@@ -521,7 +521,7 @@ export default function LandingPage() {
             Terms of Service
           </Link>
           <Link
-            href="#"
+            href="/privacy"
             className="text-xs hover:underline underline-offset-4 text-gray-600"
           >
             Privacy Policy

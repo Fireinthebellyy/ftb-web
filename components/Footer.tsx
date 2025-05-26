@@ -18,7 +18,7 @@ export default function Footer() {
       </div>
       <nav className="sm:ml-auto flex gap-4 sm:gap-6">
         <Link
-          href="#"
+          href="/terms"
           className="text-xs hover:underline underline-offset-4 text-gray-600"
         >
           Terms of Service

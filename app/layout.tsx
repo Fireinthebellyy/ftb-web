@@ -2,6 +2,8 @@ import type React from "react";
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -27,9 +29,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} antialiased font-sans`}
+        className={`${inter.variable} ${jetbrainsMono.variable} antialiased font-sans min-h-screen flex flex-col`}
       >
-        {children}
+        <Navbar />
+        <main className="grow">{children}</main>
+        <Footer />
       </body>
     </html>
   );

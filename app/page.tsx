@@ -22,64 +22,10 @@ import {
   Globe,
 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 
 export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
-      {/* Header */}
-      <header className="px-4 lg:px-6 h-16 flex items-center border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <Link href="/" className="flex items-center space-x-3">
-          <Image
-            src="/images/fire-logo.png"
-            alt="Fire in the Belly Logo"
-            width={40}
-            height={40}
-            className="object-contain"
-          />
-          <span className="font-bold text-xl bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
-            Fire in the Belly
-          </span>
-        </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Link
-            href="#mentors"
-            className="text-sm font-medium hover:text-red-600 transition-colors"
-          >
-            Find Mentors
-          </Link>
-          <Link
-            href="#resources"
-            className="text-sm font-medium hover:text-red-600 transition-colors"
-          >
-            Resources
-          </Link>
-          <Link
-            href="#features"
-            className="text-sm font-medium hover:text-red-600 transition-colors"
-          >
-            Features
-          </Link>
-          <Link
-            href="#about"
-            className="text-sm font-medium hover:text-red-600 transition-colors"
-          >
-            About
-          </Link>
-        </nav>
-        <div className="ml-6 flex gap-2">
-          <Button variant="outline" size="sm">
-            Sign In
-          </Button>
-          <Button
-            size="sm"
-            className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
-          >
-            Get Started
-          </Button>
-        </div>
-      </header>
-
       <main className="flex-1">
         {/* Hero Section */}
         <section className="w-full py-12 md:py-24 lg:py-32">
@@ -498,48 +444,6 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
-
-      {/* Footer */}
-      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t bg-white">
-        <div className="flex items-center space-x-3">
-          <Image
-            src="/images/fire-logo.png"
-            alt="Fire in the Belly Logo"
-            width={24}
-            height={24}
-            className="object-contain"
-          />
-          <p className="text-xs text-gray-600">
-            © {new Date().getFullYear()} Fire in the Belly. All rights reserved.
-          </p>
-        </div>
-        <nav className="sm:ml-auto flex gap-4 sm:gap-6">
-          <Link
-            href="#"
-            className="text-xs hover:underline underline-offset-4 text-gray-600"
-          >
-            Terms of Service
-          </Link>
-          <Link
-            href="/privacy"
-            className="text-xs hover:underline underline-offset-4 text-gray-600"
-          >
-            Privacy Policy
-          </Link>
-          <Link
-            href="#"
-            className="text-xs hover:underline underline-offset-4 text-gray-600"
-          >
-            Contact
-          </Link>
-          <Link
-            href="#"
-            className="text-xs hover:underline underline-offset-4 text-gray-600"
-          >
-            Help
-          </Link>
-        </nav>
-      </footer>
     </div>
   );
 }

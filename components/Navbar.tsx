@@ -3,11 +3,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-// import { auth, provider, signInWithPopup } from "@/lib/firebase";
-// import axios from "axios";
+import UserProfileButton from "@/components/UserProfileButton";
+import { useUser } from "@stackframe/stack";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const user = useUser();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -51,32 +52,18 @@ export default function Navbar() {
           >
             Resources
           </Link>
-          <Link
-            href="#features"
-            className="text-sm font-medium hover:text-red-600 transition-colors"
-          >
-            Features
-          </Link>
-          <Link
-            href="#about"
-            className="text-sm font-medium hover:text-red-600 transition-colors"
-          >
-            About
-          </Link>
         </nav>
 
         <div className="hidden md:flex ml-6 gap-2">
-          <Link href={"/handler/sign-in"}>
-            <Button variant="outline" size="sm">
-              Sign In
-            </Button>
-          </Link>
-          <Button
-            size="sm"
-            className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
-          >
-            Get Started
-          </Button>
+          {!user ? (
+            <Link href={"/handler/sign-in"}>
+              <Button variant="outline" size="sm">
+                Sign In
+              </Button>
+            </Link>
+          ) : null}
+
+          <UserProfileButton />
         </div>
 
         <button
@@ -145,17 +132,11 @@ export default function Navbar() {
               </Link>
             </li>
             <li>
-              <Link href="#features" onClick={() => setIsOpen(false)}>
-                Features
-              </Link>
+              {/* <Link href={"/handler/sign-in"}>Sign up</Link> */}
+              {!user ? <Link href={"/handler/sign-in"}>Sign up</Link> : null}
             </li>
             <li>
-              <Link href="#about" onClick={() => setIsOpen(false)}>
-                About
-              </Link>
-            </li>
-            <li>
-              <Link href={"/handler/sign-in"}>Sign up</Link>
+              <UserProfileButton />
             </li>
           </ul>
         </div>

@@ -3,8 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { auth, provider, signInWithPopup } from "@/lib/firebase";
-import axios from "axios";
+// import { auth, provider, signInWithPopup } from "@/lib/firebase";
+// import axios from "axios";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -66,12 +66,11 @@ export default function Navbar() {
         </nav>
 
         <div className="hidden md:flex ml-6 gap-2">
-          <Button variant="outline" size="sm">
-            Sign In
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleSignInWithGoogle}>
-            Sign In with Google
-          </Button>
+          <Link href={"/handler/sign-in"}>
+            <Button variant="outline" size="sm">
+              Sign In
+            </Button>
+          </Link>
           <Button
             size="sm"
             className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
@@ -156,71 +155,11 @@ export default function Navbar() {
               </Link>
             </li>
             <li>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsOpen(false)}
-              >
-                Sign In
-              </Button>
-            </li>
-            <li>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSignInWithGoogle}
-              >
-                Sign In with Google
-              </Button>
-            </li>
-            <li>
-              <Button
-                size="sm"
-                className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
-                onClick={() => setIsOpen(false)}
-              >
-                Get Started
-              </Button>
+              <Link href={"/handler/sign-in"}>Sign up</Link>
             </li>
           </ul>
         </div>
       )}
     </header>
   );
-
-  async function handleSignInWithGoogle() {
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      console.log("User signed in:", user.displayName, user.email, user.uid);
-
-      const userInfo = {
-        name: user.displayName,
-        email: user.email,
-        image: user.photoURL, // Assuming photoURL is the image
-        bio: null, // Optional, can be null
-        isDeleted: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        role: "student",
-        bookmarks: [],
-        interested_field: null, // Optional, can be null
-      };
-
-      try {
-        const response = await axios.post("/api/user", userInfo);
-        console.log("User info sent to backend:", response.data);
-        alert(`User signed in: ${user.displayName} (${user.email})`);
-      } catch (error: any) {
-        console.error("Error sending user info to backend:", error);
-        alert("Error sending user info to backend: " + error.message);
-        return;
-      }
-      // You can store the user information in local storage or a state variable here
-    } catch (error: any) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      console.error("Error signing in with Google:", error);
-      alert("Error signing in with Google: " + error.message);
-    }
-  }
 }

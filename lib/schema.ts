@@ -30,7 +30,7 @@ export const mentors = pgTable("mentors", {
   description: text("description"),
   mentorEmail: text("mentor_email").notNull(),
   isVerified: boolean("is_verified").default(false),
-  tags: text("tags"),
+  tags: text("tags").array().default([]),
   calLink: text("cal_link"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

@@ -6,6 +6,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { Suspense } from "react";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -35,9 +36,11 @@ export default function RootLayout({
       >
         <StackProvider app={stackServerApp}>
           <StackTheme>
-            <Navbar />
-            <main className="grow">{children}</main>
-            <Footer />
+            <Suspense fallback={<div>Loading ..</div>}>
+              <Navbar />
+              <main className="grow">{children}</main>
+              <Footer />
+            </Suspense>
           </StackTheme>
         </StackProvider>
       </body>

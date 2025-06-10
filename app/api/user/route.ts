@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { users } from "@/lib/schema";
+import { users_sync } from "@/lib/schema";
 import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 
@@ -11,13 +11,13 @@ export async function POST(req: NextRequest) {
 
     const existingUser = await db
       .select()
-      .from(users)
-      .where(eq(users.email, email));
+      .from(users_sync)
+      .where(eq(users_sync.email, email));
 
     if (existingUser.length > 0) {
       // Update existing user
       await db
-        .update(users)
+        .update(users_sync)
         .set({
           name: name,
           image: image,
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
           updatedAt: new Date(),
           interestedField: interested_field,
         })
-        .where(eq(users.email, email));
+        .where(eq(users_sync.email, email));
 
       return NextResponse.json(
         { message: "User updated successfully" },
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       );
     } else {
       // Insert new user
-      await db.insert(users).values({
+      await db.insert(users_sync).values({
         name: name,
         image: image,
         bio: bio,

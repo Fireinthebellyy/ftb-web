@@ -1,0 +1,1 @@
+ALTER TABLE "comments" ALTER COLUMN "opportunity_id" SET DATA TYPE uuid;

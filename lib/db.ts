@@ -7,7 +7,7 @@ const projectDir = process.cwd();
 loadEnvConfig(projectDir);
 
 const pool = new Pool({
-  connectionString: process.env.DB_URL,
+  connectionString: process.env.DATABASE_URL,
 });
 
 export const db = drizzle(pool);

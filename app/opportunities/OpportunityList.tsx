@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from 'react';
 import OpportunityCard from '@/components/OpportunityCard';
@@ -7,15 +7,33 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Search, Filter, SortAsc } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import axios from 'axios';
+
+
+type Opportunity = {
+  id: string;
+  title: string;
+  description: string;
+  type: string | string[];
+  tags?: string[];
+  created_at: string;
+  start_date: string;
+};
 
 export default function OpportunityCardsPage() {
-  const [opportunities, setOpportunities] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all');
-  const [sortBy, setSortBy] = useState('newest');
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [filterType, setFilterType] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('newest');
 
   useEffect(() => {
     fetchOpportunities();
@@ -24,46 +42,46 @@ export default function OpportunityCardsPage() {
   const fetchOpportunities = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/opportunities');
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch opportunities');
-      }
-      
-      const data = await response.json();
+      const response = await axios.get('/api/opportunities');
+
+
+      const data = response.data;
       setOpportunities(data.opportunities || []);
-    } catch (err) {
-      setError(err.message);
+    } catch (err: any) {
+      setError(err.message || 'Unknown error');
       console.error('Error fetching opportunities:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Filter and Sort opportunities
   const filteredAndSortedOpportunities = opportunities
-    .filter(opportunity => {
-      const matchesSearch = opportunity.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          opportunity.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          opportunity.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-      
-      const matchesType = filterType === 'all' || 
-                         (Array.isArray(opportunity.type) ? 
-                          opportunity.type.includes(filterType) : 
-                          opportunity.type === filterType);
-      
+    .filter((opportunity) => {
+      const search = searchTerm.toLowerCase();
+      const matchesSearch =
+        opportunity.title.toLowerCase().includes(search) ||
+        opportunity.description.toLowerCase().includes(search) ||
+        opportunity.tags?.some((tag) => tag.toLowerCase().includes(search));
+
+      const matchesType =
+        filterType === 'all'
+          ? true
+          : Array.isArray(opportunity.type)
+          ? opportunity.type.includes(filterType)
+          : opportunity.type === filterType;
+
       return matchesSearch && matchesType;
     })
     .sort((a, b) => {
       switch (sortBy) {
         case 'newest':
-          return new Date(b.created_at) - new Date(a.created_at);
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         case 'oldest':
-          return new Date(a.created_at) - new Date(b.created_at);
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         case 'title':
           return a.title.localeCompare(b.title);
         case 'start_date':
-          return new Date(a.start_date) - new Date(b.start_date);
+          return new Date(a.start_date).getTime() - new Date(b.start_date).getTime();
         default:
           return 0;
       }
@@ -84,17 +102,16 @@ export default function OpportunityCardsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-8">
-        {/* Header - Written Part */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Discover Amazing Opportunities
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Explore hackathons, grants, competitions, and more. Find the perfect opportunity to showcase your skills and grow your career.
+            Explore hackathons, grants, competitions, and more. Find the perfect opportunity to
+            showcase your skills and grow your career.
           </p>
         </div>
 
-        
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Search */}
@@ -139,13 +156,11 @@ export default function OpportunityCardsPage() {
             </Select>
           </div>
 
-          {/* Results count */}
           <div className="mt-4 text-sm text-gray-600">
             Showing {filteredAndSortedOpportunities.length} of {opportunities.length} opportunities
           </div>
         </div>
 
-        {/* Loading State  - apply Skeleton*/}
         {loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, index) => (
@@ -163,16 +178,12 @@ export default function OpportunityCardsPage() {
           </div>
         )}
 
-        {/* Opportunities Cards */}
         {!loading && (
           <>
             {filteredAndSortedOpportunities.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredAndSortedOpportunities.map((opportunity) => (
-                  <OpportunityCard 
-                    key={opportunity.id} 
-                    opportunity={opportunity} 
-                  />
+                  <OpportunityCard key={opportunity.id} opportunity={opportunity} />
                 ))}
               </div>
             ) : (
@@ -180,13 +191,9 @@ export default function OpportunityCardsPage() {
                 <div className="text-gray-400 mb-4">
                   <Search className="w-12 h-12 mx-auto" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-600 mb-2">
-                  No opportunities found
-                </h3>
-                <p className="text-gray-500">
-                  Try adjusting your search criteria or filters
-                </p>
-                <Button 
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">No opportunities found</h3>
+                <p className="text-gray-500">Try adjusting your search criteria or filters</p>
+                <Button
                   onClick={() => {
                     setSearchTerm('');
                     setFilterType('all');

@@ -84,3 +84,20 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export async function GET(req: NextRequest) {
+  try {
+    const allOpportunities = await db.select().from(opportunities);
+
+    return NextResponse.json(
+      { success: true, opportunities: allOpportunities },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error fetching opportunities:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch opportunities" },
+      { status: 500 }
+    );
+  }
+}

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CalendarDays, MapPin, Building2, ExternalLink, Phone } from "lucide-react";
 import { format } from "date-fns";
 import React from "react";
+import Link from "next/link";
 
 type Opportunity = {
   id: string;
@@ -88,14 +89,14 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity }) => {
             {title}
           </CardTitle>
           {url && (
-            <a
+            <Link
               href={url}
               target="_blank"
               rel="noopener noreferrer"
               className="cursor-pointer"
             >
               <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0" />
-            </a>
+            </Link>
           )}
         </div>
 

@@ -30,6 +30,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    console.log({ user });
+
     const body = await req.json();
     const validatedData = opportunitySchema.parse(body);
 

@@ -17,19 +17,6 @@ export const opportunityTypeEnum = pgEnum("opportunity_type", [
   "ideathon",
 ]);
 
-export const users_sync = pgTable("users_sync", {
-  raw_json: text("raw_json").$type<string>(),
-  id: text("id").primaryKey(),
-  name: text("name"),
-  email: text("email"),
-  created_at: timestamp("created_at"),
-  updated_at: timestamp("updated_at"),
-  deleted_at: timestamp("deleted_at").$type<string | null>(),
-  bookmarks: text("bookmarks").array(),
-  role: userRoleEnum("role").default("student"),
-  instrestedIn: text("instrestedIn").array().default([]),
-});
-
 export const mentors = pgTable("mentors", {
   id: uuid("id").primaryKey().defaultRandom(),
   mentorName: text("mentor_name").notNull(),
@@ -51,7 +38,7 @@ export const comments = pgTable("comments", {
   content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  userId: text("user_id").references(() => users_sync.id),
+  userId: text("user_id").references(() => user.id),
   opportunityId: uuid("opportunity_id").references(() => opportunities.id),
 });
 
@@ -73,5 +60,65 @@ export const opportunities = pgTable("opportunities", {
   updatedAt: timestamp("updated_at").defaultNow(),
   isVerified: boolean("is_verified").default(false),
   isActive: boolean("is_active").default(true),
-  createdByUser: text("created_by_user").references(() => users_sync.id),
+  createdByUser: text("created_by_user").references(() => user.id),
+});
+
+export const user = pgTable("user", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified")
+    .$defaultFn(() => false)
+    .notNull(),
+  image: text("image"),
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => /* @__PURE__ */ new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .$defaultFn(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+export const session = pgTable("session", {
+  id: text("id").primaryKey(),
+  expiresAt: timestamp("expires_at").notNull(),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
+
+export const account = pgTable("account", {
+  id: text("id").primaryKey(),
+  accountId: text("account_id").notNull(),
+  providerId: text("provider_id").notNull(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  idToken: text("id_token"),
+  accessTokenExpiresAt: timestamp("access_token_expires_at"),
+  refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+  scope: text("scope"),
+  password: text("password"),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+});
+
+export const verification = pgTable("verification", {
+  id: text("id").primaryKey(),
+  identifier: text("identifier").notNull(),
+  value: text("value").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").$defaultFn(
+    () => /* @__PURE__ */ new Date()
+  ),
+  updatedAt: timestamp("updated_at").$defaultFn(
+    () => /* @__PURE__ */ new Date()
+  ),
 });

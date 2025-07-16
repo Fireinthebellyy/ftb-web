@@ -2,9 +2,30 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { authClient } from "@/lib/auth-client";
+import { Button } from "./ui/button";
+
+import { LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
+
+export function Logout() {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await authClient.signOut();
+    router.push("/");
+  };
+
+  return (
+    <Button variant="outline" onClick={handleLogout}>
+      Logout <LogOut className="size-4" />
+    </Button>
+  );
+}
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const { data: user } = authClient.useSession();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -43,22 +64,24 @@ export default function Navbar() {
             Find Mentors
           </Link>
           <Link
-            href="#resources"
+            href="/opportunities"
             className="text-sm font-medium hover:text-red-600 transition-colors"
           >
-            Resources
+            Opportunities
           </Link>
         </nav>
 
-        {/* <div className="hidden md:flex ml-6 gap-2">
+        <div className="hidden md:flex ml-6 gap-2">
           {!user ? (
-            <Link href={"/handler/sign-in"}>
+            <Link href={"/login"}>
               <Button variant="outline" size="sm">
-                Sign In
+                Login
               </Button>
             </Link>
-          ) : null}
-        </div> */}
+          ) : (
+            <Logout />
+          )}
+        </div>
 
         <button
           onClick={() => setIsOpen(true)}
@@ -121,13 +144,13 @@ export default function Navbar() {
               </Link>
             </li>
             <li>
-              <Link href="#resources" onClick={() => setIsOpen(false)}>
-                Resources
+              <Link href="/opportunities" onClick={() => setIsOpen(false)}>
+                Opportunities
               </Link>
             </li>
             <li>
-              {/* <Link href={"/handler/sign-in"}>Sign up</Link> */}
-              {/* {!user ? <Link href={"/sign-in"}>Sign up</Link> : null} */}
+              <Link href={"signup"}>Sign up</Link>
+              {!user ? <Link href={"/login"}>Log in</Link> : <Logout />}
             </li>
           </ul>
         </div>

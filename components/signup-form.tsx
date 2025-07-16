@@ -57,14 +57,14 @@ export function SignupForm({
   const signInWithGoogle = async () => {
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/dashboard",
+      callbackURL: "/opportunities",
     });
   };
 
   const signInWithLinkedIn = async () => {
     await authClient.signIn.social({
       provider: "linkedin",
-      callbackURL: "/dashboard",
+      callbackURL: "/opportunities",
     });
   };
 
@@ -81,7 +81,7 @@ export function SignupForm({
       toast.success(
         `${message as string} Please check your email for verification.`
       );
-      router.push("/dashboard");
+      router.push("/opportunities");
     } else {
       toast.error(message as string);
     }

@@ -1,21 +1,21 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import OpportunityCard from '@/components/OpportunityCard';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Search, Filter, SortAsc } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect } from "react";
+import OpportunityCard from "@/components/OpportunityCard";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Search, Filter, SortAsc } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import axios from 'axios';
-
+} from "@/components/ui/select";
+import axios from "axios";
+import Link from "next/link";
 
 type Opportunity = {
   id: string;
@@ -31,9 +31,9 @@ export default function OpportunityCardsPage() {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [filterType, setFilterType] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('newest');
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("newest");
 
   useEffect(() => {
     fetchOpportunities();
@@ -42,14 +42,13 @@ export default function OpportunityCardsPage() {
   const fetchOpportunities = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/opportunities');
-
+      const response = await axios.get("/api/opportunities");
 
       const data = response.data;
       setOpportunities(data.opportunities || []);
     } catch (err: any) {
-      setError(err.message || 'Unknown error');
-      console.error('Error fetching opportunities:', err);
+      setError(err.message || "Unknown error");
+      console.error("Error fetching opportunities:", err);
     } finally {
       setLoading(false);
     }
@@ -64,7 +63,7 @@ export default function OpportunityCardsPage() {
         opportunity.tags?.some((tag) => tag.toLowerCase().includes(search));
 
       const matchesType =
-        filterType === 'all'
+        filterType === "all"
           ? true
           : Array.isArray(opportunity.type)
           ? opportunity.type.includes(filterType)
@@ -74,14 +73,20 @@ export default function OpportunityCardsPage() {
     })
     .sort((a, b) => {
       switch (sortBy) {
-        case 'newest':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        case 'oldest':
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-        case 'title':
+        case "newest":
+          return (
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+        case "oldest":
+          return (
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          );
+        case "title":
           return a.title.localeCompare(b.title);
-        case 'start_date':
-          return new Date(a.start_date).getTime() - new Date(b.start_date).getTime();
+        case "start_date":
+          return (
+            new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
+          );
         default:
           return 0;
       }
@@ -107,9 +112,12 @@ export default function OpportunityCardsPage() {
             Discover Amazing Opportunities
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Explore hackathons, grants, competitions, and more. Find the perfect opportunity to
-            showcase your skills and grow your career.
+            Explore hackathons, grants, competitions, and more. Find the perfect
+            opportunity to showcase your skills and grow your career.
           </p>
+          <Link href="/opportunities/new">
+            <Button className="mt-4">Post an Opportunity</Button>
+          </Link>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
@@ -157,7 +165,8 @@ export default function OpportunityCardsPage() {
           </div>
 
           <div className="mt-4 text-sm text-gray-600">
-            Showing {filteredAndSortedOpportunities.length} of {opportunities.length} opportunities
+            Showing {filteredAndSortedOpportunities.length} of{" "}
+            {opportunities.length} opportunities
           </div>
         </div>
 
@@ -183,7 +192,10 @@ export default function OpportunityCardsPage() {
             {filteredAndSortedOpportunities.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredAndSortedOpportunities.map((opportunity) => (
-                  <OpportunityCard key={opportunity.id} opportunity={opportunity} />
+                  <OpportunityCard
+                    key={opportunity.id}
+                    opportunity={opportunity}
+                  />
                 ))}
               </div>
             ) : (
@@ -191,12 +203,16 @@ export default function OpportunityCardsPage() {
                 <div className="text-gray-400 mb-4">
                   <Search className="w-12 h-12 mx-auto" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-600 mb-2">No opportunities found</h3>
-                <p className="text-gray-500">Try adjusting your search criteria or filters</p>
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                  No opportunities found
+                </h3>
+                <p className="text-gray-500">
+                  Try adjusting your search criteria or filters
+                </p>
                 <Button
                   onClick={() => {
-                    setSearchTerm('');
-                    setFilterType('all');
+                    setSearchTerm("");
+                    setFilterType("all");
                   }}
                   variant="outline"
                   className="mt-4"

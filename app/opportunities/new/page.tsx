@@ -9,7 +9,7 @@ export default async function NewOpportunityPage() {
   });
 
   if (!session) {
-    redirect("/signin");
+    redirect("/login");
   }
 
   return <ClientNewOpportunityForm />;

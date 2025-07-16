@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { opportunities } from "@/lib/schema";
+import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -18,19 +19,11 @@ const opportunitySchema = z.object({
   endDate: z.string().optional(),
 });
 
-import { stackServerApp } from "@/stack";
-
 export async function POST(req: NextRequest) {
   try {
-    const user = await stackServerApp.getUser();
-    if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized - Please login" },
-        { status: 401 }
-      );
-    }
+    const user = await getCurrentUser();
 
-    console.log({ user });
+    console.log("Current user:", user);
 
     const body = await req.json();
     const validatedData = opportunitySchema.parse(body);
@@ -40,7 +33,7 @@ export async function POST(req: NextRequest) {
       title: validatedData.title,
       description: validatedData.description,
       url: validatedData.url,
-      createdByUser: user.id,
+      userId: user.currentUser.id,
       isFlagged: false,
       isVerified: false,
       isActive: true,

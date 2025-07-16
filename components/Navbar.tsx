@@ -2,13 +2,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import UserProfileButton from "@/components/UserProfileButton";
-import { useUser } from "@stackframe/stack";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const user = useUser();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -54,7 +50,7 @@ export default function Navbar() {
           </Link>
         </nav>
 
-        <div className="hidden md:flex ml-6 gap-2">
+        {/* <div className="hidden md:flex ml-6 gap-2">
           {!user ? (
             <Link href={"/handler/sign-in"}>
               <Button variant="outline" size="sm">
@@ -62,9 +58,7 @@ export default function Navbar() {
               </Button>
             </Link>
           ) : null}
-
-          <UserProfileButton />
-        </div>
+        </div> */}
 
         <button
           onClick={() => setIsOpen(true)}
@@ -133,10 +127,7 @@ export default function Navbar() {
             </li>
             <li>
               {/* <Link href={"/handler/sign-in"}>Sign up</Link> */}
-              {!user ? <Link href={"/handler/sign-in"}>Sign up</Link> : null}
-            </li>
-            <li>
-              <UserProfileButton />
+              {/* {!user ? <Link href={"/sign-in"}>Sign up</Link> : null} */}
             </li>
           </ul>
         </div>

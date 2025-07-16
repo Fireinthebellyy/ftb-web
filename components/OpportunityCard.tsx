@@ -1,9 +1,22 @@
-'use client';
+/* eslint-disable @next/next/no-img-element */
+"use client";
 
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, MapPin, Building2, ExternalLink, Phone } from "lucide-react";
+import {
+  CalendarDays,
+  MapPin,
+  Building2,
+  ExternalLink,
+  Phone,
+} from "lucide-react";
 import { format } from "date-fns";
 import React from "react";
 import Link from "next/link";
@@ -23,7 +36,6 @@ type Opportunity = {
   end_date?: string;
 };
 
-
 interface OpportunityCardProps {
   opportunity: Opportunity;
 }
@@ -40,10 +52,9 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity }) => {
     location,
     organiser_info,
     start_date,
-    end_date
+    end_date,
   } = opportunity;
 
-  
   const primaryType = Array.isArray(type) ? type[0] : type;
 
   const getTypeColor = (type?: string): string => {
@@ -52,7 +63,7 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity }) => {
       grant: "bg-green-100 text-green-800 border-green-200",
       competition: "bg-purple-100 text-purple-800 border-purple-200",
       ideathon: "bg-orange-100 text-orange-800 border-orange-200",
-      others: "bg-gray-100 text-gray-800 border-gray-200"
+      others: "bg-gray-100 text-gray-800 border-gray-200",
     };
     return colors[type?.toLowerCase() || "others"] || colors.others;
   };
@@ -113,7 +124,10 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity }) => {
               </Badge>
             ))}
             {tags.length > 3 && (
-              <Badge variant="secondary" className="text-xs px-2 py-1 bg-gray-100 text-gray-600">
+              <Badge
+                variant="secondary"
+                className="text-xs px-2 py-1 bg-gray-100 text-gray-600"
+              >
                 +{tags.length - 3} more
               </Badge>
             )}

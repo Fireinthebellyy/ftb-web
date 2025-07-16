@@ -31,6 +31,9 @@ export const mentors = pgTable("mentors", {
   updatedAt: timestamp("updated_at").defaultNow(),
   rating: integer("rating"),
   availability: boolean("availability").default(true),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
 });
 
 export const comments = pgTable("comments", {
@@ -38,7 +41,9 @@ export const comments = pgTable("comments", {
   content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  userId: text("user_id").references(() => user.id),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
   opportunityId: uuid("opportunity_id").references(() => opportunities.id),
 });
 
@@ -60,7 +65,9 @@ export const opportunities = pgTable("opportunities", {
   updatedAt: timestamp("updated_at").defaultNow(),
   isVerified: boolean("is_verified").default(false),
   isActive: boolean("is_active").default(true),
-  createdByUser: text("created_by_user").references(() => user.id),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
 });
 
 export const user = pgTable("user", {
@@ -122,3 +129,13 @@ export const verification = pgTable("verification", {
     () => /* @__PURE__ */ new Date()
   ),
 });
+
+export const schema = {
+  user,
+  mentors,
+  opportunities,
+  comments,
+  session,
+  account,
+  verification,
+};

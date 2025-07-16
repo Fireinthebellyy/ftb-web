@@ -1,12 +1,11 @@
 import type React from "react";
-import { StackProvider, StackTheme } from "@stackframe/stack";
-import { stackServerApp } from "../stack";
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Suspense } from "react";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -34,15 +33,12 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased font-sans min-h-screen flex flex-col`}
       >
-        <StackProvider app={stackServerApp}>
-          <StackTheme>
-            <Suspense fallback={<div>Loading ..</div>}>
-              <Navbar />
-              <main className="grow">{children}</main>
-              <Footer />
-            </Suspense>
-          </StackTheme>
-        </StackProvider>
+        <Suspense fallback={<div>Loading ..</div>}>
+          <Navbar />
+          <main className="grow">{children}</main>
+          <Footer />
+          <Toaster />
+        </Suspense>
       </body>
     </html>
   );

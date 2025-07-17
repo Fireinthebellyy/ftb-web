@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { opportunities } from "@/lib/schema";
-// import { getCurrentUser } from "@/server/users";
+import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -21,7 +21,7 @@ const opportunitySchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    // const user = await getCurrentUser();
+    const user = await getCurrentUser();
     const body = await req.json();
     const validatedData = opportunitySchema.parse(body);
 
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       title: validatedData.title,
       description: validatedData.description,
       url: validatedData.url,
-      // userId: user.currentUser.id,
+      userId: user.currentUser.id,
       isFlagged: false,
       isVerified: false,
       isActive: true,
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(_req: NextRequest) {
   try {
     const allOpportunities = await db.select().from(opportunities);
 

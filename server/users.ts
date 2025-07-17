@@ -16,7 +16,7 @@ export const getCurrentUser = async () => {
     redirect("/login");
   }
 
-  const currentUser = await db.query.user.findFirst({
+  const currentUser = await db?.query.user.findFirst({
     where: eq(user.id, session.user.id),
   });
 

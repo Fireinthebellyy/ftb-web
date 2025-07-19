@@ -53,17 +53,33 @@ export function LoginForm({
   });
 
   const signInWithGoogle = async () => {
-    await authClient.signIn.social({
-      provider: "google",
-      callbackURL: "/opportunities",
-    });
+    try {
+      setIsLoading(true);
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/opportunities",
+      });
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+      toast.error("Google sign-in failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const signInWithLinkedIn = async () => {
-    await authClient.signIn.social({
-      provider: "linkedin",
-      callbackURL: "/opportunities",
-    });
+    try {
+      setIsLoading(true);
+      await authClient.signIn.social({
+        provider: "linkedin",
+        callbackURL: "/opportunities",
+      });
+    } catch (error) {
+      console.error("LinkedIn sign-in error:", error);
+      toast.error("LinkedIn sign-in failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {

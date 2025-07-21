@@ -35,6 +35,11 @@ export default function OpportunityCardsPage() {
   const [filterType, setFilterType] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('newest');
 
+  const handleBookmarkChange = (opportunityId: string, isBookmarked: boolean) => {
+    // Optional: Update local state or show notification
+    console.log(`Opportunity ${opportunityId} ${isBookmarked ? 'bookmarked' : 'unbookmarked'}`);
+  };
+
   useEffect(() => {
     fetchOpportunities();
   }, []);
@@ -183,7 +188,15 @@ export default function OpportunityCardsPage() {
             {filteredAndSortedOpportunities.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredAndSortedOpportunities.map((opportunity) => (
+<<<<<<< Updated upstream
                   <OpportunityCard key={opportunity.id} opportunity={opportunity} />
+=======
+                  <OpportunityCard
+                    key={opportunity.id}
+                    opportunity={opportunity}
+                    onBookmarkChange={handleBookmarkChange}
+                  />
+>>>>>>> Stashed changes
                 ))}
               </div>
             ) : (

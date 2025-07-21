@@ -188,15 +188,11 @@ export default function OpportunityCardsPage() {
             {filteredAndSortedOpportunities.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredAndSortedOpportunities.map((opportunity) => (
-<<<<<<< Updated upstream
-                  <OpportunityCard key={opportunity.id} opportunity={opportunity} />
-=======
                   <OpportunityCard
                     key={opportunity.id}
                     opportunity={opportunity}
                     onBookmarkChange={handleBookmarkChange}
                   />
->>>>>>> Stashed changes
                 ))}
               </div>
             ) : (

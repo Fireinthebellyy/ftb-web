@@ -3,9 +3,6 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-<<<<<<< Updated upstream
-import { CalendarDays, MapPin, Building2, ExternalLink, Phone } from "lucide-react";
-=======
 import {
   CalendarDays,
   MapPin,
@@ -14,7 +11,6 @@ import {
   Phone,
   Bookmark
 } from "lucide-react";
->>>>>>> Stashed changes
 import { format } from "date-fns";
 import React from "react";
 import Link from "next/link";
@@ -57,9 +53,6 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity, onBookma
     end_date
   } = opportunity;
 
-<<<<<<< Updated upstream
-  
-=======
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
   const [showMessage, setShowMessage] = useState<boolean>(false);
 
@@ -78,7 +71,6 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity, onBookma
   };
 
 
->>>>>>> Stashed changes
   const primaryType = Array.isArray(type) ? type[0] : type;
 
   const getTypeColor = (type?: string): string => {

@@ -21,6 +21,13 @@ const opportunitySchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    if (!db) {
+      return NextResponse.json(
+        { error: "Database connection not available" },
+        { status: 500 }
+      );
+    }
+    
     const user = await getCurrentUser();
     const body = await req.json();
     const validatedData = opportunitySchema.parse(body);
@@ -73,6 +80,13 @@ export async function POST(req: NextRequest) {
 
 export async function GET(_req: NextRequest) {
   try {
+    if (!db) {
+      return NextResponse.json(
+        { error: "Database connection not available" },
+        { status: 500 }
+      );
+    }
+    
     const allOpportunities = await db.select().from(opportunities);
 
     return NextResponse.json(

@@ -1,4 +1,4 @@
-import { db2 } from "@/lib/db2";
+import { db } from "@/lib/db";
 import { opportunities } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     if (validatedData.endDate)
       insertData.endDate = new Date(validatedData.endDate);
 
-    const newOpportunity = await db2.insert(opportunities).values(insertData);
+    const newOpportunity = await db.insert(opportunities).values(insertData);
 
     return NextResponse.json(
       { success: true, data: newOpportunity },
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET(_req: NextRequest) {
   try {
-    const allOpportunities = await db2.select().from(opportunities);
+    const allOpportunities = await db.select().from(opportunities);
 
     return NextResponse.json(
       { success: true, opportunities: allOpportunities },

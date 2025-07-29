@@ -16,10 +16,12 @@ import {
   Building2,
   ExternalLink,
   Phone,
+  Bookmark
 } from "lucide-react";
 import { format } from "date-fns";
 import React from "react";
 import Link from "next/link";
+import { useState } from "react";
 
 type Opportunity = {
   id: string;
@@ -38,10 +40,12 @@ type Opportunity = {
 
 interface OpportunityCardProps {
   opportunity: Opportunity;
+  onBookmarkChange?: (id: string, isBookmarked: boolean) => void;
 }
 
-const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity }) => {
+const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity, onBookmarkChange }) => {
   const {
+    id,
     type,
     tags,
     title,
@@ -54,6 +58,24 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity }) => {
     start_date,
     end_date,
   } = opportunity;
+
+  const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
+  const [showMessage, setShowMessage] = useState<boolean>(false);
+
+  const handleBookmark = (): void => {
+    const newBookmarkState = !isBookmarked;
+    setIsBookmarked(newBookmarkState);
+    
+    // Call parent callback to update parent state
+    if (onBookmarkChange) {
+      onBookmarkChange(id, newBookmarkState);
+    }
+    
+    // Show message
+    setShowMessage(true);
+    setTimeout(() => setShowMessage(false), 2000);
+  };
+
 
   const primaryType = Array.isArray(type) ? type[0] : type;
 
@@ -91,6 +113,16 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity }) => {
               {primaryType?.charAt(0).toUpperCase() + primaryType?.slice(1)}
             </Badge>
           </div>
+          <div className="absolute top-3 right-3">
+            <Button
+              onClick={handleBookmark}
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 bg-white backdrop-blur-sm hover:bg-white cursor-pointer"
+            >
+              <Bookmark className={`w-4 h-4 ${isBookmarked ? 'text-yellow-500' : 'text-gray-600'}`} />
+            </Button>
+          </div>
         </div>
       )}
 
@@ -99,6 +131,18 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity }) => {
           <CardTitle className="text-lg font-bold leading-tight text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
             {title}
           </CardTitle>
+          <div className="flex items-center gap-2">
+            {/* Bookmark button for cards without image */}
+            {!image && (
+              <Button
+                onClick={handleBookmark}
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0 hover:bg-gray-100 cursor-pointer"
+              >
+                <Bookmark className={`w-4 h-4 ${isBookmarked ? 'text-yellow-500' : 'text-gray-600'}`} />
+              </Button>
+            )}
           {url && (
             <Link
               href={url}
@@ -109,6 +153,7 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity }) => {
               <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0" />
             </Link>
           )}
+        </div>
         </div>
 
         {/* Tags */}
@@ -134,6 +179,15 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity }) => {
           </div>
         )}
       </CardHeader>
+
+      {/* Simple Message */}
+      {showMessage && (
+        <div className="absolute top-16 right-3 pointer-events-none z-10">
+          <div className="bg-gray-800 text-white px-3 py-1 rounded text-sm">
+            {isBookmarked ? "Bookmarked" : "Removed"}
+          </div>
+        </div>
+      )}
 
       <CardContent className="pb-4">
         {/* Description */}

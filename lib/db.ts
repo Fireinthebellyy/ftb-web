@@ -7,4 +7,10 @@ import { loadEnvConfig } from "@next/env";
 const projectDir = process.cwd();
 loadEnvConfig(projectDir);
 
-export const db = drizzle(process.env.DATABASE_URL!, { schema });
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("DATABASE_URL environment variable is not set");
+}
+
+export const db = drizzle(connectionString, { schema });

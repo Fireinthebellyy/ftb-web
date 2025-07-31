@@ -35,6 +35,11 @@ export default function OpportunityCardsPage() {
   const [filterType, setFilterType] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
 
+  const handleBookmarkChange = (opportunityId: string, isBookmarked: boolean) => {
+    // Optional: Update local state or show notification
+    console.log(`Opportunity ${opportunityId} ${isBookmarked ? 'bookmarked' : 'unbookmarked'}`);
+  };
+
   useEffect(() => {
     fetchOpportunities();
   }, []);
@@ -195,6 +200,7 @@ export default function OpportunityCardsPage() {
                   <OpportunityCard
                     key={opportunity.id}
                     opportunity={opportunity}
+                    onBookmarkChange={handleBookmarkChange}
                   />
                 ))}
               </div>

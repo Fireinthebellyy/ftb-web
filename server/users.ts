@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { db2 } from "@/lib/db2";
+import { db } from "@/lib/db";
 
 export const getCurrentUser = async () => {
   const session = await auth.api.getSession({
@@ -16,7 +16,11 @@ export const getCurrentUser = async () => {
     redirect("/login");
   }
 
-  const currentUser = await db2?.query.user.findFirst({
+  if (!db) {
+    throw new Error("Database connection not available");
+  }
+
+  const currentUser = await db.query.user.findFirst({
     where: eq(user.id, session.user.id),
   });
 

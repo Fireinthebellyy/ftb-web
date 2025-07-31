@@ -2,7 +2,6 @@
 
 import axios from "axios";
 import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { useDropzone } from "react-dropzone";
 import { storage } from "@/lib/appwrite";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -97,8 +96,11 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-export default function ClientNewOpportunityForm() {
-  const router = useRouter();
+export default function ClientNewOpportunityForm({
+  onOpportunityCreated,
+}: {
+  onOpportunityCreated: () => void;
+}) {
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState<FileItem[]>([]);
 
@@ -237,7 +239,7 @@ export default function ClientNewOpportunityForm() {
       setFiles([]);
 
       toast.success("Opportunity created successfully!");
-      router.push("/opportunities");
+      onOpportunityCreated();
     } catch (err: unknown) {
       if (err instanceof Error) {
         toast.error(err.message);
@@ -257,7 +259,10 @@ export default function ClientNewOpportunityForm() {
   const watchedDateRange = form.watch("dateRange");
 
   return (
-    <div className="max-w-lg mx-auto py-6 px-4">
+    <div className="py-6 px-4">
+      <h2 className="text-2xl font-bold text-gray-900 mb-4">
+        Post a New Opportunity
+      </h2>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           {/* Main Content Card */}

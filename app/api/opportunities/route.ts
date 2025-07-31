@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
-import { opportunities } from "@/lib/schema";
+import { eq } from "drizzle-orm";
+import { opportunities, user } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -119,7 +120,34 @@ export async function GET(_req: NextRequest) {
       );
     }
 
-    const allOpportunities = await db.select().from(opportunities);
+    // Method 1: Using leftJoin (recommended)
+    const allOpportunities = await db
+      .select({
+        // Opportunity fields
+        id: opportunities.id,
+        type: opportunities.type,
+        title: opportunities.title,
+        description: opportunities.description,
+        images: opportunities.images,
+        tags: opportunities.tags,
+        location: opportunities.location,
+        organiserInfo: opportunities.organiserInfo,
+        startDate: opportunities.startDate,
+        endDate: opportunities.endDate,
+        isFlagged: opportunities.isFlagged,
+        createdAt: opportunities.createdAt,
+        updatedAt: opportunities.updatedAt,
+        isVerified: opportunities.isVerified,
+        isActive: opportunities.isActive,
+        userId: opportunities.userId,
+        user: {
+          id: user.id,
+          name: user.name,
+          image: user.image,
+        },
+      })
+      .from(opportunities)
+      .leftJoin(user, eq(opportunities.userId, user.id));
 
     return NextResponse.json(
       { success: true, opportunities: allOpportunities },

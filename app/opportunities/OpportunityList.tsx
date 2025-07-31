@@ -21,9 +21,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import axios from "axios";
 import Link from "next/link";
 import OpportunityPost from "@/components/OpportunityCard";
+import ClientNewOpportunityForm from "./new/ClientNewOpportunityForm";
 
 type Opportunity = {
   id: string;
@@ -33,11 +35,17 @@ type Opportunity = {
   tags?: string[];
   created_at: string;
   start_date: string;
+  user: {
+    id: string;
+    name: string;
+    image: string;
+  };
 };
 
 export default function OpportunityCardsPage() {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isNewOpportunityOpen, setIsNewOpportunityOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [filterType, setFilterType] = useState<string>("all");
@@ -143,9 +151,22 @@ export default function OpportunityCardsPage() {
             <p className="text-sm sm:text-lg text-gray-600 mb-4">
               Find hackathons, grants, competitions, and more.
             </p>
-            <Link href="/opportunities/new">
-              <Button className="w-full sm:w-auto">Post an Opportunity</Button>
-            </Link>
+            <Button
+              className="w-full sm:w-auto"
+              onClick={() => setIsNewOpportunityOpen(true)}
+            >
+              Post an Opportunity
+            </Button>
+            <Dialog
+              open={isNewOpportunityOpen}
+              onOpenChange={setIsNewOpportunityOpen}
+            >
+              <DialogContent className="h-[600px] max-w-3xl mx-auto">
+                <ClientNewOpportunityForm
+                  onOpportunityCreated={() => setIsNewOpportunityOpen(false)}
+                />
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>

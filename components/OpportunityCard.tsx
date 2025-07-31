@@ -4,7 +4,9 @@ import React, { useState } from "react";
 import { CalendarDays, MapPin, ExternalLink, Bookmark } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { storage } from "@/lib/appwrite";
+import Image from "next/image";
 
 type Opportunity = {
   id: string;
@@ -19,6 +21,11 @@ type Opportunity = {
   organiser_info?: string;
   start_date?: string;
   end_date?: string;
+  user: {
+    id: string;
+    name: string;
+    image: string;
+  };
 };
 
 interface OpportunityPostProps {
@@ -40,9 +47,9 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
     images,
     created_at,
     location,
-    organiser_info,
     start_date,
     end_date,
+    user,
   } = opportunity;
 
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
@@ -79,20 +86,28 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
       <header className="flex items-center p-3 sm:p-4 space-x-3">
         {/* Avatar */}
         <div className="flex-shrink-0">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-semibold uppercase text-sm">
-            {organiser_info
-              ? organiser_info
-                  .split(" ")
-                  .map((word) => word[0])
-                  .join("")
-                  .slice(0, 2)
-              : "OP"}
-          </div>
+          {user &&
+          user.image &&
+          !user.image.includes("https://media.licdn.com") ? (
+            <Avatar className="w-10 h-10 sm:w-12 sm:h-12">
+              <AvatarImage src={user.image} alt={user.name} />
+            </Avatar>
+          ) : (
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-semibold uppercase text-sm">
+              {user && user.name
+                ? user.name
+                    .split(" ")
+                    .map((word) => word[0])
+                    .join("")
+                    .slice(0, 2)
+                : "OP"}
+            </div>
+          )}
         </div>
 
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-gray-900 truncate">
-            {organiser_info || "Opportunity Organizer"}
+            {user && user.name ? user.name : "Opportunity Organizer"}
           </p>
           <p className="text-xs text-gray-500">
             {created_at ? `${format(new Date(created_at), "MMM dd")}` : ""}
@@ -119,7 +134,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         {images.length > 0
           ? images.map((image, i) => (
               <div className="mb-3 rounded overflow-hidden" key={i}>
-                <img
+                <Image
                   src={storage.getFileView(
                     process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
                     image
@@ -127,6 +142,8 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                   alt={title}
                   className="w-full object-cover max-h-48 sm:max-h-64"
                   loading="lazy"
+                  height={256}
+                  width={400}
                 />
               </div>
             ))

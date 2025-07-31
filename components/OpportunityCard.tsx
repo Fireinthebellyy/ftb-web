@@ -1,27 +1,9 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  CalendarDays,
-  MapPin,
-  Building2,
-  ExternalLink,
-  Phone,
-  Bookmark
-} from "lucide-react";
+import React, { useState } from "react";
+import { CalendarDays, MapPin, ExternalLink, Bookmark } from "lucide-react";
 import { format } from "date-fns";
-import React from "react";
-import Link from "next/link";
-import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 
 type Opportunity = {
   id: string;
@@ -38,12 +20,15 @@ type Opportunity = {
   end_date?: string;
 };
 
-interface OpportunityCardProps {
+interface OpportunityPostProps {
   opportunity: Opportunity;
   onBookmarkChange?: (id: string, isBookmarked: boolean) => void;
 }
 
-const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity, onBookmarkChange }) => {
+const OpportunityPost: React.FC<OpportunityPostProps> = ({
+  opportunity,
+  onBookmarkChange,
+}) => {
   const {
     id,
     type,
@@ -65,197 +50,171 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity, onBookma
   const handleBookmark = (): void => {
     const newBookmarkState = !isBookmarked;
     setIsBookmarked(newBookmarkState);
-    
-    // Call parent callback to update parent state
+
     if (onBookmarkChange) {
       onBookmarkChange(id, newBookmarkState);
     }
-    
-    // Show message
+
     setShowMessage(true);
     setTimeout(() => setShowMessage(false), 2000);
   };
-
 
   const primaryType = Array.isArray(type) ? type[0] : type;
 
   const getTypeColor = (type?: string): string => {
     const colors: Record<string, string> = {
-      hackathon: "bg-blue-100 text-blue-800 border-blue-200",
-      grant: "bg-green-100 text-green-800 border-green-200",
-      competition: "bg-purple-100 text-purple-800 border-purple-200",
-      ideathon: "bg-orange-100 text-orange-800 border-orange-200",
-      others: "bg-gray-100 text-gray-800 border-gray-200",
+      hackathon: "bg-blue-100 text-blue-800",
+      grant: "bg-green-100 text-green-800",
+      competition: "bg-purple-100 text-purple-800",
+      ideathon: "bg-orange-100 text-orange-800",
+      others: "bg-gray-100 text-gray-800",
     };
     return colors[type?.toLowerCase() || "others"] || colors.others;
   };
 
-  const handleScheduleCall = () => {
-    // For Future Use
-  };
-
-  const handleViewProfile = () => {
-    // For Future Use
-  };
-
   return (
-    <Card className="group overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 bg-white pt-0">
-      {/* Image */}
-      {image && (
-        <div className="relative h-48 overflow-hidden">
-          <img
-            src={image}
-            alt={title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-          <div className="absolute top-3 left-3">
-            <Badge className={`${getTypeColor(primaryType)} font-medium`}>
-              {primaryType?.charAt(0).toUpperCase() + primaryType?.slice(1)}
-            </Badge>
-          </div>
-          <div className="absolute top-3 right-3">
-            <Button
-              onClick={handleBookmark}
-              size="sm"
-              variant="ghost"
-              className="h-8 w-8 p-0 bg-white backdrop-blur-sm hover:bg-white cursor-pointer"
-            >
-              <Bookmark className={`w-4 h-4 ${isBookmarked ? 'text-yellow-500' : 'text-gray-600'}`} />
-            </Button>
+    <article className="w-full bg-white border rounded-lg shadow-sm mb-3 sm:mb-4">
+      {/* Post Header */}
+      <header className="flex items-center p-3 sm:p-4 space-x-3">
+        {/* Avatar */}
+        <div className="flex-shrink-0">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-semibold uppercase text-sm">
+            {organiser_info
+              ? organiser_info
+                  .split(" ")
+                  .map((word) => word[0])
+                  .join("")
+                  .slice(0, 2)
+              : "OP"}
           </div>
         </div>
-      )}
 
-      <CardHeader className="pb-0">
-        <div className="flex items-start justify-between gap-3">
-          <CardTitle className="text-lg font-bold leading-tight text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
-            {title}
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            {/* Bookmark button for cards without image */}
-            {!image && (
-              <Button
-                onClick={handleBookmark}
-                size="sm"
-                variant="ghost"
-                className="h-8 w-8 p-0 hover:bg-gray-100 cursor-pointer"
-              >
-                <Bookmark className={`w-4 h-4 ${isBookmarked ? 'text-yellow-500' : 'text-gray-600'}`} />
-              </Button>
-            )}
-          {url && (
-            <Link
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="cursor-pointer"
-            >
-              <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0" />
-            </Link>
-          )}
-        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-gray-900 truncate">
+            {organiser_info || "Opportunity Organizer"}
+          </p>
+          <p className="text-xs text-gray-500">
+            {created_at ? `${format(new Date(created_at), "MMM dd")}` : ""}
+          </p>
         </div>
 
-        {/* Tags */}
+        {/* Type Badge - Smaller on mobile */}
+        <Badge
+          className={`${getTypeColor(
+            primaryType
+          )} font-medium text-xs px-2 py-1 text-[10px] sm:text-xs`}
+        >
+          {primaryType?.charAt(0).toUpperCase() + primaryType?.slice(1)}
+        </Badge>
+      </header>
+
+      {/* Post Content */}
+      <div className="px-3 sm:px-4 pb-3 sm:pb-4">
+        <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-2 leading-tight">
+          {title}
+        </h2>
+
+        {/* Image (optional) */}
+        {image && (
+          <div className="mb-3 rounded overflow-hidden">
+            <img
+              src={image}
+              alt={title}
+              className="w-full object-cover max-h-48 sm:max-h-64"
+              loading="lazy"
+            />
+          </div>
+        )}
+
+        {/* Description */}
+        <p className="text-gray-700 text-sm leading-relaxed mb-3">
+          {description}
+        </p>
+
+        {/* Tags - Show fewer on mobile */}
         {tags && tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {tags.slice(0, 3).map((tag, index) => (
+          <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
+            {tags.slice(0, window.innerWidth < 640 ? 2 : 4).map((tag, idx) => (
               <Badge
-                key={index}
+                key={idx}
+                className="text-[10px] sm:text-xs bg-gray-100 text-gray-700 px-2 py-1 cursor-default"
                 variant="secondary"
-                className="text-xs px-2 py-1 bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
               >
-                {tag}
+                #{tag}
               </Badge>
             ))}
-            {tags.length > 3 && (
-              <Badge
-                variant="secondary"
-                className="text-xs px-2 py-1 bg-gray-100 text-gray-600"
-              >
-                +{tags.length - 3} more
+            {tags.length > (window.innerWidth < 640 ? 2 : 4) && (
+              <Badge className="text-[10px] sm:text-xs bg-gray-100 text-gray-600 px-2 py-1">
+                +{tags.length - (window.innerWidth < 640 ? 2 : 4)} more
               </Badge>
             )}
           </div>
         )}
-      </CardHeader>
 
-      {/* Simple Message */}
-      {showMessage && (
-        <div className="absolute top-16 right-3 pointer-events-none z-10">
-          <div className="bg-gray-800 text-white px-3 py-1 rounded text-sm">
-            {isBookmarked ? "Bookmarked" : "Removed"}
-          </div>
-        </div>
-      )}
-
-      <CardContent className="pb-4">
-        {/* Description */}
-        <p className="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-4">
-          {description}
-        </p>
-
-        <div className="space-y-3">
-          {/* Dates */}
+        {/* Dates, Location info - Stack on mobile */}
+        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 text-gray-600 text-xs mb-3">
           {(start_date || end_date) && (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <CalendarDays className="w-4 h-4 text-gray-400" />
-              <span>
+            <div className="flex items-center gap-1">
+              <CalendarDays className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="text-xs">
                 {start_date && format(new Date(start_date), "MMM dd")}
                 {start_date && end_date && " - "}
-                {end_date && format(new Date(end_date), "MMM dd, yyyy")}
+                {end_date && format(new Date(end_date), "MMM dd")}
               </span>
             </div>
           )}
 
-          {/* Location */}
           {location && (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <MapPin className="w-4 h-4 text-gray-400" />
-              <span className="truncate">{location}</span>
-            </div>
-          )}
-
-          {/* Organiser Info */}
-          {organiser_info && (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Building2 className="w-4 h-4 text-gray-400" />
-              <span className="truncate">{organiser_info}</span>
+            <div className="flex items-center gap-1">
+              <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span className="truncate text-xs">{location}</span>
             </div>
           )}
         </div>
 
-        {/* Created At */}
-        {created_at && (
-          <div className="mt-4 pt-3 border-t border-gray-100">
-            <span className="text-xs text-gray-500">
-              Posted {format(new Date(created_at), "MMM dd, yyyy")}
-            </span>
+        {/* Actions Footer - Mobile optimized */}
+        <footer className="flex items-center justify-between border-t border-gray-100 pt-2 sm:pt-3">
+          <div className="flex items-center space-x-4 sm:space-x-6 text-gray-500">
+            {/* Bookmark */}
+            <button
+              onClick={handleBookmark}
+              aria-label="Bookmark"
+              className="flex items-center gap-1 hover:text-yellow-500 transition-colors text-xs sm:text-sm"
+            >
+              <Bookmark
+                className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                  isBookmarked ? "text-yellow-500" : "text-gray-400"
+                }`}
+              />
+              <span className="hidden sm:inline">
+                {isBookmarked ? "Bookmarked" : "Bookmark"}
+              </span>
+            </button>
+
+            {/* External Link */}
+            {url && (
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 hover:text-blue-600 transition-colors text-xs sm:text-sm"
+              >
+                <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline">Visit</span>
+              </a>
+            )}
+          </div>
+        </footer>
+
+        {/* Bookmark Message - Mobile positioned */}
+        {showMessage && (
+          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 sm:bottom-8 sm:right-8 sm:left-auto sm:transform-none bg-gray-800 text-white px-3 py-2 sm:px-4 rounded shadow-lg text-xs sm:text-sm z-50">
+            {isBookmarked ? "Added to bookmarks" : "Removed from bookmarks"}
           </div>
         )}
-      </CardContent>
-
-      {/* Buttons */}
-      <CardFooter className="pt-0 gap-2">
-        <Button
-          onClick={handleScheduleCall}
-          variant="outline"
-          size="sm"
-          className="flex-1 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all"
-        >
-          <Phone className="w-4 h-4 mr-2" />
-          Schedule Call
-        </Button>
-        <Button
-          onClick={handleViewProfile}
-          size="sm"
-          className="flex-1 bg-blue-600 hover:bg-blue-700 transition-colors"
-        >
-          View Profile
-        </Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </article>
   );
 };
 
-export default OpportunityCard;
+export default OpportunityPost;

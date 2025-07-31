@@ -176,7 +176,7 @@ export default function OpportunityCardsPage() {
                     Customize your opportunity search
                   </SheetDescription>
                 </SheetHeader>
-                <div className="space-y-4 mt-4">
+                <div className="space-y-4 mt-4 px-4">
                   <div>
                     <label className="text-sm font-medium mb-2 block">
                       Filter by Type

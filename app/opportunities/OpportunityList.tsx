@@ -48,6 +48,7 @@ export default function OpportunityCardsPage() {
     opportunityId: string,
     isBookmarked: boolean
   ) => {
+    // TODO: handle bookmark
     console.log(
       `Opportunity ${opportunityId} ${
         isBookmarked ? "bookmarked" : "unbookmarked"

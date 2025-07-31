@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { CalendarDays, MapPin, ExternalLink, Bookmark } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { storage } from "@/lib/appwrite";
 
 type Opportunity = {
   id: string;
@@ -12,7 +13,7 @@ type Opportunity = {
   type: string | string[];
   tags?: string[];
   url?: string;
-  image?: string;
+  images?: string[];
   created_at?: string;
   location?: string;
   organiser_info?: string;
@@ -36,7 +37,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
     title,
     description,
     url,
-    image,
+    images,
     created_at,
     location,
     organiser_info,
@@ -115,16 +116,21 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         </h2>
 
         {/* Image (optional) */}
-        {image && (
-          <div className="mb-3 rounded overflow-hidden">
-            <img
-              src={image}
-              alt={title}
-              className="w-full object-cover max-h-48 sm:max-h-64"
-              loading="lazy"
-            />
-          </div>
-        )}
+        {images.length > 0
+          ? images.map((image, i) => (
+              <div className="mb-3 rounded overflow-hidden" key={i}>
+                <img
+                  src={storage.getFileView(
+                    process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
+                    image
+                  )}
+                  alt={title}
+                  className="w-full object-cover max-h-48 sm:max-h-64"
+                  loading="lazy"
+                />
+              </div>
+            ))
+          : null}
 
         {/* Description */}
         <p className="text-gray-700 text-sm leading-relaxed mb-3">

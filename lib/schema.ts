@@ -44,25 +44,26 @@ export const comments = pgTable("comments", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  opportunityId: uuid("opportunity_id").references(() => opportunities.id),
+  opportunityId: uuid("opportunity_id")
+    .notNull()
+    .references(() => opportunities.id, { onDelete: "cascade" }),
 });
 
 export const opportunities = pgTable("opportunities", {
   id: uuid("id").primaryKey().defaultRandom(),
-  type: opportunityTypeEnum("type").array().default([]),
+  type: opportunityTypeEnum("type").notNull(),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  url: text("url").notNull(),
-  image: text("image"),
+  images: text("images").array().default([]),
   tags: text("tags").array().default([]),
   location: text("location"),
   organiserInfo: text("organiser_info"),
   startDate: date("start_date"),
   endDate: date("end_date"),
-  comments: text("comments").array().default([]),
   isFlagged: boolean("is_flagged").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  deletedAt: timestamp("deleted_at"), // Soft delete
   isVerified: boolean("is_verified").default(false),
   isActive: boolean("is_active").default(true),
   userId: text("user_id")
@@ -84,6 +85,8 @@ export const user = pgTable("user", {
   updatedAt: timestamp("updated_at")
     .$defaultFn(() => /* @__PURE__ */ new Date())
     .notNull(),
+  deletedAt: timestamp("deleted_at"),
+  role: userRoleEnum("role").default("student").notNull(),
 });
 
 export const session = pgTable("session", {

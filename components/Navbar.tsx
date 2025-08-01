@@ -58,12 +58,6 @@ export default function Navbar() {
         {/* Desktop Nav */}
         <nav className="hidden md:flex ml-auto gap-4 sm:gap-6">
           <Link
-            href="#mentors"
-            className="text-sm font-medium hover:text-red-600 transition-colors"
-          >
-            Find Mentors
-          </Link>
-          <Link
             href="/opportunities"
             className="text-sm font-medium hover:text-red-600 transition-colors"
           >
@@ -136,11 +130,6 @@ export default function Navbar() {
             <li>
               <Link href="/" onClick={() => setIsOpen(false)}>
                 Home
-              </Link>
-            </li>
-            <li>
-              <Link href="#mentors" onClick={() => setIsOpen(false)}>
-                Find Mentors
               </Link>
             </li>
             <li>

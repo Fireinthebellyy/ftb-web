@@ -1,0 +1,1 @@
+ALTER TABLE "opportunities" RENAME COLUMN "image" TO "images";

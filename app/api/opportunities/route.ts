@@ -1,18 +1,16 @@
 import { db } from "@/lib/db";
-import { opportunities } from "@/lib/schema";
+import { eq } from "drizzle-orm";
+import { opportunities, user } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 const opportunitySchema = z.object({
-  type: z.array(
-    z.enum(["hackathon", "grant application", "competition", "ideathon"])
-  ),
+  type: z.enum(["hackathon", "grant application", "competition", "ideathon"]),
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
-  url: z.string().url("Invalid URL"),
-  image: z.string().optional(),
-  tags: z.array(z.string()).default([]),
+  images: z.array(z.string()).optional(),
+  tags: z.array(z.string()).optional(),
   location: z.string().optional(),
   organiserInfo: z.string().optional(),
   startDate: z.string().optional(),
@@ -27,36 +25,76 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
-    
+
     const user = await getCurrentUser();
+    if (!user || !user.currentUser?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const validatedData = opportunitySchema.parse(body);
 
+    // Build insertData with careful array handling
     const insertData: any = {
       type: validatedData.type,
       title: validatedData.title,
       description: validatedData.description,
-      url: validatedData.url,
       userId: user.currentUser.id,
       isFlagged: false,
       isVerified: false,
       isActive: true,
     };
 
-    if (validatedData.image) insertData.image = validatedData.image;
-    if (validatedData.tags) insertData.tags = validatedData.tags;
-    if (validatedData.location) insertData.location = validatedData.location;
-    if (validatedData.organiserInfo)
-      insertData.organiserInfo = validatedData.organiserInfo;
-    if (validatedData.startDate)
-      insertData.startDate = new Date(validatedData.startDate);
-    if (validatedData.endDate)
-      insertData.endDate = new Date(validatedData.endDate);
+    // Handle arrays properly - only add if they have values
+    if (
+      validatedData.tags &&
+      Array.isArray(validatedData.tags) &&
+      validatedData.tags.length > 0
+    ) {
+      insertData.tags = validatedData.tags;
+    }
 
-    const newOpportunity = await db.insert(opportunities).values(insertData);
+    if (
+      validatedData.images &&
+      Array.isArray(validatedData.images) &&
+      validatedData.images.length > 0
+    ) {
+      insertData.images = validatedData.images;
+    }
+
+    // Optional string fields
+    if (validatedData.location) {
+      insertData.location = validatedData.location;
+    }
+
+    if (validatedData.organiserInfo) {
+      insertData.organiserInfo = validatedData.organiserInfo;
+    }
+
+    // Date handling - convert to proper date format
+    if (validatedData.startDate) {
+      const startDate = new Date(validatedData.startDate);
+      if (!isNaN(startDate.getTime())) {
+        // Convert to YYYY-MM-DD format for PostgreSQL date type
+        insertData.startDate = startDate.toISOString().split("T")[0];
+      }
+    }
+
+    if (validatedData.endDate) {
+      const endDate = new Date(validatedData.endDate);
+      if (!isNaN(endDate.getTime())) {
+        // Convert to YYYY-MM-DD format for PostgreSQL date type
+        insertData.endDate = endDate.toISOString().split("T")[0];
+      }
+    }
+
+    const newOpportunity = await db
+      .insert(opportunities)
+      .values(insertData)
+      .returning();
 
     return NextResponse.json(
-      { success: true, data: newOpportunity },
+      { success: true, data: newOpportunity[0] },
       { status: 201 }
     );
   } catch (error) {
@@ -64,17 +102,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.errors }, { status: 400 });
     }
 
-    // Log the full error object for better debugging
     console.error("Full error object:", error);
-
     const errorMessage =
       error instanceof Error ? error.message : "Internal Server Error";
     console.error("Error creating opportunity:", errorMessage);
 
-    return NextResponse.json(
-      { error: errorMessage, details: error },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
@@ -86,8 +119,35 @@ export async function GET(_req: NextRequest) {
         { status: 500 }
       );
     }
-    
-    const allOpportunities = await db.select().from(opportunities);
+
+    // Method 1: Using leftJoin (recommended)
+    const allOpportunities = await db
+      .select({
+        // Opportunity fields
+        id: opportunities.id,
+        type: opportunities.type,
+        title: opportunities.title,
+        description: opportunities.description,
+        images: opportunities.images,
+        tags: opportunities.tags,
+        location: opportunities.location,
+        organiserInfo: opportunities.organiserInfo,
+        startDate: opportunities.startDate,
+        endDate: opportunities.endDate,
+        isFlagged: opportunities.isFlagged,
+        createdAt: opportunities.createdAt,
+        updatedAt: opportunities.updatedAt,
+        isVerified: opportunities.isVerified,
+        isActive: opportunities.isActive,
+        userId: opportunities.userId,
+        user: {
+          id: user.id,
+          name: user.name,
+          image: user.image,
+        },
+      })
+      .from(opportunities)
+      .leftJoin(user, eq(opportunities.userId, user.id));
 
     return NextResponse.json(
       { success: true, opportunities: allOpportunities },

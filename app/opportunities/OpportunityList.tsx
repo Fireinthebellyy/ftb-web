@@ -25,7 +25,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import axios from "axios";
 import Link from "next/link";
 import OpportunityPost from "@/components/OpportunityCard";
-import ClientNewOpportunityForm from "@/components/ClientNewOpportunityForm";
+import NewOpportunityForm from "@/components/opportunity/NewOpportunityForm";
 
 type Opportunity = {
   id: string;
@@ -165,7 +165,7 @@ export default function OpportunityCardsPage() {
                 className="md:min-w-[600px] mx-auto"
                 overlayClassName="backdrop-blur-xs bg-black/30"
               >
-                <ClientNewOpportunityForm
+                <NewOpportunityForm
                   onOpportunityCreated={() => setIsNewOpportunityOpen(false)}
                 />
               </DialogContent>

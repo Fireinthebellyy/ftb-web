@@ -5,7 +5,7 @@ import { CalendarDays, MapPin, ExternalLink, Bookmark } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
-import { storage } from "@/lib/appwrite";
+import { createOpportunityStorage } from "@/lib/appwrite";
 import Image from "next/image";
 
 type Opportunity = {
@@ -80,6 +80,8 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
     return colors[type?.toLowerCase() || "others"] || colors.others;
   };
 
+  const opportunityStorage = createOpportunityStorage();
+
   return (
     <article className="w-full bg-white border rounded-lg shadow-sm mb-3 sm:mb-4">
       {/* Post Header */}
@@ -135,7 +137,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           ? images.map((image, i) => (
               <div className="mb-3 rounded overflow-hidden" key={i}>
                 <Image
-                  src={storage.getFileView(
+                  src={opportunityStorage.getFileView(
                     process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
                     image
                   )}

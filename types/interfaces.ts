@@ -4,13 +4,14 @@ export type Opportunity = {
   description: string;
   type: string | string[];
   tags?: string[];
-  url?: string;
   images?: string[];
   createdAt?: string;
   location?: string;
-  organiser_info?: string;
+  organiserInfo?: string;
   startDate?: string;
   endDate?: string;
+  upvoteCount: number;
+  upvoterIds: string[];
   user: {
     id: string;
     name: string;

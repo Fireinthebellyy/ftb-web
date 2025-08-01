@@ -1,5 +1,10 @@
 import sanityClient from "@/lib/sanity";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 
+/**
+ * Existing Sanity queries (kept intact)
+ */
 const privacyPolicyQuery = `*[_type == "privacy"][0]{
     title,
     content,
@@ -31,3 +36,83 @@ export const getTermsOfService = async () => {
     return null;
   }
 };
+
+/**
+ * Upvote/opportunity client helpers using React Query + Axios
+ */
+
+export type OpportunityVoteState = {
+  id: string;
+  upvotes: number;
+  hasUserUpvoted: boolean;
+};
+
+async function fetchOpportunityVoteState(
+  id: string
+): Promise<OpportunityVoteState> {
+  // Hits the dedicated upvote GET endpoint which returns { count, userHasUpvoted }
+  const { data } = await axios.get(`/api/opportunities/${id}/upvote`);
+  return {
+    id,
+    upvotes: typeof data.count === "number" ? data.count : 0,
+    hasUserUpvoted:
+      typeof data.userHasUpvoted === "boolean" ? data.userHasUpvoted : false,
+  };
+}
+
+export function useOpportunity(id: string) {
+  return useQuery({
+    queryKey: ["opportunity", id],
+    queryFn: () => fetchOpportunityVoteState(id),
+    staleTime: 1000 * 30, // 30s
+  });
+}
+
+async function toggleUpvote(id: string): Promise<OpportunityVoteState> {
+  const { data } = await axios.post(`/api/opportunities/${id}/upvote`);
+  return {
+    id,
+    upvotes: typeof data.count === "number" ? data.count : 0,
+    hasUserUpvoted:
+      typeof data.userHasUpvoted === "boolean" ? data.userHasUpvoted : false,
+  };
+}
+
+export function useToggleUpvote(id: string) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationKey: ["opportunity", id, "toggle-upvote"],
+    mutationFn: () => toggleUpvote(id),
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: ["opportunity", id] });
+      const prev = qc.getQueryData<OpportunityVoteState>(["opportunity", id]);
+
+      // Optimistic update
+      if (prev) {
+        const nextHas = !prev.hasUserUpvoted;
+        const nextCount = Math.max(0, prev.upvotes + (nextHas ? 1 : -1));
+        qc.setQueryData<OpportunityVoteState>(["opportunity", id], {
+          ...prev,
+          hasUserUpvoted: nextHas,
+          upvotes: nextCount,
+        });
+      }
+
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) {
+        qc.setQueryData(["opportunity", id], ctx.prev);
+      }
+    },
+    onSuccess: (data) => {
+      // Replace with server canonical state
+      qc.setQueryData<OpportunityVoteState>(["opportunity", id], data);
+    },
+    onSettled: () => {
+      // Background refetch to ensure consistency
+      qc.invalidateQueries({ queryKey: ["opportunity", id] });
+    },
+  });
+}

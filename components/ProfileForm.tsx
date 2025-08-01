@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import axios from "axios";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +31,7 @@ const formSchema = z.object({
 export default function ProfileForm({ user }: { user: ProfileUser }) {
   // Editing state: opt-in by default (view mode initially)
   const [isEditing, setIsEditing] = useState(false);
+  const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [files, setFiles] = useState<FileItem[]>([]);
   const maxFiles = 1;
@@ -123,20 +126,9 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
         payload.image = uploadedUrl;
       }
 
-      const res = await fetch("/api/profile", {
-        method: "POST",
+      const { data } = await axios.post("/api/profile", payload, {
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
       });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error ?? "Failed to update profile");
-      }
-
-      const data = (await res.json()) as {
-        user: { id: string; name: string; email: string; image: string | null };
-      };
 
       // Revoke object URLs and clear local files post-success
       files.forEach((f) => URL.revokeObjectURL(f.preview));
@@ -148,6 +140,8 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
       });
 
       toast.success("Profile updated");
+
+      router.refresh();
 
       // Exit edit mode and announce change
       setIsEditing(false);

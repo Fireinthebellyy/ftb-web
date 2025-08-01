@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import { Suspense } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/next";
+import Providers from "@/components/Providers";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -36,7 +37,9 @@ export default function RootLayout({
       >
         <Suspense fallback={<div>Loading ..</div>}>
           <Navbar />
-          <main className="grow">{children}</main>
+          <main className="grow">
+            <Providers>{children}</Providers>
+          </main>
           <Footer />
           <Toaster />
           <Analytics />

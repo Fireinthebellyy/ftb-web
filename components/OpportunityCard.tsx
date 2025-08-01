@@ -1,13 +1,21 @@
 "use client";
 
 import React, { useState } from "react";
-import { CalendarDays, MapPin, ExternalLink, Bookmark } from "lucide-react";
+import {
+  CalendarDays,
+  MapPin,
+  Bookmark,
+  ChevronUp,
+  MessageSquare,
+  Building2,
+} from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { createOpportunityStorage } from "@/lib/appwrite";
 import Image from "next/image";
 import { OpportunityPostProps } from "@/types/interfaces";
+import { useOpportunity, useToggleUpvote } from "@/lib/queries";
 
 const OpportunityPost: React.FC<OpportunityPostProps> = ({
   opportunity,
@@ -19,8 +27,8 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
     tags,
     title,
     description,
-    url,
-    images,
+    images = [],
+    organiserInfo,
     createdAt,
     location,
     startDate,
@@ -30,6 +38,12 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
   const [showMessage, setShowMessage] = useState<boolean>(false);
+
+  // Upvote state via React Query
+  const { data, isLoading } = useOpportunity(id);
+  const toggleUpvote = useToggleUpvote(id);
+
+  // Placeholder for comments count (UI only for now)
 
   const handleBookmark = (): void => {
     const newBookmarkState = !isBookmarked;
@@ -58,6 +72,18 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
   const opportunityStorage = createOpportunityStorage();
 
+  const upvotes = data?.upvotes ?? (opportunity as any)?.upvoteCount ?? 0;
+  const userUpvoted =
+    data?.hasUserUpvoted ??
+    ((opportunity as any)?.userHasUpvoted as boolean | undefined) ??
+    false;
+
+  const onUpvoteClick = () => {
+    if (!toggleUpvote.isPending) {
+      toggleUpvote.mutate();
+    }
+  };
+
   return (
     <article className="w-full bg-white border rounded-lg shadow-sm mb-3 sm:mb-4">
       {/* Post Header */}
@@ -68,7 +94,11 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           user.image &&
           !user.image.includes("https://media.licdn.com") ? (
             <Avatar className="w-10 h-10 sm:w-12 sm:h-12">
-              <AvatarImage src={user.image} alt={user.name} />
+              <AvatarImage
+                src={user.image}
+                alt={user.name}
+                className="object-cover w-full h-full"
+              />
             </Avatar>
           ) : (
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-semibold uppercase text-sm">
@@ -118,7 +148,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                     image
                   )}
                   alt={title}
-                  className="w-full object-cover max-h-48 sm:max-h-64"
+                  className="w-full object-contain max-h-48 sm:max-h-64"
                   loading="lazy"
                   height={256}
                   width={400}
@@ -135,25 +165,38 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         {/* Tags - Show fewer on mobile */}
         {tags && tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
-            {tags.slice(0, window.innerWidth < 640 ? 2 : 4).map((tag, idx) => (
-              <Badge
-                key={idx}
-                className="text-[10px] sm:text-xs bg-gray-100 text-gray-700 px-2 py-1 cursor-default"
-                variant="secondary"
-              >
-                #{tag}
-              </Badge>
-            ))}
-            {tags.length > (window.innerWidth < 640 ? 2 : 4) && (
+            {tags
+              .slice(
+                0,
+                typeof window !== "undefined" && window.innerWidth < 640 ? 2 : 4
+              )
+              .map((tag, idx) => (
+                <Badge
+                  key={idx}
+                  className="text-[10px] sm:text-xs bg-gray-100 text-gray-700 px-2 py-1 cursor-default"
+                  variant="secondary"
+                >
+                  #{tag}
+                </Badge>
+              ))}
+            {tags.length >
+              (typeof window !== "undefined" && window.innerWidth < 640
+                ? 2
+                : 4) && (
               <Badge className="text-[10px] sm:text-xs bg-gray-100 text-gray-600 px-2 py-1">
-                +{tags.length - (window.innerWidth < 640 ? 2 : 4)} more
+                +
+                {tags.length -
+                  (typeof window !== "undefined" && window.innerWidth < 640
+                    ? 2
+                    : 4)}{" "}
+                more
               </Badge>
             )}
           </div>
         )}
 
         {/* Dates, Location info - Stack on mobile */}
-        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 text-gray-600 text-xs mb-3">
+        <div className="flex sm:flex-row sm:flex-wrap gap-2 sm:gap-4 text-gray-600 text-xs mb-3">
           {(startDate || endDate) && (
             <div className="flex items-center gap-1">
               <CalendarDays className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -171,11 +214,52 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               <span className="truncate text-xs">{location}</span>
             </div>
           )}
+
+          {organiserInfo && (
+            <div className="flex items-center gap-1">
+              <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span className="truncate text-xs">{organiserInfo}</span>
+            </div>
+          )}
         </div>
 
         {/* Actions Footer - Mobile optimized */}
         <footer className="flex items-center justify-between border-t border-gray-100 pt-2 sm:pt-3">
           <div className="flex items-center space-x-4 sm:space-x-6 text-gray-500">
+            {/* Voting & Comments */}
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              {/* Upvote (toggle) */}
+              <button
+                onClick={onUpvoteClick}
+                aria-label="Upvote"
+                disabled={toggleUpvote.isPending || isLoading}
+                className={`flex items-center gap-1 transition-colors text-xs sm:text-sm ${
+                  userUpvoted ? "text-green-600" : "hover:text-green-600"
+                } ${
+                  toggleUpvote.isPending || isLoading
+                    ? "opacity-60 cursor-not-allowed"
+                    : ""
+                }`}
+              >
+                <ChevronUp
+                  className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                    userUpvoted ? "fill-current" : ""
+                  }`}
+                />
+                <span className="min-w-[1ch] tabular-nums">{upvotes}</span>
+              </button>
+
+              {/* Comments (placeholder increments) */}
+              <button
+                type="button"
+                aria-label="Comments"
+                className="flex items-center gap-1 hover:text-blue-600 transition-colors text-xs sm:text-sm"
+              >
+                <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="min-w-[1ch] tabular-nums">{0}</span>
+              </button>
+            </div>
+
             {/* Bookmark */}
             <button
               onClick={handleBookmark}
@@ -187,23 +271,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                   isBookmarked ? "text-yellow-500" : "text-gray-400"
                 }`}
               />
-              <span className="hidden sm:inline">
-                {isBookmarked ? "Bookmarked" : "Bookmark"}
-              </span>
             </button>
-
-            {/* External Link */}
-            {url && (
-              <a
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 hover:text-blue-600 transition-colors text-xs sm:text-sm"
-              >
-                <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="hidden sm:inline">Visit</span>
-              </a>
-            )}
           </div>
         </footer>
 

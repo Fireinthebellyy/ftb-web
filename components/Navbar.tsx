@@ -204,6 +204,7 @@ export default function Navbar() {
                   <AvatarImage
                     src={(user.user as any)?.image || undefined}
                     alt={user.user.name || "User avatar"}
+                    className="object-cover"
                   />
                   <AvatarFallback>{avatarFallback}</AvatarFallback>
                 </Avatar>

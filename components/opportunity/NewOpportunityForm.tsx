@@ -51,10 +51,12 @@ export default function NewOpportunityForm({
     form.setValue("type", type, { shouldValidate: true, shouldTouch: true });
   }
 
-  async function uploadImages(): Promise<string[]> {
-    if (files.length === 0) return [];
+  async function uploadImages(): Promise<{ ids: string[]; success: boolean }> {
+    if (files.length === 0) return { ids: [], success: true };
 
     const uploadedFileIds: string[] = [];
+    let hasError = false;
+
     setFiles((prev) =>
       prev.map((file) => ({ ...file, uploading: true, progress: 0 }))
     );
@@ -87,23 +89,50 @@ export default function NewOpportunityForm({
         );
       } catch (err) {
         console.error(`Upload failed for ${file.name}:`, err);
+        hasError = true;
         setFiles((prev) =>
           prev.map((f, idx) =>
-            idx === i ? { ...f, uploading: false, error: true } : f
+            idx === i
+              ? {
+                  ...f,
+                  uploading: false,
+                  error: true,
+                  errorMessage:
+                    err instanceof Error ? err.message : "Unknown upload error",
+                }
+              : f
           )
         );
-        toast.error(`Failed to upload: ${file.name}`);
+        const message =
+          err instanceof Error ? err.message : "Unknown upload error";
+        toast.error(`Failed to upload "${file.name}": ${message}`);
       }
     }
 
-    return uploadedFileIds;
+    return { ids: uploadedFileIds, success: !hasError };
   }
 
   async function onSubmit(data: FormData) {
     setLoading(true);
 
     try {
-      const imageIds = await uploadImages();
+      const { ids: imageIds, success: imagesOk } = await uploadImages();
+
+      if (!imagesOk) {
+        toast.error(
+          "One or more images failed to upload. Fix the failed uploads and try again. Post was not created."
+        );
+        throw new Error(
+          "One or more images failed to upload. Post was not created."
+        );
+      }
+
+      // If images were selected but not all uploaded successfully, abort post creation
+      if (!imagesOk) {
+        throw new Error(
+          "One or more images failed to upload. Post was not created."
+        );
+      }
 
       const res = await axios.post("/api/opportunities", {
         ...data,

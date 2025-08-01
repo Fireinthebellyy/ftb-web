@@ -25,7 +25,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import axios from "axios";
 import Link from "next/link";
 import OpportunityPost from "@/components/OpportunityCard";
-import ClientNewOpportunityForm from "./new/ClientNewOpportunityForm";
+import ClientNewOpportunityForm from "@/components/ClientNewOpportunityForm";
 
 type Opportunity = {
   id: string;

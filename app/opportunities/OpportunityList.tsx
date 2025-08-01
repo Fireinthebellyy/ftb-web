@@ -344,12 +344,12 @@ export default function OpportunityCardsPage() {
                   Quick Links
                 </h3>
                 <div className="space-y-2">
-                  <Link
-                    href="/opportunities/new"
-                    className="block text-sm text-blue-600 hover:text-blue-800"
+                  <p
+                    onClick={() => setIsNewOpportunityOpen(true)}
+                    className="block text-sm text-blue-600 hover:text-blue-800 cursor-pointer"
                   >
                     Post Opportunity
-                  </Link>
+                  </p>
                   <Link
                     href="/bookmarks"
                     className="block text-sm text-gray-600 hover:text-gray-800"

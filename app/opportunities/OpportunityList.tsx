@@ -161,7 +161,10 @@ export default function OpportunityCardsPage() {
               open={isNewOpportunityOpen}
               onOpenChange={setIsNewOpportunityOpen}
             >
-              <DialogContent className="h-[600px] max-w-3xl mx-auto">
+              <DialogContent
+                className="md:min-w-[600px] mx-auto"
+                overlayClassName="backdrop-blur-xs bg-black/30"
+              >
                 <ClientNewOpportunityForm
                   onOpportunityCreated={() => setIsNewOpportunityOpen(false)}
                 />

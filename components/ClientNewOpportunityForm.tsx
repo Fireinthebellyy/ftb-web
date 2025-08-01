@@ -8,7 +8,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -35,6 +34,7 @@ import {
   MapPin,
   Building2,
   Hash,
+  Tags,
   X,
   Image as ImageIcon,
   Flag,
@@ -46,10 +46,10 @@ import { DateRange } from "react-day-picker";
 import Image from "next/image";
 
 const opportunityTypes = [
-  { id: "hackathon", label: "Hackathon", icon: "💻" },
-  { id: "grant", label: "Grant", icon: "💰" },
-  { id: "competition", label: "Competition", icon: "🏆" },
-  { id: "ideathon", label: "Ideathon", icon: "💡" },
+  { id: "hackathon", label: "Hackathon" },
+  { id: "grant", label: "Grant" },
+  { id: "competition", label: "Competition" },
+  { id: "ideathon", label: "Ideathon" },
 ];
 
 interface FileItem {
@@ -252,361 +252,362 @@ export default function ClientNewOpportunityForm({
   }
 
   const watchedType = form.watch("type");
-  // const watchedTitle = form.watch("title");
-  // const watchedDescription = form.watch("description");
   const watchedLocation = form.watch("location");
   const watchedOrganiser = form.watch("organiserInfo");
   const watchedDateRange = form.watch("dateRange");
 
   return (
-    <div className="py-6 px-4">
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">
-        Post a New Opportunity
-      </h2>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          {/* Main Content Card */}
-          <Card className="shadow-sm border-2 border-gray-100 focus-within:border-blue-200 transition-colors">
-            <CardContent className="p-4 space-y-2">
-              {/* Type Selection */}
-              <FormField
-                control={form.control}
-                name="type"
-                render={() => (
-                  <FormItem>
-                    <FormControl>
-                      <div className="flex flex-wrap gap-2">
-                        {opportunityTypes.map((type) => (
-                          <Badge
-                            key={type.id}
-                            variant={
-                              watchedType === type.id ? "default" : "outline"
-                            }
-                            className="cursor-pointer hover:opacity-80 px-3 py-1.5"
-                            onClick={() => handleTypeChange(type.id)}
-                          >
-                            <span className="mr-1">{type.icon}</span>
-                            {type.label}
-                          </Badge>
-                        ))}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-1">
+        {/* Title */}
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="What's the opportunity about? *"
+                  className="text-xl md:text-xl font-medium border-none px-0 focus-visible:ring-0 placeholder:text-gray-400 shadow-none"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-              {/* Title */}
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="What's the opportunity about?"
-                        className="text-xl font-medium border-none px-0 focus-visible:ring-0 placeholder:text-gray-400 shadow-none"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        {/* Description */}
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Textarea
+                  {...field}
+                  placeholder="Tell us more about this opportunity... (include URLs if needed) *"
+                  rows={4}
+                  className="resize-none border-none px-0 focus-visible:ring-0 placeholder:text-gray-400 shadow-none"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-              {/* Description */}
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder="Tell us more about this opportunity... (include URLs if needed)"
-                        rows={4}
-                        className="resize-none border-none px-0 focus-visible:ring-0 placeholder:text-gray-400 shadow-none"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Small Image Previews Inside Container */}
-              {files.length > 0 && (
-                <div className="flex flex-wrap gap-2 py-2">
-                  {files.map((file, idx) => (
-                    <div key={idx} className="relative group">
-                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 border">
-                        <Image
-                          src={file.preview}
-                          alt={file.name}
-                          className="w-full h-full object-cover"
-                          width={64}
-                          height={64}
-                        />
-                        {file.uploading && (
-                          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                            <div className="text-white text-xs">
-                              {file.progress}%
-                            </div>
-                          </div>
-                        )}
-                        {file.error && (
-                          <div className="absolute inset-0 bg-red-500 bg-opacity-50 flex items-center justify-center">
-                            <div className="text-white text-xs">!</div>
-                          </div>
-                        )}
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="absolute -top-1 -right-1 h-4 w-4 p-0 rounded-full "
-                        onClick={() => removeFile(idx)}
-                      >
-                        <X className="w-2 h-2" />
-                      </Button>
+        {/* Small Image Previews Inside Container */}
+        {files.length > 0 && (
+          <div className="flex flex-wrap gap-2 py-2">
+            {files.map((file, idx) => (
+              <div key={idx} className="relative group">
+                <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 border">
+                  <Image
+                    src={file.preview}
+                    alt={file.name}
+                    className="w-full h-full object-cover"
+                    width={64}
+                    height={64}
+                  />
+                  {file.uploading && (
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                      <div className="text-white text-xs">{file.progress}%</div>
                     </div>
-                  ))}
+                  )}
+                  {file.error && (
+                    <div className="absolute inset-0 bg-red-500 bg-opacity-50 flex items-center justify-center">
+                      <div className="text-white text-xs">!</div>
+                    </div>
+                  )}
                 </div>
-              )}
-
-              {/* Tags Row */}
-              <FormField
-                control={form.control}
-                name="tags"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <div className="flex items-center gap-2 pt-2">
-                        <Hash className="w-4 h-4 text-gray-400" />
-                        <Input
-                          {...field}
-                          placeholder="Add tags (ai, blockchain, web3...)"
-                          className="border-none px-0 focus-visible:ring-0 placeholder:text-gray-400 text-sm shadow-none"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Bottom Action Bar */}
-              <div className="flex items-center justify-between pt-2">
-                <div className="flex items-center gap-4">
-                  {/* Location */}
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className={cn(
-                          "p-2 h-8 w-8",
-                          watchedLocation && "text-blue-600 bg-blue-50"
-                        )}
-                      >
-                        <MapPin className="w-4 h-4" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-64" align="start">
-                      <FormField
-                        control={form.control}
-                        name="location"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <div className="space-y-2">
-                                <label className="text-sm font-medium">
-                                  Location
-                                </label>
-                                <Input
-                                  {...field}
-                                  placeholder="City, Country"
-                                  className="text-sm"
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </PopoverContent>
-                  </Popover>
-
-                  {/* Organizer */}
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className={cn(
-                          "p-2 h-8 w-8",
-                          watchedOrganiser && "text-blue-600 bg-blue-50"
-                        )}
-                      >
-                        <Building2 className="w-4 h-4" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-64" align="start">
-                      <FormField
-                        control={form.control}
-                        name="organiserInfo"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <div className="space-y-2">
-                                <label className="text-sm font-medium">
-                                  Organizer
-                                </label>
-                                <Input
-                                  {...field}
-                                  placeholder="Company or Organization"
-                                  className="text-sm"
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </PopoverContent>
-                  </Popover>
-
-                  {/* Calendar with Date Range */}
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className={cn(
-                          "p-2 h-8 w-8",
-                          watchedDateRange && "text-blue-600 bg-blue-50"
-                        )}
-                      >
-                        <CalendarIcon className="w-4 h-4" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <FormField
-                        control={form.control}
-                        name="dateRange"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <div>
-                                <Calendar
-                                  mode="range"
-                                  selected={field.value as DateRange}
-                                  onSelect={field.onChange}
-                                  captionLayout={"dropdown-months"}
-                                  numberOfMonths={1}
-                                />
-                                {field.value?.from && (
-                                  <div className="p-3 border-t">
-                                    <div className="flex items-center justify-between mb-2">
-                                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                                        Selected Dates
-                                        {field.value.to && (
-                                          <span className="text-xs ml-1">
-                                            (
-                                            {Math.ceil(
-                                              (field.value.to.getTime() -
-                                                field.value.from.getTime()) /
-                                                (1000 * 60 * 60 * 24)
-                                            ) + 1}{" "}
-                                            days)
-                                          </span>
-                                        )}
-                                      </span>
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() =>
-                                          field.onChange(undefined)
-                                        }
-                                        className="h-5 w-5 p-0 text-gray-400 hover:text-red-500"
-                                      >
-                                        <X className="w-3 h-3" />
-                                      </Button>
-                                    </div>
-
-                                    <div className="flex flex-wrap gap-2">
-                                      <Badge
-                                        variant="secondary"
-                                        className="bg-green-100 text-green-800 flex items-center"
-                                      >
-                                        <CalendarIcon className="w-3 h-3 mr-1" />
-                                        {format(
-                                          field.value.from,
-                                          "MMM dd, yyyy"
-                                        )}
-                                      </Badge>
-
-                                      {field.value.to && (
-                                        <Badge
-                                          variant="secondary"
-                                          className="bg-red-100 text-red-800 flex items-center"
-                                        >
-                                          <Flag className="w-3 h-3 mr-1" />
-                                          {format(
-                                            field.value.to,
-                                            "MMM dd, yyyy"
-                                          )}
-                                        </Badge>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </PopoverContent>
-                  </Popover>
-
-                  {/* Image Upload Trigger */}
-                  <div {...getRootProps()}>
-                    <input {...getInputProps()} />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        "p-2 h-8 w-8",
-                        files.length > 0 && "text-blue-600 bg-blue-50",
-                        files.length >= maxFiles &&
-                          "opacity-50 cursor-not-allowed"
-                      )}
-                      disabled={files.length >= maxFiles}
-                    >
-                      <ImageIcon className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Submit Button */}
                 <Button
-                  type="submit"
-                  disabled={loading || !form.formState.isValid}
+                  type="button"
+                  variant="outline"
                   size="sm"
-                  className="px-6"
+                  className="absolute -top-1 -right-1 h-4 w-4 p-0 rounded-full "
+                  onClick={() => removeFile(idx)}
                 >
-                  {loading ? "Posting..." : "Post"}
+                  <X className="w-2 h-2" />
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </form>
-      </Form>
-    </div>
+            ))}
+          </div>
+        )}
+
+        {/* Tags Row */}
+        <FormField
+          control={form.control}
+          name="tags"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <div className="flex items-center gap-2 pt-2">
+                  <Hash className="w-4 h-4 text-gray-400" />
+                  <Input
+                    {...field}
+                    placeholder="Add tags (ai, blockchain, web3...)"
+                    className="border-none px-0 focus-visible:ring-0 placeholder:text-gray-400 text-sm shadow-none"
+                  />
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Type selection */}
+        <FormField
+          control={form.control}
+          name="type"
+          render={() => (
+            <FormItem>
+              <FormControl>
+                <div className="pt-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Tags
+                      className="w-3.5 h-3.5 text-gray-400"
+                      aria-hidden="true"
+                    />
+                    <span className="text-xs font-medium text-gray-400">
+                      Opportunity type
+                      <span className="ml-0.5">*</span>
+                    </span>
+                  </div>
+
+                  <div
+                    className="flex items-center gap-1 flex-wrap"
+                    role="radiogroup"
+                    aria-label="Opportunity type"
+                  >
+                    {opportunityTypes.map((type) => {
+                      // Unified selected color style for all badges
+                      const selectedClass =
+                        "bg-blue-100 text-blue-800 hover:bg-blue-200";
+
+                      return (
+                        <Badge
+                          key={type.id}
+                          variant={
+                            watchedType === type.id ? "default" : "outline"
+                          }
+                          className={cn(
+                            "text-xs cursor-pointer transition-all px-2 py-0.5 h-auto",
+                            watchedType === type.id
+                              ? `${selectedClass} border-transparent`
+                              : "bg-gray-50 text-gray-500 hover:bg-gray-100 border-gray-200"
+                          )}
+                          onClick={() => handleTypeChange(type.id)}
+                          role="radio"
+                          aria-checked={watchedType === type.id}
+                        >
+                          {type.label}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Bottom Action Bar */}
+        <div className="flex items-center justify-between pt-2">
+          <div className="flex items-center gap-4">
+            {/* Location */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "p-2 h-8 w-8",
+                    watchedLocation && "text-blue-600 bg-blue-50"
+                  )}
+                >
+                  <MapPin className="w-4 h-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64" align="start">
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">
+                            Location
+                          </label>
+                          <Input
+                            {...field}
+                            placeholder="City, Country"
+                            className="text-sm"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </PopoverContent>
+            </Popover>
+
+            {/* Organizer */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "p-2 h-8 w-8",
+                    watchedOrganiser && "text-blue-600 bg-blue-50"
+                  )}
+                >
+                  <Building2 className="w-4 h-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64" align="start">
+                <FormField
+                  control={form.control}
+                  name="organiserInfo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">
+                            Organizer
+                          </label>
+                          <Input
+                            {...field}
+                            placeholder="Company or Organization"
+                            className="text-sm"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </PopoverContent>
+            </Popover>
+
+            {/* Calendar with Date Range */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "p-2 h-8 w-8",
+                    watchedDateRange && "text-blue-600 bg-blue-50"
+                  )}
+                >
+                  <CalendarIcon className="w-4 h-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <FormField
+                  control={form.control}
+                  name="dateRange"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <div>
+                          <Calendar
+                            mode="range"
+                            selected={field.value as DateRange}
+                            onSelect={field.onChange}
+                            captionLayout={"dropdown-months"}
+                            numberOfMonths={1}
+                          />
+                          {field.value?.from && (
+                            <div className="p-3 border-t">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                  Selected Dates
+                                  {field.value.to && (
+                                    <span className="text-xs ml-1">
+                                      (
+                                      {Math.ceil(
+                                        (field.value.to.getTime() -
+                                          field.value.from.getTime()) /
+                                          (1000 * 60 * 60 * 24)
+                                      ) + 1}{" "}
+                                      days)
+                                    </span>
+                                  )}
+                                </span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => field.onChange(undefined)}
+                                  className="h-5 w-5 p-0 text-gray-400 hover:text-red-500"
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </div>
+
+                              <div className="flex flex-wrap gap-2">
+                                <Badge
+                                  variant="secondary"
+                                  className="bg-green-100 text-green-800 flex items-center"
+                                >
+                                  <CalendarIcon className="w-3 h-3 mr-1" />
+                                  {format(field.value.from, "MMM dd, yyyy")}
+                                </Badge>
+
+                                {field.value.to && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="bg-red-100 text-red-800 flex items-center"
+                                  >
+                                    <Flag className="w-3 h-3 mr-1" />
+                                    {format(field.value.to, "MMM dd, yyyy")}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </PopoverContent>
+            </Popover>
+
+            {/* Image Upload Trigger */}
+            <div {...getRootProps()}>
+              <input {...getInputProps()} />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "p-2 h-8 w-8",
+                  files.length > 0 && "text-blue-600 bg-blue-50",
+                  files.length >= maxFiles && "opacity-50 cursor-not-allowed"
+                )}
+                disabled={files.length >= maxFiles}
+              >
+                <ImageIcon className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <Button type="submit" disabled={loading} size="sm" className="px-6">
+            {loading ? "Posting..." : "Post"}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }

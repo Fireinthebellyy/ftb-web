@@ -12,7 +12,7 @@ import {
 export const userRoleEnum = pgEnum("user_role", ["student", "mentor", "admin"]);
 export const opportunityTypeEnum = pgEnum("opportunity_type", [
   "hackathon",
-  "grant application",
+  "grant",
   "competition",
   "ideathon",
 ]);

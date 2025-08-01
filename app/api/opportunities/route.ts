@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 const opportunitySchema = z.object({
-  type: z.enum(["hackathon", "grant application", "competition", "ideathon"]),
+  type: z.enum(["hackathon", "grant", "competition", "ideathon"]),
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   images: z.array(z.string()).optional(),

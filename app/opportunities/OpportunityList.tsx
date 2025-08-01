@@ -26,21 +26,7 @@ import axios from "axios";
 import Link from "next/link";
 import OpportunityPost from "@/components/OpportunityCard";
 import NewOpportunityForm from "@/components/opportunity/NewOpportunityForm";
-
-type Opportunity = {
-  id: string;
-  title: string;
-  description: string;
-  type: string | string[];
-  tags?: string[];
-  created_at: string;
-  start_date: string;
-  user: {
-    id: string;
-    name: string;
-    image: string;
-  };
-};
+import { Opportunity } from "@/types/interfaces";
 
 export default function OpportunityCardsPage() {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
@@ -103,17 +89,17 @@ export default function OpportunityCardsPage() {
       switch (sortBy) {
         case "newest":
           return (
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           );
         case "oldest":
           return (
-            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           );
         case "title":
           return a.title.localeCompare(b.title);
-        case "start_date":
+        case "startDate":
           return (
-            new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
+            new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
           );
         default:
           return 0;
@@ -140,7 +126,7 @@ export default function OpportunityCardsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-full grow bg-gray-50">
       {/* Header - Full width */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-6 sm:px-6 sm:py-8 max-w-7xl">

@@ -139,6 +139,8 @@ export async function GET(_req: NextRequest) {
         updatedAt: opportunities.updatedAt,
         isVerified: opportunities.isVerified,
         isActive: opportunities.isActive,
+        upvoteCount: opportunities.upvoteCount,
+        upvoterIds: opportunities.upvoterIds,
         userId: opportunities.userId,
         user: {
           id: user.id,

@@ -25,7 +25,7 @@ import Image from "next/image";
 
 export default function LandingPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
+    <div className="flex flex-col h-full grow bg-gradient-to-br from-orange-50 to-red-50">
       <main className="flex-1">
         {/* Hero Section */}
         <section className="w-full py-12 md:py-24 lg:py-32">

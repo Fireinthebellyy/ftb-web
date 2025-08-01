@@ -66,6 +66,8 @@ export const opportunities = pgTable("opportunities", {
   deletedAt: timestamp("deleted_at"), // Soft delete
   isVerified: boolean("is_verified").default(false),
   isActive: boolean("is_active").default(true),
+  upvoterIds: text("upvoter_ids").array().default([]),
+  upvoteCount: integer("upvote_count").default(0),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),

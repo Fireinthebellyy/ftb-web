@@ -1,10 +1,5 @@
 import { getTermsOfService } from "@/lib/queries";
-
-type TermsType = {
-  title: string;
-  content: string;
-  lastUpdated: string;
-};
+import { TermsType } from "@/types/interfaces";
 
 export default async function TermsPage() {
   const terms: TermsType | null = await getTermsOfService();

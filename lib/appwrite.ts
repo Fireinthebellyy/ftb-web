@@ -1,10 +1,23 @@
 import { Client, Storage } from "appwrite";
 
-const client = new Client();
-client
-  .setEndpoint("https://fra.cloud.appwrite.io/v1") // Replace with your Appwrite endpoint
-  .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID); // Replace with your Appwrite project ID
+export function createOpportunityStorage() {
+  const client = new Client();
+  client
+    .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT as string)
+    .setProject(
+      process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITY_PROJECT_ID as string
+    );
 
-const storage = new Storage(client);
+  return new Storage(client);
+}
 
-export { client, storage };
+export function createAvatarStorage() {
+  const client = new Client();
+  client
+    .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT as string)
+    .setProject(
+      process.env.NEXT_PUBLIC_APPWRITE_USR_AVATAR_PROJECT_ID as string
+    );
+
+  return new Storage(client);
+}

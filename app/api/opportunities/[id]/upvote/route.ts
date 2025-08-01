@@ -6,13 +6,11 @@ import { getCurrentUser } from "@/server/users";
 
 // GET: returns { count, userHasUpvoted }
 export async function GET(
-  _req: NextRequest,
-  context: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const {
-      params: { id },
-    } = context;
+    const { id } = await params;
 
     const rows = await db
       .select({
@@ -52,13 +50,11 @@ export async function GET(
 
 // POST: toggles user upvote, returns { success, userHasUpvoted, count }
 export async function POST(
-  _req: NextRequest,
-  context: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const {
-      params: { id },
-    } = context;
+    const { id } = await params;
 
     const auth = await getCurrentUser();
     const currentUserId = auth?.currentUser?.id as string | undefined;

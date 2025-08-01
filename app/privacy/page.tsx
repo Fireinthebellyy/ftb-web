@@ -1,10 +1,5 @@
 import { getPrivacyPolicy } from "@/lib/queries";
-
-type PrivacyPolicy = {
-  title: string;
-  content: string;
-  lastUpdated: string;
-};
+import { PrivacyPolicy } from "@/types/interfaces";
 
 export default async function PrivacyPage() {
   const privacy: PrivacyPolicy | null = await getPrivacyPolicy();

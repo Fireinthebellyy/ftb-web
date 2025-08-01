@@ -5,7 +5,7 @@ import { Image as ImageIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useDropzone } from "react-dropzone";
-import { FileItem } from "./types";
+import { FileItem } from "@/types/interfaces";
 
 type BaseProps = {
   files: FileItem[];

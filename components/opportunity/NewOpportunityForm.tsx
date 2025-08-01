@@ -15,7 +15,7 @@ import { TypeSelector } from "./fields/TypeSelector";
 import { MetaPopovers } from "./fields/MetaPopovers";
 import { ImagePicker, SelectedImages } from "./images/ImageDropzone";
 import { formSchema, FormData } from "./schema";
-import { FileItem, UploadProgress } from "./images/types";
+import { FileItem, UploadProgress } from "@/types/interfaces";
 
 export default function NewOpportunityForm({
   onOpportunityCreated,

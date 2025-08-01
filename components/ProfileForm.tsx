@@ -18,18 +18,8 @@ import {
 } from "@/components/ui/form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ImageDropzone } from "@/components/opportunity/images/ImageDropzone";
-import {
-  FileItem,
-  UploadProgress,
-} from "@/components/opportunity/images/types";
 import { createAvatarStorage } from "@/lib/appwrite";
-
-type ProfileUser = {
-  id: string;
-  name: string;
-  email: string;
-  image: string;
-};
+import { FileItem, ProfileUser, UploadProgress } from "@/types/interfaces";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required").max(80, "Name too long"),

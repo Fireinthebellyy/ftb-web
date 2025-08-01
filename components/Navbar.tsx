@@ -145,7 +145,7 @@ export default function Navbar() {
   }, [user]);
 
   return (
-    <header className="bg-white/80 backdrop-blur-sm sticky top-0 z-50 border-b">
+    <header className="bg-white/80 backdrop-blur-sm sticky top-0 z-50 border-b flex-none">
       <div className="px-4 lg:px-6 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center space-x-3">
           <Image

@@ -7,31 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { createOpportunityStorage } from "@/lib/appwrite";
 import Image from "next/image";
-
-type Opportunity = {
-  id: string;
-  title: string;
-  description: string;
-  type: string | string[];
-  tags?: string[];
-  url?: string;
-  images?: string[];
-  created_at?: string;
-  location?: string;
-  organiser_info?: string;
-  start_date?: string;
-  end_date?: string;
-  user: {
-    id: string;
-    name: string;
-    image: string;
-  };
-};
-
-interface OpportunityPostProps {
-  opportunity: Opportunity;
-  onBookmarkChange?: (id: string, isBookmarked: boolean) => void;
-}
+import { OpportunityPostProps } from "@/types/interfaces";
 
 const OpportunityPost: React.FC<OpportunityPostProps> = ({
   opportunity,
@@ -45,10 +21,10 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
     description,
     url,
     images,
-    created_at,
+    createdAt,
     location,
-    start_date,
-    end_date,
+    startDate,
+    endDate,
     user,
   } = opportunity;
 
@@ -112,7 +88,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
             {user && user.name ? user.name : "Opportunity Organizer"}
           </p>
           <p className="text-xs text-gray-500">
-            {created_at ? `${format(new Date(created_at), "MMM dd")}` : ""}
+            {createdAt ? `${format(new Date(createdAt), "MMM dd")}` : ""}
           </p>
         </div>
 
@@ -178,13 +154,13 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
         {/* Dates, Location info - Stack on mobile */}
         <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 text-gray-600 text-xs mb-3">
-          {(start_date || end_date) && (
+          {(startDate || endDate) && (
             <div className="flex items-center gap-1">
               <CalendarDays className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="text-xs">
-                {start_date && format(new Date(start_date), "MMM dd")}
-                {start_date && end_date && " - "}
-                {end_date && format(new Date(end_date), "MMM dd")}
+                {startDate && format(new Date(startDate), "MMM dd")}
+                {startDate && endDate && " - "}
+                {endDate && format(new Date(endDate), "MMM dd")}
               </span>
             </div>
           )}

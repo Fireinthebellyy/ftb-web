@@ -30,7 +30,7 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="container max-w-2xl mx-auto px-4 py-8">
+    <div className="container max-w-2xl mx-auto px-4 py-8 h-full grow">
       <h1 className="text-2xl font-semibold mb-6">Your Profile</h1>
       <ProfileForm
         user={{

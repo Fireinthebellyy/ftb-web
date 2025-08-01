@@ -7,13 +7,13 @@ import { useForm, FormProvider } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { storage } from "@/lib/appwrite";
+import { createOpportunityStorage } from "@/lib/appwrite";
 import { TitleField } from "./fields/TitleField";
 import { DescriptionField } from "./fields/DescriptionField";
 import { TagsField } from "./fields/TagsField";
 import { TypeSelector } from "./fields/TypeSelector";
 import { MetaPopovers } from "./fields/MetaPopovers";
-import { ImageDropzone } from "./images/ImageDropzone";
+import { ImagePicker, SelectedImages } from "./images/ImageDropzone";
 import { formSchema, FormData } from "./schema";
 import { FileItem, UploadProgress } from "./images/types";
 
@@ -62,7 +62,9 @@ export default function NewOpportunityForm({
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       try {
-        const res = await storage.createFile(
+        const opportunityStorage = createOpportunityStorage();
+
+        const res = await opportunityStorage.createFile(
           process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
           "unique()",
           file.file,
@@ -142,12 +144,8 @@ export default function NewOpportunityForm({
 
           <DescriptionField control={form.control} />
 
-          {/* Image previews + upload trigger */}
-          <ImageDropzone
-            files={files}
-            setFiles={setFiles}
-            maxFiles={maxFiles}
-          />
+          {/* Selected images displayed above the bottom action bar */}
+          <SelectedImages files={files} setFiles={setFiles} />
 
           <TagsField control={form.control} />
 
@@ -159,12 +157,20 @@ export default function NewOpportunityForm({
 
           {/* Bottom Action Bar */}
           <div className="flex items-center justify-between pt-2">
-            <MetaPopovers
-              control={form.control}
-              watchedLocation={watchedLocation}
-              watchedOrganiser={watchedOrganiser}
-              watchedDateRange={watchedDateRange}
-            />
+            <div className="flex gap-4 items-center">
+              <MetaPopovers
+                control={form.control}
+                watchedLocation={watchedLocation}
+                watchedOrganiser={watchedOrganiser}
+                watchedDateRange={watchedDateRange}
+              />
+              {/* Image picker trigger (no previews here) */}
+              <ImagePicker
+                files={files}
+                setFiles={setFiles}
+                maxFiles={maxFiles}
+              />
+            </div>
 
             <Button type="submit" disabled={loading} size="sm" className="px-6">
               {loading ? "Posting..." : "Post"}

@@ -12,6 +12,13 @@ import {
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import { createOpportunityStorage } from "@/lib/appwrite";
 import Image from "next/image";
 import { OpportunityPostProps } from "@/types/interfaces";
@@ -230,7 +237,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               : description}
           </p>
 
-          {meta && (
+          {images.length > 0 && meta && (
             <Link href={meta?.url} target="_blank" rel="noopener noreferrer">
               <div className="border border-gray-300 shadow-sm rounded p-2 mt-1 flex flex-col">
                 {meta.image && (
@@ -249,23 +256,50 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         </div>
 
         {/* Image (optional) */}
-        {images.length > 0 && !meta?.image
-          ? images.map((image, i) => (
-              <div className="mb-3 rounded overflow-hidden" key={i}>
-                <Image
-                  src={opportunityStorage.getFileView(
-                    process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
-                    image
-                  )}
-                  alt={title}
-                  className="w-full object-contain max-h-48 sm:max-h-64"
-                  loading="lazy"
-                  height={256}
-                  width={400}
-                />
-              </div>
-            ))
-          : null}
+        {images.length > 0 ? (
+          images.length === 1 ? (
+            <div className="mb-3 rounded overflow-hidden">
+              <Image
+                src={opportunityStorage.getFileView(
+                  process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
+                  images[0]
+                )}
+                alt={title}
+                className="w-full object-contain max-h-48 sm:max-h-64"
+                loading="lazy"
+                height={256}
+                width={400}
+              />
+            </div>
+          ) : (
+            <div className="mb-3">
+              <Carousel className="w-full">
+                <CarouselContent>
+                  {images.map((image, i) => (
+                    <CarouselItem key={i}>
+                      <div className="rounded overflow-hidden">
+                        <Image
+                          src={opportunityStorage.getFileView(
+                            process.env
+                              .NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
+                            image
+                          )}
+                          alt={`${title} - Image ${i + 1}`}
+                          className="w-full object-contain max-h-48 sm:max-h-64"
+                          loading="lazy"
+                          height={256}
+                          width={400}
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="left-2" />
+                <CarouselNext className="right-2" />
+              </Carousel>
+            </div>
+          )
+        ) : null}
 
         {/* Tags - Show fewer on mobile */}
         {tags && tags.length > 0 && (

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
   MapPin,
@@ -12,10 +12,19 @@ import {
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import { createOpportunityStorage } from "@/lib/appwrite";
 import Image from "next/image";
 import { OpportunityPostProps } from "@/types/interfaces";
 import { useOpportunity, useToggleUpvote } from "@/lib/queries";
+import Link from "next/link";
+import axios from "axios";
 
 const OpportunityPost: React.FC<OpportunityPostProps> = ({
   opportunity,
@@ -84,6 +93,77 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
     }
   };
 
+  // Extract first URL from description
+  const firstUrl = useMemo(() => {
+    if (!description || typeof description !== "string") return null;
+    const urlRegex = /https?:\/\/[^\s<>"'`|\\^{}\[\]]+/gi;
+    const match = description.match(urlRegex);
+    if (!match) return null;
+    let url = match[0].trim();
+    url = url.replace(/[),.;:!?]+$/g, "");
+    const openCount = (url.match(/\(/g) || []).length;
+    const closeCount = (url.match(/\)/g) || []).length;
+    if (closeCount > openCount) url = url.replace(/\)+$/g, "");
+    return url;
+  }, [description]);
+
+  const [meta, setMeta] = useState<{
+    title: string | null;
+    description: string | null;
+    image: string | null;
+    url: string | null;
+  } | null>(null);
+  const [_metaLoading, setMetaLoading] = useState(false);
+  const [_metaError, setMetaError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let aborted = false;
+    async function fetchMeta() {
+      setMetaError(null);
+      setMeta(null);
+
+      if (!firstUrl) return;
+      setMetaLoading(true);
+      try {
+        const response = await axios.post("/api/og-meta", { description });
+        const data = response.data;
+        if (aborted) return;
+
+        if (!data?.ok) {
+          setMetaError(
+            data?.error === "NO_URL_IN_DESCRIPTION"
+              ? null
+              : "Failed to fetch metadata"
+          );
+          setMeta(null);
+          return;
+        }
+
+        setMeta(
+          data?.meta
+            ? {
+                ...data.meta,
+                url: data?.url,
+              }
+            : null
+        );
+      } catch (_e) {
+        if (!aborted) {
+          setMetaError("Failed to fetch metadata");
+          setMeta(null);
+        }
+      } finally {
+        if (!aborted) setMetaLoading(false);
+      }
+    }
+
+    if (!images.length) fetchMeta();
+
+    return () => {
+      aborted = true;
+    };
+  }, [description, firstUrl, images.length]);
+
   return (
     <article className="w-full bg-white border rounded-lg shadow-sm mb-3 sm:mb-4">
       {/* Post Header */}
@@ -138,29 +218,88 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           {title}
         </h2>
 
-        {/* Image (optional) */}
-        {images.length > 0
-          ? images.map((image, i) => (
-              <div className="mb-3 rounded overflow-hidden" key={i}>
-                <Image
-                  src={opportunityStorage.getFileView(
-                    process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
-                    image
-                  )}
-                  alt={title}
-                  className="w-full object-contain max-h-48 sm:max-h-64"
-                  loading="lazy"
-                  height={256}
-                  width={400}
-                />
-              </div>
-            ))
-          : null}
-
         {/* Description */}
-        <p className="text-gray-700 text-sm leading-relaxed mb-3">
-          {description}
-        </p>
+        <div className="text-gray-700 text-sm leading-relaxed mb-3">
+          <p>
+            {description && typeof description === "string"
+              ? description
+                  .split(/(https?:\/\/[^\s<>"'`|\\^{}\[\]]+)/gi)
+                  .map((part, index) => {
+                    if (part.match(/^https?:\/\/[^\s<>"'`|\\^{}\[\]]+$/i)) {
+                      return (
+                        <span key={index} className="text-gray-400">
+                          {part}
+                        </span>
+                      );
+                    }
+                    return part;
+                  })
+              : description}
+          </p>
+
+          {images.length > 0 && meta && (
+            <Link href={meta?.url} target="_blank" rel="noopener noreferrer">
+              <div className="border border-gray-300 shadow-sm rounded p-2 mt-1 flex flex-col">
+                {meta.image && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={meta.image}
+                    alt={meta.title}
+                    className="w-full h-auto rounded"
+                  />
+                )}
+                <h3 className="font-semibold text-sm mt-2">{meta.title}</h3>
+                <p className="text-sm text-gray-600">{meta.description}</p>
+              </div>
+            </Link>
+          )}
+        </div>
+
+        {/* Image (optional) */}
+        {images.length > 0 ? (
+          images.length === 1 ? (
+            <div className="mb-3 rounded overflow-hidden">
+              <Image
+                src={opportunityStorage.getFileView(
+                  process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
+                  images[0]
+                )}
+                alt={title}
+                className="w-full object-contain max-h-48 sm:max-h-64"
+                loading="lazy"
+                height={256}
+                width={400}
+              />
+            </div>
+          ) : (
+            <div className="mb-3">
+              <Carousel className="w-full">
+                <CarouselContent>
+                  {images.map((image, i) => (
+                    <CarouselItem key={i}>
+                      <div className="rounded overflow-hidden">
+                        <Image
+                          src={opportunityStorage.getFileView(
+                            process.env
+                              .NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
+                            image
+                          )}
+                          alt={`${title} - Image ${i + 1}`}
+                          className="w-full object-contain max-h-48 sm:max-h-64"
+                          loading="lazy"
+                          height={256}
+                          width={400}
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="left-2" />
+                <CarouselNext className="right-2" />
+              </Carousel>
+            </div>
+          )
+        ) : null}
 
         {/* Tags - Show fewer on mobile */}
         {tags && tags.length > 0 && (

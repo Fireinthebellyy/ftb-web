@@ -169,7 +169,11 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
 
       <div className="flex items-center gap-4">
         <Avatar className="w-16 h-16">
-          <AvatarImage src={effectiveAvatar || undefined} alt={user.name} />
+          <AvatarImage
+            src={effectiveAvatar || undefined}
+            alt={user.name}
+            className="object-cover w-full h-full"
+          />
           <AvatarFallback>
             {user.name
               ?.split(" ")

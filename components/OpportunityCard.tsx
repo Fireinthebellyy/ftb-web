@@ -158,7 +158,8 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
       }
     }
 
-    fetchMeta();
+    if (!images.length) fetchMeta();
+
     return () => {
       aborted = true;
     };

@@ -16,10 +16,12 @@ import {
   Building2,
   ExternalLink,
   Phone,
+  MessageCircle,
 } from "lucide-react";
 import { format } from "date-fns";
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import CommentSection from "./CommentSection";
 
 type Opportunity = {
   id: string;
@@ -76,8 +78,10 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity }) => {
     // For Future Use
   };
 
+  const [showComments, setShowComments] = useState(false);
+
   return (
-    <Card className="group overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 bg-white pt-0">
+    <Card className={`group overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 bg-white pt-0 w-full relative ${showComments ? 'pb-6' : ''}`}>
       {/* Image */}
       {image && (
         <div className="relative h-48 overflow-hidden">
@@ -182,26 +186,47 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({ opportunity }) => {
       </CardContent>
 
       {/* Buttons */}
-      <CardFooter className="pt-0 gap-2">
-        <Button
-          onClick={handleScheduleCall}
-          variant="outline"
-          size="sm"
-          className="flex-1 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all"
-        >
-          <Phone className="w-4 h-4 mr-2" />
-          Schedule Call
-        </Button>
-        <Button
-          onClick={handleViewProfile}
-          size="sm"
-          className="flex-1 bg-blue-600 hover:bg-blue-700 transition-colors"
-        >
-          View Profile
-        </Button>
+      <CardFooter className="pt-0 gap-2 flex flex-col items-center">
+        <div className="flex w-full gap-2 items-center">
+          {/* Comment Icon Button on the left */}
+          <button
+            className="p-2 rounded-full transition-colors bg-white shadow border border-gray-200 hover:border-blue-400"
+            style={{ outline: "none" }}
+            onClick={() => setShowComments((v) => !v)}
+            aria-label="Show comments"
+          >
+            <MessageCircle
+              className="w-6 h-6 text-gray-300 hover:text-blue-600 transition-colors"
+              style={{ color: showComments ? "#2563eb" : undefined }}
+            />
+          </button>
+          <Button
+            onClick={handleScheduleCall}
+            variant="outline"
+            size="sm"
+            className="flex-1 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all"
+          >
+            <Phone className="w-4 h-4 mr-2" />
+            Schedule Call
+          </Button>
+          <Button
+            onClick={handleViewProfile}
+            size="sm"
+            className="flex-1 bg-blue-600 hover:bg-blue-700 transition-colors"
+          >
+            View Profile
+          </Button>
+        </div>
       </CardFooter>
+      {/* Expanded Comment Section */}
+      {showComments && (
+        <div className="w-full px-4 pt-2">
+          <CommentSection opportunityId={opportunity.id} />
+        </div>
+      )}
     </Card>
   );
 };
 
 export default OpportunityCard;
+

@@ -122,6 +122,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
       setMetaError(null);
       setMeta(null);
 
+      if (images.length > 0) return;
       if (!firstUrl) return;
       setMetaLoading(true);
       try {
@@ -227,9 +228,15 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                   .map((part, index) => {
                     if (part.match(/^https?:\/\/[^\s<>"'`|\\^{}\[\]]+$/i)) {
                       return (
-                        <span key={index} className="text-gray-400">
+                        <Link
+                          href={part}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          key={index}
+                          className="text-gray-400"
+                        >
                           {part}
-                        </span>
+                        </Link>
                       );
                     }
                     return part;
@@ -237,7 +244,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               : description}
           </p>
 
-          {images.length > 0 && meta && (
+          {!(images.length > 0) && meta && (
             <Link href={meta?.url} target="_blank" rel="noopener noreferrer">
               <div className="border border-gray-300 shadow-sm rounded p-2 mt-1 flex flex-col">
                 {meta.image && (

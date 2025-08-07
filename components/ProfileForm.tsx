@@ -121,10 +121,8 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
 
       const payload: { name: string; image?: string | null } = {
         name: values.name,
+        image: uploadedUrl !== null ? uploadedUrl : user.image ?? null,
       };
-      if (uploadedUrl !== null) {
-        payload.image = uploadedUrl;
-      }
 
       const { data } = await axios.post("/api/profile", payload, {
         headers: { "Content-Type": "application/json" },

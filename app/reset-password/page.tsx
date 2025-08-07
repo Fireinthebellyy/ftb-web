@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import { LoginForm } from "@/components/auth/login-form";
 import Image from "next/image";
+import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 
 export default function LoginPage() {
   return (
@@ -22,7 +22,7 @@ export default function LoginPage() {
           </div>
           Fire in the Belly
         </Link>
-        <LoginForm />
+        <ResetPasswordForm />
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import { LoginForm } from "@/components/auth/login-form";
 import Image from "next/image";
+import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
 
 export default function LoginPage() {
   return (
@@ -22,7 +22,7 @@ export default function LoginPage() {
           </div>
           Fire in the Belly
         </Link>
-        <LoginForm />
+        <ForgotPasswordForm />
       </div>
     </div>
   );

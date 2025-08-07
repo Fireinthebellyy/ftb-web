@@ -137,7 +137,7 @@ export function SignupForm({
                       <rect width="4" height="12" x="2" y="9" />
                       <circle cx="4" cy="4" r="2" />
                     </svg>
-                    Login with LinkedIn
+                    Signup with LinkedIn
                   </Button>
                 </div>
                 <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">

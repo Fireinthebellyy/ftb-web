@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Search, Filter } from "lucide-react";
@@ -22,17 +22,15 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import axios from "axios";
 import Link from "next/link";
 import OpportunityPost from "@/components/OpportunityCard";
 import NewOpportunityForm from "@/components/opportunity/NewOpportunityForm";
-import { Opportunity } from "@/types/interfaces";
+import { useOpportunities } from "@/lib/queries";
 
 export default function OpportunityCardsPage() {
-  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const { data: opportunities = [], isLoading, error } = useOpportunities();
+
   const [isNewOpportunityOpen, setIsNewOpportunityOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [filterType, setFilterType] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
@@ -48,24 +46,6 @@ export default function OpportunityCardsPage() {
         isBookmarked ? "bookmarked" : "unbookmarked"
       }`
     );
-  };
-
-  useEffect(() => {
-    fetchOpportunities();
-  }, []);
-
-  const fetchOpportunities = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get("/api/opportunities");
-      const data = response.data;
-      setOpportunities(data.opportunities || []);
-    } catch (err: any) {
-      setError(err.message || "Unknown error");
-      console.error("Error fetching opportunities:", err);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const filteredAndSortedOpportunities = opportunities
@@ -118,7 +98,7 @@ export default function OpportunityCardsPage() {
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <Alert className="border-red-200 bg-red-50">
           <AlertDescription className="text-red-800">
-            Error loading opportunities: {error}
+            Error loading opportunities: {(error as Error).message}
           </AlertDescription>
         </Alert>
       </div>
@@ -152,7 +132,9 @@ export default function OpportunityCardsPage() {
                 overlayClassName="backdrop-blur-xs bg-black/30"
               >
                 <NewOpportunityForm
-                  onOpportunityCreated={() => setIsNewOpportunityOpen(false)}
+                  onOpportunityCreated={() => {
+                    setIsNewOpportunityOpen(false);
+                  }}
                 />
               </DialogContent>
             </Dialog>
@@ -221,7 +203,7 @@ export default function OpportunityCardsPage() {
                         <SelectItem value="newest">Newest First</SelectItem>
                         <SelectItem value="oldest">Oldest First</SelectItem>
                         <SelectItem value="title">Title A-Z</SelectItem>
-                        <SelectItem value="start_date">Start Date</SelectItem>
+                        <SelectItem value="startDate">Start Date</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -305,7 +287,7 @@ export default function OpportunityCardsPage() {
                       <SelectItem value="newest">Newest First</SelectItem>
                       <SelectItem value="oldest">Oldest First</SelectItem>
                       <SelectItem value="title">Title A-Z</SelectItem>
-                      <SelectItem value="start_date">Start Date</SelectItem>
+                      <SelectItem value="startDate">Start Date</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -358,7 +340,7 @@ export default function OpportunityCardsPage() {
 
           {/* Main Content - Middle Column - 6 columns */}
           <main className="col-span-6">
-            {loading && (
+            {isLoading && (
               <div className="space-y-4">
                 {[...Array(3)].map((_, index) => (
                   <div
@@ -379,7 +361,7 @@ export default function OpportunityCardsPage() {
               </div>
             )}
 
-            {!loading && (
+            {!isLoading && (
               <>
                 {filteredAndSortedOpportunities.length > 0 ? (
                   <div className="space-y-4">
@@ -470,7 +452,7 @@ export default function OpportunityCardsPage() {
 
         {/* Mobile Content (single column) */}
         <div className="lg:hidden">
-          {loading && (
+          {isLoading && (
             <div className="space-y-4">
               {[...Array(3)].map((_, index) => (
                 <div key={index} className="bg-white rounded-lg p-4 space-y-4">
@@ -488,7 +470,7 @@ export default function OpportunityCardsPage() {
             </div>
           )}
 
-          {!loading && (
+          {!isLoading && (
             <>
               {filteredAndSortedOpportunities.length > 0 ? (
                 <div className="space-y-3 sm:space-y-4">
@@ -501,7 +483,7 @@ export default function OpportunityCardsPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12">
+                <div className="text-center py-12 bg-white rounded-lg border">
                   <div className="text-gray-400 mb-4">
                     <Search className="w-12 h-12 mx-auto" />
                   </div>

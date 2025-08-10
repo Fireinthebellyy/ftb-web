@@ -1,6 +1,7 @@
 import sanityClient from "@/lib/sanity";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { Opportunity } from "@/types/interfaces";
 
 /**
  * Existing Sanity queries (kept intact)
@@ -114,5 +115,25 @@ export function useToggleUpvote(id: string) {
       // Background refetch to ensure consistency
       qc.invalidateQueries({ queryKey: ["opportunity", id] });
     },
+  });
+}
+
+/**
+ * Fetch list of opportunities
+ */
+export type OpportunitiesResponse = {
+  opportunities: Opportunity[];
+};
+
+export async function fetchOpportunities(): Promise<Opportunity[]> {
+  const { data } = await axios.get<OpportunitiesResponse>("/api/opportunities");
+  return data.opportunities;
+}
+
+export function useOpportunities() {
+  return useQuery<Opportunity[]>({
+    queryKey: ["opportunities"],
+    queryFn: fetchOpportunities,
+    staleTime: 1000 * 60, // 1 minute
   });
 }

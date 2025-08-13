@@ -162,6 +162,12 @@ export default function Navbar() {
           >
             Opportunities
           </Link>
+          <Link
+            href="/featured"
+            className="text-sm font-medium hover:text-red-600 transition-colors"
+          >
+            Featured
+          </Link>
         </nav>
 
         {/* Right side: avatar-only area with guest Login when unauthenticated */}
@@ -325,6 +331,11 @@ export default function Navbar() {
             <li>
               <Link href="/opportunities" onClick={() => setIsOpen(false)}>
                 Opportunities
+              </Link>
+            </li>
+            <li>
+              <Link href="/featured" onClick={() => setIsOpen(false)}>
+                Featured
               </Link>
             </li>
             {/* If authenticated, show Profile link inside mobile overlay for navigation */}

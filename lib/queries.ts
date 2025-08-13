@@ -18,6 +18,27 @@ const termsOfServiceQuery = `*[_type == "terms"][0]{
     lastUpdated
 }`;
 
+/**
+ * Featured query
+ */
+const featuredQuery = `*[_type == "featured"] | order(priority, _createdAt desc) {
+    _id,
+    title,
+    type,
+    url,
+    description,
+    priority,
+    thumbnail{
+      _type,
+      alt,
+      asset->{
+        _ref,
+        _type,
+        url
+      }
+    }
+}`;
+
 export const getPrivacyPolicy = async () => {
   try {
     const privacyPolicy = await sanityClient.fetch(privacyPolicyQuery);
@@ -35,6 +56,16 @@ export const getTermsOfService = async () => {
   } catch (error) {
     console.error("Sanity query error:", error);
     return null;
+  }
+};
+
+export const getFeatured = async () => {
+  try {
+    const featuredItems = await sanityClient.fetch(featuredQuery);
+    return featuredItems;
+  } catch (error) {
+    console.error("Sanity query error:", error);
+    return [];
   }
 };
 
@@ -135,5 +166,16 @@ export function useOpportunities() {
     queryKey: ["opportunities"],
     queryFn: fetchOpportunities,
     staleTime: 1000 * 60, // 1 minute
+  });
+}
+
+export function useFeatured(limit?: number) {
+  return useQuery({
+    queryKey: ["featured", limit],
+    queryFn: () =>
+      limit
+        ? getFeatured().then((items) => items.slice(0, limit))
+        : getFeatured(),
+    staleTime: 1000 * 60 * 15, // 15 minutes
   });
 }

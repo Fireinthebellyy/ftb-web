@@ -450,14 +450,14 @@ export default function OpportunityCardsPage() {
                             className="font-medium
                             text-sm text-blue-600 hover:underline"
                           >
-                            {item.title.length > 35
-                              ? `${item.title.substring(0, 35)}...`
+                            {item.title.length > 30
+                              ? `${item.title.substring(0, 30)}...`
                               : item.title}
                           </a>
                           {item.description && (
                             <p className="text-xs text-gray-500 mt-1">
-                              {item.description.length > 35
-                                ? `${item.description.substring(0, 35)}...`
+                              {item.description.length > 30
+                                ? `${item.description.substring(0, 30)}...`
                                 : item.description}
                             </p>
                           )}

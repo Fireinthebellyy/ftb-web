@@ -1,12 +1,13 @@
 "use client";
+import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "./ui/button";
 
-// Idempotent logout with guard against duplicate clicks
 function useLogout() {
   const router = useRouter();
   const inFlight = useRef(false);
@@ -28,13 +29,10 @@ function useLogout() {
 }
 
 export default function Navbar() {
-  // Mobile menu (existing)
   const [isOpen, setIsOpen] = useState(false);
 
-  // Auth session hook supports pending state
   const { data: user, isPending } = authClient.useSession();
 
-  // Avatar dropdown state
   const [menuOpen, setMenuOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -44,7 +42,6 @@ export default function Navbar() {
 
   const handleLogout = useLogout();
 
-  // Global Escape handling for mobile overlay
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -54,7 +51,6 @@ export default function Navbar() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
 
-  // Close dropdown on outside click
   useEffect(() => {
     if (!menuOpen) return;
     const onDocClick = (e: MouseEvent) => {
@@ -115,7 +111,6 @@ export default function Navbar() {
     }
   };
 
-  // When opening menu, move focus to first item
   useEffect(() => {
     if (menuOpen) {
       const id = requestAnimationFrame(() => firstItemRef.current?.focus());
@@ -123,7 +118,6 @@ export default function Navbar() {
     }
   }, [menuOpen]);
 
-  // Derive avatar visual
   const avatarFallback = useMemo(() => {
     const name = user?.user?.name || user?.user?.email || "";
     const letters = name
@@ -136,43 +130,48 @@ export default function Navbar() {
   }, [user]);
 
   return (
-    <header className="bg-white/80 backdrop-blur-sm sticky top-0 z-50 border-b flex-none">
-      <div className="px-4 lg:px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center space-x-3">
-          <Image
-            src="/images/fire-logo.png"
-            alt="Fire in the Belly Logo"
-            width={40}
-            height={40}
-            className="object-contain"
-          />
-          <span className="font-bold text-xl bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent hidden sm:inline">
-            Fire in the Belly
-          </span>
-          <span className="font-bold text-xl bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent sm:hidden">
-            FTB
-          </span>
-        </Link>
+    <motion.header
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="bg-white/80 backdrop-blur-sm sticky top-0 z-50 border-b flex-none"
+    >
+      <div className="container px-4 lg:px-6 mx-auto h-16 grid grid-cols-2 md:grid-cols-3 items-center">
+        <div className="flex items-center space-x-3 justify-start">
+          <Link href="/" className="flex items-center space-x-3">
+            <Image
+              src="/images/fire-logo.png"
+              alt="Fire in the Belly Logo"
+              width={40}
+              height={40}
+              className="object-contain"
+            />
+            <span className="font-bold text-xl bg-primary bg-clip-text text-transparent hidden sm:inline">
+              Fire in the Belly
+            </span>
+            <span className="font-bold text-xl bg-primary bg-clip-text text-transparent sm:hidden">
+              FTB
+            </span>
+          </Link>
+        </div>
 
-        {/* Center/left navigation unchanged */}
-        <nav className="hidden md:flex ml-auto gap-4 sm:gap-6">
+        <nav className="hidden md:flex justify-center gap-4 sm:gap-6">
           <Link
             href="/opportunities"
-            className="text-sm font-medium hover:text-red-600 transition-colors"
+            className="text-sm font-medium hover:text-gray-600 transition-colors"
           >
             Opportunities
           </Link>
           <Link
             href="/featured"
-            className="text-sm font-medium hover:text-red-600 transition-colors"
+            className="text-sm font-medium hover:text-gray-600 transition-colors"
           >
             Featured
           </Link>
         </nav>
 
-        {/* Right side: avatar-only area with guest Login when unauthenticated */}
-        <div className="ml-4 flex items-center">
-          {/* Pending skeleton: render minimal circle and nothing else */}
+        {/* Right side: auth controls and Get Started button */}
+        <div className="flex items-center justify-end space-x-2 md:space-x-4">
           {isPending ? (
             <div role="status">
               <svg
@@ -262,13 +261,14 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            // Not authenticated: show Login button
-            <Link
-              href="/login"
-              className="text-sm font-medium hover:text-red-600 transition-colors"
-            >
-              Log in
-            </Link>
+            <div className="flex gap-2">
+              <Button asChild variant="outline" size="sm">
+                <Link href="/login">Log in</Link>
+              </Button>
+              <Button asChild size="sm">
+                <Link href="/signup">Get Started</Link>
+              </Button>
+            </div>
           )}
 
           {/* Mobile hamburger kept for existing site structure */}
@@ -363,6 +363,6 @@ export default function Navbar() {
           </ul>
         </div>
       )}
-    </header>
+    </motion.header>
   );
 }

@@ -138,7 +138,7 @@ export default function OpportunityCardsPage() {
               Find hackathons, grants, competitions, and more.
             </p>
             <Button
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto cursor-pointer"
               onClick={() => setIsNewOpportunityOpen(true)}
             >
               Post an Opportunity
@@ -176,7 +176,7 @@ export default function OpportunityCardsPage() {
             </div>
             <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="px-3">
+                <Button variant="outline" size="sm" className="px-3 cursor-pointer">
                   <Filter className="w-4 h-4" />
                 </Button>
               </SheetTrigger>
@@ -230,13 +230,13 @@ export default function OpportunityCardsPage() {
                     <Button
                       onClick={clearFilters}
                       variant="outline"
-                      className="flex-1"
+                      className="flex-1 cursor-pointer"
                     >
                       Clear All
                     </Button>
                     <Button
                       onClick={() => setIsFilterOpen(false)}
-                      className="flex-1"
+                      className="flex-1 cursor-pointer"
                     >
                       Apply
                     </Button>
@@ -321,7 +321,7 @@ export default function OpportunityCardsPage() {
                   onClick={clearFilters}
                   variant="outline"
                   size="sm"
-                  className="w-full"
+                  className="w-full cursor-pointer"
                 >
                   Clear All Filters
                 </Button>
@@ -402,7 +402,7 @@ export default function OpportunityCardsPage() {
                     <p className="text-gray-500 mb-4">
                       Try adjusting your search criteria
                     </p>
-                    <Button onClick={clearFilters} variant="outline">
+                    <Button onClick={clearFilters} variant="outline" className="cursor-pointer">
                       Clear Filters
                     </Button>
                   </div>
@@ -511,7 +511,7 @@ export default function OpportunityCardsPage() {
                   <p className="text-gray-500 mb-4">
                     Try adjusting your search criteria
                   </p>
-                  <Button onClick={clearFilters} variant="outline">
+                  <Button onClick={clearFilters} variant="outline" className="cursor-pointer">
                     Clear Filters
                   </Button>
                 </div>

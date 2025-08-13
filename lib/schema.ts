@@ -135,6 +135,18 @@ export const verification = pgTable("verification", {
   ),
 });
 
+export const bookmarks = pgTable("bookmarks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  opportunityId: uuid("opportunity_id")
+    .notNull()
+    .references(() => opportunities.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
+},
+);
+
 export const schema = {
   user,
   mentors,
@@ -143,4 +155,5 @@ export const schema = {
   session,
   account,
   verification,
+  bookmarks,
 };

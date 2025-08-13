@@ -201,7 +201,7 @@ export default function NewOpportunityForm({
               />
             </div>
 
-            <Button type="submit" disabled={loading} size="sm" className="px-6">
+            <Button type="submit" disabled={loading} size="sm" className="px-6 cursor-pointer">
               {loading ? "Posting..." : "Post"}
             </Button>
           </div>

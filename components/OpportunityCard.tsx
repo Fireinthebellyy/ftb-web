@@ -25,6 +25,13 @@ import { OpportunityPostProps } from "@/types/interfaces";
 import { useOpportunity, useToggleUpvote } from "@/lib/queries";
 import Link from "next/link";
 import axios from "axios";
+import { authClient } from "@/lib/auth-client";
+
+// UUID validation function
+const isValidUUID = (uuid: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+};
 
 const OpportunityPost: React.FC<OpportunityPostProps> = ({
   opportunity,
@@ -48,18 +55,55 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
   const [showMessage, setShowMessage] = useState<boolean>(false);
 
+  // Auth session (acts like context)
+  const { data: session, isPending: isSessionPending } = authClient.useSession();
+
   // Upvote state via React Query
   const { data, isLoading } = useOpportunity(id);
   const toggleUpvote = useToggleUpvote(id);
 
   // Placeholder for comments count (UI only for now)
 
-  const handleBookmark = (): void => {
+  const handleBookmark = async (): Promise<void> => {
     const newBookmarkState = !isBookmarked;
     setIsBookmarked(newBookmarkState);
 
     if (onBookmarkChange) {
       onBookmarkChange(id, newBookmarkState);
+    }
+
+    // Check if user is logged in
+    if (!session?.user?.id) {
+      console.error("User not logged in");
+      return;
+    }
+
+    // Validate opportunity ID is a valid UUID
+    if (!isValidUUID(id)) {
+      console.error("Invalid opportunity ID format");
+      return;
+    }
+
+    const currentUserId = session.user.id as string;
+
+    try {
+      if (newBookmarkState) {
+        // Add bookmark
+        await axios.post("/api/bookmarks", {
+          userId: currentUserId,
+          opportunityId: id,
+        });
+      } else {
+        // Remove bookmark
+        await axios.delete("/api/bookmarks", {
+          data: {
+            userId: currentUserId,
+            opportunityId: id,
+          },
+        });
+      }
+    } catch (err) {
+      console.error("Bookmark request failed:", err);
     }
 
     setShowMessage(true);

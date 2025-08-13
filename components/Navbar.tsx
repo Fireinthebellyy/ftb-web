@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 
 function circleSkeleton(className = "size-8") {
   return (
@@ -186,7 +187,7 @@ export default function Navbar() {
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
                 aria-controls={menuId}
-                className="focus:outline-none focus:ring-2 focus:ring-red-500 rounded-full"
+                className="focus:outline-none focus:ring-2 focus:ring-red-500 rounded-full cursor-pointer"
                 onClick={() => setMenuOpen((v) => !v)}
                 onKeyDown={(e) => {
                   if (
@@ -223,7 +224,7 @@ export default function Navbar() {
                   <button
                     ref={firstItemRef}
                     role="menuitem"
-                    className="w-full text-left px-3 py-2 text-sm rounded hover:bg-accent focus:bg-accent focus:outline-none"
+                    className="w-full text-left px-3 py-2 text-sm rounded hover:bg-accent focus:bg-accent focus:outline-none cursor-pointer"
                     onClick={() => {
                       setMenuOpen(false);
                       // use client-side navigation to profile
@@ -235,7 +236,7 @@ export default function Navbar() {
                   <button
                     ref={lastItemRef}
                     role="menuitem"
-                    className="w-full text-left px-3 py-2 text-sm rounded hover:bg-accent focus:bg-accent text-red-600 focus:outline-none"
+                    className="w-full text-left px-3 py-2 text-sm rounded hover:bg-accent focus:bg-accent text-red-600 focus:outline-none cursor-pointer"
                     onClick={() => {
                       setMenuOpen(false);
                       handleLogout();
@@ -248,12 +249,16 @@ export default function Navbar() {
             </div>
           ) : (
             // Not authenticated: show Login button
+            <Button 
+            className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-transparent cursor-pointer"
+            >
             <Link
               href="/login"
-              className="text-sm font-medium hover:text-red-600 transition-colors"
+              className="text-sm font-medium text-white"
             >
               Log in
             </Link>
+            </Button>
           )}
 
           {/* Mobile hamburger kept for existing site structure */}
@@ -290,7 +295,7 @@ export default function Navbar() {
         >
           <button
             onClick={() => setIsOpen(false)}
-            className="absolute top-6 right-6 focus:outline-none"
+            className="absolute top-6 right-6 focus:outline-none cursor-pointer"
             aria-label="Close menu"
           >
             <svg
@@ -330,7 +335,7 @@ export default function Navbar() {
             {!isPending && user ? (
               <li>
                 <button
-                  className="text-red-600"
+                  className="text-red-600 cursor-pointer"
                   onClick={() => {
                     setIsOpen(false);
                     handleLogout();

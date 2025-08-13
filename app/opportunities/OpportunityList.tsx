@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Search, Filter } from "lucide-react";
@@ -22,21 +22,22 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import axios from "axios";
 import Link from "next/link";
 import OpportunityPost from "@/components/OpportunityCard";
 import NewOpportunityForm from "@/components/opportunity/NewOpportunityForm";
-import { Opportunity } from "@/types/interfaces";
+import { useFeatured, useOpportunities } from "@/lib/queries";
+import Image from "next/image";
 
 export default function OpportunityCardsPage() {
-  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const { data: opportunities = [], isLoading, error } = useOpportunities();
+
   const [isNewOpportunityOpen, setIsNewOpportunityOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [filterType, setFilterType] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
+
+  const { data: featured = [] } = useFeatured(4);
 
   const handleBookmarkChange = (
     opportunityId: string,
@@ -48,24 +49,6 @@ export default function OpportunityCardsPage() {
         isBookmarked ? "bookmarked" : "unbookmarked"
       }`
     );
-  };
-
-  useEffect(() => {
-    fetchOpportunities();
-  }, []);
-
-  const fetchOpportunities = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get("/api/opportunities");
-      const data = response.data;
-      setOpportunities(data.opportunities || []);
-    } catch (err: any) {
-      setError(err.message || "Unknown error");
-      console.error("Error fetching opportunities:", err);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const filteredAndSortedOpportunities = opportunities
@@ -118,7 +101,7 @@ export default function OpportunityCardsPage() {
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <Alert className="border-red-200 bg-red-50">
           <AlertDescription className="text-red-800">
-            Error loading opportunities: {error}
+            Error loading opportunities: {(error as Error).message}
           </AlertDescription>
         </Alert>
       </div>
@@ -152,7 +135,9 @@ export default function OpportunityCardsPage() {
                 overlayClassName="backdrop-blur-xs bg-black/30"
               >
                 <NewOpportunityForm
-                  onOpportunityCreated={() => setIsNewOpportunityOpen(false)}
+                  onOpportunityCreated={() => {
+                    setIsNewOpportunityOpen(false);
+                  }}
                 />
               </DialogContent>
             </Dialog>
@@ -221,7 +206,7 @@ export default function OpportunityCardsPage() {
                         <SelectItem value="newest">Newest First</SelectItem>
                         <SelectItem value="oldest">Oldest First</SelectItem>
                         <SelectItem value="title">Title A-Z</SelectItem>
-                        <SelectItem value="start_date">Start Date</SelectItem>
+                        <SelectItem value="startDate">Start Date</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -305,7 +290,7 @@ export default function OpportunityCardsPage() {
                       <SelectItem value="newest">Newest First</SelectItem>
                       <SelectItem value="oldest">Oldest First</SelectItem>
                       <SelectItem value="title">Title A-Z</SelectItem>
-                      <SelectItem value="start_date">Start Date</SelectItem>
+                      <SelectItem value="startDate">Start Date</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -358,7 +343,7 @@ export default function OpportunityCardsPage() {
 
           {/* Main Content - Middle Column - 6 columns */}
           <main className="col-span-6">
-            {loading && (
+            {isLoading && (
               <div className="space-y-4">
                 {[...Array(3)].map((_, index) => (
                   <div
@@ -379,7 +364,7 @@ export default function OpportunityCardsPage() {
               </div>
             )}
 
-            {!loading && (
+            {!isLoading && (
               <>
                 {filteredAndSortedOpportunities.length > 0 ? (
                   <div className="space-y-4">
@@ -414,13 +399,78 @@ export default function OpportunityCardsPage() {
           {/* Right Sidebar - Featured Posts - 3 columns */}
           <aside className="col-span-3">
             <div className="sticky top-6 space-y-6">
-              {/* Featured Posts Placeholder */}
+              {/* Featured Posts */}
               <div className="bg-white rounded-lg border p-4">
                 <h3 className="font-semibold text-gray-900 mb-4">Featured</h3>
-                <div className="text-center py-8 text-gray-500">
-                  <div className="text-4xl mb-2">🌟</div>
-                  <p className="text-sm">Featured posts will appear here</p>
-                </div>
+                {featured && featured.length > 0 ? (
+                  <ul className="space-y-4">
+                    {featured.map((item, index) => (
+                      <li
+                        key={item._id || `featured-${index}`}
+                        className="flex items-start space-x-3"
+                      >
+                        <div
+                          className={`relative w-12 h-12 rounded ${
+                            !item.thumbnail
+                              ? "bg-gradient-to-br from-gray-100 to-gray-200"
+                              : ""
+                          }`}
+                        >
+                          {item.thumbnail ? (
+                            <Image
+                              src={item.thumbnail.asset.url}
+                              alt={item.title}
+                              className="w-12 h-12 rounded object-cover"
+                              width={100}
+                              height={100}
+                            />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <svg
+                                className="w-6 h-6 text-gray-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="1.5"
+                                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium
+                            text-sm text-blue-600 hover:underline"
+                          >
+                            {item.title.length > 35
+                              ? `${item.title.substring(0, 35)}...`
+                              : item.title}
+                          </a>
+                          {item.description && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              {item.description.length > 35
+                                ? `${item.description.substring(0, 35)}...`
+                                : item.description}
+                            </p>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <div className="text-4xl mb-2">🌟</div>
+                    <p className="text-sm">No featured posts yet</p>
+                  </div>
+                )}
               </div>
 
               {/* Trending Tags */}
@@ -470,7 +520,7 @@ export default function OpportunityCardsPage() {
 
         {/* Mobile Content (single column) */}
         <div className="lg:hidden">
-          {loading && (
+          {isLoading && (
             <div className="space-y-4">
               {[...Array(3)].map((_, index) => (
                 <div key={index} className="bg-white rounded-lg p-4 space-y-4">
@@ -488,7 +538,7 @@ export default function OpportunityCardsPage() {
             </div>
           )}
 
-          {!loading && (
+          {!isLoading && (
             <>
               {filteredAndSortedOpportunities.length > 0 ? (
                 <div className="space-y-3 sm:space-y-4">
@@ -501,7 +551,7 @@ export default function OpportunityCardsPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12">
+                <div className="text-center py-12 bg-white rounded-lg border">
                   <div className="text-gray-400 mb-4">
                     <Search className="w-12 h-12 mx-auto" />
                   </div>

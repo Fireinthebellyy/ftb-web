@@ -25,6 +25,7 @@ import { OpportunityPostProps } from "@/types/interfaces";
 import { useOpportunity, useToggleUpvote } from "@/lib/queries";
 import Link from "next/link";
 import axios from "axios";
+import { formatDate } from "@/lib/utils";
 
 const OpportunityPost: React.FC<OpportunityPostProps> = ({
   opportunity,
@@ -199,7 +200,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
             {user && user.name ? user.name : "Opportunity Organizer"}
           </p>
           <p className="text-xs text-gray-500">
-            {createdAt ? `${format(new Date(createdAt), "MMM dd")}` : ""}
+            {createdAt ? formatDate(createdAt) : ""}
           </p>
         </div>
 

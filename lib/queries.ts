@@ -1,6 +1,7 @@
 import sanityClient from "@/lib/sanity";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { Opportunity } from "@/types/interfaces";
 
 /**
  * Existing Sanity queries (kept intact)
@@ -15,6 +16,27 @@ const termsOfServiceQuery = `*[_type == "terms"][0]{
     title,
     content,
     lastUpdated
+}`;
+
+/**
+ * Featured query
+ */
+const featuredQuery = `*[_type == "featured"] | order(priority, _createdAt desc) {
+    _id,
+    title,
+    type,
+    url,
+    description,
+    priority,
+    thumbnail{
+      _type,
+      alt,
+      asset->{
+        _ref,
+        _type,
+        url
+      }
+    }
 }`;
 
 export const getPrivacyPolicy = async () => {
@@ -34,6 +56,16 @@ export const getTermsOfService = async () => {
   } catch (error) {
     console.error("Sanity query error:", error);
     return null;
+  }
+};
+
+export const getFeatured = async () => {
+  try {
+    const featuredItems = await sanityClient.fetch(featuredQuery);
+    return featuredItems;
+  } catch (error) {
+    console.error("Sanity query error:", error);
+    return [];
   }
 };
 
@@ -114,5 +146,36 @@ export function useToggleUpvote(id: string) {
       // Background refetch to ensure consistency
       qc.invalidateQueries({ queryKey: ["opportunity", id] });
     },
+  });
+}
+
+/**
+ * Fetch list of opportunities
+ */
+export type OpportunitiesResponse = {
+  opportunities: Opportunity[];
+};
+
+export async function fetchOpportunities(): Promise<Opportunity[]> {
+  const { data } = await axios.get<OpportunitiesResponse>("/api/opportunities");
+  return data.opportunities;
+}
+
+export function useOpportunities() {
+  return useQuery<Opportunity[]>({
+    queryKey: ["opportunities"],
+    queryFn: fetchOpportunities,
+    staleTime: 1000 * 60, // 1 minute
+  });
+}
+
+export function useFeatured(limit?: number) {
+  return useQuery({
+    queryKey: ["featured", limit],
+    queryFn: () =>
+      limit
+        ? getFeatured().then((items) => items.slice(0, limit))
+        : getFeatured(),
+    staleTime: 1000 * 60 * 15, // 15 minutes
   });
 }

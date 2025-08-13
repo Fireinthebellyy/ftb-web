@@ -16,6 +16,7 @@ import { MetaPopovers } from "./fields/MetaPopovers";
 import { ImagePicker, SelectedImages } from "./images/ImageDropzone";
 import { formSchema, FormData } from "./schema";
 import { FileItem, UploadProgress } from "@/types/interfaces";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function NewOpportunityForm({
   onOpportunityCreated,
@@ -24,6 +25,7 @@ export default function NewOpportunityForm({
 }) {
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState<FileItem[]>([]);
+  const queryClient = useQueryClient();
 
   const maxFiles = 4;
 
@@ -153,6 +155,7 @@ export default function NewOpportunityForm({
       setFiles([]);
 
       toast.success("Opportunity created successfully!");
+      queryClient.invalidateQueries({ queryKey: ["opportunities"] });
       onOpportunityCreated();
     } catch (err: unknown) {
       if (err instanceof Error) {

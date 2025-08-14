@@ -7,6 +7,7 @@ import {
   integer,
   date,
   uuid,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const userRoleEnum = pgEnum("user_role", ["student", "mentor", "admin"]);

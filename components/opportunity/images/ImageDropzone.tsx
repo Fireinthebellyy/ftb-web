@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Image as ImageIcon, X } from "lucide-react";
+import { ImagePlus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useDropzone } from "react-dropzone";
@@ -11,9 +11,17 @@ type BaseProps = {
   files: FileItem[];
   setFiles: (updater: (prev: FileItem[]) => FileItem[]) => void;
   maxFiles: number;
+  className?: string;
+  buttonClassName?: string;
 };
 
-export function ImagePicker({ files, setFiles, maxFiles }: BaseProps) {
+export function ImagePicker({
+  files,
+  setFiles,
+  maxFiles,
+  className,
+  buttonClassName,
+}: BaseProps) {
   const onDrop = (acceptedFiles: File[]) => {
     const remainingSlots = maxFiles - files.length;
     if (remainingSlots <= 0) return;
@@ -42,7 +50,7 @@ export function ImagePicker({ files, setFiles, maxFiles }: BaseProps) {
   });
 
   return (
-    <div {...getRootProps()}>
+    <div {...getRootProps()} className={className}>
       <input {...getInputProps()} />
       <Button
         type="button"
@@ -51,11 +59,12 @@ export function ImagePicker({ files, setFiles, maxFiles }: BaseProps) {
         className={cn(
           "p-2 h-8 w-8",
           files.length > 0 && "text-blue-600 bg-blue-50",
-          files.length >= maxFiles && "opacity-50 cursor-not-allowed"
+          files.length >= maxFiles && "opacity-50 cursor-not-allowed",
+          buttonClassName
         )}
         disabled={files.length >= maxFiles}
       >
-        <ImageIcon className="w-4 h-4" />
+        <ImagePlus className="w-4 h-4" />
       </Button>
     </div>
   );

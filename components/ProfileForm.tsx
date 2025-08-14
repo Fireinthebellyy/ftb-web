@@ -139,7 +139,7 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
 
       toast.success("Profile updated");
 
-      router.refresh();
+      router.push("/profile");
 
       // Exit edit mode and announce change
       setIsEditing(false);
@@ -154,6 +154,16 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
     }
   }
 
+  const initialValuesRef = useRef({
+    name: user.name ?? "",
+    image: user.image ?? null,
+  });
+
+  const watchedValues = form.watch();
+
+  const hasChanges =
+    watchedValues.name !== initialValuesRef.current.name || files.length > 0;
+
   return (
     <div className="space-y-6">
       {/* live region for mode change announcements */}
@@ -166,21 +176,37 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
       />
 
       <div className="flex items-center gap-4">
-        <Avatar className="w-16 h-16">
-          <AvatarImage
-            src={effectiveAvatar || undefined}
-            alt={user.name}
-            className="object-cover w-full h-full"
-          />
-          <AvatarFallback>
-            {user.name
-              ?.split(" ")
-              .map((n) => n[0])
-              .join("")
-              .slice(0, 2)
-              .toUpperCase() || "U"}
-          </AvatarFallback>
-        </Avatar>
+        <div className="relative">
+          <Avatar className="w-16 h-16">
+            <AvatarImage
+              src={effectiveAvatar || undefined}
+              alt={user.name}
+              className="object-cover w-full h-full"
+            />
+            <AvatarFallback>
+              {user.name
+                ?.split(" ")
+                .map((n) => n[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase() || "U"}
+            </AvatarFallback>
+          </Avatar>
+          {isEditing && (
+            <div className="absolute inset-0 flex items-center justify-center rounded-full cursor-pointer">
+              <div className="absolute inset-0 bg-white opacity-50 rounded-full"></div>
+              <div className="relative z-10">
+                <ImageDropzone
+                  files={files}
+                  setFiles={setFiles}
+                  maxFiles={maxFiles}
+                  className="w-full h-full"
+                  buttonClassName="w-full h-full"
+                />
+              </div>
+            </div>
+          )}
+        </div>
         <div>
           <div className="text-sm text-muted-foreground">Email</div>
           <div className="text-sm">{user.email}</div>
@@ -229,23 +255,6 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
       </div>
 
       <Form {...form}>
-        {/* Avatar section */}
-        <div className="space-y-2" aria-disabled={!isEditing} aria-live="off">
-          <FormLabel>Profile picture</FormLabel>
-          <div className={isEditing ? "" : "opacity-60"}>
-            <ImageDropzone
-              files={files}
-              setFiles={setFiles}
-              maxFiles={maxFiles}
-            />
-            {!isEditing && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Edit mode disabled. Click “Edit Profile” to change your picture.
-              </p>
-            )}
-          </div>
-        </div>
-
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-5"
@@ -304,7 +313,7 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
               >
                 Reset
               </Button>
-              <Button type="submit" disabled={submitting}>
+              <Button type="submit" disabled={submitting || !hasChanges}>
                 {submitting ? "Saving..." : "Save"}
               </Button>
             </div>

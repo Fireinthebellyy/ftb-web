@@ -9,8 +9,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 type BookmarkItem = {
-  id: string;
-  opportunityId: string;
   title: string;
   description: string;
   endDate: string; 
@@ -47,8 +45,11 @@ export default function BookmarksPage() {
       try {
         setLoading(true);
         const res = await axios.get("/api/bookmarks");
-        const list: BookmarkItem[] = res.data?.bookmarks ?? res.data ?? [];
-        if (mounted) setItems(Array.isArray(list) ? list : []);
+        // API now returns { future: BookmarkItem[], past: BookmarkItem[] }
+        const futureItems = res.data?.future || [];
+        const pastItems = res.data?.past || [];
+        const allItems = [...futureItems, ...pastItems];
+        if (mounted) setItems(allItems);
       } catch (e: any) {
         if (mounted) setError(e?.response?.status === 401 ? "unauthorized" : e?.message || "Failed to load");
       } finally {
@@ -63,7 +64,7 @@ export default function BookmarksPage() {
   const upcoming = useMemo(
     () =>
       items
-        .filter((b) => (typeof b.daysDiff === "number" ? b.daysDiff >= 0 : new Date(b.endDate) >= new Date()))
+        .filter((b) => b.daysDiff >= 0)
         .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime()),
     [items]
   );
@@ -71,7 +72,7 @@ export default function BookmarksPage() {
   const past = useMemo(
     () =>
       items
-        .filter((b) => (typeof b.daysDiff === "number" ? b.daysDiff < 0 : new Date(b.endDate) < new Date()))
+        .filter((b) => b.daysDiff < 0)
         .sort((a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime()),
     [items]
   );
@@ -100,7 +101,7 @@ export default function BookmarksPage() {
         <CardContent className="p-3 sm:p-4">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between">
                 <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate max-w-[60vw]">
                   {item.title}
                 </h3>
@@ -132,8 +133,8 @@ export default function BookmarksPage() {
     return (
       <div className="container mx-auto px-4 py-6 max-w-2xl">
         <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white border rounded-lg p-4 h-20 animate-pulse" />
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white border rounded-lg p-4 h-25 animate-pulse" />
           ))}
         </div>
       </div>
@@ -163,12 +164,12 @@ export default function BookmarksPage() {
     <div className="container mx-auto px-4 py-6 max-w-2xl">
       <h1 className="text-2xl font-bold mb-4">Bookmarks</h1>
 
-      <section className="mb-6">
-        <h2 className="text-sm font-semibold text-gray-600 mb-2">Future</h2>
+      <section className="mb-8">
+        <h2 className="text-md font-semibold text-black mb-2">Future</h2>
         {upcoming.length ? (
-          <div className="space-y-2">
+          <div className="space-y-4">
             {upcoming.map((item) => (
-              <BookmarkCard key={item.id} item={item} />
+              <BookmarkCard key={item.title} item={item} />
             ))}
           </div>
         ) : (
@@ -177,11 +178,11 @@ export default function BookmarksPage() {
       </section>
 
       <section>
-        <h2 className="text-sm font-semibold text-gray-600 mb-2">Past</h2>
+        <h2 className="text-md font-semibold text-black mb-2">Past</h2>
         {past.length ? (
-          <div className="space-y-2">
+          <div className="space-y-4">
             {past.map((item) => (
-              <BookmarkCard key={item.id} item={item} />
+              <BookmarkCard key={item.title} item={item} />
             ))}
           </div>
         ) : (

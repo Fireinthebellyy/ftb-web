@@ -76,14 +76,18 @@ export async function GET(req: Request) {
     if (diff >= 0) {
       future.push({
         title: item.title,
+        description: item.description,
+        type: item.type,
         endDate: item.endDate,
-        daysLeft: diff
+        daysDiff: diff
       });
     } else {
       past.push({
         title: item.title,
+        description: item.description,
+        type: item.type,
         endDate: item.endDate,
-        daysAgo: Math.abs(diff)
+        daysDiff: diff
       });
     }
   });

@@ -7,6 +7,7 @@ import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "./ui/button";
+import { Righteous } from "next/font/google";
 
 function useLogout() {
   const router = useRouter();
@@ -27,6 +28,12 @@ function useLogout() {
 
   return signOut;
 }
+
+const righteous = Righteous({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-righteous",
+});
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -146,10 +153,14 @@ export default function Navbar() {
               height={40}
               className="object-contain"
             />
-            <span className="font-bold text-xl bg-primary bg-clip-text text-transparent hidden sm:inline">
+            <span
+              className={`${righteous.className} font-bold text-xl bg-primary bg-clip-text text-transparent hidden sm:inline`}
+            >
               Fire in the Belly
             </span>
-            <span className="font-bold text-xl bg-primary bg-clip-text text-transparent sm:hidden">
+            <span
+              className={`${righteous.className}  font-bold text-xl bg-primary bg-clip-text tracking-wide text-transparent sm:hidden`}
+            >
               FTB
             </span>
           </Link>

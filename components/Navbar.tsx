@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 
 // Idempotent logout with guard against duplicate clicks
 function useLogout() {
@@ -263,17 +262,12 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            // Not authenticated: show Login button
-            <Button 
-            className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-transparent"
-            >
             <Link
               href="/login"
-              className="text-sm font-medium text-white"
+              className="text-sm font-medium hover:text-red-600 transition-colors"
             >
               Log in
             </Link>
-            </Button>
           )}
 
           {/* Mobile hamburger kept for existing site structure */}

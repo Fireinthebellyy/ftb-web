@@ -146,6 +146,12 @@ export const bookmarks = pgTable("bookmarks", {
     .references(() => opportunities.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow(),
 },
+(table) => [
+  uniqueIndex("bookmarks_user_opportunity_unique").on(
+    table.userId,
+    table.opportunityId
+  ),
+]
 );
 
 export const schema = {

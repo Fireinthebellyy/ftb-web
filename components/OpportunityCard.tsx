@@ -22,7 +22,11 @@ import {
 import { createOpportunityStorage } from "@/lib/appwrite";
 import Image from "next/image";
 import { OpportunityPostProps } from "@/types/interfaces";
-import { useOpportunity, useToggleUpvote, useIsBookmarked } from "@/lib/queries";
+import {
+  useOpportunity,
+  useToggleUpvote,
+  useIsBookmarked,
+} from "@/lib/queries";
 import Link from "next/link";
 import axios from "axios";
 import { authClient } from "@/lib/auth-client";
@@ -32,10 +36,10 @@ import { useQueryClient } from "@tanstack/react-query";
 
 // UUID validation function
 const isValidUUID = (uuid: string): boolean => {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(uuid);
 };
-
 
 const OpportunityPost: React.FC<OpportunityPostProps> = ({
   opportunity,
@@ -60,7 +64,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   const [showMessage, setShowMessage] = useState<boolean>(false);
 
   // Auth session (acts like context)
-  const { data: session, isPending: isSessionPending } = authClient.useSession();
+  const { data: session } = authClient.useSession();
 
   // Upvote state via React Query
   const { data, isLoading } = useOpportunity(id);
@@ -215,9 +219,9 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         setMeta(
           data?.meta
             ? {
-              ...data.meta,
-              url: data?.url,
-            }
+                ...data.meta,
+                url: data?.url,
+              }
             : null
         );
       } catch (_e) {
@@ -244,8 +248,8 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         {/* Avatar */}
         <div className="flex-shrink-0">
           {user &&
-            user.image &&
-            !user.image.includes("https://media.licdn.com") ? (
+          user.image &&
+          !user.image.includes("https://media.licdn.com") ? (
             <Avatar className="w-10 h-10 sm:w-12 sm:h-12">
               <AvatarImage
                 src={user.image}
@@ -257,10 +261,10 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-semibold uppercase text-sm">
               {user && user.name
                 ? user.name
-                  .split(" ")
-                  .map((word) => word[0])
-                  .join("")
-                  .slice(0, 2)
+                    .split(" ")
+                    .map((word) => word[0])
+                    .join("")
+                    .slice(0, 2)
                 : "OP"}
             </div>
           )}
@@ -296,23 +300,23 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           <p>
             {description && typeof description === "string"
               ? description
-                .split(/(https?:\/\/[^\s<>"'`|\\^{}\[\]]+)/gi)
-                .map((part, index) => {
-                  if (part.match(/^https?:\/\/[^\s<>"'`|\\^{}\[\]]+$/i)) {
-                    return (
-                      <Link
-                        href={part}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        key={index}
-                        className="text-gray-400"
-                      >
-                        {part}
-                      </Link>
-                    );
-                  }
-                  return part;
-                })
+                  .split(/(https?:\/\/[^\s<>"'`|\\^{}\[\]]+)/gi)
+                  .map((part, index) => {
+                    if (part.match(/^https?:\/\/[^\s<>"'`|\\^{}\[\]]+$/i)) {
+                      return (
+                        <Link
+                          href={part}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          key={index}
+                          className="text-gray-400"
+                        >
+                          {part}
+                        </Link>
+                      );
+                    }
+                    return part;
+                  })
               : description}
           </p>
 
@@ -401,15 +405,15 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               (typeof window !== "undefined" && window.innerWidth < 640
                 ? 2
                 : 4) && (
-                <Badge className="text-[10px] sm:text-xs bg-gray-100 text-gray-600 px-2 py-1">
-                  +
-                  {tags.length -
-                    (typeof window !== "undefined" && window.innerWidth < 640
-                      ? 2
-                      : 4)}{" "}
-                  more
-                </Badge>
-              )}
+              <Badge className="text-[10px] sm:text-xs bg-gray-100 text-gray-600 px-2 py-1">
+                +
+                {tags.length -
+                  (typeof window !== "undefined" && window.innerWidth < 640
+                    ? 2
+                    : 4)}{" "}
+                more
+              </Badge>
+            )}
           </div>
         )}
 
@@ -451,15 +455,18 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                 onClick={onUpvoteClick}
                 aria-label="Upvote"
                 disabled={toggleUpvote.isPending || isLoading}
-                className={`flex items-center gap-1 transition-colors text-xs sm:text-sm ${userUpvoted ? "text-green-600" : "hover:text-green-600"
-                  } ${toggleUpvote.isPending || isLoading
+                className={`flex items-center gap-1 transition-colors text-xs sm:text-sm ${
+                  userUpvoted ? "text-green-600" : "hover:text-green-600"
+                } ${
+                  toggleUpvote.isPending || isLoading
                     ? "opacity-60 cursor-not-allowed"
                     : ""
-                  }`}
+                }`}
               >
                 <ChevronUp
-                  className={`w-4 h-4 sm:w-5 sm:h-5 ${userUpvoted ? "fill-current" : ""
-                    }`}
+                  className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                    userUpvoted ? "fill-current" : ""
+                  }`}
                 />
                 <span className="min-w-[1ch] tabular-nums">{upvotes}</span>
               </button>
@@ -482,8 +489,9 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               className="flex items-center gap-1 hover:text-yellow-500 transition-colors text-xs sm:text-sm"
             >
               <Bookmark
-                className={`w-4 h-4 sm:w-5 sm:h-5 ${isBookmarked ? "text-yellow-500" : "text-gray-400"
-                  }`}
+                className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                  isBookmarked ? "text-yellow-500" : "text-gray-400"
+                }`}
               />
             </button>
           </div>

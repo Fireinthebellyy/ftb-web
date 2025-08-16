@@ -10,6 +10,7 @@ export async function POST(req: Request) {
   try {
     const { userId, opportunityId } = await req.json();
 
+
     // Check if bookmark already exists
     const existingBookmark = await db
       .select({ id: bookmarks.id })
@@ -56,11 +57,11 @@ export async function DELETE(req: Request) {
   }
 }
 
-export async function GET(_req: Request) {
+export async function GET() {
   try {
     // Get user ID from auth session
     const session = await auth.api.getSession({ headers: await headers() });
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

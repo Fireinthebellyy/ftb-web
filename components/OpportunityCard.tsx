@@ -37,7 +37,6 @@ const isValidUUID = (uuid: string): boolean => {
   return uuidRegex.test(uuid);
 };
 
-
 const OpportunityPost: React.FC<OpportunityPostProps> = ({
   opportunity,
   onBookmarkChange,
@@ -63,6 +62,9 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
   // Auth session (acts like context)
   const { data: session} = authClient.useSession();
+
+  // Auth session (acts like context)
+  const { data: session } = authClient.useSession();
 
   // Upvote state via React Query
   const { data, isLoading } = useOpportunity(id);

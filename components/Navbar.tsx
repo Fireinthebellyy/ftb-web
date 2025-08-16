@@ -262,7 +262,6 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            // Not authenticated: show Login button
             <Link
               href="/login"
               className="text-sm font-medium hover:text-red-600 transition-colors"

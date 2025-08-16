@@ -179,3 +179,17 @@ export function useFeatured(limit?: number) {
     staleTime: 1000 * 60 * 15, // 15 minutes
   });
 }
+
+/**
+ * Bookmarks: per-opportunity status (recommended approach, mirrors upvote flow)
+ */
+export function useIsBookmarked(id: string) {
+  return useQuery<boolean>({
+    queryKey: ["bookmark", id],
+    queryFn: async () => {
+      const { data } = await axios.get(`/api/bookmarks/${id}`);
+      return Boolean(data?.isBookmarked);
+    },
+    staleTime: 1000 * 30,
+  });
+}

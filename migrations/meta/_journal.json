@@ -36,6 +36,34 @@
       "when": 1754050881791,
       "tag": "0004_mighty_sir_ram",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1755012489429,
+      "tag": "0005_cold_slayback",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1755171552075,
+      "tag": "0006_next_zemo",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1755171682800,
+      "tag": "0007_daffy_plazm",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1755287552034,
+      "tag": "0008_dapper_wrecker",
+      "breakpoints": true
     }
   ]
 }

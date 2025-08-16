@@ -10,6 +10,19 @@ export async function POST(req: Request) {
   try {
     const { userId, opportunityId } = await req.json();
 
+    // Check if bookmark already exists
+    const existingBookmark = await db
+      .select({ id: bookmarks.id })
+      .from(bookmarks)
+      .where(and(eq(bookmarks.userId, userId), eq(bookmarks.opportunityId, opportunityId)))
+      .limit(1);
+
+    if (existingBookmark.length > 0) {
+      // Bookmark already exists, return success
+      return NextResponse.json({ success: true, message: "Already bookmarked" });
+    }
+
+    // Create new bookmark
     await db.insert(bookmarks).values({
       userId,
       opportunityId,
@@ -43,7 +56,7 @@ export async function DELETE(req: Request) {
   }
 }
 
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   try {
     // Get user ID from auth session
     const session = await auth.api.getSession({ headers: await headers() });

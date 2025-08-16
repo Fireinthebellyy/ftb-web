@@ -48,7 +48,7 @@ export async function DELETE(req: Request) {
   }
 }
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     // Get user ID from auth session
     const session = await auth.api.getSession({ headers: await headers() });

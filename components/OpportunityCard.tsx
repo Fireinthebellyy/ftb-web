@@ -62,10 +62,6 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
   // Auth session (acts like context)
   const { data: session} = authClient.useSession();
-
-  // Auth session (acts like context)
-  const { data: session } = authClient.useSession();
-
   // Upvote state via React Query
   const { data, isLoading } = useOpportunity(id);
   const toggleUpvote = useToggleUpvote(id);

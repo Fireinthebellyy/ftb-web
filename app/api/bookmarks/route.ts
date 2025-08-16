@@ -31,7 +31,12 @@ export async function DELETE(req: Request) {
 
     await db
       .delete(bookmarks)
-      .where(and(eq(bookmarks.userId, userId), eq(bookmarks.opportunityId, opportunityId)));
+      .where(
+        and(
+          eq(bookmarks.userId, userId),
+          eq(bookmarks.opportunityId, opportunityId)
+        )
+      );
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -43,56 +48,56 @@ export async function DELETE(req: Request) {
   }
 }
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     // Get user ID from auth session
     const session = await auth.api.getSession({ headers: await headers() });
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Fetch user's bookmarks
     const data = await db
-    .select({
-      bookmarkId: bookmarks.id,
-      opportunityId: opportunities.id,
-      title: opportunities.title,
-      type: opportunities.type,
-      description: opportunities.description,
-      endDate: opportunities.endDate,
-      daysDiff: sql`DATE_PART('day', ${opportunities.endDate} - NOW())`
-    })
-    .from(bookmarks)
-    .innerJoin(opportunities, eq(bookmarks.opportunityId, opportunities.id))
-    .where(eq(bookmarks.userId, session.user.id));
+      .select({
+        bookmarkId: bookmarks.id,
+        opportunityId: opportunities.id,
+        title: opportunities.title,
+        type: opportunities.type,
+        description: opportunities.description,
+        endDate: opportunities.endDate,
+        daysDiff: sql`DATE_PART('day', ${opportunities.endDate} - NOW())`,
+      })
+      .from(bookmarks)
+      .innerJoin(opportunities, eq(bookmarks.opportunityId, opportunities.id))
+      .where(eq(bookmarks.userId, session.user.id));
 
-  // Separate into future and past
-  const future = [];
-  const past = [];
+    // Separate into future and past
+    const future = [];
+    const past = [];
 
-  data.forEach(item => {
-    const diff = Number(item.daysDiff);
-    if (diff >= 0) {
-      future.push({
-        title: item.title,
-        description: item.description,
-        type: item.type,
-        endDate: item.endDate,
-        daysDiff: diff
-      });
-    } else {
-      past.push({
-        title: item.title,
-        description: item.description,
-        type: item.type,
-        endDate: item.endDate,
-        daysDiff: diff
-      });
-    }
-  });
+    data.forEach((item) => {
+      const diff = Number(item.daysDiff);
+      if (diff >= 0) {
+        future.push({
+          title: item.title,
+          description: item.description,
+          type: item.type,
+          endDate: item.endDate,
+          daysDiff: diff,
+        });
+      } else {
+        past.push({
+          title: item.title,
+          description: item.description,
+          type: item.type,
+          endDate: item.endDate,
+          daysDiff: diff,
+        });
+      }
+    });
 
-  return NextResponse.json({ future, past });
+    return NextResponse.json({ future, past });
   } catch (error) {
     console.error(error);
     return NextResponse.json(

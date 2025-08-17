@@ -211,7 +211,7 @@ export default function Navbar() {
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
                 aria-controls={menuId}
-                className="rounded-full focus:ring-2 focus:ring-red-500 focus:outline-none"
+                className="rounded-full focus:outline-none focus:ring-2 focus:ring-red-500"
                 onClick={() => setMenuOpen((v) => !v)}
                 onKeyDown={(e) => {
                   if (
@@ -310,13 +310,13 @@ export default function Navbar() {
       {/* Mobile Overlay Menu - unchanged items except auth-driven ones are hidden by avatar-only requirement on desktop; keep for mobile pages */}
       {isOpen && (
         <div
-          className="bg-opacity-95 fixed inset-0 z-50 flex min-h-dvh flex-col items-center justify-center bg-white md:hidden"
+          className="fixed inset-0 z-50 flex min-h-dvh flex-col items-center justify-center bg-white bg-opacity-95 md:hidden"
           role="dialog"
           aria-modal="true"
         >
           <button
             onClick={() => setIsOpen(false)}
-            className="absolute top-6 right-6 focus:outline-none"
+            className="absolute right-6 top-6 focus:outline-none"
             aria-label="Close menu"
           >
             <svg

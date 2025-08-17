@@ -8,6 +8,7 @@ import {
   ChevronUp,
   MessageSquare,
   Building2,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -22,10 +23,19 @@ import {
 import { createOpportunityStorage } from "@/lib/appwrite";
 import Image from "next/image";
 import { OpportunityPostProps } from "@/types/interfaces";
-import { useOpportunity, useToggleUpvote } from "@/lib/queries";
+import { useOpportunity, useToggleUpvote, useIsBookmarked } from "@/lib/queries";
 import Link from "next/link";
 import axios from "axios";
+import { authClient } from "@/lib/auth-client";
 import { formatDate } from "@/lib/utils";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+
+// UUID validation function
+const isValidUUID = (uuid: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+};
 
 const OpportunityPost: React.FC<OpportunityPostProps> = ({
   opportunity,
@@ -48,23 +58,100 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
   const [showMessage, setShowMessage] = useState<boolean>(false);
+  const [isBookmarkLoading, setIsBookmarkLoading] = useState<boolean>(false);
 
+  // Auth session (acts like context)
+  const { data: session} = authClient.useSession();
   // Upvote state via React Query
   const { data, isLoading } = useOpportunity(id);
   const toggleUpvote = useToggleUpvote(id);
 
+  // Bookmark status via React Query (server-derived)
+  const { data: isBookmarkedServer } = useIsBookmarked(id);
+  const queryClient = useQueryClient();
+
+  // Rehydrate local bookmark state from server
+  useEffect(() => {
+    if (typeof isBookmarkedServer === "boolean") {
+      setIsBookmarked(isBookmarkedServer);
+    }
+  }, [isBookmarkedServer]);
+
+  // Show toast message when bookmark state changes
+  useEffect(() => {
+    if (showMessage) {
+      toast.success(
+        isBookmarked ? "Added to bookmarks" : "Removed from bookmarks"
+      );
+      // Reset showMessage after showing toast
+      const timer = setTimeout(() => setShowMessage(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showMessage, isBookmarked]);
+
   // Placeholder for comments count (UI only for now)
 
-  const handleBookmark = (): void => {
-    const newBookmarkState = !isBookmarked;
-    setIsBookmarked(newBookmarkState);
+  const handleBookmark = async (): Promise<void> => {
+    // Prevent multiple clicks while processing
+    if (isBookmarkLoading) return;
 
-    if (onBookmarkChange) {
-      onBookmarkChange(id, newBookmarkState);
+    // Check if user is logged in first
+    if (!session?.user?.id) {
+      toast.error("Please log in to bookmark opportunities");
+      return;
     }
 
-    setShowMessage(true);
-    setTimeout(() => setShowMessage(false), 2000);
+    // Validate opportunity ID is a valid UUID
+    if (!isValidUUID(id)) {
+      console.error("Invalid opportunity ID format");
+      return;
+    }
+
+    const currentUserId = session.user.id as string;
+    const newBookmarkState = !isBookmarked;
+
+    setIsBookmarkLoading(true);
+    
+    try {
+      if (newBookmarkState) {
+        // Add bookmark
+        const response = await axios.post("/api/bookmarks", {
+          userId: currentUserId,
+          opportunityId: id,
+        });
+        
+        // If bookmark already existed, show appropriate message
+        if (response.data?.message === "Already bookmarked") {
+          toast.info("Already bookmarked");
+        }
+      } else {
+        // Remove bookmark
+        await axios.delete("/api/bookmarks", {
+          data: {
+            userId: currentUserId,
+            opportunityId: id,
+          },
+        });
+      }
+
+      // Only update local state after successful API call
+      setIsBookmarked(newBookmarkState);
+      
+      if (onBookmarkChange) {
+        onBookmarkChange(id, newBookmarkState);
+      }
+
+      // Keep bookmark query in sync
+      queryClient.invalidateQueries({ queryKey: ["bookmark", id] });
+      
+      setShowMessage(true);
+    } catch (err) {
+      console.error("Bookmark request failed:", err);
+      // Don't update local state if API call failed
+      toast.error("Failed to update bookmark");
+    } finally {
+      setIsBookmarkLoading(false);
+    }
   };
 
   const primaryType = Array.isArray(type) ? type[0] : type;
@@ -144,9 +231,9 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         setMeta(
           data?.meta
             ? {
-                ...data.meta,
-                url: data?.url,
-              }
+              ...data.meta,
+              url: data?.url,
+            }
             : null
         );
       } catch (_e) {
@@ -173,8 +260,8 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         {/* Avatar */}
         <div className="flex-shrink-0">
           {user &&
-          user.image &&
-          !user.image.includes("https://media.licdn.com") ? (
+            user.image &&
+            !user.image.includes("https://media.licdn.com") ? (
             <Avatar className="w-10 h-10 sm:w-12 sm:h-12">
               <AvatarImage
                 src={user.image}
@@ -186,10 +273,10 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-semibold uppercase text-sm">
               {user && user.name
                 ? user.name
-                    .split(" ")
-                    .map((word) => word[0])
-                    .join("")
-                    .slice(0, 2)
+                  .split(" ")
+                  .map((word) => word[0])
+                  .join("")
+                  .slice(0, 2)
                 : "OP"}
             </div>
           )}
@@ -225,23 +312,23 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           <p>
             {description && typeof description === "string"
               ? description
-                  .split(/(https?:\/\/[^\s<>"'`|\\^{}\[\]]+)/gi)
-                  .map((part, index) => {
-                    if (part.match(/^https?:\/\/[^\s<>"'`|\\^{}\[\]]+$/i)) {
-                      return (
-                        <Link
-                          href={part}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          key={index}
-                          className="text-gray-400"
-                        >
-                          {part}
-                        </Link>
-                      );
-                    }
-                    return part;
-                  })
+                .split(/(https?:\/\/[^\s<>"'`|\\^{}\[\]]+)/gi)
+                .map((part, index) => {
+                  if (part.match(/^https?:\/\/[^\s<>"'`|\\^{}\[\]]+$/i)) {
+                    return (
+                      <Link
+                        href={part}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        key={index}
+                        className="text-gray-400"
+                      >
+                        {part}
+                      </Link>
+                    );
+                  }
+                  return part;
+                })
               : description}
           </p>
 
@@ -330,15 +417,15 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               (typeof window !== "undefined" && window.innerWidth < 640
                 ? 2
                 : 4) && (
-              <Badge className="text-[10px] sm:text-xs bg-gray-100 text-gray-600 px-2 py-1">
-                +
-                {tags.length -
-                  (typeof window !== "undefined" && window.innerWidth < 640
-                    ? 2
-                    : 4)}{" "}
-                more
-              </Badge>
-            )}
+                <Badge className="text-[10px] sm:text-xs bg-gray-100 text-gray-600 px-2 py-1">
+                  +
+                  {tags.length -
+                    (typeof window !== "undefined" && window.innerWidth < 640
+                      ? 2
+                      : 4)}{" "}
+                  more
+                </Badge>
+              )}
           </div>
         )}
 
@@ -380,18 +467,15 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                 onClick={onUpvoteClick}
                 aria-label="Upvote"
                 disabled={toggleUpvote.isPending || isLoading}
-                className={`flex items-center gap-1 transition-colors text-xs sm:text-sm ${
-                  userUpvoted ? "text-green-600" : "hover:text-green-600"
-                } ${
-                  toggleUpvote.isPending || isLoading
+                className={`flex items-center gap-1 transition-colors text-xs sm:text-sm ${userUpvoted ? "text-green-600" : "hover:text-green-600"
+                  } ${toggleUpvote.isPending || isLoading
                     ? "opacity-60 cursor-not-allowed"
                     : ""
-                }`}
+                  }`}
               >
                 <ChevronUp
-                  className={`w-4 h-4 sm:w-5 sm:h-5 ${
-                    userUpvoted ? "fill-current" : ""
-                  }`}
+                  className={`w-4 h-4 sm:w-5 sm:h-5 ${userUpvoted ? "fill-current" : ""
+                    }`}
                 />
                 <span className="min-w-[1ch] tabular-nums">{upvotes}</span>
               </button>
@@ -410,24 +494,28 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
             {/* Bookmark */}
             <button
               onClick={handleBookmark}
+              disabled={isBookmarkLoading}
               aria-label="Bookmark"
-              className="flex items-center gap-1 hover:text-yellow-500 transition-colors text-xs sm:text-sm"
+              className={`flex items-center gap-1 transition-colors text-xs sm:text-sm ${
+                isBookmarkLoading 
+                  ? "opacity-50 cursor-not-allowed" 
+                  : "hover:text-yellow-500"
+              }`}
             >
-              <Bookmark
-                className={`w-4 h-4 sm:w-5 sm:h-5 ${
-                  isBookmarked ? "text-yellow-500" : "text-gray-400"
-                }`}
-              />
+              {isBookmarkLoading ? (
+                <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin text-gray-400" />
+              ) : (
+                <Bookmark
+                  className={`w-4 h-4 sm:w-5 sm:h-5 ${isBookmarked ? "text-yellow-500" : "text-gray-400"
+                    }`}
+                />
+              )}
             </button>
           </div>
         </footer>
 
         {/* Bookmark Message - Mobile positioned */}
-        {showMessage && (
-          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 sm:bottom-8 sm:right-8 sm:left-auto sm:transform-none bg-gray-800 text-white px-3 py-2 sm:px-4 rounded shadow-lg text-xs sm:text-sm z-50">
-            {isBookmarked ? "Added to bookmarks" : "Removed from bookmarks"}
-          </div>
-        )}
+        {/* Toast is now handled in useEffect above */}
       </div>
     </article>
   );

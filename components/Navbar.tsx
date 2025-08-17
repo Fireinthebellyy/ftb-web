@@ -1,12 +1,14 @@
-"use client";
-import Image from "next/image";
-import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+'use client';
+import { motion } from 'framer-motion';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { authClient } from '@/lib/auth-client';
+import { useRouter } from 'next/navigation';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from './ui/button';
+import { Righteous } from 'next/font/google';
 
-// Idempotent logout with guard against duplicate clicks
 function useLogout() {
   const router = useRouter();
   const inFlight = useRef(false);
@@ -19,7 +21,7 @@ function useLogout() {
     } catch {
       // ignore errors; we still route home
     } finally {
-      router.push("/");
+      router.push('/');
       inFlight.current = false;
     }
   }, [router]);
@@ -27,34 +29,35 @@ function useLogout() {
   return signOut;
 }
 
+const righteous = Righteous({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-righteous',
+});
+
 export default function Navbar() {
-  // Mobile menu (existing)
   const [isOpen, setIsOpen] = useState(false);
 
-  // Auth session hook supports pending state
   const { data: user, isPending } = authClient.useSession();
 
-  // Avatar dropdown state
   const [menuOpen, setMenuOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const firstItemRef = useRef<HTMLButtonElement | null>(null);
   const lastItemRef = useRef<HTMLButtonElement | null>(null);
-  const menuId = "nav-avatar-menu";
+  const menuId = 'nav-avatar-menu';
 
   const handleLogout = useLogout();
 
-  // Global Escape handling for mobile overlay
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setIsOpen(false);
+      if (e.key === 'Escape') setIsOpen(false);
     };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
-  // Close dropdown on outside click
   useEffect(() => {
     if (!menuOpen) return;
     const onDocClick = (e: MouseEvent) => {
@@ -68,39 +71,39 @@ export default function Navbar() {
         setMenuOpen(false);
       }
     };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
   }, [menuOpen]);
 
   // Manage keyboard navigation within the menu
   const onMenuKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
+    if (e.key === 'Escape') {
       e.preventDefault();
       setMenuOpen(false);
       triggerRef.current?.focus();
       return;
     }
-    if (e.key === "ArrowDown") {
+    if (e.key === 'ArrowDown') {
       e.preventDefault();
       (document.activeElement === lastItemRef.current
         ? firstItemRef.current
-        : (document.activeElement
+        : ((document.activeElement
             ?.nextElementSibling as HTMLButtonElement | null) ??
-          firstItemRef.current
+          firstItemRef.current)
       )?.focus();
       return;
     }
-    if (e.key === "ArrowUp") {
+    if (e.key === 'ArrowUp') {
       e.preventDefault();
       (document.activeElement === firstItemRef.current
         ? lastItemRef.current
-        : (document.activeElement
+        : ((document.activeElement
             ?.previousElementSibling as HTMLButtonElement | null) ??
-          lastItemRef.current
+          lastItemRef.current)
       )?.focus();
       return;
     }
-    if (e.key === "Tab") {
+    if (e.key === 'Tab') {
       // trap focus within menu
       if (e.shiftKey && document.activeElement === firstItemRef.current) {
         e.preventDefault();
@@ -115,7 +118,6 @@ export default function Navbar() {
     }
   };
 
-  // When opening menu, move focus to first item
   useEffect(() => {
     if (menuOpen) {
       const id = requestAnimationFrame(() => firstItemRef.current?.focus());
@@ -123,61 +125,69 @@ export default function Navbar() {
     }
   }, [menuOpen]);
 
-  // Derive avatar visual
   const avatarFallback = useMemo(() => {
-    const name = user?.user?.name || user?.user?.email || "";
+    const name = user?.user?.name || user?.user?.email || '';
     const letters = name
-      ?.split(" ")
+      ?.split(' ')
       .map((n: string) => n[0])
-      .join("")
+      .join('')
       .slice(0, 2)
       .toUpperCase();
-    return letters || "U";
+    return letters || 'U';
   }, [user]);
 
   return (
-    <header className="bg-white/80 backdrop-blur-sm sticky top-0 z-50 border-b flex-none">
-      <div className="px-4 lg:px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center space-x-3">
-          <Image
-            src="/images/fire-logo.png"
-            alt="Fire in the Belly Logo"
-            width={40}
-            height={40}
-            className="object-contain"
-          />
-          <span className="font-bold text-xl bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent hidden sm:inline">
-            Fire in the Belly
-          </span>
-          <span className="font-bold text-xl bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent sm:hidden">
-            FTB
-          </span>
-        </Link>
+    <motion.header
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="sticky top-0 z-50 flex-none border-b bg-white/80 backdrop-blur-sm"
+    >
+      <div className="container mx-auto grid h-16 grid-cols-2 items-center px-4 md:grid-cols-3 lg:px-6">
+        <div className="flex items-center justify-start space-x-3">
+          <Link href="/" className="flex items-center space-x-2">
+            <Image
+              src="/images/fire-logo.png"
+              alt="Fire in the Belly Logo"
+              width={40}
+              height={40}
+              className="object-contain"
+            />
+            <span
+              className={`${righteous.className} bg-primary hidden bg-clip-text text-xl font-bold tracking-tight text-transparent sm:inline`}
+            >
+              Fire in the Belly
+            </span>
+            <span
+              className={`${righteous.className} bg-primary bg-clip-text text-xl font-bold tracking-wide text-transparent sm:hidden`}
+            >
+              FTB
+            </span>
+          </Link>
+        </div>
 
-        {/* Center/left navigation unchanged */}
-        <nav className="hidden md:flex ml-auto gap-4 sm:gap-6">
+        <nav className="hidden justify-center gap-4 sm:gap-6 md:flex">
           <Link
             href="/opportunities"
-            className="text-sm font-medium hover:text-red-600 transition-colors"
+            className="text-sm font-medium transition-colors duration-200 hover:text-gray-600"
           >
             Opportunities
           </Link>
           <Link
             href="/featured"
-            className="text-sm font-medium hover:text-red-600 transition-colors"
+            className="text-sm font-medium transition-colors duration-200 hover:text-gray-600"
           >
             Featured
           </Link>
         </nav>
 
-        {/* Right side: avatar-only area with guest Login when unauthenticated */}
-        <div className="ml-4 flex items-center">
-          {/* Pending skeleton: render minimal circle and nothing else */}
+        {/* Right side: auth controls and Get Started button */}
+        <div className="flex items-center justify-end space-x-2 md:space-x-4">
           {isPending ? (
             <div role="status">
               <svg
                 aria-hidden="true"
-                className="w-4 h-4 me-2 text-gray-200 animate-spin dark:text-gray-600 fill-orange-600"
+                className="me-2 h-4 w-4 animate-spin fill-orange-600 text-gray-200 dark:text-gray-600"
                 viewBox="0 0 100 101"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -201,13 +211,13 @@ export default function Navbar() {
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
                 aria-controls={menuId}
-                className="focus:outline-none focus:ring-2 focus:ring-red-500 rounded-full"
+                className="rounded-full focus:outline-none focus:ring-2 focus:ring-red-500"
                 onClick={() => setMenuOpen((v) => !v)}
                 onKeyDown={(e) => {
                   if (
-                    (e.key === "ArrowDown" ||
-                      e.key === "Enter" ||
-                      e.key === " ") &&
+                    (e.key === 'ArrowDown' ||
+                      e.key === 'Enter' ||
+                      e.key === ' ') &&
                     !menuOpen
                   ) {
                     e.preventDefault();
@@ -218,7 +228,7 @@ export default function Navbar() {
                 <Avatar>
                   <AvatarImage
                     src={(user.user as any)?.image || undefined}
-                    alt={user.user.name || "User avatar"}
+                    alt={user.user.name || 'User avatar'}
                     className="object-cover"
                   />
                   <AvatarFallback>{avatarFallback}</AvatarFallback>
@@ -232,17 +242,17 @@ export default function Navbar() {
                   role="menu"
                   aria-labelledby={undefined}
                   tabIndex={-1}
-                  className="absolute right-0 mt-2 w-40 rounded-md border bg-popover text-popover-foreground shadow-md p-1"
+                  className="bg-popover text-popover-foreground absolute right-0 mt-2 w-40 rounded-md border p-1 shadow-md"
                   onKeyDown={onMenuKeyDown}
                 >
                   <button
                     ref={firstItemRef}
                     role="menuitem"
-                    className="w-full text-left px-3 py-2 text-sm rounded hover:bg-accent focus:bg-accent focus:outline-none"
+                    className="hover:bg-accent focus:bg-accent w-full rounded px-3 py-2 text-left text-sm focus:outline-none"
                     onClick={() => {
                       setMenuOpen(false);
                       // use client-side navigation to profile
-                      window.location.href = "/profile";
+                      window.location.href = '/profile';
                     }}
                   >
                     Profile
@@ -250,7 +260,7 @@ export default function Navbar() {
                   <button
                     ref={lastItemRef}
                     role="menuitem"
-                    className="w-full text-left px-3 py-2 text-sm rounded hover:bg-accent focus:bg-accent text-red-600 focus:outline-none"
+                    className="hover:bg-accent focus:bg-accent w-full rounded px-3 py-2 text-left text-sm text-red-600 focus:outline-none"
                     onClick={() => {
                       setMenuOpen(false);
                       handleLogout();
@@ -262,24 +272,26 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <Link
-              href="/login"
-              className="text-sm font-medium hover:text-red-600 transition-colors"
-            >
-              Log in
-            </Link>
+            <div className="flex gap-2">
+              <Button asChild variant="outline" size="sm">
+                <Link href="/login">Log in</Link>
+              </Button>
+              <Button asChild size="sm">
+                <Link href="/signup">Get Started</Link>
+              </Button>
+            </div>
           )}
 
           {/* Mobile hamburger kept for existing site structure */}
           <button
             onClick={() => setIsOpen(true)}
-            className="md:hidden focus:outline-none ml-3"
+            className="ml-3 focus:outline-none md:hidden"
             aria-label="Open menu"
             aria-haspopup="true"
             aria-expanded={isOpen}
           >
             <svg
-              className="w-6 h-6"
+              className="h-6 w-6"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -298,17 +310,17 @@ export default function Navbar() {
       {/* Mobile Overlay Menu - unchanged items except auth-driven ones are hidden by avatar-only requirement on desktop; keep for mobile pages */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white bg-opacity-95 md:hidden min-h-dvh"
+          className="fixed inset-0 z-50 flex min-h-dvh flex-col items-center justify-center bg-white bg-opacity-95 md:hidden"
           role="dialog"
           aria-modal="true"
         >
           <button
             onClick={() => setIsOpen(false)}
-            className="absolute top-6 right-6 focus:outline-none"
+            className="absolute right-6 top-6 focus:outline-none"
             aria-label="Close menu"
           >
             <svg
-              className="w-8 h-8"
+              className="h-8 w-8"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -321,7 +333,7 @@ export default function Navbar() {
               />
             </svg>
           </button>
-          <ul className="flex flex-col items-center space-y-8 text-2xl font-semibold text-red-700">
+          <ul className="flex flex-col items-center space-y-8 text-2xl font-semibold text-gray-700">
             <li>
               <Link href="/" onClick={() => setIsOpen(false)}>
                 Home
@@ -362,6 +374,6 @@ export default function Navbar() {
           </ul>
         </div>
       )}
-    </header>
+    </motion.header>
   );
 }

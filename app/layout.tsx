@@ -1,6 +1,6 @@
 import type React from "react";
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -9,13 +9,9 @@ import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/next";
 import Providers from "@/components/Providers";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
+const plusJakartaSans = Plus_Jakarta_Sans({
+  weight: ["400", "700"], // or ["400", "700"] if multiple
+  variable: "--font-plus-jakarta-sans",
   subsets: ["latin"],
 });
 
@@ -31,9 +27,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full" suppressHydrationWarning>
+    <html lang="en" className="h-full">
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} antialiased font-sans min-h-screen flex flex-col`}
+        className={`${plusJakartaSans.className} antialiased font-sans min-h-screen flex flex-col`}
+        suppressHydrationWarning
       >
         <Suspense fallback={<div>Loading ..</div>}>
           <Navbar />

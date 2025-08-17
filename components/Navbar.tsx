@@ -169,13 +169,13 @@ export default function Navbar() {
         <nav className="hidden md:flex justify-center gap-4 sm:gap-6">
           <Link
             href="/opportunities"
-            className="text-sm font-medium hover:text-gray-600 transition-colors"
+            className="text-sm font-medium hover:text-gray-600 transition-colors duration-200"
           >
             Opportunities
           </Link>
           <Link
             href="/featured"
-            className="text-sm font-medium hover:text-gray-600 transition-colors"
+            className="text-sm font-medium hover:text-gray-600 transition-colors duration-200"
           >
             Featured
           </Link>
@@ -333,7 +333,7 @@ export default function Navbar() {
               />
             </svg>
           </button>
-          <ul className="flex flex-col items-center space-y-8 text-2xl font-semibold text-red-700">
+          <ul className="flex flex-col items-center space-y-8 text-2xl font-semibold text-gray-700">
             <li>
               <Link href="/" onClick={() => setIsOpen(false)}>
                 Home

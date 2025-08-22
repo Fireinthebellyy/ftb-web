@@ -30,6 +30,7 @@ import { authClient } from "@/lib/auth-client";
 import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import CommentSection from "@/components/opportunity/CommentSection";
 
 // UUID validation function
 const isValidUUID = (uuid: string): boolean => {
@@ -513,6 +514,9 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
             </button>
           </div>
         </footer>
+
+        {/* Comment Section */}
+        <CommentSection opportunityId={id} />
 
         {/* Bookmark Message - Mobile positioned */}
         {/* Toast is now handled in useEffect above */}

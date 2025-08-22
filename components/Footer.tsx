@@ -1,43 +1,56 @@
-import Image from "next/image";
+import { Instagram, Linkedin, Youtube } from "lucide-react";
 import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="flex-none flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t bg-white">
-      <div className="flex items-center space-x-3">
-        <Image
-          src="/images/fire-logo.png"
-          alt="Fire in the Belly Logo"
-          width={24}
-          height={24}
-          className="object-contain"
-        />
+    <footer className="flex w-full flex-none shrink-0 flex-col items-center gap-2 border-t bg-white px-4 py-6 sm:flex-row md:px-6">
+      <div className="flex flex-wrap items-center justify-center space-x-3">
         <p className="text-xs text-gray-600">
           © {new Date().getFullYear()} Fire in the Belly. All rights reserved.
         </p>
+        <div className="flex items-end justify-center gap-3">
+          <Link
+            href="https://www.instagram.com/fireinthebelly_ftb/"
+            aria-label="Follow us on Instagram"
+          >
+            <Instagram className="h-4 w-4" />
+          </Link>
+          <Link
+            href="https://www.linkedin.com/company/fireinthebelly/"
+            aria-label="Follow us on LinkedIn"
+          >
+            <Linkedin className="h-4 w-4" />
+          </Link>
+          <Link
+            href="https://www.youtube.com/@fireinthebelly11"
+            aria-label="Follow us on YouTube"
+          >
+            <Youtube className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
-      <nav className="sm:ml-auto flex gap-4 sm:gap-6">
+      <nav className="flex gap-4 sm:ml-auto sm:gap-6">
         <Link
           href="/terms"
-          className="text-xs hover:underline underline-offset-4 text-gray-600"
+          className="text-xs text-gray-600 underline-offset-4 hover:underline"
         >
           Terms of Service
         </Link>
         <Link
           href="/privacy"
-          className="text-xs hover:underline underline-offset-4 text-gray-600"
+          className="text-xs text-gray-600 underline-offset-4 hover:underline"
         >
           Privacy Policy
         </Link>
         <Link
           href="#"
-          className="text-xs hover:underline underline-offset-4 text-gray-600"
+          className="text-xs text-gray-600 underline-offset-4 hover:underline"
         >
           Contact
         </Link>
         <Link
           href="#"
-          className="text-xs hover:underline underline-offset-4 text-gray-600"
+          className="text-xs text-gray-600 underline-offset-4 hover:underline"
         >
           Help
         </Link>

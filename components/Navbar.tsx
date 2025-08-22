@@ -276,7 +276,7 @@ export default function Navbar() {
               <Button asChild variant="outline" size="sm">
                 <Link href="/login">Log in</Link>
               </Button>
-              <Button asChild size="sm">
+              <Button asChild size="sm" variant='primary'>
                 <Link href="/signup">Get Started</Link>
               </Button>
             </div>

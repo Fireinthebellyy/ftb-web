@@ -1,5 +1,1 @@
-#!/usr/bin/env sh
-
-echo "Pre-push hook running..."
 npm run lint
-echo "Lint completed with exit code: $?"

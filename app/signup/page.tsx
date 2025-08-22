@@ -1,7 +1,7 @@
-import Link from "next/link";
+import Link from 'next/link';
 
-import { SignupForm } from "@/components/auth/signup-form";
-import Image from "next/image";
+import { SignupForm } from '@/components/auth/signup-form';
+import Image from 'next/image';
 
 export default function SignupPage() {
   return (
@@ -11,11 +11,11 @@ export default function SignupPage() {
           href="/"
           className="flex items-center gap-2 self-center font-medium"
         >
-          <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
+          <div className="text-primary-foreground flex size-6 items-center justify-center rounded bg-white">
             <Image
               width={50}
               height={50}
-              src={"/images/fire-logo.png"}
+              src={'/images/fire-logo.png'}
               alt="Fire in the Belly Logo"
               priority
             />

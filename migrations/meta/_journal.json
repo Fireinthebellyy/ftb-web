@@ -64,6 +64,13 @@
       "when": 1755287552034,
       "tag": "0008_dapper_wrecker",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1755881617915,
+      "tag": "0009_perpetual_spot",
+      "breakpoints": true
     }
   ]
 }

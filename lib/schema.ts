@@ -136,23 +136,31 @@ export const verification = pgTable("verification", {
   ),
 });
 
-export const bookmarks = pgTable("bookmarks", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  opportunityId: uuid("opportunity_id")
-    .notNull()
-    .references(() => opportunities.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at").defaultNow(),
-},
-(table) => [
-  uniqueIndex("bookmarks_user_opportunity_unique").on(
-    table.userId,
-    table.opportunityId
-  ),
-]
+export const bookmarks = pgTable(
+  "bookmarks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    opportunityId: uuid("opportunity_id")
+      .notNull()
+      .references(() => opportunities.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("bookmarks_user_opportunity_unique").on(
+      table.userId,
+      table.opportunityId
+    ),
+  ]
 );
+
+export const waitlist = pgTable("waitlist", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 export const schema = {
   user,
@@ -163,4 +171,5 @@ export const schema = {
   account,
   verification,
   bookmarks,
+  waitlist,
 };

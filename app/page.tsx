@@ -61,6 +61,7 @@ export default function LandingPage() {
               >
                 <Button
                   size="lg"
+                  variant='primary'
                   className="px-8 text-base text-shadow-sm"
                   onClick={() => router.push('/opportunities')}
                 >

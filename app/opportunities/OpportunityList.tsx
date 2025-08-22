@@ -122,6 +122,7 @@ export default function OpportunityCardsPage() {
             </p>
             <Button
               className="w-full sm:w-auto"
+              variant="primary"
               onClick={() => setIsNewOpportunityOpen(true)}
             >
               Post an Opportunity

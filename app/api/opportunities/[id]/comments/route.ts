@@ -11,7 +11,7 @@ const commentSchema = z.object({
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     if (!db) {
@@ -21,7 +21,7 @@ export async function GET(
       );
     }
 
-    const opportunityId = params.id;
+    const { id: opportunityId } = await params;
 
     // Fetch comments with user information, ordered by newest first
     const commentsWithUsers = await db
@@ -55,7 +55,7 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     if (!db) {
@@ -70,7 +70,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const opportunityId = params.id;
+    const { id: opportunityId } = await params;
     const body = await req.json();
     const validatedData = commentSchema.parse(body);
 

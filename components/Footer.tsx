@@ -12,18 +12,21 @@ export default function Footer() {
           <Link
             href="https://www.instagram.com/fireinthebelly_ftb/"
             aria-label="Follow us on Instagram"
+            target="_blank"
           >
             <Instagram className="h-4 w-4" />
           </Link>
           <Link
             href="https://www.linkedin.com/company/fireinthebelly/"
             aria-label="Follow us on LinkedIn"
+            target="_blank"
           >
             <Linkedin className="h-4 w-4" />
           </Link>
           <Link
             href="https://www.youtube.com/@fireinthebelly11"
             aria-label="Follow us on YouTube"
+            target="_blank"
           >
             <Youtube className="h-4 w-4" />
           </Link>

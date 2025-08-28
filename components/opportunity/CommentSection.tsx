@@ -188,7 +188,6 @@ const CommentInput: React.FC<{
 };
 
 const CommentSection: React.FC<CommentSectionProps> = ({ opportunityId }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
   const { data: session } = authClient.useSession();
   const { data: comments = [], isLoading, error } = useComments(opportunityId);
   const deleteComment = useDeleteComment(opportunityId);
@@ -203,10 +202,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ opportunityId }) => {
   };
 
   const handleCommentSubmit = () => {
-    // Optionally expand the comment section when a new comment is posted
-    if (!isExpanded) {
-      setIsExpanded(true);
-    }
+    // Comment submitted successfully
   };
 
   if (error) {
@@ -219,63 +215,46 @@ const CommentSection: React.FC<CommentSectionProps> = ({ opportunityId }) => {
 
   return (
     <div className="border-t border-gray-100">
-      {/* Comment Count and Toggle */}
-      <div className="p-4 border-b border-gray-100">
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-        >
-          <MessageSquare className="w-4 h-4" />
-          <span>
-            {comments.length} {comments.length === 1 ? "comment" : "comments"}
-          </span>
-        </button>
-      </div>
-
-      {/* Comment Input - Always visible when expanded */}
-      {isExpanded && (
-        <CommentInput 
-          opportunityId={opportunityId} 
-          onSubmit={handleCommentSubmit}
-        />
-      )}
+      {/* Comment Input - Always visible when comment section is open */}
+      <CommentInput 
+        opportunityId={opportunityId} 
+        onSubmit={handleCommentSubmit}
+      />
 
       {/* Comments List */}
-      {isExpanded && (
-        <div className="max-h-96 overflow-y-auto">
-          {isLoading ? (
-            // Loading skeleton
-            <div className="space-y-3 p-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex gap-3">
-                  <Skeleton className="w-8 h-8 rounded-full" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
+      <div className="max-h-96 overflow-y-auto">
+        {isLoading ? (
+          // Loading skeleton
+          <div className="space-y-3 p-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex gap-3">
+                <Skeleton className="w-8 h-8 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
                 </div>
-              ))}
-            </div>
-          ) : comments.length === 0 ? (
-            <div className="p-4 text-center text-gray-500 text-sm">
-              No comments yet. Be the first to comment!
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-100">
-              {comments.map((comment) => (
-                <CommentItem
-                  key={comment.id}
-                  comment={comment}
-                  currentUserId={session?.user?.id}
-                  onDelete={handleDelete}
-                  isDeleting={deleteComment.isPending}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+              </div>
+            ))}
+          </div>
+        ) : comments.length === 0 ? (
+          <div className="p-4 text-center text-gray-500 text-sm">
+            No comments yet. Be the first to comment!
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {comments.map((comment) => (
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                currentUserId={session?.user?.id}
+                onDelete={handleDelete}
+                isDeleting={deleteComment.isPending}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

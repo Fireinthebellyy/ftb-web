@@ -84,7 +84,8 @@
 // }
 
 import { NextRequest } from "next/server";
-import ogs from "open-graph-scraper";
+// Temporarily disable open-graph-scraper due to server compatibility issues
+// import ogs from "open-graph-scraper";
 
 // Extract first URL from a text block (handles (), [] and trailing punctuation)
 function extractFirstUrl(text: string): string | null {
@@ -136,35 +137,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { result, error } = await ogs({ url });
-
-    if (error) {
-      // result likely contains error details
-      return new Response(
-        JSON.stringify({
-          ok: false,
-          error: "OG_SCRAPE_FAILED",
-          details: result,
-        }),
-        { status: 502, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    // Normalize a minimal payload focused on meta description
+    // Temporarily disable OG scraping due to server compatibility issues
     const payload = {
       ok: true,
       url,
       meta: {
-        title: (result as any).ogTitle ?? null,
-        description:
-          (result as any).ogDescription ?? (result as any).description ?? null,
-        image: Array.isArray((result as any).ogImage)
-          ? (result as any).ogImage?.[0]?.url ?? null
-          : (result as any).ogImage?.url ?? null,
-        siteName: (result as any).ogSiteName ?? null,
-        type: (result as any).ogType ?? null,
+        title: null,
+        description: null,
+        image: null,
+        siteName: null,
+        type: null,
       },
-      rawResult: result,
+      message: "OG scraping temporarily disabled due to server compatibility",
     };
 
     return new Response(JSON.stringify(payload), {

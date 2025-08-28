@@ -60,6 +60,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
   const [showMessage, setShowMessage] = useState<boolean>(false);
   const [isBookmarkLoading, setIsBookmarkLoading] = useState<boolean>(false);
+  const [showComments, setShowComments] = useState<boolean>(false);
 
   // Auth session (acts like context)
   const { data: session} = authClient.useSession();
@@ -401,10 +402,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         {tags && tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
             {tags
-              .slice(
-                0,
-                typeof window !== "undefined" && window.innerWidth < 640 ? 2 : 4
-              )
+              .slice(0, 4)
               .map((tag, idx) => (
                 <Badge
                   key={idx}
@@ -414,17 +412,9 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                   #{tag}
                 </Badge>
               ))}
-            {tags.length >
-              (typeof window !== "undefined" && window.innerWidth < 640
-                ? 2
-                : 4) && (
+            {tags.length > 4 && (
                 <Badge className="text-[10px] sm:text-xs bg-gray-100 text-gray-600 px-2 py-1">
-                  +
-                  {tags.length -
-                    (typeof window !== "undefined" && window.innerWidth < 640
-                      ? 2
-                      : 4)}{" "}
-                  more
+                  +{tags.length - 4} more
                 </Badge>
               )}
           </div>
@@ -481,9 +471,10 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                 <span className="min-w-[1ch] tabular-nums">{upvotes}</span>
               </button>
 
-              {/* Comments (placeholder increments) */}
+              {/* Comments (clickable to toggle comment section) */}
               <button
                 type="button"
+                onClick={() => setShowComments(!showComments)}
                 aria-label="Comments"
                 className="flex items-center gap-1 hover:text-blue-600 transition-colors text-xs sm:text-sm"
               >
@@ -515,8 +506,8 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           </div>
         </footer>
 
-        {/* Comment Section */}
-        <CommentSection opportunityId={id} />
+        {/* Comment Section - Only show when toggled by comment icon */}
+        {showComments && <CommentSection opportunityId={id} />}
 
         {/* Bookmark Message - Mobile positioned */}
         {/* Toast is now handled in useEffect above */}

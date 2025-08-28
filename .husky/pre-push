@@ -1,1 +1,15 @@
+#!/bin/sh
+
+# Run linter before push
 npm run lint
+
+# Capture the exit status of the linter
+LINT_EXIT_CODE=$?
+
+# If linter fails (exit code not 0), prevent the push
+if [ $LINT_EXIT_CODE -ne 0 ]; then
+    echo "Linting failed. Please fix the linting errors before pushing."
+    exit 1
+fi
+
+exit 0

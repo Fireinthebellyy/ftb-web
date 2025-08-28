@@ -82,6 +82,12 @@ export const user = pgTable("user", {
     .$defaultFn(() => false)
     .notNull(),
   image: text("image"),
+  fieldInterests: text("field_interests").array().default([]),
+  opportunityInterests: text("opportunity_interests").array().default([]),
+  dateOfBirth: date("date_of_birth"),
+  collegeInstitute: text("college_institute"),
+  contactNumber: text("contact_number"),
+  currentRole: text("current_role"),
   createdAt: timestamp("created_at")
     .$defaultFn(() => /* @__PURE__ */ new Date())
     .notNull(),

@@ -18,7 +18,16 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const { name, image } = body as { name?: string; image?: string };
+    const { name, image, fieldInterests, opportunityInterests, dateOfBirth, collegeInstitute, contactNumber, currentRole } = body as {
+      name?: string;
+      image?: string;
+      fieldInterests?: string[];
+      opportunityInterests?: string[];
+      dateOfBirth?: string;
+      collegeInstitute?: string;
+      contactNumber?: string;
+      currentRole?: string;
+    };
 
     if (!name || typeof name !== "string") {
       return new Response(JSON.stringify({ error: "Name is required" }), {
@@ -35,11 +44,92 @@ export async function POST(request: Request) {
       });
     }
 
+    // Validate interests types
+    if (
+      typeof fieldInterests !== "undefined" &&
+      !(
+        Array.isArray(fieldInterests) &&
+        fieldInterests.every((v) => typeof v === "string")
+      )
+    ) {
+      return new Response(JSON.stringify({ error: "Invalid fieldInterests" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    if (typeof dateOfBirth !== "undefined" && typeof dateOfBirth !== "string") {
+      return new Response(JSON.stringify({ error: "Invalid dateOfBirth" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    if (
+      typeof collegeInstitute !== "undefined" &&
+      (typeof collegeInstitute !== "string" ||
+        /[^a-zA-Z0-9\s.&'()-]/.test(collegeInstitute) ||
+        /^\d+$/.test(collegeInstitute))
+    ) {
+      return new Response(
+        JSON.stringify({ error: "Invalid collegeInstitute" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+    if (
+      typeof contactNumber !== "undefined" &&
+      (typeof contactNumber !== "string" || !/^\d{10}$/.test(contactNumber))
+    ) {
+      return new Response(
+        JSON.stringify({ error: "Invalid contactNumber" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+    if (
+      typeof currentRole !== "undefined" &&
+      (typeof currentRole !== "string" || currentRole.length > 60)
+    ) {
+      return new Response(
+        JSON.stringify({ error: "Invalid currentRole" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+    if (
+      typeof opportunityInterests !== "undefined" &&
+      !(
+        Array.isArray(opportunityInterests) &&
+        opportunityInterests.every((v) => typeof v === "string")
+      )
+    ) {
+      return new Response(
+        JSON.stringify({ error: "Invalid opportunityInterests" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+    
+
     const [updated] = await db
       .update(userTable)
       .set({
         name,
         image: image ?? null,
+        fieldInterests: fieldInterests ?? [],
+        opportunityInterests: opportunityInterests ?? [],
+        // Store as plain YYYY-MM-DD string to avoid timezone shifts
+        dateOfBirth: dateOfBirth ?? null,
+        collegeInstitute: collegeInstitute ?? null,
+        contactNumber: contactNumber ?? null,
+        currentRole: currentRole ?? null,
         updatedAt: new Date(),
       })
       .where(eq(userTable.id, session.user.id))
@@ -48,6 +138,12 @@ export async function POST(request: Request) {
         name: userTable.name,
         email: userTable.email,
         image: userTable.image,
+        fieldInterests: userTable.fieldInterests,
+        opportunityInterests: userTable.opportunityInterests,
+        dateOfBirth: userTable.dateOfBirth,
+        collegeInstitute: userTable.collegeInstitute,
+        contactNumber: userTable.contactNumber,
+        currentRole: userTable.currentRole,
       });
 
     if (!updated) {

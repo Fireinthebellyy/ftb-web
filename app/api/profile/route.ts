@@ -125,7 +125,6 @@ export async function POST(request: Request) {
         image: image ?? null,
         fieldInterests: fieldInterests ?? [],
         opportunityInterests: opportunityInterests ?? [],
-        // Store as plain YYYY-MM-DD string to avoid timezone shifts
         dateOfBirth: dateOfBirth ?? null,
         collegeInstitute: collegeInstitute ?? null,
         contactNumber: contactNumber ?? null,

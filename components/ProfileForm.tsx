@@ -5,11 +5,10 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
- 
 import axios from "axios";
 import { toast } from "sonner";
-
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import {
   Form,
@@ -103,7 +102,6 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
   const firstEditableRef = useRef<HTMLInputElement | null>(null);
   const modeChangeLiveRef = useRef<HTMLDivElement | null>(null);
   
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -208,7 +206,7 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
           idx === 0 ? { ...f, uploading: false, error: true } : f
         )
       );
-      toast.success("Profile updated");
+      toast.error("Avatar upload failed. Saving without new image.");
       return null;
     }
   }, [files]);
@@ -256,6 +254,7 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
       const { data } = await axios.post("/api/profile", payload, {
         headers: { "Content-Type": "application/json" },
       });
+      toast.success("Profile updated");
 
       // Revoke object URLs and clear local files post-success
       files.forEach((f) => URL.revokeObjectURL(f.preview));
@@ -560,7 +559,11 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
                   {submitting ? "Saving..." : "Save"}
                 </Button>
               </div>
-              <p className="text-red-600 font-bold text-sm mt-2">All the details are confidential & only utilized for enhancing service quality*</p>
+              <Alert className="mt-2 border-red-200 bg-red-50">
+                <AlertDescription className="text-red-600 font-bold text-sm">
+                  All the details are confidential & only utilized for enhancing service quality*
+                </AlertDescription>
+              </Alert>
             </>
           ) : null}
         </form>

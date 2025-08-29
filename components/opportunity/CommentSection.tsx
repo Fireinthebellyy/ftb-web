@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { formatDate } from "@/lib/utils";
-import { Loader2, Send, Trash2, MessageSquare } from "lucide-react";
+import { Loader2, Send, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface CommentSectionProps {

@@ -34,7 +34,6 @@ export default function CurrentRoleSelector({ control, isEditing }: Props) {
       render={({ field }) => {
         const selected = field.value || "";
         const isCustom = selected && !ROLE_OPTIONS.includes(selected);
-        const showOtherInput = selected === "Other" || isCustom;
         const displayRole = selected === "Other" ? (otherValue || "").trim() : selected;
 
         return (
@@ -95,8 +94,6 @@ export default function CurrentRoleSelector({ control, isEditing }: Props) {
                       );
                     })}
                   </div>
-
-                  
                 </div>
               )}
             </FormControl>

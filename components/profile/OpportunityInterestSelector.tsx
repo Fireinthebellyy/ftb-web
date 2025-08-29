@@ -13,11 +13,6 @@ import { Input } from "@/components/ui/input";
 import { Control } from "react-hook-form";
 import { cn } from "@/lib/utils";
 
-type ProfileFormValues = {
-  opportunityInterests?: string[];
-  opportunityInterestOther?: string;
-};
-
 type Props = {
   control: Control<any>;
   isEditing: boolean;

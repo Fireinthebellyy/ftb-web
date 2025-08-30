@@ -1,10 +1,12 @@
 import { NextRequest } from "next/server";
-import ogs from "open-graph-scraper";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 // Extract first URL from a text block (handles (), [] and trailing punctuation)
 function extractFirstUrl(text: string): string | null {
   // Match http/https URLs
-  const urlRegex = /https?:\/\/[^\s<>"'`|\\^{}\[\]]+/gi;
+  const urlRegex = /https?:\/\/[^\s<>'`|\\^{}\[\]]+/gi;
 
   const match = text.match(urlRegex);
   if (!match) return null;
@@ -51,6 +53,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Dynamically import to avoid build-time evaluation in some environments
+    const { default: ogs } = await import("open-graph-scraper");
     const { result, error } = await ogs({ url });
 
     if (error) {

@@ -1,7 +1,7 @@
 import sanityClient from "@/lib/sanity";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { Opportunity } from "@/types/interfaces";
+import { Opportunity, Comment, CreateCommentData } from "@/types/interfaces";
 
 /**
  * Existing Sanity queries (kept intact)
@@ -191,5 +191,59 @@ export function useIsBookmarked(id: string) {
       return Boolean(data?.isBookmarked);
     },
     staleTime: 1000 * 30,
+  });
+}
+
+/**
+ * Comments: fetch and manage comments for opportunities
+ */
+export function useComments(opportunityId: string) {
+  return useQuery<Comment[]>({
+    queryKey: ["comments", opportunityId],
+    queryFn: async () => {
+      const { data } = await axios.get(`/api/opportunities/${opportunityId}/comments`);
+      return data.comments || [];
+    },
+    staleTime: 1000 * 30, // 30 seconds
+  });
+}
+
+export function useCreateComment(opportunityId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (commentData: CreateCommentData) => {
+      const { data } = await axios.post(`/api/opportunities/${opportunityId}/comments`, commentData);
+      return data.comment;
+    },
+    onSuccess: (newComment) => {
+      // Optimistically add the new comment to the list
+      queryClient.setQueryData<Comment[]>(["comments", opportunityId], (oldComments = []) => {
+        return [newComment, ...oldComments];
+      });
+    },
+    onError: (error) => {
+      console.error("Error creating comment:", error);
+    },
+  });
+}
+
+export function useDeleteComment(opportunityId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (commentId: string) => {
+      await axios.delete(`/api/opportunities/${opportunityId}/comments/${commentId}`);
+      return commentId;
+    },
+    onSuccess: (deletedCommentId) => {
+      // Remove the deleted comment from the list
+      queryClient.setQueryData<Comment[]>(["comments", opportunityId], (oldComments = []) => {
+        return oldComments.filter(comment => comment.id !== deletedCommentId);
+      });
+    },
+    onError: (error) => {
+      console.error("Error deleting comment:", error);
+    },
   });
 }

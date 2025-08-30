@@ -24,6 +24,24 @@ export interface OpportunityPostProps {
   onBookmarkChange?: (id: string, isBookmarked: boolean) => void;
 }
 
+export type Comment = {
+  id: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+  opportunityId: string;
+  user: {
+    id: string;
+    name: string;
+    image: string;
+  };
+};
+
+export type CreateCommentData = {
+  content: string;
+};
+
 export type ProfileUser = {
   id: string;
   name: string;

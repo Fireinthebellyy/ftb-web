@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import axios from "axios";
-
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import {
   Form,
@@ -22,11 +22,73 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ImageDropzone } from "@/components/opportunity/images/ImageDropzone";
 import { createAvatarStorage } from "@/lib/appwrite";
 import { FileItem, ProfileUser, UploadProgress } from "@/types/interfaces";
+import FieldInterestSelector from "@/components/profile/FieldInterestSelector";
+import OpportunityInterestSelector from "@/components/profile/OpportunityInterestSelector";
+import CurrentRoleSelector from "@/components/profile/CurrentRoleSelector";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
-const formSchema = z.object({
+const formSchema = z
+  .object({
   name: z.string().min(1, "Name is required").max(80, "Name too long"),
+  fieldInterests: z.array(z.string()).min(1, "Select at least 1 field interest").default([]),
+  fieldInterestOther: z.string().optional(),
+  opportunityInterests: z.array(z.string()).min(1, "Select at least 1 opportunity interest").default([]),
+  opportunityInterestOther: z.string().optional(),
+  dateOfBirth: z.string().optional(),
+  collegeInstitute: z
+    .string()
+    .trim()
+    .max(80, "Too long")
+    .optional()
+    .refine(
+      (v) => v === undefined || v === "" || /^[A-Za-z0-9 .,&'()\-]+$/.test(v),
+      "No special characters"
+    )
+    .refine(
+      (v) => v === undefined || v === "" || !/^\d+$/.test(v),
+      "Cannot be only numbers"
+    ),
+  contactNumber: z
+    .string()
+    .optional()
+    .transform((v) => (v ?? "").trim())
+    .refine((v) => v === "" || /^\d{10}$/.test(v), "Enter 10 digit number only"),
+  currentRole: z.string().min(1, "Please select your current role"),
+  currentRoleOther: z.string().optional(),
   // image is uploaded via dropzone and resolved to URL
-});
+  })
+  .superRefine((vals, ctx) => {
+    if (Array.isArray(vals.fieldInterests) && vals.fieldInterests.includes("Other")) {
+      if (!vals.fieldInterestOther || vals.fieldInterestOther.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please specify your other field interest",
+          path: ["fieldInterestOther"],
+        });
+      }
+    }
+    if (Array.isArray(vals.opportunityInterests) && vals.opportunityInterests.includes("Other")) {
+      if (!vals.opportunityInterestOther || vals.opportunityInterestOther.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please specify your other opportunity interest",
+          path: ["opportunityInterestOther"],
+        });
+      }
+    }
+    if (vals.currentRole === "Other") {
+      if (!vals.currentRoleOther || vals.currentRoleOther.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please specify your current role",
+          path: ["currentRoleOther"],
+        });
+      }
+    }
+  });
 
 export default function ProfileForm({ user }: { user: ProfileUser }) {
   // Editing state: opt-in by default (view mode initially)
@@ -39,13 +101,49 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
   // Accessibility: manage focus when entering edit mode
   const firstEditableRef = useRef<HTMLInputElement | null>(null);
   const modeChangeLiveRef = useRef<HTMLDivElement | null>(null);
-
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: user.name ?? "",
+      fieldInterests: user.fieldInterests ?? [],
+      fieldInterestOther: "",
+      opportunityInterests: user.opportunityInterests ?? [],
+      opportunityInterestOther: "",
+      dateOfBirth: user.dateOfBirth ?? "",
+      collegeInstitute: user.collegeInstitute ?? "",
+      contactNumber: user.contactNumber ?? "",
+      currentRole: user.currentRole ?? "",
+      currentRoleOther: "",
     },
   });
+
+  const handleResetInterests = useCallback(async () => {
+    try {
+      setSubmitting(true);
+      const payload: { name: string; image?: string | null; fieldInterests?: string[] } = {
+        name: form.getValues("name") ?? user.name ?? "",
+        image: user.image ?? null,
+        fieldInterests: [],
+      };
+      const { data } = await axios.post("/api/profile", payload, {
+        headers: { "Content-Type": "application/json" },
+      });
+      files.forEach((f) => URL.revokeObjectURL(f.preview));
+      setFiles([]);
+      form.reset({
+        name: data.user.name ?? "",
+        fieldInterests: data.user.fieldInterests ?? [],
+        fieldInterestOther: "",
+      });
+      
+    } catch (e) {
+      const err = e as Error;
+      console.error(err);
+    } finally {
+      setSubmitting(false);
+    }
+  }, [files, form, user.image, user.name]);
 
   const hasLocalPreview = files.length > 0 ? files[0]?.preview : "";
   const effectiveAvatar = useMemo(() => {
@@ -108,7 +206,7 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
           idx === 0 ? { ...f, uploading: false, error: true } : f
         )
       );
-      toast.error("Failed to upload avatar");
+      toast.error("Avatar upload failed. Saving without new image.");
       return null;
     }
   }, [files]);
@@ -119,14 +217,44 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
 
       const uploadedUrl = await uploadAvatar();
 
-      const payload: { name: string; image?: string | null } = {
+      const trimmedOther = (values.fieldInterestOther || "").trim();
+      const trimmedOppOther = (values.opportunityInterestOther || "").trim();
+      let normalizedInterests = Array.isArray(values.fieldInterests)
+        ? [...values.fieldInterests]
+        : [];
+      let normalizedOppInterests = Array.isArray(values.opportunityInterests)
+        ? [...values.opportunityInterests]
+        : [];
+
+      if (normalizedInterests.includes("Other")) {
+        normalizedInterests = trimmedOther
+          ? normalizedInterests.map((v) => (v === "Other" ? trimmedOther : v))
+          : normalizedInterests.filter((v) => v !== "Other");
+      }
+      if (normalizedOppInterests.includes("Other")) {
+        normalizedOppInterests = trimmedOppOther
+          ? normalizedOppInterests.map((v) => (v === "Other" ? trimmedOppOther : v))
+          : normalizedOppInterests.filter((v) => v !== "Other");
+      }
+
+      const payload: { name: string; image?: string | null; fieldInterests?: string[]; opportunityInterests?: string[]; dateOfBirth?: string; collegeInstitute?: string; contactNumber?: string; currentRole?: string } = {
         name: values.name,
         image: uploadedUrl !== null ? uploadedUrl : user.image ?? null,
+        fieldInterests: normalizedInterests,
+        opportunityInterests: normalizedOppInterests,
+        dateOfBirth: values.dateOfBirth || undefined,
+        collegeInstitute: values.collegeInstitute || undefined,
+        contactNumber: values.contactNumber || undefined,
+        currentRole:
+          values.currentRole === "Other"
+            ? (values.currentRoleOther || "").trim() || undefined
+            : values.currentRole || undefined,
       };
 
       const { data } = await axios.post("/api/profile", payload, {
         headers: { "Content-Type": "application/json" },
       });
+      toast.success("Profile updated");
 
       // Revoke object URLs and clear local files post-success
       files.forEach((f) => URL.revokeObjectURL(f.preview));
@@ -135,9 +263,18 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
       // Sync local UI
       form.reset({
         name: data.user.name ?? "",
+        fieldInterests: data.user.fieldInterests ?? [],
+        fieldInterestOther: "",
+        opportunityInterests: data.user.opportunityInterests ?? [],
+        opportunityInterestOther: "",
+        dateOfBirth: data.user.dateOfBirth ? String(data.user.dateOfBirth) : "",
+        collegeInstitute: data.user.collegeInstitute ?? "",
+        contactNumber: data.user.contactNumber ?? "",
+        currentRole: data.user.currentRole ?? "",
+        currentRoleOther: "",
       });
 
-      toast.success("Profile updated");
+      
 
       router.push("/profile");
 
@@ -157,12 +294,25 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
   const initialValuesRef = useRef({
     name: user.name ?? "",
     image: user.image ?? null,
+    dateOfBirth: user.dateOfBirth ?? "",
+    collegeInstitute: user.collegeInstitute ?? "",
+    contactNumber: user.contactNumber ?? "",
+    currentRole: user.currentRole ?? "",
   });
 
   const watchedValues = form.watch();
 
   const hasChanges =
-    watchedValues.name !== initialValuesRef.current.name || files.length > 0;
+    watchedValues.name !== initialValuesRef.current.name ||
+    files.length > 0 ||
+    (watchedValues as any).fieldInterests?.length > 0 ||
+    !!(watchedValues as any).fieldInterestOther ||
+    (watchedValues as any).opportunityInterests?.length > 0 ||
+    !!(watchedValues as any).opportunityInterestOther ||
+    (watchedValues as any).dateOfBirth !== initialValuesRef.current.dateOfBirth ||
+    (watchedValues as any).collegeInstitute !== initialValuesRef.current.collegeInstitute ||
+    (watchedValues as any).contactNumber !== initialValuesRef.current.contactNumber ||
+    (watchedValues as any).currentRole !== initialValuesRef.current.currentRole;
 
   return (
     <div className="space-y-6">
@@ -240,7 +390,7 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
                 // Cancel: revoke previews, reset files and form, exit edit mode
                 files.forEach((f) => URL.revokeObjectURL(f.preview));
                 setFiles([]);
-                form.reset({ name: user.name ?? "" });
+                form.reset({ name: user.name ?? "", fieldInterests: [], fieldInterestOther: "", opportunityInterests: [], opportunityInterestOther: "" });
                 setIsEditing(false);
                 if (modeChangeLiveRef.current) {
                   modeChangeLiveRef.current.textContent =
@@ -298,25 +448,123 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
             )}
           />
 
+          <FieldInterestSelector control={form.control as any} isEditing={isEditing} />
+          <OpportunityInterestSelector control={form.control as any} isEditing={isEditing} />
+
+          <FormField
+            control={form.control}
+            name="collegeInstitute"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>College / Institute</FormLabel>
+                {!isEditing ? (
+                  <div className="py-2 px-3 rounded-md border bg-muted/30 text-sm">
+                    {field.value || "—"}
+                  </div>
+                ) : (
+                  <FormControl>
+                    <Input placeholder="Your college or institute" {...field} />
+                  </FormControl>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="dateOfBirth"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Date of birth</FormLabel>
+                {!isEditing ? (
+                  <div className="py-2 px-3 rounded-md border bg-muted/30 text-sm">
+                    {field.value ? new Date(`${field.value}T00:00:00`).toLocaleDateString() : "—"}
+                  </div>
+                ) : (
+                  <FormControl>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value
+                            ? new Date(`${field.value}T00:00:00`).toLocaleDateString()
+                            : "Pick a date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value ? new Date(`${field.value}T00:00:00`) : undefined}
+                          onSelect={(d) => {
+                            if (!d) return field.onChange("");
+                            const yyyy = d.getFullYear();
+                            const mm = String(d.getMonth() + 1).padStart(2, "0");
+                            const dd = String(d.getDate()).padStart(2, "0");
+                            field.onChange(`${yyyy}-${mm}-${dd}`);
+                          }}
+                          disabled={(date) => date > new Date()}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </FormControl>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="contactNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Contact number</FormLabel>
+                {!isEditing ? (
+                  <div className="py-2 px-3 rounded-md border bg-muted/30 text-sm">
+                    {field.value || "—"}
+                  </div>
+                ) : (
+                  <FormControl>
+                    <Input inputMode="numeric" autoComplete="tel" maxLength={10} placeholder="Contact Number" {...field} />
+                  </FormControl>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <CurrentRoleSelector control={form.control as any} isEditing={isEditing} />
+
           {/* Controls: only show Save/Reset when editing */}
           {isEditing ? (
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  files.forEach((f) => URL.revokeObjectURL(f.preview));
-                  setFiles([]);
-                  form.reset({ name: user.name ?? "" });
-                }}
-                disabled={submitting}
-              >
-                Reset
-              </Button>
-              <Button type="submit" disabled={submitting || !hasChanges}>
-                {submitting ? "Saving..." : "Save"}
-              </Button>
-            </div>
+            <>
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleResetInterests}
+                  disabled={submitting}
+                >
+                  Reset
+                </Button>
+                <Button type="submit" disabled={submitting || !hasChanges}>
+                  {submitting ? "Saving..." : "Save"}
+                </Button>
+              </div>
+              <Alert className="mt-2 border-red-200 bg-red-50">
+                <AlertDescription className="text-red-600 font-bold text-sm">
+                  All the details are confidential & only utilized for enhancing service quality*
+                </AlertDescription>
+              </Alert>
+            </>
           ) : null}
         </form>
       </Form>

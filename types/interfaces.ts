@@ -47,6 +47,12 @@ export type ProfileUser = {
   name: string;
   email: string;
   image: string;
+  fieldInterests?: string[];
+  opportunityInterests?: string[];
+  dateOfBirth?: string | null;
+  collegeInstitute?: string | null;
+  contactNumber?: string | null;
+  currentRole?: string | null;
 };
 
 export type UploadProgress = {

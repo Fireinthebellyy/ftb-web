@@ -22,12 +22,24 @@ export default async function ProfilePage() {
       name: true,
       email: true,
       image: true,
+      fieldInterests: true,
+      opportunityInterests: true,
+      dateOfBirth: true,
+      collegeInstitute: true,
+      contactNumber: true,
+      currentRole: true,
     },
   });
 
   if (!current) {
     redirect("/login");
   }
+
+  const dobStr = current.dateOfBirth
+    ? typeof current.dateOfBirth === "string"
+      ? current.dateOfBirth
+      : new Date(current.dateOfBirth as unknown as string).toISOString().split("T")[0]
+    : null;
 
   return (
     <div className="container max-w-2xl mx-auto px-4 py-8 h-full grow">
@@ -38,6 +50,12 @@ export default async function ProfilePage() {
           name: current.name ?? "",
           email: current.email ?? "",
           image: current.image ?? "",
+          fieldInterests: current.fieldInterests ?? [],
+          opportunityInterests: current.opportunityInterests ?? [],
+          dateOfBirth: dobStr,
+          collegeInstitute: current.collegeInstitute ?? null,
+          contactNumber: current.contactNumber ?? null,
+          currentRole: current.currentRole ?? null,
         }}
       />
     </div>

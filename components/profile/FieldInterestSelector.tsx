@@ -10,8 +10,14 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Control } from "react-hook-form";
+import { Control, useWatch } from "react-hook-form";
 import { cn } from "@/lib/utils";
+
+type ProfileFormValues = {
+  name?: string;
+  fieldInterests?: string[];
+  fieldInterestOther?: string;
+};
 
 type Props = {
   control: Control<any>;
@@ -34,6 +40,9 @@ const PRESET_INTERESTS: string[] = [
 
 export function FieldInterestSelector({ control, isEditing }: Props) {
   const selectableInterests = useMemo(() => PRESET_INTERESTS, []);
+  const otherValue = useWatch({ control, name: "fieldInterestOther" }) as
+    | string
+    | undefined;
 
   return (
     <FormField
@@ -76,27 +85,47 @@ export function FieldInterestSelector({ control, isEditing }: Props) {
                         opt === "Other"
                           ? selected.includes("Other") || hasCustom
                           : selected.includes(opt);
+                      // decide label
+                      const displayLabel =
+                        opt === "Other" && (selected.includes("Other") || hasCustom)
+                          ? "Other"
+                          : opt;
+
+                      const showCustomBadge =
+                        opt === "Other" && (selected.includes("Other") || hasCustom) && (otherValue || "").trim().length > 0;
+
                       return (
-                        <Badge
-                          key={opt}
-                          variant={isActive ? "default" : "outline"}
-                          className={cn(
-                            "text-xs cursor-pointer transition-all px-2 py-0.5 h-auto",
-                            isActive
-                              ? "bg-blue-100 text-blue-800 hover:bg-blue-200 border-transparent"
-                              : "bg-gray-50 text-gray-500 hover:bg-gray-100 border-gray-200"
+                        <>
+                          {showCustomBadge && (
+                            <Badge
+                              key={`${opt}-custom`}
+                              variant="default"
+                              className="text-xs px-2 py-0.5 h-auto bg-blue-100 text-blue-800 hover:bg-blue-200 border-transparent"
+                            >
+                              {(otherValue || "").trim()}
+                            </Badge>
                           )}
-                          onClick={() => {
-                            const next = isActive
-                              ? selected.filter((s: string) => s !== opt)
-                              : [...selected, opt];
-                            field.onChange(next);
-                          }}
-                          role="checkbox"
-                          aria-checked={isActive}
-                        >
-                          {opt}
-                        </Badge>
+                          <Badge
+                            key={opt}
+                            variant={isActive ? "default" : "outline"}
+                            className={cn(
+                              "text-xs cursor-pointer transition-all px-2 py-0.5 h-auto",
+                              isActive
+                                ? "bg-blue-100 text-blue-800 hover:bg-blue-200 border-transparent"
+                                : "bg-gray-50 text-gray-500 hover:bg-gray-100 border-gray-200"
+                            )}
+                            onClick={() => {
+                              const next = isActive
+                                ? selected.filter((s: string) => s !== opt)
+                                : [...selected, opt];
+                              field.onChange(next);
+                            }}
+                            role="checkbox"
+                            aria-checked={isActive}
+                          >
+                            {displayLabel}
+                          </Badge>
+                        </>
                       );
                     })}
                   </div>

@@ -13,12 +13,6 @@ import { Input } from "@/components/ui/input";
 import { Control, useWatch } from "react-hook-form";
 import { cn } from "@/lib/utils";
 
-type ProfileFormValues = {
-  name?: string;
-  fieldInterests?: string[];
-  fieldInterestOther?: string;
-};
-
 type Props = {
   control: Control<any>;
   isEditing: boolean;

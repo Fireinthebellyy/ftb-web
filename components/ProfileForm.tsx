@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -92,7 +91,6 @@ const formSchema = z
 
 export default function ProfileForm({ user }: { user: ProfileUser }) {
   const [isEditing] = useState(true);
-  const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [files, setFiles] = useState<FileItem[]>([]);
   const maxFiles = 1;

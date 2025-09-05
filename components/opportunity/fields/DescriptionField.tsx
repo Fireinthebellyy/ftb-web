@@ -62,7 +62,7 @@ export function DescriptionField({ control }: Props) {
                 {...field}
                 placeholder="Tell us more about this opportunity... (include URLs if needed) *"
                 rows={4}
-                className="thin-scrollbar h-[100px] max-h-[300px] resize-none overflow-y-auto border-none px-0 shadow-none placeholder:text-gray-400 focus-visible:ring-0 md:max-h-[200px]"
+                className="thin-scrollbar max-h-[300px] min-h-[100px] resize-none overflow-y-auto border-none px-0 shadow-none placeholder:text-gray-400 focus-visible:ring-0 md:max-h-[200px]"
               />
               <HorizontalCountProgressBar field={field} />
             </div>

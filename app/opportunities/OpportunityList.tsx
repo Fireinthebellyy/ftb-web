@@ -63,8 +63,8 @@ export default function OpportunityCardsPage() {
         filterType === "all"
           ? true
           : Array.isArray(opportunity.type)
-          ? opportunity.type.includes(filterType)
-          : opportunity.type === filterType;
+            ? opportunity.type.includes(filterType)
+            : opportunity.type === filterType;
 
       return matchesSearch && matchesType;
     })
@@ -98,7 +98,7 @@ export default function OpportunityCardsPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <div className="container mx-auto max-w-7xl px-4 py-6">
         <Alert className="border-red-200 bg-red-50">
           <AlertDescription className="text-red-800">
             Error loading opportunities: {(error as Error).message}
@@ -111,13 +111,13 @@ export default function OpportunityCardsPage() {
   return (
     <div className="h-full grow bg-gray-50">
       {/* Header - Full width */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-6 sm:px-6 sm:py-8 max-w-7xl">
+      <div className="border-b bg-white">
+        <div className="container mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
           <div className="text-center">
-            <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2 sm:mb-4">
+            <h1 className="mb-2 text-2xl font-bold text-gray-900 sm:mb-4 sm:text-4xl">
               Discover Opportunities
             </h1>
-            <p className="text-sm sm:text-lg text-gray-600 mb-4">
+            <p className="mb-4 text-sm text-gray-600 sm:text-lg">
               Find hackathons, grants, competitions, and more.
             </p>
             <Button
@@ -132,7 +132,7 @@ export default function OpportunityCardsPage() {
               onOpenChange={setIsNewOpportunityOpen}
             >
               <DialogContent
-                className="md:min-w-[600px] mx-auto"
+                className="mx-auto [-ms-overflow-style:none] [scrollbar-width:none] md:max-h-[600px] md:min-w-[600px] [&::-webkit-scrollbar]:hidden"
                 overlayClassName="backdrop-blur-xs bg-black/30"
               >
                 <NewOpportunityForm
@@ -147,12 +147,12 @@ export default function OpportunityCardsPage() {
       </div>
 
       {/* Main Content with 3-column layout */}
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <div className="container mx-auto max-w-7xl px-4 py-6">
         {/* Mobile: Search and Filters (stays the same) */}
-        <div className="bg-white border rounded-lg px-4 py-3 mb-6 lg:hidden">
+        <div className="mb-6 rounded-lg border bg-white px-4 py-3 lg:hidden">
           <div className="flex gap-2">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <div className="relative flex-1">
+              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
               <Input
                 placeholder="Search..."
                 value={searchTerm}
@@ -163,7 +163,7 @@ export default function OpportunityCardsPage() {
             <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm" className="px-3">
-                  <Filter className="w-4 h-4" />
+                  <Filter className="h-4 w-4" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="bottom" className="h-[400px]">
@@ -173,9 +173,9 @@ export default function OpportunityCardsPage() {
                     Customize your opportunity search
                   </SheetDescription>
                 </SheetHeader>
-                <div className="space-y-4 mt-4 px-4">
+                <div className="mt-4 space-y-4 px-4">
                   <div>
-                    <label className="text-sm font-medium mb-2 block">
+                    <label className="mb-2 block text-sm font-medium">
                       Filter by Type
                     </label>
                     <Select value={filterType} onValueChange={setFilterType}>
@@ -196,7 +196,7 @@ export default function OpportunityCardsPage() {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium mb-2 block">
+                    <label className="mb-2 block text-sm font-medium">
                       Sort by
                     </label>
                     <Select value={sortBy} onValueChange={setSortBy}>
@@ -239,19 +239,19 @@ export default function OpportunityCardsPage() {
         </div>
 
         {/* Desktop: 3-Column Layout */}
-        <div className="hidden lg:grid lg:grid-cols-12 gap-6">
+        <div className="hidden gap-6 lg:grid lg:grid-cols-12">
           {/* Left Sidebar - 3 columns */}
           <aside className="col-span-3">
             <div className="sticky top-6 space-y-6">
               {/* Search and Filters */}
-              <div className="bg-white rounded-lg border p-4">
-                <h3 className="font-semibold text-gray-900 mb-4">
+              <div className="rounded-lg border bg-white p-4">
+                <h3 className="mb-4 font-semibold text-gray-900">
                   Search & Filter
                 </h3>
 
                 {/* Search */}
                 <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
                   <Input
                     placeholder="Search opportunities..."
                     value={searchTerm}
@@ -262,7 +262,7 @@ export default function OpportunityCardsPage() {
 
                 {/* Filter */}
                 <div className="mb-4">
-                  <label className="text-sm font-medium mb-2 block">Type</label>
+                  <label className="mb-2 block text-sm font-medium">Type</label>
                   <Select value={filterType} onValueChange={setFilterType}>
                     <SelectTrigger>
                       <SelectValue placeholder="All Types" />
@@ -280,7 +280,7 @@ export default function OpportunityCardsPage() {
 
                 {/* Sort */}
                 <div className="mb-4">
-                  <label className="text-sm font-medium mb-2 block">
+                  <label className="mb-2 block text-sm font-medium">
                     Sort by
                   </label>
                   <Select value={sortBy} onValueChange={setSortBy}>
@@ -297,7 +297,7 @@ export default function OpportunityCardsPage() {
                 </div>
 
                 {/* Results count */}
-                <div className="text-sm text-gray-600 mb-3">
+                <div className="mb-3 text-sm text-gray-600">
                   {filteredAndSortedOpportunities.length} of{" "}
                   {opportunities.length} results
                 </div>
@@ -314,14 +314,14 @@ export default function OpportunityCardsPage() {
               </div>
 
               {/* Additional Sidebar Content */}
-              <div className="bg-white rounded-lg border p-4">
-                <h3 className="font-semibold text-gray-900 mb-3">
+              <div className="rounded-lg border bg-white p-4">
+                <h3 className="mb-3 font-semibold text-gray-900">
                   Quick Links
                 </h3>
                 <div className="space-y-2">
                   <p
                     onClick={() => setIsNewOpportunityOpen(true)}
-                    className="block text-sm text-blue-600 hover:text-blue-800 cursor-pointer"
+                    className="block cursor-pointer text-sm text-blue-600 hover:text-blue-800"
                   >
                     Post Opportunity
                   </p>
@@ -349,11 +349,11 @@ export default function OpportunityCardsPage() {
                 {[...Array(3)].map((_, index) => (
                   <div
                     key={index}
-                    className="bg-white rounded-lg p-4 space-y-4"
+                    className="space-y-4 rounded-lg bg-white p-4"
                   >
                     <div className="flex items-center space-x-3">
                       <Skeleton className="h-10 w-10 rounded-full" />
-                      <div className="space-y-2 flex-1">
+                      <div className="flex-1 space-y-2">
                         <Skeleton className="h-4 w-32" />
                         <Skeleton className="h-3 w-24" />
                       </div>
@@ -378,14 +378,14 @@ export default function OpportunityCardsPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12 bg-white rounded-lg border">
-                    <div className="text-gray-400 mb-4">
-                      <Search className="w-12 h-12 mx-auto" />
+                  <div className="rounded-lg border bg-white py-12 text-center">
+                    <div className="mb-4 text-gray-400">
+                      <Search className="mx-auto h-12 w-12" />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                    <h3 className="mb-2 text-lg font-semibold text-gray-600">
                       No opportunities found
                     </h3>
-                    <p className="text-gray-500 mb-4">
+                    <p className="mb-4 text-gray-500">
                       Try adjusting your search criteria
                     </p>
                     <Button onClick={clearFilters} variant="outline">
@@ -401,8 +401,8 @@ export default function OpportunityCardsPage() {
           <aside className="col-span-3">
             <div className="sticky top-6 space-y-6">
               {/* Featured Posts */}
-              <div className="bg-white rounded-lg border p-4">
-                <h3 className="font-semibold text-gray-900 mb-4">Featured</h3>
+              <div className="rounded-lg border bg-white p-4">
+                <h3 className="mb-4 font-semibold text-gray-900">Featured</h3>
                 {featured && featured.length > 0 ? (
                   <ul className="space-y-4">
                     {featured.map((item, index) => (
@@ -411,7 +411,7 @@ export default function OpportunityCardsPage() {
                         className="flex items-start space-x-3"
                       >
                         <div
-                          className={`relative w-12 h-12 rounded ${
+                          className={`relative h-12 w-12 rounded ${
                             !item.thumbnail
                               ? "bg-gradient-to-br from-gray-100 to-gray-200"
                               : ""
@@ -421,14 +421,14 @@ export default function OpportunityCardsPage() {
                             <Image
                               src={item.thumbnail.asset.url}
                               alt={item.title}
-                              className="w-12 h-12 rounded object-cover"
+                              className="h-12 w-12 rounded object-cover"
                               width={100}
                               height={100}
                             />
                           ) : (
                             <div className="absolute inset-0 flex items-center justify-center">
                               <svg
-                                className="w-6 h-6 text-gray-400"
+                                className="h-6 w-6 text-gray-400"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -448,15 +448,14 @@ export default function OpportunityCardsPage() {
                             href={item.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="font-medium
-                            text-sm text-blue-600 hover:underline"
+                            className="text-sm font-medium text-blue-600 hover:underline"
                           >
                             {item.title.length > 30
                               ? `${item.title.substring(0, 30)}...`
                               : item.title}
                           </a>
                           {item.description && (
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="mt-1 text-xs text-gray-500">
                               {item.description.length > 30
                                 ? `${item.description.substring(0, 30)}...`
                                 : item.description}
@@ -467,37 +466,37 @@ export default function OpportunityCardsPage() {
                     ))}
                   </ul>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <div className="text-4xl mb-2">🌟</div>
+                  <div className="py-8 text-center text-gray-500">
+                    <div className="mb-2 text-4xl">🌟</div>
                     <p className="text-sm">No featured posts yet</p>
                   </div>
                 )}
               </div>
 
               {/* Trending Tags */}
-              <div className="bg-white rounded-lg border p-4">
-                <h3 className="font-semibold text-gray-900 mb-4">
+              <div className="rounded-lg border bg-white p-4">
+                <h3 className="mb-4 font-semibold text-gray-900">
                   Trending Tags
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                  <span className="rounded bg-blue-100 px-2 py-1 text-xs text-blue-800">
                     #ai
                   </span>
-                  <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+                  <span className="rounded bg-green-100 px-2 py-1 text-xs text-green-800">
                     #blockchain
                   </span>
-                  <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">
+                  <span className="rounded bg-purple-100 px-2 py-1 text-xs text-purple-800">
                     #web3
                   </span>
-                  <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded">
+                  <span className="rounded bg-orange-100 px-2 py-1 text-xs text-orange-800">
                     #startup
                   </span>
                 </div>
               </div>
 
               {/* Stats */}
-              <div className="bg-white rounded-lg border p-4">
-                <h3 className="font-semibold text-gray-900 mb-4">
+              <div className="rounded-lg border bg-white p-4">
+                <h3 className="mb-4 font-semibold text-gray-900">
                   Platform Stats
                 </h3>
                 <div className="space-y-3">
@@ -524,10 +523,10 @@ export default function OpportunityCardsPage() {
           {isLoading && (
             <div className="space-y-4">
               {[...Array(3)].map((_, index) => (
-                <div key={index} className="bg-white rounded-lg p-4 space-y-4">
+                <div key={index} className="space-y-4 rounded-lg bg-white p-4">
                   <div className="flex items-center space-x-3">
                     <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="space-y-2 flex-1">
+                    <div className="flex-1 space-y-2">
                       <Skeleton className="h-4 w-32" />
                       <Skeleton className="h-3 w-24" />
                     </div>
@@ -552,14 +551,14 @@ export default function OpportunityCardsPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 bg-white rounded-lg border">
-                  <div className="text-gray-400 mb-4">
-                    <Search className="w-12 h-12 mx-auto" />
+                <div className="rounded-lg border bg-white py-12 text-center">
+                  <div className="mb-4 text-gray-400">
+                    <Search className="mx-auto h-12 w-12" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                  <h3 className="mb-2 text-lg font-semibold text-gray-600">
                     No opportunities found
                   </h3>
-                  <p className="text-gray-500 mb-4">
+                  <p className="mb-4 text-gray-500">
                     Try adjusting your search criteria
                   </p>
                   <Button onClick={clearFilters} variant="outline">

@@ -189,7 +189,7 @@ export default function NewOpportunityForm({
 
           {/* Bottom Action Bar */}
           <div className="flex items-center justify-between pt-2">
-            <div className="flex gap-4 items-center">
+            <div className="flex items-center gap-4">
               <MetaPopovers
                 control={form.control}
                 watchedLocation={watchedLocation}

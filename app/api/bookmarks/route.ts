@@ -10,17 +10,24 @@ export async function POST(req: Request) {
   try {
     const { userId, opportunityId } = await req.json();
 
-
     // Check if bookmark already exists
     const existingBookmark = await db
       .select({ id: bookmarks.id })
       .from(bookmarks)
-      .where(and(eq(bookmarks.userId, userId), eq(bookmarks.opportunityId, opportunityId)))
+      .where(
+        and(
+          eq(bookmarks.userId, userId),
+          eq(bookmarks.opportunityId, opportunityId)
+        )
+      )
       .limit(1);
 
     if (existingBookmark.length > 0) {
       // Bookmark already exists, return success
-      return NextResponse.json({ success: true, message: "Already bookmarked" });
+      return NextResponse.json({
+        success: true,
+        message: "Already bookmarked",
+      });
     }
 
     // Create new bookmark
@@ -45,7 +52,12 @@ export async function DELETE(req: Request) {
 
     await db
       .delete(bookmarks)
-      .where(and(eq(bookmarks.userId, userId), eq(bookmarks.opportunityId, opportunityId)));
+      .where(
+        and(
+          eq(bookmarks.userId, userId),
+          eq(bookmarks.opportunityId, opportunityId)
+        )
+      );
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -68,45 +80,63 @@ export async function GET() {
 
     // Fetch user's bookmarks
     const data = await db
-    .select({
-      bookmarkId: bookmarks.id,
-      opportunityId: opportunities.id,
-      title: opportunities.title,
-      type: opportunities.type,
-      description: opportunities.description,
-      endDate: opportunities.endDate,
-      daysDiff: sql`DATE_PART('day', ${opportunities.endDate} - NOW())`
-    })
-    .from(bookmarks)
-    .innerJoin(opportunities, eq(bookmarks.opportunityId, opportunities.id))
-    .where(eq(bookmarks.userId, session.user.id));
+      .select({
+        bookmarkId: bookmarks.id,
+        opportunityId: opportunities.id,
+        title: opportunities.title,
+        type: opportunities.type,
+        description: opportunities.description,
+        endDate: opportunities.endDate,
+        daysDiff: sql`DATE_PART('day', ${opportunities.endDate} - NOW())`,
+      })
+      .from(bookmarks)
+      .innerJoin(opportunities, eq(bookmarks.opportunityId, opportunities.id))
+      .where(eq(bookmarks.userId, session.user.id));
 
-  // Separate into future and past
-  const future = [];
-  const past = [];
+    // Separate into upcoming, closed and uncategorized (endDate IS NULL)
+    const upcoming: any[] = [];
+    const closed: any[] = [];
+    const uncategorized: any[] = [];
 
-  data.forEach(item => {
-    const diff = Number(item.daysDiff);
-    if (diff >= 0) {
-      future.push({
+    data.forEach((item: any) => {
+      // Items without an endDate are uncategorized
+      if (item.endDate == null) {
+        uncategorized.push({
+          title: item.title,
+          description: item.description,
+          type: item.type,
+          endDate: null,
+          daysDiff: null,
+        });
+        return;
+      }
+
+      // Prefer SQL-provided daysDiff, fallback to server-side calculation
+      const rawDiff = Number(item.daysDiff);
+      let daysDiff: number;
+      if (Number.isFinite(rawDiff)) {
+        daysDiff = Math.trunc(rawDiff);
+      } else {
+        const diffMs = new Date(item.endDate).getTime() - Date.now();
+        daysDiff = Math.trunc(diffMs / (1000 * 60 * 60 * 24));
+      }
+
+      const payload = {
         title: item.title,
         description: item.description,
         type: item.type,
         endDate: item.endDate,
-        daysDiff: diff
-      });
-    } else {
-      past.push({
-        title: item.title,
-        description: item.description,
-        type: item.type,
-        endDate: item.endDate,
-        daysDiff: diff
-      });
-    }
-  });
+        daysDiff,
+      };
 
-  return NextResponse.json({ future, past });
+      if (daysDiff >= 0) {
+        upcoming.push(payload);
+      } else {
+        closed.push(payload);
+      }
+    });
+
+    return NextResponse.json({ upcoming, closed, uncategorized });
   } catch (error) {
     console.error(error);
     return NextResponse.json(

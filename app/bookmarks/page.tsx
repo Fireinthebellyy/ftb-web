@@ -2,18 +2,24 @@
 
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { CalendarDays } from "lucide-react";
-import { format } from "date-fns";
+import {
+  CalendarDays,
+  Clock,
+  AlertTriangle,
+  XCircle,
+  CircleQuestionMark,
+} from "lucide-react";
+import { format, differenceInCalendarDays } from "date-fns";
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 type BookmarkItem = {
   title: string;
-  description: string;
-  endDate: string; 
-  daysDiff: number; 
-  type?: string | string[]; 
+  description?: string;
+  endDate?: string | null;
+  daysDiff?: number | null;
+  type?: string | string[];
 };
 
 function getTypeLabel(type?: string | string[]): string | undefined {
@@ -35,9 +41,33 @@ function getTypeBadgeClasses(type?: string): string {
 }
 
 export default function BookmarksPage() {
-  const [items, setItems] = useState<BookmarkItem[]>([]);
+  const [upcoming, setUpcoming] = useState<BookmarkItem[]>([]);
+  const [closed, setClosed] = useState<BookmarkItem[]>([]);
+  const [uncategorized, setUncategorized] = useState<BookmarkItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  const memoizedUpcoming = useMemo(() => {
+    return [...upcoming].sort(
+      (a, b) =>
+        (new Date(a.endDate ?? 0).getTime() || 0) -
+        (new Date(b.endDate ?? 0).getTime() || 0)
+    );
+  }, [upcoming]);
+
+  const memoizedClosed = useMemo(() => {
+    return [...closed].sort(
+      (a, b) =>
+        (new Date(b.endDate ?? 0).getTime() || 0) -
+        (new Date(a.endDate ?? 0).getTime() || 0)
+    );
+  }, [closed]);
+
+  const memoizedUncategorized = useMemo(() => {
+    return [...uncategorized].sort((a, b) =>
+      (a.title || "").localeCompare(b.title || "")
+    );
+  }, [uncategorized]);
 
   useEffect(() => {
     let mounted = true;
@@ -45,13 +75,41 @@ export default function BookmarksPage() {
       try {
         setLoading(true);
         const res = await axios.get("/api/bookmarks");
-        // API now returns { future: BookmarkItem[], past: BookmarkItem[] }
-        const futureItems = res.data?.future || [];
-        const pastItems = res.data?.past || [];
-        const allItems = [...futureItems, ...pastItems];
-        if (mounted) setItems(allItems);
+        // API returns { upcoming, closed, uncategorized }
+        const apiUpcoming: any[] = res.data?.upcoming || [];
+        const apiClosed: any[] = res.data?.closed || [];
+        const apiUncategorized: any[] = res.data?.uncategorized || [];
+
+        const normalize = (arr: any[]) =>
+          arr.map((it) => {
+            const endDate = it?.endDate ?? null;
+            const daysDiff =
+              typeof it?.daysDiff === "number"
+                ? it.daysDiff
+                : endDate
+                  ? differenceInCalendarDays(new Date(endDate), new Date())
+                  : null;
+            return {
+              title: it.title,
+              description: it.description,
+              type: it.type,
+              endDate,
+              daysDiff,
+            } as BookmarkItem;
+          });
+
+        if (mounted) {
+          setUpcoming(normalize(apiUpcoming));
+          setClosed(normalize(apiClosed));
+          setUncategorized(normalize(apiUncategorized));
+        }
       } catch (e: any) {
-        if (mounted) setError(e?.response?.status === 401 ? "unauthorized" : e?.message || "Failed to load");
+        if (mounted)
+          setError(
+            e?.response?.status === 401
+              ? "unauthorized"
+              : e?.message || "Failed to load"
+          );
       } finally {
         if (mounted) setLoading(false);
       }
@@ -61,48 +119,45 @@ export default function BookmarksPage() {
     };
   }, []);
 
-  const upcoming = useMemo(
-    () =>
-      items
-        .filter((b) => b.daysDiff >= 0)
-        .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime()),
-    [items]
-  );
-
-  const past = useMemo(
-    () =>
-      items
-        .filter((b) => b.daysDiff < 0)
-        .sort((a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime()),
-    [items]
-  );
-
-  const DaysBadge = ({ value }: { value: number }) => {
-    const abs = Math.abs(value);
-    const label = value > 0 ? "days" : value === 0 ? "today" : "days ago";
-    return (
-      <Badge className="bg-green-700 text-white rounded-full px-3 py-1 min-w-[86px] flex items-center justify-center gap-1">
-        {label === "today" ? (
-          <span className="text-sm font-semibold">Today</span>
-        ) : (
-          <>
-            <span className="text-lg font-bold leading-none">{abs}</span>
-            <span className="text-xs leading-none">{label}</span>
-          </>
-        )}
-      </Badge>
-    );
-  };
-
   const BookmarkCard = ({ item }: { item: BookmarkItem }) => {
     const typeLabel = getTypeLabel(item.type);
+    const noDeadlineText = useMemo(() => {
+      const options = ["No deadline", "Needs more info?", "Ask the organiser"];
+      const idx = Math.floor(Math.random() * options.length);
+      return options[idx];
+    }, [item.title]);
     return (
       <Card className="py-0">
-        <CardContent className="p-3 sm:p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
+        <div className="rounded-lg bg-neutral-200 px-[2px] pb-[2px] shadow">
+          <p className="flex items-center gap-1 px-2 py-2 text-xs">
+            {typeof item.daysDiff === "number" ? (
+              item.daysDiff > 0 ? (
+                <>
+                  <Clock className="h-3 w-3" />
+                  <span>{item.daysDiff} days left to apply</span>
+                </>
+              ) : item.daysDiff === 0 ? (
+                <>
+                  <AlertTriangle className="h-3 w-3 text-yellow-600" />
+                  <span>Deadline is today</span>
+                </>
+              ) : (
+                <>
+                  <XCircle className="h-3 w-3 text-red-600" />
+                  <span>Closed {Math.abs(item.daysDiff)} days ago</span>
+                </>
+              )
+            ) : (
+              <>
+                <CircleQuestionMark className="h-3 w-3" />
+                <span>{noDeadlineText}</span>
+              </>
+            )}
+          </p>
+          <div className="flex items-center rounded-lg bg-neutral-50 p-2 shadow">
+            <div className="w-full">
               <div className="flex items-center justify-between">
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate max-w-[60vw]">
+                <h3 className="max-w-[60vw] truncate text-base font-semibold text-gray-900 sm:text-lg">
                   {item.title}
                 </h3>
                 {typeLabel ? (
@@ -114,27 +169,37 @@ export default function BookmarksPage() {
                   </Badge>
                 ) : null}
               </div>
-              <div className="mt-1 text-xs sm:text-sm text-gray-600 flex items-center gap-1">
-                <CalendarDays className="w-4 h-4 text-gray-500" />
-                <span>{format(new Date(item.endDate), "MMM dd, yyyy")}</span>
-              </div>
+              {item.endDate && (
+                <div className="mt-1 flex items-center gap-1 text-xs text-gray-600 sm:text-sm">
+                  <CalendarDays className="h-4 w-4 text-gray-500" />
+                  <span>
+                    {item.endDate
+                      ? format(new Date(item.endDate), "MMM dd, yyyy")
+                      : null}
+                  </span>
+                </div>
+              )}
               {item.description ? (
-                <p className="mt-1 text-gray-700 text-sm line-clamp-2 max-w-[70ch]">{item.description}</p>
+                <p className="mt-1 line-clamp-2 max-w-[70ch] text-sm text-gray-700">
+                  {item.description}
+                </p>
               ) : null}
             </div>
-            <DaysBadge value={item.daysDiff} />
           </div>
-        </CardContent>
+        </div>
       </Card>
     );
   };
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-6 max-w-2xl">
+      <div className="container mx-auto max-w-2xl px-4 py-6">
         <div className="space-y-3">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white border rounded-lg p-4 h-25 animate-pulse" />
+            <div
+              key={i}
+              className="h-25 animate-pulse rounded-lg border bg-white p-4"
+            />
           ))}
         </div>
       </div>
@@ -143,9 +208,14 @@ export default function BookmarksPage() {
 
   if (error === "unauthorized") {
     return (
-      <div className="container mx-auto px-4 py-12 max-w-2xl text-center">
-        <p className="text-gray-700 mb-4">Please log in to see your bookmarks.</p>
-        <Link href="/login" className="text-white bg-gradient-to-r from-red-600 to-orange-600 px-4 py-2 rounded inline-block">
+      <div className="container mx-auto max-w-2xl px-4 py-12 text-center">
+        <p className="mb-4 text-gray-700">
+          Please log in to see your bookmarks.
+        </p>
+        <Link
+          href="/login"
+          className="inline-block rounded bg-gradient-to-r from-red-600 to-orange-600 px-4 py-2 text-white"
+        >
           Log in
         </Link>
       </div>
@@ -154,43 +224,54 @@ export default function BookmarksPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-12 max-w-2xl text-center text-red-600">
+      <div className="container mx-auto max-w-2xl px-4 py-12 text-center text-red-600">
         Failed to load bookmarks: {error}
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-2xl">
-      <h1 className="text-2xl font-bold mb-4">Bookmarks</h1>
+    <div className="container mx-auto max-w-2xl px-4 py-6">
+      <h1 className="mb-4 text-2xl font-bold">Bookmarks</h1>
 
       <section className="mb-8">
-        <h2 className="text-md font-semibold text-black mb-2">Future</h2>
-        {upcoming.length ? (
+        <h2 className="text-md mb-2 font-semibold text-black">Upcoming</h2>
+        {memoizedUpcoming.length ? (
           <div className="space-y-4">
-            {upcoming.map((item) => (
+            {memoizedUpcoming.map((item) => (
               <BookmarkCard key={item.title} item={item} />
             ))}
           </div>
         ) : (
-          <div className="text-gray-500 text-sm">No upcoming items</div>
+          <div className="text-sm text-gray-500">No upcoming items</div>
         )}
       </section>
 
-      <section>
-        <h2 className="text-md font-semibold text-black mb-2">Past</h2>
-        {past.length ? (
+      <section className="mb-8">
+        <h2 className="text-md mb-2 font-semibold text-black">Closed</h2>
+        {memoizedClosed.length ? (
           <div className="space-y-4">
-            {past.map((item) => (
+            {memoizedClosed.map((item) => (
               <BookmarkCard key={item.title} item={item} />
             ))}
           </div>
         ) : (
-          <div className="text-gray-500 text-sm">No past items</div>
+          <div className="text-sm text-gray-500">No closed items</div>
+        )}
+      </section>
+
+      <section className="mb-8">
+        <h2 className="text-md mb-2 font-semibold text-black">Uncategorized</h2>
+        {memoizedUncategorized.length ? (
+          <div className="space-y-4">
+            {memoizedUncategorized.map((item) => (
+              <BookmarkCard key={item.title} item={item} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-sm text-gray-500">No uncategorized items</div>
         )}
       </section>
     </div>
   );
 }
-
-

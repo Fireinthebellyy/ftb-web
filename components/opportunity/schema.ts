@@ -20,7 +20,9 @@ export const formSchema = z.object({
     .max(2000, {
       message: "Description must not exceed 2000 characters.",
     }),
-  tags: z.string().optional(),
+  tags: z.string().min(2, {
+    message: "Please add at least one tag.",
+  }),
   location: z.string().optional(),
   organiserInfo: z.string().optional(),
   dateRange: z

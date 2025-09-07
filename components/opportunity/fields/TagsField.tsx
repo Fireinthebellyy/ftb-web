@@ -24,11 +24,11 @@ export function TagsField({ control }: Props) {
         <FormItem>
           <FormControl>
             <div className="flex items-center gap-2 pt-2">
-              <Hash className="w-4 h-4 text-gray-400" />
+              <Hash className="h-4 w-4 text-gray-400" />
               <Input
                 {...field}
                 placeholder="Add tags (ai, blockchain, web3...)"
-                className="border-none px-0 focus-visible:ring-0 placeholder:text-gray-400 text-sm shadow-none"
+                className="border-none px-0 text-sm shadow-none placeholder:text-gray-400 focus-visible:ring-0"
               />
             </div>
           </FormControl>

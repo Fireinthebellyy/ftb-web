@@ -125,3 +125,33 @@ html, body, #__next {
     @apply bg-background text-foreground;
   }
 }
+
+/* Thin scrollbar utility — very slim, works in WebKit and Firefox */
+.thin-scrollbar {
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.35) transparent;
+}
+
+/* WebKit */
+.thin-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.35);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Dark mode variant */
+.dark .thin-scrollbar {
+  scrollbar-color: rgba(255,255,255,0.18) transparent;
+}
+.dark .thin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(255,255,255,0.18);
+}

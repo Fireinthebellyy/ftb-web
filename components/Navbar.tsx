@@ -1,13 +1,13 @@
-'use client';
-import { motion } from 'framer-motion';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { authClient } from '@/lib/auth-client';
-import { useRouter } from 'next/navigation';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from './ui/button';
-import { Righteous } from 'next/font/google';
+"use client";
+import { motion } from "framer-motion";
+import Image from "next/image";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "./ui/button";
+import { Righteous } from "next/font/google";
 
 function useLogout() {
   const router = useRouter();
@@ -21,7 +21,7 @@ function useLogout() {
     } catch {
       // ignore errors; we still route home
     } finally {
-      router.push('/');
+      router.push("/");
       inFlight.current = false;
     }
   }, [router]);
@@ -30,9 +30,9 @@ function useLogout() {
 }
 
 const righteous = Righteous({
-  weight: '400',
-  subsets: ['latin'],
-  variable: '--font-righteous',
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-righteous",
 });
 
 export default function Navbar() {
@@ -45,17 +45,17 @@ export default function Navbar() {
   const menuRef = useRef<HTMLDivElement | null>(null);
   const firstItemRef = useRef<HTMLButtonElement | null>(null);
   const lastItemRef = useRef<HTMLButtonElement | null>(null);
-  const menuId = 'nav-avatar-menu';
+  const menuId = "nav-avatar-menu";
 
   const handleLogout = useLogout();
 
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsOpen(false);
+      if (e.key === "Escape") setIsOpen(false);
     };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
 
   useEffect(() => {
@@ -71,19 +71,19 @@ export default function Navbar() {
         setMenuOpen(false);
       }
     };
-    document.addEventListener('mousedown', onDocClick);
-    return () => document.removeEventListener('mousedown', onDocClick);
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
   }, [menuOpen]);
 
   // Manage keyboard navigation within the menu
   const onMenuKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       e.preventDefault();
       setMenuOpen(false);
       triggerRef.current?.focus();
       return;
     }
-    if (e.key === 'ArrowDown') {
+    if (e.key === "ArrowDown") {
       e.preventDefault();
       (document.activeElement === lastItemRef.current
         ? firstItemRef.current
@@ -93,7 +93,7 @@ export default function Navbar() {
       )?.focus();
       return;
     }
-    if (e.key === 'ArrowUp') {
+    if (e.key === "ArrowUp") {
       e.preventDefault();
       (document.activeElement === firstItemRef.current
         ? lastItemRef.current
@@ -103,7 +103,7 @@ export default function Navbar() {
       )?.focus();
       return;
     }
-    if (e.key === 'Tab') {
+    if (e.key === "Tab") {
       // trap focus within menu
       if (e.shiftKey && document.activeElement === firstItemRef.current) {
         e.preventDefault();
@@ -126,14 +126,14 @@ export default function Navbar() {
   }, [menuOpen]);
 
   const avatarFallback = useMemo(() => {
-    const name = user?.user?.name || user?.user?.email || '';
+    const name = user?.user?.name || user?.user?.email || "";
     const letters = name
-      ?.split(' ')
+      ?.split(" ")
       .map((n: string) => n[0])
-      .join('')
+      .join("")
       .slice(0, 2)
       .toUpperCase();
-    return letters || 'U';
+    return letters || "U";
   }, [user]);
 
   return (
@@ -158,31 +158,27 @@ export default function Navbar() {
             >
               Fire in the Belly
             </span>
-            <span
-              className={`${righteous.className} bg-primary bg-clip-text text-xl font-bold tracking-wide text-transparent sm:hidden`}
-            >
-              FTB
-            </span>
           </Link>
         </div>
 
         <nav className="hidden justify-center gap-4 sm:gap-6 md:flex">
           <Link
             href="/opportunities"
-            className="text-sm font-medium transition-colors duration-200 hover:text-gray-600"
+            className="relative text-sm font-medium text-neutral-800 transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-0 after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full"
           >
             Opportunities
           </Link>
+
           <Link
             href="/featured"
-            className="text-sm font-medium transition-colors duration-200 hover:text-gray-600"
+            className="relative text-sm font-medium text-neutral-800 transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-0 after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full"
           >
             Featured
           </Link>
         </nav>
 
         {/* Right side: auth controls and Get Started button */}
-        <div className="flex items-center justify-end space-x-2 md:space-x-4">
+        <div className="flex items-center justify-end space-x-1 md:space-x-4">
           {isPending ? (
             <div role="status">
               <svg
@@ -204,20 +200,20 @@ export default function Navbar() {
               <span className="sr-only">Loading...</span>
             </div>
           ) : user ? (
-            <div className="relative">
+            <div className="relative flex items-center">
               <button
                 ref={triggerRef}
                 type="button"
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
                 aria-controls={menuId}
-                className="rounded-full focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="rounded-full focus:ring-2 focus:ring-neutral-500 focus:outline-none"
                 onClick={() => setMenuOpen((v) => !v)}
                 onKeyDown={(e) => {
                   if (
-                    (e.key === 'ArrowDown' ||
-                      e.key === 'Enter' ||
-                      e.key === ' ') &&
+                    (e.key === "ArrowDown" ||
+                      e.key === "Enter" ||
+                      e.key === " ") &&
                     !menuOpen
                   ) {
                     e.preventDefault();
@@ -225,10 +221,10 @@ export default function Navbar() {
                   }
                 }}
               >
-                <Avatar>
+                <Avatar className="size-6">
                   <AvatarImage
                     src={(user.user as any)?.image || undefined}
-                    alt={user.user.name || 'User avatar'}
+                    alt={user.user.name || "User avatar"}
                     className="object-cover"
                   />
                   <AvatarFallback>{avatarFallback}</AvatarFallback>
@@ -242,7 +238,7 @@ export default function Navbar() {
                   role="menu"
                   aria-labelledby={undefined}
                   tabIndex={-1}
-                  className="bg-popover text-popover-foreground absolute right-0 mt-2 w-40 rounded-md border p-1 shadow-md"
+                  className="bg-popover text-popover-foreground absolute top-full right-0 z-50 w-40 rounded-md border p-1 shadow-md"
                   onKeyDown={onMenuKeyDown}
                 >
                   <button
@@ -252,7 +248,7 @@ export default function Navbar() {
                     onClick={() => {
                       setMenuOpen(false);
                       // use client-side navigation to profile
-                      window.location.href = '/profile';
+                      window.location.href = "/profile";
                     }}
                   >
                     Profile
@@ -276,7 +272,7 @@ export default function Navbar() {
               <Button asChild variant="outline" size="sm">
                 <Link href="/login">Log in</Link>
               </Button>
-              <Button asChild size="sm" variant='primary'>
+              <Button asChild size="sm" variant="primary">
                 <Link href="/signup">Get Started</Link>
               </Button>
             </div>
@@ -285,7 +281,7 @@ export default function Navbar() {
           {/* Mobile hamburger kept for existing site structure */}
           <button
             onClick={() => setIsOpen(true)}
-            className="ml-3 focus:outline-none md:hidden"
+            className="ml-1 focus:outline-none md:hidden"
             aria-label="Open menu"
             aria-haspopup="true"
             aria-expanded={isOpen}
@@ -310,13 +306,13 @@ export default function Navbar() {
       {/* Mobile Overlay Menu - unchanged items except auth-driven ones are hidden by avatar-only requirement on desktop; keep for mobile pages */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex min-h-dvh flex-col items-center justify-center bg-white bg-opacity-95 md:hidden"
+          className="bg-opacity-95 fixed inset-0 z-50 flex min-h-dvh flex-col items-center justify-center bg-white md:hidden"
           role="dialog"
           aria-modal="true"
         >
           <button
             onClick={() => setIsOpen(false)}
-            className="absolute right-6 top-6 focus:outline-none"
+            className="absolute top-6 right-6 focus:outline-none"
             aria-label="Close menu"
           >
             <svg

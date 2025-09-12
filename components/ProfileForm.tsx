@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -90,10 +89,8 @@ const formSchema = z
     }
   });
 
-export default function ProfileForm({ user }: { user: ProfileUser }) {
-  // Editing state: opt-in by default (view mode initially)
-  const [isEditing, setIsEditing] = useState(false);
-  const router = useRouter();
+export default function ProfileForm({ user, onProgressChange }: { user: ProfileUser; onProgressChange?: (value: number) => void }) {
+  const [isEditing] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [files, setFiles] = useState<FileItem[]>([]);
   const maxFiles = 1;
@@ -117,33 +114,6 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
       currentRoleOther: "",
     },
   });
-
-  const handleResetInterests = useCallback(async () => {
-    try {
-      setSubmitting(true);
-      const payload: { name: string; image?: string | null; fieldInterests?: string[] } = {
-        name: form.getValues("name") ?? user.name ?? "",
-        image: user.image ?? null,
-        fieldInterests: [],
-      };
-      const { data } = await axios.post("/api/profile", payload, {
-        headers: { "Content-Type": "application/json" },
-      });
-      files.forEach((f) => URL.revokeObjectURL(f.preview));
-      setFiles([]);
-      form.reset({
-        name: data.user.name ?? "",
-        fieldInterests: data.user.fieldInterests ?? [],
-        fieldInterestOther: "",
-      });
-      
-    } catch (e) {
-      const err = e as Error;
-      console.error(err);
-    } finally {
-      setSubmitting(false);
-    }
-  }, [files, form, user.image, user.name]);
 
   const hasLocalPreview = files.length > 0 ? files[0]?.preview : "";
   const effectiveAvatar = useMemo(() => {
@@ -226,15 +196,16 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
         ? [...values.opportunityInterests]
         : [];
 
+      // Replace 'Other' with custom text (and remove if empty, though schema prevents empty)
       if (normalizedInterests.includes("Other")) {
-        normalizedInterests = trimmedOther
-          ? normalizedInterests.map((v) => (v === "Other" ? trimmedOther : v))
-          : normalizedInterests.filter((v) => v !== "Other");
+        normalizedInterests = normalizedInterests
+          .map((v) => (v === "Other" ? trimmedOther : v))
+          .filter((v) => !!v && v.trim().length > 0);
       }
       if (normalizedOppInterests.includes("Other")) {
-        normalizedOppInterests = trimmedOppOther
-          ? normalizedOppInterests.map((v) => (v === "Other" ? trimmedOppOther : v))
-          : normalizedOppInterests.filter((v) => v !== "Other");
+        normalizedOppInterests = normalizedOppInterests
+          .map((v) => (v === "Other" ? trimmedOppOther : v))
+          .filter((v) => !!v && v.trim().length > 0);
       }
 
       const payload: { name: string; image?: string | null; fieldInterests?: string[]; opportunityInterests?: string[]; dateOfBirth?: string; collegeInstitute?: string; contactNumber?: string; currentRole?: string } = {
@@ -260,29 +231,20 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
       files.forEach((f) => URL.revokeObjectURL(f.preview));
       setFiles([]);
 
-      // Sync local UI
+      // Sync local UI (keep currentRoleOther so custom badge remains)
       form.reset({
         name: data.user.name ?? "",
         fieldInterests: data.user.fieldInterests ?? [],
-        fieldInterestOther: "",
+        fieldInterestOther: trimmedOther,
         opportunityInterests: data.user.opportunityInterests ?? [],
-        opportunityInterestOther: "",
+        opportunityInterestOther: trimmedOppOther,
         dateOfBirth: data.user.dateOfBirth ? String(data.user.dateOfBirth) : "",
         collegeInstitute: data.user.collegeInstitute ?? "",
         contactNumber: data.user.contactNumber ?? "",
         currentRole: data.user.currentRole ?? "",
-        currentRoleOther: "",
+        currentRoleOther: values.currentRole === "Other" ? (values.currentRoleOther || "") : "",
       });
 
-      
-
-      router.push("/profile");
-
-      // Exit edit mode and announce change
-      setIsEditing(false);
-      if (modeChangeLiveRef.current) {
-        modeChangeLiveRef.current.textContent = "Profile saved. View mode.";
-      }
     } catch (e) {
       const err = e as Error;
       toast.error(err.message || "Something went wrong");
@@ -314,9 +276,41 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
     (watchedValues as any).contactNumber !== initialValuesRef.current.contactNumber ||
     (watchedValues as any).currentRole !== initialValuesRef.current.currentRole;
 
+  // Progress bar 
+  const computeCompleteness = useCallback(() => {
+    const nameFilled = !!(watchedValues as any).name && String((watchedValues as any).name).trim().length > 0;
+    const fieldInterestsFilled = Array.isArray((watchedValues as any).fieldInterests) && (watchedValues as any).fieldInterests.length > 0;
+    const oppInterestsFilled = Array.isArray((watchedValues as any).opportunityInterests) && (watchedValues as any).opportunityInterests.length > 0;
+    const dobFilled = !!(watchedValues as any).dateOfBirth;
+    const collegeFilled = !!(watchedValues as any).collegeInstitute && String((watchedValues as any).collegeInstitute).trim().length > 0;
+    const phoneFilled = !!(watchedValues as any).contactNumber && String((watchedValues as any).contactNumber).trim().length === 10;
+    const roleFilled = !!(watchedValues as any).currentRole && String((watchedValues as any).currentRole).trim().length > 0;
+    const imageFilled = !!effectiveAvatar;
+
+    const checks = [
+      nameFilled,
+      fieldInterestsFilled,
+      oppInterestsFilled,
+      dobFilled,
+      collegeFilled,
+      phoneFilled,
+      roleFilled,
+      imageFilled,
+    ];
+    const filled = checks.filter(Boolean).length;
+    const percent = Math.round((filled / checks.length) * 100);
+    return percent;
+  }, [effectiveAvatar, watchedValues]);
+
+  if (typeof onProgressChange === "function") {
+    const percent = computeCompleteness();
+    try {
+      onProgressChange(percent);
+    } catch {}
+  }
+
   return (
     <div className="space-y-6">
-      {/* live region for mode change announcements */}
       <div
         ref={modeChangeLiveRef}
         role="status"
@@ -359,49 +353,9 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
         </div>
         <div>
           <div className="text-sm text-muted-foreground">Email</div>
-          <div className="text-sm">{user.email}</div>
+          <div className="text-sm break-words break-all">{user.email}</div>
         </div>
-        <div className="ml-auto">
-          {!isEditing ? (
-            <Button
-              type="button"
-              aria-pressed={false}
-              aria-label="Edit Profile"
-              onClick={() => {
-                setIsEditing(true);
-                // announce
-                if (modeChangeLiveRef.current) {
-                  modeChangeLiveRef.current.textContent =
-                    "Edit mode enabled. Form fields are now editable.";
-                }
-                // focus will move after render
-                setTimeout(() => firstEditableRef.current?.focus(), 0);
-              }}
-            >
-              Edit Profile
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              aria-pressed={true}
-              aria-label="Exit edit mode without saving"
-              onClick={() => {
-                // Cancel: revoke previews, reset files and form, exit edit mode
-                files.forEach((f) => URL.revokeObjectURL(f.preview));
-                setFiles([]);
-                form.reset({ name: user.name ?? "", fieldInterests: [], fieldInterestOther: "", opportunityInterests: [], opportunityInterestOther: "" });
-                setIsEditing(false);
-                if (modeChangeLiveRef.current) {
-                  modeChangeLiveRef.current.textContent =
-                    "Edit mode canceled. View mode.";
-                }
-              }}
-            >
-              Cancel
-            </Button>
-          )}
-        </div>
+        <div className="ml-auto" />
       </div>
 
       <Form {...form}>
@@ -412,7 +366,7 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
           aria-describedby="profile-mode-hint"
         >
           <span id="profile-mode-hint" className="sr-only">
-            {isEditing ? "Edit mode." : "View mode."}
+            Edit mode.
           </span>
 
           <FormField
@@ -422,27 +376,20 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
               <FormItem>
                 <FormLabel>Full name</FormLabel>
 
-                {/* View mode: read-only text */}
-                {!isEditing ? (
-                  <div className="py-2 px-3 rounded-md border bg-muted/30 text-sm">
-                    {field.value || "—"}
-                  </div>
-                ) : (
-                  <FormControl>
-                    <Input
-                      placeholder="Your name"
-                      {...field}
-                      ref={(el) => {
-                        // preserve RHF ref
-                        if (typeof field.ref === "function") field.ref(el);
-                        else (field as any).ref = el;
-                        firstEditableRef.current = el;
-                      }}
-                      aria-required="true"
-                      aria-invalid={!!form.formState.errors.name}
-                    />
-                  </FormControl>
-                )}
+                {/* Always editing */}
+                <FormControl>
+                  <Input
+                    placeholder="Your name"
+                    {...field}
+                    ref={(el) => {
+                      if (typeof field.ref === "function") field.ref(el);
+                      else (field as any).ref = el;
+                      firstEditableRef.current = el;
+                    }}
+                    aria-required="true"
+                    aria-invalid={!!form.formState.errors.name}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -457,15 +404,9 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>College / Institute</FormLabel>
-                {!isEditing ? (
-                  <div className="py-2 px-3 rounded-md border bg-muted/30 text-sm">
-                    {field.value || "—"}
-                  </div>
-                ) : (
-                  <FormControl>
-                    <Input placeholder="Your college or institute" {...field} />
-                  </FormControl>
-                )}
+                <FormControl>
+                  <Input placeholder="Your college or institute" {...field} />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -477,45 +418,40 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Date of birth</FormLabel>
-                {!isEditing ? (
-                  <div className="py-2 px-3 rounded-md border bg-muted/30 text-sm">
-                    {field.value ? new Date(`${field.value}T00:00:00`).toLocaleDateString() : "—"}
-                  </div>
-                ) : (
-                  <FormControl>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value
-                            ? new Date(`${field.value}T00:00:00`).toLocaleDateString()
-                            : "Pick a date"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value ? new Date(`${field.value}T00:00:00`) : undefined}
-                          onSelect={(d) => {
-                            if (!d) return field.onChange("");
-                            const yyyy = d.getFullYear();
-                            const mm = String(d.getMonth() + 1).padStart(2, "0");
-                            const dd = String(d.getDate()).padStart(2, "0");
-                            field.onChange(`${yyyy}-${mm}-${dd}`);
-                          }}
-                          disabled={(date) => date > new Date()}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </FormControl>
-                )}
+                <FormControl>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {field.value
+                          ? new Date(`${field.value}T00:00:00`).toLocaleDateString()
+                          : "Pick a date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        captionLayout="dropdown"
+                        selected={field.value ? new Date(`${field.value}T00:00:00`) : undefined}
+                        onSelect={(d) => {
+                          if (!d) return field.onChange("");
+                          const yyyy = d.getFullYear();
+                          const mm = String(d.getMonth() + 1).padStart(2, "0");
+                          const dd = String(d.getDate()).padStart(2, "0");
+                          field.onChange(`${yyyy}-${mm}-${dd}`);
+                        }}
+                        disabled={(date) => date > new Date()}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -527,15 +463,9 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Contact number</FormLabel>
-                {!isEditing ? (
-                  <div className="py-2 px-3 rounded-md border bg-muted/30 text-sm">
-                    {field.value || "—"}
-                  </div>
-                ) : (
-                  <FormControl>
-                    <Input inputMode="numeric" autoComplete="tel" maxLength={10} placeholder="Contact Number" {...field} />
-                  </FormControl>
-                )}
+                <FormControl>
+                  <Input inputMode="numeric" autoComplete="tel" maxLength={10} placeholder="Contact Number" {...field} />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -543,29 +473,19 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
 
           <CurrentRoleSelector control={form.control as any} isEditing={isEditing} />
 
-          {/* Controls: only show Save/Reset when editing */}
-          {isEditing ? (
-            <>
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleResetInterests}
-                  disabled={submitting}
-                >
-                  Reset
-                </Button>
-                <Button type="submit" disabled={submitting || !hasChanges}>
-                  {submitting ? "Saving..." : "Save"}
-                </Button>
-              </div>
-              <Alert className="mt-2 border-red-200 bg-red-50">
-                <AlertDescription className="text-red-600 font-bold text-sm">
-                  All the details are confidential & only utilized for enhancing service quality*
-                </AlertDescription>
-              </Alert>
-            </>
-          ) : null}
+          {/* Control only SAVE */}
+          <>
+            <div className="flex justify-end gap-2">
+              <Button type="submit" disabled={submitting || !hasChanges}>
+                {submitting ? "Saving..." : "Save"}
+              </Button>
+            </div>
+            <Alert className="mt-2 border-red-200 bg-red-50">
+              <AlertDescription className="text-red-600 font-bold text-sm">
+                All the details are confidential & only utilized for enhancing service quality*
+              </AlertDescription>
+            </Alert>
+          </>
         </form>
       </Form>
     </div>

@@ -125,7 +125,7 @@ export default function BookmarksPage() {
       const options = ["No deadline", "Needs more info?", "Ask the organiser"];
       const idx = Math.floor(Math.random() * options.length);
       return options[idx];
-    }, [item.title]);
+    }, []);
     return (
       <Card className="py-0">
         <div className="rounded-lg bg-neutral-200 px-[2px] pb-[2px] shadow">

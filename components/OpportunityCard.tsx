@@ -9,7 +9,9 @@ import {
   MessageSquare,
   Building2,
   Loader2,
-} from "lucide-react";
+  Share2,
+  } from "lucide-react";
+import { FaXTwitter, FaFacebook, FaLinkedin, FaWhatsapp, FaEnvelope } from "react-icons/fa6";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
@@ -31,6 +33,9 @@ import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import CommentSection from "@/components/opportunity/CommentSection";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 // UUID validation function
 const isValidUUID = (uuid: string): boolean => {
@@ -180,6 +185,21 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   const onUpvoteClick = () => {
     if (!toggleUpvote.isPending) {
       toggleUpvote.mutate();
+    }
+  };
+
+  const publicBaseUrl =
+    (process.env.NEXT_PUBLIC_SITE_URL as string | undefined) ||
+    (typeof window !== "undefined" ? window.location.origin : "");
+  const shareUrl = publicBaseUrl
+    ? `${publicBaseUrl}/opportunities/${id}`
+    : `/opportunities/${id}`;
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Link copied to clipboard");
+    } catch {
+      toast.error("Failed to copy link");
     }
   };
 
@@ -503,6 +523,69 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                 />
               )}
             </button>
+
+            {/* Share */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Share"
+                  className="flex items-center gap-1 hover:text-blue-600 transition-colors text-xs sm:text-sm"
+                >
+                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Share this opportunity</DialogTitle>
+                </DialogHeader>
+                <div className="flex items-center gap-2">
+                  <Input readOnly value={shareUrl} />
+                  <Button type="button" size="sm" onClick={handleCopy}>Copy</Button>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Link
+                    href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(title)}`}
+                    target="_blank"
+                    aria-label="Share on Twitter/X"
+                    className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
+                  >
+                    <FaXTwitter className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
+                    target="_blank"
+                    aria-label="Share on Facebook"
+                    className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
+                  >
+                    <FaFacebook className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
+                    target="_blank"
+                    aria-label="Share on LinkedIn"
+                    className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
+                  >
+                    <FaLinkedin className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    href={`https://api.whatsapp.com/send?text=${encodeURIComponent(title + " " + shareUrl)}`}
+                    target="_blank"
+                    aria-label="Share on WhatsApp"
+                    className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
+                  >
+                    <FaWhatsapp className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    href={`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(shareUrl)}`}
+                    aria-label="Share via Email"
+                    className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
+                  >
+                    <FaEnvelope className="h-4 w-4" />
+                  </Link>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </footer>
 

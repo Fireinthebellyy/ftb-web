@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import OpportunityCard from "@/components/OpportunityCard";
 import { notFound } from "next/navigation";
 
-export default async function OpportunityDetailPage({ params }: { params: { id: string } }) {
+export default async function OpportunityDetailPage({ params }: any) {
   const id = params.id;
 
   const result = await db

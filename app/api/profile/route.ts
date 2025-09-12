@@ -117,7 +117,6 @@ export async function POST(request: Request) {
       );
     }
     
-
     const [updated] = await db
       .update(userTable)
       .set({

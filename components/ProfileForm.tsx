@@ -89,7 +89,7 @@ const formSchema = z
     }
   });
 
-export default function ProfileForm({ user }: { user: ProfileUser }) {
+export default function ProfileForm({ user, onProgressChange }: { user: ProfileUser; onProgressChange?: (value: number) => void }) {
   const [isEditing] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -114,38 +114,6 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
       currentRoleOther: "",
     },
   });
-
-  const handleResetInterests = useCallback(async () => {
-    try {
-      setSubmitting(true);
-      const payload: { name: string; image?: string | null; fieldInterests?: string[]; opportunityInterests?: string[] } = {
-        name: form.getValues("name") ?? user.name ?? "",
-        image: user.image ?? null,
-        fieldInterests: [],
-        opportunityInterests: [],
-      };
-      const { data } = await axios.post("/api/profile", payload, {
-        headers: { "Content-Type": "application/json" },
-      });
-      files.forEach((f) => URL.revokeObjectURL(f.preview));
-      setFiles([]);
-      form.reset({
-        name: data.user.name ?? "",
-        fieldInterests: [],
-        fieldInterestOther: "",
-        opportunityInterests: [],
-        opportunityInterestOther: "",
-        currentRole: "",
-        currentRoleOther: "",
-      });
-      
-    } catch (e) {
-      const err = e as Error;
-      console.error(err);
-    } finally {
-      setSubmitting(false);
-    }
-  }, [files, form, user.image, user.name]);
 
   const hasLocalPreview = files.length > 0 ? files[0]?.preview : "";
   const effectiveAvatar = useMemo(() => {
@@ -308,9 +276,41 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
     (watchedValues as any).contactNumber !== initialValuesRef.current.contactNumber ||
     (watchedValues as any).currentRole !== initialValuesRef.current.currentRole;
 
+  // Progress bar 
+  const computeCompleteness = useCallback(() => {
+    const nameFilled = !!(watchedValues as any).name && String((watchedValues as any).name).trim().length > 0;
+    const fieldInterestsFilled = Array.isArray((watchedValues as any).fieldInterests) && (watchedValues as any).fieldInterests.length > 0;
+    const oppInterestsFilled = Array.isArray((watchedValues as any).opportunityInterests) && (watchedValues as any).opportunityInterests.length > 0;
+    const dobFilled = !!(watchedValues as any).dateOfBirth;
+    const collegeFilled = !!(watchedValues as any).collegeInstitute && String((watchedValues as any).collegeInstitute).trim().length > 0;
+    const phoneFilled = !!(watchedValues as any).contactNumber && String((watchedValues as any).contactNumber).trim().length === 10;
+    const roleFilled = !!(watchedValues as any).currentRole && String((watchedValues as any).currentRole).trim().length > 0;
+    const imageFilled = !!effectiveAvatar;
+
+    const checks = [
+      nameFilled,
+      fieldInterestsFilled,
+      oppInterestsFilled,
+      dobFilled,
+      collegeFilled,
+      phoneFilled,
+      roleFilled,
+      imageFilled,
+    ];
+    const filled = checks.filter(Boolean).length;
+    const percent = Math.round((filled / checks.length) * 100);
+    return percent;
+  }, [effectiveAvatar, watchedValues]);
+
+  if (typeof onProgressChange === "function") {
+    const percent = computeCompleteness();
+    try {
+      onProgressChange(percent);
+    } catch {}
+  }
+
   return (
     <div className="space-y-6">
-      {/* live region for mode change announcements */}
       <div
         ref={modeChangeLiveRef}
         role="status"
@@ -353,7 +353,7 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
         </div>
         <div>
           <div className="text-sm text-muted-foreground">Email</div>
-          <div className="text-sm">{user.email}</div>
+          <div className="text-sm break-words break-all">{user.email}</div>
         </div>
         <div className="ml-auto" />
       </div>
@@ -437,6 +437,7 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
+                        captionLayout="dropdown"
                         selected={field.value ? new Date(`${field.value}T00:00:00`) : undefined}
                         onSelect={(d) => {
                           if (!d) return field.onChange("");
@@ -472,17 +473,9 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
 
           <CurrentRoleSelector control={form.control as any} isEditing={isEditing} />
 
-          {/* Controls: always show Save/Reset */}
+          {/* Control only SAVE */}
           <>
             <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleResetInterests}
-                disabled={submitting}
-              >
-                Reset
-              </Button>
               <Button type="submit" disabled={submitting || !hasChanges}>
                 {submitting ? "Saving..." : "Save"}
               </Button>

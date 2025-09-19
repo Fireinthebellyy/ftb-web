@@ -4,7 +4,7 @@ import { user as userTable } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import ProfileForm from "@/components/ProfileForm";
+import ProfileCard from "@/components/profile/ProfileCard";
 
 export default async function ProfilePage() {
   const session = await auth.api.getSession({
@@ -42,22 +42,31 @@ export default async function ProfilePage() {
     : null;
 
   return (
-    <div className="container max-w-2xl mx-auto px-4 py-8 h-full grow">
-      <h1 className="text-2xl font-semibold mb-6">Your Profile</h1>
-      <ProfileForm
-        user={{
-          id: current.id,
-          name: current.name ?? "",
-          email: current.email ?? "",
-          image: current.image ?? "",
-          fieldInterests: current.fieldInterests ?? [],
-          opportunityInterests: current.opportunityInterests ?? [],
-          dateOfBirth: dobStr,
-          collegeInstitute: current.collegeInstitute ?? null,
-          contactNumber: current.contactNumber ?? null,
-          currentRole: current.currentRole ?? null,
-        }}
-      />
+    <div
+      className="relative min-h-[calc(100vh-64px)] w-full bg-neutral-100"
+      aria-label="Profile background"
+    >
+
+      <div className="absolute inset-0 -z-10 bg-black/10" aria-hidden="true" />
+
+      <div className="container mx-auto px-4 py-8">
+        <div className="mx-auto max-w-3xl">
+          <ProfileCard
+            user={{
+              id: current.id,
+              name: current.name ?? "",
+              email: current.email ?? "",
+              image: current.image ?? "",
+              fieldInterests: current.fieldInterests ?? [],
+              opportunityInterests: current.opportunityInterests ?? [],
+              dateOfBirth: dobStr,
+              collegeInstitute: current.collegeInstitute ?? null,
+              contactNumber: current.contactNumber ?? null,
+              currentRole: current.currentRole ?? null,
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 }

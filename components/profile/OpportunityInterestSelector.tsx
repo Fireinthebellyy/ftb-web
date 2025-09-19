@@ -10,7 +10,7 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Control } from "react-hook-form";
+import { Control, useWatch } from "react-hook-form";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -31,6 +31,7 @@ const PRESET_OPP_INTERESTS: string[] = [
 
 export default function OpportunityInterestSelector({ control, isEditing }: Props) {
   const selectable = useMemo(() => PRESET_OPP_INTERESTS, []);
+  const otherValue = useWatch({ control, name: "opportunityInterestOther" }) as string | undefined;
 
   return (
     <FormField
@@ -65,27 +66,41 @@ export default function OpportunityInterestSelector({ control, isEditing }: Prop
                         opt === "Other"
                           ? selected.includes("Other") || hasCustom
                           : selected.includes(opt);
+                      const showCustomBadge =
+                        opt === "Other" && (selected.includes("Other") || hasCustom) && (otherValue || "").trim().length > 0;
+
                       return (
-                        <Badge
-                          key={opt}
-                          variant={isActive ? "default" : "outline"}
-                          className={cn(
-                            "text-xs cursor-pointer transition-all px-2 py-0.5 h-auto",
-                            isActive
-                              ? "bg-blue-100 text-blue-800 hover:bg-blue-200 border-transparent"
-                              : "bg-gray-50 text-gray-500 hover:bg-gray-100 border-gray-200"
+                        <>
+                          {showCustomBadge && (
+                            <Badge
+                              key={`${opt}-custom`}
+                              variant="default"
+                              className="text-xs px-2 py-0.5 h-auto bg-blue-100 text-blue-800 hover:bg-blue-200 border-transparent"
+                            >
+                              {(otherValue || "").trim()}
+                            </Badge>
                           )}
-                          onClick={() => {
-                            const next = isActive
-                              ? selected.filter((s: string) => s !== opt)
-                              : [...selected, opt];
-                            field.onChange(next);
-                          }}
-                          role="checkbox"
-                          aria-checked={isActive}
-                        >
-                          {opt}
-                        </Badge>
+                          <Badge
+                            key={opt}
+                            variant={isActive ? "default" : "outline"}
+                            className={cn(
+                              "text-xs cursor-pointer transition-all px-2 py-0.5 h-auto",
+                              isActive
+                                ? "bg-blue-100 text-blue-800 hover:bg-blue-200 border-transparent"
+                                : "bg-gray-50 text-gray-500 hover:bg-gray-100 border-gray-200"
+                            )}
+                            onClick={() => {
+                              const next = isActive
+                                ? selected.filter((s: string) => s !== opt)
+                                : [...selected, opt];
+                              field.onChange(next);
+                            }}
+                            role="checkbox"
+                            aria-checked={isActive}
+                          >
+                            {opt}
+                          </Badge>
+                        </>
                       );
                     })}
                   </div>

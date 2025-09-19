@@ -11,7 +11,11 @@ import {
   Loader2,
   Share2,
   } from "lucide-react";
-import { FaXTwitter, FaFacebook, FaLinkedin, FaWhatsapp, FaEnvelope } from "react-icons/fa6";
+import TwitterXIcon from "@/components/icons/TwitterX";
+import FacebookIcon from "@/components/icons/Facebook";
+import LinkedInIcon from "@/components/icons/LinkedIn";
+import WhatsAppIcon from "@/components/icons/WhatsApp";
+import EnvelopeIcon from "@/components/icons/Envelope";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
@@ -550,7 +554,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                     aria-label="Share on Twitter/X"
                     className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
                   >
-                    <FaXTwitter className="h-4 w-4" />
+                    <TwitterXIcon className="h-6 w-6" />
                   </Link>
                   <Link
                     href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
@@ -558,7 +562,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                     aria-label="Share on Facebook"
                     className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
                   >
-                    <FaFacebook className="h-4 w-4" />
+                    <FacebookIcon className="h-6 w-6" />
                   </Link>
                   <Link
                     href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
@@ -566,7 +570,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                     aria-label="Share on LinkedIn"
                     className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
                   >
-                    <FaLinkedin className="h-4 w-4" />
+                    <LinkedInIcon className="h-6 w-6" />
                   </Link>
                   <Link
                     href={`https://api.whatsapp.com/send?text=${encodeURIComponent(title + " " + shareUrl)}`}
@@ -574,14 +578,14 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                     aria-label="Share on WhatsApp"
                     className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
                   >
-                    <FaWhatsapp className="h-4 w-4" />
+                    <WhatsAppIcon className="h-6 w-6" />
                   </Link>
                   <Link
                     href={`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(shareUrl)}`}
                     aria-label="Share via Email"
                     className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
                   >
-                    <FaEnvelope className="h-4 w-4" />
+                    <EnvelopeIcon className="h-6 w-6" />
                   </Link>
                 </div>
               </DialogContent>

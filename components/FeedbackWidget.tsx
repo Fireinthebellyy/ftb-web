@@ -111,7 +111,7 @@ export default function FeedbackWidget() {
                           userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
                         }),
                       });
-                    } catch (e) {
+                    } catch (_err) {
                       // Best-effort; surface toast already handled
                     }
                   }

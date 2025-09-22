@@ -21,12 +21,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import Link from "next/link";
 import OpportunityPost from "@/components/OpportunityCard";
 import NewOpportunityForm from "@/components/opportunity/NewOpportunityForm";
 import { useFeatured, useOpportunities } from "@/lib/queries";
 import Image from "next/image";
+import FeedbackWidget from "@/components/FeedbackWidget";
 
 export default function OpportunityCardsPage() {
   const { data: opportunities = [], isLoading, error } = useOpportunities();
@@ -135,6 +136,7 @@ export default function OpportunityCardsPage() {
                 className="mx-auto [-ms-overflow-style:none] [scrollbar-width:none] md:max-h-[600px] md:min-w-[600px] [&::-webkit-scrollbar]:hidden"
                 overlayClassName="backdrop-blur-xs bg-black/30"
               >
+                <DialogTitle className="sr-only">Post New Opportunity</DialogTitle>
                 <NewOpportunityForm
                   onOpportunityCreated={() => {
                     setIsNewOpportunityOpen(false);
@@ -570,6 +572,7 @@ export default function OpportunityCardsPage() {
           )}
         </div>
       </div>
+      <FeedbackWidget />
     </div>
   );
 }

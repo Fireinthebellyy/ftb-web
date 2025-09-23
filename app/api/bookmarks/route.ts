@@ -1,7 +1,7 @@
 // app/api/bookmarks/route.ts
 import { db } from "@/lib/db";
 import { bookmarks, opportunities } from "@/lib/schema";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -69,13 +69,63 @@ export async function DELETE(req: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     // Get user ID from auth session
     const session = await auth.api.getSession({ headers: await headers() });
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const month = searchParams.get("month"); // e.g. "2025-09"
+
+    if (month) {
+      // validate month query param (expected "YYYY-MM")
+      const monthRegex = /^\d{4}-(0[1-9]|1[0-2])$/;
+      if (!monthRegex.test(month)) {
+        return NextResponse.json(
+          { error: "Invalid month format. Expected YYYY-MM" },
+          { status: 400 }
+        );
+      }
+
+      const [year, mon] = month.split("-");
+      const yearNum = Number(year);
+      const monNum = Number(mon);
+
+      // start = first day of month (YYYY-MM-DD)
+      const startDate = new Date(yearNum, monNum - 1, 1, 0, 0, 0, 0);
+      // end = last day of month
+      const endDate = new Date(yearNum, monNum, 0, 23, 59, 59, 999);
+
+      // convert to YYYY-MM-DD strings because `opportunities.endDate` is a DATE column
+      const startStr = startDate.toISOString().split("T")[0];
+      const endStr = endDate.toISOString().split("T")[0];
+
+      // fetch only dates for this user within the month range
+      const dates = await db
+        .select({
+          endDate: opportunities.endDate,
+        })
+        .from(bookmarks)
+        .innerJoin(opportunities, eq(bookmarks.opportunityId, opportunities.id))
+        .where(
+          and(
+            eq(bookmarks.userId, session.user.id),
+            gte(opportunities.endDate, startStr),
+            lte(opportunities.endDate, endStr)
+          )
+        )
+        .orderBy(opportunities.endDate);
+
+      // return unique, sorted dates as strings (YYYY-MM-DD)
+      const formatted = Array.from(
+        new Set(dates.filter((d) => d.endDate).map((d) => d.endDate))
+      ).sort();
+
+      return NextResponse.json({ dates: formatted });
     }
 
     // Fetch user's bookmarks

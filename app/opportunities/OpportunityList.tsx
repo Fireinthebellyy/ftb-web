@@ -27,6 +27,7 @@ import OpportunityPost from "@/components/OpportunityCard";
 import NewOpportunityForm from "@/components/opportunity/NewOpportunityForm";
 import { useFeatured, useOpportunities } from "@/lib/queries";
 import Image from "next/image";
+import CalendarWidget from "@/components/opportunity/CalendarWidget";
 
 export default function OpportunityCardsPage() {
   const { data: opportunities = [], isLoading, error } = useOpportunities();
@@ -244,7 +245,7 @@ export default function OpportunityCardsPage() {
           <aside className="col-span-3">
             <div className="sticky top-6 space-y-6">
               {/* Search and Filters */}
-              <div className="rounded-lg border bg-white p-4">
+              <div className="rounded-lg border bg-white px-4 py-3">
                 <h3 className="mb-4 font-semibold text-gray-900">
                   Search & Filter
                 </h3>
@@ -314,7 +315,7 @@ export default function OpportunityCardsPage() {
               </div>
 
               {/* Additional Sidebar Content */}
-              <div className="rounded-lg border bg-white p-4">
+              <div className="rounded-lg border bg-white px-4 py-3">
                 <h3 className="mb-3 font-semibold text-gray-900">
                   Quick Links
                 </h3>
@@ -329,7 +330,7 @@ export default function OpportunityCardsPage() {
                     href="/bookmarks"
                     className="block text-sm text-gray-600 hover:text-gray-800"
                   >
-                    My Bookmarks
+                    My Deadlines
                   </Link>
                   <Link
                     href="/profile"
@@ -400,8 +401,9 @@ export default function OpportunityCardsPage() {
           {/* Right Sidebar - Featured Posts - 3 columns */}
           <aside className="col-span-3">
             <div className="sticky top-6 space-y-6">
+              <CalendarWidget />
               {/* Featured Posts */}
-              <div className="rounded-lg border bg-white p-4">
+              <div className="rounded-lg border bg-white px-4 py-3">
                 <h3 className="mb-4 font-semibold text-gray-900">Featured</h3>
                 {featured && featured.length > 0 ? (
                   <ul className="space-y-4">
@@ -474,7 +476,7 @@ export default function OpportunityCardsPage() {
               </div>
 
               {/* Trending Tags */}
-              <div className="rounded-lg border bg-white p-4">
+              <div className="rounded-lg border bg-white px-4 py-3">
                 <h3 className="mb-4 font-semibold text-gray-900">
                   Trending Tags
                 </h3>
@@ -491,27 +493,6 @@ export default function OpportunityCardsPage() {
                   <span className="rounded bg-orange-100 px-2 py-1 text-xs text-orange-800">
                     #startup
                   </span>
-                </div>
-              </div>
-
-              {/* Stats */}
-              <div className="rounded-lg border bg-white p-4">
-                <h3 className="mb-4 font-semibold text-gray-900">
-                  Platform Stats
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Total Opportunities</span>
-                    <span className="font-medium">{opportunities.length}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Active This Week</span>
-                    <span className="font-medium">24</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Total Applications</span>
-                    <span className="font-medium">1,234</span>
-                  </div>
                 </div>
               </div>
             </div>

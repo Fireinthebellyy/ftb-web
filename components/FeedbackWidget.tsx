@@ -28,13 +28,30 @@ export default function FeedbackWidget() {
     if (!mood) return;
     try {
       setSubmitting(true);
-      // Placeholder for future API integration
-      // await fetch("/api/feedback", { method: "POST", body: JSON.stringify({ mood, comment }) })
-      await new Promise((r) => setTimeout(r, 600));
+      
+      const response = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mood,
+          meaning: moods.find((m) => m.value === mood)?.meaning,
+          message: comment,
+          path: typeof window !== "undefined" ? window.location.pathname : undefined,
+          userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to submit feedback");
+      }
+
       toast.success("Thanks for your feedback!");
       setOpen(false);
       setMood(null);
       setComment("");
+    } catch (error) {
+      console.error("Feedback submission error:", error);
+      toast.error("Failed to submit feedback. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -96,26 +113,7 @@ export default function FeedbackWidget() {
 
             <div className="pt-2">
               <Button
-                onClick={async () => {
-                  await handleSubmit();
-                  if (mood) {
-                    try {
-                      await fetch("/api/feedback", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          mood,
-                          meaning: moods.find((m) => m.value === mood)?.meaning,
-                          message: comment,
-                          path: typeof window !== "undefined" ? window.location.pathname : undefined,
-                          userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
-                        }),
-                      });
-                    } catch (_err) {
-                      // Best-effort; surface toast already handled
-                    }
-                  }
-                }}
+                onClick={handleSubmit}
                 disabled={!mood || submitting}
                 className="w-full bg-orange-500 hover:bg-orange-600 text-white"
               >

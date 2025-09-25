@@ -21,7 +21,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import Link from "next/link";
 import OpportunityPost from "@/components/OpportunityCard";
 import NewOpportunityForm from "@/components/opportunity/NewOpportunityForm";
@@ -136,7 +136,6 @@ export default function OpportunityCardsPage() {
                 className="mx-auto [-ms-overflow-style:none] [scrollbar-width:none] md:max-h-[600px] md:min-w-[600px] [&::-webkit-scrollbar]:hidden"
                 overlayClassName="backdrop-blur-xs bg-black/30"
               >
-                <DialogTitle className="sr-only">Post New Opportunity</DialogTitle>
                 <NewOpportunityForm
                   onOpportunityCreated={() => {
                     setIsNewOpportunityOpen(false);

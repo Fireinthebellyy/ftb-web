@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "./ui/button";
 import { Righteous } from "next/font/google";
@@ -37,6 +37,7 @@ const righteous = Righteous({
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
 
   const { data: user, isPending } = authClient.useSession();
 
@@ -164,14 +165,22 @@ export default function Navbar() {
         <nav className="hidden justify-center gap-4 sm:gap-6 md:flex">
           <Link
             href="/opportunities"
-            className="relative text-sm font-medium text-neutral-800 transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-0 after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full"
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
+              pathname === "/opportunities"
+                ? "text-primary after:w-full"
+                : "text-neutral-800 after:w-0"
+            }`}
           >
             Opportunities
           </Link>
 
           <Link
             href="/featured"
-            className="relative text-sm font-medium text-neutral-800 transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-0 after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full"
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
+              pathname === "/featured"
+                ? "text-primary after:w-full"
+                : "text-neutral-800 after:w-0"
+            }`}
           >
             Featured
           </Link>
@@ -331,24 +340,56 @@ export default function Navbar() {
           </button>
           <ul className="flex flex-col items-center space-y-8 text-2xl font-semibold text-gray-700">
             <li>
-              <Link href="/" onClick={() => setIsOpen(false)}>
+              <Link
+                href="/"
+                onClick={() => setIsOpen(false)}
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
+                  pathname === "/"
+                    ? "text-primary font-bold after:w-full"
+                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                }`}
+              >
                 Home
               </Link>
             </li>
             <li>
-              <Link href="/opportunities" onClick={() => setIsOpen(false)}>
+              <Link
+                href="/opportunities"
+                onClick={() => setIsOpen(false)}
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
+                  pathname === "/opportunities"
+                    ? "text-primary font-bold after:w-full"
+                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                }`}
+              >
                 Opportunities
               </Link>
             </li>
             <li>
-              <Link href="/featured" onClick={() => setIsOpen(false)}>
+              <Link
+                href="/featured"
+                onClick={() => setIsOpen(false)}
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
+                  pathname === "/featured"
+                    ? "text-primary font-bold after:w-full"
+                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                }`}
+              >
                 Featured
               </Link>
             </li>
             {/* If authenticated, show Profile link inside mobile overlay for navigation */}
             {!isPending && user ? (
               <li>
-                <Link href="/profile" onClick={() => setIsOpen(false)}>
+                <Link
+                  href="/profile"
+                  onClick={() => setIsOpen(false)}
+                  className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
+                    pathname === "/profile"
+                      ? "text-primary font-bold after:w-full"
+                      : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                  }`}
+                >
                   Profile
                 </Link>
               </li>
@@ -357,7 +398,6 @@ export default function Navbar() {
             {!isPending && user ? (
               <li>
                 <button
-                  className="text-red-600"
                   onClick={() => {
                     setIsOpen(false);
                     handleLogout();

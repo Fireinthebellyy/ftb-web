@@ -28,6 +28,8 @@ const Footer = () => {
     };
   }, []);
 
+  if (pathname === "/opportunities") return null;
+
   return (
     <footer className="bg-orange-600/70 pt-6 pb-4 text-white md:pt-0">
       {pathname === "/" && (

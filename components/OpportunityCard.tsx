@@ -10,6 +10,7 @@ import {
   Loader2,
   Share2,
   Flame,
+  ChevronDown,
 } from "lucide-react";
 import TwitterXIcon from "@/components/icons/TwitterX";
 import FacebookIcon from "@/components/icons/Facebook";
@@ -50,6 +51,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // UUID validation function
 const isValidUUID = (uuid: string): boolean => {
@@ -61,6 +63,7 @@ const isValidUUID = (uuid: string): boolean => {
 const OpportunityPost: React.FC<OpportunityPostProps> = ({
   opportunity,
   onBookmarkChange,
+  isCardExpanded = false,
 }) => {
   const {
     id,
@@ -81,6 +84,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   const [showMessage, setShowMessage] = useState<boolean>(false);
   const [isBookmarkLoading, setIsBookmarkLoading] = useState<boolean>(false);
   const [showComments, setShowComments] = useState<boolean>(false);
+  const [isExpanded, setIsExpanded] = useState<boolean>(isCardExpanded);
 
   const { data: session } = authClient.useSession();
   const { data, isLoading } = useOpportunity(id);
@@ -160,6 +164,13 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   };
 
   const primaryType = Array.isArray(type) ? type[0] : type;
+
+  const isMobile = useIsMobile();
+  const needsExpand =
+    images.length > 0 ||
+    (description &&
+      typeof description === "string" &&
+      description.length > (isMobile ? 50 : 100));
 
   const getTypeColor = (type?: string): string => {
     const colors: Record<string, string> = {
@@ -274,8 +285,8 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   }, [description, firstUrl, images.length]);
 
   return (
-    <article className="mb-3 w-full rounded-lg border bg-white shadow-sm sm:mb-4">
-      <header className="flex items-center space-x-3 p-3 sm:p-4">
+    <article className="relative mb-3 w-full rounded-lg border bg-white shadow-sm sm:mb-4">
+      <header className="flex items-center space-x-3 px-3 py-2 sm:px-4 sm:py-3">
         <div className="flex-shrink-0">
           {user &&
           user.image &&
@@ -309,6 +320,29 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           </p>
         </div>
 
+        <div className="ml-auto flex flex-col items-end gap-1 text-xs text-gray-600">
+          {(startDate || endDate) && (
+            <div className="flex items-center gap-1">
+              <CalendarDays className="h-3 w-3 sm:h-3 sm:w-3" />
+              <span className="text-xs">
+                {startDate && format(new Date(startDate), "MMM dd")}
+                {startDate && endDate && (
+                  <>
+                    {" - "}
+                    {format(new Date(startDate), "MMM") ===
+                    format(new Date(endDate), "MMM")
+                      ? format(new Date(endDate), "dd")
+                      : format(new Date(endDate), "MMM dd")}
+                  </>
+                )}
+                {!startDate && endDate && format(new Date(endDate), "MMM dd")}
+              </span>
+            </div>
+          )}
+        </div>
+      </header>
+
+      <div className="absolute -top-3 -right-2 z-10">
         <Badge
           className={`${getTypeColor(
             primaryType
@@ -316,56 +350,62 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         >
           {primaryType?.charAt(0).toUpperCase() + primaryType?.slice(1)}
         </Badge>
-      </header>
+      </div>
 
       <div className="px-3 pb-3 sm:px-4 sm:pb-4">
-        <h2 className="mb-2 text-base leading-tight font-bold text-gray-900 sm:text-lg">
+        <h2 className="mb-2 line-clamp-1 truncate text-base leading-tight font-bold text-gray-900 sm:text-lg">
           {title}
         </h2>
 
-        <div className="mb-3 text-sm leading-relaxed text-gray-700">
-          <p>
-            {description && typeof description === "string"
-              ? description
-                  .split(/(https?:\/\/[^\s<>"'`|\\^{}\[\]]+)/gi)
-                  .map((part, index) => {
-                    if (part.match(/^https?:\/\/[^\s<>"'`|\\^{}\[\]]+$/i)) {
-                      return (
-                        <Link
-                          href={part}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          key={index}
-                          className="text-gray-400"
-                        >
-                          {part}
-                        </Link>
-                      );
-                    }
-                    return part;
-                  })
-              : description}
-          </p>
+        {description && (
+          <div
+            className={`text-sm leading-relaxed text-gray-700 ${
+              !isExpanded ? "mb-2 line-clamp-1 overflow-hidden" : "mb-3"
+            }`}
+          >
+            <p>
+              {typeof description === "string"
+                ? description
+                    .split(/(https?:\/\/[^\s<>"'`|\\^{}\[\]]+)/gi)
+                    .map((part, index) => {
+                      if (part.match(/^https?:\/\/[^\s<>"'`|\\^{}\[\]]+$/i)) {
+                        return (
+                          <Link
+                            href={part}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            key={index}
+                            className="text-gray-400"
+                          >
+                            {part}
+                          </Link>
+                        );
+                      }
+                      return part;
+                    })
+                : description}
+            </p>
+          </div>
+        )}
 
-          {!(images.length > 0) && meta && (
-            <Link href={meta?.url} target="_blank" rel="noopener noreferrer">
-              <div className="mt-1 flex flex-col rounded border border-gray-300 p-2 shadow-sm">
-                {meta.image && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={meta.image}
-                    alt={meta.title}
-                    className="h-auto w-full rounded"
-                  />
-                )}
-                <h3 className="mt-2 text-sm font-semibold">{meta.title}</h3>
-                <p className="text-sm text-gray-600">{meta.description}</p>
-              </div>
-            </Link>
-          )}
-        </div>
+        {isExpanded && !(images.length > 0) && meta && (
+          <Link href={meta?.url} target="_blank" rel="noopener noreferrer">
+            <div className="mb-3 flex flex-col rounded border border-gray-300 p-2 shadow-sm">
+              {meta.image && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={meta.image}
+                  alt={meta.title}
+                  className="h-auto w-full rounded"
+                />
+              )}
+              <h3 className="mt-2 text-sm font-semibold">{meta.title}</h3>
+              <p className="text-sm text-gray-600">{meta.description}</p>
+            </div>
+          </Link>
+        )}
 
-        {images.length > 0 ? (
+        {isExpanded && images.length > 0 ? (
           images.length === 1 ? (
             <div className="mb-3 overflow-hidden rounded">
               <Image
@@ -413,7 +453,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         {/* Tags - Show fewer on mobile */}
         {tags && tags.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-1.5 sm:gap-2">
-            {tags.slice(0, 4).map((tag, idx) => (
+            {(isExpanded ? tags : tags.slice(0, 4)).map((tag, idx) => (
               <Badge
                 key={idx}
                 className="cursor-default bg-gray-100 px-2 py-1 text-[10px] text-gray-700 sm:text-xs"
@@ -422,7 +462,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                 #{tag}
               </Badge>
             ))}
-            {tags.length > 4 && (
+            {!isExpanded && tags.length > 4 && (
               <Badge className="bg-gray-100 px-2 py-1 text-[10px] text-gray-600 sm:text-xs">
                 +{tags.length - 4} more
               </Badge>
@@ -430,33 +470,23 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           </div>
         )}
 
-        {/* Dates, Location info - Stack on mobile */}
-        <div className="mb-3 flex gap-2 text-xs text-gray-600 sm:flex-row sm:flex-wrap sm:gap-4">
-          {(startDate || endDate) && (
-            <div className="flex items-center gap-1">
-              <CalendarDays className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="text-xs">
-                {startDate && format(new Date(startDate), "MMM dd")}
-                {startDate && endDate && " - "}
-                {endDate && format(new Date(endDate), "MMM dd")}
-              </span>
-            </div>
-          )}
+        {isExpanded && (
+          <div className="mb-3 flex gap-2 text-xs text-gray-600 sm:flex-row sm:flex-wrap sm:gap-4">
+            {location && (
+              <div className="flex items-center gap-1">
+                <MapPin className="h-3.5 w-3.5 flex-shrink-0 sm:h-4 sm:w-4" />
+                <span className="truncate text-xs">{location}</span>
+              </div>
+            )}
 
-          {location && (
-            <div className="flex items-center gap-1">
-              <MapPin className="h-3.5 w-3.5 flex-shrink-0 sm:h-4 sm:w-4" />
-              <span className="truncate text-xs">{location}</span>
-            </div>
-          )}
-
-          {organiserInfo && (
-            <div className="flex items-center gap-1">
-              <Building2 className="h-3.5 w-3.5 flex-shrink-0 sm:h-4 sm:w-4" />
-              <span className="truncate text-xs">{organiserInfo}</span>
-            </div>
-          )}
-        </div>
+            {organiserInfo && (
+              <div className="flex items-center gap-1">
+                <Building2 className="h-3.5 w-3.5 flex-shrink-0 sm:h-4 sm:w-4" />
+                <span className="truncate text-xs">{organiserInfo}</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Actions Footer - Mobile optimized */}
         <footer className="flex items-center justify-between border-t border-gray-100 pt-2 sm:pt-3">
@@ -582,6 +612,18 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               </Dialog>
             </div>
           </div>
+          {needsExpand && (
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="flex items-center gap-1 text-xs font-medium text-orange-600 hover:underline"
+            >
+              {isExpanded ? "Read less" : "Read more"}
+              <ChevronDown
+                className={`h-3 w-3 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+              />
+            </button>
+          )}
         </footer>
 
         {showComments && <CommentSection opportunityId={id} />}

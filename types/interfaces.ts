@@ -22,6 +22,7 @@ export type Opportunity = {
 export interface OpportunityPostProps {
   opportunity: Opportunity;
   onBookmarkChange?: (id: string, isBookmarked: boolean) => void;
+  isCardExpanded?: boolean;
 }
 
 export type Comment = {

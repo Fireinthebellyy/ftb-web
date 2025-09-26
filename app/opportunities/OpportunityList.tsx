@@ -26,6 +26,7 @@ import OpportunityPost from "@/components/OpportunityCard";
 import { NewOpportunityButton } from "@/components/opportunity/NewOpportunityButton";
 import { useFeatured, useOpportunities } from "@/lib/queries";
 import Image from "next/image";
+import FeedbackWidget from "@/components/FeedbackWidget";
 import CalendarWidget from "@/components/opportunity/CalendarWidget";
 
 export default function OpportunityCardsPage() {
@@ -524,6 +525,7 @@ export default function OpportunityCardsPage() {
           )}
         </div>
       </div>
+      <FeedbackWidget />
     </div>
   );
 }

@@ -40,9 +40,7 @@ export default async function OpportunityDetailPage({ params }: any) {
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-6">
-      <OpportunityCard opportunity={opportunity as any} />
+      <OpportunityCard opportunity={opportunity as any} isCardExpanded={true} />
     </div>
   );
 }
-
-

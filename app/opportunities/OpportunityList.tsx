@@ -21,13 +21,16 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import Link from "next/link";
 import OpportunityPost from "@/components/OpportunityCard";
-import NewOpportunityForm from "@/components/opportunity/NewOpportunityForm";
+import { NewOpportunityButton } from "@/components/opportunity/NewOpportunityButton";
 import { useFeatured, useOpportunities } from "@/lib/queries";
 import Image from "next/image";
+<<<<<<< HEAD
 import FeedbackWidget from "@/components/FeedbackWidget";
+=======
+import CalendarWidget from "@/components/opportunity/CalendarWidget";
+>>>>>>> 4519ef54359e4ca8a6d66e67360e5e98a9f12667
 
 export default function OpportunityCardsPage() {
   const { data: opportunities = [], isLoading, error } = useOpportunities();
@@ -111,46 +114,10 @@ export default function OpportunityCardsPage() {
 
   return (
     <div className="h-full grow bg-gray-50">
-      {/* Header - Full width */}
-      <div className="border-b bg-white">
-        <div className="container mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-          <div className="text-center">
-            <h1 className="mb-2 text-2xl font-bold text-gray-900 sm:mb-4 sm:text-4xl">
-              Discover Opportunities
-            </h1>
-            <p className="mb-4 text-sm text-gray-600 sm:text-lg">
-              Find hackathons, grants, competitions, and more.
-            </p>
-            <Button
-              className="w-full sm:w-auto"
-              variant="primary"
-              onClick={() => setIsNewOpportunityOpen(true)}
-            >
-              Post an Opportunity
-            </Button>
-            <Dialog
-              open={isNewOpportunityOpen}
-              onOpenChange={setIsNewOpportunityOpen}
-            >
-              <DialogContent
-                className="mx-auto [-ms-overflow-style:none] [scrollbar-width:none] md:max-h-[600px] md:min-w-[600px] [&::-webkit-scrollbar]:hidden"
-                overlayClassName="backdrop-blur-xs bg-black/30"
-              >
-                <NewOpportunityForm
-                  onOpportunityCreated={() => {
-                    setIsNewOpportunityOpen(false);
-                  }}
-                />
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content with 3-column layout */}
-      <div className="container mx-auto max-w-7xl px-4 py-6">
+      <div className="container mx-auto max-w-7xl px-4 pt-6">
         {/* Mobile: Search and Filters (stays the same) */}
-        <div className="mb-6 rounded-lg border bg-white px-4 py-3 lg:hidden">
+        <div className="mb-4 rounded-lg border bg-white px-4 py-3 lg:hidden">
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
@@ -245,7 +212,7 @@ export default function OpportunityCardsPage() {
           <aside className="col-span-3">
             <div className="sticky top-6 space-y-6">
               {/* Search and Filters */}
-              <div className="rounded-lg border bg-white p-4">
+              <div className="rounded-lg border bg-white px-4 py-3">
                 <h3 className="mb-4 font-semibold text-gray-900">
                   Search & Filter
                 </h3>
@@ -315,7 +282,7 @@ export default function OpportunityCardsPage() {
               </div>
 
               {/* Additional Sidebar Content */}
-              <div className="rounded-lg border bg-white p-4">
+              <div className="rounded-lg border bg-white px-4 py-3">
                 <h3 className="mb-3 font-semibold text-gray-900">
                   Quick Links
                 </h3>
@@ -330,7 +297,7 @@ export default function OpportunityCardsPage() {
                     href="/bookmarks"
                     className="block text-sm text-gray-600 hover:text-gray-800"
                   >
-                    My Bookmarks
+                    My Deadlines
                   </Link>
                   <Link
                     href="/profile"
@@ -344,7 +311,12 @@ export default function OpportunityCardsPage() {
           </aside>
 
           {/* Main Content - Middle Column - 6 columns */}
-          <main className="col-span-6">
+          <main className="col-span-6 max-h-[90vh] overflow-y-scroll pr-2">
+            <NewOpportunityButton
+              isOpen={isNewOpportunityOpen}
+              onOpenChange={setIsNewOpportunityOpen}
+              layout="horizontal"
+            />
             {isLoading && (
               <div className="space-y-4">
                 {[...Array(3)].map((_, index) => (
@@ -401,8 +373,9 @@ export default function OpportunityCardsPage() {
           {/* Right Sidebar - Featured Posts - 3 columns */}
           <aside className="col-span-3">
             <div className="sticky top-6 space-y-6">
+              <CalendarWidget />
               {/* Featured Posts */}
-              <div className="rounded-lg border bg-white p-4">
+              <div className="rounded-lg border bg-white px-4 py-3">
                 <h3 className="mb-4 font-semibold text-gray-900">Featured</h3>
                 {featured && featured.length > 0 ? (
                   <ul className="space-y-4">
@@ -475,7 +448,7 @@ export default function OpportunityCardsPage() {
               </div>
 
               {/* Trending Tags */}
-              <div className="rounded-lg border bg-white p-4">
+              <div className="rounded-lg border bg-white px-4 py-3">
                 <h3 className="mb-4 font-semibold text-gray-900">
                   Trending Tags
                 </h3>
@@ -494,33 +467,17 @@ export default function OpportunityCardsPage() {
                   </span>
                 </div>
               </div>
-
-              {/* Stats */}
-              <div className="rounded-lg border bg-white p-4">
-                <h3 className="mb-4 font-semibold text-gray-900">
-                  Platform Stats
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Total Opportunities</span>
-                    <span className="font-medium">{opportunities.length}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Active This Week</span>
-                    <span className="font-medium">24</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Total Applications</span>
-                    <span className="font-medium">1,234</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </aside>
         </div>
 
         {/* Mobile Content (single column) */}
         <div className="lg:hidden">
+          <NewOpportunityButton
+            isOpen={isNewOpportunityOpen}
+            onOpenChange={setIsNewOpportunityOpen}
+            layout="vertical"
+          />
           {isLoading && (
             <div className="space-y-4">
               {[...Array(3)].map((_, index) => (

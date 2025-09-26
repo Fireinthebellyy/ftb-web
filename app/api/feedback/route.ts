@@ -26,15 +26,18 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const data = payloadSchema.parse(body);
 
-    const sanitizedMessage = data.message
-      ?.trim()
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
-      .replace(/<[^>]*>/g, "");
+    const sanitizedMessage =
+      data.message && data.message.trim().length > 0
+        ? data.message
+            .trim()
+            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+            .replace(/<[^>]*>/g, "")
+        : null;
 
     await db.insert(feedbackTable).values({
       mood: data.mood,
       meaning: data.meaning,
-      message: sanitizedMessage ?? null,
+      message: sanitizedMessage,
       path: data.path ?? null,
       userAgent: data.userAgent ?? req.headers.get("user-agent") ?? null,
       userId,

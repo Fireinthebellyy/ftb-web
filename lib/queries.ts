@@ -201,7 +201,9 @@ export function useComments(opportunityId: string) {
   return useQuery<Comment[]>({
     queryKey: ["comments", opportunityId],
     queryFn: async () => {
-      const { data } = await axios.get(`/api/opportunities/${opportunityId}/comments`);
+      const { data } = await axios.get(
+        `/api/opportunities/${opportunityId}/comments`
+      );
       return data.comments || [];
     },
     staleTime: 1000 * 30, // 30 seconds
@@ -213,14 +215,20 @@ export function useCreateComment(opportunityId: string) {
 
   return useMutation({
     mutationFn: async (commentData: CreateCommentData) => {
-      const { data } = await axios.post(`/api/opportunities/${opportunityId}/comments`, commentData);
+      const { data } = await axios.post(
+        `/api/opportunities/${opportunityId}/comments`,
+        commentData
+      );
       return data.comment;
     },
     onSuccess: (newComment) => {
       // Optimistically add the new comment to the list
-      queryClient.setQueryData<Comment[]>(["comments", opportunityId], (oldComments = []) => {
-        return [newComment, ...oldComments];
-      });
+      queryClient.setQueryData<Comment[]>(
+        ["comments", opportunityId],
+        (oldComments = []) => {
+          return [newComment, ...oldComments];
+        }
+      );
     },
     onError: (error) => {
       console.error("Error creating comment:", error);
@@ -233,17 +241,49 @@ export function useDeleteComment(opportunityId: string) {
 
   return useMutation({
     mutationFn: async (commentId: string) => {
-      await axios.delete(`/api/opportunities/${opportunityId}/comments/${commentId}`);
+      await axios.delete(
+        `/api/opportunities/${opportunityId}/comments/${commentId}`
+      );
       return commentId;
     },
     onSuccess: (deletedCommentId) => {
       // Remove the deleted comment from the list
-      queryClient.setQueryData<Comment[]>(["comments", opportunityId], (oldComments = []) => {
-        return oldComments.filter(comment => comment.id !== deletedCommentId);
-      });
+      queryClient.setQueryData<Comment[]>(
+        ["comments", opportunityId],
+        (oldComments = []) => {
+          return oldComments.filter(
+            (comment) => comment.id !== deletedCommentId
+          );
+        }
+      );
     },
     onError: (error) => {
       console.error("Error deleting comment:", error);
     },
+  });
+}
+
+export async function fetchBookmarkDatesForMonth(
+  month: string
+): Promise<string[]> {
+  try {
+    const { data } = await axios.get<{ dates?: string[] }>("/api/bookmarks", {
+      params: { month },
+    });
+
+    // Normalize to an array of strings
+    return Array.isArray(data?.dates) ? data.dates : [];
+  } catch (error) {
+    console.error("Error fetching bookmark dates for month:", error);
+    return [];
+  }
+}
+
+export function useBookmarkDatesForMonth(month?: string) {
+  return useQuery<string[]>({
+    queryKey: ["bookmarks", "month", month],
+    queryFn: () => fetchBookmarkDatesForMonth(month as string),
+    enabled: Boolean(month),
+    staleTime: 1000 * 60 * 5,
   });
 }

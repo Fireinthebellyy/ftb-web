@@ -24,8 +24,8 @@ import {
 import Link from "next/link";
 import OpportunityPost from "@/components/OpportunityCard";
 import { NewOpportunityButton } from "@/components/opportunity/NewOpportunityButton";
-import { useFeatured, useOpportunities } from "@/lib/queries";
-import Image from "next/image";
+import { useOpportunities } from "@/lib/queries";
+import FeaturedOpportunities from "@/components/opportunity/FeaturedOpportunities";
 import CalendarWidget from "@/components/opportunity/CalendarWidget";
 
 export default function OpportunityCardsPage() {
@@ -36,8 +36,6 @@ export default function OpportunityCardsPage() {
   const [filterType, setFilterType] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
-
-  const { data: featured = [] } = useFeatured(4);
 
   const handleBookmarkChange = (
     opportunityId: string,
@@ -303,6 +301,9 @@ export default function OpportunityCardsPage() {
                   </Link>
                 </div>
               </div>
+
+              {/* Featured Posts */}
+              <FeaturedOpportunities />
             </div>
           </aside>
 
@@ -370,79 +371,6 @@ export default function OpportunityCardsPage() {
           <aside className="col-span-3">
             <div className="sticky top-6 space-y-6">
               <CalendarWidget />
-              {/* Featured Posts */}
-              <div className="rounded-lg border bg-white px-4 py-3">
-                <h3 className="mb-4 font-semibold text-gray-900">Featured</h3>
-                {featured && featured.length > 0 ? (
-                  <ul className="space-y-4">
-                    {featured.map((item, index) => (
-                      <li
-                        key={item._id || `featured-${index}`}
-                        className="flex items-start space-x-3"
-                      >
-                        <div
-                          className={`relative h-12 w-12 rounded ${
-                            !item.thumbnail
-                              ? "bg-gradient-to-br from-gray-100 to-gray-200"
-                              : ""
-                          }`}
-                        >
-                          {item.thumbnail ? (
-                            <Image
-                              src={item.thumbnail.asset.url}
-                              alt={item.title}
-                              className="h-12 w-12 rounded object-cover"
-                              width={100}
-                              height={100}
-                            />
-                          ) : (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <svg
-                                className="h-6 w-6 text-gray-400"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="1.5"
-                                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                />
-                              </svg>
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm font-medium text-blue-600 hover:underline"
-                          >
-                            {item.title.length > 30
-                              ? `${item.title.substring(0, 30)}...`
-                              : item.title}
-                          </a>
-                          {item.description && (
-                            <p className="mt-1 text-xs text-gray-500">
-                              {item.description.length > 30
-                                ? `${item.description.substring(0, 30)}...`
-                                : item.description}
-                            </p>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="py-8 text-center text-gray-500">
-                    <div className="mb-2 text-4xl">🌟</div>
-                    <p className="text-sm">No featured posts yet</p>
-                  </div>
-                )}
-              </div>
-
               {/* Trending Tags */}
               <div className="rounded-lg border bg-white px-4 py-3">
                 <h3 className="mb-4 font-semibold text-gray-900">

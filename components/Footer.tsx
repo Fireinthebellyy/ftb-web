@@ -3,6 +3,7 @@ import { Instagram, Linkedin, Youtube } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Righteous } from "next/font/google";
+import { usePathname } from "next/navigation";
 
 const righteous = Righteous({
   weight: "400",
@@ -13,6 +14,7 @@ const righteous = Righteous({
 const Footer = () => {
   const textRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -26,25 +28,29 @@ const Footer = () => {
     };
   }, []);
 
+  if (pathname === "/opportunities") return null;
+
   return (
-    <footer className="bg-orange-600/60 pt-6 pb-4 text-white md:pt-12">
-      <div className="container mx-auto px-4">
-        <div
-          className="flex flex-col items-center justify-center md:flex-row"
-          style={{ perspective: "1200px" }}
-        >
+    <footer className="bg-orange-600/70 pt-6 pb-4 text-white md:pt-0">
+      {pathname === "/" && (
+        <div className="container mx-auto px-4 pt-12">
           <div
-            ref={textRef}
-            className={`transform transition-all duration-2000 ease-out ${
-              visible
-                ? "translate-y-0 rotate-x-0 opacity-80"
-                : "translate-y-15 rotate-x-[50deg] opacity-20 md:translate-y-24"
-            } ${righteous.className} mb-1 text-4xl font-bold md:mb-0 md:text-7xl md:text-[96px]`}
+            className="flex flex-col items-center justify-center md:flex-row"
+            style={{ perspective: "1200px" }}
           >
-            Fire In The Belly
+            <div
+              ref={textRef}
+              className={`transform transition-all duration-2000 ease-out ${
+                visible
+                  ? "translate-y-0 rotate-x-0 opacity-80"
+                  : "translate-y-15 rotate-x-[50deg] opacity-20 md:translate-y-24"
+              } ${righteous.className} mb-1 text-4xl font-bold md:mb-0 md:text-7xl md:text-[96px]`}
+            >
+              Fire In The Belly
+            </div>
           </div>
         </div>
-      </div>
+      )}
       <div className="mt-8 flex flex-col items-center justify-center space-y-4 md:flex-row md:space-y-0 md:space-x-8">
         <div className="flex space-x-4">
           <Link

@@ -25,43 +25,62 @@ import FieldInterestSelector from "@/components/profile/FieldInterestSelector";
 import OpportunityInterestSelector from "@/components/profile/OpportunityInterestSelector";
 import CurrentRoleSelector from "@/components/profile/CurrentRoleSelector";
 import { Calendar as CalendarIcon } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 
 const formSchema = z
   .object({
-  name: z.string().min(1, "Name is required").max(80, "Name too long"),
-  fieldInterests: z.array(z.string()).min(1, "Select at least 1 field interest").default([]),
-  fieldInterestOther: z.string().optional(),
-  opportunityInterests: z.array(z.string()).min(1, "Select at least 1 opportunity interest").default([]),
-  opportunityInterestOther: z.string().optional(),
-  dateOfBirth: z.string().optional(),
-  collegeInstitute: z
-    .string()
-    .trim()
-    .max(80, "Too long")
-    .optional()
-    .refine(
-      (v) => v === undefined || v === "" || /^[A-Za-z0-9 .,&'()\-]+$/.test(v),
-      "No special characters"
-    )
-    .refine(
-      (v) => v === undefined || v === "" || !/^\d+$/.test(v),
-      "Cannot be only numbers"
-    ),
-  contactNumber: z
-    .string()
-    .optional()
-    .transform((v) => (v ?? "").trim())
-    .refine((v) => v === "" || /^\d{10}$/.test(v), "Enter 10 digit number only"),
-  currentRole: z.string().min(1, "Please select your current role"),
-  currentRoleOther: z.string().optional(),
-  // image is uploaded via dropzone and resolved to URL
+    name: z.string().min(1, "Name is required").max(80, "Name too long"),
+    fieldInterests: z
+      .array(z.string())
+      .min(1, "Select at least 1 field interest")
+      .default([]),
+    fieldInterestOther: z.string().optional(),
+    opportunityInterests: z
+      .array(z.string())
+      .min(1, "Select at least 1 opportunity interest")
+      .default([]),
+    opportunityInterestOther: z.string().optional(),
+    dateOfBirth: z.string().optional(),
+    collegeInstitute: z
+      .string()
+      .trim()
+      .max(80, "Too long")
+      .optional()
+      .refine(
+        (v) => v === undefined || v === "" || /^[A-Za-z0-9 .,&'()\-]+$/.test(v),
+        "No special characters"
+      )
+      .refine(
+        (v) => v === undefined || v === "" || !/^\d+$/.test(v),
+        "Cannot be only numbers"
+      ),
+    contactNumber: z
+      .string()
+      .optional()
+      .transform((v) => (v ?? "").trim())
+      .refine(
+        (v) => v === "" || /^\d{10}$/.test(v),
+        "Enter 10 digit number only"
+      ),
+    currentRole: z.string().min(1, "Please select your current role"),
+    currentRoleOther: z.string().optional(),
+    // image is uploaded via dropzone and resolved to URL
   })
   .superRefine((vals, ctx) => {
-    if (Array.isArray(vals.fieldInterests) && vals.fieldInterests.includes("Other")) {
-      if (!vals.fieldInterestOther || vals.fieldInterestOther.trim().length === 0) {
+    if (
+      Array.isArray(vals.fieldInterests) &&
+      vals.fieldInterests.includes("Other")
+    ) {
+      if (
+        !vals.fieldInterestOther ||
+        vals.fieldInterestOther.trim().length === 0
+      ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "Please specify your other field interest",
@@ -69,8 +88,14 @@ const formSchema = z
         });
       }
     }
-    if (Array.isArray(vals.opportunityInterests) && vals.opportunityInterests.includes("Other")) {
-      if (!vals.opportunityInterestOther || vals.opportunityInterestOther.trim().length === 0) {
+    if (
+      Array.isArray(vals.opportunityInterests) &&
+      vals.opportunityInterests.includes("Other")
+    ) {
+      if (
+        !vals.opportunityInterestOther ||
+        vals.opportunityInterestOther.trim().length === 0
+      ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "Please specify your other opportunity interest",
@@ -89,7 +114,13 @@ const formSchema = z
     }
   });
 
-export default function ProfileForm({ user, onProgressChange }: { user: ProfileUser; onProgressChange?: (value: number) => void }) {
+export default function ProfileForm({
+  user,
+  onProgressChange,
+}: {
+  user: ProfileUser;
+  onProgressChange?: (value: number) => void;
+}) {
   const [isEditing] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -98,7 +129,7 @@ export default function ProfileForm({ user, onProgressChange }: { user: ProfileU
   // Accessibility: manage focus when entering edit mode
   const firstEditableRef = useRef<HTMLInputElement | null>(null);
   const modeChangeLiveRef = useRef<HTMLDivElement | null>(null);
-  
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -208,9 +239,18 @@ export default function ProfileForm({ user, onProgressChange }: { user: ProfileU
           .filter((v) => !!v && v.trim().length > 0);
       }
 
-      const payload: { name: string; image?: string | null; fieldInterests?: string[]; opportunityInterests?: string[]; dateOfBirth?: string; collegeInstitute?: string; contactNumber?: string; currentRole?: string } = {
+      const payload: {
+        name: string;
+        image?: string | null;
+        fieldInterests?: string[];
+        opportunityInterests?: string[];
+        dateOfBirth?: string;
+        collegeInstitute?: string;
+        contactNumber?: string;
+        currentRole?: string;
+      } = {
         name: values.name,
-        image: uploadedUrl !== null ? uploadedUrl : user.image ?? null,
+        image: uploadedUrl !== null ? uploadedUrl : (user.image ?? null),
         fieldInterests: normalizedInterests,
         opportunityInterests: normalizedOppInterests,
         dateOfBirth: values.dateOfBirth || undefined,
@@ -242,9 +282,9 @@ export default function ProfileForm({ user, onProgressChange }: { user: ProfileU
         collegeInstitute: data.user.collegeInstitute ?? "",
         contactNumber: data.user.contactNumber ?? "",
         currentRole: data.user.currentRole ?? "",
-        currentRoleOther: values.currentRole === "Other" ? (values.currentRoleOther || "") : "",
+        currentRoleOther:
+          values.currentRole === "Other" ? values.currentRoleOther || "" : "",
       });
-
     } catch (e) {
       const err = e as Error;
       toast.error(err.message || "Something went wrong");
@@ -271,20 +311,35 @@ export default function ProfileForm({ user, onProgressChange }: { user: ProfileU
     !!(watchedValues as any).fieldInterestOther ||
     (watchedValues as any).opportunityInterests?.length > 0 ||
     !!(watchedValues as any).opportunityInterestOther ||
-    (watchedValues as any).dateOfBirth !== initialValuesRef.current.dateOfBirth ||
-    (watchedValues as any).collegeInstitute !== initialValuesRef.current.collegeInstitute ||
-    (watchedValues as any).contactNumber !== initialValuesRef.current.contactNumber ||
+    (watchedValues as any).dateOfBirth !==
+      initialValuesRef.current.dateOfBirth ||
+    (watchedValues as any).collegeInstitute !==
+      initialValuesRef.current.collegeInstitute ||
+    (watchedValues as any).contactNumber !==
+      initialValuesRef.current.contactNumber ||
     (watchedValues as any).currentRole !== initialValuesRef.current.currentRole;
 
-  // Progress bar 
+  // Progress bar
   const computeCompleteness = useCallback(() => {
-    const nameFilled = !!(watchedValues as any).name && String((watchedValues as any).name).trim().length > 0;
-    const fieldInterestsFilled = Array.isArray((watchedValues as any).fieldInterests) && (watchedValues as any).fieldInterests.length > 0;
-    const oppInterestsFilled = Array.isArray((watchedValues as any).opportunityInterests) && (watchedValues as any).opportunityInterests.length > 0;
+    const nameFilled =
+      !!(watchedValues as any).name &&
+      String((watchedValues as any).name).trim().length > 0;
+    const fieldInterestsFilled =
+      Array.isArray((watchedValues as any).fieldInterests) &&
+      (watchedValues as any).fieldInterests.length > 0;
+    const oppInterestsFilled =
+      Array.isArray((watchedValues as any).opportunityInterests) &&
+      (watchedValues as any).opportunityInterests.length > 0;
     const dobFilled = !!(watchedValues as any).dateOfBirth;
-    const collegeFilled = !!(watchedValues as any).collegeInstitute && String((watchedValues as any).collegeInstitute).trim().length > 0;
-    const phoneFilled = !!(watchedValues as any).contactNumber && String((watchedValues as any).contactNumber).trim().length === 10;
-    const roleFilled = !!(watchedValues as any).currentRole && String((watchedValues as any).currentRole).trim().length > 0;
+    const collegeFilled =
+      !!(watchedValues as any).collegeInstitute &&
+      String((watchedValues as any).collegeInstitute).trim().length > 0;
+    const phoneFilled =
+      !!(watchedValues as any).contactNumber &&
+      String((watchedValues as any).contactNumber).trim().length === 10;
+    const roleFilled =
+      !!(watchedValues as any).currentRole &&
+      String((watchedValues as any).currentRole).trim().length > 0;
     const imageFilled = !!effectiveAvatar;
 
     const checks = [
@@ -321,11 +376,11 @@ export default function ProfileForm({ user, onProgressChange }: { user: ProfileU
 
       <div className="flex items-center gap-4">
         <div className="relative">
-          <Avatar className="w-16 h-16">
+          <Avatar className="h-16 w-16">
             <AvatarImage
               src={effectiveAvatar || undefined}
               alt={user.name}
-              className="object-cover w-full h-full"
+              className="h-full w-full object-cover"
             />
             <AvatarFallback>
               {user.name
@@ -337,14 +392,14 @@ export default function ProfileForm({ user, onProgressChange }: { user: ProfileU
             </AvatarFallback>
           </Avatar>
           {isEditing && (
-            <div className="absolute inset-0 flex items-center justify-center rounded-full cursor-pointer">
-              <div className="absolute inset-0 bg-white opacity-50 rounded-full"></div>
+            <div className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full">
+              <div className="absolute inset-0 rounded-full bg-white opacity-50"></div>
               <div className="relative z-10">
                 <ImageDropzone
                   files={files}
                   setFiles={setFiles}
                   maxFiles={maxFiles}
-                  className="w-full h-full"
+                  className="h-full w-full"
                   buttonClassName="w-full h-full"
                 />
               </div>
@@ -352,7 +407,7 @@ export default function ProfileForm({ user, onProgressChange }: { user: ProfileU
           )}
         </div>
         <div>
-          <div className="text-sm text-muted-foreground">Email</div>
+          <div className="text-muted-foreground text-sm">Email</div>
           <div className="text-sm break-words break-all">{user.email}</div>
         </div>
         <div className="ml-auto" />
@@ -395,8 +450,14 @@ export default function ProfileForm({ user, onProgressChange }: { user: ProfileU
             )}
           />
 
-          <FieldInterestSelector control={form.control as any} isEditing={isEditing} />
-          <OpportunityInterestSelector control={form.control as any} isEditing={isEditing} />
+          <FieldInterestSelector
+            control={form.control as any}
+            isEditing={isEditing}
+          />
+          <OpportunityInterestSelector
+            control={form.control as any}
+            isEditing={isEditing}
+          />
 
           <FormField
             control={form.control}
@@ -430,7 +491,9 @@ export default function ProfileForm({ user, onProgressChange }: { user: ProfileU
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {field.value
-                          ? new Date(`${field.value}T00:00:00`).toLocaleDateString()
+                          ? new Date(
+                              `${field.value}T00:00:00`
+                            ).toLocaleDateString()
                           : "Pick a date"}
                       </Button>
                     </PopoverTrigger>
@@ -438,7 +501,11 @@ export default function ProfileForm({ user, onProgressChange }: { user: ProfileU
                       <Calendar
                         mode="single"
                         captionLayout="dropdown"
-                        selected={field.value ? new Date(`${field.value}T00:00:00`) : undefined}
+                        selected={
+                          field.value
+                            ? new Date(`${field.value}T00:00:00`)
+                            : undefined
+                        }
                         onSelect={(d) => {
                           if (!d) return field.onChange("");
                           const yyyy = d.getFullYear();
@@ -464,14 +531,23 @@ export default function ProfileForm({ user, onProgressChange }: { user: ProfileU
               <FormItem>
                 <FormLabel>Contact number</FormLabel>
                 <FormControl>
-                  <Input inputMode="numeric" autoComplete="tel" maxLength={10} placeholder="Contact Number" {...field} />
+                  <Input
+                    inputMode="numeric"
+                    autoComplete="tel"
+                    maxLength={10}
+                    placeholder="Contact Number"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          <CurrentRoleSelector control={form.control as any} isEditing={isEditing} />
+          <CurrentRoleSelector
+            control={form.control as any}
+            isEditing={isEditing}
+          />
 
           {/* Control only SAVE */}
           <>
@@ -481,8 +557,9 @@ export default function ProfileForm({ user, onProgressChange }: { user: ProfileU
               </Button>
             </div>
             <Alert className="mt-2 border-red-200 bg-red-50">
-              <AlertDescription className="text-red-600 font-bold text-sm">
-                All the details are confidential & only utilized for enhancing service quality*
+              <AlertDescription className="text-sm text-red-600">
+                All the details are confidential & only utilized for enhancing
+                service quality*
               </AlertDescription>
             </Alert>
           </>

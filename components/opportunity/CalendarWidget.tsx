@@ -1,11 +1,11 @@
 "use client";
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { Calendar } from "../ui/calendar";
 import { useBookmarkDatesForMonth } from "@/lib/queries";
 import { Loader2 } from "lucide-react"; // or your preferred loading icon
 import { useRouter } from "next/navigation";
 
-export default function CalendarWidget() {
+const CalendarWidget = memo(function CalendarWidget() {
   const router = useRouter();
   const [month, setMonth] = useState<Date>(() => new Date());
 
@@ -61,4 +61,6 @@ export default function CalendarWidget() {
       </div>
     </div>
   );
-}
+});
+
+export default CalendarWidget;

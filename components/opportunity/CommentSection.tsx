@@ -25,11 +25,12 @@ const CommentItem: React.FC<{
   const canDelete = currentUserId === comment.userId;
 
   return (
-    <div className="flex gap-3 p-3 border-b border-gray-100 last:border-b-0">
+    <div className="flex gap-3 border-b border-gray-100 p-3 last:border-b-0">
       {/* User Avatar */}
       <div className="flex-shrink-0">
-        {comment.user.image && !comment.user.image.includes("https://media.licdn.com") ? (
-          <Avatar className="w-8 h-8">
+        {comment.user.image &&
+        !comment.user.image.includes("https://media.licdn.com") ? (
+          <Avatar className="h-8 w-8">
             <AvatarImage
               src={comment.user.image}
               alt={comment.user.name}
@@ -37,7 +38,7 @@ const CommentItem: React.FC<{
             />
           </Avatar>
         ) : (
-          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-semibold text-xs uppercase">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-300 text-xs font-semibold text-gray-600 uppercase">
             {comment.user.name
               .split(" ")
               .map((word) => word[0])
@@ -48,8 +49,8 @@ const CommentItem: React.FC<{
       </div>
 
       {/* Comment Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
+      <div className="min-w-0 flex-1">
+        <div className="mb-1 flex items-center gap-2">
           <span className="text-sm font-semibold text-gray-900">
             {comment.user.name}
           </span>
@@ -57,10 +58,10 @@ const CommentItem: React.FC<{
             {formatDate(comment.createdAt)}
           </span>
         </div>
-        <p className="text-sm text-gray-700 leading-relaxed mb-2">
+        <p className="mb-2 text-sm leading-relaxed text-gray-700">
           {comment.content}
         </p>
-        
+
         {/* Delete Button */}
         {canDelete && (
           <Button
@@ -68,12 +69,12 @@ const CommentItem: React.FC<{
             size="sm"
             onClick={() => onDelete(comment.id)}
             disabled={isDeleting}
-            className="h-6 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+            className="h-6 px-2 text-xs text-red-600 hover:bg-red-50 hover:text-red-700"
           >
             {isDeleting ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
+              <Loader2 className="h-3 w-3 animate-spin" />
             ) : (
-              <Trash2 className="w-3 h-3" />
+              <Trash2 className="h-3 w-3" />
             )}
             <span className="ml-1">Delete</span>
           </Button>
@@ -85,15 +86,14 @@ const CommentItem: React.FC<{
 
 const CommentInput: React.FC<{
   opportunityId: string;
-  onSubmit: () => void;
-}> = ({ opportunityId, onSubmit }) => {
+}> = ({ opportunityId }) => {
   const [content, setContent] = useState("");
   const { data: session } = authClient.useSession();
   const createComment = useCreateComment(opportunityId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!session?.user?.id) {
       toast.error("Please log in to comment");
       return;
@@ -113,7 +113,6 @@ const CommentInput: React.FC<{
       await createComment.mutateAsync({ content: content.trim() });
       setContent("");
       toast.success("Comment posted successfully");
-      onSubmit();
     } catch (_error) {
       toast.error("Failed to post comment");
     }
@@ -121,19 +120,20 @@ const CommentInput: React.FC<{
 
   if (!session?.user?.id) {
     return (
-      <div className="p-4 text-center text-gray-500 text-sm">
+      <div className="p-4 text-center text-sm text-gray-500">
         Please log in to comment
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 border-t border-gray-100">
+    <form onSubmit={handleSubmit} className="p-4">
       <div className="flex gap-3">
         {/* User Avatar */}
         <div className="flex-shrink-0">
-          {session.user.image && !session.user.image.includes("https://media.licdn.com") ? (
-            <Avatar className="w-8 h-8">
+          {session.user.image &&
+          !session.user.image.includes("https://media.licdn.com") ? (
+            <Avatar className="h-6 w-6">
               <AvatarImage
                 src={session.user.image}
                 alt={session.user.name || "User"}
@@ -141,7 +141,7 @@ const CommentInput: React.FC<{
               />
             </Avatar>
           ) : (
-            <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-semibold text-xs uppercase">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-300 text-xs font-semibold text-gray-600 uppercase">
               {session.user.name
                 ? session.user.name
                     .split(" ")
@@ -163,10 +163,8 @@ const CommentInput: React.FC<{
             maxLength={1000}
             disabled={createComment.isPending}
           />
-          <div className="flex items-center justify-between mt-2">
-            <span className="text-xs text-gray-500">
-              {content.length}/1000
-            </span>
+          <div className="mt-2 flex items-start justify-between">
+            <span className="text-xs text-gray-500">{content.length}/1000</span>
             <Button
               type="submit"
               size="sm"
@@ -174,9 +172,9 @@ const CommentInput: React.FC<{
               className="h-8 px-3"
             >
               {createComment.isPending ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Send className="w-4 h-4" />
+                <Send className="h-4 w-4" />
               )}
               <span className="ml-1">Post</span>
             </Button>
@@ -201,34 +199,24 @@ const CommentSection: React.FC<CommentSectionProps> = ({ opportunityId }) => {
     }
   };
 
-  const handleCommentSubmit = () => {
-    // Comment submitted successfully
-  };
-
   if (error) {
     return (
-      <div className="p-4 text-center text-red-500 text-sm">
+      <div className="p-4 text-center text-sm text-red-500">
         Failed to load comments
       </div>
     );
   }
 
   return (
-    <div className="border-t border-gray-100">
-      {/* Comment Input - Always visible when comment section is open */}
-      <CommentInput 
-        opportunityId={opportunityId} 
-        onSubmit={handleCommentSubmit}
-      />
+    <div className="mt-2 border-t border-gray-100">
+      <CommentInput opportunityId={opportunityId} />
 
-      {/* Comments List */}
       <div className="max-h-96 overflow-y-auto">
         {isLoading ? (
-          // Loading skeleton
           <div className="space-y-3 p-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex gap-3">
-                <Skeleton className="w-8 h-8 rounded-full" />
+                <Skeleton className="h-8 w-8 rounded-full" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-4 w-24" />
                   <Skeleton className="h-4 w-full" />
@@ -238,7 +226,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ opportunityId }) => {
             ))}
           </div>
         ) : comments.length === 0 ? (
-          <div className="p-4 text-center text-gray-500 text-sm">
+          <div className="p-4 text-center text-sm text-gray-500">
             No comments yet. Be the first to comment!
           </div>
         ) : (

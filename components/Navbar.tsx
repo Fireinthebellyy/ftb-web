@@ -209,72 +209,77 @@ export default function Navbar() {
               <span className="sr-only">Loading...</span>
             </div>
           ) : user ? (
-            <div className="relative flex items-center">
-              <button
-                ref={triggerRef}
-                type="button"
-                aria-haspopup="menu"
-                aria-expanded={menuOpen}
-                aria-controls={menuId}
-                className="rounded-full focus:ring-2 focus:ring-neutral-500 focus:outline-none"
-                onClick={() => setMenuOpen((v) => !v)}
-                onKeyDown={(e) => {
-                  if (
-                    (e.key === "ArrowDown" ||
-                      e.key === "Enter" ||
-                      e.key === " ") &&
-                    !menuOpen
-                  ) {
-                    e.preventDefault();
-                    setMenuOpen(true);
-                  }
-                }}
-              >
-                <Avatar className="size-6">
-                  <AvatarImage
-                    src={(user.user as any)?.image || undefined}
-                    alt={user.user.name || "User avatar"}
-                    className="object-cover"
-                  />
-                  <AvatarFallback>{avatarFallback}</AvatarFallback>
-                </Avatar>
-              </button>
-
-              {menuOpen && (
-                <div
-                  ref={menuRef}
-                  id={menuId}
-                  role="menu"
-                  aria-labelledby={undefined}
-                  tabIndex={-1}
-                  className="bg-popover text-popover-foreground absolute top-full right-0 z-50 w-40 rounded-md border p-1 shadow-md"
-                  onKeyDown={onMenuKeyDown}
+            <div className="flex items-center justify-center space-x-2">
+              <span className="hidden text-sm font-medium sm:inline">
+                Hi, {user?.user?.name?.split(" ")[0] || "User"}!
+              </span>
+              <div className="relative flex items-center">
+                <button
+                  ref={triggerRef}
+                  type="button"
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  aria-controls={menuId}
+                  className="rounded-full focus:ring-2 focus:ring-neutral-500 focus:outline-none"
+                  onClick={() => setMenuOpen((v) => !v)}
+                  onKeyDown={(e) => {
+                    if (
+                      (e.key === "ArrowDown" ||
+                        e.key === "Enter" ||
+                        e.key === " ") &&
+                      !menuOpen
+                    ) {
+                      e.preventDefault();
+                      setMenuOpen(true);
+                    }
+                  }}
                 >
-                  <button
-                    ref={firstItemRef}
-                    role="menuitem"
-                    className="hover:bg-accent focus:bg-accent w-full rounded px-3 py-2 text-left text-sm focus:outline-none"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      // use client-side navigation to profile
-                      window.location.href = "/profile";
-                    }}
+                  <Avatar className="size-6">
+                    <AvatarImage
+                      src={(user.user as any)?.image || undefined}
+                      alt={user.user.name || "User avatar"}
+                      className="object-cover"
+                    />
+                    <AvatarFallback>{avatarFallback}</AvatarFallback>
+                  </Avatar>
+                </button>
+
+                {menuOpen && (
+                  <div
+                    ref={menuRef}
+                    id={menuId}
+                    role="menu"
+                    aria-labelledby={undefined}
+                    tabIndex={-1}
+                    className="bg-popover text-popover-foreground absolute top-full right-0 z-50 w-40 rounded-md border p-1 shadow-md"
+                    onKeyDown={onMenuKeyDown}
                   >
-                    Profile
-                  </button>
-                  <button
-                    ref={lastItemRef}
-                    role="menuitem"
-                    className="hover:bg-accent focus:bg-accent w-full rounded px-3 py-2 text-left text-sm text-red-600 focus:outline-none"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      handleLogout();
-                    }}
-                  >
-                    Log out
-                  </button>
-                </div>
-              )}
+                    <button
+                      ref={firstItemRef}
+                      role="menuitem"
+                      className="hover:bg-accent focus:bg-accent w-full rounded px-3 py-2 text-left text-sm focus:outline-none"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        // use client-side navigation to profile
+                        window.location.href = "/profile";
+                      }}
+                    >
+                      Profile
+                    </button>
+                    <button
+                      ref={lastItemRef}
+                      role="menuitem"
+                      className="hover:bg-accent focus:bg-accent w-full rounded px-3 py-2 text-left text-sm text-red-600 focus:outline-none"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        handleLogout();
+                      }}
+                    >
+                      Log out
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <div className="flex gap-2">

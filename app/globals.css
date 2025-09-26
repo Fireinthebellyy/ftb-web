@@ -4,7 +4,9 @@
 @custom-variant dark (&:is(.dark *));
 
 /* Ensure h-full can resolve for full-height pages */
-html, body, #__next {
+html,
+body,
+#__next {
   height: 100%;
 }
 
@@ -117,7 +119,6 @@ html, body, #__next {
   --sidebar-ring: oklch(0.646 0.222 41.116);
 }
 
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -128,31 +129,22 @@ html, body, #__next {
 }
 
 /* Thin scrollbar utility — very slim, works in WebKit and Firefox */
-.thin-scrollbar {
-  /* Firefox */
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0,0,0,0.35) transparent;
+/* width */
+::-webkit-scrollbar {
+  width: 4px;
 }
-
-/* WebKit */
-.thin-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-.thin-scrollbar::-webkit-scrollbar-track {
+/* Track */
+::-webkit-scrollbar-track {
   background: transparent;
 }
-.thin-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(0,0,0,0.35);
-  border-radius: 9999px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #bec4c4;
+  border-radius: 12px;
 }
 
-/* Dark mode variant */
-.dark .thin-scrollbar {
-  scrollbar-color: rgba(255,255,255,0.18) transparent;
-}
-.dark .thin-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(255,255,255,0.18);
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }

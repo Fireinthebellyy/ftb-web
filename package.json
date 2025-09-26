@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "dz:generate": "npx drizzle-kit generate --config drizzle.config.ts",
+    "dz:pull": "npx drizzle-kit pull --config drizzle.config.ts",
     "dz:push": "npx drizzle-kit push --config drizzle.config.ts",
     "prepare": "husky"
   },

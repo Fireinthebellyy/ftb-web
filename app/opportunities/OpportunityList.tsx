@@ -26,11 +26,8 @@ import OpportunityPost from "@/components/OpportunityCard";
 import { NewOpportunityButton } from "@/components/opportunity/NewOpportunityButton";
 import { useFeatured, useOpportunities } from "@/lib/queries";
 import Image from "next/image";
-<<<<<<< HEAD
 import FeedbackWidget from "@/components/FeedbackWidget";
-=======
 import CalendarWidget from "@/components/opportunity/CalendarWidget";
->>>>>>> 4519ef54359e4ca8a6d66e67360e5e98a9f12667
 
 export default function OpportunityCardsPage() {
   const { data: opportunities = [], isLoading, error } = useOpportunities();

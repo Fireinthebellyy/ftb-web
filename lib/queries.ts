@@ -1,7 +1,12 @@
 import sanityClient from "@/lib/sanity";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { Opportunity, Comment, CreateCommentData } from "@/types/interfaces";
+import {
+  Opportunity,
+  Comment,
+  CreateCommentData,
+  Task,
+} from "@/types/interfaces";
 
 /**
  * Existing Sanity queries (kept intact)
@@ -285,5 +290,115 @@ export function useBookmarkDatesForMonth(month?: string) {
     queryFn: () => fetchBookmarkDatesForMonth(month as string),
     enabled: Boolean(month),
     staleTime: 1000 * 60 * 5,
+  });
+}
+
+/**
+ * Tasks: fetch and manage user tasks
+ */
+export type TasksResponse = {
+  tasks: Task[];
+};
+
+export async function fetchTasks(): Promise<Task[]> {
+  const { data } = await axios.get<TasksResponse>("/api/tasks");
+  return data.tasks;
+}
+
+export function useTasks() {
+  return useQuery<Task[]>({
+    queryKey: ["tasks"],
+    queryFn: fetchTasks,
+    staleTime: 1000 * 60, // 1 minute
+  });
+}
+
+export type CreateTaskData = {
+  title: string;
+  description?: string;
+};
+
+export function useCreateTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (taskData: CreateTaskData) => {
+      const { data } = await axios.post("/api/tasks", taskData);
+      return data.task;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch tasks
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+    onError: (error) => {
+      console.error("Error creating task:", error);
+    },
+  });
+}
+export type UpdateTaskData = {
+  id: string;
+  title?: string;
+  description?: string;
+  opportunityLink?: string;
+  completed?: boolean;
+};
+
+export function useUpdateTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (taskData: UpdateTaskData) => {
+      const { data } = await axios.put(`/api/tasks/${taskData.id}`, taskData);
+      return data.task;
+    },
+    onMutate: async (taskData) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["tasks"] });
+
+      // Snapshot the previous value
+      const previousTasks = queryClient.getQueryData<Task[]>(["tasks"]);
+
+      // Optimistically update the task in the cache
+      if (previousTasks) {
+        queryClient.setQueryData<Task[]>(
+          ["tasks"],
+          previousTasks.map((task) =>
+            task.id === taskData.id ? { ...task, ...taskData } : task
+          )
+        );
+      }
+
+      // Return context with the previous tasks and updating task id
+      return { previousTasks, updatingTaskId: taskData.id };
+    },
+    onError: (error, taskData, context) => {
+      console.error("Error updating task:", error);
+      // Rollback to the previous state
+      if (context?.previousTasks) {
+        queryClient.setQueryData<Task[]>(["tasks"], context.previousTasks);
+      }
+    },
+    onSettled: () => {
+      // Invalidate and refetch tasks to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+  });
+}
+
+export function useDeleteTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (taskId: string) => {
+      const { data } = await axios.delete(`/api/tasks/${taskId}`);
+      return data.success;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch tasks
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+    onError: (error) => {
+      console.error("Error deleting task:", error);
+    },
   });
 }

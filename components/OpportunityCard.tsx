@@ -52,6 +52,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // UUID validation function
 const isValidUUID = (uuid: string): boolean => {
@@ -286,12 +292,12 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
   return (
     <article className="relative mb-3 w-full rounded-lg border bg-white shadow-sm sm:mb-4">
-      <header className="flex items-center space-x-3 px-3 py-2 sm:px-4 sm:py-3">
+      <header className="flex items-center space-x-2 px-3 py-2 sm:px-4 sm:py-3">
         <div className="flex-shrink-0">
           {user &&
           user.image &&
           !user.image.includes("https://media.licdn.com") ? (
-            <Avatar className="h-6 w-6 sm:h-8 sm:w-8">
+            <Avatar className="size-6 sm:size-7">
               <AvatarImage
                 src={user.image}
                 alt={user.name}
@@ -322,8 +328,8 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
         <div className="ml-auto flex flex-col items-end gap-1 text-xs text-gray-600">
           {(startDate || endDate) && (
-            <div className="flex items-center gap-1">
-              <CalendarDays className="h-3 w-3 sm:h-3 sm:w-3" />
+            <div className="flex items-baseline gap-1">
+              <CalendarDays className="size-3" />
               <span className="text-xs">
                 {startDate && format(new Date(startDate), "MMM dd")}
                 {startDate && endDate && (
@@ -342,7 +348,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         </div>
       </header>
 
-      <div className="absolute -top-3 -right-2 z-10">
+      <div className="absolute -top-3 -right-1.5 z-10">
         <Badge
           className={`${getTypeColor(
             primaryType
@@ -452,7 +458,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
         {/* Tags - Show fewer on mobile */}
         {tags && tags.length > 0 && (
-          <div className="mb-3 flex flex-wrap gap-1.5 sm:gap-2">
+          <div className="mb-1 flex flex-wrap gap-1.5 sm:gap-2">
             {(isExpanded ? tags : tags.slice(0, 4)).map((tag, idx) => (
               <Badge
                 key={idx}
@@ -494,69 +500,163 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
             {/* Voting & Comments */}
             <div className="flex items-center space-x-3 sm:space-x-4">
               {/* Upvote (toggle) */}
-              <button
-                onClick={onUpvoteClick}
-                aria-label="Upvote"
-                disabled={toggleUpvote.isPending || isLoading}
-                className={`flex place-items-center-safe text-xs transition-colors sm:text-sm ${
-                  userUpvoted
-                    ? "fill-orange-500 text-orange-600"
-                    : "hover:text-orange-600"
-                } ${
-                  toggleUpvote.isPending || isLoading
-                    ? "cursor-not-allowed opacity-60"
-                    : ""
-                }`}
-              >
-                <Flame
-                  className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                    userUpvoted ? "fill-current" : ""
-                  }`}
-                />
-                <span>{upvotes > 2 ? `${upvotes} ` : ""}</span>
-              </button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={onUpvoteClick}
+                      aria-label="Upvote"
+                      disabled={toggleUpvote.isPending || isLoading}
+                      className={`flex place-items-center-safe text-xs transition-colors sm:text-sm ${
+                        userUpvoted
+                          ? "fill-orange-500 text-orange-600"
+                          : "hover:text-orange-600"
+                      } ${
+                        toggleUpvote.isPending || isLoading
+                          ? "cursor-not-allowed opacity-60"
+                          : ""
+                      }`}
+                    >
+                      <Flame
+                        className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                          userUpvoted ? "fill-current" : ""
+                        }`}
+                      />
+                      <span>{upvotes > 2 ? `${upvotes} ` : ""}</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{userUpvoted ? "Remove upvote" : "Upvote"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
               {/* Comments (clickable to toggle comment section) */}
-              <button
-                type="button"
-                onClick={() => setShowComments(!showComments)}
-                aria-label="Comments"
-                className="flex items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
-              >
-                <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
-              </button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => setShowComments(!showComments)}
+                      aria-label="Comments"
+                      className="flex items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
+                    >
+                      <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{showComments ? "Hide comments" : "Show comments"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
               {/* Bookmark */}
-              <button
-                type="button"
-                onClick={handleBookmark}
-                disabled={isBookmarkLoading}
-                aria-label="Bookmark"
-                className="flex items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
-              >
-                {isBookmarkLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin sm:h-5 sm:w-5" />
-                ) : (
-                  <Bookmark
-                    className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                      isBookmarked
-                        ? "fill-yellow-400 text-yellow-500"
-                        : "hover:text-orange-600"
-                    }`}
-                  />
-                )}
-              </button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={handleBookmark}
+                      disabled={isBookmarkLoading}
+                      aria-label="Bookmark"
+                      className="flex items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
+                    >
+                      {isBookmarkLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin sm:h-5 sm:w-5" />
+                      ) : (
+                        <Bookmark
+                          className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                            isBookmarked
+                              ? "fill-yellow-400 text-yellow-500"
+                              : "hover:text-orange-600"
+                          }`}
+                        />
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{isBookmarked ? "Remove bookmark" : "Bookmark"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               {/* Share */}
               <Dialog>
-                <DialogTrigger asChild>
-                  <button
-                    type="button"
-                    aria-label="Share"
-                    className="flex items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
-                  >
-                    <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                  </button>
-                </DialogTrigger>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DialogTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label="Share"
+                          className="flex items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
+                        >
+                          <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                        </button>
+                      </DialogTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Share opportunity</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Share this opportunity</DialogTitle>
+                  </DialogHeader>
+                  <div className="flex items-center gap-2">
+                    <Input readOnly value={shareUrl} />
+                    <Button type="button" size="sm" onClick={handleCopy}>
+                      Copy
+                    </Button>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Link
+                      href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(title)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Share on Twitter/X"
+                      className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
+                    >
+                      <TwitterXIcon className="h-6 w-6" />
+                    </Link>
+                    <Link
+                      href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Share on Facebook"
+                      className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
+                    >
+                      <FacebookIcon className="h-6 w-6" />
+                    </Link>
+                    <Link
+                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Share on LinkedIn"
+                      className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
+                    >
+                      <LinkedInIcon className="h-6 w-6" />
+                    </Link>
+                    <Link
+                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(title + " " + shareUrl)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Share on WhatsApp"
+                      className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
+                    >
+                      <WhatsAppIcon className="h-6 w-6" />
+                    </Link>
+                    <Link
+                      href={`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(shareUrl)}`}
+                      aria-label="Share via Email"
+                      className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
+                    >
+                      <EnvelopeIcon className="h-6 w-6" />
+                    </Link>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              <Dialog>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
                     <DialogTitle>Share this opportunity</DialogTitle>

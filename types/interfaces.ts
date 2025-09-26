@@ -19,6 +19,17 @@ export type Opportunity = {
   };
 };
 
+export type Task = {
+  id: string;
+  title: string;
+  description?: string;
+  opportunityLink?: string;
+  completed: boolean;
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+};
+
 export interface OpportunityPostProps {
   opportunity: Opportunity;
   onBookmarkChange?: (id: string, isBookmarked: boolean) => void;

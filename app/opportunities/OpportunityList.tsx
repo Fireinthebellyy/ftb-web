@@ -27,6 +27,7 @@ import { NewOpportunityButton } from "@/components/opportunity/NewOpportunityBut
 import { useOpportunities } from "@/lib/queries";
 import FeaturedOpportunities from "@/components/opportunity/FeaturedOpportunities";
 import CalendarWidget from "@/components/opportunity/CalendarWidget";
+import TaskWidget from "@/components/opportunity/TaskWidget";
 
 export default function OpportunityCardsPage() {
   const { data: opportunities = [], isLoading, error } = useOpportunities();
@@ -371,6 +372,7 @@ export default function OpportunityCardsPage() {
           <aside className="col-span-3">
             <div className="sticky top-6 space-y-6">
               <CalendarWidget />
+              <TaskWidget />
               {/* Trending Tags */}
               <div className="rounded-lg border bg-white px-4 py-3">
                 <h3 className="mb-4 font-semibold text-gray-900">

@@ -571,6 +571,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                     <Link
                       href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(title)}`}
                       target="_blank"
+                      rel="noopener noreferrer"
                       aria-label="Share on Twitter/X"
                       className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
                     >
@@ -579,6 +580,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                     <Link
                       href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
                       target="_blank"
+                      rel="noopener noreferrer"
                       aria-label="Share on Facebook"
                       className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
                     >
@@ -587,6 +589,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                     <Link
                       href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
                       target="_blank"
+                      rel="noopener noreferrer"
                       aria-label="Share on LinkedIn"
                       className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
                     >
@@ -595,6 +598,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                     <Link
                       href={`https://api.whatsapp.com/send?text=${encodeURIComponent(title + " " + shareUrl)}`}
                       target="_blank"
+                      rel="noopener noreferrer"
                       aria-label="Share on WhatsApp"
                       className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
                     >

@@ -127,7 +127,7 @@ const CommentInput: React.FC<{
   }
 
   return (
-    <form onSubmit={handleSubmit} className="border-t border-gray-100 p-4">
+    <form onSubmit={handleSubmit} className="p-4">
       <div className="flex gap-3">
         {/* User Avatar */}
         <div className="flex-shrink-0">

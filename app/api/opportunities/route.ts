@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 import { opportunities, user } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
@@ -149,6 +149,7 @@ export async function GET(_req: NextRequest) {
         },
       })
       .from(opportunities)
+      .where(isNull(opportunities.deletedAt))
       .leftJoin(user, eq(opportunities.userId, user.id));
 
     return NextResponse.json(

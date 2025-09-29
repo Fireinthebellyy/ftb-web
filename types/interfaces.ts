@@ -2,7 +2,7 @@ export type Opportunity = {
   id: string;
   title: string;
   description: string;
-  type: string | string[];
+  type: string;
   tags?: string[];
   images?: string[];
   createdAt?: string;

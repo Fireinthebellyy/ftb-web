@@ -15,21 +15,26 @@ import { TypeSelector } from "./fields/TypeSelector";
 import { MetaPopovers } from "./fields/MetaPopovers";
 import { ImagePicker, SelectedImages } from "./images/ImageDropzone";
 import { formSchema, FormData } from "./schema";
-import { FileItem, Opportunity, UploadProgress } from "@/types/interfaces";
+import { FileItem, UploadProgress } from "@/types/interfaces";
 import { useQueryClient } from "@tanstack/react-query";
+import { opportunities } from "@/lib/schema";
+import { InferSelectModel } from "drizzle-orm";
 
-export default function NewOpportunityForm({
+type Opportunity = InferSelectModel<typeof opportunities>;
+
+interface EditOpportunityFormProps {
+  opportunity: Opportunity;
+  onOpportunityUpdated: () => void;
+  onCancel: () => void;
+}
+
+export default function EditOpportunityForm({
   opportunity,
-  onOpportunityCreated,
+  onOpportunityUpdated,
   onCancel,
-}: {
-  opportunity?: Opportunity;
-  onOpportunityCreated: () => void;
-  onCancel?: () => void;
-}) {
+}: EditOpportunityFormProps) {
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState<FileItem[]>([]);
-  const [hasChanges, setHasChanges] = useState(false);
   const queryClient = useQueryClient();
 
   const maxFiles = 4;
@@ -39,12 +44,12 @@ export default function NewOpportunityForm({
     mode: "onBlur",
     reValidateMode: "onChange",
     defaultValues: {
-      type: opportunity?.type || "",
-      title: opportunity?.title || "",
-      description: opportunity?.description || "",
-      tags: opportunity?.tags?.join(", ") || "",
-      location: opportunity?.location || "",
-      organiserInfo: opportunity?.organiserInfo || "",
+      type: opportunity.type || "",
+      title: opportunity.title || "",
+      description: opportunity.description || "",
+      tags: opportunity.tags?.join(", ") || "",
+      location: opportunity.location || "",
+      organiserInfo: opportunity.organiserInfo || "",
       dateRange: undefined,
     },
   });
@@ -53,13 +58,10 @@ export default function NewOpportunityForm({
   const watchedLocation = form.watch("location");
   const watchedOrganiser = form.watch("organiserInfo");
   const watchedDateRange = form.watch("dateRange");
-  const watchedTitle = form.watch("title");
-  const watchedDescription = form.watch("description");
-  const watchedTags = form.watch("tags");
 
   useEffect(() => {
     // Set initial date range if available
-    if (opportunity?.startDate || opportunity?.endDate) {
+    if (opportunity.startDate || opportunity.endDate) {
       form.setValue("dateRange", {
         from: opportunity.startDate
           ? new Date(opportunity.startDate)
@@ -67,63 +69,7 @@ export default function NewOpportunityForm({
         to: opportunity.endDate ? new Date(opportunity.endDate) : undefined,
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [opportunity]);
-
-  useEffect(() => {
-    // Only run change detection when editing an existing opportunity
-    if (!opportunity) {
-      // Creating new opportunity -> enable submit when form is dirty or images present
-      setHasChanges(form.formState.isDirty || files.length > 0);
-      return;
-    }
-
-    const currentSnapshot = JSON.stringify({
-      type: watchedType || "",
-      title: watchedTitle || "",
-      description: watchedDescription || "",
-      tags: watchedTags || "",
-      location: watchedLocation || "",
-      organiserInfo: watchedOrganiser || "",
-      dateRange: {
-        from: watchedDateRange?.from
-          ? watchedDateRange.from.toISOString()
-          : null,
-        to: watchedDateRange?.to ? watchedDateRange.to.toISOString() : null,
-      },
-    });
-
-    const originalSnapshot = JSON.stringify({
-      type: opportunity.type || "",
-      title: opportunity.title || "",
-      description: opportunity.description || "",
-      tags: (opportunity.tags || []).join(", "),
-      location: opportunity.location || "",
-      organiserInfo: opportunity.organiserInfo || "",
-      dateRange: {
-        from: opportunity.startDate
-          ? new Date(opportunity.startDate).toISOString()
-          : null,
-        to: opportunity.endDate
-          ? new Date(opportunity.endDate).toISOString()
-          : null,
-      },
-    });
-
-    const imagesChanged = files.length > 0;
-    setHasChanges(currentSnapshot !== originalSnapshot || imagesChanged);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    opportunity,
-    watchedType,
-    watchedTitle,
-    watchedDescription,
-    watchedTags,
-    watchedLocation,
-    watchedOrganiser,
-    watchedDateRange,
-    files,
-  ]);
+  }, [opportunity, form]);
 
   function handleTypeChange(type: string) {
     form.setValue("type", type, { shouldValidate: true, shouldTouch: true });
@@ -198,14 +144,21 @@ export default function NewOpportunityForm({
 
       if (!imagesOk) {
         toast.error(
-          `One or more images failed to upload. Fix the failed uploads and try again. ${opportunity ? "Post was not updated." : "Post was not created."}`
+          "One or more images failed to upload. Fix the failed uploads and try again. Post was not updated."
         );
         throw new Error(
-          "One or more images failed to upload. Post was not updated/created."
+          "One or more images failed to upload. Post was not updated."
         );
       }
 
-      const payload = {
+      // If images were selected but not all uploaded successfully, abort post update
+      if (!imagesOk) {
+        throw new Error(
+          "One or more images failed to upload. Post was not updated."
+        );
+      }
+
+      const res = await axios.put(`/api/opportunities/${opportunity.id}`, {
         ...data,
         startDate: data.dateRange?.from?.toISOString(),
         endDate: data.dateRange?.to?.toISOString(),
@@ -215,28 +168,18 @@ export default function NewOpportunityForm({
             .map((t) => t.trim())
             .filter(Boolean) || [],
         images: imageIds.length > 0 ? imageIds : undefined,
-      };
+      });
 
-      let res;
-      if (opportunity?.id) {
-        res = await axios.put(`/api/opportunities/${opportunity.id}`, payload);
-        if (res.status !== 200) throw new Error("Failed to update opportunity");
-      } else {
-        res = await axios.post("/api/opportunities", payload);
-        if (res.status !== 200 && res.status !== 201)
-          throw new Error("Failed to create opportunity");
+      if (res.status !== 200) {
+        throw new Error("Failed to update opportunity");
       }
 
       files.forEach((file) => URL.revokeObjectURL(file.preview));
       setFiles([]);
 
-      toast.success(
-        opportunity?.id
-          ? "Opportunity updated successfully!"
-          : "Opportunity created successfully!"
-      );
+      toast.success("Opportunity updated successfully!");
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
-      onOpportunityCreated();
+      onOpportunityUpdated();
     } catch (err: unknown) {
       if (err instanceof Error) {
         toast.error(err.message);
@@ -268,8 +211,8 @@ export default function NewOpportunityForm({
           />
 
           {/* Bottom Action Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
-            <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center gap-4">
               <MetaPopovers
                 control={form.control}
                 watchedLocation={watchedLocation}
@@ -285,30 +228,22 @@ export default function NewOpportunityForm({
             </div>
 
             <div className="flex items-center gap-2">
-              {onCancel && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onCancel}
-                  disabled={loading}
-                  size="sm"
-                >
-                  Cancel
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancel}
+                disabled={loading}
+                size="sm"
+              >
+                Cancel
+              </Button>
               <Button
                 type="submit"
-                disabled={loading || (opportunity ? !hasChanges : false)}
+                disabled={loading}
                 size="sm"
                 className="px-6"
               >
-                {loading
-                  ? opportunity
-                    ? "Updating..."
-                    : "Posting..."
-                  : opportunity
-                    ? "Update"
-                    : "Post"}
+                {loading ? "Updating..." : "Update"}
               </Button>
             </div>
           </div>

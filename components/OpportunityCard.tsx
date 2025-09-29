@@ -11,6 +11,11 @@ import {
   Share2,
   Flame,
   ChevronDown,
+  EllipsisVertical,
+  ThumbsDown,
+  FlagTriangleRight,
+  Trash2,
+  PencilLine,
 } from "lucide-react";
 import TwitterXIcon from "@/components/icons/TwitterX";
 import FacebookIcon from "@/components/icons/Facebook";
@@ -42,6 +47,7 @@ import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import CommentSection from "@/components/opportunity/CommentSection";
+import NewOpportunityForm from "@/components/opportunity/NewOpportunityForm";
 import {
   Dialog,
   DialogContent,
@@ -49,6 +55,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -87,6 +99,29 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   } = opportunity;
 
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+
+  const _handleEditSuccess = () => {
+    setIsEditing(false);
+    queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+  };
+
+  const _handleEditCancel = () => {
+    setIsEditing(false);
+  };
+
+  const handleDeletePost = async () => {
+    try {
+      const res = await axios.delete(`/api/opportunities/${id}`);
+      if (res.status === 200) {
+        toast.success("Post deleted successfully!");
+        queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+      }
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      toast.error("Failed to delete post");
+    }
+  };
   const [showMessage, setShowMessage] = useState<boolean>(false);
   const [isBookmarkLoading, setIsBookmarkLoading] = useState<boolean>(false);
   const [showComments, setShowComments] = useState<boolean>(false);
@@ -716,19 +751,97 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               </Dialog>
             </div>
           </div>
-          {needsExpand && (
-            <button
-              type="button"
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="flex items-center gap-1 text-xs font-medium text-orange-600 hover:underline"
-            >
-              {isExpanded ? "Read less" : "Read more"}
-              <ChevronDown
-                className={`h-3 w-3 transition-transform ${isExpanded ? "rotate-180" : ""}`}
-              />
-            </button>
-          )}
+          <div className="flex items-center">
+            {needsExpand && (
+              <button
+                type="button"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="flex items-center gap-1 text-xs font-medium text-orange-600 hover:underline"
+              >
+                {isExpanded ? "Read less" : "Read more"}
+                <ChevronDown
+                  className={`h-3 w-3 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                />
+              </button>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <EllipsisVertical />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-42">
+                {session?.user?.id === user?.id ? (
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => setIsEditing(true)}
+                      className="flex items-center gap-2"
+                    >
+                      <PencilLine />
+                      <p className="text-muted-foreground text-sm">Edit Post</p>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="flex items-center gap-2"
+                      onClick={() => {
+                        if (
+                          confirm("Are you sure you want to delete this post?")
+                        ) {
+                          handleDeletePost();
+                        }
+                      }}
+                    >
+                      <Trash2 />
+                      <p className="text-muted-foreground text-sm">
+                        Delete Post
+                      </p>
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        // TODO: Implement not interested functionality
+                        toast.info("Not interested functionality coming soon");
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <ThumbsDown />
+                      <p className="text-muted-foreground text-sm">
+                        Not Interested
+                      </p>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="flex items-center gap-2"
+                      onClick={() => {
+                        // TODO: Implement report functionality
+                        toast.info("Report functionality coming soon");
+                      }}
+                    >
+                      <FlagTriangleRight />
+                      <p className="text-muted-foreground text-sm">
+                        Report Post
+                      </p>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </footer>
+
+        {/* Edit dialog */}
+        <Dialog open={isEditing} onOpenChange={(open) => setIsEditing(open)}>
+          <DialogContent
+            className="mx-auto p-4 md:max-h-[600px] md:min-w-[600px]"
+            overlayClassName="backdrop-blur-xs bg-black/30"
+          >
+            <NewOpportunityForm
+              opportunity={opportunity as any}
+              onOpportunityCreated={_handleEditSuccess}
+              onCancel={_handleEditCancel}
+            />
+          </DialogContent>
+        </Dialog>
 
         {showComments && <CommentSection opportunityId={id} />}
       </div>

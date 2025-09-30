@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import ProfileCard from "@/components/profile/ProfileCard";
+import FeedbackWidget from "@/components/FeedbackWidget";
 
 export default async function ProfilePage() {
   const session = await auth.api.getSession({
@@ -46,9 +47,7 @@ export default async function ProfilePage() {
       className="relative min-h-[calc(100vh-64px)] w-full bg-neutral-100"
       aria-label="Profile background"
     >
-
       <div className="absolute inset-0 -z-10 bg-black/10" aria-hidden="true" />
-
       <div className="container mx-auto px-4 py-8">
         <div className="mx-auto max-w-3xl">
           <ProfileCard
@@ -67,6 +66,7 @@ export default async function ProfilePage() {
           />
         </div>
       </div>
+      <FeedbackWidget />
     </div>
   );
 }

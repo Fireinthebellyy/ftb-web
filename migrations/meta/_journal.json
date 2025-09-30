@@ -113,6 +113,20 @@
       "when": 1756292696555,
       "tag": "0015_wealthy_pixie",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1758525385158,
+      "tag": "0016_amusing_black_cat",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1758526820706,
+      "tag": "0017_worthless_lorna_dane",
+      "breakpoints": true
     }
   ]
 }

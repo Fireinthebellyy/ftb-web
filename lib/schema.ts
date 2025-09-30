@@ -166,6 +166,18 @@ export const waitlist = pgTable("waitlist", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").notNull().unique(),
   createdAt: timestamp("created_at").defaultNow(),
+  feedback: text("feedback"),
+});
+
+export const feedback = pgTable("feedback", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  mood: integer("mood").notNull(), // 1-5
+  meaning: text("meaning").notNull(),
+  message: text("message"),
+  path: text("path"),
+  userAgent: text("user_agent"),
+  userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const schema = {
@@ -178,4 +190,5 @@ export const schema = {
   verification,
   bookmarks,
   waitlist,
+  feedback,
 };

@@ -1,5 +1,5 @@
 "use client";
-import { memo, useMemo, useState } from "react";
+import { memo, useMemo, useState, useEffect } from "react";
 import { Calendar } from "../ui/calendar";
 import { useBookmarkDatesForMonth } from "@/lib/queries";
 import { Loader2 } from "lucide-react"; // or your preferred loading icon
@@ -8,6 +8,12 @@ import { useRouter } from "next/navigation";
 const CalendarWidget = memo(function CalendarWidget() {
   const router = useRouter();
   const [month, setMonth] = useState<Date>(() => new Date());
+  const [isClient, setIsClient] = useState(false);
+
+  // Ensure this only renders on client to avoid hydration mismatch
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const monthKey = useMemo(() => {
     const y = month.getFullYear();
@@ -31,6 +37,21 @@ const CalendarWidget = memo(function CalendarWidget() {
   const handleSelect = () => {
     router.push("/bookmarks");
   };
+
+  // Show loading state during hydration
+  if (!isClient) {
+    return (
+      <div className="rounded-lg border bg-white px-4 py-3">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-gray-900">Upcoming Deadlines</h3>
+          <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+        </div>
+        <div className="w-full h-64 flex items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-lg border bg-white px-4 py-3">

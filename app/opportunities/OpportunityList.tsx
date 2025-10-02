@@ -90,7 +90,8 @@ export default function OpportunityCardsPage() {
 
   // Intersection observer for infinite scroll
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLDivElement>(null);
+  const desktopTriggerRef = useRef<HTMLDivElement>(null);
+  const mobileTriggerRef = useRef<HTMLDivElement>(null);
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -111,14 +112,22 @@ export default function OpportunityCardsPage() {
       }
     );
 
-    const currentTriggerRef = triggerRef.current;
-    if (currentTriggerRef) {
-      observer.observe(currentTriggerRef);
+    const currentDesktopTriggerRef = desktopTriggerRef.current;
+    const currentMobileTriggerRef = mobileTriggerRef.current;
+    
+    if (currentDesktopTriggerRef) {
+      observer.observe(currentDesktopTriggerRef);
+    }
+    if (currentMobileTriggerRef) {
+      observer.observe(currentMobileTriggerRef);
     }
 
     return () => {
-      if (currentTriggerRef) {
-        observer.unobserve(currentTriggerRef);
+      if (currentDesktopTriggerRef) {
+        observer.unobserve(currentDesktopTriggerRef);
+      }
+      if (currentMobileTriggerRef) {
+        observer.unobserve(currentMobileTriggerRef);
       }
     };
   }, [handleLoadMore, filteredAndSortedOpportunities.length]);
@@ -391,16 +400,20 @@ export default function OpportunityCardsPage() {
                             opportunity={opportunity}
                             onBookmarkChange={handleBookmarkChange}
                           />
-                          {/* Place trigger at 3rd card from the end of current batch */}
-                          {index === filteredAndSortedOpportunities.length - 3 && (
-                            <div ref={triggerRef} className="h-1" />
+                          {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
+                          {(filteredAndSortedOpportunities.length > 1 && index === Math.max(0, filteredAndSortedOpportunities.length - 3)) && (
+                            <div ref={desktopTriggerRef} className="h-1" />
                           )}
                         </div>
                       ))}
                     </div>
                     
-                    {/* Load more indicator */}
+                    {/* Load more indicator - also acts as fallback trigger */}
                     <div ref={loadMoreRef} className="flex justify-center py-8">
+                      {/* Auto-fetch trigger when filtered set is empty but we still have more pages */}
+                      {filteredAndSortedOpportunities.length === 0 && hasNextPage && !isFetchingNextPage && (
+                        <div ref={desktopTriggerRef} className="h-1" />
+                      )}
                       {isFetchingNextPage && (
                         <div className="flex items-center space-x-2 text-gray-600">
                           <Loader2 className="h-5 w-5 animate-spin" />
@@ -571,16 +584,20 @@ export default function OpportunityCardsPage() {
                           opportunity={opportunity}
                           onBookmarkChange={handleBookmarkChange}
                         />
-                        {/* Place trigger at 3rd card from the end of current batch */}
-                        {index === filteredAndSortedOpportunities.length - 3 && (
-                          <div className="h-1" />
+                        {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
+                        {(filteredAndSortedOpportunities.length > 1 && index === Math.max(0, filteredAndSortedOpportunities.length - 3)) && (
+                          <div ref={mobileTriggerRef} className="h-1" />
                         )}
                       </div>
                     ))}
                   </div>
                   
-                  {/* Load more indicator for mobile */}
+                  {/* Load more indicator for mobile - also acts as fallback trigger */}
                   <div className="flex justify-center py-8">
+                    {/* Auto-fetch trigger when filtered set is empty but we still have more pages */}
+                    {filteredAndSortedOpportunities.length === 0 && hasNextPage && !isFetchingNextPage && (
+                      <div ref={mobileTriggerRef} className="h-1" />
+                    )}
                     {isFetchingNextPage && (
                       <div className="flex items-center space-x-2 text-gray-600">
                         <Loader2 className="h-5 w-5 animate-spin" />

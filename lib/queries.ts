@@ -162,11 +162,6 @@ export type OpportunitiesResponse = {
   };
 };
 
-export async function fetchOpportunities(): Promise<Opportunity[]> {
-  const { data } = await axios.get<OpportunitiesResponse>("/api/opportunities");
-  return data.opportunities;
-}
-
 export async function fetchOpportunitiesPaginated(
   limit: number = 10,
   offset: number = 0
@@ -175,14 +170,6 @@ export async function fetchOpportunitiesPaginated(
     params: { limit, offset }
   });
   return data;
-}
-
-export function useOpportunities() {
-  return useQuery<Opportunity[]>({
-    queryKey: ["opportunities"],
-    queryFn: fetchOpportunities,
-    staleTime: 1000 * 60, // 1 minute
-  });
 }
 
 export function useOpportunitiesPaginated(limit: number = 10, offset: number = 0) {

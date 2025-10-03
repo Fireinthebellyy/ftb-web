@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,13 +24,20 @@ import {
 import Link from "next/link";
 import OpportunityPost from "@/components/OpportunityCard";
 import { NewOpportunityButton } from "@/components/opportunity/NewOpportunityButton";
-import { useFeatured, useOpportunities } from "@/lib/queries";
+import { useFeatured, useInfiniteOpportunities } from "@/lib/queries";
 import Image from "next/image";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import CalendarWidget from "@/components/opportunity/CalendarWidget";
 
 export default function OpportunityCardsPage() {
-  const { data: opportunities = [], isLoading, error } = useOpportunities();
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteOpportunities(10);
 
   const [isNewOpportunityOpen, setIsNewOpportunityOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -40,19 +47,11 @@ export default function OpportunityCardsPage() {
 
   const { data: featured = [] } = useFeatured(4);
 
-  const handleBookmarkChange = (
-    opportunityId: string,
-    isBookmarked: boolean
-  ) => {
-    // TODO: handle bookmark
-    console.log(
-      `Opportunity ${opportunityId} ${
-        isBookmarked ? "bookmarked" : "unbookmarked"
-      }`
-    );
-  };
+  // Flatten all opportunities from all pages
+  const allOpportunities = data?.pages?.flatMap(page => page.opportunities) || [];
 
-  const filteredAndSortedOpportunities = opportunities
+  // Apply filtering and sorting to the loaded opportunities
+  const filteredAndSortedOpportunities = allOpportunities
     .filter((opportunity) => {
       const search = searchTerm.toLowerCase();
       const matchesSearch =
@@ -72,9 +71,8 @@ export default function OpportunityCardsPage() {
     .sort((a, b) => {
       switch (sortBy) {
         case "newest":
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
+          // API already provides newest first, so maintain order
+          return 0;
         case "oldest":
           return (
             new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
@@ -89,6 +87,62 @@ export default function OpportunityCardsPage() {
           return 0;
       }
     });
+
+  // Intersection observer for infinite scroll
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const desktopTriggerRef = useRef<HTMLDivElement>(null);
+  const mobileTriggerRef = useRef<HTMLDivElement>(null);
+
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          handleLoadMore();
+        }
+      },
+      { 
+        threshold: 0.1,
+        rootMargin: '300px' // Start loading when trigger is 300px away from viewport
+      }
+    );
+
+    const currentDesktopTriggerRef = desktopTriggerRef.current;
+    const currentMobileTriggerRef = mobileTriggerRef.current;
+    
+    if (currentDesktopTriggerRef) {
+      observer.observe(currentDesktopTriggerRef);
+    }
+    if (currentMobileTriggerRef) {
+      observer.observe(currentMobileTriggerRef);
+    }
+
+    return () => {
+      if (currentDesktopTriggerRef) {
+        observer.unobserve(currentDesktopTriggerRef);
+      }
+      if (currentMobileTriggerRef) {
+        observer.unobserve(currentMobileTriggerRef);
+      }
+    };
+  }, [handleLoadMore, filteredAndSortedOpportunities.length]);
+
+  const handleBookmarkChange = (
+    opportunityId: string,
+    isBookmarked: boolean
+  ) => {
+    // TODO: handle bookmark
+    console.log(
+      `Opportunity ${opportunityId} ${
+        isBookmarked ? "bookmarked" : "unbookmarked"
+      }`
+    );
+  };
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -198,8 +252,8 @@ export default function OpportunityCardsPage() {
           </div>
 
           <div className="mt-3 text-sm text-gray-600">
-            {filteredAndSortedOpportunities.length} of {opportunities.length}{" "}
-            opportunities
+            {filteredAndSortedOpportunities.length} of {allOpportunities.length}{" "}
+            opportunities loaded
           </div>
         </div>
 
@@ -264,7 +318,7 @@ export default function OpportunityCardsPage() {
                 {/* Results count */}
                 <div className="mb-3 text-sm text-gray-600">
                   {filteredAndSortedOpportunities.length} of{" "}
-                  {opportunities.length} results
+                  {allOpportunities.length} results loaded
                 </div>
 
                 {/* Clear filters button */}
@@ -338,15 +392,41 @@ export default function OpportunityCardsPage() {
             {!isLoading && (
               <>
                 {filteredAndSortedOpportunities.length > 0 ? (
-                  <div className="space-y-4">
-                    {filteredAndSortedOpportunities.map((opportunity) => (
-                      <OpportunityPost
-                        key={opportunity.id}
-                        opportunity={opportunity}
-                        onBookmarkChange={handleBookmarkChange}
-                      />
-                    ))}
-                  </div>
+                  <>
+                    <div className="space-y-4">
+                      {filteredAndSortedOpportunities.map((opportunity, index) => (
+                        <div key={opportunity.id}>
+                          <OpportunityPost
+                            opportunity={opportunity}
+                            onBookmarkChange={handleBookmarkChange}
+                          />
+                          {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
+                          {(filteredAndSortedOpportunities.length > 1 && index === Math.max(0, filteredAndSortedOpportunities.length - 3)) && (
+                            <div ref={desktopTriggerRef} className="h-1" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Load more indicator - also acts as fallback trigger */}
+                    <div ref={loadMoreRef} className="flex justify-center py-8">
+                      {/* Auto-fetch trigger when filtered set is empty but we still have more pages */}
+                      {filteredAndSortedOpportunities.length === 0 && hasNextPage && !isFetchingNextPage && (
+                        <div ref={desktopTriggerRef} className="h-1" />
+                      )}
+                      {isFetchingNextPage && (
+                        <div className="flex items-center space-x-2 text-gray-600">
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                          <span>Loading more opportunities...</span>
+                        </div>
+                      )}
+                      {!hasNextPage && allOpportunities.length > 0 && (
+                        <div className="text-gray-500 text-sm">
+                          You&apos;ve reached the end of opportunities
+                        </div>
+                      )}
+                    </div>
+                  </>
                 ) : (
                   <div className="rounded-lg border bg-white py-12 text-center">
                     <div className="mb-4 text-gray-400">
@@ -496,15 +576,41 @@ export default function OpportunityCardsPage() {
           {!isLoading && (
             <>
               {filteredAndSortedOpportunities.length > 0 ? (
-                <div className="space-y-3 sm:space-y-4">
-                  {filteredAndSortedOpportunities.map((opportunity) => (
-                    <OpportunityPost
-                      key={opportunity.id}
-                      opportunity={opportunity}
-                      onBookmarkChange={handleBookmarkChange}
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="space-y-3 sm:space-y-4">
+                    {filteredAndSortedOpportunities.map((opportunity, index) => (
+                      <div key={opportunity.id}>
+                        <OpportunityPost
+                          opportunity={opportunity}
+                          onBookmarkChange={handleBookmarkChange}
+                        />
+                        {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
+                        {(filteredAndSortedOpportunities.length > 1 && index === Math.max(0, filteredAndSortedOpportunities.length - 3)) && (
+                          <div ref={mobileTriggerRef} className="h-1" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Load more indicator for mobile - also acts as fallback trigger */}
+                  <div className="flex justify-center py-8">
+                    {/* Auto-fetch trigger when filtered set is empty but we still have more pages */}
+                    {filteredAndSortedOpportunities.length === 0 && hasNextPage && !isFetchingNextPage && (
+                      <div ref={mobileTriggerRef} className="h-1" />
+                    )}
+                    {isFetchingNextPage && (
+                      <div className="flex items-center space-x-2 text-gray-600">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span>Loading more opportunities...</span>
+                      </div>
+                    )}
+                      {!hasNextPage && allOpportunities.length > 0 && (
+                        <div className="text-gray-500 text-sm">
+                          You&apos;ve reached the end of opportunities
+                        </div>
+                      )}
+                  </div>
+                </>
               ) : (
                 <div className="rounded-lg border bg-white py-12 text-center">
                   <div className="mb-4 text-gray-400">

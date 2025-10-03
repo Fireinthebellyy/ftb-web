@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { eq, count, desc } from "drizzle-orm";
 import { opportunities, user } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
     if (!db) {
       return NextResponse.json(
@@ -120,7 +120,18 @@ export async function GET(_req: NextRequest) {
       );
     }
 
-    // Method 1: Using leftJoin (recommended)
+    // Get pagination parameters from URL
+    const { searchParams } = new URL(req.url);
+    const limitParam = Number.parseInt(searchParams.get("limit") ?? "", 10);
+    const offsetParam = Number.parseInt(searchParams.get("offset") ?? "", 10);
+    const limit = Number.isNaN(limitParam) ? 10 : limitParam;
+    const offset = Number.isNaN(offsetParam) ? 0 : offsetParam;
+
+    // Validate pagination parameters
+    const validLimit = Math.min(Math.max(limit, 1), 50); // Between 1 and 50
+    const validOffset = Math.max(offset, 0); // Non-negative
+
+    // Method 1: Using leftJoin (recommended) with pagination
     const allOpportunities = await db
       .select({
         // Opportunity fields
@@ -149,10 +160,30 @@ export async function GET(_req: NextRequest) {
         },
       })
       .from(opportunities)
-      .leftJoin(user, eq(opportunities.userId, user.id));
+      .leftJoin(user, eq(opportunities.userId, user.id))
+      .orderBy(desc(opportunities.createdAt)) // Newest first for consistent pagination
+      .limit(validLimit)
+      .offset(validOffset);
+
+    // Get total count for pagination metadata
+    const totalCountResult = await db
+      .select({ count: count() })
+      .from(opportunities);
+    const totalCount = totalCountResult[0]?.count || 0;
+
+    const hasMore = validOffset + validLimit < totalCount;
 
     return NextResponse.json(
-      { success: true, opportunities: allOpportunities },
+      { 
+        success: true, 
+        opportunities: allOpportunities,
+        pagination: {
+          limit: validLimit,
+          offset: validOffset,
+          total: totalCount,
+          hasMore
+        }
+      },
       { status: 200 }
     );
   } catch (error) {

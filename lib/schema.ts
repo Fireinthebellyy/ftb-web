@@ -180,6 +180,16 @@ export const feedback = pgTable("feedback", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Tags for autosuggest
+export const tags = pgTable(
+  "tags",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull().unique(),
+    createdAt: timestamp("created_at").defaultNow(),
+  }
+);
+
 export const schema = {
   user,
   mentors,
@@ -191,4 +201,5 @@ export const schema = {
   bookmarks,
   waitlist,
   feedback,
+  tags,
 };

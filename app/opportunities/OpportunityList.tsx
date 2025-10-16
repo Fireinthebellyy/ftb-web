@@ -24,10 +24,8 @@ import {
 import Link from "next/link";
 import OpportunityPost from "@/components/OpportunityCard";
 import { NewOpportunityButton } from "@/components/opportunity/NewOpportunityButton";
-import { useOpportunities } from "@/lib/queries";
 import FeaturedOpportunities from "@/components/opportunity/FeaturedOpportunities";
-import { useFeatured, useInfiniteOpportunities } from "@/lib/queries";
-import Image from "next/image";
+import { useInfiniteOpportunities } from "@/lib/queries";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import CalendarWidget from "@/components/opportunity/CalendarWidget";
 import TaskWidget from "@/components/opportunity/TaskWidget";
@@ -47,19 +45,6 @@ export default function OpportunityCardsPage() {
   const [filterType, setFilterType] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
-
-  const handleBookmarkChange = (
-    opportunityId: string,
-    isBookmarked: boolean
-  ) => {
-    // TODO: handle bookmark
-    console.log(
-      `Opportunity ${opportunityId} ${
-        isBookmarked ? "bookmarked" : "unbookmarked"
-      }`
-    );
-  };
-  const { data: featured = [] } = useFeatured(4);
 
   // Flatten all opportunities from all pages
   const allOpportunities = data?.pages?.flatMap(page => page.opportunities) || [];

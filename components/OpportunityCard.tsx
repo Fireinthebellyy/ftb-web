@@ -107,7 +107,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   const handleDeletePost = async () => {
     try {
       const res = await axios.delete(`/api/opportunities/${id}`);
-      if (res.status === 200) {
+      if (res.status === 200 || res.status === 204) {
         toast.success("Post deleted successfully!");
         queryClient.invalidateQueries({ queryKey: ["opportunities"] });
       }
@@ -647,64 +647,6 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                   </div>
                 </DialogContent>
               </Dialog>
-              <Dialog>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Share this opportunity</DialogTitle>
-                  </DialogHeader>
-                  <div className="flex items-center gap-2">
-                    <Input readOnly value={shareUrl} />
-                    <Button type="button" size="sm" onClick={handleCopy}>
-                      Copy
-                    </Button>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Link
-                      href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(title)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label="Share on Twitter/X"
-                      className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
-                    >
-                      <TwitterXIcon className="h-6 w-6" />
-                    </Link>
-                    <Link
-                      href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label="Share on Facebook"
-                      className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
-                    >
-                      <FacebookIcon className="h-6 w-6" />
-                    </Link>
-                    <Link
-                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label="Share on LinkedIn"
-                      className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
-                    >
-                      <LinkedInIcon className="h-6 w-6" />
-                    </Link>
-                    <Link
-                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(title + " " + shareUrl)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label="Share on WhatsApp"
-                      className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
-                    >
-                      <WhatsAppIcon className="h-6 w-6" />
-                    </Link>
-                    <Link
-                      href={`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(shareUrl)}`}
-                      aria-label="Share via Email"
-                      className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
-                    >
-                      <EnvelopeIcon className="h-6 w-6" />
-                    </Link>
-                  </div>
-                </DialogContent>
-              </Dialog>
             </div>
           </div>
           <div className="flex items-center">
@@ -792,7 +734,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
             overlayClassName="backdrop-blur-xs bg-black/30"
           >
             <NewOpportunityForm
-              opportunity={opportunity as any}
+              opportunity={opportunity}
               onOpportunityCreated={_handleEditSuccess}
               onCancel={_handleEditCancel}
             />

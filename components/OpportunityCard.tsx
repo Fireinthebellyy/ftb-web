@@ -64,12 +64,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 // UUID validation function
 const isValidUUID = (uuid: string): boolean => {
@@ -535,105 +529,67 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
             {/* Voting & Comments */}
             <div className="flex items-center space-x-3 sm:space-x-4">
               {/* Upvote (toggle) */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={onUpvoteClick}
-                      aria-label="Upvote"
-                      disabled={toggleUpvote.isPending || isLoading}
-                      className={`flex place-items-center-safe text-xs transition-colors sm:text-sm ${
-                        userUpvoted
-                          ? "fill-orange-500 text-orange-600"
-                          : "hover:text-orange-600"
-                      } ${
-                        toggleUpvote.isPending || isLoading
-                          ? "cursor-not-allowed opacity-60"
-                          : ""
-                      }`}
-                    >
-                      <Flame
-                        className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                          userUpvoted ? "fill-current" : ""
-                        }`}
-                      />
-                      <span>{upvotes > 2 ? `${upvotes} ` : ""}</span>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{userUpvoted ? "Remove upvote" : "Upvote"}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
+              <button
+                onClick={onUpvoteClick}
+                aria-label="Upvote"
+                disabled={toggleUpvote.isPending || isLoading}
+                className={`flex place-items-center-safe text-xs transition-colors sm:text-sm ${
+                  userUpvoted
+                    ? "fill-orange-500 text-orange-600"
+                    : "hover:text-orange-600"
+                } ${
+                  toggleUpvote.isPending || isLoading
+                    ? "cursor-not-allowed opacity-60"
+                    : ""
+                }`}
+              >
+                <Flame
+                  className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                    userUpvoted ? "fill-current" : ""
+                  }`}
+                />
+                <span>{upvotes > 2 ? `${upvotes} ` : ""}</span>
+              </button>
               {/* Comments (clickable to toggle comment section) */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      onClick={() => setShowComments(!showComments)}
-                      aria-label="Comments"
-                      className="flex items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
-                    >
-                      <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{showComments ? "Hide comments" : "Show comments"}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
+              <button
+                type="button"
+                onClick={() => setShowComments(!showComments)}
+                aria-label="Comments"
+                className="flex items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
+              >
+                <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
+              </button>
               {/* Bookmark */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      onClick={handleBookmark}
-                      disabled={isBookmarkLoading}
-                      aria-label="Bookmark"
-                      className="flex items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
-                    >
-                      {isBookmarkLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin sm:h-5 sm:w-5" />
-                      ) : (
-                        <Bookmark
-                          className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                            isBookmarked
-                              ? "fill-yellow-400 text-yellow-500"
-                              : "hover:text-orange-600"
-                          }`}
-                        />
-                      )}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{isBookmarked ? "Remove bookmark" : "Bookmark"}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <button
+                type="button"
+                onClick={handleBookmark}
+                disabled={isBookmarkLoading}
+                aria-label="Bookmark"
+                className="flex items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
+              >
+                {isBookmarkLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin sm:h-5 sm:w-5" />
+                ) : (
+                  <Bookmark
+                    className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                      isBookmarked
+                        ? "fill-yellow-400 text-yellow-500"
+                        : "hover:text-orange-600"
+                    }`}
+                  />
+                )}
+              </button>
               {/* Share */}
               <Dialog>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <DialogTrigger asChild>
-                        <button
-                          type="button"
-                          aria-label="Share"
-                          className="flex items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
-                        >
-                          <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </button>
-                      </DialogTrigger>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Share opportunity</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <DialogTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Share"
+                    className="flex items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
+                  >
+                    <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </button>
+                </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
                     <DialogTitle>Share this opportunity</DialogTitle>

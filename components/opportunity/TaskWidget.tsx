@@ -14,12 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Circle, SquareArrowOutUpRight, Trash2 } from "lucide-react";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
   useTasks,
   useCreateTask,
   useUpdateTask,
@@ -162,46 +156,30 @@ export default function TaskWidget() {
                   </p>
                 </div>
                 <div className="flex gap-1">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0"
-                          onClick={() => {
-                            setEditingTask(task);
-                            setEditTaskTitle(task.title);
-                            setEditTaskDescription(task.description || "");
-                            setEditTaskOpportunityLink(
-                              task.opportunityLink || ""
-                            );
-                            setIsEditDialogOpen(true);
-                          }}
-                        >
-                          <SquareArrowOutUpRight className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Expand task</p>
-                      </TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0"
-                          onClick={() => deleteTask(task.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Delete task</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={() => {
+                      setEditingTask(task);
+                      setEditTaskTitle(task.title);
+                      setEditTaskDescription(task.description || "");
+                      setEditTaskOpportunityLink(
+                        task.opportunityLink || ""
+                      );
+                      setIsEditDialogOpen(true);
+                    }}
+                  >
+                    <SquareArrowOutUpRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={() => deleteTask(task.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             ))

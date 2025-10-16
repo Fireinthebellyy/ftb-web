@@ -14,7 +14,7 @@ const updateTaskSchema = z.object({
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     if (!db) {
@@ -29,6 +29,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await context.params;
     const body = await req.json();
     const validatedData = updateTaskSchema.parse(body);
 
@@ -54,7 +55,7 @@ export async function PUT(
     const updatedTask = await db
       .update(tasks)
       .set(updates)
-      .where(eq(tasks.id, params.id))
+      .where(eq(tasks.id, id))
       .returning();
 
     if (updatedTask.length === 0) {
@@ -84,7 +85,7 @@ export async function PUT(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     if (!db) {
@@ -99,9 +100,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await context.params;
     const deletedTask = await db
       .delete(tasks)
-      .where(eq(tasks.id, params.id))
+      .where(eq(tasks.id, id))
       .returning();
 
     if (deletedTask.length === 0) {

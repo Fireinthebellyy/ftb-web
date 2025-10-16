@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { eq, count, desc } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 import { opportunities, user } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
@@ -131,7 +131,7 @@ export async function GET(req: NextRequest) {
     const validLimit = Math.min(Math.max(limit, 1), 50); // Between 1 and 50
     const validOffset = Math.max(offset, 0); // Non-negative
 
-    // Method 1: Using leftJoin (recommended) with pagination
+    // Fetch all non-deleted opportunities with user info
     const allOpportunities = await db
       .select({
         // Opportunity fields
@@ -160,29 +160,27 @@ export async function GET(req: NextRequest) {
         },
       })
       .from(opportunities)
-      .leftJoin(user, eq(opportunities.userId, user.id))
-      .orderBy(desc(opportunities.createdAt)) // Newest first for consistent pagination
-      .limit(validLimit)
-      .offset(validOffset);
+      .where(isNull(opportunities.deletedAt))
+      .leftJoin(user, eq(opportunities.userId, user.id));
 
-    // Get total count for pagination metadata
-    const totalCountResult = await db
-      .select({ count: count() })
-      .from(opportunities);
-    const totalCount = totalCountResult[0]?.count || 0;
-
-    const hasMore = validOffset + validLimit < totalCount;
+    // Compute pagination on the result set
+    const totalCount = allOpportunities.length;
+    const paginated = allOpportunities.slice(
+      validOffset,
+      validOffset + validLimit
+    );
+    const hasMore = validOffset + paginated.length < totalCount;
 
     return NextResponse.json(
-      { 
-        success: true, 
-        opportunities: allOpportunities,
+      {
+        success: true,
+        opportunities: paginated,
         pagination: {
           limit: validLimit,
           offset: validOffset,
           total: totalCount,
-          hasMore
-        }
+          hasMore,
+        },
       },
       { status: 200 }
     );

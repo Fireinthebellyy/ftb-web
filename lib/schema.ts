@@ -169,6 +169,19 @@ export const waitlist = pgTable("waitlist", {
   feedback: text("feedback"),
 });
 
+export const tasks = pgTable("tasks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  description: text("description"),
+  opportunityLink: text("opportunity_link"),
+  completed: boolean("completed").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
+
 export const feedback = pgTable("feedback", {
   id: uuid("id").primaryKey().defaultRandom(),
   mood: integer("mood").notNull(), // 1-5
@@ -200,6 +213,7 @@ export const schema = {
   verification,
   bookmarks,
   waitlist,
+  tasks,
   feedback,
   tags,
 };

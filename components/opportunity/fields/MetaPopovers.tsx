@@ -36,7 +36,7 @@ export function MetaPopovers({
   watchedDateRange,
 }: Props) {
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-2 md:gap-4">
       {/* Location */}
       <Popover>
         <PopoverTrigger asChild>
@@ -45,11 +45,11 @@ export function MetaPopovers({
             variant="ghost"
             size="sm"
             className={cn(
-              "p-2 h-8 w-8",
-              watchedLocation && "text-blue-600 bg-blue-50"
+              "h-8 w-8 p-2",
+              watchedLocation && "bg-blue-50 text-blue-600"
             )}
           >
-            <MapPin className="w-4 h-4" />
+            <MapPin className="h-4 w-4" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-64" align="start">
@@ -83,11 +83,11 @@ export function MetaPopovers({
             variant="ghost"
             size="sm"
             className={cn(
-              "p-2 h-8 w-8",
-              watchedOrganiser && "text-blue-600 bg-blue-50"
+              "h-8 w-8 p-2",
+              watchedOrganiser && "bg-blue-50 text-blue-600"
             )}
           >
-            <Building2 className="w-4 h-4" />
+            <Building2 className="h-4 w-4" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-64" align="start">
@@ -121,11 +121,11 @@ export function MetaPopovers({
             variant="ghost"
             size="sm"
             className={cn(
-              "p-2 h-8 w-8",
-              watchedDateRange && "text-blue-600 bg-blue-50"
+              "h-8 w-8 p-2",
+              watchedDateRange && "bg-blue-50 text-blue-600"
             )}
           >
-            <CalendarIcon className="w-4 h-4" />
+            <CalendarIcon className="h-4 w-4" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
@@ -144,12 +144,12 @@ export function MetaPopovers({
                       numberOfMonths={1}
                     />
                     {field.value?.from && (
-                      <div className="p-3 border-t">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      <div className="border-t p-3">
+                        <div className="mb-2 flex items-center justify-between">
+                          <span className="text-xs font-medium tracking-wide text-gray-500 uppercase">
                             Selected Dates
                             {field.value.to && (
-                              <span className="text-xs ml-1">
+                              <span className="ml-1 text-xs">
                                 (
                                 {Math.ceil(
                                   (field.value.to.getTime() -
@@ -168,25 +168,25 @@ export function MetaPopovers({
                             onClick={() => field.onChange(undefined)}
                             className="h-5 w-5 p-0 text-gray-400 hover:text-red-500"
                           >
-                            <X className="w-3 h-3" />
+                            <X className="h-3 w-3" />
                           </Button>
                         </div>
 
                         <div className="flex flex-wrap gap-2">
                           <Badge
                             variant="secondary"
-                            className="bg-green-100 text-green-800 flex items-center"
+                            className="flex items-center bg-green-100 text-green-800"
                           >
-                            <CalendarIcon className="w-3 h-3 mr-1" />
+                            <CalendarIcon className="mr-1 h-3 w-3" />
                             {format(field.value.from, "MMM dd, yyyy")}
                           </Badge>
 
                           {field.value.to && (
                             <Badge
                               variant="secondary"
-                              className="bg-red-100 text-red-800 flex items-center"
+                              className="flex items-center bg-red-100 text-red-800"
                             >
-                              <Flag className="w-3 h-3 mr-1" />
+                              <Flag className="mr-1 h-3 w-3" />
                               {format(field.value.to, "MMM dd, yyyy")}
                             </Badge>
                           )}

@@ -2,7 +2,7 @@ export type Opportunity = {
   id: string;
   title: string;
   description: string;
-  type: string | string[];
+  type: string;
   tags?: string[];
   images?: string[];
   createdAt?: string;
@@ -17,6 +17,17 @@ export type Opportunity = {
     name: string;
     image: string;
   };
+};
+
+export type Task = {
+  id: string;
+  title: string;
+  description?: string;
+  opportunityLink?: string;
+  completed: boolean;
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
 };
 
 export interface OpportunityPostProps {

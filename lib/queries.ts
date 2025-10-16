@@ -1,5 +1,5 @@
 import sanityClient from "@/lib/sanity";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import axios from "axios";
 import {
   Opportunity,
@@ -159,18 +159,44 @@ export function useToggleUpvote(id: string) {
  */
 export type OpportunitiesResponse = {
   opportunities: Opportunity[];
+  pagination?: {
+    limit: number;
+    offset: number;
+    total: number;
+    hasMore: boolean;
+  };
 };
 
-export async function fetchOpportunities(): Promise<Opportunity[]> {
-  const { data } = await axios.get<OpportunitiesResponse>("/api/opportunities");
-  return data.opportunities;
+export async function fetchOpportunitiesPaginated(
+  limit: number = 10,
+  offset: number = 0
+): Promise<OpportunitiesResponse> {
+  const { data } = await axios.get<OpportunitiesResponse>("/api/opportunities", {
+    params: { limit, offset }
+  });
+  return data;
 }
 
-export function useOpportunities() {
-  return useQuery<Opportunity[]>({
-    queryKey: ["opportunities"],
-    queryFn: fetchOpportunities,
-    staleTime: 1000 * 60, // 1 minute
+export function useOpportunitiesPaginated(limit: number = 10, offset: number = 0) {
+  return useQuery<OpportunitiesResponse>({
+    queryKey: ["opportunities", "paginated", limit, offset],
+    queryFn: () => fetchOpportunitiesPaginated(limit, offset),
+    staleTime: 1000 * 30, // 30 seconds
+  });
+}
+
+export function useInfiniteOpportunities(limit: number = 10) {
+  return useInfiniteQuery<OpportunitiesResponse>({
+    queryKey: ["opportunities", "infinite", limit],
+    queryFn: ({ pageParam = 0 }) => fetchOpportunitiesPaginated(limit, pageParam as number),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.pagination?.hasMore) {
+        return (lastPage.pagination.offset || 0) + (lastPage.pagination.limit || limit);
+      }
+      return undefined;
+    },
+    staleTime: 1000 * 30, // 30 seconds
   });
 }
 

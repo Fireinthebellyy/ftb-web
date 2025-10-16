@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
     if (!db) {
       return NextResponse.json(
@@ -120,7 +120,18 @@ export async function GET(_req: NextRequest) {
       );
     }
 
-    // Method 1: Using leftJoin (recommended)
+    // Get pagination parameters from URL
+    const { searchParams } = new URL(req.url);
+    const limitParam = Number.parseInt(searchParams.get("limit") ?? "", 10);
+    const offsetParam = Number.parseInt(searchParams.get("offset") ?? "", 10);
+    const limit = Number.isNaN(limitParam) ? 10 : limitParam;
+    const offset = Number.isNaN(offsetParam) ? 0 : offsetParam;
+
+    // Validate pagination parameters
+    const validLimit = Math.min(Math.max(limit, 1), 50); // Between 1 and 50
+    const validOffset = Math.max(offset, 0); // Non-negative
+
+    // Method 1: Using leftJoin (recommended) with pagination
     const allOpportunities = await db
       .select({
         // Opportunity fields
@@ -153,7 +164,16 @@ export async function GET(_req: NextRequest) {
       .leftJoin(user, eq(opportunities.userId, user.id));
 
     return NextResponse.json(
-      { success: true, opportunities: allOpportunities },
+      { 
+        success: true, 
+        opportunities: allOpportunities,
+        pagination: {
+          limit: validLimit,
+          offset: validOffset,
+          total: totalCount,
+          hasMore
+        }
+      },
       { status: 200 }
     );
   } catch (error) {

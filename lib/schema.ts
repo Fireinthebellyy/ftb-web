@@ -166,6 +166,7 @@ export const waitlist = pgTable("waitlist", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").notNull().unique(),
   createdAt: timestamp("created_at").defaultNow(),
+  feedback: text("feedback"),
 });
 
 export const tasks = pgTable("tasks", {
@@ -181,6 +182,27 @@ export const tasks = pgTable("tasks", {
     .references(() => user.id, { onDelete: "cascade" }),
 });
 
+export const feedback = pgTable("feedback", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  mood: integer("mood").notNull(), // 1-5
+  meaning: text("meaning").notNull(),
+  message: text("message"),
+  path: text("path"),
+  userAgent: text("user_agent"),
+  userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Tags for autosuggest
+export const tags = pgTable(
+  "tags",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull().unique(),
+    createdAt: timestamp("created_at").defaultNow(),
+  }
+);
+
 export const schema = {
   user,
   mentors,
@@ -192,4 +214,6 @@ export const schema = {
   bookmarks,
   waitlist,
   tasks,
+  feedback,
+  tags,
 };

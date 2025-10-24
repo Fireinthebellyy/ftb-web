@@ -169,10 +169,15 @@ export type OpportunitiesResponse = {
 
 export async function fetchOpportunitiesPaginated(
   limit: number = 10,
-  offset: number = 0
+  offset: number = 0,
+  search?: string
 ): Promise<OpportunitiesResponse> {
+  const params: any = { limit, offset };
+  if (search && search.trim()) {
+    params.search = search.trim();
+  }
   const { data } = await axios.get<OpportunitiesResponse>("/api/opportunities", {
-    params: { limit, offset }
+    params
   });
   return data;
 }
@@ -185,10 +190,10 @@ export function useOpportunitiesPaginated(limit: number = 10, offset: number = 0
   });
 }
 
-export function useInfiniteOpportunities(limit: number = 10) {
+export function useInfiniteOpportunities(limit: number = 10, search?: string) {
   return useInfiniteQuery<OpportunitiesResponse>({
-    queryKey: ["opportunities", "infinite", limit],
-    queryFn: ({ pageParam = 0 }) => fetchOpportunitiesPaginated(limit, pageParam as number),
+    queryKey: ["opportunities", "infinite", limit, search],
+    queryFn: ({ pageParam = 0 }) => fetchOpportunitiesPaginated(limit, pageParam as number, search),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => {
       if (lastPage.pagination?.hasMore) {

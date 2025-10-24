@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { eq, isNull } from "drizzle-orm";
+import { eq, isNull, or, ilike, sql } from "drizzle-orm";
 import { opportunities, user } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
@@ -120,10 +120,11 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Get pagination parameters from URL
+    // Get pagination and search parameters from URL
     const { searchParams } = new URL(req.url);
     const limitParam = Number.parseInt(searchParams.get("limit") ?? "", 10);
     const offsetParam = Number.parseInt(searchParams.get("offset") ?? "", 10);
+    const searchTerm = searchParams.get("search") ?? "";
     const limit = Number.isNaN(limitParam) ? 10 : limitParam;
     const offset = Number.isNaN(offsetParam) ? 0 : offsetParam;
 
@@ -131,7 +132,18 @@ export async function GET(req: NextRequest) {
     const validLimit = Math.min(Math.max(limit, 1), 50); // Between 1 and 50
     const validOffset = Math.max(offset, 0); // Non-negative
 
-    // Fetch all non-deleted opportunities with user info
+    // Search (Server Side)
+    let whereConditions = isNull(opportunities.deletedAt);
+    
+    if (searchTerm.trim()) {
+      whereConditions = or(
+        ilike(opportunities.title, `%${searchTerm}%`),
+        ilike(opportunities.description, `%${searchTerm}%`),
+        sql`EXISTS (SELECT 1 FROM unnest(${opportunities.tags}) AS tag WHERE tag ILIKE ${`%${searchTerm}%`})`
+      );
+    }
+
+    // Fetch opportunities with search and pagination
     const allOpportunities = await db
       .select({
         // Opportunity fields
@@ -160,8 +172,8 @@ export async function GET(req: NextRequest) {
         },
       })
       .from(opportunities)
-      .where(isNull(opportunities.deletedAt))
-      .leftJoin(user, eq(opportunities.userId, user.id));
+      .leftJoin(user, eq(opportunities.userId, user.id))
+      .where(whereConditions);
 
     // Compute pagination on the result set
     const totalCount = allOpportunities.length;

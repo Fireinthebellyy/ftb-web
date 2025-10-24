@@ -31,6 +31,12 @@ import CalendarWidget from "@/components/opportunity/CalendarWidget";
 import TaskWidget from "@/components/opportunity/TaskWidget";
 
 export default function OpportunityCardsPage() {
+  const [isNewOpportunityOpen, setIsNewOpportunityOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("newest");
+  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
+
   const {
     data,
     isLoading,
@@ -38,13 +44,7 @@ export default function OpportunityCardsPage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteOpportunities(10);
-
-  const [isNewOpportunityOpen, setIsNewOpportunityOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [filterType, setFilterType] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<string>("newest");
-  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
+  } = useInfiniteOpportunities(10, searchTerm);
 
   // Flatten all opportunities from all pages
   const allOpportunities = data?.pages?.flatMap(page => page.opportunities) || [];
@@ -52,12 +52,6 @@ export default function OpportunityCardsPage() {
   // Apply filtering and sorting to the loaded opportunities
   const filteredAndSortedOpportunities = allOpportunities
     .filter((opportunity) => {
-      const search = searchTerm.toLowerCase();
-      const matchesSearch =
-        opportunity.title.toLowerCase().includes(search) ||
-        opportunity.description.toLowerCase().includes(search) ||
-        opportunity.tags?.some((tag) => tag.toLowerCase().includes(search));
-
       const matchesType =
         filterType === "all"
           ? true
@@ -65,7 +59,7 @@ export default function OpportunityCardsPage() {
             ? opportunity.type.includes(filterType)
             : opportunity.type === filterType;
 
-      return matchesSearch && matchesType;
+      return matchesType;
     })
     .sort((a, b) => {
       switch (sortBy) {

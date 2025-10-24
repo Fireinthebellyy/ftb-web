@@ -7,7 +7,8 @@ import Footer from "@/components/Footer";
 import { Suspense } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/next";
-import Providers from "@/components/Providers";
+import QueryProvider from "@/components/Providers";
+import ProgressProvider from "./providers";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   weight: ["400", "700"], // or ["400", "700"] if multiple
@@ -33,10 +34,12 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <Suspense fallback={<div>Loading ..</div>}>
-          <Navbar />
-          <main className="grow">
-            <Providers>{children}</Providers>
-          </main>
+          <ProgressProvider>
+            <Navbar />
+            <main className="grow">
+              <QueryProvider>{children}</QueryProvider>
+            </main>
+          </ProgressProvider>
           <Footer />
           <Toaster />
           <Analytics />

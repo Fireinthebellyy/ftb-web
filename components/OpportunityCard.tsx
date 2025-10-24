@@ -334,7 +334,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               />
             </Avatar>
           ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-300 text-sm font-semibold text-gray-600 uppercase sm:h-12 sm:w-12">
+            <div className="flex size-6 items-center justify-center rounded-full bg-gray-300 text-sm font-semibold text-gray-600 uppercase sm:size-7">
               {user && user.name
                 ? user.name
                     .split(" ")

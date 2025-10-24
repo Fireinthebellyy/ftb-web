@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { eq, isNull, or, ilike, sql } from "drizzle-orm";
+import { eq, isNull, or, and, ilike, sql } from "drizzle-orm";
 import { opportunities, user } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
@@ -136,10 +136,13 @@ export async function GET(req: NextRequest) {
     let whereConditions = isNull(opportunities.deletedAt);
     
     if (searchTerm.trim()) {
-      whereConditions = or(
+      whereConditions = and(
+        isNull(opportunities.deletedAt),
+        or(
         ilike(opportunities.title, `%${searchTerm}%`),
         ilike(opportunities.description, `%${searchTerm}%`),
         sql`EXISTS (SELECT 1 FROM unnest(${opportunities.tags}) AS tag WHERE tag ILIKE ${`%${searchTerm}%`})`
+        )
       );
     }
 

@@ -344,7 +344,7 @@ export default function OpportunityCardsPage() {
                     Post Opportunity
                   </p>
                   <Link
-                    href="/bookmarks"
+                    href="/deadlines"
                     className="block text-sm text-gray-600 hover:text-gray-800"
                   >
                     My Deadlines

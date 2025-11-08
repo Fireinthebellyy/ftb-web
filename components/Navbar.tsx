@@ -8,6 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "./ui/button";
 import { Righteous } from "next/font/google";
+import { EllipsisVertical } from "lucide-react";
 
 function useLogout() {
   const router = useRouter();
@@ -155,7 +156,7 @@ export default function Navbar() {
               className="object-contain"
             />
             <span
-              className={`${righteous.className} bg-primary hidden bg-clip-text text-xl font-bold tracking-tight text-transparent sm:inline`}
+              className={`${righteous.className} hidden bg-clip-text text-xl font-bold tracking-tight text-neutral-800 sm:inline`}
             >
               Fire in the Belly
             </span>
@@ -183,6 +184,16 @@ export default function Navbar() {
             }`}
           >
             Featured
+          </Link>
+          <Link
+            href="/deadlines"
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
+              pathname === "/deadlines"
+                ? "text-primary after:w-full"
+                : "text-neutral-800 after:w-0"
+            }`}
+          >
+            Deadlines
           </Link>
         </nav>
 
@@ -214,13 +225,21 @@ export default function Navbar() {
                 Hi, {user?.user?.name?.split(" ")[0] || "User"}!
               </span>
               <div className="relative flex items-center">
+                <Avatar className="size-6 border-2 border-neutral-300">
+                  <AvatarImage
+                    src={(user.user as any)?.image || undefined}
+                    alt={user.user.name || "User avatar"}
+                    className="object-cover"
+                  />
+                  <AvatarFallback>{avatarFallback}</AvatarFallback>
+                </Avatar>
                 <button
                   ref={triggerRef}
                   type="button"
                   aria-haspopup="menu"
                   aria-expanded={menuOpen}
                   aria-controls={menuId}
-                  className="rounded-full focus:ring-2 focus:ring-neutral-500 focus:outline-none"
+                  className="hidden cursor-pointer rounded-full focus:ring-2 focus:ring-neutral-500 focus:outline-none md:block"
                   onClick={() => setMenuOpen((v) => !v)}
                   onKeyDown={(e) => {
                     if (
@@ -234,14 +253,7 @@ export default function Navbar() {
                     }
                   }}
                 >
-                  <Avatar className="size-6">
-                    <AvatarImage
-                      src={(user.user as any)?.image || undefined}
-                      alt={user.user.name || "User avatar"}
-                      className="object-cover"
-                    />
-                    <AvatarFallback>{avatarFallback}</AvatarFallback>
-                  </Avatar>
+                  <EllipsisVertical className="ml-1 size-4 text-neutral-600" />
                 </button>
 
                 {menuOpen && (

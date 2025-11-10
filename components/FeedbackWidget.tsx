@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,6 +28,13 @@ export default function FeedbackWidget() {
   const [mood, setMood] = useState<FeedbackMood | null>(null);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setSubmitted(localStorage.getItem("feedback_submitted") === "true");
+    }
+  }, []);
 
   const handleSubmit = async () => {
     if (!mood) return;
@@ -58,6 +65,10 @@ export default function FeedbackWidget() {
       setOpen(false);
       setMood(null);
       setComment("");
+      setSubmitted(true);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("feedback_submitted", "true");
+      }
     } catch (error) {
       console.error("Feedback submission error:", error);
       toast.error("Failed to submit feedback. Please try again.");
@@ -68,15 +79,17 @@ export default function FeedbackWidget() {
 
   return (
     <>
-      <button
-        type="button"
-        aria-label="Open feedback"
-        title="Share feedback"
-        onClick={() => setOpen(true)}
-        className="fixed right-6 bottom-6 z-50 flex size-8 items-center justify-center rounded-full bg-orange-500 text-white shadow-lg transition hover:bg-orange-600 focus:ring-2 focus:ring-orange-400 focus:outline-none md:size-12"
-      >
-        <MessageSquare className="size-4 md:size-6" />
-      </button>
+      {!submitted && (
+        <button
+          type="button"
+          aria-label="Open feedback"
+          title="Share feedback"
+          onClick={() => setOpen(true)}
+          className="fixed right-6 bottom-6 z-50 flex size-8 items-center justify-center rounded-full bg-orange-500 text-white shadow-lg transition hover:bg-orange-600 focus:ring-2 focus:ring-orange-400 focus:outline-none md:size-12"
+        >
+          <MessageSquare className="size-4 md:size-6" />
+        </button>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="w-[95vw] max-w-md">
@@ -127,13 +140,19 @@ export default function FeedbackWidget() {
             )}
 
             <div className="pt-2">
-              <Button
-                onClick={handleSubmit}
-                disabled={!mood || submitting}
-                className="w-full bg-orange-500 text-white hover:bg-orange-600"
-              >
-                {submitting ? "Submitting..." : "Submit"}
-              </Button>
+              {!submitted ? (
+                <Button
+                  onClick={handleSubmit}
+                  disabled={!mood || submitting}
+                  className="w-full bg-orange-500 text-white hover:bg-orange-600"
+                >
+                  {submitting ? "Submitting..." : "Submit"}
+                </Button>
+              ) : (
+                <div className="text-center text-sm text-gray-600">
+                  Feedback already submitted
+                </div>
+              )}
             </div>
           </div>
         </DialogContent>

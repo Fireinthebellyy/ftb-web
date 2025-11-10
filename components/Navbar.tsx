@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { usePathname, useRouter } from "next/navigation";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "./ui/button";
 import { Righteous } from "next/font/google";
 import { EllipsisVertical } from "lucide-react";
@@ -225,14 +224,15 @@ export default function Navbar() {
                 Hi, {user?.user?.name?.split(" ")[0] || "User"}!
               </span>
               <div className="relative flex items-center">
-                <Avatar className="size-6 border-2 border-neutral-300">
-                  <AvatarImage
-                    src={(user.user as any)?.image || undefined}
+                <div className="rounded-full border-2 border-neutral-300">
+                  <Image
+                    src={(user.user as any)?.image || avatarFallback.toString()}
                     alt={user.user.name || "User avatar"}
-                    className="object-cover"
+                    className="size-6 rounded-full object-cover"
+                    width={24}
+                    height={24}
                   />
-                  <AvatarFallback>{avatarFallback}</AvatarFallback>
-                </Avatar>
+                </div>
                 <button
                   ref={triggerRef}
                   type="button"

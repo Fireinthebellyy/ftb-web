@@ -23,7 +23,6 @@ import WhatsAppIcon from "@/components/icons/WhatsApp";
 import EnvelopeIcon from "@/components/icons/Envelope";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import {
   Carousel,
   CarouselContent,
@@ -321,13 +320,15 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           {user &&
           user.image &&
           !user.image.includes("https://media.licdn.com") ? (
-            <Avatar className="size-6 sm:size-7">
-              <AvatarImage
+            <div className="size-6 sm:size-7">
+              <Image
                 src={user.image}
                 alt={user.name}
-                className="h-full w-full object-cover"
+                className="h-full w-full rounded-full object-cover"
+                width={28}
+                height={28}
               />
-            </Avatar>
+            </div>
           ) : (
             <div className="flex size-6 items-center justify-center rounded-full bg-gray-300 text-sm font-semibold text-gray-600 uppercase sm:size-7">
               {user && user.name

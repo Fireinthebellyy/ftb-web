@@ -30,6 +30,10 @@ import FeedbackWidget from "@/components/FeedbackWidget";
 import CalendarWidget from "@/components/opportunity/CalendarWidget";
 import TaskWidget from "@/components/opportunity/TaskWidget";
 
+const FEATURE_FLAGS = {
+  showTrendingTags: false,
+};
+
 export default function OpportunityCardsPage() {
   const {
     data,
@@ -464,26 +468,54 @@ export default function OpportunityCardsPage() {
             <div className="sticky top-6 space-y-6">
               <CalendarWidget />
               <TaskWidget />
-              {/* Trending Tags */}
-              <div className="rounded-lg border bg-white px-4 py-3">
-                <h3 className="mb-4 font-semibold text-gray-900">
-                  Trending Tags
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  <span className="rounded bg-blue-100 px-2 py-1 text-xs text-blue-800">
-                    #ai
-                  </span>
-                  <span className="rounded bg-green-100 px-2 py-1 text-xs text-green-800">
-                    #blockchain
-                  </span>
-                  <span className="rounded bg-purple-100 px-2 py-1 text-xs text-purple-800">
-                    #web3
-                  </span>
-                  <span className="rounded bg-orange-100 px-2 py-1 text-xs text-orange-800">
-                    #startup
-                  </span>
-                </div>
-              </div>
+              {FEATURE_FLAGS.showTrendingTags && (
+                <>
+                  {/* Trending Tags */}
+                  <div className="rounded-lg border bg-white px-4 py-3">
+                    <h3 className="mb-4 font-semibold text-gray-900">
+                      Trending Tags
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="rounded bg-blue-100 px-2 py-1 text-xs text-blue-800">
+                        #ai
+                      </span>
+                      <span className="rounded bg-green-100 px-2 py-1 text-xs text-green-800">
+                        #blockchain
+                      </span>
+                      <span className="rounded bg-purple-100 px-2 py-1 text-xs text-purple-800">
+                        #web3
+                      </span>
+                      <span className="rounded bg-orange-100 px-2 py-1 text-xs text-orange-800">
+                        #startup
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
+              {FEATURE_FLAGS.showTrendingTags && (
+                <>
+                  {/* Trending Tags */}
+                  <div className="rounded-lg border bg-white px-4 py-3">
+                    <h3 className="mb-4 font-semibold text-gray-900">
+                      Trending Tags
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="rounded bg-blue-100 px-2 py-1 text-xs text-blue-800">
+                        #ai
+                      </span>
+                      <span className="rounded bg-green-100 px-2 py-1 text-xs text-green-800">
+                        #blockchain
+                      </span>
+                      <span className="rounded bg-purple-100 px-2 py-1 text-xs text-purple-800">
+                        #web3
+                      </span>
+                      <span className="rounded bg-orange-100 px-2 py-1 text-xs text-orange-800">
+                        #startup
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </aside>
         </div>

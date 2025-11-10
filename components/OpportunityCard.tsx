@@ -11,8 +11,6 @@ import {
   Share2,
   Flame,
   EllipsisVertical,
-  ThumbsDown,
-  FlagTriangleRight,
   Trash2,
   PencilLine,
 } from "lucide-react";
@@ -762,15 +760,15 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               </Dialog>
             </div>
           </div>
-          <div className="flex items-center">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <EllipsisVertical />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-42">
-                {session?.user?.id === user?.id ? (
+          {session?.user?.id === user?.id && (
+            <div className="flex items-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <EllipsisVertical />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-42">
                   <>
                     <DropdownMenuItem
                       onClick={() => setIsEditing(true)}
@@ -795,37 +793,10 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                       </p>
                     </DropdownMenuItem>
                   </>
-                ) : (
-                  <>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        // TODO: Implement not interested functionality
-                        toast.info("Not interested functionality coming soon");
-                      }}
-                      className="flex items-center gap-2"
-                    >
-                      <ThumbsDown />
-                      <p className="text-muted-foreground text-sm">
-                        Not Interested
-                      </p>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="flex items-center gap-2"
-                      onClick={() => {
-                        // TODO: Implement report functionality
-                        toast.info("Report functionality coming soon");
-                      }}
-                    >
-                      <FlagTriangleRight />
-                      <p className="text-muted-foreground text-sm">
-                        Report Post
-                      </p>
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
         </footer>
 
         {/* Edit dialog */}

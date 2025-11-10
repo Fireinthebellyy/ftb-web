@@ -22,6 +22,39 @@ const moods: {
   { value: 5, label: "Great", emoji: "😍", meaning: "Excellent" },
 ];
 
+const FEEDBACK_STORAGE_PREFIX = "feedback_submitted";
+const FEEDBACK_BLOCK_DAYS = 30;
+
+function getFeedbackStorageKey(path?: string) {
+  return `${FEEDBACK_STORAGE_PREFIX}:${path ?? "global"}`;
+}
+
+function isFeedbackBlockedForPath(path?: string) {
+  try {
+    if (typeof window === "undefined") return false;
+    const key = getFeedbackStorageKey(path);
+    const ts = localStorage.getItem(key);
+    if (!ts) return false;
+    const date = new Date(ts);
+    if (isNaN(date.getTime())) return false;
+    const ageDays = (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24);
+    return ageDays < FEEDBACK_BLOCK_DAYS;
+  } catch (err) {
+    console.error("Feedback storage read error:", err);
+    return false;
+  }
+}
+
+function markFeedbackSubmittedForPath(path?: string) {
+  try {
+    if (typeof window === "undefined") return;
+    const key = getFeedbackStorageKey(path);
+    localStorage.setItem(key, new Date().toISOString());
+  } catch (err) {
+    console.error("Feedback storage write error:", err);
+  }
+}
+
 export default function FeedbackWidget() {
   const [open, setOpen] = useState(false);
   const [mood, setMood] = useState<FeedbackMood | null>(null);
@@ -31,7 +64,9 @@ export default function FeedbackWidget() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setSubmitted(localStorage.getItem("feedback_submitted") === "true");
+      const path =
+        typeof window !== "undefined" ? window.location.pathname : undefined;
+      setSubmitted(isFeedbackBlockedForPath(path));
     }
   }, []);
 
@@ -65,9 +100,9 @@ export default function FeedbackWidget() {
       setMood(null);
       setComment("");
       setSubmitted(true);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("feedback_submitted", "true");
-      }
+      const path =
+        typeof window !== "undefined" ? window.location.pathname : undefined;
+      markFeedbackSubmittedForPath(path);
     } catch (error) {
       console.error("Feedback submission error:", error);
       toast.error("Failed to submit feedback. Please try again.");
@@ -93,9 +128,9 @@ export default function FeedbackWidget() {
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
             className="size-5 md:size-6"
           >
             <path stroke="none" d="M0 0h24v24H0z" fill="none" />

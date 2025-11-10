@@ -15,5 +15,3 @@ export default function WhatsAppIcon(props: Props) {
     </svg>
   );
 }
-
-

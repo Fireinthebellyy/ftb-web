@@ -10,10 +10,7 @@ import {
   Loader2,
   Share2,
   Flame,
-  ChevronDown,
   EllipsisVertical,
-  ThumbsDown,
-  FlagTriangleRight,
   Trash2,
   PencilLine,
 } from "lucide-react";
@@ -24,7 +21,6 @@ import WhatsAppIcon from "@/components/icons/WhatsApp";
 import EnvelopeIcon from "@/components/icons/Envelope";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import {
   Carousel,
   CarouselContent,
@@ -63,7 +59,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 // UUID validation function
 const isValidUUID = (uuid: string): boolean => {
@@ -75,7 +70,6 @@ const isValidUUID = (uuid: string): boolean => {
 const OpportunityPost: React.FC<OpportunityPostProps> = ({
   opportunity,
   onBookmarkChange,
-  isCardExpanded = false,
 }) => {
   const {
     id,
@@ -119,7 +113,12 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   const [showMessage, setShowMessage] = useState<boolean>(false);
   const [isBookmarkLoading, setIsBookmarkLoading] = useState<boolean>(false);
   const [showComments, setShowComments] = useState<boolean>(false);
-  const [isExpanded, setIsExpanded] = useState<boolean>(isCardExpanded);
+  const isExpanded = true;
+
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [modalIndex, setModalIndex] = useState<number>(0);
+
+  const modalFileId = images[modalIndex] ?? images[0] ?? null;
 
   const { data: session } = authClient.useSession();
   const { data, isLoading } = useOpportunity(id);
@@ -199,13 +198,6 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   };
 
   const primaryType = Array.isArray(type) ? type[0] : type;
-
-  const isMobile = useIsMobile();
-  const needsExpand =
-    images.length > 0 ||
-    (description &&
-      typeof description === "string" &&
-      description.length > (isMobile ? 50 : 100));
 
   const getTypeColor = (type?: string): string => {
     const colors: Record<string, string> = {
@@ -326,13 +318,15 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           {user &&
           user.image &&
           !user.image.includes("https://media.licdn.com") ? (
-            <Avatar className="size-6 sm:size-7">
-              <AvatarImage
+            <div className="size-6 sm:size-7">
+              <Image
                 src={user.image}
                 alt={user.name}
-                className="h-full w-full object-cover"
+                className="h-full w-full rounded-full object-cover"
+                width={28}
+                height={28}
               />
-            </Avatar>
+            </div>
           ) : (
             <div className="flex size-6 items-center justify-center rounded-full bg-gray-300 text-sm font-semibold text-gray-600 uppercase sm:size-7">
               {user && user.name
@@ -387,10 +381,30 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         </Badge>
       </div>
 
-      <div className="px-3 pb-3 sm:px-4 sm:pb-4">
+      <div className="px-3 pb-2 sm:px-4">
         <h2 className="mb-2 line-clamp-1 truncate text-base leading-tight font-bold text-gray-900 sm:text-lg">
           {title}
         </h2>
+
+        {/* Tags - Show fewer on mobile */}
+        {tags && tags.length > 0 && (
+          <div className="mb-1 flex flex-wrap gap-1.5 sm:gap-2">
+            {(isExpanded ? tags : tags.slice(0, 4)).map((tag, idx) => (
+              <Badge
+                key={idx}
+                className="cursor-default bg-neutral-200 px-2 py-1 text-[10px] text-gray-700 sm:text-xs"
+                variant="secondary"
+              >
+                #{tag}
+              </Badge>
+            ))}
+            {!isExpanded && tags.length > 4 && (
+              <Badge className="bg-neutral-200 px-2 py-1 text-[10px] text-gray-600 sm:text-xs">
+                +{tags.length - 4} more
+              </Badge>
+            )}
+          </div>
+        )}
 
         {description && (
           <div
@@ -398,7 +412,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               !isExpanded ? "mb-2 line-clamp-1 overflow-hidden" : "mb-3"
             }`}
           >
-            <p>
+            <p className="line-clamp-4 text-ellipsis">
               {typeof description === "string"
                 ? description
                     .split(/(https?:\/\/[^\s<>"'`|\\^{}\[\]]+)/gi)
@@ -425,35 +439,59 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
         {isExpanded && !(images.length > 0) && meta && (
           <Link href={meta?.url} target="_blank" rel="noopener noreferrer">
-            <div className="mb-3 flex flex-col rounded border border-gray-300 p-2 shadow-sm">
+            <div className="mb-3 flex items-center gap-2 rounded-lg border border-gray-300 p-2 shadow-sm hover:bg-gray-50">
               {meta.image && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={meta.image}
                   alt={meta.title}
-                  className="h-auto w-full rounded"
+                  className="h-20 w-20 rounded object-cover"
                 />
               )}
-              <h3 className="mt-2 text-sm font-semibold">{meta.title}</h3>
-              <p className="text-sm text-gray-600">{meta.description}</p>
+              <div>
+                <h3 className="mt-2 text-sm font-semibold">{meta.title}</h3>
+                <p className="text-sm text-gray-600">{meta.description}</p>
+              </div>
             </div>
           </Link>
         )}
 
         {isExpanded && images.length > 0 ? (
           images.length === 1 ? (
-            <div className="mb-3 overflow-hidden rounded">
-              <Image
-                src={opportunityStorage.getFileView(
-                  process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
-                  images[0]
+            <div className="mb-3 overflow-hidden">
+              <div
+                className="cursor-pointer"
+                onClick={() => {
+                  setModalIndex(0);
+                  setModalOpen(true);
+                }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    setModalIndex(0);
+                    setModalOpen(true);
+                  }
+                }}
+              >
+                {images[0] ? (
+                  <Image
+                    src={opportunityStorage.getFileView(
+                      process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
+                      images[0]
+                    )}
+                    alt={title}
+                    className="max-h-48 w-full rounded-lg object-cover sm:max-h-64"
+                    loading="lazy"
+                    height={256}
+                    width={400}
+                  />
+                ) : (
+                  <div className="flex h-48 w-full items-center justify-center rounded-lg bg-neutral-100 text-sm text-gray-400">
+                    Image not available
+                  </div>
                 )}
-                alt={title}
-                className="max-h-48 w-full object-contain sm:max-h-64"
-                loading="lazy"
-                height={256}
-                width={400}
-              />
+              </div>
             </div>
           ) : (
             <div className="mb-3">
@@ -461,19 +499,39 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                 <CarouselContent>
                   {images.map((image, i) => (
                     <CarouselItem key={i}>
-                      <div className="overflow-hidden rounded">
-                        <Image
-                          src={opportunityStorage.getFileView(
-                            process.env
-                              .NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
-                            image
-                          )}
-                          alt={`${title} - Image ${i + 1}`}
-                          className="max-h-48 w-full object-contain sm:max-h-64"
-                          loading="lazy"
-                          height={256}
-                          width={400}
-                        />
+                      <div
+                        className="cursor-pointer overflow-hidden"
+                        onClick={() => {
+                          setModalIndex(i);
+                          setModalOpen(true);
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            setModalIndex(i);
+                            setModalOpen(true);
+                          }
+                        }}
+                      >
+                        {image ? (
+                          <Image
+                            src={opportunityStorage.getFileView(
+                              process.env
+                                .NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
+                              image
+                            )}
+                            alt={`${title} - Image ${i + 1}`}
+                            className="max-h-48 w-full rounded-lg object-cover sm:max-h-64"
+                            loading="lazy"
+                            height={256}
+                            width={400}
+                          />
+                        ) : (
+                          <div className="flex h-48 w-full items-center justify-center rounded-lg bg-neutral-100 text-sm text-gray-400">
+                            Image not available
+                          </div>
+                        )}
                       </div>
                     </CarouselItem>
                   ))}
@@ -485,25 +543,74 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           )
         ) : null}
 
-        {/* Tags - Show fewer on mobile */}
-        {tags && tags.length > 0 && (
-          <div className="mb-1 flex flex-wrap gap-1.5 sm:gap-2">
-            {(isExpanded ? tags : tags.slice(0, 4)).map((tag, idx) => (
-              <Badge
-                key={idx}
-                className="cursor-default bg-gray-100 px-2 py-1 text-[10px] text-gray-700 sm:text-xs"
-                variant="secondary"
+        {/* Image lightbox modal */}
+        <Dialog open={modalOpen} onOpenChange={(open) => setModalOpen(open)}>
+          <DialogContent
+            className="mx-auto min-w-auto p-0 md:min-w-3xl"
+            overlayClassName="bg-black/70"
+          >
+            <DialogHeader className="hidden">
+              <DialogTitle className="text-lg font-semibold text-gray-600"></DialogTitle>
+            </DialogHeader>
+
+            {images.length <= 1 ? (
+              <div className="flex items-center justify-center">
+                {modalFileId ? (
+                  <Image
+                    src={opportunityStorage.getFileView(
+                      process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
+                      modalFileId
+                    )}
+                    alt={title}
+                    className="max-h-[80vh] w-full object-contain"
+                    height={600}
+                    width={800}
+                  />
+                ) : (
+                  <div className="w-full text-center text-sm text-gray-400">
+                    Image not available
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Carousel
+                className="w-full"
+                setApi={(api) => {
+                  // Ensure Embla scrolls to the selected index after initialization
+                  setTimeout(() => api?.scrollTo(modalIndex), 0);
+                }}
               >
-                #{tag}
-              </Badge>
-            ))}
-            {!isExpanded && tags.length > 4 && (
-              <Badge className="bg-gray-100 px-2 py-1 text-[10px] text-gray-600 sm:text-xs">
-                +{tags.length - 4} more
-              </Badge>
+                <CarouselContent>
+                  {images.map((image, idx) => (
+                    <CarouselItem key={idx}>
+                      <div className="flex h-full items-center justify-center bg-transparent">
+                        {image ? (
+                          <Image
+                            src={opportunityStorage.getFileView(
+                              process.env
+                                .NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
+                              image
+                            )}
+                            alt={`${title} - Image ${idx + 1}`}
+                            className="max-h-[80vh] w-full object-contain"
+                            height={600}
+                            width={800}
+                          />
+                        ) : (
+                          <div className="w-full text-center text-sm text-gray-400">
+                            Image not available
+                          </div>
+                        )}
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="left-2" />
+                <CarouselNext className="right-2" />
+              </Carousel>
             )}
-          </div>
-        )}
+          </DialogContent>
+        </Dialog>
 
         {isExpanded && (
           <div className="mb-3 flex gap-2 text-xs text-gray-600 sm:flex-row sm:flex-wrap sm:gap-4">
@@ -524,13 +631,14 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         )}
 
         {/* Actions Footer - Mobile optimized */}
-        <footer className="flex items-center justify-between border-t border-gray-100 pt-2 sm:pt-3">
+        <footer className="flex items-center justify-between border-t border-gray-100 pt-1">
           <div className="flex items-center space-x-4 text-gray-500 sm:space-x-6">
             {/* Voting & Comments */}
             <div className="flex items-center space-x-3 sm:space-x-4">
               {/* Upvote (toggle) */}
               <button
                 onClick={onUpvoteClick}
+                title="Upvote"
                 aria-label="Upvote"
                 disabled={toggleUpvote.isPending || isLoading}
                 className={`flex place-items-center-safe text-xs transition-colors sm:text-sm ${
@@ -553,6 +661,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               {/* Comments (clickable to toggle comment section) */}
               <button
                 type="button"
+                title="Comments"
                 onClick={() => setShowComments(!showComments)}
                 aria-label="Comments"
                 className="flex items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
@@ -562,6 +671,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               {/* Bookmark */}
               <button
                 type="button"
+                title="Bookmark"
                 onClick={handleBookmark}
                 disabled={isBookmarkLoading}
                 aria-label="Bookmark"
@@ -584,6 +694,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                 <DialogTrigger asChild>
                   <button
                     type="button"
+                    title="Share"
                     aria-label="Share"
                     className="flex items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
                   >
@@ -649,27 +760,15 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               </Dialog>
             </div>
           </div>
-          <div className="flex items-center">
-            {needsExpand && (
-              <button
-                type="button"
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="flex items-center gap-1 text-xs font-medium text-orange-600 hover:underline"
-              >
-                {isExpanded ? "Read less" : "Read more"}
-                <ChevronDown
-                  className={`h-3 w-3 transition-transform ${isExpanded ? "rotate-180" : ""}`}
-                />
-              </button>
-            )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <EllipsisVertical />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-42">
-                {session?.user?.id === user?.id ? (
+          {session?.user?.id === user?.id && (
+            <div className="flex items-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <EllipsisVertical />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-42">
                   <>
                     <DropdownMenuItem
                       onClick={() => setIsEditing(true)}
@@ -694,37 +793,10 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                       </p>
                     </DropdownMenuItem>
                   </>
-                ) : (
-                  <>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        // TODO: Implement not interested functionality
-                        toast.info("Not interested functionality coming soon");
-                      }}
-                      className="flex items-center gap-2"
-                    >
-                      <ThumbsDown />
-                      <p className="text-muted-foreground text-sm">
-                        Not Interested
-                      </p>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="flex items-center gap-2"
-                      onClick={() => {
-                        // TODO: Implement report functionality
-                        toast.info("Report functionality coming soon");
-                      }}
-                    >
-                      <FlagTriangleRight />
-                      <p className="text-muted-foreground text-sm">
-                        Report Post
-                      </p>
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
         </footer>
 
         {/* Edit dialog */}

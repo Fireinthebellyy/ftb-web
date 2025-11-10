@@ -127,6 +127,13 @@
       "when": 1758876817037,
       "tag": "0017_hesitant_sunspot",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1762581168310,
+      "tag": "0018_bitter_dakota_north",
+      "breakpoints": true
     }
   ]
 }

@@ -210,7 +210,7 @@ export default function BookmarksPage() {
     return (
       <div className="container mx-auto max-w-2xl px-4 py-12 text-center">
         <p className="mb-4 text-gray-700">
-          Please log in to see your bookmarks.
+          Please log in to see your deadlines.
         </p>
         <Link
           href="/login"
@@ -225,14 +225,14 @@ export default function BookmarksPage() {
   if (error) {
     return (
       <div className="container mx-auto max-w-2xl px-4 py-12 text-center text-red-600">
-        Failed to load bookmarks: {error}
+        Failed to load deadlines: {error}
       </div>
     );
   }
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-6">
-      <h1 className="mb-4 text-2xl font-bold">Bookmarks</h1>
+      <h1 className="mb-4 text-2xl font-bold">Deadlines</h1>
 
       <section className="mb-8">
         <h2 className="text-md mb-2 font-semibold text-black">Upcoming</h2>
@@ -248,7 +248,7 @@ export default function BookmarksPage() {
       </section>
 
       <section className="mb-8">
-        <h2 className="text-md mb-2 font-semibold text-black">Closed</h2>
+        <h2 className="text-md mb-2 font-semibold text-black">Past</h2>
         {memoizedClosed.length ? (
           <div className="space-y-4">
             {memoizedClosed.map((item) => (

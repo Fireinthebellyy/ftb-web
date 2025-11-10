@@ -613,14 +613,13 @@ export default function OpportunityCardsPage() {
         </div>
       </div>
       <FeedbackWidget />
-      <div
-        className="fixed right-6 bottom-6 z-50 flex size-10 items-center justify-center rounded-full bg-neutral-200 text-neutral-600 shadow-lg transition hover:bg-neutral-100 md:size-12"
-        title="Chat on WhatsApp"
-      >
+      <div className="fixed right-6 bottom-6 z-50 flex size-10 items-center justify-center rounded-full bg-neutral-200 text-neutral-600 shadow-lg transition hover:bg-neutral-100 md:size-12">
         <Link
           href="https://wa.me/917014885565"
           target="_blank"
           rel="noopener noreferrer"
+          title="Chat with us on WhatsApp"
+          aria-label="Chat with us on WhatsApp"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -629,9 +628,9 @@ export default function OpportunityCardsPage() {
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
             className="size-5 md:size-6"
           >
             <path stroke="none" d="M0 0h24v24H0z" fill="none" />

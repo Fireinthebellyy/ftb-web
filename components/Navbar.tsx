@@ -224,15 +224,21 @@ export default function Navbar() {
                 Hi, {user?.user?.name?.split(" ")[0] || "User"}!
               </span>
               <div className="relative flex items-center">
-                <div className="rounded-full border-2 border-neutral-300">
-                  <Image
-                    src={(user.user as any)?.image || avatarFallback.toString()}
-                    alt={user.user.name || "User avatar"}
-                    className="size-6 rounded-full object-cover"
-                    width={24}
-                    height={24}
-                  />
-                </div>
+                {user.user?.image ? (
+                  <div className="rounded-full border-2 border-neutral-300">
+                    <Image
+                      src={user.user.image}
+                      alt={user.user.name || "User avatar"}
+                      className="size-6 rounded-full object-cover"
+                      width={24}
+                      height={24}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex size-6 items-center justify-center rounded-full border-2 border-neutral-300 bg-neutral-200 text-xs font-semibold text-neutral-600 uppercase">
+                    {avatarFallback}
+                  </div>
+                )}
                 <button
                   ref={triggerRef}
                   type="button"

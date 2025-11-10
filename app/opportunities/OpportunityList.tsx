@@ -47,7 +47,8 @@ export default function OpportunityCardsPage() {
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
 
   // Flatten all opportunities from all pages
-  const allOpportunities = data?.pages?.flatMap(page => page.opportunities) || [];
+  const allOpportunities =
+    data?.pages?.flatMap((page) => page.opportunities) || [];
 
   // Apply filtering and sorting to the loaded opportunities
   const filteredAndSortedOpportunities = allOpportunities
@@ -105,15 +106,15 @@ export default function OpportunityCardsPage() {
           handleLoadMore();
         }
       },
-      { 
+      {
         threshold: 0.1,
-        rootMargin: '300px' // Start loading when trigger is 300px away from viewport
+        rootMargin: "300px", // Start loading when trigger is 300px away from viewport
       }
     );
 
     const currentDesktopTriggerRef = desktopTriggerRef.current;
     const currentMobileTriggerRef = mobileTriggerRef.current;
-    
+
     if (currentDesktopTriggerRef) {
       observer.observe(currentDesktopTriggerRef);
     }
@@ -396,26 +397,35 @@ export default function OpportunityCardsPage() {
                 {filteredAndSortedOpportunities.length > 0 ? (
                   <>
                     <div className="space-y-4">
-                      {filteredAndSortedOpportunities.map((opportunity, index) => (
-                        <div key={opportunity.id}>
-                          <OpportunityPost
-                            opportunity={opportunity}
-                            onBookmarkChange={handleBookmarkChange}
-                          />
-                          {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
-                          {(filteredAndSortedOpportunities.length > 1 && index === Math.max(0, filteredAndSortedOpportunities.length - 3)) && (
-                            <div ref={desktopTriggerRef} className="h-1" />
-                          )}
-                        </div>
-                      ))}
+                      {filteredAndSortedOpportunities.map(
+                        (opportunity, index) => (
+                          <div key={opportunity.id}>
+                            <OpportunityPost
+                              opportunity={opportunity}
+                              onBookmarkChange={handleBookmarkChange}
+                            />
+                            {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
+                            {filteredAndSortedOpportunities.length > 1 &&
+                              index ===
+                                Math.max(
+                                  0,
+                                  filteredAndSortedOpportunities.length - 3
+                                ) && (
+                                <div ref={desktopTriggerRef} className="h-1" />
+                              )}
+                          </div>
+                        )
+                      )}
                     </div>
-                    
+
                     {/* Load more indicator - also acts as fallback trigger */}
                     <div ref={loadMoreRef} className="flex justify-center py-8">
                       {/* Auto-fetch trigger when filtered set is empty but we still have more pages */}
-                      {filteredAndSortedOpportunities.length === 0 && hasNextPage && !isFetchingNextPage && (
-                        <div ref={desktopTriggerRef} className="h-1" />
-                      )}
+                      {filteredAndSortedOpportunities.length === 0 &&
+                        hasNextPage &&
+                        !isFetchingNextPage && (
+                          <div ref={desktopTriggerRef} className="h-1" />
+                        )}
                       {isFetchingNextPage && (
                         <div className="flex items-center space-x-2 text-gray-600">
                           <Loader2 className="h-5 w-5 animate-spin" />
@@ -423,7 +433,7 @@ export default function OpportunityCardsPage() {
                         </div>
                       )}
                       {!hasNextPage && allOpportunities.length > 0 && (
-                        <div className="text-gray-500 text-sm">
+                        <div className="text-sm text-gray-500">
                           You&apos;ve reached the end of opportunities
                         </div>
                       )}
@@ -508,37 +518,46 @@ export default function OpportunityCardsPage() {
               {filteredAndSortedOpportunities.length > 0 ? (
                 <>
                   <div className="space-y-3 sm:space-y-4">
-                    {filteredAndSortedOpportunities.map((opportunity, index) => (
-                      <div key={opportunity.id}>
-                        <OpportunityPost
-                          opportunity={opportunity}
-                          onBookmarkChange={handleBookmarkChange}
-                        />
-                        {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
-                        {(filteredAndSortedOpportunities.length > 1 && index === Math.max(0, filteredAndSortedOpportunities.length - 3)) && (
-                          <div ref={mobileTriggerRef} className="h-1" />
-                        )}
-                      </div>
-                    ))}
+                    {filteredAndSortedOpportunities.map(
+                      (opportunity, index) => (
+                        <div key={opportunity.id}>
+                          <OpportunityPost
+                            opportunity={opportunity}
+                            onBookmarkChange={handleBookmarkChange}
+                          />
+                          {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
+                          {filteredAndSortedOpportunities.length > 1 &&
+                            index ===
+                              Math.max(
+                                0,
+                                filteredAndSortedOpportunities.length - 3
+                              ) && (
+                              <div ref={mobileTriggerRef} className="h-1" />
+                            )}
+                        </div>
+                      )
+                    )}
                   </div>
-                  
+
                   {/* Load more indicator for mobile - also acts as fallback trigger */}
                   <div className="flex justify-center py-8">
                     {/* Auto-fetch trigger when filtered set is empty but we still have more pages */}
-                    {filteredAndSortedOpportunities.length === 0 && hasNextPage && !isFetchingNextPage && (
-                      <div ref={mobileTriggerRef} className="h-1" />
-                    )}
+                    {filteredAndSortedOpportunities.length === 0 &&
+                      hasNextPage &&
+                      !isFetchingNextPage && (
+                        <div ref={mobileTriggerRef} className="h-1" />
+                      )}
                     {isFetchingNextPage && (
                       <div className="flex items-center space-x-2 text-gray-600">
                         <Loader2 className="h-5 w-5 animate-spin" />
                         <span>Loading more opportunities...</span>
                       </div>
                     )}
-                      {!hasNextPage && allOpportunities.length > 0 && (
-                        <div className="text-gray-500 text-sm">
-                          You&apos;ve reached the end of opportunities
-                        </div>
-                      )}
+                    {!hasNextPage && allOpportunities.length > 0 && (
+                      <div className="text-sm text-gray-500">
+                        You&apos;ve reached the end of opportunities
+                      </div>
+                    )}
                   </div>
                 </>
               ) : (
@@ -562,6 +581,33 @@ export default function OpportunityCardsPage() {
         </div>
       </div>
       <FeedbackWidget />
+      <div
+        className="fixed right-6 bottom-6 z-50 flex size-10 items-center justify-center rounded-full bg-neutral-200 text-neutral-600 shadow-lg transition hover:bg-neutral-100 md:size-12"
+        title="Chat on WhatsApp"
+      >
+        <Link
+          href="https://wa.me/917014885565"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            className="size-5 md:size-6"
+          >
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9" />
+            <path d="M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a.5 .5 0 0 0 0 1" />
+          </svg>
+        </Link>
+      </div>
     </div>
   );
 }

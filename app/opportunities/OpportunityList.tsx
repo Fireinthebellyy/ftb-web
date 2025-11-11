@@ -3,9 +3,18 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Search, Filter, Loader2 } from "lucide-react";
+import { Search, Filter, Loader2, X, Check, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -30,6 +39,25 @@ import FeedbackWidget from "@/components/FeedbackWidget";
 import CalendarWidget from "@/components/opportunity/CalendarWidget";
 import TaskWidget from "@/components/opportunity/TaskWidget";
 
+const AVAILABLE_TAGS = ["ai", "blockchain", "biology", "mba", "startup"];
+const AVAILABLE_TYPES = ["hackathon", "grant", "competition", "ideathon"];
+
+const formatTypeName = (type: string): string => {
+  return type.charAt(0).toUpperCase() + type.slice(1);
+};
+
+const getTypeDropdownLabel = (selected: string[]) => {
+  if (selected.length === 0) return "Opportunity types";
+  if (selected.length === 1) return formatTypeName(selected[0]);
+  return `${selected.length} types`;
+};
+
+const getTagDropdownLabel = (selected: string[]) => {
+  if (selected.length === 0) return "Tags used";
+  if (selected.length === 1) return `#${selected[0]}`;
+  return `${selected.length} tags`;
+};
+
 export default function OpportunityCardsPage() {
   const {
     data,
@@ -42,14 +70,39 @@ export default function OpportunityCardsPage() {
 
   const [isNewOpportunityOpen, setIsNewOpportunityOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [filterType, setFilterType] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<string>("newest");
-  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
+  const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
+
+  const searchPlaceholders = ["DU Hacks", "Doctors meetup", "localhost event"];
+
+  // Rotate placeholders every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentPlaceholderIndex((prev) => (prev + 1) % searchPlaceholders.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Load all pages when filters are applied to ensure complete dataset
+  useEffect(() => {
+    if ((searchTerm || selectedTypes.length > 0 || selectedTags.length > 0) && hasNextPage && !isFetchingNextPage) {
+      // Load all remaining pages when filters are active
+      const loadAllPages = async () => {
+        while (hasNextPage && !isFetchingNextPage) {
+          await fetchNextPage();
+        }
+      };
+      loadAllPages();
+    }
+  }, [searchTerm, selectedTypes, selectedTags, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Flatten all opportunities from all pages
   const allOpportunities = data?.pages?.flatMap(page => page.opportunities) || [];
 
-  // Apply filtering and sorting to the loaded opportunities
+  // Apply filtering to the loaded opportunities
   const filteredAndSortedOpportunities = allOpportunities
     .filter((opportunity) => {
       const search = searchTerm.toLowerCase();
@@ -58,33 +111,31 @@ export default function OpportunityCardsPage() {
         opportunity.description.toLowerCase().includes(search) ||
         opportunity.tags?.some((tag) => tag.toLowerCase().includes(search));
 
+      // Filter by selected types - opportunity must have at least one of the selected types
       const matchesType =
-        filterType === "all"
+        selectedTypes.length === 0
           ? true
           : Array.isArray(opportunity.type)
-            ? opportunity.type.includes(filterType)
-            : opportunity.type === filterType;
+            ? opportunity.type.some((type) =>
+                selectedTypes.some((selectedType) =>
+                  type.toLowerCase() === selectedType.toLowerCase()
+                )
+              )
+            : selectedTypes.some((selectedType) =>
+                opportunity.type.toLowerCase() === selectedType.toLowerCase()
+              );
 
-      return matchesSearch && matchesType;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case "newest":
-          // API already provides newest first, so maintain order
-          return 0;
-        case "oldest":
-          return (
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          );
-        case "title":
-          return a.title.localeCompare(b.title);
-        case "startDate":
-          return (
-            new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
-          );
-        default:
-          return 0;
-      }
+      // Filter by selected tags - opportunity must have at least one of the selected tags
+      const matchesTags =
+        selectedTags.length === 0
+          ? true
+          : opportunity.tags?.some((tag) =>
+              selectedTags.some((selectedTag) =>
+                tag.toLowerCase() === selectedTag.toLowerCase()
+              )
+            ) ?? false;
+
+      return matchesSearch && matchesType && matchesTags;
     });
 
   // Intersection observer for infinite scroll
@@ -143,11 +194,26 @@ export default function OpportunityCardsPage() {
     );
   };
 
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag)
+        ? prev.filter((t) => t !== tag)
+        : [...prev, tag]
+    );
+  };
+
+  const toggleType = (type: string) => {
+    setSelectedTypes((prev) =>
+      prev.includes(type)
+        ? prev.filter((t) => t !== type)
+        : [...prev, type]
+    );
+  };
+
   const clearFilters = () => {
     setSearchTerm("");
-    setFilterType("all");
-    setSortBy("newest");
-    setIsFilterOpen(false);
+    setSelectedTypes([]);
+    setSelectedTags([]);
   };
 
   if (error) {
@@ -164,95 +230,86 @@ export default function OpportunityCardsPage() {
 
   return (
     <div className="h-full grow bg-gray-50">
-      {/* Main Content with 3-column layout */}
       <div className="container mx-auto max-w-7xl px-4 pt-6">
-        {/* Mobile: Search and Filters (stays the same) */}
-        <div className="mb-4 rounded-lg border bg-white px-4 py-3 lg:hidden">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
-              <Input
-                placeholder="Search..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="px-3">
-                  <Filter className="h-4 w-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="bottom" className="h-[400px]">
-                <SheetHeader>
-                  <SheetTitle>Filter & Sort</SheetTitle>
-                  <SheetDescription>
-                    Customize your opportunity search
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="mt-4 space-y-4 px-4">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium">
-                      Filter by Type
-                    </label>
-                    <Select value={filterType} onValueChange={setFilterType}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="All Types" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Types</SelectItem>
-                        <SelectItem value="hackathon">Hackathons</SelectItem>
-                        <SelectItem value="grant">Grants</SelectItem>
-                        <SelectItem value="competition">
-                          Competitions
-                        </SelectItem>
-                        <SelectItem value="ideathon">Ideathons</SelectItem>
-                        <SelectItem value="others">Others</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
 
-                  <div>
-                    <label className="mb-2 block text-sm font-medium">
-                      Sort by
-                    </label>
-                    <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Newest First" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="newest">Newest First</SelectItem>
-                        <SelectItem value="oldest">Oldest First</SelectItem>
-                        <SelectItem value="title">Title A-Z</SelectItem>
-                        <SelectItem value="startDate">Start Date</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex gap-2 pt-4">
-                    <Button
-                      onClick={clearFilters}
-                      variant="outline"
-                      className="flex-1"
-                    >
-                      Clear All
-                    </Button>
-                    <Button
-                      onClick={() => setIsFilterOpen(false)}
-                      className="flex-1"
-                    >
-                      Apply
-                    </Button>
-                  </div>
-                </div>
-              </SheetContent>
-            </Sheet>
+        {/* Mobile: Search */}
+        <div className="mb-5 lg:hidden">
+          {/* Tag Badges - Above Search Bar */}
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            {AVAILABLE_TAGS.map((tag) => {
+              const isSelected = selectedTags.includes(tag);
+              return (
+                <Badge
+                  key={tag}
+                  variant={isSelected ? "default" : "outline"}
+                  className={`flex items-center gap-1 px-3 py-1 cursor-pointer border-gray-300 ${
+                    !isSelected ? "bg-transparent" : ""
+                  }`}
+                  onClick={() => toggleTag(tag)}
+                >
+                  {isSelected && <Check className="h-3 w-3" />}
+                  <span>#{tag}</span>
+                </Badge>
+              );
+            })}
           </div>
 
-          <div className="mt-3 text-sm text-gray-600">
-            {filteredAndSortedOpportunities.length} of {allOpportunities.length}{" "}
-            opportunities loaded
+          {/* Search Bar */}
+          <div className="relative mb-3">
+            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
+            <Input
+              placeholder={searchPlaceholders[currentPlaceholderIndex]}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Types and Tags Dropdowns (mobile) */}
+          <div className="grid grid-cols-2 gap-2">
+            {/* Types Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  {getTypeDropdownLabel(selectedTypes)}
+                  <ChevronDown className="h-4 w-4 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="start">
+                <DropdownMenuLabel>Types</DropdownMenuLabel>
+                {AVAILABLE_TYPES.map((type) => (
+                  <DropdownMenuCheckboxItem
+                    key={type}
+                    checked={selectedTypes.includes(type)}
+                    onCheckedChange={() => toggleType(type)}
+                  >
+                    {formatTypeName(type)}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Tags Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  {getTagDropdownLabel(selectedTags)}
+                  <ChevronDown className="h-4 w-4 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end">
+                <DropdownMenuLabel>Tags</DropdownMenuLabel>
+                {AVAILABLE_TAGS.map((tag) => (
+                  <DropdownMenuCheckboxItem
+                    key={tag}
+                    checked={selectedTags.includes(tag)}
+                    onCheckedChange={() => toggleTag(tag)}
+                  >
+                    #{tag}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -261,77 +318,18 @@ export default function OpportunityCardsPage() {
           {/* Left Sidebar - 3 columns */}
           <aside className="col-span-3">
             <div className="sticky top-6 space-y-6">
-              {/* Search and Filters */}
-              <div className="rounded-lg border bg-white px-4 py-3">
-                <h3 className="mb-4 font-semibold text-gray-900">
-                  Search & Filter
-                </h3>
-
-                {/* Search */}
-                <div className="relative mb-4">
-                  <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
-                  <Input
-                    placeholder="Search opportunities..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-
-                {/* Filter */}
-                <div className="mb-4">
-                  <label className="mb-2 block text-sm font-medium">Type</label>
-                  <Select value={filterType} onValueChange={setFilterType}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="All Types" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="hackathon">Hackathons</SelectItem>
-                      <SelectItem value="grant">Grants</SelectItem>
-                      <SelectItem value="competition">Competitions</SelectItem>
-                      <SelectItem value="ideathon">Ideathons</SelectItem>
-                      <SelectItem value="others">Others</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Sort */}
-                <div className="mb-4">
-                  <label className="mb-2 block text-sm font-medium">
-                    Sort by
-                  </label>
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Newest First" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="newest">Newest First</SelectItem>
-                      <SelectItem value="oldest">Oldest First</SelectItem>
-                      <SelectItem value="title">Title A-Z</SelectItem>
-                      <SelectItem value="startDate">Start Date</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Results count */}
-                <div className="mb-3 text-sm text-gray-600">
-                  {filteredAndSortedOpportunities.length} of{" "}
-                  {allOpportunities.length} results loaded
-                </div>
-
-                {/* Clear filters button */}
-                <Button
-                  onClick={clearFilters}
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                >
-                  Clear All Filters
-                </Button>
+              {/* Search Bar - Above Quick Links */}
+              <div className="relative mb-4">
+                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
+                <Input
+                  placeholder={searchPlaceholders[currentPlaceholderIndex]}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
               </div>
 
-              {/* Additional Sidebar Content */}
+              {/* Quick Links */}
               <div className="rounded-lg border bg-white px-4 py-3">
                 <h3 className="mb-3 font-semibold text-gray-900">
                   Quick Links
@@ -363,8 +361,93 @@ export default function OpportunityCardsPage() {
             </div>
           </aside>
 
-          {/* Main Content - Middle Column - 6 columns */}
+          {/* Main Content - 6 columns */}
           <main className="col-span-6 max-h-[90vh] overflow-y-scroll pr-2">
+            {/* Tags in Horizontal Box with Filter Icon */}
+            <div className="mb-4 flex items-center gap-3 rounded-lg border bg-white px-4 py-3">
+              <div className="flex flex-1 flex-wrap items-center gap-2">
+                {AVAILABLE_TAGS.map((tag) => {
+                  const isSelected = selectedTags.includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-all ${
+                        isSelected
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  );
+                })}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
+                className={`shrink-0 border-2 font-semibold transition-all ${
+                  isFilterBoxOpen
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-gray-400"
+                }`}
+              >
+                <Filter className="h-5 w-5" />
+              </Button>
+            </div>
+
+            {/* Filter Box with Dropdowns */}
+            {isFilterBoxOpen && (
+              <div className="mb-4 rounded-lg border bg-white p-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {/* Types Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between">
+                        {getTypeDropdownLabel(selectedTypes)}
+                        <ChevronDown className="h-4 w-4 opacity-60" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-64" align="start">
+                      <DropdownMenuLabel>Types</DropdownMenuLabel>
+                      {AVAILABLE_TYPES.map((type) => (
+                        <DropdownMenuCheckboxItem
+                          key={type}
+                          checked={selectedTypes.includes(type)}
+                          onCheckedChange={() => toggleType(type)}
+                        >
+                          {formatTypeName(type)}
+                        </DropdownMenuCheckboxItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* Tags Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between">
+                        {getTagDropdownLabel(selectedTags)}
+                        <ChevronDown className="h-4 w-4 opacity-60" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-64" align="end">
+                      <DropdownMenuLabel>Tags</DropdownMenuLabel>
+                      {AVAILABLE_TAGS.map((tag) => (
+                        <DropdownMenuCheckboxItem
+                          key={tag}
+                          checked={selectedTags.includes(tag)}
+                          onCheckedChange={() => toggleTag(tag)}
+                        >
+                          #{tag}
+                        </DropdownMenuCheckboxItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            )}
+
             <NewOpportunityButton
               isOpen={isNewOpportunityOpen}
               onOpenChange={setIsNewOpportunityOpen}
@@ -467,7 +550,10 @@ export default function OpportunityCardsPage() {
                     #blockchain
                   </span>
                   <span className="rounded bg-purple-100 px-2 py-1 text-xs text-purple-800">
-                    #web3
+                    #biology
+                  </span>
+                  <span className="rounded bg-pink-100 px-2 py-1 text-xs text-pink-800">
+                    #mba
                   </span>
                   <span className="rounded bg-orange-100 px-2 py-1 text-xs text-orange-800">
                     #startup

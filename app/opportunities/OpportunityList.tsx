@@ -3,10 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Search, Filter, Loader2, X, Check, ChevronDown } from "lucide-react";
+import { Search, Filter, Loader2, Check, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -15,21 +14,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import Link from "next/link";
 import OpportunityPost from "@/components/OpportunityCard";
 import { NewOpportunityButton } from "@/components/opportunity/NewOpportunityButton";
@@ -84,7 +68,7 @@ export default function OpportunityCardsPage() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [searchPlaceholders.length]);
 
   // Load all pages when filters are applied to ensure complete dataset
   useEffect(() => {

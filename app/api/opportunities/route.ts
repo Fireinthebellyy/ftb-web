@@ -1,5 +1,16 @@
 import { db } from "@/lib/db";
-import { eq, isNull } from "drizzle-orm";
+import {
+  SQL,
+  and,
+  count,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  isNull,
+  or,
+  sql,
+} from "drizzle-orm";
 import { opportunities, user } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
@@ -124,17 +135,73 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const limitParam = Number.parseInt(searchParams.get("limit") ?? "", 10);
     const offsetParam = Number.parseInt(searchParams.get("offset") ?? "", 10);
+    const searchParam = searchParams.get("search");
+    const typesParam = searchParams.get("types");
+    const tagsParam = searchParams.get("tags");
     const limit = Number.isNaN(limitParam) ? 10 : limitParam;
     const offset = Number.isNaN(offsetParam) ? 0 : offsetParam;
+    const searchTerm = searchParam ? searchParam.trim() : "";
+    const rawTypes = typesParam
+      ? typesParam.split(",").map((value) => value.trim()).filter(Boolean)
+      : [];
+    const allowedTypes = (opportunities.type.enumValues ?? []) as string[];
+    const validTypes = rawTypes.filter((type) =>
+      allowedTypes.includes(type)
+    );
+    const rawTags = tagsParam
+      ? tagsParam
+          .split(",")
+          .map((value) => value.trim().toLowerCase())
+          .filter(Boolean)
+      : [];
 
     // Validate pagination parameters
     const validLimit = Math.min(Math.max(limit, 1), 50); // Between 1 and 50
     const validOffset = Math.max(offset, 0); // Non-negative
 
-    // Fetch all non-deleted opportunities with user info
-    const allOpportunities = await db
+    const conditions: SQL<unknown>[] = [isNull(opportunities.deletedAt)];
+
+    if (searchTerm) {
+      conditions.push(
+        or(
+          ilike(opportunities.title, `%${searchTerm}%`),
+          ilike(opportunities.description, `%${searchTerm}%`)
+        )
+      );
+    }
+
+    if (validTypes.length > 0) {
+      conditions.push(inArray(opportunities.type, validTypes as any));
+    }
+
+    if (rawTags.length > 0) {
+      const tagConditions = rawTags.map((tag) =>
+        sql`EXISTS (
+          SELECT 1
+          FROM unnest(${opportunities.tags}) AS t(tag_value)
+          WHERE lower(t.tag_value) = ${tag}
+        )`
+      );
+
+      if (tagConditions.length === 1) {
+        conditions.push(tagConditions[0]);
+      } else {
+        conditions.push(or(...tagConditions));
+      }
+    }
+
+    const filters =
+      conditions.length === 1 ? conditions[0] : and(...conditions);
+
+    const totalResult = await db
+      .select({ total: count() })
+      .from(opportunities)
+      .where(filters);
+
+    const totalCount = totalResult[0]?.total ?? 0;
+
+    const paginated = await db
       .select({
-        // Opportunity fields
         id: opportunities.id,
         type: opportunities.type,
         title: opportunities.title,
@@ -160,15 +227,12 @@ export async function GET(req: NextRequest) {
         },
       })
       .from(opportunities)
-      .where(isNull(opportunities.deletedAt))
-      .leftJoin(user, eq(opportunities.userId, user.id));
+      .leftJoin(user, eq(opportunities.userId, user.id))
+      .where(filters)
+      .orderBy(desc(opportunities.createdAt))
+      .limit(validLimit)
+      .offset(validOffset);
 
-    // Compute pagination on the result set
-    const totalCount = allOpportunities.length;
-    const paginated = allOpportunities.slice(
-      validOffset,
-      validOffset + validLimit
-    );
     const hasMore = validOffset + paginated.length < totalCount;
 
     return NextResponse.json(

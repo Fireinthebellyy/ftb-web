@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Search, Filter, Loader2, Check, ChevronDown } from "lucide-react";
+import { Search, Filter, Loader2, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,8 +34,8 @@ const formatTypeName = (type: string): string => {
   return type.charAt(0).toUpperCase() + type.slice(1);
 };
 
-const getTypeDropdownLabel = (selected: string[]) => {
-  if (selected.length === 0) return "Opportunity types";
+const getTypeDropdownLabel = (selected: string[], compact = false) => {
+  if (selected.length === 0) return compact ? "Types" : "Opportunity types";
   if (selected.length === 1) return formatTypeName(selected[0]);
   return `${selected.length} types`;
 };
@@ -47,15 +47,6 @@ const getTagDropdownLabel = (selected: string[]) => {
 };
 
 export default function OpportunityCardsPage() {
-  const {
-    data,
-    isLoading,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteOpportunities(10);
-
   const [isNewOpportunityOpen, setIsNewOpportunityOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
@@ -63,7 +54,32 @@ export default function OpportunityCardsPage() {
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
 
-  const searchPlaceholders = ["DU Hacks", "Doctors meetup", "localhost event"];
+  const normalizedSearchTerm = searchTerm.trim();
+
+  const normalizedTypesForQuery = useMemo(
+    () => [...selectedTypes].sort(),
+    [selectedTypes]
+  );
+  const normalizedTagsForQuery = useMemo(
+    () => selectedTags.map((tag) => tag.toLowerCase()).sort(),
+    [selectedTags]
+  );
+
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteOpportunities(
+    10,
+    normalizedSearchTerm,
+    normalizedTypesForQuery,
+    normalizedTagsForQuery
+  );
+
+  const searchPlaceholders = ["DU Hacks", "Tech meetup", "Fellowship"];
 
   // Rotate placeholders every 3 seconds
   useEffect(() => {
@@ -74,58 +90,9 @@ export default function OpportunityCardsPage() {
     return () => clearInterval(interval);
   }, [searchPlaceholders.length]);
 
-  // Load all pages when filters are applied to ensure complete dataset
-  useEffect(() => {
-    if ((searchTerm || selectedTypes.length > 0 || selectedTags.length > 0) && hasNextPage && !isFetchingNextPage) {
-      // Load all remaining pages when filters are active
-      const loadAllPages = async () => {
-        while (hasNextPage && !isFetchingNextPage) {
-          await fetchNextPage();
-        }
-      };
-      loadAllPages();
-    }
-  }, [searchTerm, selectedTypes, selectedTags, hasNextPage, isFetchingNextPage, fetchNextPage]);
-
   // Flatten all opportunities from all pages
   const allOpportunities =
     data?.pages?.flatMap((page) => page.opportunities) || [];
-
-  // Apply filtering to the loaded opportunities
-  const filteredAndSortedOpportunities = allOpportunities
-    .filter((opportunity) => {
-      const search = searchTerm.toLowerCase();
-      const matchesSearch =
-        opportunity.title.toLowerCase().includes(search) ||
-        opportunity.description.toLowerCase().includes(search) ||
-        opportunity.tags?.some((tag) => tag.toLowerCase().includes(search));
-
-      // Filter by selected types - opportunity must have at least one of the selected types
-      const matchesType =
-        selectedTypes.length === 0
-          ? true
-          : Array.isArray(opportunity.type)
-            ? opportunity.type.some((type) =>
-                selectedTypes.some((selectedType) =>
-                  type.toLowerCase() === selectedType.toLowerCase()
-                )
-              )
-            : selectedTypes.some((selectedType) =>
-                opportunity.type.toLowerCase() === selectedType.toLowerCase()
-              );
-
-      // Filter by selected tags - opportunity must have at least one of the selected tags
-      const matchesTags =
-        selectedTags.length === 0
-          ? true
-          : opportunity.tags?.some((tag) =>
-              selectedTags.some((selectedTag) =>
-                tag.toLowerCase() === selectedTag.toLowerCase()
-              )
-            ) ?? false;
-
-      return matchesSearch && matchesType && matchesTags;
-    });
 
   // Intersection observer for infinite scroll
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -169,7 +136,7 @@ export default function OpportunityCardsPage() {
         observer.unobserve(currentMobileTriggerRef);
       }
     };
-  }, [handleLoadMore, filteredAndSortedOpportunities.length]);
+  }, [handleLoadMore, allOpportunities.length]);
 
   const handleBookmarkChange = (
     opportunityId: string,
@@ -231,13 +198,12 @@ export default function OpportunityCardsPage() {
                 <Badge
                   key={tag}
                   variant={isSelected ? "default" : "outline"}
-                  className={`flex items-center gap-1 px-3 py-1 cursor-pointer border-gray-300 ${
-                    !isSelected ? "bg-transparent" : ""
+                  className={`cursor-pointer px-3 py-1 text-sm font-semibold ${
+                    isSelected ? "" : "bg-transparent"
                   }`}
                   onClick={() => toggleTag(tag)}
                 >
-                  {isSelected && <Check className="h-3 w-3" />}
-                  <span>#{tag}</span>
+                  <span>{tag}</span>
                 </Badge>
               );
             })}
@@ -260,7 +226,7 @@ export default function OpportunityCardsPage() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="w-full justify-between">
-                  {getTypeDropdownLabel(selectedTypes)}
+                  {getTypeDropdownLabel(selectedTypes, true)}
                   <ChevronDown className="h-4 w-4 opacity-60" />
                 </Button>
               </DropdownMenuTrigger>
@@ -358,17 +324,16 @@ export default function OpportunityCardsPage() {
                 {AVAILABLE_TAGS.map((tag) => {
                   const isSelected = selectedTags.includes(tag);
                   return (
-                    <button
+                    <Badge
                       key={tag}
-                      onClick={() => toggleTag(tag)}
-                      className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-all ${
-                        isSelected
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      variant={isSelected ? "default" : "outline"}
+                      className={`cursor-pointer px-3 py-1 text-sm font-semibold ${
+                        isSelected ? "" : "bg-transparent"
                       }`}
+                      onClick={() => toggleTag(tag)}
                     >
-                      {tag}
-                    </button>
+                      <span>{tag}</span>
+                    </Badge>
                   );
                 })}
               </div>
@@ -465,10 +430,10 @@ export default function OpportunityCardsPage() {
 
             {!isLoading && (
               <>
-                {filteredAndSortedOpportunities.length > 0 ? (
+                {allOpportunities.length > 0 ? (
                   <>
                     <div className="space-y-4">
-                      {filteredAndSortedOpportunities.map(
+                      {allOpportunities.map(
                         (opportunity, index) => (
                           <div key={opportunity.id}>
                             <OpportunityPost
@@ -476,11 +441,11 @@ export default function OpportunityCardsPage() {
                               onBookmarkChange={handleBookmarkChange}
                             />
                             {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
-                            {filteredAndSortedOpportunities.length > 1 &&
+                            {allOpportunities.length > 1 &&
                               index ===
                                 Math.max(
                                   0,
-                                  filteredAndSortedOpportunities.length - 3
+                                  allOpportunities.length - 3
                                 ) && (
                                 <div ref={desktopTriggerRef} className="h-1" />
                               )}
@@ -492,7 +457,7 @@ export default function OpportunityCardsPage() {
                     {/* Load more indicator - also acts as fallback trigger */}
                     <div ref={loadMoreRef} className="flex justify-center py-8">
                       {/* Auto-fetch trigger when filtered set is empty but we still have more pages */}
-                      {filteredAndSortedOpportunities.length === 0 &&
+                      {allOpportunities.length === 0 &&
                         hasNextPage &&
                         !isFetchingNextPage && (
                           <div ref={desktopTriggerRef} className="h-1" />
@@ -614,10 +579,10 @@ export default function OpportunityCardsPage() {
 
           {!isLoading && (
             <>
-              {filteredAndSortedOpportunities.length > 0 ? (
+              {allOpportunities.length > 0 ? (
                 <>
                   <div className="space-y-3 sm:space-y-4">
-                    {filteredAndSortedOpportunities.map(
+                    {allOpportunities.map(
                       (opportunity, index) => (
                         <div key={opportunity.id}>
                           <OpportunityPost
@@ -625,11 +590,11 @@ export default function OpportunityCardsPage() {
                             onBookmarkChange={handleBookmarkChange}
                           />
                           {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
-                          {filteredAndSortedOpportunities.length > 1 &&
+                          {allOpportunities.length > 1 &&
                             index ===
                               Math.max(
                                 0,
-                                filteredAndSortedOpportunities.length - 3
+                                allOpportunities.length - 3
                               ) && (
                               <div ref={mobileTriggerRef} className="h-1" />
                             )}
@@ -641,7 +606,7 @@ export default function OpportunityCardsPage() {
                   {/* Load more indicator for mobile - also acts as fallback trigger */}
                   <div className="flex justify-center py-8">
                     {/* Auto-fetch trigger when filtered set is empty but we still have more pages */}
-                    {filteredAndSortedOpportunities.length === 0 &&
+                    {allOpportunities.length === 0 &&
                       hasNextPage &&
                       !isFetchingNextPage && (
                         <div ref={mobileTriggerRef} className="h-1" />

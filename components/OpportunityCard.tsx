@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   CalendarDays,
   MapPin,
@@ -9,10 +9,10 @@ import {
   Building2,
   Loader2,
   Share2,
-  Flame,
   EllipsisVertical,
   Trash2,
   PencilLine,
+  Heart,
 } from "lucide-react";
 import TwitterXIcon from "@/components/icons/TwitterX";
 import FacebookIcon from "@/components/icons/Facebook";
@@ -113,6 +113,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   const [showMessage, setShowMessage] = useState<boolean>(false);
   const [isBookmarkLoading, setIsBookmarkLoading] = useState<boolean>(false);
   const [showComments, setShowComments] = useState<boolean>(false);
+  const showUpvoteCount = false;
   const isExpanded = true;
 
   const [modalOpen, setModalOpen] = useState<boolean>(false);
@@ -239,78 +240,6 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
     }
   };
 
-  // Extract first URL from description
-  const firstUrl = useMemo(() => {
-    if (!description || typeof description !== "string") return null;
-    const urlRegex = /https?:\/\/[^\s<>"'`|\\^{}\[\]]+/gi;
-    const match = description.match(urlRegex);
-    if (!match) return null;
-    let url = match[0].trim();
-    url = url.replace(/[),.;:!?]+$/g, "");
-    const openCount = (url.match(/\(/g) || []).length;
-    const closeCount = (url.match(/\)/g) || []).length;
-    if (closeCount > openCount) url = url.replace(/\)+$/g, "");
-    return url;
-  }, [description]);
-
-  const [meta, setMeta] = useState<{
-    title: string | null;
-    description: string | null;
-    image: string | null;
-    url: string | null;
-  } | null>(null);
-  const [_metaLoading, setMetaLoading] = useState(false);
-  const [_metaError, setMetaError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let aborted = false;
-    async function fetchMeta() {
-      setMetaError(null);
-      setMeta(null);
-
-      if (images.length > 0) return;
-      if (!firstUrl) return;
-      setMetaLoading(true);
-      try {
-        const response = await axios.post("/api/og-meta", { description });
-        const data = response.data;
-        if (aborted) return;
-
-        if (!data?.ok) {
-          setMetaError(
-            data?.error === "NO_URL_IN_DESCRIPTION"
-              ? null
-              : "Failed to fetch metadata"
-          );
-          setMeta(null);
-          return;
-        }
-
-        setMeta(
-          data?.meta
-            ? {
-                ...data.meta,
-                url: data?.url,
-              }
-            : null
-        );
-      } catch (_e) {
-        if (!aborted) {
-          setMetaError("Failed to fetch metadata");
-          setMeta(null);
-        }
-      } finally {
-        if (!aborted) setMetaLoading(false);
-      }
-    }
-
-    if (!images.length) fetchMeta();
-
-    return () => {
-      aborted = true;
-    };
-  }, [description, firstUrl, images.length]);
-
   return (
     <article className="relative mb-3 w-full rounded-lg border bg-white shadow-sm sm:mb-4">
       <header className="flex items-center space-x-2 px-3 py-2 sm:px-4 sm:py-3">
@@ -318,17 +247,17 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           {user &&
           user.image &&
           !user.image.includes("https://media.licdn.com") ? (
-            <div className="size-6 sm:size-7">
+            <div className="size-8 overflow-hidden rounded-full border-1 border-gray-100 shadow sm:size-7">
               <Image
                 src={user.image}
                 alt={user.name}
                 className="h-full w-full rounded-full object-cover"
-                width={28}
-                height={28}
+                width={30}
+                height={30}
               />
             </div>
           ) : (
-            <div className="flex size-6 items-center justify-center rounded-full bg-gray-300 text-sm font-semibold text-gray-600 uppercase sm:size-7">
+            <div className="flex size-8 items-center justify-center rounded-full bg-gray-300 text-sm font-semibold text-gray-600 uppercase sm:size-7">
               {user && user.name
                 ? user.name
                     .split(" ")
@@ -344,7 +273,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           <p className="truncate text-sm font-semibold text-gray-900">
             {user && user.name ? user.name : "Opportunity Organizer"}
           </p>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-400">
             {createdAt ? formatDate(createdAt) : ""}
           </p>
         </div>
@@ -420,11 +349,11 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                       if (part.match(/^https?:\/\/[^\s<>"'`|\\^{}\[\]]+$/i)) {
                         return (
                           <Link
-                            href={part}
+                            href={`${part}?utm_source=ftb_web&utm_medium=opportunity_card`}
                             target="_blank"
                             rel="noopener noreferrer"
                             key={index}
-                            className="text-gray-400"
+                            className="text-blue-400"
                           >
                             {part}
                           </Link>
@@ -435,25 +364,6 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                 : description}
             </p>
           </div>
-        )}
-
-        {isExpanded && !(images.length > 0) && meta && (
-          <Link href={meta?.url} target="_blank" rel="noopener noreferrer">
-            <div className="mb-3 flex items-center gap-2 rounded-lg border border-gray-300 p-2 shadow-sm hover:bg-gray-50">
-              {meta.image && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={meta.image}
-                  alt={meta.title}
-                  className="h-20 w-20 rounded object-cover"
-                />
-              )}
-              <div>
-                <h3 className="mt-2 text-sm font-semibold">{meta.title}</h3>
-                <p className="text-sm text-gray-600">{meta.description}</p>
-              </div>
-            </div>
-          </Link>
         )}
 
         {isExpanded && images.length > 0 ? (
@@ -632,7 +542,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
         {/* Actions Footer - Mobile optimized */}
         <footer className="flex items-center justify-between border-t border-gray-100 pt-1">
-          <div className="flex items-center space-x-4 text-gray-500 sm:space-x-6">
+          <div className="flex h-9 items-center space-x-4 text-gray-500 sm:space-x-6">
             {/* Voting & Comments */}
             <div className="flex items-center space-x-3 sm:space-x-4">
               {/* Upvote (toggle) */}
@@ -641,7 +551,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                 title="Upvote"
                 aria-label="Upvote"
                 disabled={toggleUpvote.isPending || isLoading}
-                className={`flex place-items-center-safe text-xs transition-colors sm:text-sm ${
+                className={`flex cursor-pointer place-items-center text-xs transition-colors sm:text-sm ${
                   userUpvoted
                     ? "fill-orange-500 text-orange-600"
                     : "hover:text-orange-600"
@@ -651,12 +561,16 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                     : ""
                 }`}
               >
-                <Flame
+                <Heart
                   className={`h-4 w-4 sm:h-5 sm:w-5 ${
                     userUpvoted ? "fill-current" : ""
                   }`}
                 />
-                <span>{upvotes > 2 ? `${upvotes} ` : ""}</span>
+                {showUpvoteCount && (
+                  <span className="pl-1">
+                    {upvotes > 2 ? `${upvotes} ` : ""}
+                  </span>
+                )}
               </button>
               {/* Comments (clickable to toggle comment section) */}
               <button
@@ -664,7 +578,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                 title="Comments"
                 onClick={() => setShowComments(!showComments)}
                 aria-label="Comments"
-                className="flex items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
+                className="flex cursor-pointer items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
               >
                 <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
@@ -675,7 +589,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                 onClick={handleBookmark}
                 disabled={isBookmarkLoading}
                 aria-label="Bookmark"
-                className="flex items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
+                className="flex cursor-pointer items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
               >
                 {isBookmarkLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin sm:h-5 sm:w-5" />
@@ -696,7 +610,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                     type="button"
                     title="Share"
                     aria-label="Share"
-                    className="flex items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
+                    className="flex cursor-pointer items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
                   >
                     <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
                   </button>
@@ -713,7 +627,9 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Link
-                      href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(title)}`}
+                      href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(
+                        `${shareUrl}${shareUrl.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=opportunity_card&utm_campaign=opportunity_share`
+                      )}&text=${encodeURIComponent(title)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label="Share on Twitter/X"
@@ -722,7 +638,9 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                       <TwitterXIcon className="h-6 w-6" />
                     </Link>
                     <Link
-                      href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
+                      href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+                        `${shareUrl}${shareUrl.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=opportunity_card&utm_campaign=opportunity_share`
+                      )}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label="Share on Facebook"
@@ -731,7 +649,9 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                       <FacebookIcon className="h-6 w-6" />
                     </Link>
                     <Link
-                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
+                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+                        `${shareUrl}${shareUrl.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=opportunity_card&utm_campaign=opportunity_share`
+                      )}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label="Share on LinkedIn"
@@ -740,7 +660,11 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                       <LinkedInIcon className="h-6 w-6" />
                     </Link>
                     <Link
-                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(title + " " + shareUrl)}`}
+                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
+                        title +
+                          " " +
+                          `${shareUrl}${shareUrl.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=opportunity_card&utm_campaign=opportunity_share`
+                      )}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label="Share on WhatsApp"
@@ -765,7 +689,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon">
-                    <EllipsisVertical />
+                    <EllipsisVertical className="size-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-42">

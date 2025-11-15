@@ -41,7 +41,7 @@ const getTypeDropdownLabel = (selected: string[], compact = false) => {
 };
 
 const getTagDropdownLabel = (selected: string[]) => {
-  if (selected.length === 0) return "Tags used";
+  if (selected.length === 0) return "Tags";
   if (selected.length === 1) return `#${selected[0]}`;
   return `${selected.length} tags`;
 };
@@ -84,7 +84,9 @@ export default function OpportunityCardsPage() {
   // Rotate placeholders every 3 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentPlaceholderIndex((prev) => (prev + 1) % searchPlaceholders.length);
+      setCurrentPlaceholderIndex(
+        (prev) => (prev + 1) % searchPlaceholders.length
+      );
     }, 3000);
 
     return () => clearInterval(interval);
@@ -152,17 +154,13 @@ export default function OpportunityCardsPage() {
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
-      prev.includes(tag)
-        ? prev.filter((t) => t !== tag)
-        : [...prev, tag]
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
   };
 
   const toggleType = (type: string) => {
     setSelectedTypes((prev) =>
-      prev.includes(type)
-        ? prev.filter((t) => t !== type)
-        : [...prev, type]
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
     );
   };
 
@@ -186,8 +184,7 @@ export default function OpportunityCardsPage() {
 
   return (
     <div className="h-full grow bg-gray-50">
-      <div className="container mx-auto max-w-7xl px-4 pt-6">
-
+      <div className="container mx-auto max-w-7xl px-4 pt-2">
         {/* Mobile: Search */}
         <div className="mb-5 lg:hidden">
           {/* Tag Badges - Above Search Bar */}
@@ -198,7 +195,7 @@ export default function OpportunityCardsPage() {
                 <Badge
                   key={tag}
                   variant={isSelected ? "default" : "outline"}
-                  className={`cursor-pointer px-3 py-1 text-sm font-semibold ${
+                  className={`cursor-pointer px-3 py-1 text-sm ${
                     isSelected ? "" : "bg-transparent"
                   }`}
                   onClick={() => toggleTag(tag)}
@@ -210,7 +207,7 @@ export default function OpportunityCardsPage() {
           </div>
 
           {/* Search Bar */}
-          <div className="relative mb-3">
+          <div className="relative mb-3 bg-white/80">
             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
             <Input
               placeholder={searchPlaceholders[currentPlaceholderIndex]}
@@ -274,7 +271,7 @@ export default function OpportunityCardsPage() {
           <aside className="col-span-3">
             <div className="sticky top-6 space-y-6">
               {/* Search Bar - Above Quick Links */}
-              <div className="relative mb-4">
+              <div className="relative mb-4 bg-white/80">
                 <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
                 <Input
                   placeholder={searchPlaceholders[currentPlaceholderIndex]}
@@ -319,7 +316,7 @@ export default function OpportunityCardsPage() {
           {/* Main Content - 6 columns */}
           <main className="col-span-6 max-h-[90vh] overflow-y-scroll pr-2">
             {/* Tags in Horizontal Box with Filter Icon */}
-            <div className="mb-4 flex items-center gap-3 rounded-lg border bg-white px-4 py-3">
+            <div className="mb-4 flex items-center gap-2">
               <div className="flex flex-1 flex-wrap items-center gap-2">
                 {AVAILABLE_TAGS.map((tag) => {
                   const isSelected = selectedTags.includes(tag);
@@ -327,8 +324,8 @@ export default function OpportunityCardsPage() {
                     <Badge
                       key={tag}
                       variant={isSelected ? "default" : "outline"}
-                      className={`cursor-pointer px-3 py-1 text-sm font-semibold ${
-                        isSelected ? "" : "bg-transparent"
+                      className={`cursor-pointer bg-neutral-700 px-3 py-1 text-sm text-gray-200 ${
+                        isSelected ? "" : "bg-white text-gray-700"
                       }`}
                       onClick={() => toggleTag(tag)}
                     >
@@ -338,10 +335,10 @@ export default function OpportunityCardsPage() {
                 })}
               </div>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
-                className={`shrink-0 border-2 font-semibold transition-all ${
+                className={`shrink-0 transition-all ${
                   isFilterBoxOpen
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-gray-400"
@@ -358,7 +355,10 @@ export default function OpportunityCardsPage() {
                   {/* Types Dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between">
+                      <Button
+                        variant="outline"
+                        className="w-full justify-between"
+                      >
                         {getTypeDropdownLabel(selectedTypes)}
                         <ChevronDown className="h-4 w-4 opacity-60" />
                       </Button>
@@ -380,7 +380,10 @@ export default function OpportunityCardsPage() {
                   {/* Tags Dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between">
+                      <Button
+                        variant="outline"
+                        className="w-full justify-between"
+                      >
                         {getTagDropdownLabel(selectedTags)}
                         <ChevronDown className="h-4 w-4 opacity-60" />
                       </Button>
@@ -433,25 +436,20 @@ export default function OpportunityCardsPage() {
                 {allOpportunities.length > 0 ? (
                   <>
                     <div className="space-y-4">
-                      {allOpportunities.map(
-                        (opportunity, index) => (
-                          <div key={opportunity.id}>
-                            <OpportunityPost
-                              opportunity={opportunity}
-                              onBookmarkChange={handleBookmarkChange}
-                            />
-                            {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
-                            {allOpportunities.length > 1 &&
-                              index ===
-                                Math.max(
-                                  0,
-                                  allOpportunities.length - 3
-                                ) && (
-                                <div ref={desktopTriggerRef} className="h-1" />
-                              )}
-                          </div>
-                        )
-                      )}
+                      {allOpportunities.map((opportunity, index) => (
+                        <div key={opportunity.id}>
+                          <OpportunityPost
+                            opportunity={opportunity}
+                            onBookmarkChange={handleBookmarkChange}
+                          />
+                          {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
+                          {allOpportunities.length > 1 &&
+                            index ===
+                              Math.max(0, allOpportunities.length - 3) && (
+                              <div ref={desktopTriggerRef} className="h-1" />
+                            )}
+                        </div>
+                      ))}
                     </div>
 
                     {/* Load more indicator - also acts as fallback trigger */}
@@ -558,25 +556,20 @@ export default function OpportunityCardsPage() {
               {allOpportunities.length > 0 ? (
                 <>
                   <div className="space-y-3 sm:space-y-4">
-                    {allOpportunities.map(
-                      (opportunity, index) => (
-                        <div key={opportunity.id}>
-                          <OpportunityPost
-                            opportunity={opportunity}
-                            onBookmarkChange={handleBookmarkChange}
-                          />
-                          {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
-                          {allOpportunities.length > 1 &&
-                            index ===
-                              Math.max(
-                                0,
-                                allOpportunities.length - 3
-                              ) && (
-                              <div ref={mobileTriggerRef} className="h-1" />
-                            )}
-                        </div>
-                      )
-                    )}
+                    {allOpportunities.map((opportunity, index) => (
+                      <div key={opportunity.id}>
+                        <OpportunityPost
+                          opportunity={opportunity}
+                          onBookmarkChange={handleBookmarkChange}
+                        />
+                        {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
+                        {allOpportunities.length > 1 &&
+                          index ===
+                            Math.max(0, allOpportunities.length - 3) && (
+                            <div ref={mobileTriggerRef} className="h-1" />
+                          )}
+                      </div>
+                    ))}
                   </div>
 
                   {/* Load more indicator for mobile - also acts as fallback trigger */}

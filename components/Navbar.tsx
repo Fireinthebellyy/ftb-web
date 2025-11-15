@@ -142,7 +142,7 @@ export default function Navbar() {
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="sticky top-0 z-50 flex-none border-b bg-white/80 backdrop-blur-sm"
+      className="sticky top-0 z-50 flex-none bg-gray-50 backdrop-blur-sm"
     >
       <div className="container mx-auto grid h-16 grid-cols-2 items-center px-4 md:grid-cols-3 lg:px-6">
         <div className="flex items-center justify-start space-x-3">
@@ -225,7 +225,7 @@ export default function Navbar() {
               </span>
               <div className="relative flex items-center">
                 {user.user?.image ? (
-                  <div className="rounded-full border-2 border-neutral-300">
+                  <div className="rounded-full border-2 border-white shadow-lg">
                     <Image
                       src={user.user.image}
                       alt={user.user.name || "User avatar"}
@@ -269,7 +269,7 @@ export default function Navbar() {
                     role="menu"
                     aria-labelledby={undefined}
                     tabIndex={-1}
-                    className="bg-popover text-popover-foreground absolute top-full right-0 z-50 w-40 rounded-md border p-1 shadow-md"
+                    className="bg-popover text-popover-foreground absolute top-8 right-0 z-50 w-40 rounded-md border p-1 shadow-md"
                     onKeyDown={onMenuKeyDown}
                   >
                     <button
@@ -399,6 +399,19 @@ export default function Navbar() {
                 }`}
               >
                 Featured
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/deadlines"
+                onClick={() => setIsOpen(false)}
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
+                  pathname === "/featured"
+                    ? "text-primary font-bold after:w-full"
+                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                }`}
+              >
+                Deadlines
               </Link>
             </li>
             {/* If authenticated, show Profile link inside mobile overlay for navigation */}

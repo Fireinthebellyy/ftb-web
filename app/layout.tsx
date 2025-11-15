@@ -30,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body
-        className={`${plusJakartaSans.className} flex min-h-screen flex-col font-sans antialiased`}
+        className={`${plusJakartaSans.className} flex min-h-screen flex-col bg-neutral-50 font-sans antialiased`}
         suppressHydrationWarning
       >
         <Suspense fallback={<div>Loading ..</div>}>

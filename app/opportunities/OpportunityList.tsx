@@ -27,7 +27,14 @@ const FEATURE_FLAGS = {
   showTrendingTags: false,
 };
 
-const AVAILABLE_TAGS = ["ai", "blockchain", "biology", "mba", "startup"];
+const AVAILABLE_TAGS = [
+  "ai",
+  "biology",
+  "mba",
+  "startup",
+  "psychology",
+  "web3",
+];
 const AVAILABLE_TYPES = ["hackathon", "grant", "competition", "ideathon"];
 
 const formatTypeName = (type: string): string => {
@@ -186,26 +193,8 @@ export default function OpportunityCardsPage() {
     <div className="h-full grow bg-gray-50">
       <div className="container mx-auto max-w-7xl px-4 pt-2">
         {/* Mobile: Search */}
-        <div className="mb-5 lg:hidden">
-          {/* Tag Badges - Above Search Bar */}
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            {AVAILABLE_TAGS.map((tag) => {
-              const isSelected = selectedTags.includes(tag);
-              return (
-                <Badge
-                  key={tag}
-                  variant={isSelected ? "default" : "outline"}
-                  className={`cursor-pointer px-3 py-1 text-sm ${
-                    isSelected ? "" : "bg-transparent"
-                  }`}
-                  onClick={() => toggleTag(tag)}
-                >
-                  <span>{tag}</span>
-                </Badge>
-              );
-            })}
-          </div>
 
+        <div className="mb-5 lg:hidden">
           {/* Search Bar */}
           <div className="relative mb-3 bg-white/80">
             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
@@ -217,52 +206,84 @@ export default function OpportunityCardsPage() {
             />
           </div>
 
-          {/* Types and Tags Dropdowns (mobile) */}
-          <div className="grid grid-cols-2 gap-2">
-            {/* Types Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
-                  {getTypeDropdownLabel(selectedTypes, true)}
-                  <ChevronDown className="h-4 w-4 opacity-60" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="start">
-                <DropdownMenuLabel>Types</DropdownMenuLabel>
-                {AVAILABLE_TYPES.map((type) => (
-                  <DropdownMenuCheckboxItem
-                    key={type}
-                    checked={selectedTypes.includes(type)}
-                    onCheckedChange={() => toggleType(type)}
-                  >
-                    {formatTypeName(type)}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Tags Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
-                  {getTagDropdownLabel(selectedTags)}
-                  <ChevronDown className="h-4 w-4 opacity-60" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end">
-                <DropdownMenuLabel>Tags</DropdownMenuLabel>
-                {AVAILABLE_TAGS.map((tag) => (
-                  <DropdownMenuCheckboxItem
+          {/* Tag Badges - Above Search Bar */}
+          <div className="mb-2 flex items-start justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              {AVAILABLE_TAGS.map((tag) => {
+                const isSelected = selectedTags.includes(tag);
+                return (
+                  <Badge
                     key={tag}
-                    checked={selectedTags.includes(tag)}
-                    onCheckedChange={() => toggleTag(tag)}
+                    variant={isSelected ? "default" : "outline"}
+                    className={`cursor-pointer bg-neutral-700 px-3 py-1 text-sm text-gray-200 ${
+                      isSelected ? "" : "bg-white text-gray-700"
+                    }`}
+                    onClick={() => toggleTag(tag)}
                   >
-                    #{tag}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    <span>{tag}</span>
+                  </Badge>
+                );
+              })}
+            </div>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
+              className="shrink-0 cursor-pointer"
+            >
+              <Filter className="size-4 text-gray-600" />
+            </Button>
           </div>
+
+          {/* Types and Tags Dropdowns (mobile) */}
+          {isFilterBoxOpen && (
+            <div className="grid grid-cols-2 gap-2">
+              {/* Types Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between">
+                    {getTypeDropdownLabel(selectedTypes, true)}
+                    <ChevronDown className="h-4 w-4 opacity-60" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="start">
+                  <DropdownMenuLabel>Types</DropdownMenuLabel>
+                  {AVAILABLE_TYPES.map((type) => (
+                    <DropdownMenuCheckboxItem
+                      key={type}
+                      checked={selectedTypes.includes(type)}
+                      onCheckedChange={() => toggleType(type)}
+                    >
+                      {formatTypeName(type)}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Tags Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between">
+                    {getTagDropdownLabel(selectedTags)}
+                    <ChevronDown className="h-4 w-4 opacity-60" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end">
+                  <DropdownMenuLabel>Tags</DropdownMenuLabel>
+                  {AVAILABLE_TAGS.map((tag) => (
+                    <DropdownMenuCheckboxItem
+                      key={tag}
+                      checked={selectedTags.includes(tag)}
+                      onCheckedChange={() => toggleTag(tag)}
+                    >
+                      #{tag}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
         </div>
 
         {/* Desktop: 3-Column Layout */}

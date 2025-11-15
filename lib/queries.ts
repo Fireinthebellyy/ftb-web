@@ -169,11 +169,23 @@ export type OpportunitiesResponse = {
 
 export async function fetchOpportunitiesPaginated(
   limit: number = 10,
-  offset: number = 0
+  offset: number = 0,
+  search?: string,
+  types: string[] = [],
+  tags: string[] = []
 ): Promise<OpportunitiesResponse> {
-  const { data } = await axios.get<OpportunitiesResponse>("/api/opportunities", {
-    params: { limit, offset }
-  });
+  const { data } = await axios.get<OpportunitiesResponse>(
+    "/api/opportunities",
+    {
+      params: {
+        limit,
+        offset,
+        search: search && search.length > 0 ? search : undefined,
+        types: types.length > 0 ? types.join(",") : undefined,
+        tags: tags.length > 0 ? tags.join(",") : undefined,
+      },
+    }
+  );
   return data;
 }
 
@@ -185,10 +197,32 @@ export function useOpportunitiesPaginated(limit: number = 10, offset: number = 0
   });
 }
 
-export function useInfiniteOpportunities(limit: number = 10) {
+export function useInfiniteOpportunities(
+  limit: number = 10,
+  search?: string,
+  types: string[] = [],
+  tags: string[] = []
+) {
+  const serializedTypes = types.join(",");
+  const serializedTags = tags.join(",");
+
   return useInfiniteQuery<OpportunitiesResponse>({
-    queryKey: ["opportunities", "infinite", limit],
-    queryFn: ({ pageParam = 0 }) => fetchOpportunitiesPaginated(limit, pageParam as number),
+    queryKey: [
+      "opportunities",
+      "infinite",
+      limit,
+      search ?? "",
+      serializedTypes,
+      serializedTags,
+    ],
+    queryFn: ({ pageParam = 0 }) =>
+      fetchOpportunitiesPaginated(
+        limit,
+        pageParam as number,
+        search,
+        types,
+        tags
+      ),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => {
       if (lastPage.pagination?.hasMore) {

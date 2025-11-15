@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Circle, SquareArrowOutUpRight, Trash2 } from "lucide-react";
+import { Circle, Plus, SquareArrowOutUpRight, Trash2 } from "lucide-react";
 import {
   useTasks,
   useCreateTask,
@@ -64,8 +64,15 @@ export default function TaskWidget() {
         <h3 className="font-semibold text-gray-900">Tasks</h3>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" size="sm" disabled={isLoading}>
-              New Task
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={isLoading}
+              title="Add New Task"
+              aria-label="Add New Task"
+              className="transition-all duration-300 ease-in-out hover:scale-110"
+            >
+              <Plus className="transition-all duration-300 ease-in-out group-hover:rotate-90" />
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -126,7 +133,7 @@ export default function TaskWidget() {
             tasks.map((task) => (
               <div
                 key={task.id}
-                className="flex items-center gap-2 rounded px-2 hover:bg-gray-50"
+                className="flex items-center gap-2 rounded px-2"
               >
                 <div className="flex items-center">
                   {isUpdating && variables?.id === task.id ? (
@@ -142,7 +149,7 @@ export default function TaskWidget() {
                       }
                       className={`size-3 cursor-pointer ${
                         task.completed
-                          ? "text-blue-600"
+                          ? "fill-blue-600 text-blue-600"
                           : "text-gray-300 hover:text-gray-500"
                       }`}
                     />
@@ -160,13 +167,12 @@ export default function TaskWidget() {
                     variant="ghost"
                     size="sm"
                     className="h-6 w-6 p-0"
+                    title="Expand/Edit Task"
                     onClick={() => {
                       setEditingTask(task);
                       setEditTaskTitle(task.title);
                       setEditTaskDescription(task.description || "");
-                      setEditTaskOpportunityLink(
-                        task.opportunityLink || ""
-                      );
+                      setEditTaskOpportunityLink(task.opportunityLink || "");
                       setIsEditDialogOpen(true);
                     }}
                   >
@@ -175,6 +181,7 @@ export default function TaskWidget() {
                   <Button
                     variant="ghost"
                     size="sm"
+                    title="Delete Task"
                     className="h-6 w-6 p-0"
                     onClick={() => deleteTask(task.id)}
                   >

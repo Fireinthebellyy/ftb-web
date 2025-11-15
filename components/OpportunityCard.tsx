@@ -247,7 +247,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           {user &&
           user.image &&
           !user.image.includes("https://media.licdn.com") ? (
-            <div className="size-8 overflow-hidden rounded-full border-1 border-gray-100 shadow sm:size-7">
+            <div className="size-8 overflow-hidden rounded-full border border-gray-100 shadow sm:size-7">
               <Image
                 src={user.image}
                 alt={user.name}

@@ -406,7 +406,7 @@ export default function Navbar() {
                 href="/deadlines"
                 onClick={() => setIsOpen(false)}
                 className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
-                  pathname === "/featured"
+                  pathname === "/deadlines"
                     ? "text-primary font-bold after:w-full"
                     : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
                 }`}

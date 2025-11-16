@@ -327,8 +327,8 @@ export default function OpportunityCardsPage() {
                   <Badge
                     key={tag}
                     variant={isSelected ? "default" : "outline"}
-                    className={`cursor-pointer bg-neutral-700 px-3 py-1 text-sm text-gray-200 ${
-                      isSelected ? "" : "bg-white text-gray-700"
+                    className={`cursor-pointer px-3 py-1 text-sm ${
+                      isSelected ? "bg-neutral-700 text-gray-200" : "bg-white text-gray-700"
                     }`}
                     onClick={() => toggleTag(tag)}
                   >
@@ -454,8 +454,8 @@ export default function OpportunityCardsPage() {
                     <Badge
                       key={tag}
                       variant={isSelected ? "default" : "outline"}
-                      className={`cursor-pointer bg-neutral-700 px-3 py-1 text-sm text-gray-200 ${
-                        isSelected ? "" : "bg-white text-gray-700"
+                      className={`cursor-pointer px-3 py-1 text-sm ${
+                        isSelected ? "bg-neutral-700 text-gray-200" : "bg-white text-gray-700"
                       }`}
                       onClick={() => toggleTag(tag)}
                     >

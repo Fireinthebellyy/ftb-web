@@ -100,7 +100,7 @@ export default function OpportunityCardsPage() {
 
   // Debounce search term updates (400ms delay) - only for user input, not URL loading
   useEffect(() => {
-    
+
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
     }, 400);
@@ -274,6 +274,7 @@ export default function OpportunityCardsPage() {
 
   const clearFilters = () => {
     setSearchTerm("");
+    setDebouncedSearchTerm("");
     setSelectedTypes([]);
     setSelectedTags([]);
   };

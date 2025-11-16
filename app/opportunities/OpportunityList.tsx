@@ -72,23 +72,9 @@ export default function OpportunityCardsPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>(getInitialTags);
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
-  const isInitializingFromUrl = useRef(true);
-  const hasInitialized = useRef(false);
 
   // Derive state from URL query parameters whenever searchParams changes (for browser navigation)
   useEffect(() => {
-    // Skip on initial mount since we already initialized from URL
-    if (!hasInitialized.current) {
-      hasInitialized.current = true;
-      // Use requestAnimationFrame to ensure state is set before allowing URL sync
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          isInitializingFromUrl.current = false;
-        });
-      });
-      return;
-    }
-
     const searchParam = searchParams.get("search") || "";
     const typesParam = searchParams.get("types") || "";
     const tagsParam = searchParams.get("tags") || "";
@@ -114,11 +100,7 @@ export default function OpportunityCardsPage() {
 
   // Debounce search term updates (400ms delay) - only for user input, not URL loading
   useEffect(() => {
-    // Skip debounce if we're initializing from URL
-    if (isInitializingFromUrl.current) {
-      return;
-    }
-
+    
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
     }, 400);
@@ -131,10 +113,6 @@ export default function OpportunityCardsPage() {
 
   // Update URL query parameters when filters change
   useEffect(() => {
-    // Skip URL update if we're still initializing from URL
-    if (isInitializingFromUrl.current) {
-      return;
-    }
 
     // Get current values from URL
     const currentSearch = searchParams.get("search") || "";

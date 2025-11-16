@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Search, Filter, Loader2, ChevronDown } from "lucide-react";
+import { Search, Filter, Loader2, ChevronDown, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,9 +15,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import OpportunityPost from "@/components/OpportunityCard";
 import { NewOpportunityButton } from "@/components/opportunity/NewOpportunityButton";
 import FeaturedOpportunities from "@/components/opportunity/FeaturedOpportunities";
+import { TagsDropdown } from "@/components/opportunity/TagsDropdown";
 import { useInfiniteOpportunities } from "@/lib/queries";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import CalendarWidget from "@/components/opportunity/CalendarWidget";
@@ -28,12 +30,12 @@ const FEATURE_FLAGS = {
 };
 
 const AVAILABLE_TAGS = [
-  "ai",
-  "biology",
-  "mba",
-  "startup",
-  "psychology",
-  "web3",
+  "AI",
+  "Biology",
+  "MBA",
+  "Startup",
+  "Psychology",
+  "Web3",
 ];
 const AVAILABLE_TYPES = ["hackathon", "grant", "competition", "ideathon"];
 
@@ -47,19 +49,70 @@ const getTypeDropdownLabel = (selected: string[], compact = false) => {
   return `${selected.length} types`;
 };
 
-const getTagDropdownLabel = (selected: string[]) => {
-  if (selected.length === 0) return "Tags";
-  if (selected.length === 1) return `#${selected[0]}`;
-  return `${selected.length} tags`;
-};
-
 export default function OpportunityCardsPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [isNewOpportunityOpen, setIsNewOpportunityOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initialize state from URL query parameters on mount
+  useEffect(() => {
+    if (isInitialized) return;
+
+    const searchParam = searchParams.get("search");
+    const typesParam = searchParams.get("types");
+    const tagsParam = searchParams.get("tags");
+
+    if (searchParam) {
+      setSearchTerm(searchParam);
+    }
+    if (typesParam) {
+      setSelectedTypes(typesParam.split(",").filter(Boolean));
+    }
+    if (tagsParam) {
+      setSelectedTags(tagsParam.split(",").filter(Boolean));
+    }
+
+    setIsInitialized(true);
+  }, [searchParams, isInitialized]);
+
+  // Update URL query parameters when filters change
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    const params = new URLSearchParams();
+
+    // Update search
+    if (searchTerm.trim()) {
+      params.set("search", searchTerm.trim());
+    }
+
+    // Update types
+    if (selectedTypes.length > 0) {
+      params.set("types", selectedTypes.join(","));
+    }
+
+    // Update tags
+    if (selectedTags.length > 0) {
+      params.set("tags", selectedTags.join(","));
+    }
+
+    // Update URL without page reload
+    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    const currentUrl = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
+    
+    // Only update if URL actually changed
+    if (newUrl !== currentUrl) {
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [searchTerm, selectedTypes, selectedTags, isInitialized, pathname, router, searchParams]);
 
   const normalizedSearchTerm = searchTerm.trim();
 
@@ -202,8 +255,17 @@ export default function OpportunityCardsPage() {
               placeholder={searchPlaceholders[currentPlaceholderIndex]}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 pr-10"
             />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm("")}
+                className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
           {/* Tag Badges - Above Search Bar */}
@@ -262,26 +324,12 @@ export default function OpportunityCardsPage() {
               </DropdownMenu>
 
               {/* Tags Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between">
-                    {getTagDropdownLabel(selectedTags)}
-                    <ChevronDown className="h-4 w-4 opacity-60" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end">
-                  <DropdownMenuLabel>Tags</DropdownMenuLabel>
-                  {AVAILABLE_TAGS.map((tag) => (
-                    <DropdownMenuCheckboxItem
-                      key={tag}
-                      checked={selectedTags.includes(tag)}
-                      onCheckedChange={() => toggleTag(tag)}
-                    >
-                      #{tag}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <TagsDropdown
+                selectedTags={selectedTags}
+                onTagsChange={setSelectedTags}
+                align="end"
+                className="w-56"
+              />
             </div>
           )}
         </div>
@@ -298,8 +346,17 @@ export default function OpportunityCardsPage() {
                   placeholder={searchPlaceholders[currentPlaceholderIndex]}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 pr-10"
                 />
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm("")}
+                    className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
 
               {/* Quick Links */}
@@ -399,29 +456,12 @@ export default function OpportunityCardsPage() {
                   </DropdownMenu>
 
                   {/* Tags Dropdown */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-between"
-                      >
-                        {getTagDropdownLabel(selectedTags)}
-                        <ChevronDown className="h-4 w-4 opacity-60" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-64" align="end">
-                      <DropdownMenuLabel>Tags</DropdownMenuLabel>
-                      {AVAILABLE_TAGS.map((tag) => (
-                        <DropdownMenuCheckboxItem
-                          key={tag}
-                          checked={selectedTags.includes(tag)}
-                          onCheckedChange={() => toggleTag(tag)}
-                        >
-                          #{tag}
-                        </DropdownMenuCheckboxItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <TagsDropdown
+                    selectedTags={selectedTags}
+                    onTagsChange={setSelectedTags}
+                    align="end"
+                    className="w-64"
+                  />
                 </div>
               </div>
             )}

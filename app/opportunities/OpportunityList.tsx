@@ -30,12 +30,12 @@ const FEATURE_FLAGS = {
 };
 
 const AVAILABLE_TAGS = [
-  "AI",
-  "Biology",
-  "MBA",
-  "Startup",
-  "Psychology",
-  "Web3",
+  "ai",
+  "biology",
+  "mba",
+  "startup",
+  "psychology",
+  "web3",
 ];
 const AVAILABLE_TYPES = ["hackathon", "grant", "competition", "ideathon"];
 
@@ -54,16 +54,41 @@ export default function OpportunityCardsPage() {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Initialize state from URL on mount
+  const getInitialSearch = () => searchParams.get("search") || "";
+  const getInitialTypes = () => {
+    const typesParam = searchParams.get("types") || "";
+    return typesParam ? typesParam.split(",").filter(Boolean) : [];
+  };
+  const getInitialTags = () => {
+    const tagsParam = searchParams.get("tags") || "";
+    return tagsParam ? tagsParam.split(",").filter(Boolean) : [];
+  };
+
   const [isNewOpportunityOpen, setIsNewOpportunityOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>(getInitialSearch);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>(getInitialSearch);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(getInitialTypes);
+  const [selectedTags, setSelectedTags] = useState<string[]>(getInitialTags);
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
+  const isInitializingFromUrl = useRef(true);
+  const hasInitialized = useRef(false);
 
-  // Derive state from URL query parameters whenever searchParams changes
+  // Derive state from URL query parameters whenever searchParams changes (for browser navigation)
   useEffect(() => {
+    // Skip on initial mount since we already initialized from URL
+    if (!hasInitialized.current) {
+      hasInitialized.current = true;
+      // Use requestAnimationFrame to ensure state is set before allowing URL sync
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          isInitializingFromUrl.current = false;
+        });
+      });
+      return;
+    }
+
     const searchParam = searchParams.get("search") || "";
     const typesParam = searchParams.get("types") || "";
     const tagsParam = searchParams.get("tags") || "";
@@ -87,8 +112,13 @@ export default function OpportunityCardsPage() {
     });
   }, [searchParams]);
 
-  // Debounce search term updates (400ms delay)
+  // Debounce search term updates (400ms delay) - only for user input, not URL loading
   useEffect(() => {
+    // Skip debounce if we're initializing from URL
+    if (isInitializingFromUrl.current) {
+      return;
+    }
+
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
     }, 400);
@@ -101,6 +131,11 @@ export default function OpportunityCardsPage() {
 
   // Update URL query parameters when filters change
   useEffect(() => {
+    // Skip URL update if we're still initializing from URL
+    if (isInitializingFromUrl.current) {
+      return;
+    }
+
     // Get current values from URL
     const currentSearch = searchParams.get("search") || "";
     const currentTypes = (searchParams.get("types") || "").split(",").filter(Boolean).sort();
@@ -121,6 +156,7 @@ export default function OpportunityCardsPage() {
       return;
     }
 
+    // Build new params
     const params = new URLSearchParams();
 
     // Update search
@@ -138,12 +174,17 @@ export default function OpportunityCardsPage() {
       params.set("tags", stateTags.join(","));
     }
 
-    // Update URL without page reload
+    // Build new URL
     const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
-    router.replace(newUrl, { scroll: false });
+    const currentUrl = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
+
+    // Only update if URL actually changed
+    if (newUrl !== currentUrl) {
+      router.replace(newUrl, { scroll: false });
+    }
   }, [debouncedSearchTerm, selectedTypes, selectedTags, pathname, router, searchParams]);
 
-  const normalizedSearchTerm = searchTerm.trim();
+  const normalizedSearchTerm = debouncedSearchTerm.trim();
 
   const normalizedTypesForQuery = useMemo(
     () => [...selectedTypes].sort(),
@@ -302,6 +343,7 @@ export default function OpportunityCardsPage() {
             <div className="flex flex-wrap items-center gap-2">
               {AVAILABLE_TAGS.map((tag) => {
                 const isSelected = selectedTags.includes(tag);
+                const displayTag = tag.charAt(0).toUpperCase() + tag.slice(1);
                 return (
                   <Badge
                     key={tag}
@@ -311,7 +353,7 @@ export default function OpportunityCardsPage() {
                     }`}
                     onClick={() => toggleTag(tag)}
                   >
-                    <span>{tag}</span>
+                    <span>{displayTag}</span>
                   </Badge>
                 );
               })}
@@ -428,6 +470,7 @@ export default function OpportunityCardsPage() {
               <div className="flex flex-1 flex-wrap items-center gap-2">
                 {AVAILABLE_TAGS.map((tag) => {
                   const isSelected = selectedTags.includes(tag);
+                  const displayTag = tag.charAt(0).toUpperCase() + tag.slice(1);
                   return (
                     <Badge
                       key={tag}
@@ -437,7 +480,7 @@ export default function OpportunityCardsPage() {
                       }`}
                       onClick={() => toggleTag(tag)}
                     >
-                      <span>{tag}</span>
+                      <span>{displayTag}</span>
                     </Badge>
                   );
                 })}
@@ -535,9 +578,7 @@ export default function OpportunityCardsPage() {
                             onBookmarkChange={handleBookmarkChange}
                           />
                           {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
-                          {allOpportunities.length > 1 &&
-                            index ===
-                              Math.max(0, allOpportunities.length - 3) && (
+                          {index === Math.max(0, allOpportunities.length - 3) && (
                               <div ref={desktopTriggerRef} className="h-1" />
                             )}
                         </div>
@@ -655,9 +696,7 @@ export default function OpportunityCardsPage() {
                           onBookmarkChange={handleBookmarkChange}
                         />
                         {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
-                        {allOpportunities.length > 1 &&
-                          index ===
-                            Math.max(0, allOpportunities.length - 3) && (
+                        {index === Math.max(0, allOpportunities.length - 3) && (
                             <div ref={mobileTriggerRef} className="h-1" />
                           )}
                       </div>

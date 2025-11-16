@@ -699,7 +699,7 @@ export default function OpportunityCardsPage() {
               ) : (
                  <>
                     {hasNextPage && !isFetchingNextPage && (
-                      <div ref={desktopTriggerRef} className="h-1" />
+                      <div ref={mobileTriggerRef} className="h-1" />
                     )}
                 <div className="rounded-lg border bg-white py-12 text-center">
                   <div className="mb-4 text-gray-400">

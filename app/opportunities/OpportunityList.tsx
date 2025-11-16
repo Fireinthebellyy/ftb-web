@@ -566,12 +566,6 @@ export default function OpportunityCardsPage() {
 
                     {/* Load more indicator - also acts as fallback trigger */}
                     <div ref={loadMoreRef} className="flex justify-center py-8">
-                      {/* Auto-fetch trigger when filtered set is empty but we still have more pages */}
-                      {allOpportunities.length === 0 &&
-                        hasNextPage &&
-                        !isFetchingNextPage && (
-                          <div ref={desktopTriggerRef} className="h-1" />
-                        )}
                       {isFetchingNextPage && (
                         <div className="flex items-center space-x-2 text-gray-600">
                           <Loader2 className="h-5 w-5 animate-spin" />
@@ -586,6 +580,10 @@ export default function OpportunityCardsPage() {
                     </div>
                   </>
                 ) : (
+                  <>
+                     {hasNextPage && !isFetchingNextPage && (
+                       <div ref={desktopTriggerRef} className="h-1" />
+                     )}
                   <div className="rounded-lg border bg-white py-12 text-center">
                     <div className="mb-4 text-gray-400">
                       <Search className="mx-auto h-12 w-12" />
@@ -600,6 +598,7 @@ export default function OpportunityCardsPage() {
                       Clear Filters
                     </Button>
                   </div>
+                  </>
                 )}
               </>
             )}
@@ -684,12 +683,6 @@ export default function OpportunityCardsPage() {
 
                   {/* Load more indicator for mobile - also acts as fallback trigger */}
                   <div className="flex justify-center py-8">
-                    {/* Auto-fetch trigger when filtered set is empty but we still have more pages */}
-                    {allOpportunities.length === 0 &&
-                      hasNextPage &&
-                      !isFetchingNextPage && (
-                        <div ref={mobileTriggerRef} className="h-1" />
-                      )}
                     {isFetchingNextPage && (
                       <div className="flex items-center space-x-2 text-gray-600">
                         <Loader2 className="h-5 w-5 animate-spin" />
@@ -704,6 +697,10 @@ export default function OpportunityCardsPage() {
                   </div>
                 </>
               ) : (
+                 <>
+                    {hasNextPage && !isFetchingNextPage && (
+                      <div ref={desktopTriggerRef} className="h-1" />
+                    )}
                 <div className="rounded-lg border bg-white py-12 text-center">
                   <div className="mb-4 text-gray-400">
                     <Search className="mx-auto h-12 w-12" />
@@ -718,6 +715,7 @@ export default function OpportunityCardsPage() {
                     Clear Filters
                   </Button>
                 </div>
+                </>
               )}
             </>
           )}

@@ -56,63 +56,92 @@ export default function OpportunityCardsPage() {
 
   const [isNewOpportunityOpen, setIsNewOpportunityOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
-  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize state from URL query parameters on mount
+  // Derive state from URL query parameters whenever searchParams changes
   useEffect(() => {
-    if (isInitialized) return;
+    const searchParam = searchParams.get("search") || "";
+    const typesParam = searchParams.get("types") || "";
+    const tagsParam = searchParams.get("tags") || "";
 
-    const searchParam = searchParams.get("search");
-    const typesParam = searchParams.get("types");
-    const tagsParam = searchParams.get("tags");
+    const newSearchTerm = searchParam;
+    const newTypes = typesParam ? typesParam.split(",").filter(Boolean) : [];
+    const newTags = tagsParam ? tagsParam.split(",").filter(Boolean) : [];
 
-    if (searchParam) {
-      setSearchTerm(searchParam);
-    }
-    if (typesParam) {
-      setSelectedTypes(typesParam.split(",").filter(Boolean));
-    }
-    if (tagsParam) {
-      setSelectedTags(tagsParam.split(",").filter(Boolean));
-    }
+    // Update state from URL - use functional updates to compare and only update if changed
+    setSearchTerm((prev) => (prev !== newSearchTerm ? newSearchTerm : prev));
+    setDebouncedSearchTerm((prev) => (prev !== newSearchTerm ? newSearchTerm : prev));
+    setSelectedTypes((prev) => {
+      const prevSorted = [...prev].sort();
+      const newSorted = [...newTypes].sort();
+      return JSON.stringify(prevSorted) !== JSON.stringify(newSorted) ? newTypes : prev;
+    });
+    setSelectedTags((prev) => {
+      const prevSorted = [...prev].sort();
+      const newSorted = [...newTags].sort();
+      return JSON.stringify(prevSorted) !== JSON.stringify(newSorted) ? newTags : prev;
+    });
+  }, [searchParams]);
 
-    setIsInitialized(true);
-  }, [searchParams, isInitialized]);
+  // Debounce search term updates (400ms delay)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 400);
+
+    // Cleanup timer on unmount or when searchTerm changes
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchTerm]);
 
   // Update URL query parameters when filters change
   useEffect(() => {
-    if (!isInitialized) return;
+    // Get current values from URL
+    const currentSearch = searchParams.get("search") || "";
+    const currentTypes = (searchParams.get("types") || "").split(",").filter(Boolean).sort();
+    const currentTags = (searchParams.get("tags") || "").split(",").filter(Boolean).sort();
+
+    // Get state values - use debouncedSearchTerm for search, immediate updates for types/tags
+    const stateSearch = debouncedSearchTerm.trim();
+    const stateTypes = [...selectedTypes].sort();
+    const stateTags = [...selectedTags].sort();
+
+    // Compare values to see if URL needs updating
+    const searchChanged = currentSearch !== stateSearch;
+    const typesChanged = JSON.stringify(currentTypes) !== JSON.stringify(stateTypes);
+    const tagsChanged = JSON.stringify(currentTags) !== JSON.stringify(stateTags);
+
+    // Only update URL if values actually differ
+    if (!searchChanged && !typesChanged && !tagsChanged) {
+      return;
+    }
 
     const params = new URLSearchParams();
 
     // Update search
-    if (searchTerm.trim()) {
-      params.set("search", searchTerm.trim());
+    if (stateSearch) {
+      params.set("search", stateSearch);
     }
 
     // Update types
-    if (selectedTypes.length > 0) {
-      params.set("types", selectedTypes.join(","));
+    if (stateTypes.length > 0) {
+      params.set("types", stateTypes.join(","));
     }
 
     // Update tags
-    if (selectedTags.length > 0) {
-      params.set("tags", selectedTags.join(","));
+    if (stateTags.length > 0) {
+      params.set("tags", stateTags.join(","));
     }
 
     // Update URL without page reload
     const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
-    const currentUrl = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
-    
-    // Only update if URL actually changed
-    if (newUrl !== currentUrl) {
-      router.replace(newUrl, { scroll: false });
-    }
-  }, [searchTerm, selectedTypes, selectedTags, isInitialized, pathname, router, searchParams]);
+    router.replace(newUrl, { scroll: false });
+  }, [debouncedSearchTerm, selectedTypes, selectedTags, pathname, router, searchParams]);
 
   const normalizedSearchTerm = searchTerm.trim();
 
@@ -316,6 +345,7 @@ export default function OpportunityCardsPage() {
                       key={type}
                       checked={selectedTypes.includes(type)}
                       onCheckedChange={() => toggleType(type)}
+                      onSelect={(e) => e.preventDefault()}
                     >
                       {formatTypeName(type)}
                     </DropdownMenuCheckboxItem>
@@ -448,6 +478,7 @@ export default function OpportunityCardsPage() {
                           key={type}
                           checked={selectedTypes.includes(type)}
                           onCheckedChange={() => toggleType(type)}
+                          onSelect={(e) => e.preventDefault()}
                         >
                           {formatTypeName(type)}
                         </DropdownMenuCheckboxItem>

@@ -23,7 +23,7 @@ const NewOpportunityButton = memo(function NewOpportunityButton({
 
   return (
     <div
-      className={`mb-4 w-full rounded-lg border bg-white/70 px-4 py-3 ${layoutClasses}`}
+      className={`mb-4 w-full rounded-lg border bg-white px-4 py-3 ${layoutClasses}`}
     >
       <p className="font-medium">Have a new opportunity?</p>
       <Button

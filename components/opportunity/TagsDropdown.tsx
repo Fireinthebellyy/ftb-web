@@ -7,7 +7,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -92,9 +91,7 @@ export function TagsDropdown({
 
   // Filter tags based on search and sort: selected tags first
   const filteredTags = tags
-    .filter((tag) =>
-      tag.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    .filter((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a, b) => {
       const aSelected = selectedTags.includes(a);
       const bSelected = selectedTags.includes(b);
@@ -112,18 +109,16 @@ export function TagsDropdown({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className={className} align={align}>
-        <DropdownMenuLabel>Tags</DropdownMenuLabel>
-        
         {/* Search Input */}
         <div className="relative px-2 pb-2">
-          <div className="relative">
-            <Search className="absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <div className="relative pt-2">
+            <Search className="pointer-events-none absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
               ref={searchInputRef}
               placeholder="Search tags..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-9 h-9"
+              className="h-9 pr-9 pl-9"
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
             />
@@ -135,7 +130,7 @@ export function TagsDropdown({
                   setSearchQuery("");
                   searchInputRef.current?.focus();
                 }}
-                className="absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute top-1/2 right-4 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -170,4 +165,3 @@ export function TagsDropdown({
     </DropdownMenu>
   );
 }
-

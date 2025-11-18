@@ -11,7 +11,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
@@ -67,7 +66,8 @@ export default function OpportunityCardsPage() {
 
   const [isNewOpportunityOpen, setIsNewOpportunityOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>(getInitialSearch);
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>(getInitialSearch);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] =
+    useState<string>(getInitialSearch);
   const [selectedTypes, setSelectedTypes] = useState<string[]>(getInitialTypes);
   const [selectedTags, setSelectedTags] = useState<string[]>(getInitialTags);
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
@@ -85,22 +85,27 @@ export default function OpportunityCardsPage() {
 
     // Update state from URL - use functional updates to compare and only update if changed
     setSearchTerm((prev) => (prev !== newSearchTerm ? newSearchTerm : prev));
-    setDebouncedSearchTerm((prev) => (prev !== newSearchTerm ? newSearchTerm : prev));
+    setDebouncedSearchTerm((prev) =>
+      prev !== newSearchTerm ? newSearchTerm : prev
+    );
     setSelectedTypes((prev) => {
       const prevSorted = [...prev].sort();
       const newSorted = [...newTypes].sort();
-      return JSON.stringify(prevSorted) !== JSON.stringify(newSorted) ? newTypes : prev;
+      return JSON.stringify(prevSorted) !== JSON.stringify(newSorted)
+        ? newTypes
+        : prev;
     });
     setSelectedTags((prev) => {
       const prevSorted = [...prev].sort();
       const newSorted = [...newTags].sort();
-      return JSON.stringify(prevSorted) !== JSON.stringify(newSorted) ? newTags : prev;
+      return JSON.stringify(prevSorted) !== JSON.stringify(newSorted)
+        ? newTags
+        : prev;
     });
   }, [searchParams]);
 
   // Debounce search term updates (400ms delay) - only for user input, not URL loading
   useEffect(() => {
-
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
     }, 400);
@@ -113,11 +118,16 @@ export default function OpportunityCardsPage() {
 
   // Update URL query parameters when filters change
   useEffect(() => {
-
     // Get current values from URL
     const currentSearch = searchParams.get("search") || "";
-    const currentTypes = (searchParams.get("types") || "").split(",").filter(Boolean).sort();
-    const currentTags = (searchParams.get("tags") || "").split(",").filter(Boolean).sort();
+    const currentTypes = (searchParams.get("types") || "")
+      .split(",")
+      .filter(Boolean)
+      .sort();
+    const currentTags = (searchParams.get("tags") || "")
+      .split(",")
+      .filter(Boolean)
+      .sort();
 
     // Get state values - use debouncedSearchTerm for search, immediate updates for types/tags
     const stateSearch = debouncedSearchTerm.trim();
@@ -126,8 +136,10 @@ export default function OpportunityCardsPage() {
 
     // Compare values to see if URL needs updating
     const searchChanged = currentSearch !== stateSearch;
-    const typesChanged = JSON.stringify(currentTypes) !== JSON.stringify(stateTypes);
-    const tagsChanged = JSON.stringify(currentTags) !== JSON.stringify(stateTags);
+    const typesChanged =
+      JSON.stringify(currentTypes) !== JSON.stringify(stateTypes);
+    const tagsChanged =
+      JSON.stringify(currentTags) !== JSON.stringify(stateTags);
 
     // Only update URL if values actually differ
     if (!searchChanged && !typesChanged && !tagsChanged) {
@@ -153,14 +165,25 @@ export default function OpportunityCardsPage() {
     }
 
     // Build new URL
-    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
-    const currentUrl = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
+    const newUrl = params.toString()
+      ? `${pathname}?${params.toString()}`
+      : pathname;
+    const currentUrl = searchParams.toString()
+      ? `${pathname}?${searchParams.toString()}`
+      : pathname;
 
     // Only update if URL actually changed
     if (newUrl !== currentUrl) {
       router.replace(newUrl, { scroll: false });
     }
-  }, [debouncedSearchTerm, selectedTypes, selectedTags, pathname, router, searchParams]);
+  }, [
+    debouncedSearchTerm,
+    selectedTypes,
+    selectedTags,
+    pathname,
+    router,
+    searchParams,
+  ]);
 
   const normalizedSearchTerm = debouncedSearchTerm.trim();
 
@@ -298,19 +321,19 @@ export default function OpportunityCardsPage() {
 
         <div className="mb-5 lg:hidden">
           {/* Search Bar */}
-          <div className="relative mb-3 bg-white/80">
+          <div className="relative mb-3 bg-white">
             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
             <Input
               placeholder={searchPlaceholders[currentPlaceholderIndex]}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-10"
+              className="pr-10 pl-10"
             />
             {searchTerm && (
               <button
                 type="button"
                 onClick={() => setSearchTerm("")}
-                className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute top-1/2 right-3 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -328,7 +351,9 @@ export default function OpportunityCardsPage() {
                     key={tag}
                     variant={isSelected ? "default" : "outline"}
                     className={`cursor-pointer px-3 py-1 text-sm ${
-                      isSelected ? "bg-neutral-700 text-gray-200" : "bg-white text-gray-700"
+                      isSelected
+                        ? "bg-neutral-700 text-gray-200"
+                        : "bg-white text-gray-700"
                     }`}
                     onClick={() => toggleTag(tag)}
                   >
@@ -360,7 +385,6 @@ export default function OpportunityCardsPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="start">
-                  <DropdownMenuLabel>Types</DropdownMenuLabel>
                   {AVAILABLE_TYPES.map((type) => (
                     <DropdownMenuCheckboxItem
                       key={type}
@@ -391,19 +415,19 @@ export default function OpportunityCardsPage() {
           <aside className="col-span-3">
             <div className="sticky top-6 space-y-6">
               {/* Search Bar - Above Quick Links */}
-              <div className="relative mb-4 bg-white/80">
+              <div className="relative bg-white">
                 <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
                 <Input
                   placeholder={searchPlaceholders[currentPlaceholderIndex]}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-10"
+                  className="pr-10 pl-10"
                 />
                 {searchTerm && (
                   <button
                     type="button"
                     onClick={() => setSearchTerm("")}
-                    className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute top-1/2 right-3 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -455,7 +479,9 @@ export default function OpportunityCardsPage() {
                       key={tag}
                       variant={isSelected ? "default" : "outline"}
                       className={`cursor-pointer px-3 py-1 text-sm ${
-                        isSelected ? "bg-neutral-700 text-gray-200" : "bg-white text-gray-700"
+                        isSelected
+                          ? "bg-neutral-700 text-gray-200"
+                          : "bg-white text-gray-700"
                       }`}
                       onClick={() => toggleTag(tag)}
                     >
@@ -494,7 +520,6 @@ export default function OpportunityCardsPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-64" align="start">
-                      <DropdownMenuLabel>Types</DropdownMenuLabel>
                       {AVAILABLE_TYPES.map((type) => (
                         <DropdownMenuCheckboxItem
                           key={type}
@@ -557,9 +582,10 @@ export default function OpportunityCardsPage() {
                             onBookmarkChange={handleBookmarkChange}
                           />
                           {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
-                          {index === Math.max(0, allOpportunities.length - 3) && (
-                              <div ref={desktopTriggerRef} className="h-1" />
-                            )}
+                          {index ===
+                            Math.max(0, allOpportunities.length - 3) && (
+                            <div ref={desktopTriggerRef} className="h-1" />
+                          )}
                         </div>
                       ))}
                     </div>
@@ -581,23 +607,23 @@ export default function OpportunityCardsPage() {
                   </>
                 ) : (
                   <>
-                     {hasNextPage && !isFetchingNextPage && (
-                       <div ref={desktopTriggerRef} className="h-1" />
-                     )}
-                  <div className="rounded-lg border bg-white py-12 text-center">
-                    <div className="mb-4 text-gray-400">
-                      <Search className="mx-auto h-12 w-12" />
+                    {hasNextPage && !isFetchingNextPage && (
+                      <div ref={desktopTriggerRef} className="h-1" />
+                    )}
+                    <div className="rounded-lg border bg-white py-12 text-center">
+                      <div className="mb-4 text-gray-400">
+                        <Search className="mx-auto h-12 w-12" />
+                      </div>
+                      <h3 className="mb-2 text-lg font-semibold text-gray-600">
+                        No opportunities found
+                      </h3>
+                      <p className="mb-4 text-gray-500">
+                        Try adjusting your search criteria
+                      </p>
+                      <Button onClick={clearFilters} variant="outline">
+                        Clear Filters
+                      </Button>
                     </div>
-                    <h3 className="mb-2 text-lg font-semibold text-gray-600">
-                      No opportunities found
-                    </h3>
-                    <p className="mb-4 text-gray-500">
-                      Try adjusting your search criteria
-                    </p>
-                    <Button onClick={clearFilters} variant="outline">
-                      Clear Filters
-                    </Button>
-                  </div>
                   </>
                 )}
               </>
@@ -675,8 +701,8 @@ export default function OpportunityCardsPage() {
                         />
                         {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
                         {index === Math.max(0, allOpportunities.length - 3) && (
-                            <div ref={mobileTriggerRef} className="h-1" />
-                          )}
+                          <div ref={mobileTriggerRef} className="h-1" />
+                        )}
                       </div>
                     ))}
                   </div>
@@ -697,24 +723,24 @@ export default function OpportunityCardsPage() {
                   </div>
                 </>
               ) : (
-                 <>
-                    {hasNextPage && !isFetchingNextPage && (
-                      <div ref={mobileTriggerRef} className="h-1" />
-                    )}
-                <div className="rounded-lg border bg-white py-12 text-center">
-                  <div className="mb-4 text-gray-400">
-                    <Search className="mx-auto h-12 w-12" />
+                <>
+                  {hasNextPage && !isFetchingNextPage && (
+                    <div ref={mobileTriggerRef} className="h-1" />
+                  )}
+                  <div className="rounded-lg border bg-white py-12 text-center">
+                    <div className="mb-4 text-gray-400">
+                      <Search className="mx-auto h-12 w-12" />
+                    </div>
+                    <h3 className="mb-2 text-lg font-semibold text-gray-600">
+                      No opportunities found
+                    </h3>
+                    <p className="mb-4 text-gray-500">
+                      Try adjusting your search criteria
+                    </p>
+                    <Button onClick={clearFilters} variant="outline">
+                      Clear Filters
+                    </Button>
                   </div>
-                  <h3 className="mb-2 text-lg font-semibold text-gray-600">
-                    No opportunities found
-                  </h3>
-                  <p className="mb-4 text-gray-500">
-                    Try adjusting your search criteria
-                  </p>
-                  <Button onClick={clearFilters} variant="outline">
-                    Clear Filters
-                  </Button>
-                </div>
                 </>
               )}
             </>

@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
-import { opportunities, user } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { opportunities, tags, user } from "@/lib/schema";
+import { eq, inArray } from "drizzle-orm";
 import OpportunityCard from "@/components/OpportunityCard";
 import { notFound } from "next/navigation";
 
@@ -14,7 +14,7 @@ export default async function OpportunityDetailPage({ params }: any) {
       title: opportunities.title,
       description: opportunities.description,
       images: opportunities.images,
-      tags: opportunities.tags,
+      tagIds: opportunities.tagIds,
       location: opportunities.location,
       organiserInfo: opportunities.organiserInfo,
       startDate: opportunities.startDate,
@@ -33,7 +33,20 @@ export default async function OpportunityDetailPage({ params }: any) {
     .where(eq(opportunities.id, id))
     .limit(1);
 
-  const opportunity = result?.[0];
+  // Fetch tag names from tagIds
+  let tagNames: string[] = [];
+  if (result?.[0]?.tagIds && result[0].tagIds.length > 0) {
+    const tagRows = await db
+      .select({ name: tags.name })
+      .from(tags)
+      .where(inArray(tags.id, result[0].tagIds));
+
+    tagNames = tagRows.map((row) => row.name);
+  }
+
+  const opportunity = result?.[0]
+    ? { ...result[0], tags: tagNames }
+    : null;
   if (!opportunity) {
     notFound();
   }

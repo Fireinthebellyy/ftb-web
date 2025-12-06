@@ -11,10 +11,11 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import { opportunities, user } from "@/lib/schema";
+import { opportunities, tags, user } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { resolveTagsFromNames } from "@/lib/tag-utils";
 
 const opportunitySchema = z.object({
   type: z.enum(["hackathon", "grant", "competition", "ideathon"]),
@@ -56,15 +57,6 @@ export async function POST(req: NextRequest) {
       isActive: true,
     };
 
-    // Handle arrays properly - only add if they have values
-    if (
-      validatedData.tags &&
-      Array.isArray(validatedData.tags) &&
-      validatedData.tags.length > 0
-    ) {
-      insertData.tags = validatedData.tags;
-    }
-
     if (
       validatedData.images &&
       Array.isArray(validatedData.images) &&
@@ -99,13 +91,26 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const newOpportunity = await db
+    // Resolve tags - missing tags will be auto-created
+    const resolvedTags = await resolveTagsFromNames(validatedData.tags);
+
+    // Add tagIds to insertData
+    insertData.tagIds = resolvedTags.tagIds;
+
+    // Create opportunity with tagIds array
+    const [opportunity] = await db
       .insert(opportunities)
       .values(insertData)
       .returning();
 
     return NextResponse.json(
-      { success: true, data: newOpportunity[0] },
+      {
+        success: true,
+        data: {
+          ...opportunity,
+          tags: resolvedTags.tagNames,
+        },
+      },
       { status: 201 }
     );
   } catch (error) {
@@ -175,18 +180,27 @@ export async function GET(req: NextRequest) {
     }
 
     if (rawTags.length > 0) {
-      const tagConditions = rawTags.map((tag) =>
-        sql`EXISTS (
-          SELECT 1
-          FROM unnest(${opportunities.tags}) AS t(tag_value)
-          WHERE lower(t.tag_value) = ${tag}
-        )`
-      );
+      // Get tag IDs for the filter tags
+      const tagRows = await db
+        .select({ id: tags.id, name: tags.name })
+        .from(tags)
+        .where(
+          or(...rawTags.map((tag) => sql`lower(${tags.name}) = ${tag}`))
+        );
 
-      if (tagConditions.length === 1) {
-        conditions.push(tagConditions[0]);
+      const tagIds = tagRows.map((row) => row.id);
+
+      if (tagIds.length > 0) {
+        // Filter opportunities that have any of these tag IDs in their tagIds array
+        conditions.push(
+          sql`${opportunities.tagIds} && ARRAY[${sql.join(
+            tagIds.map((id) => sql`${id}::uuid`),
+            sql`, `
+          )}]::uuid[]`
+        );
       } else {
-        conditions.push(or(...tagConditions));
+        // If no matching tags found, return empty result
+        conditions.push(sql`1 = 0`);
       }
     }
 
@@ -207,7 +221,7 @@ export async function GET(req: NextRequest) {
         title: opportunities.title,
         description: opportunities.description,
         images: opportunities.images,
-        tags: opportunities.tags,
+        tagIds: opportunities.tagIds,
         location: opportunities.location,
         organiserInfo: opportunities.organiserInfo,
         startDate: opportunities.startDate,
@@ -233,12 +247,47 @@ export async function GET(req: NextRequest) {
       .limit(validLimit)
       .offset(validOffset);
 
+    // Fetch tag names for all opportunities
+    const allTagIds = new Set<string>();
+    paginated.forEach((row) => {
+      if (row.tagIds && Array.isArray(row.tagIds)) {
+        row.tagIds.forEach((id) => allTagIds.add(id));
+      }
+    });
+
+    const tagMap = new Map<string, string>();
+    if (allTagIds.size > 0) {
+      const tagRows = await db
+        .select({ id: tags.id, name: tags.name })
+        .from(tags)
+        .where(inArray(tags.id, Array.from(allTagIds)));
+
+      tagRows.forEach((row) => {
+        tagMap.set(row.id, row.name);
+      });
+    }
+
+    // Format response with tags array
+    const formatted = paginated.map((row) => {
+      const tagNames =
+        row.tagIds && Array.isArray(row.tagIds)
+          ? row.tagIds
+              .map((id) => tagMap.get(id))
+              .filter((name): name is string => name !== undefined)
+          : [];
+
+      return {
+        ...row,
+        tags: tagNames,
+      };
+    });
+
     const hasMore = validOffset + paginated.length < totalCount;
 
     return NextResponse.json(
       {
         success: true,
-        opportunities: paginated,
+        opportunities: formatted,
         pagination: {
           limit: validLimit,
           offset: validOffset,

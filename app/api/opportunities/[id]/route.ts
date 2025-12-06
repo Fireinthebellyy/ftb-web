@@ -1,9 +1,10 @@
 import { db } from "@/lib/db";
-import { eq } from "drizzle-orm";
-import { opportunities } from "@/lib/schema";
+import { eq, inArray } from "drizzle-orm";
+import { opportunities, tags } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { resolveTagsFromNames } from "@/lib/tag-utils";
 
 const updateOpportunitySchema = z.object({
   type: z.enum(["hackathon", "grant", "competition", "ideathon"]).optional(),
@@ -76,7 +77,8 @@ export async function PUT(
       updateData.images = validatedData.images;
     }
     if (validatedData.tags !== undefined) {
-      updateData.tags = validatedData.tags;
+      const resolved = await resolveTagsFromNames(validatedData.tags);
+      updateData.tagIds = resolved.tagIds;
     }
     if (validatedData.location !== undefined) {
       updateData.location = validatedData.location;
@@ -118,8 +120,25 @@ export async function PUT(
       .where(eq(opportunities.id, id))
       .returning();
 
+    // Fetch tag names for response
+    let updatedTags: string[] = [];
+    if (updatedOpportunity.tagIds && updatedOpportunity.tagIds.length > 0) {
+      const tagRows = await db
+        .select({ name: tags.name })
+        .from(tags)
+        .where(inArray(tags.id, updatedOpportunity.tagIds));
+
+      updatedTags = tagRows.map((row) => row.name);
+    }
+
     return NextResponse.json(
-      { success: true, data: updatedOpportunity },
+      {
+        success: true,
+        data: {
+          ...updatedOpportunity,
+          tags: updatedTags,
+        },
+      },
       { status: 200 }
     );
   } catch (error) {

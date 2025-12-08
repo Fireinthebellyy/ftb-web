@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
     Table,
     TableBody,
@@ -32,58 +33,53 @@ type User = {
     emailVerified: boolean;
 };
 
+async function fetchUsers(): Promise<User[]> {
+    const response = await axios.get<{ users: User[] }>("/api/admin/users");
+    return response.data.users;
+}
+
 export default function AdminUsersTable({ currentUserId }: { currentUserId: string }) {
-    const [users, setUsers] = useState<User[]>([]);
-    const [loading, setLoading] = useState(true);
     const [updatingRoles, setUpdatingRoles] = useState<Set<string>>(new Set());
     const router = useRouter();
+    const queryClient = useQueryClient();
 
+    const { data: users = [], isLoading: loading, error } = useQuery({
+        queryKey: ["admin", "users"],
+        queryFn: fetchUsers,
+        staleTime: 1000 * 30, // 30 seconds
+        retry: false,
+    });
+
+    // Handle 403 errors
     useEffect(() => {
-        fetchUsers();
-    }, []);
-
-    const fetchUsers = async () => {
-        try {
-            const response = await axios.get("/api/admin/users");
-            if (response.status === 200) {
-                setUsers(response.data.users);
-            } else if (response.status === 403) {
-                router.push("/");
-                toast.error("You don't have permission to access this page");
-            }
-        } catch (error) {
-            console.error("Error:", error);
-            if (axios.isAxiosError(error)) {
-                if (error.response?.status === 403) {
-                    router.push("/");
-                    toast.error("You don't have permission to access this page");
-                } else {
-                    toast.error("Failed to load users");
-                }
-            } else {
-                toast.error("Failed to load users");
-            }
-        } finally {
-            setLoading(false);
+        if (error && axios.isAxiosError(error) && error.response?.status === 403) {
+            router.push("/");
+            toast.error("You don't have permission to access this page");
+        } else if (error && axios.isAxiosError(error) && error.response?.status !== 403) {
+            toast.error("Failed to load users");
         }
-    };
+    }, [error, router]);
 
-    const handleRoleChange = async (userId: string, newRole: "user" | "member" | "admin") => {
-        setUpdatingRoles((prev) => new Set(prev).add(userId));
-        try {
+    const updateRoleMutation = useMutation({
+        mutationFn: async ({ userId, newRole }: { userId: string; newRole: "user" | "member" | "admin" }) => {
             const response = await axios.patch(`/api/admin/users/${userId}`, {
                 role: newRole,
             });
-
-            if (response.status === 200) {
-                setUsers((prevUsers) =>
-                    prevUsers.map((user) =>
-                        user.id === userId ? { ...user, role: newRole } : user
-                    )
-                );
-                toast.success(`User role updated to ${newRole}`);
-            }
-        } catch (error) {
+            return { userId, newRole, user: response.data.user };
+        },
+        onMutate: async ({ userId }) => {
+            setUpdatingRoles((prev) => new Set(prev).add(userId));
+        },
+        onSuccess: ({ userId, newRole }) => {
+            // Optimistically update the cache
+            queryClient.setQueryData<User[]>(["admin", "users"], (oldUsers = []) =>
+                oldUsers.map((user) =>
+                    user.id === userId ? { ...user, role: newRole } : user
+                )
+            );
+            toast.success(`User role updated to ${newRole}`);
+        },
+        onError: (error) => {
             console.error("Error updating role:", error);
             if (axios.isAxiosError(error)) {
                 const message = error.response?.data?.error || "Failed to update user role";
@@ -91,13 +87,20 @@ export default function AdminUsersTable({ currentUserId }: { currentUserId: stri
             } else {
                 toast.error("Failed to update user role");
             }
-        } finally {
+            // Refetch to ensure consistency
+            queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+        },
+        onSettled: (_data, _error, { userId }) => {
             setUpdatingRoles((prev) => {
                 const next = new Set(prev);
                 next.delete(userId);
                 return next;
             });
-        }
+        },
+    });
+
+    const handleRoleChange = (userId: string, newRole: "user" | "member" | "admin") => {
+        updateRoleMutation.mutate({ userId, newRole });
     };
 
     const getRoleBadgeVariant = (role: string) => {

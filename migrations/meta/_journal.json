@@ -134,6 +134,13 @@
       "when": 1762581168310,
       "tag": "0018_bitter_dakota_north",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1765183245755,
+      "tag": "0019_absent_vindicator",
+      "breakpoints": true
     }
   ]
 }

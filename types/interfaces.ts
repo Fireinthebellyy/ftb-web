@@ -16,6 +16,7 @@ export type Opportunity = {
     id: string;
     name: string;
     image: string;
+    role?: "user" | "member" | "admin";
   };
 };
 

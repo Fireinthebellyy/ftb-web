@@ -26,6 +26,7 @@ export default async function OpportunityDetailPage({ params }: any) {
         id: user.id,
         name: user.name,
         image: user.image,
+        role: user.role,
       },
     })
     .from(opportunities)

@@ -13,6 +13,7 @@ import {
   Trash2,
   PencilLine,
   Heart,
+  BadgeCheck,
 } from "lucide-react";
 import TwitterXIcon from "@/components/icons/TwitterX";
 import FacebookIcon from "@/components/icons/Facebook";
@@ -245,8 +246,8 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
       <header className="flex items-center space-x-2 px-3 py-2 sm:px-4 sm:py-3">
         <div className="flex-shrink-0">
           {user &&
-          user.image &&
-          !user.image.includes("https://media.licdn.com") ? (
+            user.image &&
+            !user.image.includes("https://media.licdn.com") ? (
             <div className="size-8 overflow-hidden rounded-full border border-gray-100 shadow sm:size-7">
               <Image
                 src={user.image}
@@ -260,19 +261,26 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
             <div className="flex size-8 items-center justify-center rounded-full bg-gray-300 text-sm font-semibold text-gray-600 uppercase sm:size-7">
               {user && user.name
                 ? user.name
-                    .split(" ")
-                    .map((word) => word[0])
-                    .join("")
-                    .slice(0, 2)
+                  .split(" ")
+                  .map((word) => word[0])
+                  .join("")
+                  .slice(0, 2)
                 : "OP"}
             </div>
           )}
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-gray-900">
-            {user && user.name ? user.name : "Opportunity Organizer"}
-          </p>
+          <div className="flex items-center gap-1.5">
+            <p className="truncate text-sm font-semibold text-gray-900">
+              {user && user.name ? user.name : "Opportunity Organizer"}
+            </p>
+            {user?.role === "member" && (
+              <span title="Verified Member">
+                <BadgeCheck className="h-4 w-4 fill-orange-500/60 text-orange-600" />
+              </span>
+            )}
+          </div>
           <p className="text-xs text-gray-400">
             {createdAt ? formatDate(createdAt) : ""}
           </p>
@@ -288,7 +296,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                   <>
                     {" - "}
                     {format(new Date(startDate), "MMM") ===
-                    format(new Date(endDate), "MMM")
+                      format(new Date(endDate), "MMM")
                       ? format(new Date(endDate), "dd")
                       : format(new Date(endDate), "MMM dd")}
                   </>
@@ -337,30 +345,29 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
         {description && (
           <div
-            className={`text-sm leading-relaxed text-gray-700 ${
-              !isExpanded ? "mb-2 line-clamp-1 overflow-hidden" : "mb-3"
-            }`}
+            className={`text-sm leading-relaxed text-gray-700 ${!isExpanded ? "mb-2 line-clamp-1 overflow-hidden" : "mb-3"
+              }`}
           >
             <p className="line-clamp-4 text-ellipsis">
               {typeof description === "string"
                 ? description
-                    .split(/(https?:\/\/[^\s<>"'`|\\^{}\[\]]+)/gi)
-                    .map((part, index) => {
-                      if (part.match(/^https?:\/\/[^\s<>"'`|\\^{}\[\]]+$/i)) {
-                        return (
-                          <Link
-                            href={`${part}?utm_source=ftb_web&utm_medium=opportunity_card`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            key={index}
-                            className="text-blue-400"
-                          >
-                            {part}
-                          </Link>
-                        );
-                      }
-                      return part;
-                    })
+                  .split(/(https?:\/\/[^\s<>"'`|\\^{}\[\]]+)/gi)
+                  .map((part, index) => {
+                    if (part.match(/^https?:\/\/[^\s<>"'`|\\^{}\[\]]+$/i)) {
+                      return (
+                        <Link
+                          href={`${part}?utm_source=ftb_web&utm_medium=opportunity_card`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          key={index}
+                          className="text-blue-400"
+                        >
+                          {part}
+                        </Link>
+                      );
+                    }
+                    return part;
+                  })
                 : description}
             </p>
           </div>
@@ -551,20 +558,17 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                 title="Upvote"
                 aria-label="Upvote"
                 disabled={toggleUpvote.isPending || isLoading}
-                className={`flex cursor-pointer place-items-center text-xs transition-colors sm:text-sm ${
-                  userUpvoted
-                    ? "fill-orange-500 text-orange-600"
-                    : "hover:text-orange-600"
-                } ${
-                  toggleUpvote.isPending || isLoading
+                className={`flex cursor-pointer place-items-center text-xs transition-colors sm:text-sm ${userUpvoted
+                  ? "fill-orange-500 text-orange-600"
+                  : "hover:text-orange-600"
+                  } ${toggleUpvote.isPending || isLoading
                     ? "cursor-not-allowed opacity-60"
                     : ""
-                }`}
+                  }`}
               >
                 <Heart
-                  className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                    userUpvoted ? "fill-current" : ""
-                  }`}
+                  className={`h-4 w-4 sm:h-5 sm:w-5 ${userUpvoted ? "fill-current" : ""
+                    }`}
                 />
                 {showUpvoteCount && (
                   <span className="pl-1">
@@ -595,11 +599,10 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                   <Loader2 className="h-4 w-4 animate-spin sm:h-5 sm:w-5" />
                 ) : (
                   <Bookmark
-                    className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                      isBookmarked
-                        ? "fill-yellow-400 text-yellow-500"
-                        : "hover:text-orange-600"
-                    }`}
+                    className={`h-4 w-4 sm:h-5 sm:w-5 ${isBookmarked
+                      ? "fill-yellow-400 text-yellow-500"
+                      : "hover:text-orange-600"
+                      }`}
                   />
                 )}
               </button>
@@ -662,8 +665,8 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                     <Link
                       href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
                         title +
-                          " " +
-                          `${shareUrl}${shareUrl.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=opportunity_card&utm_campaign=opportunity_share`
+                        " " +
+                        `${shareUrl}${shareUrl.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=opportunity_card&utm_campaign=opportunity_share`
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"

@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 
 export async function PATCH(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await auth.api.getSession({
@@ -30,6 +30,7 @@ export async function PATCH(
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
+        const { id } = await params;
         const body = await request.json();
         const { role } = body as { role?: "user" | "member" | "admin" };
 
@@ -41,7 +42,7 @@ export async function PATCH(
         }
 
         // Prevent admin from changing their own role
-        if (params.id === session.user.id) {
+        if (id === session.user.id) {
             return NextResponse.json(
                 { error: "Cannot change your own role" },
                 { status: 400 }
@@ -55,7 +56,7 @@ export async function PATCH(
                 role,
                 updatedAt: new Date(),
             })
-            .where(eq(userTable.id, params.id))
+            .where(eq(userTable.id, id))
             .returning({
                 id: userTable.id,
                 name: userTable.name,

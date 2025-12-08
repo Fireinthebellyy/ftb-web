@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Resolve tags - missing tags will be auto-created
+    // Resolve tags -- missing tags will be auto-created
     const resolvedTags = await resolveTagsFromNames(validatedData.tags);
 
     // Add tagIds to insertData

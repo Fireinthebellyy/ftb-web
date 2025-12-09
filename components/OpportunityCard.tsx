@@ -26,8 +26,8 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
+  CarouselDots,
+  Autoplay,
 } from "@/components/ui/carousel";
 import { createOpportunityStorage } from "@/lib/appwrite";
 import Image from "next/image";
@@ -243,82 +243,111 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
   return (
     <article className="relative mb-3 w-full rounded-lg border bg-white shadow-sm sm:mb-4">
-      <header className="flex items-center space-x-2 px-3 py-2 sm:px-4 sm:py-3">
-        <div className="flex-shrink-0">
-          {user &&
-            user.image &&
-            !user.image.includes("https://media.licdn.com") ? (
-            <div className="size-8 overflow-hidden rounded-full border border-gray-100 shadow sm:size-7">
-              <Image
-                src={user.image}
-                alt={user.name}
-                className="h-full w-full rounded-full object-cover"
-                width={30}
-                height={30}
-              />
+      {isExpanded && images.length > 0 ? (
+        images.length === 1 ? (
+          <div className="overflow-hidden">
+            <div
+              className="cursor-pointer"
+              onClick={() => {
+                setModalIndex(0);
+                setModalOpen(true);
+              }}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  setModalIndex(0);
+                  setModalOpen(true);
+                }
+              }}
+            >
+              {images[0] ? (
+                <Image
+                  src={opportunityStorage.getFileView(
+                    process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
+                    images[0]
+                  )}
+                  alt={title}
+                  className="max-h-48 w-full rounded-t-lg object-cover sm:max-h-64"
+                  loading="lazy"
+                  height={256}
+                  width={400}
+                />
+              ) : (
+                <div className="flex h-48 w-full items-center justify-center rounded-t-lg bg-neutral-100 text-sm text-gray-400">
+                  Image not available
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="flex size-8 items-center justify-center rounded-full bg-gray-300 text-sm font-semibold text-gray-600 uppercase sm:size-7">
-              {user && user.name
-                ? user.name
-                  .split(" ")
-                  .map((word) => word[0])
-                  .join("")
-                  .slice(0, 2)
-                : "OP"}
-            </div>
-          )}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <p className="truncate text-sm font-semibold text-gray-900">
-              {user && user.name ? user.name : "Opportunity Organizer"}
-            </p>
-            {user?.role === "member" && (
-              <span title="Verified Member">
-                <BadgeCheck className="size-4 text-orange-600 stroke-3" />
-              </span>
-            )}
           </div>
-          <p className="text-xs text-gray-400">
-            {createdAt ? formatDate(createdAt) : ""}
-          </p>
-        </div>
+        ) : (
+          <div>
+            <Carousel
+              className="w-full"
+              plugins={[
+                Autoplay({
+                  delay: 3000,
+                }),
+              ]}
+            >
+              <CarouselContent>
+                {images.map((image, i) => (
+                  <CarouselItem key={i}>
+                    <div
+                      className="cursor-pointer overflow-hidden"
+                      onClick={() => {
+                        setModalIndex(i);
+                        setModalOpen(true);
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          setModalIndex(i);
+                          setModalOpen(true);
+                        }
+                      }}
+                    >
+                      {image ? (
+                        <Image
+                          src={opportunityStorage.getFileView(
+                            process.env
+                              .NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
+                            image
+                          )}
+                          alt={`${title} - Image ${i + 1}`}
+                          className="max-h-48 w-full rounded-t-lg object-cover sm:max-h-64"
+                          loading="lazy"
+                          height={256}
+                          width={400}
+                        />
+                      ) : (
+                        <div className="flex h-48 w-full items-center justify-center rounded-t-lg bg-neutral-100 text-sm text-gray-400">
+                          Image not available
+                        </div>
+                      )}
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselDots />
+            </Carousel>
+          </div>
+        )
+      ) : null}
 
-        <div className="ml-auto flex flex-col items-end gap-1 text-xs text-gray-600">
-          {(startDate || endDate) && (
-            <div className="flex items-baseline gap-1">
-              <CalendarDays className="size-3" />
-              <span className="text-xs">
-                {startDate && format(new Date(startDate), "MMM dd")}
-                {startDate && endDate && (
-                  <>
-                    {" - "}
-                    {format(new Date(startDate), "MMM") ===
-                      format(new Date(endDate), "MMM")
-                      ? format(new Date(endDate), "dd")
-                      : format(new Date(endDate), "MMM dd")}
-                  </>
-                )}
-                {!startDate && endDate && format(new Date(endDate), "MMM dd")}
-              </span>
-            </div>
-          )}
-        </div>
-      </header>
-
-      <div className="absolute -top-3 -right-1.5 z-10">
+      <div className="absolute -top-0.5 right-0 z-10">
         <Badge
           className={`${getTypeColor(
             primaryType
-          )} px-2 py-1 text-xs text-[10px] font-medium sm:text-xs`}
+          )} px-2 py-1 text-xs text-[10px] font-medium sm:text-xs rounded-tl-none rounded-br-none`}
         >
           {primaryType?.charAt(0).toUpperCase() + primaryType?.slice(1)}
         </Badge>
       </div>
 
-      <div className="px-3 pb-2 sm:px-4">
+      <div className="px-3 py-2 sm:px-4">
+
         <h2 className="mb-2 line-clamp-1 truncate text-base leading-tight font-bold text-gray-900 sm:text-lg">
           {title}
         </h2>
@@ -373,92 +402,90 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           </div>
         )}
 
-        {isExpanded && images.length > 0 ? (
-          images.length === 1 ? (
-            <div className="mb-3 overflow-hidden">
-              <div
-                className="cursor-pointer"
-                onClick={() => {
-                  setModalIndex(0);
-                  setModalOpen(true);
-                }}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    setModalIndex(0);
-                    setModalOpen(true);
-                  }
-                }}
-              >
-                {images[0] ? (
-                  <Image
-                    src={opportunityStorage.getFileView(
-                      process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
-                      images[0]
-                    )}
-                    alt={title}
-                    className="max-h-48 w-full rounded-lg object-cover sm:max-h-64"
-                    loading="lazy"
-                    height={256}
-                    width={400}
-                  />
-                ) : (
-                  <div className="flex h-48 w-full items-center justify-center rounded-lg bg-neutral-100 text-sm text-gray-400">
-                    Image not available
-                  </div>
-                )}
+        {(location || organiserInfo || startDate || endDate) && <div className="flex mb-3">
+          <div className="flex gap-2 text-xs text-gray-600 sm:flex-row sm:flex-wrap sm:gap-4">
+            {location && (
+              <div className="flex items-center gap-1">
+                <MapPin className="h-3.5 w-3.5 flex-shrink-0 sm:h-4 sm:w-4" />
+                <span className="truncate text-xs">{location}</span>
               </div>
+            )}
+
+            {organiserInfo && (
+              <div className="flex items-center gap-1">
+                <Building2 className="h-3.5 w-3.5 flex-shrink-0 sm:h-4 sm:w-4" />
+                <span className="truncate text-xs">{organiserInfo}</span>
+              </div>
+            )}
+          </div>
+          <div className="ml-auto flex flex-col items-end gap-1 text-xs text-gray-600">
+            {(startDate || endDate) && (
+              <div className="flex items-baseline gap-1">
+                <CalendarDays className="size-3" />
+                <span className="text-xs">
+                  {startDate && format(new Date(startDate), "MMM dd")}
+                  {startDate && endDate && (
+                    <>
+                      {" - "}
+                      {format(new Date(startDate), "MMM") ===
+                        format(new Date(endDate), "MMM")
+                        ? format(new Date(endDate), "dd")
+                        : format(new Date(endDate), "MMM dd")}
+                    </>
+                  )}
+                  {!startDate && endDate && format(new Date(endDate), "MMM dd")}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>}
+
+        <header className="flex items-end sm:items-center space-x-2 pb-2 sm:pb-3">
+          <div className="flex-shrink-0">
+            {user &&
+              user.image &&
+              !user.image.includes("https://media.licdn.com") ? (
+              <div className="size-4 overflow-hidden rounded-full border border-gray-100 shadow sm:size-5">
+                <Image
+                  src={user.image}
+                  alt={user.name}
+                  className="h-full w-full rounded-full object-cover"
+                  width={30}
+                  height={30}
+                />
+              </div>
+            ) : (
+              <div className="flex size-4 items-center justify-center rounded-full bg-gray-300 text-xs font-semibold text-gray-600 uppercase sm:size-5">
+                {user && user.name
+                  ? user.name
+                    .split(" ")
+                    .map((word) => word[0])
+                    .join("")
+                    .slice(0, 2)
+                  : "OP"}
+              </div>
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              <p className="truncate text-sm font-semibold text-gray-900">
+                {user && user.name ? user.name : "Opportunity Organizer"}
+              </p>
+              {user?.role === "member" && (
+                <span title="Verified Member">
+                  <BadgeCheck className="size-4 text-orange-600 stroke-3" />
+                </span>
+              )}
             </div>
-          ) : (
-            <div className="mb-3">
-              <Carousel className="w-full">
-                <CarouselContent>
-                  {images.map((image, i) => (
-                    <CarouselItem key={i}>
-                      <div
-                        className="cursor-pointer overflow-hidden"
-                        onClick={() => {
-                          setModalIndex(i);
-                          setModalOpen(true);
-                        }}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            setModalIndex(i);
-                            setModalOpen(true);
-                          }
-                        }}
-                      >
-                        {image ? (
-                          <Image
-                            src={opportunityStorage.getFileView(
-                              process.env
-                                .NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
-                              image
-                            )}
-                            alt={`${title} - Image ${i + 1}`}
-                            className="max-h-48 w-full rounded-lg object-cover sm:max-h-64"
-                            loading="lazy"
-                            height={256}
-                            width={400}
-                          />
-                        ) : (
-                          <div className="flex h-48 w-full items-center justify-center rounded-lg bg-neutral-100 text-sm text-gray-400">
-                            Image not available
-                          </div>
-                        )}
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious className="left-2" />
-                <CarouselNext className="right-2" />
-              </Carousel>
-            </div>
-          )
-        ) : null}
+
+          </div>
+          <p className="text-xs text-gray-400">
+            {createdAt ? formatDate(createdAt) : ""}
+          </p>
+
+
+        </header>
 
         {/* Image lightbox modal */}
         <Dialog open={modalOpen} onOpenChange={(open) => setModalOpen(open)}>
@@ -522,30 +549,13 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                <CarouselPrevious className="left-2" />
-                <CarouselNext className="right-2" />
+                <CarouselDots />
               </Carousel>
             )}
           </DialogContent>
         </Dialog>
 
-        {isExpanded && (
-          <div className="mb-3 flex gap-2 text-xs text-gray-600 sm:flex-row sm:flex-wrap sm:gap-4">
-            {location && (
-              <div className="flex items-center gap-1">
-                <MapPin className="h-3.5 w-3.5 flex-shrink-0 sm:h-4 sm:w-4" />
-                <span className="truncate text-xs">{location}</span>
-              </div>
-            )}
 
-            {organiserInfo && (
-              <div className="flex items-center gap-1">
-                <Building2 className="h-3.5 w-3.5 flex-shrink-0 sm:h-4 sm:w-4" />
-                <span className="truncate text-xs">{organiserInfo}</span>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Actions Footer - Mobile optimized */}
         <footer className="flex items-center justify-between border-t border-gray-100 pt-1">

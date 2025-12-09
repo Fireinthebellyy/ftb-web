@@ -22,8 +22,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { signIn } from "@/server/users";
-
 import { z } from "zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -58,6 +56,7 @@ export function LoginForm({
       await authClient.signIn.social({
         provider: "google",
         callbackURL: "/opportunities",
+        newUserCallbackURL: "/onboarding",
       });
     } catch (error) {
       console.error("Google sign-in error:", error);
@@ -73,6 +72,7 @@ export function LoginForm({
       await authClient.signIn.social({
         provider: "linkedin",
         callbackURL: "/opportunities",
+        newUserCallbackURL: "/onboarding",
       });
     } catch (error) {
       console.error("LinkedIn sign-in error:", error);
@@ -85,16 +85,57 @@ export function LoginForm({
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
 
-    const { success, message } = await signIn(values.email, values.password);
+    try {
+      await authClient.signIn.email(
+        {
+          email: values.email,
+          password: values.password,
+        },
+        {
+          onSuccess: async (ctx) => {
+            // Check if user has completed onboarding by fetching profile
+            try {
+              const response = await fetch("/api/onboarding");
+              const data = await response.json();
 
-    if (success) {
-      toast.success(message as string);
-      router.push("/opportunities");
-    } else {
-      toast.error(message as string);
+              // User has completed onboarding if profile exists
+              const hasCompletedOnboarding = !!data.profile;
+
+              if (hasCompletedOnboarding) {
+                router.push("/opportunities");
+              } else {
+                // Fallback to robust timestamp comparison
+                const createdAt = ctx.data?.user?.createdAt;
+                const updatedAt = ctx.data?.user?.updatedAt;
+
+                const isNewUser = createdAt && updatedAt
+                  ? new Date(createdAt).getTime() === new Date(updatedAt).getTime()
+                  : false;
+
+                router.push(isNewUser ? "/onboarding" : "/opportunities");
+              }
+            } catch (error) {
+              console.error("Error checking onboarding status:", error);
+              // Fallback to timestamp comparison if API call fails
+              const createdAt = ctx.data?.user?.createdAt;
+              const updatedAt = ctx.data?.user?.updatedAt;
+
+              const isNewUser = createdAt && updatedAt
+                ? new Date(createdAt).getTime() === new Date(updatedAt).getTime()
+                : false;
+
+              router.push(isNewUser ? "/onboarding" : "/opportunities");
+            }
+          },
+        }
+      );
+      toast.success("Logged in. Redirecting...");
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("Login failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   }
 
   return (

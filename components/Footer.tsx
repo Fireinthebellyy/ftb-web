@@ -28,7 +28,7 @@ const Footer = () => {
     };
   }, []);
 
-  if (pathname === "/opportunities") return null;
+  if (pathname === "/opportunities" || pathname === "/onboarding") return null;
 
   return (
     <footer className="bg-orange-600/70 pt-6 pb-4 text-white md:pt-0">
@@ -40,11 +40,10 @@ const Footer = () => {
           >
             <div
               ref={textRef}
-              className={`transform transition-all duration-2000 ease-out ${
-                visible
-                  ? "translate-y-0 rotate-x-0 opacity-80"
-                  : "translate-y-15 rotate-x-[50deg] opacity-20 md:translate-y-24"
-              } ${righteous.className} mb-1 text-4xl font-bold md:mb-0 md:text-7xl md:text-[96px]`}
+              className={`transform transition-all duration-2000 ease-out ${visible
+                ? "translate-y-0 rotate-x-0 opacity-80"
+                : "translate-y-15 rotate-x-[50deg] opacity-20 md:translate-y-24"
+                } ${righteous.className} mb-1 text-4xl font-bold md:mb-0 md:text-7xl md:text-[96px]`}
             >
               Fire In The Belly
             </div>

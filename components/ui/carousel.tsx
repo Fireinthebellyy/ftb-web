@@ -4,6 +4,7 @@ import * as React from "react"
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
 } from "embla-carousel-react"
+import Autoplay from "embla-carousel-autoplay"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -231,6 +232,66 @@ function CarouselNext({
   )
 }
 
+function CarouselDots({ className, ...props }: React.ComponentProps<"div">) {
+  const { api } = useCarousel()
+  const [selectedIndex, setSelectedIndex] = React.useState(0)
+  const [scrollSnaps, setScrollSnaps] = React.useState<number[]>([])
+
+  const onInit = React.useCallback((api: CarouselApi) => {
+    if (!api) return
+    setScrollSnaps(api.scrollSnapList())
+  }, [])
+
+  const onSelect = React.useCallback((api: CarouselApi) => {
+    if (!api) return
+    setSelectedIndex(api.selectedScrollSnap())
+  }, [])
+
+  React.useEffect(() => {
+    if (!api) return
+    onInit(api)
+    onSelect(api)
+    api.on("reInit", onInit)
+    api.on("select", onSelect)
+
+    return () => {
+      api?.off("select", onSelect)
+      api?.off("reInit", onInit)
+    }
+  }, [api, onInit, onSelect])
+
+  const scrollTo = React.useCallback(
+    (index: number) => {
+      api?.scrollTo(index)
+    },
+    [api]
+  )
+
+  return (
+    <div
+      className={cn(
+        "flex justify-center gap-2 py-2",
+        className
+      )}
+      {...props}
+    >
+      {scrollSnaps.map((_, index) => (
+        <button
+          key={index}
+          className={cn(
+            "size-1.5 rounded-full transition-all duration-200",
+            index === selectedIndex
+              ? "bg-gray-800 scale-110"
+              : "bg-gray-400 hover:bg-gray-600"
+          )}
+          onClick={() => scrollTo(index)}
+          aria-label={`Go to slide ${index + 1}`}
+        />
+      ))}
+    </div>
+  )
+}
+
 export {
   type CarouselApi,
   Carousel,
@@ -238,4 +299,6 @@ export {
   CarouselItem,
   CarouselPrevious,
   CarouselNext,
+  CarouselDots,
+  Autoplay,
 }

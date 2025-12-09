@@ -11,6 +11,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 export const userRoleEnum = pgEnum("user_role", ["user", "member", "admin"]);
+export const personaEnum = pgEnum("persona_type", ["student", "society"]);
 export const opportunityTypeEnum = pgEnum("opportunity_type", [
   "hackathon",
   "grant",
@@ -97,6 +98,30 @@ export const user = pgTable("user", {
   deletedAt: timestamp("deleted_at"),
   role: userRoleEnum("role").default("user").notNull(),
 });
+
+export const userOnboardingProfiles = pgTable(
+  "user_onboarding_profiles",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    persona: personaEnum("persona").notNull(),
+    locationType: text("location_type"),
+    locationValue: text("location_value"),
+    educationLevel: text("education_level"),
+    fieldOfStudy: text("field_of_study"),
+    fieldOther: text("field_other"),
+    opportunityInterests: text("opportunity_interests").array().default([]),
+    domainPreferences: text("domain_preferences").array().default([]),
+    struggles: text("struggles").array().default([]),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("user_onboarding_profiles_user_id_unique").on(table.userId),
+  ]
+);
 
 export const session = pgTable("session", {
   id: text("id").primaryKey(),
@@ -205,6 +230,7 @@ export const tags = pgTable(
 
 export const schema = {
   user,
+  userOnboardingProfiles,
   mentors,
   opportunities,
   comments,

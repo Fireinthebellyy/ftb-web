@@ -17,7 +17,6 @@ import { ImagePicker, SelectedImages } from "./images/ImageDropzone";
 import { formSchema, FormData } from "./schema";
 import { FileItem, Opportunity, UploadProgress } from "@/types/interfaces";
 import { useQueryClient } from "@tanstack/react-query";
-
 export default function NewOpportunityForm({
   opportunity,
   onOpportunityCreated,
@@ -172,12 +171,12 @@ export default function NewOpportunityForm({
           prev.map((f, idx) =>
             idx === i
               ? {
-                  ...f,
-                  uploading: false,
-                  error: true,
-                  errorMessage:
-                    err instanceof Error ? err.message : "Unknown upload error",
-                }
+                ...f,
+                uploading: false,
+                error: true,
+                errorMessage:
+                  err instanceof Error ? err.message : "Unknown upload error",
+              }
               : f
           )
         );
@@ -233,7 +232,7 @@ export default function NewOpportunityForm({
       toast.success(
         opportunity?.id
           ? "Opportunity updated successfully!"
-          : "Opportunity created successfully!"
+          : "Opportunity submitted successfully!"
       );
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
       onOpportunityCreated();

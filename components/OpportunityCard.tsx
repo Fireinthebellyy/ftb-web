@@ -277,7 +277,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
             </p>
             {user?.role === "member" && (
               <span title="Verified Member">
-                <BadgeCheck className="h-4 w-4 fill-orange-500/60 text-orange-600" />
+                <BadgeCheck className="size-4 text-orange-600 stroke-3" />
               </span>
             )}
           </div>

@@ -21,7 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import axios from "axios";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Image from "next/image";
 
 type User = {
     id: string;
@@ -150,7 +150,7 @@ export default function AdminUsersTable({ currentUserId }: { currentUserId: stri
                                     <TableHead>Role</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>Joined</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
+                                    <TableHead>Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -165,17 +165,26 @@ export default function AdminUsersTable({ currentUserId }: { currentUserId: stri
                                         <TableRow key={user.id}>
                                             <TableCell>
                                                 <div className="flex items-center gap-3">
-                                                    <Avatar>
-                                                        <AvatarImage src={user.image || undefined} alt={user.name} />
-                                                        <AvatarFallback>
+                                                    {user?.image ? (
+                                                        <div className="rounded-full border-2 border-white shadow-lg">
+                                                            <Image
+                                                                src={user.image}
+                                                                alt={user.name || "User avatar"}
+                                                                className="size-6 rounded-full object-cover"
+                                                                width={24}
+                                                                height={24}
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex size-6 items-center justify-center rounded-full border-2 border-neutral-300 bg-neutral-200 text-xs font-semibold text-neutral-600 uppercase">
                                                             {user.name
                                                                 .split(" ")
                                                                 .map((n) => n[0])
                                                                 .join("")
                                                                 .toUpperCase()
                                                                 .slice(0, 2)}
-                                                        </AvatarFallback>
-                                                    </Avatar>
+                                                        </div>
+                                                    )}
                                                     <span className="font-medium">{user.name}</span>
                                                 </div>
                                             </TableCell>

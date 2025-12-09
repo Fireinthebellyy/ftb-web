@@ -110,7 +110,11 @@ export async function POST(req: NextRequest) {
       .returning();
 
     return NextResponse.json(
-      { success: true, data: newOpportunity[0] },
+      {
+        success: true,
+        data: newOpportunity[0],
+        userRole: user.currentUser.role
+      },
       { status: 201 }
     );
   } catch (error) {

@@ -229,10 +229,16 @@ export default function NewOpportunityForm({
       files.forEach((file) => URL.revokeObjectURL(file.preview));
       setFiles([]);
 
+      // Check user role to show appropriate message
+      const userRole = res.data?.userRole || "user"; // The API should return user role
+      const needsReview = userRole === "user";
+
       toast.success(
         opportunity?.id
           ? "Opportunity updated successfully!"
-          : "Opportunity submitted successfully!"
+          : needsReview
+            ? "Opportunity submitted for review! It will be visible once approved by an admin."
+            : "Opportunity submitted successfully!"
       );
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
       onOpportunityCreated();

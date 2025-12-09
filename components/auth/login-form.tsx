@@ -90,17 +90,41 @@ export function LoginForm({
         {
           email: values.email,
           password: values.password,
-          callbackURL: "/dashboard",
         },
         {
-          onSuccess: (ctx) => {
-            const isNewUser =
-              ctx.data?.user?.createdAt === ctx.data?.user?.updatedAt;
+          onSuccess: async (ctx) => {
+            // Check if user has completed onboarding by fetching profile
+            try {
+              const response = await fetch("/api/onboarding");
+              const data = await response.json();
 
-            if (isNewUser) {
-              router.push("/onboarding");
-            } else {
-              router.push("/dashboard");
+              // User has completed onboarding if profile exists
+              const hasCompletedOnboarding = !!data.profile;
+
+              if (hasCompletedOnboarding) {
+                router.push("/opportunities");
+              } else {
+                // Fallback to robust timestamp comparison
+                const createdAt = ctx.data?.user?.createdAt;
+                const updatedAt = ctx.data?.user?.updatedAt;
+
+                const isNewUser = createdAt && updatedAt
+                  ? new Date(createdAt).getTime() === new Date(updatedAt).getTime()
+                  : false;
+
+                router.push(isNewUser ? "/onboarding" : "/opportunities");
+              }
+            } catch (error) {
+              console.error("Error checking onboarding status:", error);
+              // Fallback to timestamp comparison if API call fails
+              const createdAt = ctx.data?.user?.createdAt;
+              const updatedAt = ctx.data?.user?.updatedAt;
+
+              const isNewUser = createdAt && updatedAt
+                ? new Date(createdAt).getTime() === new Date(updatedAt).getTime()
+                : false;
+
+              router.push(isNewUser ? "/onboarding" : "/opportunities");
             }
           },
         }

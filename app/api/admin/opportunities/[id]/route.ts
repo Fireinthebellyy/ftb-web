@@ -11,7 +11,7 @@ const updateOpportunitySchema = z.object({
 
 export async function PATCH(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         if (!db) {
@@ -27,7 +27,8 @@ export async function PATCH(
             return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
         }
 
-        const opportunityId = params.id;
+        const { id } = await params;
+        const opportunityId = id;
         if (!opportunityId) {
             return NextResponse.json(
                 { error: "Opportunity ID is required" },

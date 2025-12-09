@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -144,27 +144,30 @@ export default function OnboardingPage() {
     });
 
     const hasHydratedProfile = useRef(false);
-    if (!hasHydratedProfile.current && profileQuery.data) {
-        const profile = profileQuery.data;
-        const persona: Role | null =
-            profile.persona === "student" || profile.persona === "society"
-                ? profile.persona
-                : null;
 
-        setAnswers((prev) => ({
-            ...prev,
-            role: persona,
-            locationType: profile.locationType === "state" ? "state" : "city",
-            locationValue: profile.locationValue ?? "",
-            educationLevel: profile.educationLevel ?? "",
-            fieldOfStudy: profile.fieldOfStudy ?? "",
-            fieldOther: profile.fieldOther ?? "",
-            opportunities: profile.opportunityInterests ?? [],
-            domains: profile.domainPreferences ?? [],
-            struggles: profile.struggles ?? [],
-        }));
-        hasHydratedProfile.current = true;
-    }
+    useEffect(() => {
+        if (!hasHydratedProfile.current && profileQuery.data) {
+            const profile = profileQuery.data;
+            const persona: Role | null =
+                profile.persona === "student" || profile.persona === "society"
+                    ? profile.persona
+                    : null;
+
+            setAnswers((prev) => ({
+                ...prev,
+                role: persona,
+                locationType: profile.locationType === "state" ? "state" : "city",
+                locationValue: profile.locationValue ?? "",
+                educationLevel: profile.educationLevel ?? "",
+                fieldOfStudy: profile.fieldOfStudy ?? "",
+                fieldOther: profile.fieldOther ?? "",
+                opportunities: profile.opportunityInterests ?? [],
+                domains: profile.domainPreferences ?? [],
+                struggles: profile.struggles ?? [],
+            }));
+            hasHydratedProfile.current = true;
+        }
+    }, [profileQuery.data]);
 
     const currentStep = steps[stepIndex];
     const progressValue = Math.round(((stepIndex + 1) / steps.length) * 100);

@@ -47,6 +47,10 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const validatedData = opportunitySchema.parse(body);
 
+    // Check user role - users with role "user" need approval, members and admins can post directly
+    const userRole = user.currentUser.role;
+    const canPostDirectly = userRole === "admin" || userRole === "member";
+
     // Build insertData with careful array handling
     const insertData: any = {
       type: validatedData.type,
@@ -55,7 +59,8 @@ export async function POST(req: NextRequest) {
       userId: user.currentUser.id,
       isFlagged: false,
       isVerified: false,
-      isActive: true,
+      // Set isActive based on user role - members and admins post directly, users need approval
+      isActive: canPostDirectly,
     };
 
     // Handle arrays properly - only add if they have values
@@ -106,7 +111,11 @@ export async function POST(req: NextRequest) {
       .returning();
 
     return NextResponse.json(
-      { success: true, data: newOpportunity[0] },
+      {
+        success: true,
+        data: newOpportunity[0],
+        userRole: user.currentUser.role
+      },
       { status: 201 }
     );
   } catch (error) {
@@ -131,6 +140,10 @@ export async function GET(req: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Check if current user is admin to determine what opportunities to show
+    const currentUser = await getCurrentUser();
+    const isAdmin = currentUser?.currentUser?.role === "admin";
 
     // Get pagination parameters from URL
     const { searchParams } = new URL(req.url);
@@ -161,6 +174,12 @@ export async function GET(req: NextRequest) {
     const validOffset = Math.max(offset, 0); // Non-negative
 
     const conditions: SQL<unknown>[] = [isNull(opportunities.deletedAt)];
+
+    // Only show active (approved) opportunities to non-admin users
+    // Admins can see all opportunities including pending ones
+    if (!isAdmin) {
+      conditions.push(eq(opportunities.isActive, true));
+    }
 
     if (searchTerm) {
       conditions.push(

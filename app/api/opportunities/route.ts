@@ -150,9 +150,9 @@ export async function GET(req: NextRequest) {
     );
     const rawTags = tagsParam
       ? tagsParam
-          .split(",")
-          .map((value) => value.trim().toLowerCase())
-          .filter(Boolean)
+        .split(",")
+        .map((value) => value.trim().toLowerCase())
+        .filter(Boolean)
       : [];
 
     // Validate pagination parameters
@@ -224,6 +224,7 @@ export async function GET(req: NextRequest) {
           id: user.id,
           name: user.name,
           image: user.image,
+          role: user.role,
         },
       })
       .from(opportunities)

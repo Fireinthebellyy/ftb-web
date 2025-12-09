@@ -4,6 +4,12 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { Righteous } from "next/font/google";
 import { useRouter } from "next/navigation";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const righteous = Righteous({
   weight: "400",
@@ -150,6 +156,137 @@ export default function LandingPage() {
                 </p>
               </div>
             </motion.div>
+          </div>
+        </section>
+
+        <section className="container mx-auto py-24 md:py-28">
+          <div className="px-4">
+            <div className="mx-auto max-w-6xl">
+              <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-start">
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                  className="lg:sticky lg:top-24"
+                >
+                  <h2
+                    className={`${righteous.className} mb-4 text-3xl font-semibold tracking-tight md:text-5xl`}
+                  >
+                    Frequently Asked Questions
+                  </h2>
+                  <p className="text-muted-foreground mb-6 text-base leading-relaxed md:text-lg">
+                    Everything you need to know about finding and managing opportunities
+                  </p>
+                  <p className="text-muted-foreground text-sm leading-relaxed md:text-base">
+                    Have questions? We&apos;ve got answers. Browse through our most commonly
+                    asked questions to learn more about how our platform works and how it
+                    can help you discover your next big opportunity.
+                  </p>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                >
+                  <Accordion type="single" collapsible className="w-full space-y-4">
+                    <AccordionItem
+                      value="item-1"
+                      className="rounded-lg border border-gray-200 bg-white px-6 shadow-sm transition-shadow hover:shadow-md"
+                    >
+                      <AccordionTrigger className="text-left font-semibold text-gray-900 hover:no-underline">
+                        What types of opportunities can I find on this platform?
+                      </AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground text-base leading-relaxed">
+                        Our platform features a wide range of opportunities including
+                        hackathons, grants, competitions, internships, scholarships, and
+                        other programs designed for ambitious students. You can browse by
+                        category, filter by deadline, and discover opportunities that match
+                        your interests and goals.
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem
+                      value="item-2"
+                      className="rounded-lg border border-gray-200 bg-white px-6 shadow-sm transition-shadow hover:shadow-md"
+                    >
+                      <AccordionTrigger className="text-left font-semibold text-gray-900 hover:no-underline">
+                        How do bookmarks work?
+                      </AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground text-base leading-relaxed">
+                        You can bookmark any opportunity that interests you to save it for
+                        later. Bookmarked opportunities are stored in your profile, making
+                        it easy to track deadlines and revisit opportunities you&apos;re
+                        considering. This helps you stay organized and never miss an
+                        important deadline.
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem
+                      value="item-3"
+                      className="rounded-lg border border-gray-200 bg-white px-6 shadow-sm transition-shadow hover:shadow-md"
+                    >
+                      <AccordionTrigger className="text-left font-semibold text-gray-900 hover:no-underline">
+                        Is the platform free to use?
+                      </AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground text-base leading-relaxed">
+                        Yes! Our platform is completely free for students. You can browse
+                        opportunities, create bookmarks, set up your profile, and access all
+                        features without any cost. We&apos;re committed to making opportunities
+                        accessible to all ambitious students.
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem
+                      value="item-4"
+                      className="rounded-lg border border-gray-200 bg-white px-6 shadow-sm transition-shadow hover:shadow-md"
+                    >
+                      <AccordionTrigger className="text-left font-semibold text-gray-900 hover:no-underline">
+                        How do I stay updated on new opportunities?
+                      </AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground text-base leading-relaxed">
+                        New opportunities are added regularly to the platform. You can
+                        browse the opportunities page to see the latest additions, filter by
+                        date, and check the featured section for curated highlights. Make
+                        sure to bookmark opportunities you&apos;re interested in to track their
+                        deadlines.
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem
+                      value="item-5"
+                      className="rounded-lg border border-gray-200 bg-white px-6 shadow-sm transition-shadow hover:shadow-md"
+                    >
+                      <AccordionTrigger className="text-left font-semibold text-gray-900 hover:no-underline">
+                        Can I submit my own opportunities?
+                      </AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground text-base leading-relaxed">
+                        Currently, opportunities are curated by our team to ensure quality
+                        and relevance. If you know of an opportunity that should be featured
+                        on our platform, please reach out through our feedback system. We&apos;re
+                        always looking to expand our database with valuable opportunities for
+                        students.
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem
+                      value="item-6"
+                      className="rounded-lg border border-gray-200 bg-white px-6 shadow-sm transition-shadow hover:shadow-md"
+                    >
+                      <AccordionTrigger className="text-left font-semibold text-gray-900 hover:no-underline">
+                        What information do I need to create an account?
+                      </AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground text-base leading-relaxed">
+                        Creating an account is simple and quick. You&apos;ll need a valid email
+                        address to sign up. Once registered, you can enhance your profile
+                        with information about your interests, current role, and field of
+                        study to get personalized opportunity recommendations.
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </motion.div>
+              </div>
+            </div>
           </div>
         </section>
       </main>

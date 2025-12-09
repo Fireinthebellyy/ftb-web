@@ -10,7 +10,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-export const userRoleEnum = pgEnum("user_role", ["student", "mentor", "admin"]);
+export const userRoleEnum = pgEnum("user_role", ["user", "member", "admin"]);
 export const opportunityTypeEnum = pgEnum("opportunity_type", [
   "hackathon",
   "grant",
@@ -95,7 +95,7 @@ export const user = pgTable("user", {
     .$defaultFn(() => /* @__PURE__ */ new Date())
     .notNull(),
   deletedAt: timestamp("deleted_at"),
-  role: userRoleEnum("role").default("student").notNull(),
+  role: userRoleEnum("role").default("user").notNull(),
 });
 
 export const session = pgTable("session", {

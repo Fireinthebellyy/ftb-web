@@ -22,8 +22,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { signUp } from "@/server/users";
-
 import { z } from "zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -58,6 +56,7 @@ export function SignupForm({
     await authClient.signIn.social({
       provider: "google",
       callbackURL: "/opportunities",
+      newUserCallbackURL: "/onboarding",
     });
   };
 
@@ -65,28 +64,42 @@ export function SignupForm({
     await authClient.signIn.social({
       provider: "linkedin",
       callbackURL: "/opportunities",
+      newUserCallbackURL: "/onboarding",
     });
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
 
-    const { success, message } = await signUp(
-      values.email,
-      values.password,
-      values.username
-    );
+    try {
+      await authClient.signUp.email(
+        {
+          email: values.email,
+          password: values.password,
+          name: values.username,
+          callbackURL: "/dashboard",
+        },
+        {
+          onSuccess: (ctx) => {
+            const isNewUser =
+              ctx.data?.user?.createdAt === ctx.data?.user?.updatedAt;
 
-    if (success) {
-      toast.success(
-        `${message as string} Please check your email for verification.`
+            if (isNewUser) {
+              router.push("/onboarding");
+            } else {
+              router.push("/dashboard");
+            }
+          },
+        }
       );
-      router.push("/opportunities");
-    } else {
-      toast.error(message as string);
-    }
 
-    setIsLoading(false);
+      toast.success("Account created. Redirecting...");
+    } catch (error) {
+      console.error("Signup error:", error);
+      toast.error("Signup failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (

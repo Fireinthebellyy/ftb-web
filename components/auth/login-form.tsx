@@ -22,8 +22,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { signIn } from "@/server/users";
-
 import { z } from "zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -58,6 +56,7 @@ export function LoginForm({
       await authClient.signIn.social({
         provider: "google",
         callbackURL: "/opportunities",
+        newUserCallbackURL: "/onboarding",
       });
     } catch (error) {
       console.error("Google sign-in error:", error);
@@ -73,6 +72,7 @@ export function LoginForm({
       await authClient.signIn.social({
         provider: "linkedin",
         callbackURL: "/opportunities",
+        newUserCallbackURL: "/onboarding",
       });
     } catch (error) {
       console.error("LinkedIn sign-in error:", error);
@@ -85,16 +85,33 @@ export function LoginForm({
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
 
-    const { success, message } = await signIn(values.email, values.password);
+    try {
+      await authClient.signIn.email(
+        {
+          email: values.email,
+          password: values.password,
+          callbackURL: "/dashboard",
+        },
+        {
+          onSuccess: (ctx) => {
+            const isNewUser =
+              ctx.data?.user?.createdAt === ctx.data?.user?.updatedAt;
 
-    if (success) {
-      toast.success(message as string);
-      router.push("/opportunities");
-    } else {
-      toast.error(message as string);
+            if (isNewUser) {
+              router.push("/onboarding");
+            } else {
+              router.push("/dashboard");
+            }
+          },
+        }
+      );
+      toast.success("Logged in. Redirecting...");
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("Login failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   }
 
   return (

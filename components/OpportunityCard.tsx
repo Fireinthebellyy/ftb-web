@@ -402,8 +402,8 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           </div>
         )}
 
-        <div className="flex">
-          <div className="mb-3 flex gap-2 text-xs text-gray-600 sm:flex-row sm:flex-wrap sm:gap-4">
+        {(location || organiserInfo || startDate || endDate) && <div className="flex mb-3">
+          <div className="flex gap-2 text-xs text-gray-600 sm:flex-row sm:flex-wrap sm:gap-4">
             {location && (
               <div className="flex items-center gap-1">
                 <MapPin className="h-3.5 w-3.5 flex-shrink-0 sm:h-4 sm:w-4" />
@@ -438,14 +438,14 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               </div>
             )}
           </div>
-        </div>
+        </div>}
 
         <header className="flex items-end sm:items-center space-x-2 pb-2 sm:pb-3">
           <div className="flex-shrink-0">
             {user &&
               user.image &&
               !user.image.includes("https://media.licdn.com") ? (
-              <div className="size-4 overflow-hidden rounded-full border border-gray-100 shadow sm:size-7">
+              <div className="size-4 overflow-hidden rounded-full border border-gray-100 shadow sm:size-5">
                 <Image
                   src={user.image}
                   alt={user.name}
@@ -455,7 +455,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                 />
               </div>
             ) : (
-              <div className="flex size-4 items-center justify-center rounded-full bg-gray-300 text-xs font-semibold text-gray-600 uppercase sm:size-7">
+              <div className="flex size-4 items-center justify-center rounded-full bg-gray-300 text-xs font-semibold text-gray-600 uppercase sm:size-5">
                 {user && user.name
                   ? user.name
                     .split(" ")

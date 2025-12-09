@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
-import { opportunities, user } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { opportunities, tags, user } from "@/lib/schema";
+import { eq, sql } from "drizzle-orm";
 import OpportunityCard from "@/components/OpportunityCard";
 import { notFound } from "next/navigation";
 
@@ -14,7 +14,11 @@ export default async function OpportunityDetailPage({ params }: any) {
       title: opportunities.title,
       description: opportunities.description,
       images: opportunities.images,
-      tags: opportunities.tags,
+      tags: sql<string[]>`(
+        SELECT coalesce(array_agg(t.name ORDER BY t.name), '{}')
+        FROM ${tags} t
+        WHERE t.id = ANY(${opportunities.tagIds})
+      )`,
       location: opportunities.location,
       organiserInfo: opportunities.organiserInfo,
       startDate: opportunities.startDate,

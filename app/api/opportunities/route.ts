@@ -11,7 +11,7 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import { opportunities, user } from "@/lib/schema";
+import { opportunities, tags, user } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -27,6 +27,53 @@ const opportunitySchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
 });
+
+async function upsertTagsAndGetIds(tagNames: string[]): Promise<string[]> {
+  const normalized = Array.from(
+    new Set(tagNames.map((name) => name.trim()).filter(Boolean))
+  );
+
+  if (normalized.length === 0) return [];
+
+  const existing = await db
+    .select({ id: tags.id, name: tags.name })
+    .from(tags)
+    .where(inArray(tags.name, normalized));
+
+  const existingMap = new Map(existing.map((row) => [row.name, row.id]));
+  const missing = normalized.filter((name) => !existingMap.has(name));
+
+  let inserted: { id: string; name: string }[] = [];
+
+  if (missing.length > 0) {
+    inserted =
+      (await db
+        .insert(tags)
+        .values(missing.map((name) => ({ name })))
+        .onConflictDoNothing()
+        .returning({ id: tags.id, name: tags.name })) ?? [];
+
+    const stillMissing = missing.filter(
+      (name) => !inserted.some((row) => row.name === name)
+    );
+
+    if (stillMissing.length > 0) {
+      const fetched = await db
+        .select({ id: tags.id, name: tags.name })
+        .from(tags)
+        .where(inArray(tags.name, stillMissing));
+      inserted = inserted.concat(fetched);
+    }
+  }
+
+  const idLookup = new Map(
+    [...existing, ...inserted].map((row) => [row.name, row.id])
+  );
+
+  return normalized
+    .map((name) => idLookup.get(name))
+    .filter((id): id is string => Boolean(id));
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -57,12 +104,11 @@ export async function POST(req: NextRequest) {
     };
 
     // Handle arrays properly - only add if they have values
-    if (
-      validatedData.tags &&
-      Array.isArray(validatedData.tags) &&
-      validatedData.tags.length > 0
-    ) {
-      insertData.tags = validatedData.tags;
+    if (validatedData.tags && Array.isArray(validatedData.tags)) {
+      const tagIds = await upsertTagsAndGetIds(validatedData.tags);
+      if (tagIds.length > 0) {
+        insertData.tagIds = tagIds;
+      }
     }
 
     if (
@@ -178,8 +224,9 @@ export async function GET(req: NextRequest) {
       const tagConditions = rawTags.map((tag) =>
         sql`EXISTS (
           SELECT 1
-          FROM unnest(${opportunities.tags}) AS t(tag_value)
-          WHERE lower(t.tag_value) = ${tag}
+          FROM ${tags} t
+          WHERE lower(t.name) = ${tag}
+            AND t.id = ANY(${opportunities.tagIds})
         )`
       );
 
@@ -207,7 +254,11 @@ export async function GET(req: NextRequest) {
         title: opportunities.title,
         description: opportunities.description,
         images: opportunities.images,
-        tags: opportunities.tags,
+        tags: sql<string[]>`(
+          SELECT coalesce(array_agg(t.name ORDER BY t.name), '{}')
+          FROM ${tags} t
+          WHERE t.id = ANY(${opportunities.tagIds})
+        )`,
         location: opportunities.location,
         organiserInfo: opportunities.organiserInfo,
         startDate: opportunities.startDate,

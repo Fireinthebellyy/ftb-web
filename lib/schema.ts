@@ -57,7 +57,7 @@ export const opportunities = pgTable("opportunities", {
   title: text("title").notNull(),
   description: text("description").notNull(),
   images: text("images").array().default([]),
-  tags: text("tags").array().default([]),
+  tagIds: uuid("tag_ids").array().default([]),
   location: text("location"),
   organiserInfo: text("organiser_info"),
   startDate: date("start_date"),

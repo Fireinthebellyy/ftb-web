@@ -20,7 +20,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { opportunities } from "@/lib/schema";
 import { InferSelectModel } from "drizzle-orm";
 
-type Opportunity = InferSelectModel<typeof opportunities>;
+type Opportunity = InferSelectModel<typeof opportunities> & { tags?: string[] };
 
 interface EditOpportunityFormProps {
   opportunity: Opportunity;

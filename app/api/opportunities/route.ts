@@ -11,7 +11,8 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import { opportunities, user } from "@/lib/schema";
+import { opportunities, tags, user } from "@/lib/schema";
+import { upsertTagsAndGetIds } from "@/lib/tags";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -27,6 +28,7 @@ const opportunitySchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
 });
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -62,12 +64,11 @@ export async function POST(req: NextRequest) {
     };
 
     // Handle arrays properly - only add if they have values
-    if (
-      validatedData.tags &&
-      Array.isArray(validatedData.tags) &&
-      validatedData.tags.length > 0
-    ) {
-      insertData.tags = validatedData.tags;
+    if (validatedData.tags && Array.isArray(validatedData.tags)) {
+      const tagIds = await upsertTagsAndGetIds(validatedData.tags);
+      if (tagIds.length > 0) {
+        insertData.tagIds = tagIds;
+      }
     }
 
     if (
@@ -197,8 +198,9 @@ export async function GET(req: NextRequest) {
       const tagConditions = rawTags.map((tag) =>
         sql`EXISTS (
           SELECT 1
-          FROM unnest(${opportunities.tags}) AS t(tag_value)
-          WHERE lower(t.tag_value) = ${tag}
+          FROM ${tags} t
+          WHERE lower(t.name) = ${tag}
+            AND t.id = ANY(${opportunities.tagIds})
         )`
       );
 
@@ -226,7 +228,11 @@ export async function GET(req: NextRequest) {
         title: opportunities.title,
         description: opportunities.description,
         images: opportunities.images,
-        tags: opportunities.tags,
+        tags: sql<string[]>`(
+          SELECT coalesce(array_agg(t.name ORDER BY t.name), '{}')
+          FROM ${tags} t
+          WHERE t.id = ANY(${opportunities.tagIds})
+        )`,
         location: opportunities.location,
         organiserInfo: opportunities.organiserInfo,
         startDate: opportunities.startDate,

@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { opportunities } from "@/lib/schema";
+import { upsertTagsAndGetIds } from "@/lib/tags";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -16,6 +17,7 @@ const updateOpportunitySchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
 });
+
 
 export async function PUT(
   req: NextRequest,
@@ -76,7 +78,7 @@ export async function PUT(
       updateData.images = validatedData.images;
     }
     if (validatedData.tags !== undefined) {
-      updateData.tags = validatedData.tags;
+      updateData.tagIds = await upsertTagsAndGetIds(validatedData.tags);
     }
     if (validatedData.location !== undefined) {
       updateData.location = validatedData.location;

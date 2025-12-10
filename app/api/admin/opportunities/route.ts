@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { opportunities, user } from "@/lib/schema";
+import { opportunities, user, tags } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { eq, and, isNull, sql, desc } from "drizzle-orm";
@@ -48,7 +48,11 @@ export async function GET(req: NextRequest) {
                     title: opportunities.title,
                     description: opportunities.description,
                     images: opportunities.images,
-                    tags: opportunities.tags,
+                    tags: sql<string[]>`(
+                      SELECT coalesce(array_agg(t.name ORDER BY t.name), '{}')
+                      FROM ${tags} t
+                      WHERE t.id = ANY(${opportunities.tagIds})
+                    )`,
                     location: opportunities.location,
                     organiserInfo: opportunities.organiserInfo,
                     startDate: opportunities.startDate,

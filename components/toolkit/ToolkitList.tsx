@@ -1,47 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import ToolkitCard from "./ToolkitCard";
-import ToolkitModal from "./ToolkitModal";
 import { Toolkit } from "@/types/interfaces";
+import { useRouter } from "next/navigation";
 
 interface ToolkitListProps {
   toolkits: Toolkit[];
-  onPurchase: (toolkitId: string) => Promise<void>;
 }
 
-export default function ToolkitList({
-  toolkits,
-  onPurchase,
-}: ToolkitListProps) {
-  const [selectedToolkit, setSelectedToolkit] = useState<Toolkit | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [purchasedToolkits, setPurchasedToolkits] = useState<Set<string>>(
-    new Set()
-  );
+export default function ToolkitList({ toolkits }: ToolkitListProps) {
+  const router = useRouter();
 
   const handleCardClick = (toolkit: Toolkit) => {
-    setSelectedToolkit(toolkit);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedToolkit(null);
-  };
-
-  const handlePurchaseSuccess = (toolkitId: string) => {
-    setPurchasedToolkits((prev) => new Set(prev).add(toolkitId));
-  };
-
-  const handlePurchase = async (toolkitId: string) => {
-    try {
-      await onPurchase(toolkitId);
-      handlePurchaseSuccess(toolkitId);
-    } catch (error) {
-      console.error("Purchase failed:", error);
-      throw error;
-    }
+    router.push(`/toolkit/${toolkit.id}`);
   };
 
   if (toolkits.length === 0) {
@@ -65,16 +37,6 @@ export default function ToolkitList({
           />
         ))}
       </div>
-
-      {selectedToolkit && (
-        <ToolkitModal
-          toolkit={selectedToolkit}
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          onPurchase={handlePurchase}
-          hasPurchased={purchasedToolkits.has(selectedToolkit.id)}
-        />
-      )}
     </div>
   );
 }

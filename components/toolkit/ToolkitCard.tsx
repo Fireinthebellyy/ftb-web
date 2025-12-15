@@ -43,7 +43,7 @@ export default function ToolkitCard({ toolkit, onClick }: ToolkitCardProps) {
       <CardFooter className="p-4 pt-0">
         <div className="flex w-full items-center justify-between">
           <span className="text-primary font-bold">
-            ₹{(toolkit.price / 100).toFixed(2)}
+            ₹{toolkit.price.toFixed(2)}
           </span>
           <Button size="sm" variant="outline">
             View Details

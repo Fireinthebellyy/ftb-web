@@ -94,3 +94,17 @@ export type TermsType = {
   content: string;
   lastUpdated: string;
 };
+
+export type Toolkit = {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  coverImageUrl?: string;
+  videoUrl?: string;
+  contentUrl?: string;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  userId?: string;
+};

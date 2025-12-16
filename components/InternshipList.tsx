@@ -580,7 +580,7 @@ export default function InternshipList() {
               <>
                 {allInternships.length > 0 ? (
                   <>
-                    <div className="space-y-4">
+                    <div className="space-y-2">
                       {allInternships.map((internship, index) => (
                         <div key={internship.id}>
                           <InternshipPost

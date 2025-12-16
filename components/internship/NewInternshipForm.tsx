@@ -14,6 +14,7 @@ import { HiringOrganizationField } from "./fields/HiringOrganizationField";
 import { TypeSelector } from "./fields/TypeSelector";
 import { MetaFields } from "./fields/MetaFields";
 import { TagsField } from "./fields/TagsField";
+import { PosterField } from "./fields/PosterField";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function NewInternshipForm({
@@ -91,6 +92,8 @@ export default function NewInternshipForm({
           <HiringOrganizationField control={form.control} />
 
           <TagsField control={form.control} />
+
+          <PosterField control={form.control} />
 
           <TypeSelector
             control={form.control}

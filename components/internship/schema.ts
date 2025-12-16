@@ -29,6 +29,7 @@ export const internshipFormSchema = z.object({
   hiringManager: z.string().optional(),
   link: z.string().url().optional().or(z.literal("")),
   deadline: z.string().optional(),
+  poster: z.string().optional(),
 });
 
 export type InternshipFormData = z.infer<typeof internshipFormSchema>;

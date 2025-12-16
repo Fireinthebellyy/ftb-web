@@ -8,7 +8,7 @@ const razorpay = new Razorpay({
 export default razorpay;
 
 export interface OrderOptions {
-  amount: number; // in paisa
+  amount: number; // in paisa (smallest currency unit, e.g., 300 rupees = 30000 paisa)
   currency: string;
   receipt: string;
 }

@@ -105,7 +105,7 @@ export async function POST(
     // Create Razorpay order
     const { createOrder } = await import("@/lib/razorpay");
     const order = await createOrder({
-      amount: toolkit[0].price,
+      amount: toolkit[0].price * 100, // Convert rupees to paisa (Razorpay expects amount in smallest currency unit)
       currency: "INR",
       receipt: `tk_${toolkitId.slice(-8)}_${Date.now().toString().slice(-8)}`,
     });

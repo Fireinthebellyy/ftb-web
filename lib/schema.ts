@@ -230,7 +230,7 @@ export const toolkits = pgTable("toolkits", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  price: integer("price").notNull(), // in smallest currency unit (paise for INR)
+  price: integer("price").notNull(), // in rupees (converted to paisa when sent to Razorpay)
   coverImageUrl: text("cover_image_url"),
   videoUrl: text("video_url"), // YouTube embed URL
   contentUrl: text("content_url"), // URL to toolkit content page

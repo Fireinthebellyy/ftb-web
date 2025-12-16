@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminUsersTable from "./AdminUsersTable";
 import AdminOpportunitiesTable from "./AdminOpportunitiesTable";
+import NewInternshipButton from "@/components/internship/NewInternshipButton";
 
 export default async function AdminPage() {
     const session = await auth.api.getSession({
@@ -33,7 +34,10 @@ export default async function AdminPage() {
         <div className="min-h-screen bg-gray-50">
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
+                    <div className="flex items-center justify-between mb-2">
+                        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+                        <NewInternshipButton />
+                    </div>
                     <p className="text-muted-foreground">
                         Manage users and review opportunities
                     </p>

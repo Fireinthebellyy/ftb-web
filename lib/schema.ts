@@ -19,6 +19,13 @@ export const opportunityTypeEnum = pgEnum("opportunity_type", [
   "ideathon",
 ]);
 
+export const internshipTypeEnum = pgEnum("internship_type", [
+  "part-time",
+  "full-time",
+  "contract",
+  "remote",
+]);
+
 export const mentors = pgTable("mentors", {
   id: uuid("id").primaryKey().defaultRandom(),
   mentorName: text("mentor_name").notNull(),
@@ -70,6 +77,32 @@ export const opportunities = pgTable("opportunities", {
   isActive: boolean("is_active").default(true),
   upvoterIds: text("upvoter_ids").array().default([]),
   upvoteCount: integer("upvote_count").default(0),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
+
+export const internships = pgTable("internships", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  type: internshipTypeEnum("type").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  link: text("link"),
+  poster: text("poster"), // Optional image URL
+  tagIds: uuid("tag_ids").array().default([]),
+  location: text("location"),
+  deadline: date("deadline"),
+  stipend: integer("stipend"), // Amount in rupees
+  hiringOrganization: text("hiring_organization").notNull(),
+  hiringManager: text("hiring_manager"), // Optional
+  isFlagged: boolean("is_flagged").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  deletedAt: timestamp("deleted_at"), // Soft delete
+  isVerified: boolean("is_verified").default(false),
+  isActive: boolean("is_active").default(true),
+  viewCount: integer("view_count").default(0),
+  applicationCount: integer("application_count").default(0),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
@@ -233,6 +266,7 @@ export const schema = {
   userOnboardingProfiles,
   mentors,
   opportunities,
+  internships,
   comments,
   session,
   account,

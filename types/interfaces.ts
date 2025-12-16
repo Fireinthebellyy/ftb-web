@@ -20,6 +20,30 @@ export type Opportunity = {
   };
 };
 
+export type Internship = {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  tags?: string[];
+  poster?: string;
+  link?: string;
+  location?: string;
+  deadline?: string;
+  stipend?: number;
+  hiringOrganization: string;
+  hiringManager?: string;
+  createdAt?: string;
+  viewCount: number;
+  applicationCount: number;
+  user: {
+    id: string;
+    name: string;
+    image: string;
+    role?: "user" | "member" | "admin";
+  };
+};
+
 export type Task = {
   id: string;
   title: string;
@@ -33,6 +57,12 @@ export type Task = {
 
 export interface OpportunityPostProps {
   opportunity: Opportunity;
+  onBookmarkChange?: (id: string, isBookmarked: boolean) => void;
+  isCardExpanded?: boolean;
+}
+
+export interface InternshipPostProps {
+  internship: Internship;
   onBookmarkChange?: (id: string, isBookmarked: boolean) => void;
   isCardExpanded?: boolean;
 }

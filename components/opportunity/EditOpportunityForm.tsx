@@ -13,7 +13,7 @@ import { DescriptionField } from "./fields/DescriptionField";
 import { TagsField } from "./fields/TagsField";
 import { TypeSelector } from "./fields/TypeSelector";
 import { MetaPopovers } from "./fields/MetaPopovers";
-import { ImagePicker, SelectedImages } from "./images/ImageDropzone";
+import { ImagePicker, SelectedImages, ExistingImages } from "./images/ImageDropzone";
 import { formSchema, FormData } from "./schema";
 import { FileItem, UploadProgress } from "@/types/interfaces";
 import { useQueryClient } from "@tanstack/react-query";
@@ -35,7 +35,15 @@ export default function EditOpportunityForm({
 }: EditOpportunityFormProps) {
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState<FileItem[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>(
+    opportunity?.images || []
+  );
   const queryClient = useQueryClient();
+
+  // Handle removing an existing image
+  const handleRemoveExistingImage = (imageId: string) => {
+    setExistingImages((prev) => prev.filter((id) => id !== imageId));
+  };
 
   const maxFiles = 4;
 
@@ -158,6 +166,9 @@ export default function EditOpportunityForm({
         );
       }
 
+      // Combine existing images with newly uploaded images
+      const finalImages = [...existingImages, ...imageIds];
+      
       const res = await axios.put(`/api/opportunities/${opportunity.id}`, {
         ...data,
         startDate: data.dateRange?.from?.toISOString(),
@@ -167,7 +178,7 @@ export default function EditOpportunityForm({
             ?.split(",")
             .map((t) => t.trim())
             .filter(Boolean) || [],
-        images: imageIds.length > 0 ? imageIds : undefined,
+        images: finalImages,
       });
 
       if (res.status !== 200) {
@@ -199,7 +210,13 @@ export default function EditOpportunityForm({
 
           <DescriptionField control={form.control} />
 
-          {/* Selected images displayed above the bottom action bar */}
+          {/* Existing images (from opportunity) displayed with remove option */}
+          <ExistingImages
+            existingImages={existingImages}
+            onRemoveExisting={handleRemoveExistingImage}
+          />
+
+          {/* Selected new images displayed above the bottom action bar */}
           <SelectedImages files={files} setFiles={setFiles} />
 
           <TagsField control={form.control} />
@@ -224,6 +241,7 @@ export default function EditOpportunityForm({
                 files={files}
                 setFiles={setFiles}
                 maxFiles={maxFiles}
+                existingImagesCount={existingImages.length}
               />
             </div>
 

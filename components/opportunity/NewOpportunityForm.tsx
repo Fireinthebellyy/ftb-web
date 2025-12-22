@@ -13,7 +13,7 @@ import { DescriptionField } from "./fields/DescriptionField";
 import { TagsField } from "./fields/TagsField";
 import { TypeSelector } from "./fields/TypeSelector";
 import { MetaPopovers } from "./fields/MetaPopovers";
-import { ImagePicker, SelectedImages } from "./images/ImageDropzone";
+import { ImagePicker, SelectedImages, ExistingImages } from "./images/ImageDropzone";
 import { formSchema, FormData } from "./schema";
 import { FileItem, Opportunity, UploadProgress } from "@/types/interfaces";
 import { useQueryClient } from "@tanstack/react-query";
@@ -29,6 +29,9 @@ export default function NewOpportunityForm({
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState<FileItem[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
+  const [existingImages, setExistingImages] = useState<string[]>(
+    opportunity?.images || []
+  );
   const queryClient = useQueryClient();
 
   const maxFiles = 4;
@@ -109,7 +112,13 @@ export default function NewOpportunityForm({
       },
     });
 
-    const imagesChanged = files.length > 0;
+    // Check if images have changed (either new files added or existing images removed)
+    const originalImages = opportunity.images || [];
+    const imagesChanged = 
+      files.length > 0 || 
+      existingImages.length !== originalImages.length ||
+      !existingImages.every((img) => originalImages.includes(img));
+    
     setHasChanges(currentSnapshot !== originalSnapshot || imagesChanged);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -122,7 +131,13 @@ export default function NewOpportunityForm({
     watchedOrganiser,
     watchedDateRange,
     files,
+    existingImages,
   ]);
+
+  // Handle removing an existing image
+  const handleRemoveExistingImage = (imageId: string) => {
+    setExistingImages((prev) => prev.filter((id) => id !== imageId));
+  };
 
   function handleTypeChange(type: string) {
     form.setValue("type", type, { shouldValidate: true, shouldTouch: true });
@@ -204,6 +219,9 @@ export default function NewOpportunityForm({
         );
       }
 
+      // Combine existing images with newly uploaded images
+      const finalImages = [...existingImages, ...imageIds];
+      
       const payload = {
         ...data,
         startDate: data.dateRange?.from?.toISOString(),
@@ -213,7 +231,11 @@ export default function NewOpportunityForm({
             ?.split(",")
             .map((t) => t.trim())
             .filter(Boolean) || [],
-        images: imageIds.length > 0 ? imageIds : undefined,
+        // For edit mode: always send the final images array (existing + new)
+        // For create mode: only send if there are images
+        images: opportunity?.id 
+          ? finalImages 
+          : (imageIds.length > 0 ? imageIds : undefined),
       };
 
       let res;
@@ -261,7 +283,15 @@ export default function NewOpportunityForm({
 
           <DescriptionField control={form.control} />
 
-          {/* Selected images displayed above the bottom action bar */}
+          {/* Existing images (from opportunity) displayed with remove option */}
+          {opportunity && (
+            <ExistingImages
+              existingImages={existingImages}
+              onRemoveExisting={handleRemoveExistingImage}
+            />
+          )}
+
+          {/* Selected new images displayed above the bottom action bar */}
           <SelectedImages files={files} setFiles={setFiles} />
 
           <TagsField control={form.control} />
@@ -286,6 +316,7 @@ export default function NewOpportunityForm({
                 files={files}
                 setFiles={setFiles}
                 maxFiles={maxFiles}
+                existingImagesCount={existingImages.length}
               />
             </div>
 

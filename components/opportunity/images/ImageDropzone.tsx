@@ -143,6 +143,15 @@ export function SelectedImages({
   );
 }
 
+// Get bucket ID with validation
+const getBucketId = () => {
+  const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
+  if (!bucketId) {
+    throw new Error("NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID is not configured");
+  }
+  return bucketId;
+};
+
 /**
  * ExistingImages:
  * Renders existing image thumbnails (from Appwrite storage) with remove buttons.
@@ -153,14 +162,12 @@ export function ExistingImages({
 }: ExistingImagesProps) {
   const [previewImageId, setPreviewImageId] = useState<string | null>(null);
   const opportunityStorage = createOpportunityStorage();
+  const bucketId = getBucketId();
 
   if (existingImages.length === 0) return null;
 
   const getImageUrl = (imageId: string) =>
-    opportunityStorage.getFileView(
-      process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
-      imageId
-    );
+    opportunityStorage.getFileView(bucketId, imageId);
 
   return (
     <>

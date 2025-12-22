@@ -38,12 +38,33 @@ export default function EditOpportunityForm({
   const [existingImages, setExistingImages] = useState<string[]>(
     opportunity?.images || []
   );
+  const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
   const queryClient = useQueryClient();
 
-  // Handle removing an existing image
+  // Handle removing an existing image - track for deletion on submit
   const handleRemoveExistingImage = (imageId: string) => {
     setExistingImages((prev) => prev.filter((id) => id !== imageId));
+    setRemovedImageIds((prev) => [...prev, imageId]);
   };
+
+  // Delete removed images from Appwrite storage
+  async function deleteRemovedImages(): Promise<void> {
+    if (removedImageIds.length === 0) return;
+
+    const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
+    if (!bucketId) return;
+
+    const opportunityStorage = createOpportunityStorage();
+    
+    for (const imageId of removedImageIds) {
+      try {
+        await opportunityStorage.deleteFile(bucketId, imageId);
+      } catch (err) {
+        console.error(`Failed to delete image ${imageId}:`, err);
+        // Continue deleting other images even if one fails
+      }
+    }
+  }
 
   const maxFiles = 4;
 
@@ -159,13 +180,6 @@ export default function EditOpportunityForm({
         );
       }
 
-      // If images were selected but not all uploaded successfully, abort post update
-      if (!imagesOk) {
-        throw new Error(
-          "One or more images failed to upload. Post was not updated."
-        );
-      }
-
       // Combine existing images with newly uploaded images
       const finalImages = [...existingImages, ...imageIds];
       
@@ -185,8 +199,12 @@ export default function EditOpportunityForm({
         throw new Error("Failed to update opportunity");
       }
 
+      // Delete removed images from Appwrite storage after successful update
+      await deleteRemovedImages();
+
       files.forEach((file) => URL.revokeObjectURL(file.preview));
       setFiles([]);
+      setRemovedImageIds([]);
 
       toast.success("Opportunity updated successfully!");
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });

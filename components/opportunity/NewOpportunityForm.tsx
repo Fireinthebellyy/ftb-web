@@ -32,6 +32,7 @@ export default function NewOpportunityForm({
   const [existingImages, setExistingImages] = useState<string[]>(
     opportunity?.images || []
   );
+  const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
   const queryClient = useQueryClient();
 
   const maxFiles = 4;
@@ -134,10 +135,30 @@ export default function NewOpportunityForm({
     existingImages,
   ]);
 
-  // Handle removing an existing image
+  // Handle removing an existing image - track for deletion on submit
   const handleRemoveExistingImage = (imageId: string) => {
     setExistingImages((prev) => prev.filter((id) => id !== imageId));
+    setRemovedImageIds((prev) => [...prev, imageId]);
   };
+
+  // Delete removed images from Appwrite storage
+  async function deleteRemovedImages(): Promise<void> {
+    if (removedImageIds.length === 0) return;
+
+    const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
+    if (!bucketId) return;
+
+    const opportunityStorage = createOpportunityStorage();
+    
+    for (const imageId of removedImageIds) {
+      try {
+        await opportunityStorage.deleteFile(bucketId, imageId);
+      } catch (err) {
+        console.error(`Failed to delete image ${imageId}:`, err);
+        // Continue deleting other images even if one fails
+      }
+    }
+  }
 
   function handleTypeChange(type: string) {
     form.setValue("type", type, { shouldValidate: true, shouldTouch: true });
@@ -242,6 +263,9 @@ export default function NewOpportunityForm({
       if (opportunity?.id) {
         res = await axios.put(`/api/opportunities/${opportunity.id}`, payload);
         if (res.status !== 200) throw new Error("Failed to update opportunity");
+        
+        // Delete removed images from Appwrite storage after successful update
+        await deleteRemovedImages();
       } else {
         res = await axios.post("/api/opportunities", payload);
         if (res.status !== 200 && res.status !== 201)
@@ -250,6 +274,7 @@ export default function NewOpportunityForm({
 
       files.forEach((file) => URL.revokeObjectURL(file.preview));
       setFiles([]);
+      setRemovedImageIds([]);
 
       // Check user role to show appropriate message
       const userRole = res.data?.userRole || "user"; // The API should return user role

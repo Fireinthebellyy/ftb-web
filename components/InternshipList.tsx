@@ -331,8 +331,7 @@ export default function InternshipList() {
   ) => {
     // TODO: handle bookmark
     console.log(
-      `Internship ${internshipId} ${
-        isBookmarked ? "bookmarked" : "unbookmarked"
+      `Internship ${internshipId} ${isBookmarked ? "bookmarked" : "unbookmarked"
       }`
     );
   };
@@ -426,11 +425,10 @@ export default function InternshipList() {
                   <Badge
                     key={tag}
                     variant={isSelected ? "default" : "outline"}
-                    className={`cursor-pointer px-3 py-1 text-sm ${
-                      isSelected
+                    className={`cursor-pointer px-3 py-1 text-sm ${isSelected
                         ? "bg-neutral-700 text-gray-200"
                         : "bg-white text-gray-700"
-                    }`}
+                      }`}
                     onClick={() => toggleTag(tag)}
                   >
                     <span>{displayTag}</span>
@@ -590,8 +588,8 @@ export default function InternshipList() {
                           {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
                           {index ===
                             Math.max(0, allInternships.length - 3) && (
-                            <div ref={desktopTriggerRef} className="h-1" />
-                          )}
+                              <div ref={desktopTriggerRef} className="h-1" />
+                            )}
                         </div>
                       ))}
                     </div>
@@ -645,7 +643,7 @@ export default function InternshipList() {
 
           </aside>
 
-          
+
         </div>
 
         {/* Mobile Content (single column) */}
@@ -705,7 +703,7 @@ export default function InternshipList() {
                     )}
                     {!hasNextPage && allInternships.length > 0 && (
                       <div className="text-sm text-gray-500">
-                        You've reached the end of internships
+                        You&apos;ve reached the end of internships
                       </div>
                     )}
                   </div>

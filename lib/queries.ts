@@ -122,34 +122,63 @@ export function useToggleUpvote(id: string) {
     mutationKey: ["opportunity", id, "toggle-upvote"],
     mutationFn: () => toggleUpvote(id),
     onMutate: async () => {
-      await qc.cancelQueries({ queryKey: ["opportunity", id] });
-      const prev = qc.getQueryData<OpportunityVoteState>(["opportunity", id]);
+      // Optimistically update opportunities list cache
+      qc.setQueriesData<OpportunitiesResponse>(
+        { queryKey: ["opportunities"] },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            opportunities: old.opportunities.map((opp) => {
+              if (opp.id === id) {
+                const nextHas = !(opp.userHasUpvoted ?? false);
+                const nextCount = Math.max(
+                  0,
+                  (opp.upvoteCount ?? 0) + (nextHas ? 1 : -1)
+                );
+                return {
+                  ...opp,
+                  userHasUpvoted: nextHas,
+                  upvoteCount: nextCount,
+                };
+              }
+              return opp;
+            }),
+          };
+        }
+      );
 
-      // Optimistic update
-      if (prev) {
-        const nextHas = !prev.hasUserUpvoted;
-        const nextCount = Math.max(0, prev.upvotes + (nextHas ? 1 : -1));
-        qc.setQueryData<OpportunityVoteState>(["opportunity", id], {
-          ...prev,
-          hasUserUpvoted: nextHas,
-          upvotes: nextCount,
-        });
-      }
-
-      return { prev };
+      return {};
     },
-    onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) {
-        qc.setQueryData(["opportunity", id], ctx.prev);
-      }
+    onError: () => {
+      // Rollback by invalidating opportunities cache
+      qc.invalidateQueries({ queryKey: ["opportunities"] });
     },
     onSuccess: (data) => {
-      // Replace with server canonical state
-      qc.setQueryData<OpportunityVoteState>(["opportunity", id], data);
+      // Update opportunities list cache with server response
+      qc.setQueriesData<OpportunitiesResponse>(
+        { queryKey: ["opportunities"] },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            opportunities: old.opportunities.map((opp) => {
+              if (opp.id === id) {
+                return {
+                  ...opp,
+                  userHasUpvoted: data.hasUserUpvoted,
+                  upvoteCount: data.upvotes,
+                };
+              }
+              return opp;
+            }),
+          };
+        }
+      );
     },
     onSettled: () => {
       // Background refetch to ensure consistency
-      qc.invalidateQueries({ queryKey: ["opportunity", id] });
+      qc.invalidateQueries({ queryKey: ["opportunities"] });
     },
   });
 }

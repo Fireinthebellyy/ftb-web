@@ -3,6 +3,7 @@ import { opportunities, tags, user } from "@/lib/schema";
 import { eq, sql } from "drizzle-orm";
 import OpportunityCard from "@/components/OpportunityCard";
 import { notFound } from "next/navigation";
+import { getCurrentUser } from "@/server/users";
 
 export default async function OpportunityDetailPage({ params }: any) {
   const id = params.id;
@@ -43,9 +44,22 @@ export default async function OpportunityDetailPage({ params }: any) {
     notFound();
   }
 
+  // Calculate userHasUpvoted
+  const currentUser = await getCurrentUser();
+  const currentUserId = currentUser?.currentUser?.id as string | undefined;
+  let userHasUpvoted = false;
+  if (currentUserId && Array.isArray(opportunity.upvoterIds)) {
+    userHasUpvoted = opportunity.upvoterIds.includes(currentUserId);
+  }
+
+  const opportunityWithUpvote = {
+    ...opportunity,
+    userHasUpvoted,
+  };
+
   return (
     <div className="container mx-auto max-w-2xl px-4 py-6">
-      <OpportunityCard opportunity={opportunity as any} isCardExpanded={true} />
+      <OpportunityCard opportunity={opportunityWithUpvote as any} isCardExpanded={true} />
     </div>
   );
 }

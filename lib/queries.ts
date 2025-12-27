@@ -118,33 +118,74 @@ async function toggleUpvote(id: string): Promise<OpportunityVoteState> {
 export function useToggleUpvote(id: string) {
   const qc = useQueryClient();
 
+  // Helper to update a single opportunity in OpportunitiesResponse
+  const updateOpportunityInResponse = (
+    response: OpportunitiesResponse,
+    id: string,
+    userHasUpvoted: boolean,
+    upvoteCount: number
+  ): OpportunitiesResponse => {
+    return {
+      ...response,
+      opportunities: response.opportunities.map((opp) => {
+        if (opp.id === id) {
+          return {
+            ...opp,
+            userHasUpvoted,
+            upvoteCount,
+          };
+        }
+        return opp;
+      }),
+    };
+  };
+
   return useMutation({
     mutationKey: ["opportunity", id, "toggle-upvote"],
     mutationFn: () => toggleUpvote(id),
     onMutate: async () => {
-      // Optimistically update opportunities list cache
-      qc.setQueriesData<OpportunitiesResponse>(
+      // Optimistically update opportunities cache (handles both regular and infinite queries)
+      qc.setQueriesData(
         { queryKey: ["opportunities"] },
-        (old) => {
+        (old: any) => {
           if (!old) return old;
-          return {
-            ...old,
-            opportunities: old.opportunities.map((opp) => {
-              if (opp.id === id) {
-                const nextHas = !(opp.userHasUpvoted ?? false);
-                const nextCount = Math.max(
-                  0,
-                  (opp.upvoteCount ?? 0) + (nextHas ? 1 : -1)
-                );
-                return {
-                  ...opp,
-                  userHasUpvoted: nextHas,
-                  upvoteCount: nextCount,
-                };
-              }
-              return opp;
-            }),
-          };
+
+          // Handle infinite query structure: { pages: OpportunitiesResponse[], pageParams: any[] }
+          if (old.pages && Array.isArray(old.pages)) {
+            const nextHas = !(
+              old.pages
+                .flatMap((page: OpportunitiesResponse) => page.opportunities)
+                .find((opp: Opportunity) => opp.id === id)?.userHasUpvoted ?? false
+            );
+            const currentCount =
+              old.pages
+                .flatMap((page: OpportunitiesResponse) => page.opportunities)
+                .find((opp: Opportunity) => opp.id === id)?.upvoteCount ?? 0;
+            const nextCount = Math.max(0, currentCount + (nextHas ? 1 : -1));
+
+            return {
+              ...old,
+              pages: old.pages.map((page: OpportunitiesResponse) =>
+                updateOpportunityInResponse(page, id, nextHas, nextCount)
+              ),
+            };
+          }
+
+          // Handle regular query structure: OpportunitiesResponse
+          if (old.opportunities && Array.isArray(old.opportunities)) {
+            const nextHas = !(
+              old.opportunities.find((opp: Opportunity) => opp.id === id)
+                ?.userHasUpvoted ?? false
+            );
+            const currentCount =
+              old.opportunities.find((opp: Opportunity) => opp.id === id)
+                ?.upvoteCount ?? 0;
+            const nextCount = Math.max(0, currentCount + (nextHas ? 1 : -1));
+
+            return updateOpportunityInResponse(old, id, nextHas, nextCount);
+          }
+
+          return old;
         }
       );
 
@@ -155,24 +196,33 @@ export function useToggleUpvote(id: string) {
       qc.invalidateQueries({ queryKey: ["opportunities"] });
     },
     onSuccess: (data) => {
-      // Update opportunities list cache with server response
-      qc.setQueriesData<OpportunitiesResponse>(
+      // Update opportunities cache with server response (handles both regular and infinite queries)
+      qc.setQueriesData(
         { queryKey: ["opportunities"] },
-        (old) => {
+        (old: any) => {
           if (!old) return old;
-          return {
-            ...old,
-            opportunities: old.opportunities.map((opp) => {
-              if (opp.id === id) {
-                return {
-                  ...opp,
-                  userHasUpvoted: data.hasUserUpvoted,
-                  upvoteCount: data.upvotes,
-                };
-              }
-              return opp;
-            }),
-          };
+
+          // Handle infinite query structure
+          if (old.pages && Array.isArray(old.pages)) {
+            return {
+              ...old,
+              pages: old.pages.map((page: OpportunitiesResponse) =>
+                updateOpportunityInResponse(page, id, data.hasUserUpvoted, data.upvotes)
+              ),
+            };
+          }
+
+          // Handle regular query structure
+          if (old.opportunities && Array.isArray(old.opportunities)) {
+            return updateOpportunityInResponse(
+              old,
+              id,
+              data.hasUserUpvoted,
+              data.upvotes
+            );
+          }
+
+          return old;
         }
       );
     },

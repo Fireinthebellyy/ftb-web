@@ -3,7 +3,8 @@ import { opportunities, tags, user } from "@/lib/schema";
 import { eq, sql } from "drizzle-orm";
 import OpportunityCard from "@/components/OpportunityCard";
 import { notFound } from "next/navigation";
-import { getCurrentUser } from "@/server/users";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export default async function OpportunityDetailPage({ params }: any) {
   const id = params.id;
@@ -44,12 +45,18 @@ export default async function OpportunityDetailPage({ params }: any) {
     notFound();
   }
 
-  // Calculate userHasUpvoted
-  const currentUser = await getCurrentUser();
-  const currentUserId = currentUser?.currentUser?.id as string | undefined;
+  // Calculate userHasUpvoted (non-redirecting check for public access)
   let userHasUpvoted = false;
-  if (currentUserId && Array.isArray(opportunity.upvoterIds)) {
-    userHasUpvoted = opportunity.upvoterIds.includes(currentUserId);
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    const currentUserId = session?.user?.id as string | undefined;
+    if (currentUserId && Array.isArray(opportunity.upvoterIds)) {
+      userHasUpvoted = opportunity.upvoterIds.includes(currentUserId);
+    }
+  } catch {
+    // User not authenticated - allow public viewing with userHasUpvoted = false
   }
 
   const opportunityWithUpvote = {

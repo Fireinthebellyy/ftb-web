@@ -219,14 +219,46 @@ export const feedback = pgTable("feedback", {
 });
 
 // Tags for autosuggest
-export const tags = pgTable(
-  "tags",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    name: text("name").notNull().unique(),
-    createdAt: timestamp("created_at").defaultNow(),
-  }
-);
+export const tags = pgTable("tags", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Toolkit tables for monetization
+export const toolkits = pgTable("toolkits", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  price: integer("price").notNull(), // in rupees (converted to paisa when sent to Razorpay)
+  coverImageUrl: text("cover_image_url"),
+  videoUrl: text("video_url"), // YouTube embed URL
+  contentUrl: text("content_url"), // URL to toolkit content page
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
+
+export const userToolkits = pgTable("user_toolkits", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  toolkitId: uuid("toolkit_id")
+    .notNull()
+    .references(() => toolkits.id, { onDelete: "cascade" }),
+  purchaseDate: timestamp("purchase_date").defaultNow(),
+  razorpayOrderId: text("razorpay_order_id"), // Razorpay order ID
+  paymentId: text("payment_id"), // Razorpay payment ID
+  paymentStatus: text("payment_status").$type<
+    "pending" | "completed" | "failed"
+  >(),
+  amountPaid: integer("amount_paid"), // Actual amount paid
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 export const schema = {
   user,
@@ -242,4 +274,6 @@ export const schema = {
   tasks,
   feedback,
   tags,
+  toolkits,
+  userToolkits,
 };

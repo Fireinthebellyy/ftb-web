@@ -33,7 +33,6 @@ import { createOpportunityStorage } from "@/lib/appwrite";
 import Image from "next/image";
 import { OpportunityPostProps } from "@/types/interfaces";
 import {
-  useOpportunity,
   useToggleUpvote,
   useIsBookmarked,
 } from "@/lib/queries";
@@ -123,7 +122,6 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   const modalFileId = images[modalIndex] ?? images[0] ?? null;
 
   const { data: session } = authClient.useSession();
-  const { data, isLoading } = useOpportunity(id);
   const toggleUpvote = useToggleUpvote(id);
 
   const { data: isBookmarkedServer } = useIsBookmarked(id);
@@ -214,11 +212,8 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
   const opportunityStorage = createOpportunityStorage();
 
-  const upvotes = data?.upvotes ?? (opportunity as any)?.upvoteCount ?? 0;
-  const userUpvoted =
-    data?.hasUserUpvoted ??
-    ((opportunity as any)?.userHasUpvoted as boolean | undefined) ??
-    false;
+  const upvotes = opportunity.upvoteCount ?? 0;
+  const userUpvoted = opportunity.userHasUpvoted ?? false;
 
   const onUpvoteClick = () => {
     if (!toggleUpvote.isPending) {
@@ -567,11 +562,11 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                 onClick={onUpvoteClick}
                 title="Upvote"
                 aria-label="Upvote"
-                disabled={toggleUpvote.isPending || isLoading}
+                disabled={toggleUpvote.isPending}
                 className={`flex cursor-pointer place-items-center text-xs transition-colors sm:text-sm ${userUpvoted
                   ? "fill-orange-500 text-orange-600"
                   : "hover:text-orange-600"
-                  } ${toggleUpvote.isPending || isLoading
+                  } ${toggleUpvote.isPending
                     ? "cursor-not-allowed opacity-60"
                     : ""
                   }`}

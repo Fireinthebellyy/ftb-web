@@ -259,12 +259,25 @@ export async function GET(req: NextRequest) {
       .limit(validLimit)
       .offset(validOffset);
 
+    // Calculate userHasUpvoted for each opportunity
+    const currentUserId = currentUser?.currentUser?.id as string | undefined;
+    const opportunitiesWithUpvote = paginated.map((opp) => {
+      let userHasUpvoted = false;
+      if (currentUserId && Array.isArray(opp.upvoterIds)) {
+        userHasUpvoted = opp.upvoterIds.includes(currentUserId);
+      }
+      return {
+        ...opp,
+        userHasUpvoted,
+      };
+    });
+
     const hasMore = validOffset + paginated.length < totalCount;
 
     return NextResponse.json(
       {
         success: true,
-        opportunities: paginated,
+        opportunities: opportunitiesWithUpvote,
         pagination: {
           limit: validLimit,
           offset: validOffset,

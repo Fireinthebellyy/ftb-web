@@ -13,7 +13,7 @@ import { DescriptionField } from "./fields/DescriptionField";
 import { TagsField } from "./fields/TagsField";
 import { TypeSelector } from "./fields/TypeSelector";
 import { MetaPopovers } from "./fields/MetaPopovers";
-import { ImagePicker, SelectedImages } from "./images/ImageDropzone";
+import { ImagePicker, SelectedImages, ExistingImages } from "./images/ImageDropzone";
 import { formSchema, FormData } from "./schema";
 import { FileItem, UploadProgress } from "@/types/interfaces";
 import { useQueryClient } from "@tanstack/react-query";
@@ -35,7 +35,36 @@ export default function EditOpportunityForm({
 }: EditOpportunityFormProps) {
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState<FileItem[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>(
+    opportunity?.images || []
+  );
+  const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
   const queryClient = useQueryClient();
+
+  // Handle removing an existing image - track for deletion on submit
+  const handleRemoveExistingImage = (imageId: string) => {
+    setExistingImages((prev) => prev.filter((id) => id !== imageId));
+    setRemovedImageIds((prev) => [...prev, imageId]);
+  };
+
+  // Delete removed images from Appwrite storage
+  async function deleteRemovedImages(): Promise<void> {
+    if (removedImageIds.length === 0) return;
+
+    const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
+    if (!bucketId) return;
+
+    const opportunityStorage = createOpportunityStorage();
+    
+    for (const imageId of removedImageIds) {
+      try {
+        await opportunityStorage.deleteFile(bucketId, imageId);
+      } catch (err) {
+        console.error(`Failed to delete image ${imageId}:`, err);
+        // Continue deleting other images even if one fails
+      }
+    }
+  }
 
   const maxFiles = 4;
 
@@ -151,13 +180,9 @@ export default function EditOpportunityForm({
         );
       }
 
-      // If images were selected but not all uploaded successfully, abort post update
-      if (!imagesOk) {
-        throw new Error(
-          "One or more images failed to upload. Post was not updated."
-        );
-      }
-
+      // Combine existing images with newly uploaded images
+      const finalImages = [...existingImages, ...imageIds];
+      
       const res = await axios.put(`/api/opportunities/${opportunity.id}`, {
         ...data,
         startDate: data.dateRange?.from?.toISOString(),
@@ -167,15 +192,19 @@ export default function EditOpportunityForm({
             ?.split(",")
             .map((t) => t.trim())
             .filter(Boolean) || [],
-        images: imageIds.length > 0 ? imageIds : undefined,
+        images: finalImages,
       });
 
       if (res.status !== 200) {
         throw new Error("Failed to update opportunity");
       }
 
+      // Delete removed images from Appwrite storage after successful update
+      await deleteRemovedImages();
+
       files.forEach((file) => URL.revokeObjectURL(file.preview));
       setFiles([]);
+      setRemovedImageIds([]);
 
       toast.success("Opportunity updated successfully!");
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
@@ -199,7 +228,13 @@ export default function EditOpportunityForm({
 
           <DescriptionField control={form.control} />
 
-          {/* Selected images displayed above the bottom action bar */}
+          {/* Existing images (from opportunity) displayed with remove option */}
+          <ExistingImages
+            existingImages={existingImages}
+            onRemoveExisting={handleRemoveExistingImage}
+          />
+
+          {/* Selected new images displayed above the bottom action bar */}
           <SelectedImages files={files} setFiles={setFiles} />
 
           <TagsField control={form.control} />
@@ -224,6 +259,7 @@ export default function EditOpportunityForm({
                 files={files}
                 setFiles={setFiles}
                 maxFiles={maxFiles}
+                existingImagesCount={existingImages.length}
               />
             </div>
 

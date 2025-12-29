@@ -13,7 +13,7 @@ import { DescriptionField } from "./fields/DescriptionField";
 import { TagsField } from "./fields/TagsField";
 import { TypeSelector } from "./fields/TypeSelector";
 import { MetaPopovers } from "./fields/MetaPopovers";
-import { ImagePicker, SelectedImages } from "./images/ImageDropzone";
+import { ImagePicker, SelectedImages, ExistingImages } from "./images/ImageDropzone";
 import { formSchema, FormData } from "./schema";
 import { FileItem, Opportunity, UploadProgress } from "@/types/interfaces";
 import { useQueryClient } from "@tanstack/react-query";
@@ -29,6 +29,10 @@ export default function NewOpportunityForm({
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState<FileItem[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
+  const [existingImages, setExistingImages] = useState<string[]>(
+    opportunity?.images || []
+  );
+  const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
   const queryClient = useQueryClient();
 
   const maxFiles = 4;
@@ -109,7 +113,13 @@ export default function NewOpportunityForm({
       },
     });
 
-    const imagesChanged = files.length > 0;
+    // Check if images have changed (either new files added or existing images removed)
+    const originalImages = opportunity.images || [];
+    const imagesChanged = 
+      files.length > 0 || 
+      existingImages.length !== originalImages.length ||
+      !existingImages.every((img) => originalImages.includes(img));
+    
     setHasChanges(currentSnapshot !== originalSnapshot || imagesChanged);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -122,7 +132,33 @@ export default function NewOpportunityForm({
     watchedOrganiser,
     watchedDateRange,
     files,
+    existingImages,
   ]);
+
+  // Handle removing an existing image - track for deletion on submit
+  const handleRemoveExistingImage = (imageId: string) => {
+    setExistingImages((prev) => prev.filter((id) => id !== imageId));
+    setRemovedImageIds((prev) => [...prev, imageId]);
+  };
+
+  // Delete removed images from Appwrite storage
+  async function deleteRemovedImages(): Promise<void> {
+    if (removedImageIds.length === 0) return;
+
+    const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
+    if (!bucketId) return;
+
+    const opportunityStorage = createOpportunityStorage();
+    
+    for (const imageId of removedImageIds) {
+      try {
+        await opportunityStorage.deleteFile(bucketId, imageId);
+      } catch (err) {
+        console.error(`Failed to delete image ${imageId}:`, err);
+        // Continue deleting other images even if one fails
+      }
+    }
+  }
 
   function handleTypeChange(type: string) {
     form.setValue("type", type, { shouldValidate: true, shouldTouch: true });
@@ -204,6 +240,9 @@ export default function NewOpportunityForm({
         );
       }
 
+      // Combine existing images with newly uploaded images
+      const finalImages = [...existingImages, ...imageIds];
+      
       const payload = {
         ...data,
         startDate: data.dateRange?.from?.toISOString(),
@@ -213,13 +252,20 @@ export default function NewOpportunityForm({
             ?.split(",")
             .map((t) => t.trim())
             .filter(Boolean) || [],
-        images: imageIds.length > 0 ? imageIds : undefined,
+        // For edit mode: always send the final images array (existing + new)
+        // For create mode: only send if there are images
+        images: opportunity?.id 
+          ? finalImages 
+          : (imageIds.length > 0 ? imageIds : undefined),
       };
 
       let res;
       if (opportunity?.id) {
         res = await axios.put(`/api/opportunities/${opportunity.id}`, payload);
         if (res.status !== 200) throw new Error("Failed to update opportunity");
+        
+        // Delete removed images from Appwrite storage after successful update
+        await deleteRemovedImages();
       } else {
         res = await axios.post("/api/opportunities", payload);
         if (res.status !== 200 && res.status !== 201)
@@ -228,6 +274,7 @@ export default function NewOpportunityForm({
 
       files.forEach((file) => URL.revokeObjectURL(file.preview));
       setFiles([]);
+      setRemovedImageIds([]);
 
       // Check user role to show appropriate message
       const userRole = res.data?.userRole || "user"; // The API should return user role
@@ -261,7 +308,15 @@ export default function NewOpportunityForm({
 
           <DescriptionField control={form.control} />
 
-          {/* Selected images displayed above the bottom action bar */}
+          {/* Existing images (from opportunity) displayed with remove option */}
+          {opportunity && (
+            <ExistingImages
+              existingImages={existingImages}
+              onRemoveExisting={handleRemoveExistingImage}
+            />
+          )}
+
+          {/* Selected new images displayed above the bottom action bar */}
           <SelectedImages files={files} setFiles={setFiles} />
 
           <TagsField control={form.control} />
@@ -286,6 +341,7 @@ export default function NewOpportunityForm({
                 files={files}
                 setFiles={setFiles}
                 maxFiles={maxFiles}
+                existingImagesCount={existingImages.length}
               />
             </div>
 

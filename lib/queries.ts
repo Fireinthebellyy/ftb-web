@@ -152,15 +152,15 @@ export function useToggleUpvote(id: string) {
 
           // Handle infinite query structure: { pages: OpportunitiesResponse[], pageParams: any[] }
           if (old.pages && Array.isArray(old.pages)) {
-            const nextHas = !(
-              old.pages
-                .flatMap((page: OpportunitiesResponse) => page.opportunities)
-                .find((opp: Opportunity) => opp.id === id)?.userHasUpvoted ?? false
+            // Optimize: find the opportunity once instead of multiple lookups
+            const allOpportunities = old.pages.flatMap(
+              (page: OpportunitiesResponse) => page.opportunities
             );
-            const currentCount =
-              old.pages
-                .flatMap((page: OpportunitiesResponse) => page.opportunities)
-                .find((opp: Opportunity) => opp.id === id)?.upvoteCount ?? 0;
+            const foundOpp = allOpportunities.find((opp: Opportunity) => opp.id === id);
+            const currentHasUpvoted = foundOpp?.userHasUpvoted ?? false;
+            const currentCount = foundOpp?.upvoteCount ?? 0;
+            
+            const nextHas = !currentHasUpvoted;
             const nextCount = Math.max(0, currentCount + (nextHas ? 1 : -1));
 
             return {
@@ -173,13 +173,12 @@ export function useToggleUpvote(id: string) {
 
           // Handle regular query structure: OpportunitiesResponse
           if (old.opportunities && Array.isArray(old.opportunities)) {
-            const nextHas = !(
-              old.opportunities.find((opp: Opportunity) => opp.id === id)
-                ?.userHasUpvoted ?? false
-            );
-            const currentCount =
-              old.opportunities.find((opp: Opportunity) => opp.id === id)
-                ?.upvoteCount ?? 0;
+            // Optimize: find the opportunity once instead of multiple lookups
+            const foundOpp = old.opportunities.find((opp: Opportunity) => opp.id === id);
+            const currentHasUpvoted = foundOpp?.userHasUpvoted ?? false;
+            const currentCount = foundOpp?.upvoteCount ?? 0;
+            
+            const nextHas = !currentHasUpvoted;
             const nextCount = Math.max(0, currentCount + (nextHas ? 1 : -1));
 
             return updateOpportunityInResponse(old, id, nextHas, nextCount);

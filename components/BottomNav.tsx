@@ -25,9 +25,9 @@ export default function BottomNav() {
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 260, damping: 20 }}
-      className="pb-safe fixed right-0 bottom-0 left-0 z-50 border-t border-neutral-200 bg-white/95 backdrop-blur-md md:hidden"
+      className="fixed right-0 bottom-0 left-0 z-50 border-t border-neutral-200 bg-white backdrop-blur-md md:hidden"
     >
-      <div className="flex h-16 items-center justify-around px-2">
+      <div className="flex h-[52px] items-center justify-around px-1">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
@@ -36,48 +36,33 @@ export default function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className="group relative flex h-12 w-12 items-center justify-center"
+              className="flex h-full w-16 flex-col items-center justify-center"
               aria-label={item.label}
             >
-              <div className="relative">
-                <motion.div
-                  initial={false}
-                  animate={{
-                    scale: isActive ? 1.1 : 1,
-                    y: isActive ? -2 : 0,
-                  }}
-                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                  className={`rounded-full p-2 transition-colors duration-200 ${
-                    isActive
-                      ? "text-primary"
-                      : "text-neutral-500 group-hover:bg-neutral-100 group-hover:text-neutral-700"
+              <motion.div
+                initial={false}
+                animate={{
+                  scale: isActive ? 1.05 : 1,
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                className={`flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200 ${isActive
+                    ? "bg-primary/10"
+                    : "text-neutral-700 group-hover:bg-neutral-100 group-hover:text-neutral-600"
                   }`}
-                >
-                  <Icon
-                    size={24}
-                    strokeWidth={isActive ? 2.5 : 2}
-                    className="transition-all duration-200"
-                  />
-                </motion.div>
-
-                {isActive && (
-                  <motion.div
-                    layoutId="activeIndicator"
-                    className="bg-primary absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                  />
-                )}
-              </div>
+              >
+                <Icon
+                  size={18}
+                  strokeWidth={2}
+                  className={`transition-all duration-200 ${isActive ? "text-primary" : ""
+                    }`}
+                />
+              </motion.div>
 
               <span
-                className={`absolute -bottom-6 text-[10px] font-medium transition-all duration-200 ${
-                  isActive
-                    ? "text-primary translate-y-0 opacity-100"
-                    : "translate-2 text-neutral-500 opacity-0 group-hover:opacity-70"
-                }`}
+                className={`text-[10px] font-medium transition-all duration-200 ${isActive
+                    ? "text-primary"
+                    : "text-neutral-400 group-hover:text-neutral-600"
+                  }`}
               >
                 {item.label}
               </span>

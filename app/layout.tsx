@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import BottomNav from "@/components/BottomNav";
 import Footer from "@/components/Footer";
 import { Suspense } from "react";
 import { Toaster } from "@/components/ui/sonner";
@@ -36,9 +37,10 @@ export default function RootLayout({
         <Suspense fallback={<div>Loading ..</div>}>
           <ProgressProvider>
             <Navbar />
-            <main className="grow">
+            <main className="grow pb-20 md:pb-0">
               <QueryProvider>{children}</QueryProvider>
             </main>
+            <BottomNav />
           </ProgressProvider>
           <Footer />
           <Toaster />

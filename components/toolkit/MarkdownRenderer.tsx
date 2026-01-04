@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
@@ -19,15 +19,60 @@ interface MarkdownRendererProps {
   content: string;
   className?: string;
   protected?: boolean;
+  itemId?: string;
+  onComplete?: (itemId: string) => void;
 }
 
 export default function MarkdownRenderer({
   content,
   className,
   protected: isProtected = false,
+  itemId,
+  onComplete,
 }: MarkdownRendererProps) {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const hasCompletedRef = useRef(false);
+
+  useEffect(() => {
+    if (!itemId || !onComplete || hasCompletedRef.current) return;
+
+    const timeThresholdMs = 50000 + Math.random() * 10000;
+    const scrollThreshold = 0.95;
+
+    const handleScroll = () => {
+      if (!contentRef.current || hasCompletedRef.current) return;
+
+      const element = contentRef.current;
+      const rect = element.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+
+      const scrollPercentage =
+        (windowHeight - rect.top) / (rect.height + windowHeight);
+
+      if (scrollPercentage >= scrollThreshold) {
+        hasCompletedRef.current = true;
+        onComplete(itemId);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    const timeoutId = setTimeout(() => {
+      if (!hasCompletedRef.current) {
+        hasCompletedRef.current = true;
+        onComplete(itemId);
+      }
+    }, timeThresholdMs);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      clearTimeout(timeoutId);
+    };
+  }, [itemId, onComplete]);
+
   const markdownContent = (
     <div
+      ref={contentRef}
       className={cn(
         "prose prose-gray prose-lg max-w-none",
         "prose-headings:font-semibold prose-headings:text-gray-900",

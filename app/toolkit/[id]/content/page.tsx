@@ -120,9 +120,6 @@ export default function ToolkitContentPage() {
 
   const handleItemSelect = (item: ToolkitContentItem): void => {
     setCurrentItem(item);
-    if (!completedItems.includes(item.id)) {
-      setCompletedItems((prev) => [...prev, item.id]);
-    }
     setSidebarOpen(false);
   };
 
@@ -145,9 +142,15 @@ export default function ToolkitContentPage() {
     }
 
     setCurrentItem(sortedItems[newIndex]);
-    if (!completedItems.includes(sortedItems[newIndex].id)) {
-      setCompletedItems((prev) => [...prev, sortedItems[newIndex].id]);
-    }
+  };
+
+  const handleToggleComplete = (itemId: string): void => {
+    setCompletedItems((prev) => {
+      if (prev.includes(itemId)) {
+        return prev.filter((id) => id !== itemId);
+      }
+      return [...prev, itemId];
+    });
   };
 
   if (isLoading) {
@@ -281,6 +284,8 @@ export default function ToolkitContentPage() {
                   videoId={currentItem.vimeoVideoId}
                   title={currentItem.title}
                   className="shadow-sm"
+                  isCompleted={completedItems.includes(currentItem.id)}
+                  onToggleComplete={() => handleToggleComplete(currentItem.id)}
                 />
               )}
 
@@ -290,6 +295,8 @@ export default function ToolkitContentPage() {
                     <MarkdownRenderer
                       content={currentItem.content}
                       protected={true}
+                      itemId={currentItem.id}
+                      onComplete={handleToggleComplete}
                     />
                   </CardContent>
                 </Card>

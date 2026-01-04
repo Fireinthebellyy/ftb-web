@@ -5,7 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Toolkit, ToolkitContentItem } from "@/types/interfaces";
 import ToolkitSidebar from "@/components/toolkit/ToolkitSidebar";
 import ContentList from "@/components/toolkit/ContentList";
 import { useToolkit, useToolkitPurchase } from "@/lib/queries";

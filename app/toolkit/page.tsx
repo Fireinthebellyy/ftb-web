@@ -58,8 +58,8 @@ export default function ToolkitPage() {
           <h1 className="mb-6 text-2xl font-bold text-gray-900">Toolkits</h1>
 
           <div className="mb-6 flex flex-wrap items-center gap-2">
-            {CATEGORIES.map(() => (
-              <Skeleton className="h-8 w-20 rounded-full" />
+            {CATEGORIES.map((category, index) => (
+              <Skeleton className="h-8 w-20 rounded-full" key={index} />
             ))}
           </div>
 

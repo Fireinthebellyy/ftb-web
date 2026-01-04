@@ -6,13 +6,74 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { PanelRight, ArrowLeft, Check, ChevronRight } from "lucide-react";
+import {
+  PanelRight,
+  ArrowLeft,
+  Check,
+  ChevronRight,
+  PanelLeft,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 import { ToolkitContentItem } from "@/types/interfaces";
 import LessonSidebar from "@/components/toolkit/LessonSidebar";
 import VimeoPlayer from "@/components/toolkit/VimeoPlayer";
 import MarkdownRenderer from "@/components/toolkit/MarkdownRenderer";
 import { useToolkit } from "@/lib/queries";
 import { Skeleton } from "@/components/ui/skeleton";
+
+interface CircularProgressProps {
+  progress: number;
+  size?: number;
+  strokeWidth?: number;
+  className?: string;
+}
+
+function CircularProgress({
+  progress,
+  size = 36,
+  strokeWidth = 3,
+  className,
+}: CircularProgressProps) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (progress / 100) * circumference;
+
+  return (
+    <div
+      className={cn(
+        "relative inline-flex items-center justify-center",
+        className
+      )}
+    >
+      <svg width={size} height={size} className="-rotate-90 transform">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          className="text-gray-200"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          className="text-primary transition-all duration-300 ease-in-out"
+        />
+      </svg>
+      <span className="absolute text-[10px] font-medium text-gray-700">
+        {Math.round(progress)}%
+      </span>
+    </div>
+  );
+}
 
 export default function ToolkitContentPage() {
   const params = useParams();
@@ -22,12 +83,18 @@ export default function ToolkitContentPage() {
   );
   const [completedItems, setCompletedItems] = useState<string[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
 
   const { data: toolkitData, isLoading } = useToolkit(params.id as string);
 
   const toolkit = toolkitData?.toolkit ?? null;
   const contentItems = toolkitData?.contentItems ?? [];
   const hasAccess = toolkitData?.hasPurchased ?? false;
+
+  const progress =
+    contentItems.length > 0
+      ? (completedItems.length / contentItems.length) * 100
+      : 0;
 
   useEffect(() => {
     if (contentItems.length > 0 && !currentItem) {
@@ -125,7 +192,7 @@ export default function ToolkitContentPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 z-10 border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
         <div className="flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Button
               variant="ghost"
               size="icon"
@@ -143,7 +210,7 @@ export default function ToolkitContentPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
               <SheetTrigger asChild>
                 <Button
@@ -164,14 +231,26 @@ export default function ToolkitContentPage() {
               </SheetContent>
             </Sheet>
 
-            <span className="hidden text-xs text-gray-500 sm:inline-block">
-              {completedItems.length}/{contentItems.length}
-            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
+              className="hidden shrink-0 lg:flex"
+            >
+              {desktopSidebarOpen ? (
+                <PanelLeft className="h-5 w-5" />
+              ) : (
+                <PanelRight className="h-5 w-5" />
+              )}
+            </Button>
+
+            <CircularProgress progress={progress} />
+
             <Button
               variant="outline"
               size="sm"
               onClick={() => router.push(`/toolkit/${toolkit.id}`)}
-              className="hidden sm:flex"
+              className="hidden shrink-0 sm:flex"
             >
               Overview
             </Button>
@@ -180,7 +259,12 @@ export default function ToolkitContentPage() {
       </header>
 
       <div className="lg:grid lg:grid-cols-[280px_1fr]">
-        <aside className="hidden lg:block lg:h-[calc(100vh-4rem)] lg:overflow-y-auto lg:border-r lg:bg-white">
+        <aside
+          className={cn(
+            "hidden lg:block lg:h-[calc(100vh-4rem)] lg:overflow-y-auto lg:border-r lg:bg-white",
+            !desktopSidebarOpen && "lg:hidden"
+          )}
+        >
           <LessonSidebar
             items={contentItems}
             currentItemId={currentItem?.id || ""}

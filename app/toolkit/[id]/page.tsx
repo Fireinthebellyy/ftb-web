@@ -1,15 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { toast } from "sonner";
-import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Toolkit, ToolkitContentItem } from "@/types/interfaces";
 import ToolkitSidebar from "@/components/toolkit/ToolkitSidebar";
 import ContentList from "@/components/toolkit/ContentList";
+import { useToolkit, useToolkitPurchase } from "@/lib/queries";
 
 declare global {
   interface Window {
@@ -20,102 +19,19 @@ declare global {
 export default function ToolkitDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const [toolkit, setToolkit] = useState<Toolkit | null>(null);
-  const [contentItems, setContentItems] = useState<ToolkitContentItem[]>([]);
-  const [hasPurchased, setHasPurchased] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [isPurchaseLoading, setIsPurchaseLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchToolkitData = async () => {
-      try {
-        const toolkitId = params.id as string;
+  const { data: toolkitData, isLoading } = useToolkit(params.id as string);
+  const purchaseMutation = useToolkitPurchase(params.id as string);
 
-        const response = await axios.get(`/api/toolkits/${toolkitId}`);
-        setToolkit(response.data.toolkit);
-        setHasPurchased(response.data.hasPurchased);
-        setContentItems(response.data.contentItems || []);
-      } catch (error) {
-        console.error("Error fetching toolkit data:", error);
-        toast.error("Failed to load toolkit details");
-        router.push("/toolkit");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchToolkitData();
-  }, [params.id, router]);
+  const toolkit = toolkitData?.toolkit ?? null;
+  const contentItems = toolkitData?.contentItems ?? [];
+  const hasPurchased = toolkitData?.hasPurchased ?? false;
 
   const handlePurchase = async () => {
     try {
       setIsPurchaseLoading(true);
-
-      const response = await axios.post(
-        `/api/toolkits/${toolkit?.id}`,
-        {},
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      const { order, key } = response.data;
-
-      if (typeof window === "undefined" || !window.Razorpay) {
-        toast.error(
-          "Payment gateway not loaded. Please refresh the page and try again."
-        );
-        return;
-      }
-
-      const options = {
-        key: key,
-        amount: order.amount,
-        currency: order.currency,
-        name: "Fire in the Belly",
-        description: "Toolkit Purchase",
-        order_id: order.id,
-        handler: async (response: any) => {
-          try {
-            await axios.post(
-              `/api/toolkits/${toolkit?.id}/verify`,
-              {
-                razorpay_order_id: order.id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              },
-              {
-                headers: {
-                  "Content-Type": "application/json",
-                },
-              }
-            );
-            toast.success("Purchase successful! Redirecting to content...");
-            setHasPurchased(true);
-            router.push(`/toolkit/${toolkit?.id}/content`);
-          } catch (error) {
-            console.error("Verification failed:", error);
-            toast.error("Payment verification failed. Contact support.");
-          }
-        },
-        prefill: {},
-        theme: {
-          color: "#F97316",
-        },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (error) {
-      console.error("Purchase error:", error);
-      if (axios.isAxiosError(error) && error.response) {
-        const errorData = error.response.data;
-        toast.error(errorData.error || "Purchase failed");
-      } else {
-        toast.error(error instanceof Error ? error.message : "Purchase failed");
-      }
+      await purchaseMutation.mutateAsync();
     } finally {
       setIsPurchaseLoading(false);
     }
@@ -165,7 +81,7 @@ export default function ToolkitDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 lg:pb-0">
+    <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto max-w-7xl px-4 py-6">
         <Button
           variant="ghost"
@@ -354,7 +270,7 @@ export default function ToolkitDetailPage() {
       </div>
 
       {/* Mobile sticky purchase bar */}
-      <div className="fixed right-0 bottom-0 left-0 border-t bg-white p-4 shadow-lg lg:hidden">
+      <div className="fixed right-0 bottom-[52px] left-0 z-50 border-t bg-white p-4 shadow-lg md:hidden">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold text-gray-900">

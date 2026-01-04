@@ -1,71 +1,38 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Toolkit, ToolkitContentItem } from "@/types/interfaces";
+import { ToolkitContentItem } from "@/types/interfaces";
 import LessonSidebar from "@/components/toolkit/LessonSidebar";
 import VimeoPlayer from "@/components/toolkit/VimeoPlayer";
 import MarkdownRenderer from "@/components/toolkit/MarkdownRenderer";
+import { useToolkit } from "@/lib/queries";
 
 export default function ToolkitContentPage() {
   const params = useParams();
   const router = useRouter();
-  const [toolkit, setToolkit] = useState<Toolkit | null>(null);
-  const [contentItems, setContentItems] = useState<ToolkitContentItem[]>([]);
   const [currentItem, setCurrentItem] = useState<ToolkitContentItem | null>(
     null
   );
   const [completedItems, setCompletedItems] = useState<string[]>([]);
-  const [hasAccess, setHasAccess] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  useEffect(() => {
-    const fetchToolkitData = async () => {
-      try {
-        const toolkitId = params.id as string;
+  const { data: toolkitData, isLoading } = useToolkit(params.id as string);
 
-        const toolkitResponse = await fetch(`/api/toolkits/${toolkitId}`);
-        if (!toolkitResponse.ok) {
-          throw new Error("Toolkit not found");
-        }
+  const toolkit = toolkitData?.toolkit ?? null;
+  const contentItems = toolkitData?.contentItems ?? [];
+  const hasAccess = toolkitData?.hasPurchased ?? false;
 
-        const toolkitData = await toolkitResponse.json();
-        setToolkit(toolkitData.toolkit);
-        setHasAccess(toolkitData.hasPurchased);
-        setContentItems(toolkitData.contentItems || []);
+  if (!isLoading && toolkit && !hasAccess) {
+    toast.warning("You need to purchase this toolkit to access content");
+    setTimeout(() => {
+      router.push(`/toolkit/${params.id}`);
+    }, 3000);
+  }
 
-        if (!toolkitData.hasPurchased) {
-          toast.warning(
-            "You need to purchase this toolkit to access the content"
-          );
-          setTimeout(() => {
-            router.push(`/toolkit/${toolkitId}`);
-          }, 3000);
-          return;
-        }
-
-        if (toolkitData.contentItems && toolkitData.contentItems.length > 0) {
-          const sortedItems = [...toolkitData.contentItems].sort(
-            (a, b) => a.orderIndex - b.orderIndex
-          );
-          setCurrentItem(sortedItems[0]);
-        }
-      } catch (error) {
-        console.error("Error fetching toolkit data:", error);
-        toast.error("Failed to load toolkit content");
-        router.push("/toolkit");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchToolkitData();
-  }, [params.id, router]);
-
-  const handleItemSelect = (item: ToolkitContentItem) => {
+  const handleItemSelect = (item: ToolkitContentItem): void => {
     setCurrentItem(item);
     if (!completedItems.includes(item.id)) {
       setCompletedItems((prev) => [...prev, item.id]);

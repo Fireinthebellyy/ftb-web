@@ -68,8 +68,8 @@ export default function ToolkitCardNew({
         )}
       </div>
 
-      <CardContent className="p-4">
-        <p className="mb-2 text-xs text-gray-500">
+      <CardContent className="p-3 sm:p-4">
+        <p className="mb-1.5 text-xs text-gray-500">
           {toolkit.creatorName && (
             <span className="font-medium text-gray-700">
               {toolkit.creatorName}
@@ -87,14 +87,24 @@ export default function ToolkitCardNew({
           )}
         </p>
 
-        <h3 className="mb-2 text-lg font-semibold text-gray-900 transition-colors group-hover:text-gray-700">
+        <h3 className="mb-1.5 text-lg font-semibold text-gray-900 transition-colors group-hover:text-gray-700">
           {toolkit.title.charAt(0).toUpperCase() + toolkit.title.slice(1)}
         </h3>
 
-        <p className="mb-4 line-clamp-2 text-sm text-gray-600">
+        <p className="mb-2 line-clamp-2 text-sm text-gray-600">
           {toolkit.description.charAt(0).toUpperCase() +
             toolkit.description.slice(1)}
         </p>
+
+        {toolkit.highlights && toolkit.highlights.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-1">
+            {toolkit.highlights.slice(0, 2).map((highlight, index) => (
+              <Badge key={index} variant="outline" className="text-gray-600">
+                {highlight}
+              </Badge>
+            ))}
+          </div>
+        )}
 
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-2">
@@ -125,16 +135,6 @@ export default function ToolkitCardNew({
             </svg>
           </div>
         </div>
-
-        {toolkit.highlights && toolkit.highlights.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-1">
-            {toolkit.highlights.slice(0, 2).map((highlight, index) => (
-              <Badge key={index} variant="outline" className="text-gray-600">
-                {highlight}
-              </Badge>
-            ))}
-          </div>
-        )}
       </CardContent>
     </Card>
   );

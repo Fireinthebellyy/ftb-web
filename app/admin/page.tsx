@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminUsersTable from "./AdminUsersTable";
 import AdminOpportunitiesTable from "./AdminOpportunitiesTable";
+import AdminToolkitsTable from "./AdminToolkitsTable";
 import NewToolkitModal from "@/components/toolkit/NewToolkitModal";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
@@ -53,17 +54,21 @@ export default async function AdminPage() {
         </div>
 
         <Tabs defaultValue="opportunities" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="opportunities">
               Pending Opportunities
             </TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
+            <TabsTrigger value="toolkits">Toolkit Management</TabsTrigger>
           </TabsList>
           <TabsContent value="opportunities">
             <AdminOpportunitiesTable />
           </TabsContent>
           <TabsContent value="users">
             <AdminUsersTable currentUserId={session.user.id} />
+          </TabsContent>
+          <TabsContent value="toolkits">
+            <AdminToolkitsTable />
           </TabsContent>
         </Tabs>
       </div>

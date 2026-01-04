@@ -22,38 +22,30 @@ export async function PUT(
     const toolkitId = paramsResolved.id;
 
     const body = await request.json();
-    const {
-      title,
-      description,
-      price,
-      originalPrice,
-      coverImageUrl,
-      videoUrl,
-      contentUrl,
-      category,
-      highlights,
-      totalDuration,
-      lessonCount,
-      isActive,
-    } = body;
+
+    const updates: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
+
+    if (body.title !== undefined) updates.title = body.title;
+    if (body.description !== undefined) updates.description = body.description;
+    if (body.price !== undefined) updates.price = body.price;
+    if (body.originalPrice !== undefined)
+      updates.originalPrice = body.originalPrice;
+    if (body.coverImageUrl !== undefined)
+      updates.coverImageUrl = body.coverImageUrl;
+    if (body.videoUrl !== undefined) updates.videoUrl = body.videoUrl;
+    if (body.contentUrl !== undefined) updates.contentUrl = body.contentUrl;
+    if (body.category !== undefined) updates.category = body.category;
+    if (body.highlights !== undefined) updates.highlights = body.highlights;
+    if (body.totalDuration !== undefined)
+      updates.totalDuration = body.totalDuration;
+    if (body.lessonCount !== undefined) updates.lessonCount = body.lessonCount;
+    if (body.isActive !== undefined) updates.isActive = body.isActive;
 
     const updatedToolkit = await db
       .update(toolkits)
-      .set({
-        title,
-        description,
-        price,
-        originalPrice,
-        coverImageUrl,
-        videoUrl,
-        contentUrl,
-        category,
-        highlights,
-        totalDuration,
-        lessonCount,
-        isActive,
-        updatedAt: new Date(),
-      })
+      .set(updates)
       .where(eq(toolkits.id, toolkitId))
       .returning();
 

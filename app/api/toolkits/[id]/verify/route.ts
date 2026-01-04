@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { userToolkits } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 import { createHmac } from "crypto";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export async function POST(
   request: Request,
@@ -32,7 +34,37 @@ export async function POST(
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
-    // Update the purchase record
+    // Authenticate user
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+
+    // First check if the purchase record exists and get its userId
+    const existingPurchase = await db.query.userToolkits.findFirst({
+      where: and(
+        eq(userToolkits.toolkitId, toolkitId),
+        eq(userToolkits.razorpayOrderId, razorpay_order_id)
+      ),
+    });
+
+    if (!existingPurchase) {
+      return NextResponse.json(
+        { error: "Purchase record not found" },
+        { status: 404 }
+      );
+    }
+
+    if (existingPurchase.userId !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Update the purchase record (only if it belongs to the authenticated user)
     await db
       .update(userToolkits)
       .set({
@@ -42,7 +74,8 @@ export async function POST(
       .where(
         and(
           eq(userToolkits.toolkitId, toolkitId),
-          eq(userToolkits.razorpayOrderId, razorpay_order_id)
+          eq(userToolkits.razorpayOrderId, razorpay_order_id),
+          eq(userToolkits.userId, userId)
         )
       );
 

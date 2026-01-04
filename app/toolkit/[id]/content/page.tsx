@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -105,12 +105,18 @@ export default function ToolkitContentPage() {
     }
   }, [contentItems, currentItem]);
 
-  if (!isLoading && toolkit && !hasAccess) {
-    toast.warning("You need to purchase this toolkit to access content");
-    setTimeout(() => {
-      router.push(`/toolkit/${params.id}`);
-    }, 3000);
-  }
+  const didRedirectRef = useRef(false);
+
+  useEffect(() => {
+    if (!isLoading && toolkit && !hasAccess && !didRedirectRef.current) {
+      didRedirectRef.current = true;
+      toast.warning("You need to purchase this toolkit to access content");
+      const timeoutId = setTimeout(() => {
+        router.push(`/toolkit/${params.id}`);
+      }, 3000);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isLoading, hasAccess, toolkit, params.id, router]);
 
   const handleItemSelect = (item: ToolkitContentItem): void => {
     setCurrentItem(item);

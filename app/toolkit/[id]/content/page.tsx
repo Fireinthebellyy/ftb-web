@@ -334,7 +334,7 @@ export default function ToolkitContentPage() {
 
         <aside
           className={cn(
-            "hidden lg:order-last lg:block lg:h-[calc(100vh-4rem)] lg:overflow-y-auto lg:border-l lg:bg-white",
+            "hidden w-72 shrink-0 lg:order-last lg:block lg:h-[calc(100vh-4rem)] lg:overflow-y-auto lg:border-l lg:bg-white",
             !desktopSidebarOpen && "lg:hidden"
           )}
         >

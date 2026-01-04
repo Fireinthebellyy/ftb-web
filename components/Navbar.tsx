@@ -197,6 +197,15 @@ export default function Navbar() {
           >
             Deadlines
           </Link>
+          <Link
+            href="/toolkit"
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/toolkit"
+                ? "text-primary after:w-full"
+                : "text-neutral-800 after:w-0"
+              }`}
+          >
+            Toolkit
+          </Link>
         </nav>
 
         {/* Right side: auth controls and Get Started button */}

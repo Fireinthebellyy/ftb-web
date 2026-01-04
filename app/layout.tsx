@@ -10,6 +10,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/next";
 import QueryProvider from "@/components/Providers";
 import ProgressProvider from "./providers";
+import Script from "next/script";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   weight: ["400", "700"], // or ["400", "700"] if multiple
@@ -30,6 +31,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
+      <head>
+        <Script
+          id="razorpay-checkout-js"
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="afterInteractive"
+        />
+      </head>
       <body
         className={`${plusJakartaSans.className} flex min-h-screen flex-col bg-neutral-50 font-sans antialiased`}
         suppressHydrationWarning

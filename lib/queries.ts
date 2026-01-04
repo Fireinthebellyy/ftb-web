@@ -1,11 +1,19 @@
 import sanityClient from "@/lib/sanity";
-import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import axios from "axios";
+import { toast } from "sonner";
 import {
   Opportunity,
   Comment,
   CreateCommentData,
   Task,
+  Toolkit,
+  ToolkitContentItem,
 } from "@/types/interfaces";
 
 /**
@@ -145,48 +153,49 @@ export function useToggleUpvote(id: string) {
     mutationFn: () => toggleUpvote(id),
     onMutate: async () => {
       // Optimistically update opportunities cache (handles both regular and infinite queries)
-      qc.setQueriesData(
-        { queryKey: ["opportunities"] },
-        (old: any) => {
-          if (!old) return old;
+      qc.setQueriesData({ queryKey: ["opportunities"] }, (old: any) => {
+        if (!old) return old;
 
-          // Handle infinite query structure: { pages: OpportunitiesResponse[], pageParams: any[] }
-          if (old.pages && Array.isArray(old.pages)) {
-            // Optimize: find the opportunity once instead of multiple lookups
-            const allOpportunities = old.pages.flatMap(
-              (page: OpportunitiesResponse) => page.opportunities
-            );
-            const foundOpp = allOpportunities.find((opp: Opportunity) => opp.id === id);
-            const currentHasUpvoted = foundOpp?.userHasUpvoted ?? false;
-            const currentCount = foundOpp?.upvoteCount ?? 0;
-            
-            const nextHas = !currentHasUpvoted;
-            const nextCount = Math.max(0, currentCount + (nextHas ? 1 : -1));
+        // Handle infinite query structure: { pages: OpportunitiesResponse[], pageParams: any[] }
+        if (old.pages && Array.isArray(old.pages)) {
+          // Optimize: find the opportunity once instead of multiple lookups
+          const allOpportunities = old.pages.flatMap(
+            (page: OpportunitiesResponse) => page.opportunities
+          );
+          const foundOpp = allOpportunities.find(
+            (opp: Opportunity) => opp.id === id
+          );
+          const currentHasUpvoted = foundOpp?.userHasUpvoted ?? false;
+          const currentCount = foundOpp?.upvoteCount ?? 0;
 
-            return {
-              ...old,
-              pages: old.pages.map((page: OpportunitiesResponse) =>
-                updateOpportunityInResponse(page, id, nextHas, nextCount)
-              ),
-            };
-          }
+          const nextHas = !currentHasUpvoted;
+          const nextCount = Math.max(0, currentCount + (nextHas ? 1 : -1));
 
-          // Handle regular query structure: OpportunitiesResponse
-          if (old.opportunities && Array.isArray(old.opportunities)) {
-            // Optimize: find the opportunity once instead of multiple lookups
-            const foundOpp = old.opportunities.find((opp: Opportunity) => opp.id === id);
-            const currentHasUpvoted = foundOpp?.userHasUpvoted ?? false;
-            const currentCount = foundOpp?.upvoteCount ?? 0;
-            
-            const nextHas = !currentHasUpvoted;
-            const nextCount = Math.max(0, currentCount + (nextHas ? 1 : -1));
-
-            return updateOpportunityInResponse(old, id, nextHas, nextCount);
-          }
-
-          return old;
+          return {
+            ...old,
+            pages: old.pages.map((page: OpportunitiesResponse) =>
+              updateOpportunityInResponse(page, id, nextHas, nextCount)
+            ),
+          };
         }
-      );
+
+        // Handle regular query structure: OpportunitiesResponse
+        if (old.opportunities && Array.isArray(old.opportunities)) {
+          // Optimize: find the opportunity once instead of multiple lookups
+          const foundOpp = old.opportunities.find(
+            (opp: Opportunity) => opp.id === id
+          );
+          const currentHasUpvoted = foundOpp?.userHasUpvoted ?? false;
+          const currentCount = foundOpp?.upvoteCount ?? 0;
+
+          const nextHas = !currentHasUpvoted;
+          const nextCount = Math.max(0, currentCount + (nextHas ? 1 : -1));
+
+          return updateOpportunityInResponse(old, id, nextHas, nextCount);
+        }
+
+        return old;
+      });
 
       return {};
     },
@@ -196,34 +205,36 @@ export function useToggleUpvote(id: string) {
     },
     onSuccess: (data) => {
       // Update opportunities cache with server response (handles both regular and infinite queries)
-      qc.setQueriesData(
-        { queryKey: ["opportunities"] },
-        (old: any) => {
-          if (!old) return old;
+      qc.setQueriesData({ queryKey: ["opportunities"] }, (old: any) => {
+        if (!old) return old;
 
-          // Handle infinite query structure
-          if (old.pages && Array.isArray(old.pages)) {
-            return {
-              ...old,
-              pages: old.pages.map((page: OpportunitiesResponse) =>
-                updateOpportunityInResponse(page, id, data.hasUserUpvoted, data.upvotes)
-              ),
-            };
-          }
-
-          // Handle regular query structure
-          if (old.opportunities && Array.isArray(old.opportunities)) {
-            return updateOpportunityInResponse(
-              old,
-              id,
-              data.hasUserUpvoted,
-              data.upvotes
-            );
-          }
-
-          return old;
+        // Handle infinite query structure
+        if (old.pages && Array.isArray(old.pages)) {
+          return {
+            ...old,
+            pages: old.pages.map((page: OpportunitiesResponse) =>
+              updateOpportunityInResponse(
+                page,
+                id,
+                data.hasUserUpvoted,
+                data.upvotes
+              )
+            ),
+          };
         }
-      );
+
+        // Handle regular query structure
+        if (old.opportunities && Array.isArray(old.opportunities)) {
+          return updateOpportunityInResponse(
+            old,
+            id,
+            data.hasUserUpvoted,
+            data.upvotes
+          );
+        }
+
+        return old;
+      });
     },
     onSettled: () => {
       // Background refetch to ensure consistency
@@ -267,7 +278,10 @@ export async function fetchOpportunitiesPaginated(
   return data;
 }
 
-export function useOpportunitiesPaginated(limit: number = 10, offset: number = 0) {
+export function useOpportunitiesPaginated(
+  limit: number = 10,
+  offset: number = 0
+) {
   return useQuery<OpportunitiesResponse>({
     queryKey: ["opportunities", "paginated", limit, offset],
     queryFn: () => fetchOpportunitiesPaginated(limit, offset),
@@ -304,7 +318,10 @@ export function useInfiniteOpportunities(
     initialPageParam: 0,
     getNextPageParam: (lastPage) => {
       if (lastPage.pagination?.hasMore) {
-        return (lastPage.pagination.offset || 0) + (lastPage.pagination.limit || limit);
+        return (
+          (lastPage.pagination.offset || 0) +
+          (lastPage.pagination.limit || limit)
+        );
       }
       return undefined;
     },
@@ -570,7 +587,9 @@ export type SaveOnboardingProfileInput = {
 
 export async function fetchOnboardingProfile(): Promise<OnboardingProfile | null> {
   try {
-    const { data } = await axios.get<{ profile?: OnboardingProfile }>("/api/onboarding");
+    const { data } = await axios.get<{ profile?: OnboardingProfile }>(
+      "/api/onboarding"
+    );
     return data?.profile ?? null;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -583,6 +602,112 @@ export async function fetchOnboardingProfile(): Promise<OnboardingProfile | null
 export async function saveOnboardingProfile(
   payload: SaveOnboardingProfileInput
 ): Promise<OnboardingProfile> {
-  const { data } = await axios.post<{ profile: OnboardingProfile }>("/api/onboarding", payload);
+  const { data } = await axios.post<{ profile: OnboardingProfile }>(
+    "/api/onboarding",
+    payload
+  );
   return data.profile;
+}
+
+/**
+ * Toolkit queries
+ */
+
+export type ToolkitDetailResponse = {
+  toolkit: Toolkit;
+  hasPurchased: boolean;
+  contentItems: ToolkitContentItem[];
+};
+
+async function fetchToolkit(toolkitId: string): Promise<ToolkitDetailResponse> {
+  const { data } = await axios.get<ToolkitDetailResponse>(
+    `/api/toolkits/${toolkitId}`
+  );
+  return data;
+}
+
+export function useToolkit(toolkitId: string) {
+  return useQuery({
+    queryKey: ["toolkit", toolkitId],
+    queryFn: () => fetchToolkit(toolkitId),
+    staleTime: 1000 * 60, // 1 minute
+  });
+}
+
+export function useToolkitPurchase(toolkitId: string) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await axios.post(
+        `/api/toolkits/${toolkitId}`,
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return data;
+    },
+    onSuccess: async (response: any) => {
+      const { order, key } = response;
+
+      if (typeof window === "undefined" || !window.Razorpay) {
+        return;
+      }
+
+      const options = {
+        key,
+        amount: order.amount,
+        currency: order.currency,
+        name: "Fire in the Belly",
+        description: "Toolkit Purchase",
+        order_id: order.id,
+        handler: async (razorpayResponse: any) => {
+          try {
+            await axios.post(
+              `/api/toolkits/${toolkitId}/verify`,
+              {
+                razorpay_order_id: order.id,
+                razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+                razorpay_signature: razorpayResponse.razorpay_signature,
+              },
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+            toast.success("Purchase successful! Redirecting to content...");
+            qc.setQueryData(["toolkit", toolkitId], (old: any) => {
+              if (old) {
+                return { ...old, hasPurchased: true };
+              }
+              return old;
+            });
+          } catch (error) {
+            console.error("Verification failed:", error);
+            toast.error("Payment verification failed. Contact support.");
+          }
+        },
+        prefill: {},
+        theme: {
+          color: "#F97316",
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    },
+    onError: (error) => {
+      console.error("Purchase error:", error);
+      if (axios.isAxiosError(error) && error.response) {
+        const errorData = error.response.data;
+        toast.error(errorData.error || "Purchase failed");
+      } else {
+        toast.error(error instanceof Error ? error.message : "Purchase failed");
+      }
+    },
+  });
 }

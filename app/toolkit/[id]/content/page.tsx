@@ -9,6 +9,7 @@ import LessonSidebar from "@/components/toolkit/LessonSidebar";
 import VimeoPlayer from "@/components/toolkit/VimeoPlayer";
 import MarkdownRenderer from "@/components/toolkit/MarkdownRenderer";
 import { useToolkit } from "@/lib/queries";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ToolkitContentPage() {
   const params = useParams();
@@ -66,9 +67,16 @@ export default function ToolkitContentPage() {
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
-          <p className="text-gray-600">Loading content...</p>
+        <div className="w-72 space-y-4">
+          <Skeleton className="h-48 w-full rounded-lg" />
+          <div className="space-y-3">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="space-y-2">
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

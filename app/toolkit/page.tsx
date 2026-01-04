@@ -9,6 +9,7 @@ import ToolkitCardNew from "@/components/toolkit/ToolkitCardNew";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Toolkit } from "@/types/interfaces";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const CATEGORIES = [
   "All",
@@ -53,9 +54,26 @@ export default function ToolkitPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex h-64 items-center justify-center">
-            <div className="border-primary h-12 w-12 animate-spin rounded-full border-t-2 border-b-2" />
+        <div className="container mx-auto max-w-7xl px-4 py-6">
+          <h1 className="mb-6 text-2xl font-bold text-gray-900">Toolkits</h1>
+
+          <div className="mb-6 flex flex-wrap items-center gap-2">
+            {CATEGORIES.map(() => (
+              <Skeleton className="h-8 w-20 rounded-full" />
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, index) => (
+              <div key={index} className="space-y-3">
+                <Skeleton className="h-40 w-full" />
+                <div className="space-y-2 pt-3">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-12 w-3/4" />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

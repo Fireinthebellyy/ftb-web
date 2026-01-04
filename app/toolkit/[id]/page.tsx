@@ -9,6 +9,7 @@ import { Toolkit, ToolkitContentItem } from "@/types/interfaces";
 import ToolkitSidebar from "@/components/toolkit/ToolkitSidebar";
 import ContentList from "@/components/toolkit/ContentList";
 import { useToolkit, useToolkitPurchase } from "@/lib/queries";
+import { Skeleton } from "@/components/ui/skeleton";
 
 declare global {
   interface Window {
@@ -55,9 +56,25 @@ export default function ToolkitDetailPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex h-64 items-center justify-center">
-            <div className="border-primary h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-orange-500" />
+        <div className="container mx-auto px-4 py-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-10 w-64" />
+              <Skeleton className="h-10 w-32" />
+            </div>
+            <Skeleton className="h-[400px] w-full rounded-lg" />
+            <div className="space-y-4">
+              <div className="flex gap-4">
+                <Skeleton className="h-40 w-full" />
+                <div className="w-72 space-y-4">
+                  <Skeleton className="h-10 w-48" />
+                  <div className="space-y-4">
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

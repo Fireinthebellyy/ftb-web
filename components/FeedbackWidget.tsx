@@ -119,7 +119,7 @@ export default function FeedbackWidget() {
 					aria-label="Open feedback"
 					title="Share feedback"
 					onClick={() => setOpen(true)}
-					className="fixed right-6 bottom-[72px] z-50 flex size-10 cursor-pointer items-center justify-center rounded-full bg-neutral-200 text-neutral-600 shadow-lg transition hover:bg-neutral-100 focus:ring-2 focus:ring-orange-400 focus:outline-none md:bottom-20 md:size-12"
+					className="fixed right-6 bottom-[124px] z-50 flex size-10 cursor-pointer items-center justify-center rounded-full bg-neutral-200 text-neutral-600 shadow-lg transition hover:bg-neutral-100 focus:ring-2 focus:ring-orange-400 focus:outline-none md:bottom-20 md:size-12"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"

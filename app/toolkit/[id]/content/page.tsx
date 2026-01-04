@@ -65,10 +65,10 @@ function CircularProgress({
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className="text-primary transition-all duration-300 ease-in-out"
+          className="text-green-600 transition-all duration-300 ease-in-out"
         />
       </svg>
-      <span className="absolute text-[10px] font-medium text-gray-700">
+      <span className="absolute text-[8px] font-bold text-green-700">
         {Math.round(progress)}%
       </span>
     </div>
@@ -258,24 +258,18 @@ export default function ToolkitContentPage() {
         </div>
       </header>
 
-      <div className="lg:grid lg:grid-cols-[280px_1fr]">
-        <aside
-          className={cn(
-            "hidden lg:block lg:h-[calc(100vh-4rem)] lg:overflow-y-auto lg:border-r lg:bg-white",
-            !desktopSidebarOpen && "lg:hidden"
-          )}
+      <div className="lg:flex">
+        <main
+          className="flex-1 p-4 sm:p-6 lg:min-w-0 lg:overflow-y-auto"
+          style={{ width: "100%" }}
         >
-          <LessonSidebar
-            items={contentItems}
-            currentItemId={currentItem?.id || ""}
-            onItemSelect={handleItemSelect}
-            completedItems={completedItems}
-          />
-        </aside>
-
-        <main className="p-4 sm:p-6 lg:h-[calc(100vh-4rem)] lg:overflow-y-auto">
           {currentItem ? (
-            <div className="mx-auto max-w-3xl space-y-6">
+            <div
+              className={cn(
+                "mx-auto space-y-6 transition-all duration-300",
+                desktopSidebarOpen ? "lg:max-w-3xl" : "lg:max-w-4xl"
+              )}
+            >
               {currentItem.type === "video" && currentItem.vimeoVideoId && (
                 <VimeoPlayer
                   videoId={currentItem.vimeoVideoId}
@@ -337,6 +331,20 @@ export default function ToolkitContentPage() {
             </div>
           )}
         </main>
+
+        <aside
+          className={cn(
+            "hidden lg:order-last lg:block lg:h-[calc(100vh-4rem)] lg:overflow-y-auto lg:border-l lg:bg-white",
+            !desktopSidebarOpen && "lg:hidden"
+          )}
+        >
+          <LessonSidebar
+            items={contentItems}
+            currentItemId={currentItem?.id || ""}
+            onItemSelect={handleItemSelect}
+            completedItems={completedItems}
+          />
+        </aside>
       </div>
     </div>
   );

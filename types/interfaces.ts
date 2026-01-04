@@ -12,6 +12,7 @@ export type Opportunity = {
   endDate?: string;
   upvoteCount: number;
   upvoterIds: string[];
+  userHasUpvoted?: boolean;
   user: {
     id: string;
     name: string;

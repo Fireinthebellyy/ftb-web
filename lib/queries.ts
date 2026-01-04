@@ -118,38 +118,116 @@ async function toggleUpvote(id: string): Promise<OpportunityVoteState> {
 export function useToggleUpvote(id: string) {
   const qc = useQueryClient();
 
+  // Helper to update a single opportunity in OpportunitiesResponse
+  const updateOpportunityInResponse = (
+    response: OpportunitiesResponse,
+    id: string,
+    userHasUpvoted: boolean,
+    upvoteCount: number
+  ): OpportunitiesResponse => {
+    return {
+      ...response,
+      opportunities: response.opportunities.map((opp) => {
+        if (opp.id === id) {
+          return {
+            ...opp,
+            userHasUpvoted,
+            upvoteCount,
+          };
+        }
+        return opp;
+      }),
+    };
+  };
+
   return useMutation({
     mutationKey: ["opportunity", id, "toggle-upvote"],
     mutationFn: () => toggleUpvote(id),
     onMutate: async () => {
-      await qc.cancelQueries({ queryKey: ["opportunity", id] });
-      const prev = qc.getQueryData<OpportunityVoteState>(["opportunity", id]);
+      // Optimistically update opportunities cache (handles both regular and infinite queries)
+      qc.setQueriesData(
+        { queryKey: ["opportunities"] },
+        (old: any) => {
+          if (!old) return old;
 
-      // Optimistic update
-      if (prev) {
-        const nextHas = !prev.hasUserUpvoted;
-        const nextCount = Math.max(0, prev.upvotes + (nextHas ? 1 : -1));
-        qc.setQueryData<OpportunityVoteState>(["opportunity", id], {
-          ...prev,
-          hasUserUpvoted: nextHas,
-          upvotes: nextCount,
-        });
-      }
+          // Handle infinite query structure: { pages: OpportunitiesResponse[], pageParams: any[] }
+          if (old.pages && Array.isArray(old.pages)) {
+            // Optimize: find the opportunity once instead of multiple lookups
+            const allOpportunities = old.pages.flatMap(
+              (page: OpportunitiesResponse) => page.opportunities
+            );
+            const foundOpp = allOpportunities.find((opp: Opportunity) => opp.id === id);
+            const currentHasUpvoted = foundOpp?.userHasUpvoted ?? false;
+            const currentCount = foundOpp?.upvoteCount ?? 0;
+            
+            const nextHas = !currentHasUpvoted;
+            const nextCount = Math.max(0, currentCount + (nextHas ? 1 : -1));
 
-      return { prev };
+            return {
+              ...old,
+              pages: old.pages.map((page: OpportunitiesResponse) =>
+                updateOpportunityInResponse(page, id, nextHas, nextCount)
+              ),
+            };
+          }
+
+          // Handle regular query structure: OpportunitiesResponse
+          if (old.opportunities && Array.isArray(old.opportunities)) {
+            // Optimize: find the opportunity once instead of multiple lookups
+            const foundOpp = old.opportunities.find((opp: Opportunity) => opp.id === id);
+            const currentHasUpvoted = foundOpp?.userHasUpvoted ?? false;
+            const currentCount = foundOpp?.upvoteCount ?? 0;
+            
+            const nextHas = !currentHasUpvoted;
+            const nextCount = Math.max(0, currentCount + (nextHas ? 1 : -1));
+
+            return updateOpportunityInResponse(old, id, nextHas, nextCount);
+          }
+
+          return old;
+        }
+      );
+
+      return {};
     },
-    onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) {
-        qc.setQueryData(["opportunity", id], ctx.prev);
-      }
+    onError: () => {
+      // Rollback by invalidating opportunities cache
+      qc.invalidateQueries({ queryKey: ["opportunities"] });
     },
     onSuccess: (data) => {
-      // Replace with server canonical state
-      qc.setQueryData<OpportunityVoteState>(["opportunity", id], data);
+      // Update opportunities cache with server response (handles both regular and infinite queries)
+      qc.setQueriesData(
+        { queryKey: ["opportunities"] },
+        (old: any) => {
+          if (!old) return old;
+
+          // Handle infinite query structure
+          if (old.pages && Array.isArray(old.pages)) {
+            return {
+              ...old,
+              pages: old.pages.map((page: OpportunitiesResponse) =>
+                updateOpportunityInResponse(page, id, data.hasUserUpvoted, data.upvotes)
+              ),
+            };
+          }
+
+          // Handle regular query structure
+          if (old.opportunities && Array.isArray(old.opportunities)) {
+            return updateOpportunityInResponse(
+              old,
+              id,
+              data.hasUserUpvoted,
+              data.upvotes
+            );
+          }
+
+          return old;
+        }
+      );
     },
     onSettled: () => {
       // Background refetch to ensure consistency
-      qc.invalidateQueries({ queryKey: ["opportunity", id] });
+      qc.invalidateQueries({ queryKey: ["opportunities"] });
     },
   });
 }

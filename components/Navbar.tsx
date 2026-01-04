@@ -35,6 +35,8 @@ const righteous = Righteous({
   variable: "--font-righteous",
 });
 
+const FEATURE_ENABLE_BOTTOM_NAV = true;
+
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
@@ -89,7 +91,7 @@ export default function Navbar() {
       (document.activeElement === lastItemRef.current
         ? firstItemRef.current
         : ((document.activeElement
-            ?.nextElementSibling as HTMLButtonElement | null) ??
+          ?.nextElementSibling as HTMLButtonElement | null) ??
           firstItemRef.current)
       )?.focus();
       return;
@@ -99,7 +101,7 @@ export default function Navbar() {
       (document.activeElement === firstItemRef.current
         ? lastItemRef.current
         : ((document.activeElement
-            ?.previousElementSibling as HTMLButtonElement | null) ??
+          ?.previousElementSibling as HTMLButtonElement | null) ??
           lastItemRef.current)
       )?.focus();
       return;
@@ -148,18 +150,18 @@ export default function Navbar() {
       transition={{ duration: 0.5 }}
       className="sticky top-0 z-50 flex-none bg-gray-50 backdrop-blur-sm"
     >
-      <div className="container mx-auto grid h-16 grid-cols-2 items-center px-4 md:grid-cols-3 lg:px-6">
-        <div className="flex items-center justify-start space-x-3">
-          <Link href="/" className="flex items-center space-x-2">
+      <div className="container mx-auto grid h-16 grid-cols-[1fr_auto] items-center px-4 md:grid-cols-3 lg:px-6">
+        <div className="flex items-center justify-start pl-2 md:pl-4">
+          <Link href="/" className="flex items-center space-x-3">
             <Image
               src="/images/fire-logo.png"
               alt="Fire in the Belly Logo"
-              width={40}
-              height={40}
+              width={48}
+              height={48}
               className="object-contain"
             />
             <span
-              className={`${righteous.className} hidden bg-clip-text text-xl font-bold tracking-tight text-neutral-800 sm:inline`}
+              className={`${righteous.className} hidden bg-clip-text text-2xl font-bold tracking-tight text-neutral-800 sm:inline`}
             >
               Fire in the Belly
             </span>
@@ -169,42 +171,38 @@ export default function Navbar() {
         <nav className="hidden justify-center gap-4 sm:gap-6 md:flex">
           <Link
             href="/opportunities"
-            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
-              pathname === "/opportunities"
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/opportunities"
                 ? "text-primary after:w-full"
                 : "text-neutral-800 after:w-0"
-            }`}
+              }`}
           >
             Opportunities
           </Link>
 
           <Link
             href="/featured"
-            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
-              pathname === "/featured"
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/featured"
                 ? "text-primary after:w-full"
                 : "text-neutral-800 after:w-0"
-            }`}
+              }`}
           >
             Featured
           </Link>
           <Link
             href="/deadlines"
-            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
-              pathname === "/deadlines"
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/deadlines"
                 ? "text-primary after:w-full"
                 : "text-neutral-800 after:w-0"
-            }`}
+              }`}
           >
             Deadlines
           </Link>
           <Link
             href="/toolkit"
-            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
-              pathname === "/toolkit"
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/toolkit"
                 ? "text-primary after:w-full"
                 : "text-neutral-800 after:w-0"
-            }`}
+              }`}
           >
             Toolkit
           </Link>
@@ -244,8 +242,8 @@ export default function Navbar() {
                       src={user.user.image}
                       alt={user.user.name || "User avatar"}
                       className="size-6 rounded-full object-cover"
-                      width={24}
-                      height={24}
+                      width={28}
+                      height={28}
                     />
                   </div>
                 ) : (
@@ -324,28 +322,30 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* Mobile hamburger kept for existing site structure */}
-          <button
-            onClick={() => setIsOpen(true)}
-            className="ml-1 focus:outline-none md:hidden"
-            aria-label="Open menu"
-            aria-haspopup="true"
-            aria-expanded={isOpen}
-          >
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          {/* Mobile hamburger kept for existing site structure - hidden when bottom nav is enabled */}
+          {!FEATURE_ENABLE_BOTTOM_NAV && (
+            <button
+              onClick={() => setIsOpen(true)}
+              className="ml-1 focus:outline-none md:hidden"
+              aria-label="Open menu"
+              aria-haspopup="true"
+              aria-expanded={isOpen}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </button>
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 
@@ -380,11 +380,10 @@ export default function Navbar() {
               <Link
                 href="/"
                 onClick={() => setIsOpen(false)}
-                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
-                  pathname === "/"
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/"
                     ? "text-primary font-bold after:w-full"
                     : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                }`}
+                  }`}
               >
                 Home
               </Link>
@@ -393,11 +392,10 @@ export default function Navbar() {
               <Link
                 href="/opportunities"
                 onClick={() => setIsOpen(false)}
-                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
-                  pathname === "/opportunities"
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/opportunities"
                     ? "text-primary font-bold after:w-full"
                     : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                }`}
+                  }`}
               >
                 Opportunities
               </Link>
@@ -406,11 +404,10 @@ export default function Navbar() {
               <Link
                 href="/featured"
                 onClick={() => setIsOpen(false)}
-                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
-                  pathname === "/featured"
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/featured"
                     ? "text-primary font-bold after:w-full"
                     : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                }`}
+                  }`}
               >
                 Featured
               </Link>
@@ -419,11 +416,10 @@ export default function Navbar() {
               <Link
                 href="/deadlines"
                 onClick={() => setIsOpen(false)}
-                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
-                  pathname === "/deadlines"
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/deadlines"
                     ? "text-primary font-bold after:w-full"
                     : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                }`}
+                  }`}
               >
                 Deadlines
               </Link>
@@ -434,11 +430,10 @@ export default function Navbar() {
                 <Link
                   href="/profile"
                   onClick={() => setIsOpen(false)}
-                  className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
-                    pathname === "/profile"
+                  className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/profile"
                       ? "text-primary font-bold after:w-full"
                       : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                  }`}
+                    }`}
                 >
                   Profile
                 </Link>

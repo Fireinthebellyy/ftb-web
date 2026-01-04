@@ -144,10 +144,13 @@ export function SelectedImages({
 }
 
 // Get bucket ID with validation
-const getBucketId = () => {
+const getBucketId = (): string | null => {
   const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
   if (!bucketId) {
-    throw new Error("NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID is not configured");
+    if (process.env.NODE_ENV === "development") {
+      console.warn("NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID is not configured");
+    }
+    return null;
   }
   return bucketId;
 };
@@ -165,6 +168,7 @@ export function ExistingImages({
   const bucketId = getBucketId();
 
   if (existingImages.length === 0) return null;
+  if (!bucketId) return null; // Gracefully handle missing bucket ID
 
   const getImageUrl = (imageId: string) =>
     opportunityStorage.getFileView(bucketId, imageId);

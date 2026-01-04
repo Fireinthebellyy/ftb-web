@@ -1,16 +1,37 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { toolkits } from "@/lib/schema";
+import { toolkits, user } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 // GET all toolkits
 export async function GET() {
   try {
     const allToolkits = await db
-      .select()
+      .select({
+        id: toolkits.id,
+        title: toolkits.title,
+        description: toolkits.description,
+        price: toolkits.price,
+        originalPrice: toolkits.originalPrice,
+        coverImageUrl: toolkits.coverImageUrl,
+        videoUrl: toolkits.videoUrl,
+        contentUrl: toolkits.contentUrl,
+        category: toolkits.category,
+        highlights: toolkits.highlights,
+        totalDuration: toolkits.totalDuration,
+        lessonCount: toolkits.lessonCount,
+        isActive: toolkits.isActive,
+        createdAt: toolkits.createdAt,
+        updatedAt: toolkits.updatedAt,
+        userId: toolkits.userId,
+        creatorName: user.name,
+      })
       .from(toolkits)
-      .where(eq(toolkits.isActive, true));
+      .leftJoin(user, eq(toolkits.userId, user.id))
+      .where(eq(toolkits.isActive, true))
+      .orderBy(desc(toolkits.createdAt));
+
     return NextResponse.json(allToolkits);
   } catch (error) {
     console.error("Error fetching toolkits:", error);
@@ -30,8 +51,19 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { title, description, price, coverImageUrl, videoUrl, contentUrl } =
-      body;
+    const {
+      title,
+      description,
+      price,
+      originalPrice,
+      coverImageUrl,
+      videoUrl,
+      contentUrl,
+      category,
+      highlights,
+      totalDuration,
+      lessonCount,
+    } = body;
 
     if (!title || !description || !price) {
       return NextResponse.json(
@@ -46,9 +78,14 @@ export async function POST(request: Request) {
         title,
         description,
         price,
+        originalPrice,
         coverImageUrl,
         videoUrl,
         contentUrl,
+        category,
+        highlights,
+        totalDuration,
+        lessonCount,
         userId: user.currentUser.id,
       })
       .returning();

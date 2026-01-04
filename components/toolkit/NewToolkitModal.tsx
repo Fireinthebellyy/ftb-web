@@ -26,8 +26,24 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-// Form schema for toolkit creation
+const CATEGORIES = [
+  "Career",
+  "Skills",
+  "Interview Prep",
+  "Resume",
+  "Salary Negotiation",
+  "LinkedIn",
+  "Networking",
+];
+
 const toolkitFormSchema = z.object({
   title: z.string().min(3, {
     message: "Title must be at least 3 characters.",
@@ -38,9 +54,13 @@ const toolkitFormSchema = z.object({
   price: z.coerce.number().min(0, {
     message: "Price must be a positive number.",
   }),
+  originalPrice: z.coerce.number().min(0).optional(),
+  category: z.string().optional(),
   coverImageUrl: z.string().url().optional().or(z.literal("")),
   videoUrl: z.string().url().optional().or(z.literal("")),
-  contentUrl: z.string().url().optional().or(z.literal("")),
+  totalDuration: z.string().optional(),
+  lessonCount: z.coerce.number().int().min(0).optional(),
+  highlights: z.array(z.string()).optional(),
 });
 
 type ToolkitFormValues = z.infer<typeof toolkitFormSchema>;
@@ -60,9 +80,13 @@ export default function NewToolkitModal({
       title: "",
       description: "",
       price: 0,
+      originalPrice: undefined,
+      category: "",
       coverImageUrl: "",
       videoUrl: "",
-      contentUrl: "",
+      totalDuration: "",
+      lessonCount: 0,
+      highlights: [],
     },
   });
 
@@ -70,12 +94,14 @@ export default function NewToolkitModal({
     try {
       setIsSubmitting(true);
 
-      // Clean up empty URL fields
       const cleanedData = {
         ...data,
         coverImageUrl: data.coverImageUrl || undefined,
         videoUrl: data.videoUrl || undefined,
-        contentUrl: data.contentUrl || undefined,
+        category: data.category || undefined,
+        totalDuration: data.totalDuration || undefined,
+        lessonCount: data.lessonCount || undefined,
+        highlights: data.highlights?.filter(Boolean) || undefined,
       };
 
       const response = await axios.post("/api/toolkits", cleanedData);
@@ -97,7 +123,7 @@ export default function NewToolkitModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Create New Toolkit</DialogTitle>
         </DialogHeader>
@@ -127,7 +153,7 @@ export default function NewToolkitModal({
                   <FormControl>
                     <Textarea
                       placeholder="Enter detailed description"
-                      className="min-h-[120px]"
+                      className="min-h-[100px]"
                       {...field}
                     />
                   </FormControl>
@@ -136,19 +162,117 @@ export default function NewToolkitModal({
               )}
             />
 
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Price (₹) *</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="299"
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange(parseFloat(e.target.value) || 0)
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="originalPrice"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Original Price (₹)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="999"
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {CATEGORIES.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="totalDuration"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Total Duration</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., 2h 30m" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
-              name="price"
+              name="lessonCount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Price (in ₹) *</FormLabel>
+                  <FormLabel>Number of Lessons</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
-                      placeholder="Enter price"
+                      placeholder="10"
                       {...field}
+                      value={field.value ?? ""}
                       onChange={(e) =>
-                        field.onChange(parseFloat(e.target.value) || 0)
+                        field.onChange(
+                          e.target.value
+                            ? parseInt(e.target.value, 10)
+                            : undefined
+                        )
                       }
                     />
                   </FormControl>
@@ -179,7 +303,7 @@ export default function NewToolkitModal({
               name="videoUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Video URL</FormLabel>
+                  <FormLabel>YouTube Promo Video URL</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="https://youtube.com/embed/..."
@@ -193,14 +317,23 @@ export default function NewToolkitModal({
 
             <FormField
               control={form.control}
-              name="contentUrl"
+              name="highlights"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Content URL</FormLabel>
+                  <FormLabel>Highlights (comma-separated)</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="https://example.com/content"
+                      placeholder="Lifetime access, Downloadable resources, Certificate"
                       {...field}
+                      value={field.value?.join(", ") ?? ""}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value
+                            .split(",")
+                            .map((s) => s.trim())
+                            .filter(Boolean)
+                        )
+                      }
                     />
                   </FormControl>
                   <FormMessage />

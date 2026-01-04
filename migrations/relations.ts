@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { user, session, mentors, account, comments, opportunities } from "./schema";
+import { user, session, mentors, account, comments, opportunities, userOnboardingProfiles } from "./schema";
 
 export const sessionRelations = relations(session, ({one}) => ({
 	user: one(user, {
@@ -14,6 +14,7 @@ export const userRelations = relations(user, ({many}) => ({
 	accounts: many(account),
 	comments: many(comments),
 	opportunities: many(opportunities),
+	userOnboardingProfiles: many(userOnboardingProfiles),
 }));
 
 export const mentorsRelations = relations(mentors, ({one}) => ({
@@ -45,6 +46,13 @@ export const opportunitiesRelations = relations(opportunities, ({one, many}) => 
 	comments: many(comments),
 	user: one(user, {
 		fields: [opportunities.userId],
+		references: [user.id]
+	}),
+}));
+
+export const userOnboardingProfilesRelations = relations(userOnboardingProfiles, ({one}) => ({
+	user: one(user, {
+		fields: [userOnboardingProfiles.userId],
 		references: [user.id]
 	}),
 }));

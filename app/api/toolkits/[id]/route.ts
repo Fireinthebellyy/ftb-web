@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { toolkits, userToolkits } from "@/lib/schema";
+import { toolkits, toolkitContentItems, user } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
-import { eq, and } from "drizzle-orm";
+import { eq, and, asc } from "drizzle-orm";
 
 // GET specific toolkit by ID
 export async function GET(
@@ -13,28 +13,54 @@ export async function GET(
     const paramsResolved = await params;
     const toolkitId = paramsResolved.id;
 
-    // Get the toolkit details
-    const toolkit = await db
-      .select()
+    const toolkitResult = await db
+      .select({
+        id: toolkits.id,
+        title: toolkits.title,
+        description: toolkits.description,
+        price: toolkits.price,
+        originalPrice: toolkits.originalPrice,
+        coverImageUrl: toolkits.coverImageUrl,
+        videoUrl: toolkits.videoUrl,
+        contentUrl: toolkits.contentUrl,
+        category: toolkits.category,
+        highlights: toolkits.highlights,
+        totalDuration: toolkits.totalDuration,
+        lessonCount: toolkits.lessonCount,
+        isActive: toolkits.isActive,
+        createdAt: toolkits.createdAt,
+        updatedAt: toolkits.updatedAt,
+        userId: toolkits.userId,
+        creatorName: user.name,
+      })
       .from(toolkits)
+      .leftJoin(user, eq(toolkits.userId, user.id))
       .where(eq(toolkits.id, toolkitId))
       .limit(1);
 
-    if (!toolkit || toolkit.length === 0) {
+    if (!toolkitResult || toolkitResult.length === 0) {
       return NextResponse.json({ error: "Toolkit not found" }, { status: 404 });
     }
 
-    // Check if user has purchased this toolkit
-    const user = await getCurrentUser();
+    const toolkit = toolkitResult[0];
+
+    const contentItemsResult = await db
+      .select()
+      .from(toolkitContentItems)
+      .where(eq(toolkitContentItems.toolkitId, toolkitId))
+      .orderBy(asc(toolkitContentItems.orderIndex));
+
+    const userSession = await getCurrentUser();
     let hasPurchased = false;
 
-    if (user && user.currentUser?.id) {
+    if (userSession && userSession.currentUser?.id) {
+      const { userToolkits } = await import("@/lib/schema");
       const purchase = await db
         .select()
         .from(userToolkits)
         .where(
           and(
-            eq(userToolkits.userId, user.currentUser.id),
+            eq(userToolkits.userId, userSession.currentUser.id),
             eq(userToolkits.toolkitId, toolkitId),
             eq(userToolkits.paymentStatus, "completed")
           )
@@ -45,7 +71,8 @@ export async function GET(
     }
 
     return NextResponse.json({
-      toolkit: toolkit[0],
+      toolkit,
+      contentItems: contentItemsResult,
       hasPurchased,
     });
   } catch (error) {
@@ -65,30 +92,31 @@ export async function POST(
   try {
     const paramsResolved = await params;
     const toolkitId = paramsResolved.id;
-    const user = await getCurrentUser();
+    const userSession = await getCurrentUser();
 
-    if (!user || !user.currentUser?.id) {
+    if (!userSession || !userSession.currentUser?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if toolkit exists
-    const toolkit = await db
+    const toolkitResult = await db
       .select()
       .from(toolkits)
       .where(eq(toolkits.id, toolkitId))
       .limit(1);
 
-    if (!toolkit || toolkit.length === 0) {
+    if (!toolkitResult || toolkitResult.length === 0) {
       return NextResponse.json({ error: "Toolkit not found" }, { status: 404 });
     }
 
-    // Check if user already purchased this toolkit
+    const toolkit = toolkitResult[0];
+
+    const { userToolkits } = await import("@/lib/schema");
     const existingPurchase = await db
       .select()
       .from(userToolkits)
       .where(
         and(
-          eq(userToolkits.userId, user.currentUser.id),
+          eq(userToolkits.userId, userSession.currentUser.id),
           eq(userToolkits.toolkitId, toolkitId),
           eq(userToolkits.paymentStatus, "completed")
         )
@@ -102,19 +130,17 @@ export async function POST(
       );
     }
 
-    // Create Razorpay order
     const { createOrder } = await import("@/lib/razorpay");
     const order = await createOrder({
-      amount: toolkit[0].price * 100, // Convert rupees to paisa (Razorpay expects amount in smallest currency unit)
+      amount: toolkit.price * 100,
       currency: "INR",
       receipt: `tk_${toolkitId.slice(-8)}_${Date.now().toString().slice(-8)}`,
     });
 
-    // Insert purchase record with pending status
     const newPurchase = await db
       .insert(userToolkits)
       .values({
-        userId: user.currentUser.id,
+        userId: userSession.currentUser.id,
         toolkitId: toolkitId,
         razorpayOrderId: order.id,
         paymentStatus: "pending",
@@ -131,7 +157,7 @@ export async function POST(
       },
       key: process.env.RAZORPAY_KEY_ID,
       purchase: newPurchase[0],
-      toolkit: toolkit[0],
+      toolkit,
     });
   } catch (error) {
     console.error("Error initiating purchase:", error);

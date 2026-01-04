@@ -1,7 +1,10 @@
-import { pgTable, uuid, text, timestamp, unique, boolean, date, foreignKey, integer, index, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, uuid, text, timestamp, unique, boolean, date, foreignKey, integer, index, uniqueIndex, pgEnum } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
+export const internshipTiming = pgEnum("internship_timing", ['full-time', 'part-time', 'shift-based'])
+export const internshipType = pgEnum("internship_type", ['part-time', 'full-time', 'contract', 'remote'])
 export const opportunityType = pgEnum("opportunity_type", ['hackathon', 'grant application', 'competition', 'ideathon'])
+export const personaType = pgEnum("persona_type", ['student', 'society'])
 export const userRole = pgEnum("user_role", ['user', 'member', 'admin'])
 
 
@@ -170,7 +173,6 @@ export const opportunities = pgTable("opportunities", {
 	upvoterIds: text("upvoter_ids").array().default([""]),
 	upvoteCount: integer("upvote_count").default(0),
 	tagIds: uuid("tag_ids").array().default([""]),
-	tags: text().array().default([""]),
 }, (table) => [
 	index("opportunities_tag_ids_idx").using("gin", table.tagIds.asc().nullsLast().op("array_ops")),
 	foreignKey({
@@ -189,4 +191,53 @@ export const feedback = pgTable("feedback", {
 	userAgent: text("user_agent"),
 	userId: text("user_id"),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+});
+
+export const userOnboardingProfiles = pgTable("user_onboarding_profiles", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	userId: text("user_id").notNull(),
+	persona: personaType().notNull(),
+	locationType: text("location_type"),
+	locationValue: text("location_value"),
+	educationLevel: text("education_level"),
+	fieldOfStudy: text("field_of_study"),
+	fieldOther: text("field_other"),
+	opportunityInterests: text("opportunity_interests").array().default([""]),
+	domainPreferences: text("domain_preferences").array().default([""]),
+	struggles: text().array().default([""]),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
+}, (table) => [
+	uniqueIndex("user_onboarding_profiles_user_id_unique").using("btree", table.userId.asc().nullsLast().op("text_ops")),
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [user.id],
+			name: "user_onboarding_profiles_user_id_user_id_fk"
+		}).onDelete("cascade"),
+]);
+
+export const userToolkits = pgTable("user_toolkits", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	userId: text("user_id").notNull(),
+	toolkitId: uuid("toolkit_id").notNull(),
+	purchaseDate: timestamp("purchase_date", { mode: 'string' }).defaultNow(),
+	razorpayOrderId: text("razorpay_order_id"),
+	paymentId: text("payment_id"),
+	paymentStatus: text("payment_status"),
+	amountPaid: integer("amount_paid"),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+});
+
+export const toolkits = pgTable("toolkits", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	title: text().notNull(),
+	description: text().notNull(),
+	price: integer().notNull(),
+	coverImageUrl: text("cover_image_url"),
+	videoUrl: text("video_url"),
+	contentUrl: text("content_url"),
+	isActive: boolean("is_active").default(true),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
+	userId: text("user_id").notNull(),
 });

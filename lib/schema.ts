@@ -231,15 +231,39 @@ export const toolkits = pgTable("toolkits", {
   title: text("title").notNull(),
   description: text("description").notNull(),
   price: integer("price").notNull(), // in rupees (converted to paisa when sent to Razorpay)
+  originalPrice: integer("original_price"), // for displaying strikethrough discount price
   coverImageUrl: text("cover_image_url"),
-  videoUrl: text("video_url"), // YouTube embed URL
-  contentUrl: text("content_url"), // URL to toolkit content page
+  videoUrl: text("video_url"), // YouTube promo video URL
+  contentUrl: text("content_url"), // URL to toolkit content page (legacy)
+  category: text("category"), // Category for filtering (e.g., "Career", "Skills")
+  highlights: text("highlights").array(), // Bullet points like "10 lessons", "Lifetime access"
+  totalDuration: text("total_duration"), // e.g., "2h 30m"
+  lessonCount: integer("lesson_count").default(0),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
+});
+
+export const toolkitContentItemTypeEnum = pgEnum("toolkit_content_item_type", [
+  "article",
+  "video",
+]);
+
+export const toolkitContentItems = pgTable("toolkit_content_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  toolkitId: uuid("toolkit_id")
+    .notNull()
+    .references(() => toolkits.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  type: toolkitContentItemTypeEnum("type").notNull(),
+  content: text("content"), // markdown for articles
+  vimeoVideoId: text("vimeo_video_id"), // Vimeo video ID for video type
+  orderIndex: integer("order_index").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const userToolkits = pgTable("user_toolkits", {
@@ -275,5 +299,6 @@ export const schema = {
   feedback,
   tags,
   toolkits,
+  toolkitContentItems,
   userToolkits,
 };

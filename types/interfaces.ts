@@ -100,11 +100,30 @@ export type Toolkit = {
   title: string;
   description: string;
   price: number;
+  originalPrice?: number;
   coverImageUrl?: string;
   videoUrl?: string;
   contentUrl?: string;
+  category?: string;
+  highlights?: string[];
+  totalDuration?: string;
+  lessonCount?: number;
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
   userId?: string;
+  creatorName?: string;
+  contentItems?: ToolkitContentItem[];
+};
+
+export type ToolkitContentItem = {
+  id: string;
+  toolkitId: string;
+  title: string;
+  type: "article" | "video";
+  content?: string;
+  vimeoVideoId?: string;
+  orderIndex: number;
+  createdAt?: string;
+  updatedAt?: string;
 };

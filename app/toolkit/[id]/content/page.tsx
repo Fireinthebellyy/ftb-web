@@ -2,24 +2,31 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Toolkit } from "@/types/interfaces";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
+import { Toolkit, ToolkitContentItem } from "@/types/interfaces";
+import LessonSidebar from "@/components/toolkit/LessonSidebar";
+import VimeoPlayer from "@/components/toolkit/VimeoPlayer";
+import MarkdownRenderer from "@/components/toolkit/MarkdownRenderer";
 
 export default function ToolkitContentPage() {
   const params = useParams();
   const router = useRouter();
   const [toolkit, setToolkit] = useState<Toolkit | null>(null);
+  const [contentItems, setContentItems] = useState<ToolkitContentItem[]>([]);
+  const [currentItem, setCurrentItem] = useState<ToolkitContentItem | null>(
+    null
+  );
+  const [completedItems, setCompletedItems] = useState<string[]>([]);
   const [hasAccess, setHasAccess] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     const fetchToolkitData = async () => {
       try {
         const toolkitId = params.id as string;
 
-        // Fetch toolkit details
         const toolkitResponse = await fetch(`/api/toolkits/${toolkitId}`);
         if (!toolkitResponse.ok) {
           throw new Error("Toolkit not found");
@@ -28,6 +35,7 @@ export default function ToolkitContentPage() {
         const toolkitData = await toolkitResponse.json();
         setToolkit(toolkitData.toolkit);
         setHasAccess(toolkitData.hasPurchased);
+        setContentItems(toolkitData.contentItems || []);
 
         if (!toolkitData.hasPurchased) {
           toast.warning(
@@ -36,6 +44,14 @@ export default function ToolkitContentPage() {
           setTimeout(() => {
             router.push(`/toolkit/${toolkitId}`);
           }, 3000);
+          return;
+        }
+
+        if (toolkitData.contentItems && toolkitData.contentItems.length > 0) {
+          const sortedItems = [...toolkitData.contentItems].sort(
+            (a, b) => a.orderIndex - b.orderIndex
+          );
+          setCurrentItem(sortedItems[0]);
         }
       } catch (error) {
         console.error("Error fetching toolkit data:", error);
@@ -49,11 +65,43 @@ export default function ToolkitContentPage() {
     fetchToolkitData();
   }, [params.id, router]);
 
+  const handleItemSelect = (item: ToolkitContentItem) => {
+    setCurrentItem(item);
+    if (!completedItems.includes(item.id)) {
+      setCompletedItems((prev) => [...prev, item.id]);
+    }
+  };
+
+  const handleNavigate = (direction: "prev" | "next") => {
+    if (!currentItem || contentItems.length === 0) return;
+
+    const sortedItems = [...contentItems].sort(
+      (a, b) => a.orderIndex - b.orderIndex
+    );
+    const currentIndex = sortedItems.findIndex(
+      (item) => item.id === currentItem.id
+    );
+
+    let newIndex: number;
+    if (direction === "prev") {
+      newIndex = currentIndex > 0 ? currentIndex - 1 : currentIndex;
+    } else {
+      newIndex =
+        currentIndex < sortedItems.length - 1 ? currentIndex + 1 : currentIndex;
+    }
+
+    setCurrentItem(sortedItems[newIndex]);
+    if (!completedItems.includes(sortedItems[newIndex].id)) {
+      setCompletedItems((prev) => [...prev, sortedItems[newIndex].id]);
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex h-64 items-center justify-center">
-          <div className="border-primary h-12 w-12 animate-spin rounded-full border-t-2 border-b-2"></div>
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
+          <p className="text-gray-600">Loading content...</p>
         </div>
       </div>
     );
@@ -61,101 +109,151 @@ export default function ToolkitContentPage() {
 
   if (!toolkit || !hasAccess) {
     return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <h2 className="mb-4 text-2xl font-bold">Access Denied</h2>
-        <p className="mb-6 text-gray-600">
-          You need to purchase this toolkit to access the content.
-        </p>
-        <Button onClick={() => router.push("/toolkit")}>
-          Back to Toolkits
-        </Button>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h2 className="mb-4 text-2xl font-bold">Access Denied</h2>
+          <p className="mb-6 text-gray-600">
+            You need to purchase this toolkit to access the content.
+          </p>
+          <Button onClick={() => router.push("/toolkit")}>
+            Back to Toolkits
+          </Button>
+        </div>
       </div>
     );
   }
 
-  // Extract YouTube video ID from URL
-  const getYouTubeVideoId = (url: string) => {
-    const regExp =
-      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return match && match[2].length === 11 ? match[2] : null;
-  };
-
-  const videoId = toolkit.videoUrl ? getYouTubeVideoId(toolkit.videoUrl) : null;
+  const sortedItems = [...contentItems].sort(
+    (a, b) => a.orderIndex - b.orderIndex
+  );
+  const currentIndex = currentItem
+    ? sortedItems.findIndex((item) => item.id === currentItem.id)
+    : -1;
+  const isFirst = currentIndex === 0;
+  const isLast = currentIndex === sortedItems.length - 1;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mx-auto max-w-4xl">
-        <Button
-          variant="outline"
-          onClick={() => router.push("/toolkit")}
-          className="mb-6"
-        >
-          ← Back to Toolkits
-        </Button>
+    <div className="flex min-h-screen bg-gray-50">
+      {sidebarOpen && (
+        <div className="w-72 flex-shrink-0 border-r bg-white">
+          <LessonSidebar
+            items={contentItems}
+            currentItemId={currentItem?.id || ""}
+            onItemSelect={handleItemSelect}
+            completedItems={completedItems}
+          />
+        </div>
+      )}
 
-        <h1 className="mb-2 text-3xl font-bold">{toolkit.title}</h1>
-        <p className="mb-6 text-gray-600">{toolkit.description}</p>
-
-        {/* Cover Image */}
-        {toolkit.coverImageUrl && (
-          <div className="relative mb-8 aspect-video overflow-hidden rounded-lg">
-            <Image
-              src={toolkit.coverImageUrl}
-              alt={toolkit.title}
-              fill
-              className="object-cover"
-              sizes="100vw"
-            />
-          </div>
-        )}
-
-        {/* YouTube Video */}
-        {videoId && (
-          <div className="mb-8 aspect-video">
-            <iframe
-              width="100%"
-              height="100%"
-              src={`https://www.youtube.com/embed/${videoId}`}
-              title={toolkit.title}
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="rounded-lg"
-            />
-          </div>
-        )}
-
-        {/* Toolkit Content */}
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-2xl font-semibold">Toolkit Content</h2>
-
-          {toolkit.contentUrl ? (
-            <div className="mt-6">
-              <h3 className="mb-2 text-lg font-medium">Content Resources:</h3>
-              <a
-                href={toolkit.contentUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
+      <div className="flex-1 overflow-auto">
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b bg-white/80 px-6 py-4 backdrop-blur-sm">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="lg:hidden"
+            >
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
               >
-                Access Full Toolkit Content →
-              </a>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </Button>
+            <div>
+              <p className="text-sm text-gray-500">{toolkit.title}</p>
+              <h1 className="text-lg font-semibold text-gray-900">
+                {currentItem?.title}
+              </h1>
             </div>
-          ) : (
-            <p className="text-gray-600">
-              This toolkit content will be available here. Contact support if
-              you have any issues accessing your purchased content.
-            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">
+              {completedItems.length} / {contentItems.length} completed
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push(`/toolkit/${toolkit.id}`)}
+            >
+              Overview
+            </Button>
+          </div>
+        </header>
+
+        <main className="mx-auto max-w-4xl px-6 py-8">
+          {currentItem && (
+            <>
+              <div className="mb-8">
+                {currentItem.type === "video" && currentItem.vimeoVideoId && (
+                  <VimeoPlayer
+                    videoId={currentItem.vimeoVideoId}
+                    title={currentItem.title}
+                    className="shadow-xl"
+                  />
+                )}
+
+                {currentItem.type === "article" && currentItem.content && (
+                  <div className="rounded-2xl bg-white p-8 shadow-sm">
+                    <MarkdownRenderer
+                      content={currentItem.content}
+                      protected={true}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between border-t pt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => handleNavigate("prev")}
+                  disabled={isFirst}
+                >
+                  ← Previous
+                </Button>
+
+                {!isLast && (
+                  <Button
+                    onClick={() => handleNavigate("next")}
+                    className="bg-orange-500 text-white hover:bg-orange-600"
+                  >
+                    Next →
+                  </Button>
+                )}
+
+                {isLast && (
+                  <Button
+                    className="bg-green-600 text-white hover:bg-green-700"
+                    onClick={() => {
+                      toast.success(
+                        "Congratulations! You've completed this toolkit!"
+                      );
+                    }}
+                  >
+                    Complete ✓
+                  </Button>
+                )}
+              </div>
+            </>
           )}
 
-          <div className="mt-8 border-t pt-4">
-            <p className="text-sm text-gray-500">
-              Thank you for your purchase! This content is now available to you
-              indefinitely.
-            </p>
-          </div>
-        </div>
+          {!currentItem && contentItems.length === 0 && (
+            <div className="py-16 text-center">
+              <p className="text-gray-500">
+                No content available for this toolkit yet.
+              </p>
+            </div>
+          )}
+        </main>
       </div>
     </div>
   );

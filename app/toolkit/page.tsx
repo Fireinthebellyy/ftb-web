@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios from "axios";
-import ToolkitHero from "@/components/toolkit/ToolkitHero";
 import ToolkitCardNew from "@/components/toolkit/ToolkitCardNew";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Toolkit } from "@/types/interfaces";
 
@@ -64,50 +64,35 @@ export default function ToolkitPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <ToolkitHero />
-
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Available Toolkits
-          </h2>
+      <div className="container mx-auto max-w-7xl px-4 py-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Toolkits</h1>
+          <p className="mt-1 text-gray-600">
+            Expert-crafted resources to help you level up your career
+          </p>
         </div>
 
-        <div className="scrollbar-hide mb-8 flex gap-2 overflow-x-auto pb-2">
+        <div className="mb-6 flex flex-wrap items-center gap-2">
           {CATEGORIES.map((category) => (
-            <button
+            <Badge
               key={category}
-              onClick={() => setSelectedCategory(category)}
+              variant={selectedCategory === category ? "default" : "outline"}
               className={cn(
-                "rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition-all",
+                "cursor-pointer px-3 py-1 text-sm",
                 selectedCategory === category
-                  ? "bg-orange-500 text-white shadow-md"
-                  : "bg-white text-gray-600 hover:bg-orange-50 hover:text-orange-600"
+                  ? "bg-neutral-700 text-gray-200"
+                  : "bg-white text-gray-700"
               )}
+              onClick={() => setSelectedCategory(category)}
             >
               {category}
-            </button>
+            </Badge>
           ))}
         </div>
 
         {filteredToolkits.length === 0 ? (
-          <div className="py-16 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100">
-              <svg
-                className="h-8 w-8 text-orange-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
-            </div>
-            <h3 className="mb-2 text-lg font-medium text-gray-900">
+          <div className="rounded-lg border bg-white py-12 text-center">
+            <h3 className="mb-2 text-lg font-semibold text-gray-600">
               No toolkits found
             </h3>
             <p className="text-gray-500">
@@ -117,7 +102,7 @@ export default function ToolkitPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filteredToolkits.map((toolkit) => (
               <ToolkitCardNew
                 key={toolkit.id}
@@ -125,12 +110,6 @@ export default function ToolkitPage() {
                 onClick={() => handleCardClick(toolkit)}
               />
             ))}
-          </div>
-        )}
-
-        {toolkits.length > 0 && filteredToolkits.length === 0 && (
-          <div className="py-12 text-center">
-            <p className="text-gray-500">No toolkits found in this category.</p>
           </div>
         )}
       </div>

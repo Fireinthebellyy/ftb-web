@@ -165,20 +165,20 @@ export default function ToolkitDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-gradient-to-b from-orange-100 to-transparent py-8">
-        <div className="container mx-auto px-4">
-          <Button
-            variant="ghost"
-            onClick={() => router.push("/toolkit")}
-            className="mb-6 text-gray-600 hover:text-gray-900"
-          >
-            ← Back to Toolkits
-          </Button>
+    <div className="min-h-screen bg-gray-50 pb-20 lg:pb-0">
+      <div className="container mx-auto max-w-7xl px-4 py-6">
+        <Button
+          variant="ghost"
+          onClick={() => router.push("/toolkit")}
+          className="mb-6 text-gray-600 hover:text-gray-900"
+        >
+          ← Back to Toolkits
+        </Button>
 
-          <div className="grid gap-8 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <div className="relative mb-6 aspect-video overflow-hidden rounded-2xl bg-gray-900 shadow-xl">
+        <div className="grid gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <div className="mb-6 overflow-hidden rounded-lg border bg-white">
+              <div className="relative aspect-video bg-gray-100">
                 {toolkit.coverImageUrl ? (
                   <Image
                     src={toolkit.coverImageUrl}
@@ -189,43 +189,40 @@ export default function ToolkitDetailPage() {
                     sizes="(max-width: 1024px) 100vw, 66vw"
                   />
                 ) : (
-                  <div className="flex h-full items-center justify-center bg-gradient-to-br from-orange-400 to-amber-500">
-                    <span className="text-6xl font-bold text-white">
+                  <div className="flex h-full items-center justify-center bg-gray-100">
+                    <span className="text-6xl font-bold text-gray-300">
                       {toolkit.title.charAt(0)}
                     </span>
                   </div>
                 )}
-
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/0 to-black/0" />
-
-                <div className="absolute right-4 bottom-4 left-4">
-                  {toolkit.category && (
-                    <Badge className="bg-white/90 text-gray-900">
-                      {toolkit.category}
-                    </Badge>
-                  )}
-                </div>
               </div>
 
-              <div className="mb-8">
-                <h1 className="mb-3 text-3xl font-bold text-gray-900 md:text-4xl">
-                  {toolkit.title}
+              <div className="p-6">
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  {toolkit.category && (
+                    <Badge variant="secondary">{toolkit.category}</Badge>
+                  )}
+                </div>
+
+                <h1 className="mb-3 text-2xl font-bold text-gray-900 md:text-3xl">
+                  {toolkit.title.charAt(0).toUpperCase() +
+                    toolkit.title.slice(1)}
                 </h1>
 
                 {toolkit.creatorName && (
-                  <p className="mb-4 text-gray-600">
+                  <p className="mb-4 text-sm text-gray-600">
                     Created by{" "}
-                    <span className="font-medium text-orange-600">
+                    <span className="font-medium text-gray-900">
                       {toolkit.creatorName}
                     </span>
                   </p>
                 )}
 
-                <div className="mb-6 flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-gray-500">
                   {toolkit.lessonCount && (
                     <div className="flex items-center gap-1">
                       <svg
-                        className="h-4 w-4 text-orange-500"
+                        className="h-4 w-4"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -244,7 +241,7 @@ export default function ToolkitDetailPage() {
                   {toolkit.totalDuration && (
                     <div className="flex items-center gap-1">
                       <svg
-                        className="h-4 w-4 text-orange-500"
+                        className="h-4 w-4"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -262,7 +259,7 @@ export default function ToolkitDetailPage() {
 
                   <div className="flex items-center gap-1">
                     <svg
-                      className="h-4 w-4 text-orange-500"
+                      className="h-4 w-4"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -278,8 +275,9 @@ export default function ToolkitDetailPage() {
                   </div>
                 </div>
 
-                <p className="text-lg leading-relaxed text-gray-700">
-                  {toolkit.description}
+                <p className="text-gray-700">
+                  {toolkit.description.charAt(0).toUpperCase() +
+                    toolkit.description.slice(1)}
                 </p>
 
                 {toolkit.highlights && toolkit.highlights.length > 0 && (
@@ -291,10 +289,10 @@ export default function ToolkitDetailPage() {
                       {toolkit.highlights.map((highlight, index) => (
                         <li
                           key={index}
-                          className="flex items-start gap-2 text-gray-700"
+                          className="flex items-start gap-2 text-gray-600"
                         >
                           <svg
-                            className="mt-0.5 h-5 w-5 flex-shrink-0 text-orange-500"
+                            className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -313,48 +311,75 @@ export default function ToolkitDetailPage() {
                   </div>
                 )}
               </div>
+            </div>
 
-              {contentItems.length > 0 && (
-                <div className="rounded-2xl bg-white p-6 shadow-sm">
-                  <ContentList
-                    items={contentItems}
-                    hasPurchased={hasPurchased}
+            {contentItems.length > 0 && (
+              <div className="rounded-lg border bg-white p-6">
+                <ContentList items={contentItems} hasPurchased={hasPurchased} />
+              </div>
+            )}
+
+            {videoId && (
+              <div className="mt-6 overflow-hidden rounded-lg border bg-white p-6">
+                <h3 className="mb-4 text-lg font-semibold text-gray-900">
+                  Preview
+                </h3>
+                <div className="aspect-video">
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src={`https://www.youtube.com/embed/${videoId}`}
+                    title={toolkit.title}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="rounded-lg"
                   />
                 </div>
-              )}
-
-              {videoId && (
-                <div className="mt-8">
-                  <h3 className="mb-4 text-xl font-semibold text-gray-900">
-                    Preview
-                  </h3>
-                  <div className="aspect-video">
-                    <iframe
-                      width="100%"
-                      height="100%"
-                      src={`https://www.youtube.com/embed/${videoId}`}
-                      title={toolkit.title}
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      className="rounded-xl"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="lg:col-span-1">
-              <ToolkitSidebar
-                toolkit={toolkit}
-                contentItems={contentItems}
-                hasPurchased={hasPurchased}
-                isPurchaseLoading={isPurchaseLoading}
-                onPurchase={handlePurchase}
-                onAccessContent={handleViewContent}
-              />
-            </div>
+              </div>
+            )}
           </div>
+
+          <div className="hidden lg:col-span-1 lg:block">
+            <ToolkitSidebar
+              toolkit={toolkit}
+              contentItems={contentItems}
+              hasPurchased={hasPurchased}
+              isPurchaseLoading={isPurchaseLoading}
+              onPurchase={handlePurchase}
+              onAccessContent={handleViewContent}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile sticky purchase bar */}
+      <div className="fixed right-0 bottom-0 left-0 border-t bg-white p-4 shadow-lg lg:hidden">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-gray-900">
+              ₹{toolkit.price.toLocaleString("en-IN")}
+            </span>
+            {toolkit.originalPrice && toolkit.originalPrice > toolkit.price && (
+              <span className="text-sm text-gray-400 line-through">
+                ₹{toolkit.originalPrice.toLocaleString("en-IN")}
+              </span>
+            )}
+          </div>
+          {hasPurchased ? (
+            <Button onClick={handleViewContent} size="lg" className="flex-1">
+              Access Content
+            </Button>
+          ) : (
+            <Button
+              onClick={handlePurchase}
+              disabled={isPurchaseLoading}
+              size="lg"
+              className="flex-1"
+            >
+              {isPurchaseLoading ? "Processing..." : "Buy Now"}
+            </Button>
+          )}
         </div>
       </div>
     </div>

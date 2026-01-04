@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, ArrowLeft, Check, ChevronRight } from "lucide-react";
+import { PanelRight, ArrowLeft, Check, ChevronRight } from "lucide-react";
 import { ToolkitContentItem } from "@/types/interfaces";
 import LessonSidebar from "@/components/toolkit/LessonSidebar";
 import VimeoPlayer from "@/components/toolkit/VimeoPlayer";
@@ -135,6 +135,15 @@ export default function ToolkitContentPage() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
 
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs text-gray-500">{toolkit.title}</p>
+              <h1 className="truncate text-sm font-semibold text-gray-900 sm:text-base">
+                {currentItem?.title || "Select a lesson"}
+              </h1>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
             <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
               <SheetTrigger asChild>
                 <Button
@@ -142,7 +151,7 @@ export default function ToolkitContentPage() {
                   size="icon"
                   className="shrink-0 lg:hidden"
                 >
-                  <Menu className="h-5 w-5" />
+                  <PanelRight className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-80 p-0">
@@ -155,15 +164,6 @@ export default function ToolkitContentPage() {
               </SheetContent>
             </Sheet>
 
-            <div className="min-w-0">
-              <p className="truncate text-xs text-gray-500">{toolkit.title}</p>
-              <h1 className="truncate text-sm font-semibold text-gray-900 sm:text-base">
-                {currentItem?.title || "Select a lesson"}
-              </h1>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
             <span className="hidden text-xs text-gray-500 sm:inline-block">
               {completedItems.length}/{contentItems.length}
             </span>

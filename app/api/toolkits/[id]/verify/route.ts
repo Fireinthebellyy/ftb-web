@@ -5,6 +5,7 @@ import { eq, and } from "drizzle-orm";
 import { createHmac } from "crypto";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { razorpayKeySecret } from "@/lib/razorpay";
 
 export async function POST(
   request: Request,
@@ -25,7 +26,7 @@ export async function POST(
     }
 
     // Verify signature
-    const secret = process.env.RAZORPAY_KEY_SECRET!;
+    const secret = razorpayKeySecret;
     const expectedSignature = createHmac("sha256", secret)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");

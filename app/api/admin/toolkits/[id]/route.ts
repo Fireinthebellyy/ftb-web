@@ -3,6 +3,36 @@ import { db } from "@/lib/db";
 import { toolkits } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { eq } from "drizzle-orm";
+import { z } from "zod";
+
+const updateToolkitSchema = z.object({
+  title: z.string().min(1, "Title is required").optional(),
+  description: z.string().optional(),
+  price: z
+    .number()
+    .min(0, "Price must be greater than or equal to 0")
+    .optional(),
+  originalPrice: z
+    .number()
+    .min(0, "Original price must be greater than or equal to 0")
+    .optional(),
+  coverImageUrl: z.string().url("Invalid cover image URL").optional(),
+  videoUrl: z.string().url("Invalid video URL").optional().or(z.literal("")),
+  contentUrl: z
+    .string()
+    .url("Invalid content URL")
+    .optional()
+    .or(z.literal("")),
+  category: z.string().optional(),
+  highlights: z.array(z.string()).optional(),
+  totalDuration: z.string().optional(),
+  lessonCount: z
+    .number()
+    .int("Lesson count must be an integer")
+    .min(0, "Lesson count must be greater than or equal to 0")
+    .optional(),
+  isActive: z.boolean().optional(),
+});
 
 export async function PUT(
   request: Request,
@@ -23,25 +53,42 @@ export async function PUT(
 
     const body = await request.json();
 
+    const validationResult = updateToolkitSchema.safeParse(body);
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: "Validation failed", details: validationResult.error.errors },
+        { status: 400 }
+      );
+    }
+
+    const validatedData = validationResult.data;
+
     const updates: Record<string, unknown> = {
       updatedAt: new Date(),
     };
 
-    if (body.title !== undefined) updates.title = body.title;
-    if (body.description !== undefined) updates.description = body.description;
-    if (body.price !== undefined) updates.price = body.price;
-    if (body.originalPrice !== undefined)
-      updates.originalPrice = body.originalPrice;
-    if (body.coverImageUrl !== undefined)
-      updates.coverImageUrl = body.coverImageUrl;
-    if (body.videoUrl !== undefined) updates.videoUrl = body.videoUrl;
-    if (body.contentUrl !== undefined) updates.contentUrl = body.contentUrl;
-    if (body.category !== undefined) updates.category = body.category;
-    if (body.highlights !== undefined) updates.highlights = body.highlights;
-    if (body.totalDuration !== undefined)
-      updates.totalDuration = body.totalDuration;
-    if (body.lessonCount !== undefined) updates.lessonCount = body.lessonCount;
-    if (body.isActive !== undefined) updates.isActive = body.isActive;
+    if (validatedData.title !== undefined) updates.title = validatedData.title;
+    if (validatedData.description !== undefined)
+      updates.description = validatedData.description;
+    if (validatedData.price !== undefined) updates.price = validatedData.price;
+    if (validatedData.originalPrice !== undefined)
+      updates.originalPrice = validatedData.originalPrice;
+    if (validatedData.coverImageUrl !== undefined)
+      updates.coverImageUrl = validatedData.coverImageUrl;
+    if (validatedData.videoUrl !== undefined)
+      updates.videoUrl = validatedData.videoUrl;
+    if (validatedData.contentUrl !== undefined)
+      updates.contentUrl = validatedData.contentUrl;
+    if (validatedData.category !== undefined)
+      updates.category = validatedData.category;
+    if (validatedData.highlights !== undefined)
+      updates.highlights = validatedData.highlights;
+    if (validatedData.totalDuration !== undefined)
+      updates.totalDuration = validatedData.totalDuration;
+    if (validatedData.lessonCount !== undefined)
+      updates.lessonCount = validatedData.lessonCount;
+    if (validatedData.isActive !== undefined)
+      updates.isActive = validatedData.isActive;
 
     const updatedToolkit = await db
       .update(toolkits)
@@ -55,6 +102,13 @@ export async function PUT(
 
     return NextResponse.json(updatedToolkit[0]);
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation failed", details: error.errors },
+        { status: 400 }
+      );
+    }
+
     console.error("Error updating toolkit:", error);
     return NextResponse.json(
       { error: "Failed to update toolkit" },

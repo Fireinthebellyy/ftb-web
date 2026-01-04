@@ -17,6 +17,7 @@ const razorpay = new Razorpay({
 });
 
 export default razorpay;
+export { keySecret as razorpayKeySecret };
 
 export interface OrderOptions {
   amount: number; // in paisa (smallest currency unit, e.g., 300 rupees = 30000 paisa)

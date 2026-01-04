@@ -748,7 +748,7 @@ export default function OpportunityCardsPage() {
 				</div>
 			</div>
 			<FeedbackWidget />
-			<div className="fixed right-6 bottom-[130px] z-50 flex size-10 items-center justify-center rounded-full bg-neutral-200 text-neutral-600 shadow-lg transition hover:bg-neutral-100 md:bottom-6 md:size-12">
+			<div className="fixed right-6 bottom-[124px] z-50 flex size-10 items-center justify-center rounded-full bg-neutral-200 text-neutral-600 shadow-lg transition hover:bg-neutral-100 md:bottom-6 md:size-12">
 				<Link
 					href="https://wa.me/917014885565"
 					target="_blank"

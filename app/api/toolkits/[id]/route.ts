@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { toolkits, toolkitContentItems, user } from "@/lib/schema";
+import {
+  toolkits,
+  toolkitContentItems,
+  user,
+  userToolkits,
+} from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { eq, and, asc } from "drizzle-orm";
 
@@ -54,7 +59,6 @@ export async function GET(
     let hasPurchased = false;
 
     if (userSession && userSession.currentUser?.id) {
-      const { userToolkits } = await import("@/lib/schema");
       const purchase = await db
         .select()
         .from(userToolkits)
@@ -110,7 +114,6 @@ export async function POST(
 
     const toolkit = toolkitResult[0];
 
-    const { userToolkits } = await import("@/lib/schema");
     const existingPurchase = await db
       .select()
       .from(userToolkits)

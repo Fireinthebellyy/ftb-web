@@ -1,12 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Check, Play } from "lucide-react";
+import { Check, Play, Loader2 } from "lucide-react";
 
 interface BunnyPlayerProps {
-  videoUrl: string;
+  videoId: string;
   title?: string;
   className?: string;
   autoplay?: boolean;
@@ -17,7 +17,7 @@ interface BunnyPlayerProps {
 }
 
 export default function BunnyPlayer({
-  videoUrl,
+  videoId,
   title = "Video content",
   className,
   autoplay = false,
@@ -26,7 +26,38 @@ export default function BunnyPlayer({
   isCompleted = false,
   onToggleComplete,
 }: BunnyPlayerProps) {
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchVideoUrl = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch(
+          `/api/video-access?videoId=${encodeURIComponent(videoId)}`
+        );
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Failed to load video");
+        }
+
+        const data = await response.json();
+        setVideoUrl(data.videoUrl);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load video");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVideoUrl();
+  }, [videoId]);
+
   const getVideoUrl = () => {
+    if (!videoUrl) return "";
     try {
       const url = new URL(videoUrl);
       url.searchParams.set("autoplay", autoplay ? "true" : "false");
@@ -41,6 +72,42 @@ export default function BunnyPlayer({
       return videoUrl;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div
+          className={cn(
+            "relative flex items-center justify-center overflow-hidden rounded-xl bg-gray-900 shadow-xl",
+            className
+          )}
+          style={{ paddingBottom: "56.25%" }}
+        >
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-white" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <div
+          className={cn(
+            "relative flex items-center justify-center overflow-hidden rounded-xl bg-red-50 shadow-xl",
+            className
+          )}
+          style={{ paddingBottom: "56.25%" }}
+        >
+          <div className="absolute inset-0 flex items-center justify-center p-4 text-center">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

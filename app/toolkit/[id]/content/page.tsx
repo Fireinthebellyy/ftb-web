@@ -281,7 +281,7 @@ export default function ToolkitContentPage() {
             >
               {currentItem.type === "video" && currentItem.bunnyVideoUrl && (
                 <BunnyPlayer
-                  videoUrl={currentItem.bunnyVideoUrl}
+                  videoId={currentItem.id}
                   title={currentItem.title}
                   className="shadow-sm"
                   isCompleted={completedItems.includes(currentItem.id)}

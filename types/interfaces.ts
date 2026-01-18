@@ -123,7 +123,6 @@ export type ToolkitContentItem = {
   title: string;
   type: "article" | "video";
   content?: string;
-  vimeoVideoId?: string;
   bunnyVideoUrl?: string;
   orderIndex: number;
   createdAt?: string;

@@ -5,12 +5,15 @@ export async function middleware(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
 
   if (!sessionCookie) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const returnUrl = request.nextUrl.pathname + request.nextUrl.search;
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("returnUrl", returnUrl);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/opportunities"],
+  matcher: ["/opportunities", "/featured", "/toolkit/:path*"],
 };

@@ -473,6 +473,29 @@ export type CreateTaskData = {
   description?: string;
 };
 
+/**
+ * Version info query
+ */
+export type VersionInfo = {
+  commitSha: string | null;
+  commitRef: string | null;
+  commitMessage: string | null;
+};
+
+async function fetchVersionInfo(): Promise<VersionInfo> {
+  const { data } = await axios.get<VersionInfo>("/api/version");
+  return data;
+}
+
+export function useVersionInfo() {
+  return useQuery<VersionInfo>({
+    queryKey: ["version"],
+    queryFn: fetchVersionInfo,
+    staleTime: Infinity, // Version info doesn't change during runtime
+    retry: false, // Don't retry if it fails
+  });
+}
+
 export function useCreateTask() {
   const queryClient = useQueryClient();
 

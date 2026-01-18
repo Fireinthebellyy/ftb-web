@@ -54,7 +54,7 @@ export default function ToolkitPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto max-w-7xl px-4 py-6">
+        <div className="container mx-auto px-4 py-6">
           <h1 className="mb-6 text-2xl font-bold text-gray-900">Toolkits</h1>
 
           <div className="mb-6 flex flex-wrap items-center gap-2">
@@ -82,7 +82,7 @@ export default function ToolkitPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-7xl px-4 py-6">
+      <div className="container mx-auto px-4 py-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Toolkits</h1>
           <p className="mt-1 text-gray-600">

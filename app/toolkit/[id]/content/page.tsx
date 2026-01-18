@@ -16,7 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ToolkitContentItem } from "@/types/interfaces";
 import LessonSidebar from "@/components/toolkit/LessonSidebar";
-import VimeoPlayer from "@/components/toolkit/VimeoPlayer";
+import BunnyPlayer from "@/components/toolkit/BunnyPlayer";
 import MarkdownRenderer from "@/components/toolkit/MarkdownRenderer";
 import { useToolkit } from "@/lib/queries";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -279,9 +279,9 @@ export default function ToolkitContentPage() {
                 desktopSidebarOpen ? "lg:max-w-3xl" : "lg:max-w-4xl"
               )}
             >
-              {currentItem.type === "video" && currentItem.vimeoVideoId && (
-                <VimeoPlayer
-                  videoId={currentItem.vimeoVideoId}
+              {currentItem.type === "video" && currentItem.bunnyVideoUrl && (
+                <BunnyPlayer
+                  videoId={currentItem.id}
                   title={currentItem.title}
                   className="shadow-sm"
                   isCompleted={completedItems.includes(currentItem.id)}

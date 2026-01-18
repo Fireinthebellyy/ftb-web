@@ -239,7 +239,7 @@ export const toolkits = pgTable("toolkits", {
   highlights: text("highlights").array(), // Bullet points like "10 lessons", "Lifetime access"
   totalDuration: text("total_duration"), // e.g., "2h 30m"
   lessonCount: integer("lesson_count").default(0),
-  isActive: boolean("is_active").default(true),
+  isActive: boolean("is_active").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   userId: text("user_id")
@@ -260,7 +260,7 @@ export const toolkitContentItems = pgTable("toolkit_content_items", {
   title: text("title").notNull(),
   type: toolkitContentItemTypeEnum("type").notNull(),
   content: text("content"), // markdown for articles
-  vimeoVideoId: text("vimeo_video_id"), // Vimeo video ID for video type
+  bunnyVideoUrl: text("bunny_video_url"), // Bunny CDN video URL for video type
   orderIndex: integer("order_index").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

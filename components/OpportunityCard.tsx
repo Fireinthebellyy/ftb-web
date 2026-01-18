@@ -14,12 +14,12 @@ import {
   PencilLine,
   Heart,
   BadgeCheck,
+  Linkedin,
+  Twitter,
+  Facebook,
+  Mail,
+  Copy,
 } from "lucide-react";
-import TwitterXIcon from "@/components/icons/TwitterX";
-import FacebookIcon from "@/components/icons/Facebook";
-import LinkedInIcon from "@/components/icons/LinkedIn";
-import WhatsAppIcon from "@/components/icons/WhatsApp";
-import EnvelopeIcon from "@/components/icons/Envelope";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -627,23 +627,28 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                   <DialogHeader>
                     <DialogTitle>Share this opportunity</DialogTitle>
                   </DialogHeader>
-                  <div className="flex items-center gap-2">
-                    <Input readOnly value={shareUrl} />
-                    <Button type="button" size="sm" onClick={handleCopy}>
-                      Copy
-                    </Button>
-                  </div>
+                  <Input readOnly value={shareUrl} className="w-full" />
                   <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCopy}
+                      title="Copy to clipboard"
+                      aria-label="Copy link"
+                      className="inline-flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-3 text-neutral-600 transition-colors hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-900"
+                    >
+                      <Copy className="h-5 w-5" />
+                    </button>
                     <Link
                       href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(
                         `${shareUrl}${shareUrl.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=opportunity_card&utm_campaign=opportunity_share`
                       )}&text=${encodeURIComponent(title)}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      title="Share to Twitter/X"
                       aria-label="Share on Twitter/X"
-                      className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
+                      className="inline-flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-3 text-neutral-600 transition-colors hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-900"
                     >
-                      <TwitterXIcon className="h-6 w-6" />
+                      <Twitter className="h-5 w-5" />
                     </Link>
                     <Link
                       href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
@@ -651,10 +656,11 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      title="Share to Facebook"
                       aria-label="Share on Facebook"
-                      className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
+                      className="inline-flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-3 text-neutral-600 transition-colors hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-900"
                     >
-                      <FacebookIcon className="h-6 w-6" />
+                      <Facebook className="h-5 w-5" />
                     </Link>
                     <Link
                       href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
@@ -662,10 +668,11 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      title="Share to LinkedIn"
                       aria-label="Share on LinkedIn"
-                      className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
+                      className="inline-flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-3 text-neutral-600 transition-colors hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-900"
                     >
-                      <LinkedInIcon className="h-6 w-6" />
+                      <Linkedin className="h-5 w-5" />
                     </Link>
                     <Link
                       href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
@@ -675,17 +682,34 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      title="Share to WhatsApp"
                       aria-label="Share on WhatsApp"
-                      className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
+                      className="inline-flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-3 text-neutral-600 transition-colors hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-900"
                     >
-                      <WhatsAppIcon className="h-6 w-6" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-5 w-5"
+                      >
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9" />
+                        <path d="M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a.5 .5 0 0 0 0 1" />
+                      </svg>
                     </Link>
                     <Link
                       href={`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(shareUrl)}`}
+                      title="Share via Email"
                       aria-label="Share via Email"
-                      className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
+                      className="inline-flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-3 text-neutral-600 transition-colors hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-900"
                     >
-                      <EnvelopeIcon className="h-6 w-6" />
+                      <Mail className="h-5 w-5" />
                     </Link>
                   </div>
                 </DialogContent>

@@ -24,7 +24,7 @@ import {
 
 import { z } from "zod";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
@@ -35,6 +35,9 @@ const formSchema = z.object({
   password: z.string().min(8),
 });
 
+// Temporarily disable email/password login and signup
+const ENABLE_EMAIL_PASSWORD_LOGIN = false;
+
 export function LoginForm({
   className,
   ...props
@@ -42,6 +45,8 @@ export function LoginForm({
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get("returnUrl") || "/opportunities";
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -55,7 +60,7 @@ export function LoginForm({
       setIsLoading(true);
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/opportunities",
+        callbackURL: returnUrl,
         newUserCallbackURL: "/onboarding",
       });
     } catch (error) {
@@ -71,7 +76,7 @@ export function LoginForm({
       setIsLoading(true);
       await authClient.signIn.social({
         provider: "linkedin",
-        callbackURL: "/opportunities",
+        callbackURL: returnUrl,
         newUserCallbackURL: "/onboarding",
       });
     } catch (error) {
@@ -102,7 +107,7 @@ export function LoginForm({
               const hasCompletedOnboarding = !!data.profile;
 
               if (hasCompletedOnboarding) {
-                router.push("/opportunities");
+                router.push(returnUrl);
               } else {
                 // Fallback to robust timestamp comparison
                 const createdAt = ctx.data?.user?.createdAt;
@@ -112,7 +117,7 @@ export function LoginForm({
                   ? new Date(createdAt).getTime() === new Date(updatedAt).getTime()
                   : false;
 
-                router.push(isNewUser ? "/onboarding" : "/opportunities");
+                router.push(isNewUser ? "/onboarding" : returnUrl);
               }
             } catch (error) {
               console.error("Error checking onboarding status:", error);
@@ -124,7 +129,7 @@ export function LoginForm({
                 ? new Date(createdAt).getTime() === new Date(updatedAt).getTime()
                 : false;
 
-              router.push(isNewUser ? "/onboarding" : "/opportunities");
+              router.push(isNewUser ? "/onboarding" : returnUrl);
             }
           },
         }
@@ -143,7 +148,7 @@ export function LoginForm({
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Welcome back</CardTitle>
-          <CardDescription>Login with your Google account</CardDescription>
+          <CardDescription>Login with your social account</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -189,68 +194,74 @@ export function LoginForm({
                     Login with LinkedIn
                   </Button>
                 </div>
-                <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
-                  <span className="bg-card text-muted-foreground relative z-10 px-2">
-                    Or continue with
-                  </span>
-                </div>
-                <div className="grid gap-6">
-                  <div className="grid gap-3">
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input placeholder="m@example.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="grid gap-3">
-                    <div className="flex flex-col gap-2">
-                      <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="********"
-                                {...field}
-                                type="password"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Link
-                        href="/forgot-password"
-                        className="ml-auto text-sm underline-offset-4 hover:underline"
-                      >
-                        Forgot your password?
-                      </Link>
+                {ENABLE_EMAIL_PASSWORD_LOGIN && (
+                  <>
+                    <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
+                      <span className="bg-card text-muted-foreground relative z-10 px-2">
+                        Or continue with
+                      </span>
                     </div>
+                    <div className="grid gap-6">
+                      <div className="grid gap-3">
+                        <FormField
+                          control={form.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input placeholder="m@example.com" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <div className="grid gap-3">
+                        <div className="flex flex-col gap-2">
+                          <FormField
+                            control={form.control}
+                            name="password"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Password</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="********"
+                                    {...field}
+                                    type="password"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <Link
+                            href="/forgot-password"
+                            className="ml-auto text-sm underline-offset-4 hover:underline"
+                          >
+                            Forgot your password?
+                          </Link>
+                        </div>
+                      </div>
+                      <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          "Login"
+                        )}
+                      </Button>
+                    </div>
+                  </>
+                )}
+                {ENABLE_EMAIL_PASSWORD_LOGIN && (
+                  <div className="text-center text-sm">
+                    Don&apos;t have an account?{" "}
+                    <Link href="/signup" className="underline underline-offset-4">
+                      Sign up
+                    </Link>
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      "Login"
-                    )}
-                  </Button>
-                </div>
-                <div className="text-center text-sm">
-                  Don&apos;t have an account?{" "}
-                  <Link href="/signup" className="underline underline-offset-4">
-                    Sign up
-                  </Link>
-                </div>
+                )}
               </div>
             </form>
           </Form>

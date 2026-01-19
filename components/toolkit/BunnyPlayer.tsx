@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Check, Play, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 interface BunnyPlayerProps {
   videoId: string;
@@ -12,8 +11,6 @@ interface BunnyPlayerProps {
   autoplay?: boolean;
   muted?: boolean;
   controls?: boolean;
-  isCompleted?: boolean;
-  onToggleComplete?: () => void;
 }
 
 export default function BunnyPlayer({
@@ -23,8 +20,6 @@ export default function BunnyPlayer({
   autoplay = false,
   muted = false,
   controls = true,
-  isCompleted = false,
-  onToggleComplete,
 }: BunnyPlayerProps) {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -128,29 +123,6 @@ export default function BunnyPlayer({
           loading="lazy"
         />
       </div>
-
-      {onToggleComplete && (
-        <Button
-          onClick={onToggleComplete}
-          variant={isCompleted ? "default" : "outline"}
-          className={cn(
-            "w-full transition-all",
-            isCompleted && "bg-green-600 text-white hover:bg-green-700"
-          )}
-        >
-          {isCompleted ? (
-            <>
-              <Check className="mr-2 h-4 w-4" />
-              Completed
-            </>
-          ) : (
-            <>
-              <Play className="mr-2 h-4 w-4" />
-              Mark as Complete
-            </>
-          )}
-        </Button>
-      )}
     </div>
   );
 }

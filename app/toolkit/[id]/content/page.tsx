@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -96,16 +102,22 @@ export default function ToolkitContentPage() {
       ? (completedItems.length / contentItems.length) * 100
       : 0;
 
+  const didRedirectRef = useRef(false);
+  const contentLengthRef = useRef(contentItems.length);
+
   useEffect(() => {
-    if (contentItems.length > 0 && !currentItem) {
+    if (
+      contentItems.length > 0 &&
+      !currentItem &&
+      contentItems.length !== contentLengthRef.current
+    ) {
       const sortedItems = [...contentItems].sort(
         (a, b) => a.orderIndex - b.orderIndex
       );
       setCurrentItem(sortedItems[0]);
+      contentLengthRef.current = contentItems.length;
     }
   }, [contentItems, currentItem]);
-
-  const didRedirectRef = useRef(false);
 
   useEffect(() => {
     if (!isLoading && toolkit && !hasAccess && !didRedirectRef.current) {
@@ -118,40 +130,63 @@ export default function ToolkitContentPage() {
     }
   }, [isLoading, hasAccess, toolkit, params.id, router]);
 
-  const handleItemSelect = (item: ToolkitContentItem): void => {
+  const handleItemSelect = useCallback((item: ToolkitContentItem): void => {
     setCurrentItem(item);
     setSidebarOpen(false);
-  };
+  }, []);
 
-  const handleNavigate = (direction: "prev" | "next") => {
-    if (!currentItem || contentItems.length === 0) return;
+  const sortedItems = useMemo(
+    () => [...contentItems].sort((a, b) => a.orderIndex - b.orderIndex),
+    [contentItems]
+  );
 
-    const sortedItems = [...contentItems].sort(
-      (a, b) => a.orderIndex - b.orderIndex
-    );
-    const currentIndex = sortedItems.findIndex(
-      (item) => item.id === currentItem.id
-    );
+  const handleNavigate = useCallback(
+    (direction: "prev" | "next") => {
+      if (!currentItem || contentItems.length === 0) return;
 
-    let newIndex: number;
-    if (direction === "prev") {
-      newIndex = currentIndex > 0 ? currentIndex - 1 : currentIndex;
-    } else {
-      newIndex =
-        currentIndex < sortedItems.length - 1 ? currentIndex + 1 : currentIndex;
-    }
+      const currentIndex = sortedItems.findIndex(
+        (item) => item.id === currentItem.id
+      );
 
-    setCurrentItem(sortedItems[newIndex]);
-  };
+      let newIndex: number;
+      if (direction === "prev") {
+        newIndex = currentIndex > 0 ? currentIndex - 1 : currentIndex;
+      } else {
+        newIndex =
+          currentIndex < sortedItems.length - 1
+            ? currentIndex + 1
+            : currentIndex;
+      }
 
-  const handleToggleComplete = (itemId: string): void => {
+      setCurrentItem(sortedItems[newIndex]);
+    },
+    [currentItem, contentItems, sortedItems]
+  );
+
+  const handleNavigatePrev = useCallback(
+    () => handleNavigate("prev"),
+    [handleNavigate]
+  );
+  const handleNavigateNext = useCallback(
+    () => handleNavigate("next"),
+    [handleNavigate]
+  );
+
+  const handleToggleComplete = useCallback((itemId: string): void => {
     setCompletedItems((prev) => {
       if (prev.includes(itemId)) {
         return prev.filter((id) => id !== itemId);
       }
       return [...prev, itemId];
     });
-  };
+  }, []);
+
+  const handleMarkCompleteAndCelebrate = useCallback(() => {
+    if (currentItem) {
+      handleToggleComplete(currentItem.id);
+      toast.success("Congratulations! You've completed this toolkit!");
+    }
+  }, [currentItem, handleToggleComplete]);
 
   if (isLoading) {
     return (
@@ -188,9 +223,6 @@ export default function ToolkitContentPage() {
     );
   }
 
-  const sortedItems = [...contentItems].sort(
-    (a, b) => a.orderIndex - b.orderIndex
-  );
   const currentIndex = currentItem
     ? sortedItems.findIndex((item) => item.id === currentItem.id)
     : -1;
@@ -284,8 +316,6 @@ export default function ToolkitContentPage() {
                   videoId={currentItem.id}
                   title={currentItem.title}
                   className="shadow-sm"
-                  isCompleted={completedItems.includes(currentItem.id)}
-                  onToggleComplete={() => handleToggleComplete(currentItem.id)}
                 />
               )}
 
@@ -305,7 +335,7 @@ export default function ToolkitContentPage() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <Button
                   variant="outline"
-                  onClick={() => handleNavigate("prev")}
+                  onClick={handleNavigatePrev}
                   disabled={isFirst}
                   className="w-full sm:w-auto"
                 >
@@ -315,7 +345,7 @@ export default function ToolkitContentPage() {
 
                 {!isLast ? (
                   <Button
-                    onClick={() => handleNavigate("next")}
+                    onClick={handleNavigateNext}
                     className="w-full sm:w-auto"
                   >
                     Next
@@ -323,11 +353,7 @@ export default function ToolkitContentPage() {
                   </Button>
                 ) : (
                   <Button
-                    onClick={() => {
-                      toast.success(
-                        "Congratulations! You've completed this toolkit!"
-                      );
-                    }}
+                    onClick={handleMarkCompleteAndCelebrate}
                     className="w-full sm:w-auto"
                   >
                     <Check className="mr-2 h-4 w-4" />

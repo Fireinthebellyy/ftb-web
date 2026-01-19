@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { BookOpen, Clock, Cloud, Check } from "lucide-react";
 import ToolkitSidebar from "@/components/toolkit/ToolkitSidebar";
 import ContentList from "@/components/toolkit/ContentList";
 import { useToolkit, useToolkitPurchase } from "@/lib/queries";
@@ -14,6 +15,12 @@ declare global {
   interface Window {
     Razorpay: any;
   }
+}
+
+function getYouTubeVideoId(url: string): string | null {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return match && match[2].length === 11 ? match[2] : null;
 }
 
 export default function ToolkitDetailPage() {
@@ -39,13 +46,6 @@ export default function ToolkitDetailPage() {
 
   const handleViewContent = () => {
     router.push(`/toolkit/${toolkit?.id}/content`);
-  };
-
-  const getYouTubeVideoId = (url: string) => {
-    const regExp =
-      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return match && match[2].length === 11 ? match[2] : null;
   };
 
   const videoId = toolkit?.videoUrl
@@ -153,56 +153,20 @@ export default function ToolkitDetailPage() {
                 <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-gray-500">
                   {toolkit.lessonCount && (
                     <div className="flex items-center gap-1">
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                        />
-                      </svg>
+                      <BookOpen className="h-4 w-4" />
                       {toolkit.lessonCount} lessons
                     </div>
                   )}
 
                   {toolkit.totalDuration && (
                     <div className="flex items-center gap-1">
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
+                      <Clock className="h-4 w-4" />
                       {toolkit.totalDuration}
                     </div>
                   )}
 
                   <div className="flex items-center gap-1">
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"
-                      />
-                    </svg>
+                    <Cloud className="h-4 w-4" />
                     Lifetime access
                   </div>
                 </div>
@@ -223,19 +187,7 @@ export default function ToolkitDetailPage() {
                           key={index}
                           className="flex items-start gap-2 text-gray-600"
                         >
-                          <svg
-                            className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
+                          <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
                           {highlight}
                         </li>
                       ))}
@@ -287,22 +239,23 @@ export default function ToolkitDetailPage() {
 
       {/* Mobile sticky purchase bar */}
       <div className="fixed right-0 bottom-[52px] left-0 z-50 border-t bg-white p-4 shadow-lg md:hidden">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-gray-900">
-              ₹{toolkit.price.toLocaleString("en-IN")}
-            </span>
-            {toolkit.originalPrice && toolkit.originalPrice > toolkit.price && (
-              <span className="text-sm text-gray-400 line-through">
-                ₹{toolkit.originalPrice.toLocaleString("en-IN")}
+        {hasPurchased ? (
+          <Button onClick={handleViewContent} size="lg" className="w-full">
+            Access Content
+          </Button>
+        ) : (
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-gray-900">
+                ₹{toolkit.price.toLocaleString("en-IN")}
               </span>
-            )}
-          </div>
-          {hasPurchased ? (
-            <Button onClick={handleViewContent} size="lg" className="flex-1">
-              Access Content
-            </Button>
-          ) : (
+              {toolkit.originalPrice &&
+                toolkit.originalPrice > toolkit.price && (
+                  <span className="text-sm text-gray-400 line-through">
+                    ₹{toolkit.originalPrice.toLocaleString("en-IN")}
+                  </span>
+                )}
+            </div>
             <Button
               onClick={handlePurchase}
               disabled={isPurchaseLoading}
@@ -311,8 +264,8 @@ export default function ToolkitDetailPage() {
             >
               {isPurchaseLoading ? "Processing..." : "Buy Now"}
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

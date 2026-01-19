@@ -284,8 +284,6 @@ export default function ToolkitContentPage() {
                   videoId={currentItem.id}
                   title={currentItem.title}
                   className="shadow-sm"
-                  isCompleted={completedItems.includes(currentItem.id)}
-                  onToggleComplete={() => handleToggleComplete(currentItem.id)}
                 />
               )}
 
@@ -324,6 +322,7 @@ export default function ToolkitContentPage() {
                 ) : (
                   <Button
                     onClick={() => {
+                      handleToggleComplete(currentItem.id);
                       toast.success(
                         "Congratulations! You've completed this toolkit!"
                       );

@@ -287,22 +287,23 @@ export default function ToolkitDetailPage() {
 
       {/* Mobile sticky purchase bar */}
       <div className="fixed right-0 bottom-[52px] left-0 z-50 border-t bg-white p-4 shadow-lg md:hidden">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-gray-900">
-              ₹{toolkit.price.toLocaleString("en-IN")}
-            </span>
-            {toolkit.originalPrice && toolkit.originalPrice > toolkit.price && (
-              <span className="text-sm text-gray-400 line-through">
-                ₹{toolkit.originalPrice.toLocaleString("en-IN")}
+        {hasPurchased ? (
+          <Button onClick={handleViewContent} size="lg" className="w-full">
+            Access Content
+          </Button>
+        ) : (
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-gray-900">
+                ₹{toolkit.price.toLocaleString("en-IN")}
               </span>
-            )}
-          </div>
-          {hasPurchased ? (
-            <Button onClick={handleViewContent} size="lg" className="flex-1">
-              Access Content
-            </Button>
-          ) : (
+              {toolkit.originalPrice &&
+                toolkit.originalPrice > toolkit.price && (
+                  <span className="text-sm text-gray-400 line-through">
+                    ₹{toolkit.originalPrice.toLocaleString("en-IN")}
+                  </span>
+                )}
+            </div>
             <Button
               onClick={handlePurchase}
               disabled={isPurchaseLoading}
@@ -311,8 +312,8 @@ export default function ToolkitDetailPage() {
             >
               {isPurchaseLoading ? "Processing..." : "Buy Now"}
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -73,13 +73,23 @@ const Footer = () => {
             </Link>
           </div>
         </div>
-        <div className="mt-6 text-center text-xs text-neutral-500">
-          <p>© {new Date().getFullYear()} Fire in the Belly. All rights reserved.</p>
-          {versionInfo?.commitSha && (
-            <p className="mt-1 font-mono">
-              Commit: {versionInfo.commitSha}
-            </p>
+        <div className="mt-6 flex items-center justify-between text-xs text-neutral-500">
+          {versionInfo?.commitSha ? (
+            <a
+              href={`https://github.com/Fireinthebellyy/ftb-web/commit/${versionInfo.commitSha}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-neutral-400 hover:text-neutral-600"
+            >
+              {versionInfo.commitSha}
+            </a>
+          ) : (
+            <span />
           )}
+          <p>
+            © {new Date().getFullYear()} Fire in the Belly. All rights
+            reserved.
+          </p>
         </div>
       </div>
     </footer>

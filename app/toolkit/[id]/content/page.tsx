@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -96,16 +102,22 @@ export default function ToolkitContentPage() {
       ? (completedItems.length / contentItems.length) * 100
       : 0;
 
+  const didRedirectRef = useRef(false);
+  const contentLengthRef = useRef(contentItems.length);
+
   useEffect(() => {
-    if (contentItems.length > 0 && !currentItem) {
+    if (
+      contentItems.length > 0 &&
+      !currentItem &&
+      contentItems.length !== contentLengthRef.current
+    ) {
       const sortedItems = [...contentItems].sort(
         (a, b) => a.orderIndex - b.orderIndex
       );
       setCurrentItem(sortedItems[0]);
+      contentLengthRef.current = contentItems.length;
     }
   }, [contentItems, currentItem]);
-
-  const didRedirectRef = useRef(false);
 
   useEffect(() => {
     if (!isLoading && toolkit && !hasAccess && !didRedirectRef.current) {
@@ -118,40 +130,47 @@ export default function ToolkitContentPage() {
     }
   }, [isLoading, hasAccess, toolkit, params.id, router]);
 
-  const handleItemSelect = (item: ToolkitContentItem): void => {
+  const handleItemSelect = useCallback((item: ToolkitContentItem): void => {
     setCurrentItem(item);
     setSidebarOpen(false);
-  };
+  }, []);
 
-  const handleNavigate = (direction: "prev" | "next") => {
-    if (!currentItem || contentItems.length === 0) return;
+  const sortedItems = useMemo(
+    () => [...contentItems].sort((a, b) => a.orderIndex - b.orderIndex),
+    [contentItems]
+  );
 
-    const sortedItems = [...contentItems].sort(
-      (a, b) => a.orderIndex - b.orderIndex
-    );
-    const currentIndex = sortedItems.findIndex(
-      (item) => item.id === currentItem.id
-    );
+  const handleNavigate = useCallback(
+    (direction: "prev" | "next") => {
+      if (!currentItem || contentItems.length === 0) return;
 
-    let newIndex: number;
-    if (direction === "prev") {
-      newIndex = currentIndex > 0 ? currentIndex - 1 : currentIndex;
-    } else {
-      newIndex =
-        currentIndex < sortedItems.length - 1 ? currentIndex + 1 : currentIndex;
-    }
+      const currentIndex = sortedItems.findIndex(
+        (item) => item.id === currentItem.id
+      );
 
-    setCurrentItem(sortedItems[newIndex]);
-  };
+      let newIndex: number;
+      if (direction === "prev") {
+        newIndex = currentIndex > 0 ? currentIndex - 1 : currentIndex;
+      } else {
+        newIndex =
+          currentIndex < sortedItems.length - 1
+            ? currentIndex + 1
+            : currentIndex;
+      }
 
-  const handleToggleComplete = (itemId: string): void => {
+      setCurrentItem(sortedItems[newIndex]);
+    },
+    [currentItem, contentItems, sortedItems]
+  );
+
+  const handleToggleComplete = useCallback((itemId: string): void => {
     setCompletedItems((prev) => {
       if (prev.includes(itemId)) {
         return prev.filter((id) => id !== itemId);
       }
       return [...prev, itemId];
     });
-  };
+  }, []);
 
   if (isLoading) {
     return (
@@ -188,9 +207,6 @@ export default function ToolkitContentPage() {
     );
   }
 
-  const sortedItems = [...contentItems].sort(
-    (a, b) => a.orderIndex - b.orderIndex
-  );
   const currentIndex = currentItem
     ? sortedItems.findIndex((item) => item.id === currentItem.id)
     : -1;

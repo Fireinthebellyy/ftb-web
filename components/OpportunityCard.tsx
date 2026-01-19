@@ -9,6 +9,13 @@ import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselDots,
+} from "@/components/ui/carousel";
+import Image from "next/image";
 import { OpportunityHeader } from "./opportunity/OpportunityHeader";
 import { OpportunityImageGallery } from "./opportunity/OpportunityImageGallery";
 import { OpportunityActions } from "./opportunity/OpportunityActions";
@@ -180,13 +187,6 @@ function ImageModal({
     }
   }, [modalIndex, carouselApi]);
 
-  const {
-    Carousel,
-    CarouselContent,
-    CarouselItem,
-    CarouselDots,
-  } = require("@/components/ui/carousel");
-
   if (images.length <= 1) {
     return (
       <div className="flex items-center justify-center">
@@ -242,8 +242,6 @@ function ImageModalContent({
   fileId,
   title,
 }: ImageModalContentProps) {
-  const Image = require("next/image").default;
-
   return (
     <Image
       src={opportunityStorage.getFileView(

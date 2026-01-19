@@ -103,19 +103,13 @@ export default function ToolkitContentPage() {
       : 0;
 
   const didRedirectRef = useRef(false);
-  const contentLengthRef = useRef(contentItems.length);
 
   useEffect(() => {
-    if (
-      contentItems.length > 0 &&
-      !currentItem &&
-      contentItems.length !== contentLengthRef.current
-    ) {
+    if (contentItems.length > 0 && !currentItem) {
       const sortedItems = [...contentItems].sort(
         (a, b) => a.orderIndex - b.orderIndex
       );
       setCurrentItem(sortedItems[0]);
-      contentLengthRef.current = contentItems.length;
     }
   }, [contentItems, currentItem]);
 

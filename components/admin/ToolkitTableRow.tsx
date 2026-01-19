@@ -17,7 +17,7 @@ import {
   EyeOff,
   FileText,
 } from "lucide-react";
-import { Toolkit } from "../types";
+import { Toolkit } from "./types";
 
 interface ToolkitTableRowProps {
   toolkit: Toolkit;

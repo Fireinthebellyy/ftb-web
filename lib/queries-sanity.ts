@@ -1,4 +1,5 @@
 import sanityClient from "@/lib/sanity";
+import { useQuery } from "@tanstack/react-query";
 
 const privacyPolicyQuery = `*[_type == "privacy"][0]{
     title,
@@ -58,4 +59,15 @@ export async function getFeatured() {
     console.error("Sanity query error:", error);
     return [];
   }
+}
+
+export function useFeatured(limit?: number) {
+  return useQuery({
+    queryKey: ["featured", limit],
+    queryFn: () =>
+      limit
+        ? getFeatured().then((items) => items.slice(0, limit))
+        : getFeatured(),
+    staleTime: 1000 * 60 * 15,
+  });
 }

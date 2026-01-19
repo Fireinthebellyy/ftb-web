@@ -661,6 +661,15 @@ export function useToolkitPurchase(toolkitId: string) {
   const qc = useQueryClient();
 
   return useMutation({
+    mutationKey: ["purchase", toolkitId],
+    onMutate: () => {
+      qc.setQueryData(["toolkit", toolkitId], (old: any) => {
+        if (old) {
+          return { ...old, isPurchasing: true };
+        }
+        return old;
+      });
+    },
     mutationFn: async () => {
       const { data } = await axios.post(
         `/api/toolkits/${toolkitId}`,
@@ -731,6 +740,15 @@ export function useToolkitPurchase(toolkitId: string) {
       } else {
         toast.error(error instanceof Error ? error.message : "Purchase failed");
       }
+    },
+    onSettled: () => {
+      qc.setQueryData(["toolkit", toolkitId], (old: any) => {
+        if (old && "isPurchasing" in old) {
+          const { isPurchasing: _, ...rest } = old;
+          return rest;
+        }
+        return old;
+      });
     },
   });
 }

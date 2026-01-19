@@ -163,6 +163,15 @@ export default function ToolkitContentPage() {
     [currentItem, contentItems, sortedItems]
   );
 
+  const handleNavigatePrev = useCallback(
+    () => handleNavigate("prev"),
+    [handleNavigate]
+  );
+  const handleNavigateNext = useCallback(
+    () => handleNavigate("next"),
+    [handleNavigate]
+  );
+
   const handleToggleComplete = useCallback((itemId: string): void => {
     setCompletedItems((prev) => {
       if (prev.includes(itemId)) {
@@ -171,6 +180,13 @@ export default function ToolkitContentPage() {
       return [...prev, itemId];
     });
   }, []);
+
+  const handleMarkCompleteAndCelebrate = useCallback(() => {
+    if (currentItem) {
+      handleToggleComplete(currentItem.id);
+      toast.success("Congratulations! You've completed this toolkit!");
+    }
+  }, [currentItem, handleToggleComplete]);
 
   if (isLoading) {
     return (
@@ -319,7 +335,7 @@ export default function ToolkitContentPage() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <Button
                   variant="outline"
-                  onClick={() => handleNavigate("prev")}
+                  onClick={handleNavigatePrev}
                   disabled={isFirst}
                   className="w-full sm:w-auto"
                 >
@@ -329,7 +345,7 @@ export default function ToolkitContentPage() {
 
                 {!isLast ? (
                   <Button
-                    onClick={() => handleNavigate("next")}
+                    onClick={handleNavigateNext}
                     className="w-full sm:w-auto"
                   >
                     Next
@@ -337,12 +353,7 @@ export default function ToolkitContentPage() {
                   </Button>
                 ) : (
                   <Button
-                    onClick={() => {
-                      handleToggleComplete(currentItem.id);
-                      toast.success(
-                        "Congratulations! You've completed this toolkit!"
-                      );
-                    }}
+                    onClick={handleMarkCompleteAndCelebrate}
                     className="w-full sm:w-auto"
                   >
                     <Check className="mr-2 h-4 w-4" />

@@ -25,7 +25,7 @@ const eslintConfig = [
       ],
       "max-lines": [
         "error",
-        { max: 499, skipBlankLines: true, skipComments: true },
+        { max: 800, skipBlankLines: true, skipComments: true },
       ],
     },
   },

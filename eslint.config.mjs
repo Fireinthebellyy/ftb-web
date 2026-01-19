@@ -23,6 +23,7 @@ const eslintConfig = [
           caughtErrorsIgnorePattern: "^_",
         },
       ],
+      "max-lines": ["error", { max: 450 }],
     },
   },
 ];

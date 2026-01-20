@@ -210,6 +210,16 @@ export default function Navbar() {
           >
             Toolkit
           </Link>
+          <Link
+            href="/ungatekeep"
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
+              pathname === "/ungatekeep"
+                ? "text-primary after:w-full"
+                : "text-neutral-800 after:w-0"
+            }`}
+          >
+            Ungatekeep
+          </Link>
         </nav>
 
         {/* Right side: auth controls and Get Started button */}
@@ -441,6 +451,19 @@ export default function Navbar() {
                 }`}
               >
                 Deadlines
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/ungatekeep"
+                onClick={() => setIsOpen(false)}
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
+                  pathname === "/ungatekeep"
+                    ? "text-primary font-bold after:w-full"
+                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                }`}
+              >
+                Ungatekeep
               </Link>
             </li>
             {/* If authenticated, show Profile link inside mobile overlay for navigation */}

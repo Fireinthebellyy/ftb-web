@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Form } from "@/components/ui/form";
 import ToolkitContentManager from "./ToolkitContentManager";
 import { ToolkitFormFields } from "@/components/admin/ToolkitFormFields";
 import { ToolkitTableRow } from "@/components/admin/ToolkitTableRow";
@@ -203,22 +204,24 @@ export default function AdminToolkitsTable() {
             <DialogTitle>Edit Toolkit</DialogTitle>
           </DialogHeader>
 
-          <form
-            onSubmit={form.handleSubmit(handleUpdate)}
-            className="space-y-4"
-          >
-            <ToolkitFormFields control={form.control} />
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setEditDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit">Update Toolkit</Button>
-            </div>
-          </form>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(handleUpdate)}
+              className="space-y-4"
+            >
+              <ToolkitFormFields control={form.control} />
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit">Update Toolkit</Button>
+              </div>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
 

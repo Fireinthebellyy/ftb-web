@@ -7,6 +7,7 @@ export type ToolkitDetailResponse = {
   toolkit: Toolkit;
   hasPurchased: boolean;
   contentItems: ToolkitContentItem[];
+  completedItemIds: string[];
 };
 
 async function fetchToolkit(toolkitId: string): Promise<ToolkitDetailResponse> {
@@ -116,6 +117,44 @@ export function useToolkitPurchase(toolkitId: string) {
         }
         return old;
       });
+    },
+  });
+}
+
+export function useMarkContentComplete(toolkitId: string) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationKey: ["progress", toolkitId],
+    mutationFn: async (contentItemId: string) => {
+      const { data } = await axios.post(
+        `/api/toolkits/${toolkitId}/progress`,
+        { contentItemId },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return data;
+    },
+    onSuccess: (response, contentItemId) => {
+      // Optimistically update the cache
+      qc.setQueryData(
+        ["toolkit", toolkitId],
+        (old: ToolkitDetailResponse | undefined) => {
+          if (old && !old.completedItemIds.includes(contentItemId)) {
+            return {
+              ...old,
+              completedItemIds: [...old.completedItemIds, contentItemId],
+            };
+          }
+          return old;
+        }
+      );
+    },
+    onError: (error) => {
+      console.error("Failed to save progress:", error);
     },
   });
 }

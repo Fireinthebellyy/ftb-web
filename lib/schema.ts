@@ -284,6 +284,30 @@ export const userToolkits = pgTable("user_toolkits", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Track user progress on toolkit content items
+export const userToolkitProgress = pgTable(
+  "user_toolkit_progress",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    toolkitId: uuid("toolkit_id")
+      .notNull()
+      .references(() => toolkits.id, { onDelete: "cascade" }),
+    contentItemId: uuid("content_item_id")
+      .notNull()
+      .references(() => toolkitContentItems.id, { onDelete: "cascade" }),
+    completedAt: timestamp("completed_at").defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("user_content_item_unique").on(
+      table.userId,
+      table.contentItemId
+    ),
+  ]
+);
+
 export const schema = {
   user,
   userOnboardingProfiles,
@@ -301,4 +325,5 @@ export const schema = {
   toolkits,
   toolkitContentItems,
   userToolkits,
+  userToolkitProgress,
 };

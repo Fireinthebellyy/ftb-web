@@ -5,6 +5,7 @@ import {
   toolkitContentItems,
   user,
   userToolkits,
+  userToolkitProgress,
 } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { eq, and, asc } from "drizzle-orm";
@@ -67,6 +68,7 @@ export async function GET(
 
     const userSession = await getCurrentUser();
     let hasPurchased = false;
+    let completedItemIds: string[] = [];
 
     if (userSession && userSession.currentUser?.id) {
       const purchase = await db
@@ -81,13 +83,29 @@ export async function GET(
         )
         .limit(1);
 
-      hasPurchased = purchase.length > 0;
+      if (purchase.length > 0) {
+        hasPurchased = true;
+
+        // Fetch completed content items for this user and toolkit
+        const completedProgress = await db
+          .select({ contentItemId: userToolkitProgress.contentItemId })
+          .from(userToolkitProgress)
+          .where(
+            and(
+              eq(userToolkitProgress.userId, userSession.currentUser.id),
+              eq(userToolkitProgress.toolkitId, toolkitId)
+            )
+          );
+
+        completedItemIds = completedProgress.map((p) => p.contentItemId);
+      }
     }
 
     return NextResponse.json({
       toolkit,
       contentItems: contentItemsResult,
       hasPurchased,
+      completedItemIds,
     });
   } catch (error) {
     console.error("Error fetching toolkit:", error);

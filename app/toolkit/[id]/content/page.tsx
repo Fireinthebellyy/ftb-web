@@ -24,7 +24,7 @@ import { ToolkitContentItem } from "@/types/interfaces";
 import LessonSidebar from "@/components/toolkit/LessonSidebar";
 import BunnyPlayer from "@/components/toolkit/BunnyPlayer";
 import MarkdownRenderer from "@/components/toolkit/MarkdownRenderer";
-import { useToolkit } from "@/lib/queries";
+import { useToolkit, useMarkContentComplete } from "@/lib/queries";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface CircularProgressProps {
@@ -84,18 +84,22 @@ function CircularProgress({
 export default function ToolkitContentPage() {
   const params = useParams();
   const router = useRouter();
+  const toolkitId = params.id as string;
+
   const [currentItem, setCurrentItem] = useState<ToolkitContentItem | null>(
     null
   );
-  const [completedItems, setCompletedItems] = useState<string[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
 
-  const { data: toolkitData, isLoading } = useToolkit(params.id as string);
+  const { data: toolkitData, isLoading } = useToolkit(toolkitId);
+  const markComplete = useMarkContentComplete(toolkitId);
 
   const toolkit = toolkitData?.toolkit ?? null;
   const contentItems = toolkitData?.contentItems ?? [];
   const hasAccess = toolkitData?.hasPurchased ?? false;
+  // Use completedItemIds from API (persisted in DB)
+  const completedItems = toolkitData?.completedItemIds ?? [];
 
   const progress =
     contentItems.length > 0
@@ -134,6 +138,17 @@ export default function ToolkitContentPage() {
     [contentItems]
   );
 
+  // Mark item as complete (idempotent - does nothing if already complete)
+  const handleMarkComplete = useCallback(
+    (itemId: string): void => {
+      // Skip if already completed
+      if (completedItems.includes(itemId)) return;
+      // Persist to database
+      markComplete.mutate(itemId);
+    },
+    [completedItems, markComplete]
+  );
+
   const handleNavigate = useCallback(
     (direction: "prev" | "next") => {
       if (!currentItem || contentItems.length === 0) return;
@@ -146,6 +161,8 @@ export default function ToolkitContentPage() {
       if (direction === "prev") {
         newIndex = currentIndex > 0 ? currentIndex - 1 : currentIndex;
       } else {
+        // Auto-mark current item as complete when moving to next
+        handleMarkComplete(currentItem.id);
         newIndex =
           currentIndex < sortedItems.length - 1
             ? currentIndex + 1
@@ -154,7 +171,7 @@ export default function ToolkitContentPage() {
 
       setCurrentItem(sortedItems[newIndex]);
     },
-    [currentItem, contentItems, sortedItems]
+    [currentItem, contentItems, sortedItems, handleMarkComplete]
   );
 
   const handleNavigatePrev = useCallback(
@@ -166,21 +183,12 @@ export default function ToolkitContentPage() {
     [handleNavigate]
   );
 
-  const handleToggleComplete = useCallback((itemId: string): void => {
-    setCompletedItems((prev) => {
-      if (prev.includes(itemId)) {
-        return prev.filter((id) => id !== itemId);
-      }
-      return [...prev, itemId];
-    });
-  }, []);
-
   const handleMarkCompleteAndCelebrate = useCallback(() => {
-    if (currentItem) {
-      handleToggleComplete(currentItem.id);
+    if (currentItem && !completedItems.includes(currentItem.id)) {
+      handleMarkComplete(currentItem.id);
       toast.success("Congratulations! You've completed this toolkit!");
     }
-  }, [currentItem, handleToggleComplete]);
+  }, [currentItem, completedItems, handleMarkComplete]);
 
   if (isLoading) {
     return (
@@ -320,7 +328,7 @@ export default function ToolkitContentPage() {
                       content={currentItem.content}
                       protected={true}
                       itemId={currentItem.id}
-                      onComplete={handleToggleComplete}
+                      onComplete={handleMarkComplete}
                     />
                   </CardContent>
                 </Card>

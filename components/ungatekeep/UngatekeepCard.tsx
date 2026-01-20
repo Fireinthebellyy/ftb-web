@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +29,6 @@ interface UngatekeepCardProps {
 }
 
 export default function UngatekeepCard({ post }: UngatekeepCardProps) {
-  const [imageError, setImageError] = useState(false);
   const ungatekeepStorage = createUngatekeepStorage();
 
   const getTagBadgeVariant = (tag: string | null | undefined) => {
@@ -114,7 +113,6 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
                   alt={post.title}
                   fill
                   className="object-cover"
-                  onError={() => setImageError(true)}
                 />
               </div>
             ) : (
@@ -129,7 +127,6 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
                       alt={`${post.title} - Image ${idx + 1}`}
                       fill
                       className="object-cover"
-                      onError={() => setImageError(true)}
                     />
                   </div>
                 ))}

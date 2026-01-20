@@ -61,8 +61,8 @@ export default function ToolkitCardNew({
           </div>
         )}
 
-        {hasOriginalPrice && (
-          <Badge className="absolute top-3 right-3 bg-orange-500 text-white hover:bg-green-700">
+        {hasOriginalPrice && toolkit.showSaleBadge && (
+          <Badge className="absolute top-3 right-3 bg-orange-500 text-white hover:bg-orange-600">
             Sale
           </Badge>
         )}

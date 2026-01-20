@@ -30,6 +30,7 @@ export async function GET() {
         totalDuration: toolkits.totalDuration,
         lessonCount: toolkits.lessonCount,
         isActive: toolkits.isActive,
+        showSaleBadge: toolkits.showSaleBadge,
         createdAt: toolkits.createdAt,
         updatedAt: toolkits.updatedAt,
         userId: toolkits.userId,

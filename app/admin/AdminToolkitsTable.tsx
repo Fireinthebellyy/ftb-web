@@ -51,6 +51,7 @@ export default function AdminToolkitsTable() {
       lessonCount: 0,
       highlights: [],
       isActive: true,
+      showSaleBadge: false,
     },
   });
 
@@ -85,6 +86,7 @@ export default function AdminToolkitsTable() {
       lessonCount: toolkit.lessonCount ?? 0,
       highlights: toolkit.highlights ?? [],
       isActive: toolkit.isActive,
+      showSaleBadge: toolkit.showSaleBadge,
     });
     setEditDialogOpen(true);
   };
@@ -167,13 +169,14 @@ export default function AdminToolkitsTable() {
                 <TableHead>Price</TableHead>
                 <TableHead>Lessons</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Sale Badge</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {toolkits.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
+                  <TableCell colSpan={7} className="h-24 text-center">
                     No toolkits found. Create your first toolkit!
                   </TableCell>
                 </TableRow>

@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
 import {
   MoreVertical,
   Edit,
@@ -16,8 +17,11 @@ import {
   Eye,
   EyeOff,
   FileText,
+  Tag,
 } from "lucide-react";
 import { Toolkit } from "./types";
+import axios from "axios";
+import { toast } from "sonner";
 
 interface ToolkitTableRowProps {
   toolkit: Toolkit;
@@ -34,6 +38,20 @@ export function ToolkitTableRow({
   onToggleActive,
   onManageContent,
 }: ToolkitTableRowProps) {
+  const handleToggleSaleBadge = async () => {
+    try {
+      await axios.put(`/api/admin/toolkits/${toolkit.id}`, {
+        showSaleBadge: !toolkit.showSaleBadge,
+      });
+      toast.success(
+        `Sale badge ${!toolkit.showSaleBadge ? "enabled" : "disabled"}`
+      );
+    } catch (error) {
+      console.error("Error toggling sale badge:", error);
+      toast.error("Failed to update sale badge");
+    }
+  };
+
   return (
     <TableRow key={toolkit.id}>
       <TableCell className="max-w-xs">
@@ -70,6 +88,21 @@ export function ToolkitTableRow({
             <EyeOff className="h-4 w-4" />
           )}
         </Button>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleToggleSaleBadge}
+            className={toolkit.showSaleBadge ? "text-orange-500" : ""}
+          >
+            <Tag className="h-4 w-4" />
+          </Button>
+          {toolkit.showSaleBadge && (
+            <Badge className="bg-orange-500">Sale</Badge>
+          )}
+        </div>
       </TableCell>
       <TableCell>
         <DropdownMenu>

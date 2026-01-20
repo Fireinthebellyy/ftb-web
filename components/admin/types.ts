@@ -16,6 +16,7 @@ export const toolkitFormSchema = z.object({
   lessonCount: z.coerce.number().int().min(0).optional(),
   highlights: z.array(z.string()).optional(),
   isActive: z.boolean().optional(),
+  showSaleBadge: z.boolean().optional(),
 });
 
 export type ToolkitFormValues = z.infer<typeof toolkitFormSchema>;
@@ -34,6 +35,7 @@ export interface Toolkit {
   totalDuration: string | null;
   lessonCount: number | null;
   isActive: boolean;
+  showSaleBadge: boolean;
   createdAt: string;
   updatedAt: string;
   userId: string;

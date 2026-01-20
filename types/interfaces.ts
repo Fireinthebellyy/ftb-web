@@ -110,6 +110,7 @@ export type Toolkit = {
   totalDuration?: string;
   lessonCount?: number;
   isActive?: boolean;
+  showSaleBadge?: boolean;
   createdAt?: string;
   updatedAt?: string;
   userId?: string;

@@ -240,6 +240,7 @@ export const toolkits = pgTable("toolkits", {
   totalDuration: text("total_duration"), // e.g., "2h 30m"
   lessonCount: integer("lesson_count").default(0),
   isActive: boolean("is_active").default(false),
+  showSaleBadge: boolean("show_sale_badge").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   userId: text("user_id")

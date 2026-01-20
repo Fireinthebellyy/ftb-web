@@ -8,7 +8,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { Righteous } from "next/font/google";
 import { EllipsisVertical, Shield } from "lucide-react";
-import axios from "axios";
 
 function useLogout() {
   const router = useRouter();
@@ -43,18 +42,6 @@ export default function Navbar() {
   const pathname = usePathname();
 
   const { data: user, isPending } = authClient.useSession();
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      axios
-        .get("/api/auth/is-admin")
-        .then((res) => setIsAdmin(res.data.isAdmin))
-        .catch(() => setIsAdmin(false));
-    } else {
-      setIsAdmin(false);
-    }
-  }, [user]);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -252,7 +239,8 @@ export default function Navbar() {
               <span className="hidden text-sm font-medium sm:inline">
                 Hi, {user?.user?.name?.split(" ")[0] || "User"}!
               </span>
-              {isAdmin && (
+              {/* @ts-ignore - role is added via additionalFields in better-auth config */}
+              {user?.user?.role === "admin" && (
                 <Link
                   href="/admin"
                   className="flex items-center gap-1 rounded-md bg-orange-100 px-2 py-1 text-xs font-medium text-orange-700 transition-colors hover:bg-orange-200"

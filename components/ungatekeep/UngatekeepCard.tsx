@@ -65,15 +65,15 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
   };
 
   return (
-    <Card className="mb-4 overflow-hidden">
-      <CardHeader className="pb-3">
+    <Card className="overflow-hidden shadow-sm">
+      <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-2">
               {post.isPinned && (
                 <Pin className="h-4 w-4 text-primary" fill="currentColor" />
               )}
-              <h3 className="text-lg font-semibold leading-tight">
+              <h3 className="text-xl font-semibold leading-tight text-gray-900">
                 {post.title}
               </h3>
             </div>
@@ -95,10 +95,10 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="pt-0 space-y-4">
         {/* Main content */}
-        <div className="prose prose-sm max-w-none">
-          <p className="whitespace-pre-wrap text-sm leading-relaxed">
+        <div className="prose prose-base max-w-none">
+          <p className="whitespace-pre-wrap text-base leading-relaxed text-gray-700">
             {post.content}
           </p>
         </div>

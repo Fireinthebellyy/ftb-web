@@ -41,13 +41,13 @@ export default function UngatekeepPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto max-w-2xl px-4 py-8">
+        <div className="container mx-auto max-w-4xl px-4 py-8">
           <div className="mb-8">
             <Skeleton className="h-8 w-48 mb-2" />
             <Skeleton className="h-4 w-96" />
           </div>
           {[...Array(3)].map((_, index) => (
-            <div key={index} className="mb-4 space-y-4">
+            <div key={index} className="mb-6 space-y-4">
               <Skeleton className="h-64 w-full rounded-lg" />
             </div>
           ))}
@@ -58,7 +58,7 @@ export default function UngatekeepPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-2xl px-4 py-8">
+      <div className="container mx-auto max-w-4xl px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Ungatekeep</h1>
           <p className="text-gray-600">
@@ -76,7 +76,7 @@ export default function UngatekeepPage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {posts.map((post) => (
               <UngatekeepCard key={post.id} post={post} />
             ))}

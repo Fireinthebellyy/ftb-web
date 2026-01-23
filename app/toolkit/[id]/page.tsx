@@ -107,8 +107,8 @@ export default function ToolkitDetailPage() {
           ← Back to Toolkits
         </Button>
 
-        <div className="grid gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2">
+        <div className="grid gap-8 xl:grid-cols-3">
+          <div className="xl:col-span-2">
             <div className="mb-6 overflow-hidden rounded-lg border bg-white">
               <div className="relative aspect-video bg-gray-100">
                 {toolkit.coverImageUrl ? (
@@ -224,7 +224,7 @@ export default function ToolkitDetailPage() {
             )}
           </div>
 
-          <div className="hidden lg:col-span-1 lg:block">
+          <div className="hidden xl:col-span-1 xl:block">
             <ToolkitSidebar
               toolkit={toolkit}
               contentItems={contentItems}
@@ -238,7 +238,7 @@ export default function ToolkitDetailPage() {
       </div>
 
       {/* Mobile sticky purchase bar */}
-      <div className="fixed right-0 bottom-[52px] left-0 z-50 border-t bg-white p-4 shadow-lg md:hidden">
+      <div className="fixed right-0 bottom-[52px] left-0 z-50 border-t bg-white p-4 shadow-lg md:bottom-0 xl:hidden">
         {hasPurchased ? (
           <Button onClick={handleViewContent} size="lg" className="w-full">
             Access Content

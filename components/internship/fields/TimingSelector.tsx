@@ -11,46 +11,46 @@ import {
 import { Control } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { InternshipFormData } from "../schema";
-import { internshipTypes } from "../constants";
+import { internshipTimings } from "../constants";
 
 type Props = {
   control: Control<InternshipFormData>;
-  value: "in-office" | "work-from-home" | "hybrid" | undefined;
-  onChange: (v: "in-office" | "work-from-home" | "hybrid") => void;
+  value: "full-time" | "part-time" | "shift-based" | undefined;
+  onChange: (v: "full-time" | "part-time" | "shift-based") => void;
 };
 
-export function TypeSelector({ control, value, onChange }: Props) {
+export function TimingSelector({ control, value, onChange }: Props) {
   return (
     <FormField
       control={control}
-      name="type"
+      name="timing"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Internship Type *</FormLabel>
+          <FormLabel>Internship Timing *</FormLabel>
           <FormControl>
             <div
               className="flex items-center gap-1 flex-wrap"
               role="radiogroup"
-              aria-label="Internship type"
+              aria-label="Internship timing"
             >
-                {internshipTypes.map((type) => (
+                {internshipTimings.map((timing) => (
                   <Badge
-                    key={type.id}
-                    variant={value === type.id ? "default" : "outline"}
+                    key={timing.id}
+                    variant={value === timing.id ? "default" : "outline"}
                     className={cn(
                       "text-xs cursor-pointer transition-all px-2 py-0.5 h-auto",
-                      value === type.id
+                      value === timing.id
                         ? "bg-blue-100 text-blue-800 hover:bg-blue-200 border-transparent"
                         : "bg-gray-50 text-gray-500 hover:bg-gray-100 border-gray-200"
                     )}
                     onClick={() => {
-                      onChange(type.id as "in-office" | "work-from-home" | "hybrid");
-                      field.onChange(type.id);
+                      onChange(timing.id as "full-time" | "part-time" | "shift-based");
+                      field.onChange(timing.id);
                     }}
                     role="radio"
-                    aria-checked={value === type.id}
+                    aria-checked={value === timing.id}
                   >
-                    {type.label}
+                    {timing.label}
                   </Badge>
                 ))}
             </div>
@@ -61,3 +61,4 @@ export function TypeSelector({ control, value, onChange }: Props) {
     />
   );
 }
+

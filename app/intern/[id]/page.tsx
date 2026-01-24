@@ -1,148 +1,294 @@
-import { db } from "@/lib/db";
-import { internships, tags, user } from "@/lib/schema";
-import { eq, sql } from "drizzle-orm";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, MapPin, Building2, IndianRupee, ExternalLink, User } from "lucide-react";
-import { format } from "date-fns";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { MapPin, Building2, IndianRupee, ExternalLink, Share2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { toast } from "sonner";
+import TwitterXIcon from "@/components/icons/TwitterX";
+import FacebookIcon from "@/components/icons/Facebook";
+import LinkedInIcon from "@/components/icons/LinkedIn";
+import WhatsAppIcon from "@/components/icons/WhatsApp";
+import EnvelopeIcon from "@/components/icons/Envelope";
 
-export default async function InternshipDetailPage({ params }: any) {
-  const id = params.id;
+interface InternshipData {
+  id: string;
+  type: string;
+  timing: string;
+  title: string;
+  description: string;
+  link: string;
+  poster: string;
+  tags: string[];
+  location: string;
+  deadline: Date | null;
+  stipend: number;
+  hiringOrganization: string;
+  hiringManager: string;
+  hiringManagerEmail: string;
+  experience: string;
+  duration?: string;
+  eligibility: string[];
+  createdAt: Date | null;
+  viewCount: number;
+  applicationCount: number;
+  user: {
+    id: string;
+    name: string;
+    image: string;
+    role: string;
+  };
+}
 
-  const result = await db
-    .select({
-      id: internships.id,
-      type: internships.type,
-      title: internships.title,
-      description: internships.description,
-      link: internships.link,
-      poster: internships.poster,
-      tags: sql<string[]>`(
-        SELECT coalesce(array_agg(t.name ORDER BY t.name), '{}')
-        FROM ${tags} t
-        WHERE t.id = ANY(${internships.tagIds})
-      )`,
-      location: internships.location,
-      deadline: internships.deadline,
-      stipend: internships.stipend,
-      hiringOrganization: internships.hiringOrganization,
-      hiringManager: internships.hiringManager,
-      createdAt: internships.createdAt,
-      viewCount: internships.viewCount,
-      applicationCount: internships.applicationCount,
-      user: {
-        id: user.id,
-        name: user.name,
-        image: user.image,
-        role: user.role,
-      },
-    })
-    .from(internships)
-    .leftJoin(user, eq(internships.userId, user.id))
-    .where(eq(internships.id, id))
-    .limit(1);
+export default function InternshipDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const [internship, setInternship] = useState<InternshipData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [id, setId] = useState<string>("");
 
-  const internship = result?.[0];
-  if (!internship) {
-    notFound();
-  }
+  useEffect(() => {
+    const fetchData = async () => {
+      const resolvedParams = await params;
+      setId(resolvedParams.id);
+
+      try {
+        const response = await fetch(`/api/internships/${resolvedParams.id}`);
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          notFound();
+        }
+
+        setInternship(data.internship as InternshipData);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching internship:", error);
+        notFound();
+      }
+    };
+
+    fetchData();
+  }, [params]);
 
   const getTypeColor = (type?: string): string => {
     const colors: Record<string, string> = {
-      "part-time": "bg-blue-100 text-blue-800",
-      "full-time": "bg-green-100 text-green-800",
-      contract: "bg-purple-100 text-purple-800",
-      remote: "bg-orange-100 text-orange-800",
+      "in-office": "bg-blue-100 text-blue-800",
+      "work-from-home": "bg-green-100 text-green-800",
+      hybrid: "bg-purple-100 text-purple-800",
     };
-    return colors[type?.toLowerCase() || "part-time"] || colors["part-time"];
+    return colors[type?.toLowerCase() || "in-office"] || colors["in-office"];
   };
 
+  const getTimingColor = (timing?: string): string => {
+    const colors: Record<string, string> = {
+      "full-time": "bg-indigo-100 text-indigo-800",
+      "part-time": "bg-pink-100 text-pink-800",
+      "shift-based": "bg-amber-100 text-amber-800",
+    };
+    return colors[timing?.toLowerCase() || "full-time"] || colors["full-time"];
+  };
+
+  const publicBaseUrl =
+    (process.env.NEXT_PUBLIC_SITE_URL as string | undefined) ||
+    (typeof window !== "undefined" ? window.location.origin : "");
+  const shareUrl = publicBaseUrl ? `${publicBaseUrl}/intern/${id}` : `/intern/${id}`;
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Link copied to clipboard");
+    } catch {
+      toast.error("Failed to copy link");
+    }
+  };
+
+  if (loading || !internship) {
+    return (
+      <div className="container mx-auto max-w-3xl px-4 py-6">
+        <div className="bg-white rounded-lg border shadow-sm p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-32 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto max-w-4xl px-4 py-6">
+    <div className="container mx-auto max-w-3xl px-4 py-6">
       {/* Header Section */}
-      <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
-        {/* Type Badge */}
-        <div className="flex justify-between items-start mb-4">
-          <Badge
-            className={`${getTypeColor(internship.type)} px-3 py-1 text-sm font-medium`}
-          >
-            {internship.type?.charAt(0).toUpperCase() + internship.type?.slice(1).replace("-", " ")}
-          </Badge>
-          <div className="text-sm text-gray-500">
-            Posted {format(new Date(internship.createdAt), "MMM dd, yyyy")}
+      <div className="bg-white rounded-lg border shadow-sm p-6 mb-6 relative">
+        {/* Logo, Title, Organization */}
+        <div className="flex gap-4 mb-4">
+          {/* Logo in top left corner */}
+          {internship.poster && (
+            <div className="flex-shrink-0">
+              <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full flex items-center justify-center overflow-hidden">
+                <Image
+                  src={internship.poster}
+                  alt={`${internship.hiringOrganization} logo`}
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-fit"
+                />
+              </div>
+            </div>
+          )}
+          
+          {/* Title, Organization and Apply Button */}
+          <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-2xl font-bold text-gray-900 mb-1">{internship.title}</h1>
+              <div className="flex items-center gap-2 text-sm sm:text-lg text-gray-700">
+                <Building2 className="w-4 h-4 hidden sm:block" />
+                <span>{internship.hiringOrganization}</span>
+              </div>
+            </div>
+            
+            {/* Apply Button */}
+            {internship.link && (
+              <Link href={`${internship.link}?utm_source=ftb_web&utm_medium=internship_detail&utm_campaign=internship_apply`} target="_blank" rel="noopener noreferrer">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium w-full sm:w-auto px-6 py-2">
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Apply
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
-        {/* Title and Organization */}
-        <div className="mb-4">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">{internship.title}</h1>
-          <div className="flex items-center gap-2 text-lg text-gray-700">
-            <Building2 className="w-5 h-5" />
-            <span>{internship.hiringOrganization}</span>
-          </div>
-        </div>
-
-        {/* Key Details Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {internship.location && (
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium">{internship.location}</span>
-            </div>
-          )}
-
-          {internship.stipend && (
-            <div className="flex items-center gap-2">
-              <IndianRupee className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium">₹{internship.stipend.toLocaleString("en-IN")}/month</span>
-            </div>
-          )}
-
-          {internship.deadline && (
-            <div className="flex items-center gap-2">
-              <CalendarDays className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium">Deadline: {format(new Date(internship.deadline), "MMM dd, yyyy")}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Apply Button */}
-        {internship.link && (
-          <div className="flex gap-3">
-            <Link href={`${internship.link}?utm_source=ftb_web&utm_medium=internship_detail&utm_campaign=internship_apply`} target="_blank" rel="noopener noreferrer" className="flex-1">
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3">
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Apply Now
-              </Button>
-            </Link>
+        {/* Location */}
+        {internship.location && (
+          <div className="flex items-center gap-2 mb-4">
+            <MapPin className="w-4 h-4 text-gray-500" />
+            <span className="text-sm font-medium line-clamp-1">{internship.location}</span>
           </div>
         )}
-      </div>
 
-      {/* Poster Image */}
-      {internship.poster && (
-        <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Company Poster</h2>
-          <div className="flex justify-center">
-            <Image
-              src={internship.poster}
-              alt={`${internship.title} poster`}
-              width={600}
-              height={400}
-              className="rounded-lg object-cover max-w-full h-auto"
-            />
-          </div>
+        {/* Type and Timing Badges */}
+        <div className="flex gap-2">
+          <Badge
+            className={`${getTypeColor(internship.type)} px-3 py-1 text-xs sm:text-sm`}
+          >
+            {internship.type?.charAt(0).toUpperCase() + internship.type?.slice(1).replace(/-/g, " ")}
+          </Badge>
+          {internship.timing && (
+            <Badge
+              className={`${getTimingColor(internship.timing)} px-3 py-1 text-xs sm:text-sm`}
+            >
+              {internship.timing?.charAt(0).toUpperCase() + internship.timing?.slice(1).replace(/-/g, " ")}
+            </Badge>
+          )}
         </div>
-      )}
+
+        {/* Share Dialog */}
+        <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShareDialogOpen(true);
+            }}
+            className="absolute bottom-6 right-6 p-2 hover:bg-orange-300 rounded-full transition-colors cursor-pointer hidden sm:block"
+            aria-label="Share"
+          >
+            <Share2 className="w-5 h-5 text-black" />
+          </button>
+          <DialogContent
+            className="sm:max-w-md"
+            onClick={(e) => e.stopPropagation()}
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
+            <DialogHeader>
+              <DialogTitle>Share this internship</DialogTitle>
+            </DialogHeader>
+            <div className="flex items-center gap-2">
+              <Input readOnly value={shareUrl} />
+              <Button type="button" size="sm" onClick={handleCopy}>
+                Copy
+              </Button>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link
+                href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(
+                  `${shareUrl}${shareUrl.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=internship_detail&utm_campaign=internship_share`
+                )}&text=${encodeURIComponent(internship.title)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Share on Twitter/X"
+                className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <TwitterXIcon className="h-6 w-6" />
+              </Link>
+              <Link
+                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+                  `${shareUrl}${shareUrl.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=internship_detail&utm_campaign=internship_share`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Share on Facebook"
+                className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <FacebookIcon className="h-6 w-6" />
+              </Link>
+              <Link
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+                  `${shareUrl}${shareUrl.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=internship_detail&utm_campaign=internship_share`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Share on LinkedIn"
+                className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <LinkedInIcon className="h-6 w-6" />
+              </Link>
+              <Link
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
+                  internship.title +
+                  " " +
+                  `${shareUrl}${shareUrl.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=internship_detail&utm_campaign=internship_share`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Share on WhatsApp"
+                className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <WhatsAppIcon className="h-6 w-6" />
+              </Link>
+              <Link
+                href={`mailto:?subject=${encodeURIComponent(internship.title)}&body=${encodeURIComponent(shareUrl)}`}
+                aria-label="Share via Email"
+                className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <EnvelopeIcon className="h-6 w-6" />
+              </Link>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       {/* Description */}
       {internship.description && (
         <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Description</h2>
-          <div className="prose max-w-none text-gray-700">
+          <h2 className="font-semibold mb-4 text-lg sm:text-xl">Description</h2>
+          <div className="prose max-w-none text-black text-sm sm:text-base">
             {typeof internship.description === "string" ? (
               <p className="whitespace-pre-wrap">{internship.description}</p>
             ) : (
@@ -152,39 +298,118 @@ export default async function InternshipDetailPage({ params }: any) {
         </div>
       )}
 
-      {/* Tags */}
-      {internship.tags && internship.tags.length > 0 && (
+      {/* Eligibility, Experience & Internship Details */}
+      {internship.eligibility  || internship.experience || internship.type || internship.timing || internship.stipend ? (
         <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Tags</h2>
-          <div className="flex flex-wrap gap-2">
-            {internship.tags.map((tag, idx) => (
+          <h2 className="text-lg font-semibold mb-4 sm:text-xl">More Information</h2>
+
+          {/* Internship Type */}
+          {internship.type && (
+            <div className="mb-6">
+              <h2 className="text-sm font-semibold mb-4 sm:text-lg">Internship Type</h2>
               <Badge
-                key={idx}
-                className="bg-blue-50 text-blue-700 border-blue-200"
+                className={`${getTypeColor(internship.type)} px-3 py-1 text-xs sm:text-sm font-medium`}
               >
-                #{tag}
+                {internship.type?.charAt(0).toUpperCase() + internship.type?.slice(1).replace(/-/g, " ")}
               </Badge>
-            ))}
-          </div>
+            </div>
+          )}
+
+          {/* Internship Timing */}
+          {internship.timing && (
+            <div className="mb-6">
+              <h2 className="font-semibold mb-4 text-sm sm:text-lg">Internship Timing</h2>
+              <Badge
+                className={`${getTimingColor(internship.timing)} px-3 py-1 text-xs sm:text-sm font-medium`}
+              >
+                {internship.timing?.charAt(0).toUpperCase() + internship.timing?.slice(1).replace(/-/g, " ")}
+              </Badge>
+            </div>
+          )}
+
+          {/* Stipend */}
+          {internship.stipend && (
+            <div className="mb-6">
+              <h2 className="font-semibold mb-4 text-sm sm:text-lg">Stipend</h2>
+              <Badge className="bg-green-100 text-green-800 border-green-300 px-3 py-1 text-xs sm:text-sm font-medium flex items-center gap-1">
+                <IndianRupee className="w-3 h-3" />
+                {internship.stipend.toLocaleString()}
+              </Badge>
+            </div>
+          )}
+
+          {/* Eligibility */}
+          {internship.eligibility && internship.eligibility.length > 0 && (
+            <div className="mb-6">
+              <h2 className="font-semibold mb-4 text-sm sm:text-lg">Eligibility</h2>
+              <div className="flex flex-wrap gap-2">
+                {internship.eligibility.map((item, idx) => (
+                  <Badge
+                    key={idx}
+                    className="bg-orange-100 text-orange-800 border-orange-300 text-xs sm:text-sm font-medium"
+                  >
+                    {item}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Experience */}
+          {internship.experience && (
+            <div className="mb-6">
+              <h2 className="font-semibold mb-4 text-sm sm:text-lg">Experience Required</h2>
+              <Badge className="bg-purple-100 text-purple-800 border-purple-300 text-xs sm:text-sm font-medium">
+                {internship.experience}
+              </Badge>
+            </div>
+          )}
+
+          {/* Duration */}
+          {internship.duration && (
+            <div className="mb-6">
+              <h2 className="text-sm font-semibold mb-4 sm:text-lg">Internship Duration</h2>
+              <Badge className="bg-blue-100 text-blue-800 border-blue-300 text-xs sm:text-sm font-medium">
+                {internship.duration}
+              </Badge>
+            </div>
+          )}
+
+          {/* Deadline */}
+          {internship.deadline && (
+            <div>
+              <h2 className="text-sm font-semibold mb-4 sm:text-lg">Deadline</h2>
+              <Badge className="bg-fuchsia-100 text-fuchsia-700 border-fuchsia-300 text-xs sm:text-sm font-medium flex items-center gap-1">
+                {new Date(internship.deadline).toLocaleDateString('en-IN', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric'
+                })}
+              </Badge>
+            </div>
+          )}
         </div>
-      )}
+      ) : null}
 
       {/* Contact Information */}
-      {(internship.hiringManager || internship.user) && (
+      {(internship.hiringManager || internship.hiringManagerEmail || internship.user) && (
         <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Contact Information</h2>
+          <h2 className="text-lg font-semibold mb-4 sm:text-xl">Contact Information</h2>
           <div className="space-y-3">
             {internship.hiringManager && (
               <div className="flex items-center gap-2">
-                <User className="w-4 h-4 text-gray-500" />
-                <span className="text-sm">
-                  <span className="font-medium">Hiring Manager:</span> {internship.hiringManager}
-                </span>
+                  <span className="text-md font-semibold text-sm sm:text-md">Hiring Manager:</span> <span className="text-sm sm:text-base">{internship.hiringManager}</span>
+              </div>
+            )}
+            {internship.hiringManagerEmail && (
+              <div className="flex items-center gap-2">
+                  <span className="text-md font-semibold text-sm sm:text-md">Email Id:</span> <span className="text-sm sm:text-base">{internship.hiringManagerEmail}</span>
               </div>
             )}
             {internship.user && (
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+              
+                  <span className="text-md font-semibold text-sm sm:text-md">Posted by:</span>   <div className="w-8 h-8 rounded-full border-2 border-amber-500 bg-gray-300 flex items-center justify-center">
                   {internship.user.image ? (
                     <Image
                       src={internship.user.image}
@@ -194,34 +419,17 @@ export default async function InternshipDetailPage({ params }: any) {
                       className="rounded-full object-cover"
                     />
                   ) : (
-                    <span className="text-xs text-gray-600">
+                    <span className="text-sm text-black">
                       {internship.user.name?.split(" ").map(n => n[0]).join("").slice(0, 2)}
                     </span>
                   )}
                 </div>
-                <span className="text-sm">
-                  <span className="font-medium">Posted by:</span> {internship.user.name}
-                </span>
+                <span className="text-sm sm:text-base">{internship.user.name}</span>
               </div>
             )}
           </div>
         </div>
       )}
-
-      {/* Stats */}
-      <div className="bg-white rounded-lg border shadow-sm p-6">
-        <h2 className="text-lg font-semibold mb-4">Internship Stats</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">{internship.viewCount || 0}</div>
-            <div className="text-sm text-gray-600">Views</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{internship.applicationCount || 0}</div>
-            <div className="text-sm text-gray-600">Applications</div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

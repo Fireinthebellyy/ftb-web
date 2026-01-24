@@ -20,10 +20,15 @@ export const opportunityTypeEnum = pgEnum("opportunity_type", [
 ]);
 
 export const internshipTypeEnum = pgEnum("internship_type", [
-  "part-time",
+  "in-office",
+  "work-from-home",
+  "hybrid",
+]);
+
+export const internshipTimingEnum = pgEnum("internship_timing", [
   "full-time",
-  "contract",
-  "remote",
+  "part-time",
+  "shift-based",
 ]);
 
 export const mentors = pgTable("mentors", {
@@ -85,16 +90,21 @@ export const opportunities = pgTable("opportunities", {
 export const internships = pgTable("internships", {
   id: uuid("id").primaryKey().defaultRandom(),
   type: internshipTypeEnum("type").notNull(),
+  timing: internshipTimingEnum("timing").notNull(),
   title: text("title").notNull(),
   description: text("description").notNull(),
   link: text("link"),
-  poster: text("poster"), // Optional image URL
+  poster: text("poster").notNull(), // Required image URL
   tagIds: uuid("tag_ids").array().default([]),
   location: text("location"),
   deadline: date("deadline"),
   stipend: integer("stipend"), // Amount in rupees
   hiringOrganization: text("hiring_organization").notNull(),
   hiringManager: text("hiring_manager"), // Optional
+  hiringManagerEmail: text("hiring_manager_email"), // Optional
+  experience: text("experience"), // Optional
+  duration: text("duration"), // Optional 
+  eligibility: text("eligibility").array().default([]),
   isFlagged: boolean("is_flagged").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

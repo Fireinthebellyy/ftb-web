@@ -7,23 +7,28 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 const internshipUpdateSchema = z.object({
-  type: z.enum(["part-time", "full-time", "contract", "remote"]).optional(),
+  type: z.enum(["in-office", "work-from-home", "hybrid"]).optional(),
+  timing: z.enum(["full-time", "part-time", "shift-based"]).optional(),
   title: z.string().min(1, "Title is required").optional(),
   description: z.string().min(1, "Description is required").optional(),
-  link: z.string().optional(),
-  poster: z.string().optional(),
+  link: z.string().url().optional().or(z.literal("")),
+  poster: z.string().min(1, "Company logo is required").optional(),
   tags: z.array(z.string()).optional(),
   location: z.string().optional(),
   deadline: z.string().optional(),
   stipend: z.number().min(0).optional(),
   hiringOrganization: z.string().min(1, "Hiring organization is required").optional(),
   hiringManager: z.string().optional(),
+  hiringManagerEmail: z.string().email().optional().or(z.literal("")),
+  experience: z.string().optional(),
+  duration: z.string().optional(),
+  eligibility: z.array(z.string()).optional(),
   isActive: z.boolean().optional(),
 });
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     if (!db) {
@@ -33,7 +38,7 @@ export async function GET(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
     if (!id) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
@@ -42,6 +47,7 @@ export async function GET(
       .select({
         id: internships.id,
         type: internships.type,
+        timing: internships.timing,
         title: internships.title,
         description: internships.description,
         link: internships.link,
@@ -56,6 +62,10 @@ export async function GET(
         stipend: internships.stipend,
         hiringOrganization: internships.hiringOrganization,
         hiringManager: internships.hiringManager,
+        hiringManagerEmail: internships.hiringManagerEmail,
+        experience: internships.experience,
+        duration: internships.duration,
+        eligibility: internships.eligibility,
         isFlagged: internships.isFlagged,
         createdAt: internships.createdAt,
         updatedAt: internships.updatedAt,
@@ -98,7 +108,7 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     if (!db) {
@@ -108,7 +118,7 @@ export async function PUT(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
     if (!id) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
@@ -147,6 +157,7 @@ export async function PUT(
 
     // Handle optional fields
     if (validatedData.type !== undefined) updateData.type = validatedData.type;
+    if (validatedData.timing !== undefined) updateData.timing = validatedData.timing;
     if (validatedData.title !== undefined) updateData.title = validatedData.title;
     if (validatedData.description !== undefined) updateData.description = validatedData.description;
     if (validatedData.link !== undefined) updateData.link = validatedData.link;
@@ -154,6 +165,16 @@ export async function PUT(
     if (validatedData.location !== undefined) updateData.location = validatedData.location;
     if (validatedData.hiringOrganization !== undefined) updateData.hiringOrganization = validatedData.hiringOrganization;
     if (validatedData.hiringManager !== undefined) updateData.hiringManager = validatedData.hiringManager;
+    if (validatedData.hiringManagerEmail !== undefined) updateData.hiringManagerEmail = validatedData.hiringManagerEmail;
+    if (validatedData.experience !== undefined) updateData.experience = validatedData.experience;
+    if (validatedData.duration !== undefined) updateData.duration = validatedData.duration;
+    if (validatedData.eligibility !== undefined) {
+      if (Array.isArray(validatedData.eligibility) && validatedData.eligibility.length > 0) {
+        updateData.eligibility = validatedData.eligibility;
+      } else {
+        updateData.eligibility = [];
+      }
+    }
     if (validatedData.stipend !== undefined) updateData.stipend = validatedData.stipend;
     if (validatedData.isActive !== undefined && isAdmin) updateData.isActive = validatedData.isActive;
 
@@ -197,7 +218,7 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     if (!db) {
@@ -207,7 +228,7 @@ export async function DELETE(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
     if (!id) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }

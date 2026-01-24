@@ -25,6 +25,7 @@ export type Internship = {
   title: string;
   description: string;
   type: string;
+  timing: string;
   tags?: string[];
   poster?: string;
   link?: string;
@@ -33,6 +34,10 @@ export type Internship = {
   stipend?: number;
   hiringOrganization: string;
   hiringManager?: string;
+  hiringManagerEmail?: string;
+  experience?: string;
+  duration?: string;
+  eligibility?: string[];
   createdAt?: string;
   viewCount: number;
   applicationCount: number;

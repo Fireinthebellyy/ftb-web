@@ -20,17 +20,28 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 const internshipSchema = z.object({
-  type: z.enum(["part-time", "full-time", "contract", "remote"]),
+  type: z.enum(["in-office", "work-from-home", "hybrid"], {
+    required_error: "Please select an internship type.",
+    invalid_type_error: "Please select an internship type.",
+  }),
+  timing: z.enum(["full-time", "part-time", "shift-based"], {
+    required_error: "Please select an internship timing option.",
+    invalid_type_error: "Please select an internship timing option.",
+  }),
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
-  link: z.string().optional(),
-  poster: z.string().optional(),
+  link: z.string().url().optional().or(z.literal("")),
+  poster: z.string().min(1, "Company logo is required"),
   tags: z.array(z.string()).optional(),
   location: z.string().optional(),
   deadline: z.string().optional(),
   stipend: z.number().min(0).optional(),
   hiringOrganization: z.string().min(1, "Hiring organization is required"),
   hiringManager: z.string().optional(),
+  hiringManagerEmail: z.string().email().optional().or(z.literal("")),
+  experience: z.string().optional(),
+  duration: z.string().optional(),
+  eligibility: z.array(z.string()).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -57,8 +68,10 @@ export async function POST(req: NextRequest) {
     // Build insertData
     const insertData: any = {
       type: validatedData.type,
+      timing: validatedData.timing,
       title: validatedData.title,
       description: validatedData.description,
+      poster: validatedData.poster,
       hiringOrganization: validatedData.hiringOrganization,
       userId: user.currentUser.id,
       isFlagged: false,
@@ -68,9 +81,14 @@ export async function POST(req: NextRequest) {
 
     // Handle optional fields
     if (validatedData.link) insertData.link = validatedData.link;
-    if (validatedData.poster) insertData.poster = validatedData.poster;
     if (validatedData.location) insertData.location = validatedData.location;
     if (validatedData.hiringManager) insertData.hiringManager = validatedData.hiringManager;
+    if (validatedData.hiringManagerEmail) insertData.hiringManagerEmail = validatedData.hiringManagerEmail;
+    if (validatedData.experience) insertData.experience = validatedData.experience;
+    if (validatedData.duration) insertData.duration = validatedData.duration;
+    if (validatedData.eligibility && Array.isArray(validatedData.eligibility) && validatedData.eligibility.length > 0) {
+      insertData.eligibility = validatedData.eligibility;
+    }
     if (validatedData.stipend !== undefined) insertData.stipend = validatedData.stipend;
 
     // Handle tags
@@ -214,6 +232,7 @@ export async function GET(req: NextRequest) {
       .select({
         id: internships.id,
         type: internships.type,
+        timing: internships.timing,
         title: internships.title,
         description: internships.description,
         link: internships.link,
@@ -228,6 +247,10 @@ export async function GET(req: NextRequest) {
         stipend: internships.stipend,
         hiringOrganization: internships.hiringOrganization,
         hiringManager: internships.hiringManager,
+        hiringManagerEmail: internships.hiringManagerEmail,
+        experience: internships.experience,
+        duration: internships.duration,
+        eligibility: internships.eligibility,
         isFlagged: internships.isFlagged,
         createdAt: internships.createdAt,
         updatedAt: internships.updatedAt,

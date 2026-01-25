@@ -2,11 +2,44 @@
 import { Instagram, Linkedin, Youtube } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useRef, useEffect } from "react";
 import { useVersionInfo } from "@/lib/queries";
 
 const Footer = () => {
   const pathname = usePathname();
   const { data: versionInfo } = useVersionInfo();
+  const [clickCount, setClickCount] = useState(0);
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleCommitShaClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    const newCount = clickCount + 1;
+
+    // Clear existing timeout
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+    }
+
+    if (newCount === 3) {
+      const url = `https://github.com/Fireinthebellyy/ftb-web/commit/${versionInfo?.commitSha}`;
+      navigator.clipboard.writeText(url);
+      setClickCount(0);
+    } else {
+      setClickCount(newCount);
+      // Reset count after 1 second if no more clicks
+      clickTimeoutRef.current = setTimeout(() => {
+        setClickCount(0);
+      }, 1000);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (pathname === "/opportunities" || pathname === "/onboarding") return null;
 
@@ -77,9 +110,8 @@ const Footer = () => {
           {versionInfo?.commitSha ? (
             <a
               href={`https://github.com/Fireinthebellyy/ftb-web/commit/${versionInfo.commitSha}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-mono text-neutral-400 hover:text-neutral-600"
+              onClick={handleCommitShaClick}
+              className="font-mono text-neutral-400 hover:text-neutral-600 cursor-pointer"
             >
               {versionInfo.commitSha}
             </a>

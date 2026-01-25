@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Control } from "react-hook-form";
 import {
   FormField,
@@ -18,6 +19,20 @@ interface ToolkitFormFieldsProps {
 }
 
 export function ToolkitFormFields({ control }: ToolkitFormFieldsProps) {
+  const [highlightsInput, setHighlightsInput] = useState("");
+
+  useEffect(() => {
+    const subscription = control._subjects.state.subscribe({
+      next: (state: any) => {
+        const value = state.values?.highlights;
+        if (value !== undefined && Array.isArray(value)) {
+          setHighlightsInput(value.join(", "));
+        }
+      },
+    });
+    return () => subscription.unsubscribe();
+  }, [control]);
+
   return (
     <>
       <FormField
@@ -190,16 +205,12 @@ export function ToolkitFormFields({ control }: ToolkitFormFieldsProps) {
             <FormControl>
               <Input
                 placeholder="Lifetime access, Downloadable resources, Certificate"
-                {...field}
-                value={field.value?.join(", ") ?? ""}
-                onChange={(e) =>
-                  field.onChange(
-                    e.target.value
-                      .split(",")
-                      .map((s) => s.trim())
-                      .filter(Boolean)
-                  )
-                }
+                value={highlightsInput}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setHighlightsInput(value);
+                  field.onChange(value.split(",").map((s) => s.trim()));
+                }}
               />
             </FormControl>
             <FormMessage />

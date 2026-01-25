@@ -253,6 +253,12 @@ export const toolkitContentItemTypeEnum = pgEnum("toolkit_content_item_type", [
   "video",
 ]);
 
+export const ungatekeepTagEnum = pgEnum("ungatekeep_tag", [
+  "announcement",
+  "company_experience",
+  "resources",
+]);
+
 export const toolkitContentItems = pgTable("toolkit_content_items", {
   id: uuid("id").primaryKey().defaultRandom(),
   toolkitId: uuid("toolkit_id")
@@ -309,6 +315,42 @@ export const userToolkitProgress = pgTable(
   ]
 );
 
+// Ungatekeep broadcast posts
+export const ungatekeepPosts = pgTable("ungatekeep_posts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  images: text("images").array().default([]), // Appwrite file IDs
+  linkUrl: text("link_url"),
+  linkTitle: text("link_title"),
+  linkImage: text("link_image"),
+  tag: ungatekeepTagEnum("tag"),
+  isPinned: boolean("is_pinned").default(false),
+  isPublished: boolean("is_published").default(false),
+  publishedAt: timestamp("published_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
+
+// Newsletter subscribers for future Resend integration
+export const newsletterSubscribers = pgTable(
+  "newsletter_subscribers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull().unique(),
+    userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
+    isSubscribed: boolean("is_subscribed").default(true),
+    createdAt: timestamp("created_at").defaultNow(),
+    unsubscribedAt: timestamp("unsubscribed_at"),
+  },
+  (table) => [
+    uniqueIndex("newsletter_subscribers_email_unique").on(table.email),
+  ]
+);
+
 export const schema = {
   user,
   userOnboardingProfiles,
@@ -327,4 +369,6 @@ export const schema = {
   toolkitContentItems,
   userToolkits,
   userToolkitProgress,
+  ungatekeepPosts,
+  newsletterSubscribers,
 };

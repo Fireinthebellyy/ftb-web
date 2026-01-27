@@ -1,18 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Search, Filter, Loader2, ChevronDown, X } from "lucide-react";
+import { Search, Filter, Loader2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import InternshipPost from "@/components/InternshipCard";
@@ -27,30 +20,13 @@ import {
 import FeaturedOpportunities from "./opportunity/FeaturedOpportunities";
 import CalendarWidget from "./opportunity/CalendarWidget";
 import TaskWidget from "./opportunity/TaskWidget";
-
-const AVAILABLE_TAGS = [
-  "ai",
-  "biology",
-  "mba",
-  "startup",
-  "psychology",
-  "web3",
-  "finance",
-  "marketing",
-  "design",
-  "engineering",
-];
-const AVAILABLE_TYPES = ["part-time", "full-time", "contract", "remote"];
-
-const formatTypeName = (type: string): string => {
-  return type.charAt(0).toUpperCase() + type.slice(1).replace("-", " ");
-};
-
-const getTypeDropdownLabel = (selected: string[], compact = false) => {
-  if (selected.length === 0) return compact ? "Types" : "Internship types";
-  if (selected.length === 1) return formatTypeName(selected[0]);
-  return `${selected.length} types`;
-};
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function InternshipList() {
   const searchParams = useSearchParams();
@@ -59,33 +35,15 @@ export default function InternshipList() {
 
   // Initialize state from URL on mount
   const getInitialSearch = () => searchParams.get("search") || "";
-  const getInitialTypes = () => {
-    const typesParam = searchParams.get("types") || "";
-    return typesParam ? typesParam.split(",").filter(Boolean) : [];
-  };
-  const getInitialTags = () => {
-    const tagsParam = searchParams.get("tags") || "";
-    return tagsParam ? tagsParam.split(",").filter(Boolean) : [];
-  };
   const getInitialLocation = () => searchParams.get("location") || "";
-  const getInitialMinStipend = () => {
-    const minStipendParam = searchParams.get("minStipend");
-    return minStipendParam ? Number.parseInt(minStipendParam, 10) : undefined;
-  };
-  const getInitialMaxStipend = () => {
-    const maxStipendParam = searchParams.get("maxStipend");
-    return maxStipendParam ? Number.parseInt(maxStipendParam, 10) : undefined;
-  };
+  const getInitialType = () => searchParams.get("type") || "";
 
   const [isNewInternshipOpen, setIsNewInternshipOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>(getInitialSearch);
   const [debouncedSearchTerm, setDebouncedSearchTerm] =
     useState<string>(getInitialSearch);
-  const [selectedTypes, setSelectedTypes] = useState<string[]>(getInitialTypes);
-  const [selectedTags, setSelectedTags] = useState<string[]>(getInitialTags);
   const [location, setLocation] = useState<string>(getInitialLocation);
-  const [minStipend, setMinStipend] = useState<number | undefined>(getInitialMinStipend);
-  const [maxStipend, setMaxStipend] = useState<number | undefined>(getInitialMaxStipend);
+  const [type, setType] = useState<string>(getInitialType);
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
 
@@ -93,41 +51,20 @@ export default function InternshipList() {
   // Derive state from URL query parameters whenever searchParams changes (for browser navigation)
   useEffect(() => {
     const searchParam = searchParams.get("search") || "";
-    const typesParam = searchParams.get("types") || "";
-    const tagsParam = searchParams.get("tags") || "";
     const locationParam = searchParams.get("location") || "";
-    const minStipendParam = searchParams.get("minStipend");
-    const maxStipendParam = searchParams.get("maxStipend");
+    const typeParam = searchParams.get("type") || "";
 
     const newSearchTerm = searchParam;
-    const newTypes = typesParam ? typesParam.split(",").filter(Boolean) : [];
-    const newTags = tagsParam ? tagsParam.split(",").filter(Boolean) : [];
     const newLocation = locationParam;
-    const newMinStipend = minStipendParam ? Number.parseInt(minStipendParam, 10) : undefined;
-    const newMaxStipend = maxStipendParam ? Number.parseInt(maxStipendParam, 10) : undefined;
+    const newType = typeParam;
 
     // Update state from URL - use functional updates to compare and only update if changed
     setSearchTerm((prev) => (prev !== newSearchTerm ? newSearchTerm : prev));
     setDebouncedSearchTerm((prev) =>
       prev !== newSearchTerm ? newSearchTerm : prev
     );
-    setSelectedTypes((prev) => {
-      const prevSorted = [...prev].sort();
-      const newSorted = [...newTypes].sort();
-      return JSON.stringify(prevSorted) !== JSON.stringify(newSorted)
-        ? newTypes
-        : prev;
-    });
-    setSelectedTags((prev) => {
-      const prevSorted = [...prev].sort();
-      const newSorted = [...newTags].sort();
-      return JSON.stringify(prevSorted) !== JSON.stringify(newSorted)
-        ? newTags
-        : prev;
-    });
     setLocation((prev) => (prev !== newLocation ? newLocation : prev));
-    setMinStipend((prev) => (prev !== newMinStipend ? newMinStipend : prev));
-    setMaxStipend((prev) => (prev !== newMaxStipend ? newMaxStipend : prev));
+    setType((prev) => (prev !== newType ? newType : prev));
   }, [searchParams]);
 
   // Debounce search term updates (400ms delay) - only for user input, not URL loading
@@ -146,38 +83,21 @@ export default function InternshipList() {
   useEffect(() => {
     // Get current values from URL
     const currentSearch = searchParams.get("search") || "";
-    const currentTypes = (searchParams.get("types") || "")
-      .split(",")
-      .filter(Boolean)
-      .sort();
-    const currentTags = (searchParams.get("tags") || "")
-      .split(",")
-      .filter(Boolean)
-      .sort();
     const currentLocation = searchParams.get("location") || "";
-    const currentMinStipend = searchParams.get("minStipend");
-    const currentMaxStipend = searchParams.get("maxStipend");
+    const currentType = searchParams.get("type") || "";
 
     // Get state values - use debouncedSearchTerm for search, immediate updates for others
     const stateSearch = debouncedSearchTerm.trim();
-    const stateTypes = [...selectedTypes].sort();
-    const stateTags = [...selectedTags].sort();
     const stateLocation = location.trim();
-    const stateMinStipend = minStipend;
-    const stateMaxStipend = maxStipend;
+    const stateType = type.trim();
 
     // Compare values to see if URL needs updating
     const searchChanged = currentSearch !== stateSearch;
-    const typesChanged =
-      JSON.stringify(currentTypes) !== JSON.stringify(stateTypes);
-    const tagsChanged =
-      JSON.stringify(currentTags) !== JSON.stringify(stateTags);
     const locationChanged = currentLocation !== stateLocation;
-    const minStipendChanged = currentMinStipend !== (stateMinStipend?.toString() || "");
-    const maxStipendChanged = currentMaxStipend !== (stateMaxStipend?.toString() || "");
+    const typeChanged = currentType !== stateType;
 
     // Only update URL if values actually differ
-    if (!searchChanged && !typesChanged && !tagsChanged && !locationChanged && !minStipendChanged && !maxStipendChanged) {
+    if (!searchChanged && !locationChanged && !typeChanged) {
       return;
     }
 
@@ -189,27 +109,14 @@ export default function InternshipList() {
       params.set("search", stateSearch);
     }
 
-    // Update types
-    if (stateTypes.length > 0) {
-      params.set("types", stateTypes.join(","));
-    }
-
-    // Update tags
-    if (stateTags.length > 0) {
-      params.set("tags", stateTags.join(","));
-    }
-
     // Update location
     if (stateLocation) {
       params.set("location", stateLocation);
     }
 
-    // Update stipend range
-    if (stateMinStipend !== undefined) {
-      params.set("minStipend", stateMinStipend.toString());
-    }
-    if (stateMaxStipend !== undefined) {
-      params.set("maxStipend", stateMaxStipend.toString());
+    // Update type
+    if (stateType) {
+      params.set("type", stateType);
     }
 
     // Build new URL
@@ -226,26 +133,14 @@ export default function InternshipList() {
     }
   }, [
     debouncedSearchTerm,
-    selectedTypes,
-    selectedTags,
     location,
-    minStipend,
-    maxStipend,
+    type,
     pathname,
     router,
     searchParams,
   ]);
 
   const normalizedSearchTerm = debouncedSearchTerm.trim();
-
-  const normalizedTypesForQuery = useMemo(
-    () => [...selectedTypes].sort(),
-    [selectedTypes]
-  );
-  const normalizedTagsForQuery = useMemo(
-    () => selectedTags.map((tag) => tag.toLowerCase()).sort(),
-    [selectedTags]
-  );
 
   const {
     data,
@@ -257,11 +152,11 @@ export default function InternshipList() {
   } = useInfiniteInternships(
     10,
     normalizedSearchTerm,
-    normalizedTypesForQuery,
-    normalizedTagsForQuery,
+    type.trim() ? [type.trim()] : [],
+    [],
     location.trim(),
-    minStipend,
-    maxStipend
+    undefined,
+    undefined
   );
 
   const searchPlaceholders = ["Software Engineer Intern", "Data Science Intern", "Marketing Intern"];
@@ -336,26 +231,11 @@ export default function InternshipList() {
     );
   };
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
-  };
-
-  const toggleType = (type: string) => {
-    setSelectedTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
-    );
-  };
-
   const clearFilters = () => {
     setSearchTerm("");
     setDebouncedSearchTerm("");
-    setSelectedTypes([]);
-    setSelectedTags([]);
     setLocation("");
-    setMinStipend(undefined);
-    setMaxStipend(undefined);
+    setType("");
   };
 
   if (error) {
@@ -376,119 +256,88 @@ export default function InternshipList() {
         {/* Mobile: Search */}
 
         <div className="mb-5 lg:hidden">
-          {/* Search Bar */}
-          <div className="relative mb-3 bg-white">
-            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
-            <Input
-              placeholder={searchPlaceholders[currentPlaceholderIndex]}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pr-10 pl-10"
-            />
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={() => setSearchTerm("")}
-                className="absolute top-1/2 right-3 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-
-          {/* Location Input */}
-          <div className="relative mb-3 bg-white">
-            <Input
-              placeholder="Location (e.g., Delhi, Mumbai)"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="pr-10"
-            />
-            {location && (
-              <button
-                type="button"
-                onClick={() => setLocation("")}
-                className="absolute top-1/2 right-3 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-
-          {/* Tag Badges - Above Search Bar */}
-          <div className="mb-2 flex items-start justify-between">
-            <div className="flex flex-wrap items-center gap-2">
-              {AVAILABLE_TAGS.map((tag) => {
-                const isSelected = selectedTags.includes(tag);
-                const displayTag = tag.charAt(0).toUpperCase() + tag.slice(1);
-                return (
-                  <Badge
-                    key={tag}
-                    variant={isSelected ? "default" : "outline"}
-                    className={`cursor-pointer px-3 py-1 text-sm ${isSelected
-                        ? "bg-neutral-700 text-gray-200"
-                        : "bg-white text-gray-700"
-                      }`}
-                    onClick={() => toggleTag(tag)}
-                  >
-                    <span>{displayTag}</span>
-                  </Badge>
-                );
-              })}
+          {/* Search Bar with Filter Icon */}
+          <div className="relative mb-3 flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
+              <Input
+                placeholder={searchPlaceholders[currentPlaceholderIndex]}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-8 pr-10 pl-10 text-sm sm:h-10 sm:text-base"
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm("")}
+                  className="absolute top-1/2 right-3 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
-
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
-              className="shrink-0 cursor-pointer"
+              className={`shrink-0 cursor-pointer h-8 sm:h-10 px-2 hover:bg-orange-600 hover:text-white ${isFilterBoxOpen ? 'bg-orange-500 text-white hover:bg-orange-600' : ''}`}
             >
-              <Filter className="size-4 text-gray-600" />
+              <Filter className={`size-4`} />
             </Button>
           </div>
 
-          {/* Types and Tags Dropdowns (mobile) */}
+          {/* Filter Box */}
           {isFilterBoxOpen && (
-            <div className="grid grid-cols-2 gap-2">
-              {/* Types Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between">
-                    {getTypeDropdownLabel(selectedTypes, true)}
-                    <ChevronDown className="h-4 w-4 opacity-60" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="start">
-                  {AVAILABLE_TYPES.map((type) => (
-                    <DropdownMenuCheckboxItem
-                      key={type}
-                      checked={selectedTypes.includes(type)}
-                      onCheckedChange={() => toggleType(type)}
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      {formatTypeName(type)}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {/* Stipend Range */}
-              <div className="space-y-2">
-                <Input
-                  type="number"
-                  placeholder="Min stipend"
-                  value={minStipend || ""}
-                  onChange={(e) => setMinStipend(e.target.value ? Number(e.target.value) : undefined)}
-                  className="w-full"
-                />
-                <Input
-                  type="number"
-                  placeholder="Max stipend"
-                  value={maxStipend || ""}
-                  onChange={(e) => setMaxStipend(e.target.value ? Number(e.target.value) : undefined)}
-                  className="w-full"
-                />
+            <div className="mt-2 rounded-lg border bg-white p-3 sm:p-4">
+              {/* Internship Type Filter */}
+              <div className="mb-3 sm:mb-4">
+                <label className="mb-1.5 block text-xs font-medium text-gray-700 sm:mb-2 sm:text-sm">
+                  Internship Type
+                </label>
+                <Select value={type} onValueChange={(value) => setType(value === type ? "" : value)}>
+                  <SelectTrigger className="w-full h-7 text-xs sm:h-8 sm:text-sm cursor-pointer">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="in-office">In-Office</SelectItem>
+                    <SelectItem value="work-from-home">Remote</SelectItem>
+                    <SelectItem value="hybrid">Hybrid</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+
+              {/* Location Filter */}
+              <div className="mb-3 sm:mb-4">
+                <label className="mb-1.5 block text-xs font-medium text-gray-700 sm:mb-2 sm:text-sm">
+                  Location
+                </label>
+                <div className="relative">
+                  <Input
+                    placeholder="Location (e.g., Delhi, Mumbai)"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    className="h-8 pr-8 text-xs sm:h-9 sm:pr-10 sm:text-sm"
+                  />
+                  {location && (
+                    <button
+                      type="button"
+                      onClick={() => setLocation("")}
+                      className="absolute top-1/2 right-2.5 flex h-3.5 w-3.5 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600 sm:right-3 sm:h-4 sm:w-4"
+                    >
+                      <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Clear Filters Button */}
+              <Button
+                onClick={clearFilters}
+                variant="outline"
+                className="w-full h-7 text-xs sm:h-8 sm:text-sm"
+              >
+                Clear All Filters
+              </Button>
             </div>
           )}
         </div>
@@ -499,24 +348,94 @@ export default function InternshipList() {
           <aside className="col-span-3">
             <div className="sticky top-6 space-y-6">
               {/* Search Bar - Above Quick Links */}
-              <div className="relative bg-white">
-                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
-                <Input
-                  placeholder={searchPlaceholders[currentPlaceholderIndex]}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pr-10 pl-10"
-                />
-                {searchTerm && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchTerm("")}
-                    className="absolute top-1/2 right-3 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
+              <div className="relative flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
+                  <Input
+                    placeholder={searchPlaceholders[currentPlaceholderIndex]}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="h-8 pr-10 pl-10 text-sm sm:h-10 sm:text-base"
+                  />
+                  {searchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchTerm("")}
+                      className="absolute top-1/2 right-3 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
+                  className={`shrink-0 cursor-pointer h-8 sm:h-10 px-2 hover:bg-orange-600 hover:text-white ${isFilterBoxOpen ? 'bg-orange-500 text-white hover:bg-orange-600' : ''}`}
+                >
+                  <Filter className={`size-4`} />
+                </Button>
               </div>
+
+              {/* Filters */}
+              {isFilterBoxOpen && (
+                <div className="rounded-lg border bg-white px-4 py-3">
+                <h3 className="mb-3 font-semibold text-gray-900">
+                  Filters
+                </h3>
+                <div className="space-y-4">
+                  {/* Internship Type Filter */}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                      Internship Type
+                    </label>
+                    <Select value={type} onValueChange={(value) => setType(value === type ? "" : value)}>
+                      <SelectTrigger className="w-full h-8 text-sm cursor-pointer">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="in-office">In-Office</SelectItem>
+                        <SelectItem value="work-from-home">Remote</SelectItem>
+                        <SelectItem value="hybrid">Hybrid</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Location Filter */}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                      Location
+                    </label>
+                    <div className="relative">
+                      <Input
+                        placeholder="Location (e.g., Delhi, Mumbai)"
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        className="h-9 pr-10 text-sm"
+                      />
+                      {location && (
+                        <button
+                          type="button"
+                          onClick={() => setLocation("")}
+                          className="absolute top-1/2 right-3 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Clear Filters Button */}
+                  <Button
+                    onClick={clearFilters}
+                    variant="outline"
+                    className="w-full h-8"
+                  >
+                    Clear Filters
+                  </Button>
+                </div>
+                </div>
+              )}
 
               {/* Quick Links */}
               <div className="rounded-lg border bg-white px-4 py-3">
@@ -578,7 +497,7 @@ export default function InternshipList() {
               <>
                 {allInternships.length > 0 ? (
                   <>
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                       {allInternships.map((internship, index) => (
                         <div key={internship.id}>
                           <InternshipPost

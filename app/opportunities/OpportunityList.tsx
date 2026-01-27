@@ -367,7 +367,7 @@ export default function OpportunityCardsPage() {
               variant="ghost"
               size="sm"
               onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
-              className="shrink-0 cursor-pointer"
+              className="shrink-0 cursor-pointer hover:bg-orange-600 hover:text-white"
             >
               <Filter className="size-4 text-gray-600" />
             </Button>
@@ -494,7 +494,7 @@ export default function OpportunityCardsPage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
-                className={`shrink-0 transition-all ${
+                className={`shrink-0 transition-all hover:bg-orange-600 hover:text-white ${
                   isFilterBoxOpen
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-gray-400"

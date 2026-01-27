@@ -80,22 +80,12 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
     fetchData();
   }, [params]);
 
-  const getTypeColor = (type?: string): string => {
-    const colors: Record<string, string> = {
-      "in-office": "bg-blue-100 text-blue-800",
-      "work-from-home": "bg-green-100 text-green-800",
-      hybrid: "bg-purple-100 text-purple-800",
-    };
-    return colors[type?.toLowerCase() || "in-office"] || colors["in-office"];
+  const getTypeColor = (_type?: string): string => {
+    return "bg-white border border-gray-300 text-black";
   };
 
-  const getTimingColor = (timing?: string): string => {
-    const colors: Record<string, string> = {
-      "full-time": "bg-indigo-100 text-indigo-800",
-      "part-time": "bg-pink-100 text-pink-800",
-      "shift-based": "bg-amber-100 text-amber-800",
-    };
-    return colors[timing?.toLowerCase() || "full-time"] || colors["full-time"];
+  const getTimingColor = (_timing?: string): string => {
+    return "bg-white border border-gray-300 text-black";
   };
 
   const publicBaseUrl =
@@ -160,7 +150,7 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
             {/* Apply Button */}
             {internship.link && (
               <Link href={`${internship.link}?utm_source=ftb_web&utm_medium=internship_detail&utm_campaign=internship_apply`} target="_blank" rel="noopener noreferrer">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium w-full sm:w-auto px-6 py-2">
+                <Button className="bg-orange-500 hover:bg-orange-600 text-white font-medium w-full sm:w-auto px-6 py-2">
                   <ExternalLink className="w-4 h-4 mr-2" />
                   Apply
                 </Button>
@@ -172,7 +162,7 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
         {/* Location */}
         {internship.location && (
           <div className="flex items-center gap-2 mb-4">
-            <MapPin className="w-4 h-4 text-gray-500" />
+            <MapPin className="w-4 h-4 text-black" />
             <span className="text-sm font-medium line-clamp-1">{internship.location}</span>
           </div>
         )}
@@ -180,13 +170,13 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
         {/* Type and Timing Badges */}
         <div className="flex gap-2">
           <Badge
-            className={`${getTypeColor(internship.type)} px-3 py-1 text-xs sm:text-sm`}
+            className={`${getTypeColor(internship.type)} text-xs sm:text-sm`}
           >
             {internship.type?.charAt(0).toUpperCase() + internship.type?.slice(1).replace(/-/g, " ")}
           </Badge>
           {internship.timing && (
             <Badge
-              className={`${getTimingColor(internship.timing)} px-3 py-1 text-xs sm:text-sm`}
+              className={`${getTimingColor(internship.timing)} text-xs sm:text-sm`}
             >
               {internship.timing?.charAt(0).toUpperCase() + internship.timing?.slice(1).replace(/-/g, " ")}
             </Badge>
@@ -201,10 +191,10 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
               e.stopPropagation();
               setShareDialogOpen(true);
             }}
-            className="absolute bottom-6 right-6 p-2 hover:bg-orange-300 rounded-full transition-colors cursor-pointer hidden sm:block"
+            className="absolute bottom-5 right-6 p-1.5 sm:p-2 rounded-full transition-colors cursor-pointer"
             aria-label="Share"
           >
-            <Share2 className="w-5 h-5 text-black" />
+            <Share2 className="w-4 h-4 sm:w-5 sm:h-5 text-black hover:text-orange-500" />
           </button>
           <DialogContent
             className="sm:max-w-md"
@@ -307,11 +297,9 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
           {internship.type && (
             <div className="mb-6">
               <h2 className="text-sm font-semibold mb-4 sm:text-lg">Internship Type</h2>
-              <Badge
-                className={`${getTypeColor(internship.type)} px-3 py-1 text-xs sm:text-sm font-medium`}
-              >
+              <p className="text-sm sm:text-base text-black">
                 {internship.type?.charAt(0).toUpperCase() + internship.type?.slice(1).replace(/-/g, " ")}
-              </Badge>
+              </p>
             </div>
           )}
 
@@ -319,11 +307,9 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
           {internship.timing && (
             <div className="mb-6">
               <h2 className="font-semibold mb-4 text-sm sm:text-lg">Internship Timing</h2>
-              <Badge
-                className={`${getTimingColor(internship.timing)} px-3 py-1 text-xs sm:text-sm font-medium`}
-              >
+              <p className="text-sm sm:text-base text-black">
                 {internship.timing?.charAt(0).toUpperCase() + internship.timing?.slice(1).replace(/-/g, " ")}
-              </Badge>
+              </p>
             </div>
           )}
 
@@ -331,10 +317,27 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
           {internship.stipend && (
             <div className="mb-6">
               <h2 className="font-semibold mb-4 text-sm sm:text-lg">Stipend</h2>
-              <Badge className="bg-green-100 text-green-800 border-green-300 px-3 py-1 text-xs sm:text-sm font-medium flex items-center gap-1">
-                <IndianRupee className="w-3 h-3" />
+              <p className="text-sm sm:text-base text-black flex items-center gap-1">
+                <IndianRupee className="w-4 h-4" />
                 {internship.stipend.toLocaleString()}
-              </Badge>
+              </p>
+            </div>
+          )}
+
+          {/* Tags */}
+          {internship.tags && internship.tags.length > 0 && (
+            <div className="mb-6">
+              <h2 className="font-semibold mb-4 text-sm sm:text-lg">Tags</h2>
+              <div className="flex flex-wrap gap-2">
+                {internship.tags.map((tag, index) => (
+                  <Badge
+                    key={index}
+                    className="border border-gray-300 bg-white text-black text-xs sm:text-sm"
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
             </div>
           )}
 
@@ -343,10 +346,10 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
             <div className="mb-6">
               <h2 className="font-semibold mb-4 text-sm sm:text-lg">Eligibility</h2>
               <div className="flex flex-wrap gap-2">
-                {internship.eligibility.map((item, idx) => (
+                {internship.eligibility.map((item, index) => (
                   <Badge
-                    key={idx}
-                    className="bg-orange-100 text-orange-800 border-orange-300 text-xs sm:text-sm font-medium"
+                    key={index}
+                    className="border border-gray-300 bg-white text-black text-xs sm:text-sm"
                   >
                     {item}
                   </Badge>
@@ -359,9 +362,9 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
           {internship.experience && (
             <div className="mb-6">
               <h2 className="font-semibold mb-4 text-sm sm:text-lg">Experience Required</h2>
-              <Badge className="bg-purple-100 text-purple-800 border-purple-300 text-xs sm:text-sm font-medium">
+              <p className="text-sm sm:text-base text-black">
                 {internship.experience}
-              </Badge>
+              </p>
             </div>
           )}
 
@@ -369,9 +372,9 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
           {internship.duration && (
             <div className="mb-6">
               <h2 className="text-sm font-semibold mb-4 sm:text-lg">Internship Duration</h2>
-              <Badge className="bg-blue-100 text-blue-800 border-blue-300 text-xs sm:text-sm font-medium">
+              <p className="text-sm sm:text-base text-black">
                 {internship.duration}
-              </Badge>
+              </p>
             </div>
           )}
 
@@ -379,13 +382,13 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
           {internship.deadline && (
             <div>
               <h2 className="text-sm font-semibold mb-4 sm:text-lg">Deadline</h2>
-              <Badge className="bg-fuchsia-100 text-fuchsia-700 border-fuchsia-300 text-xs sm:text-sm font-medium flex items-center gap-1">
+              <p className="text-sm sm:text-base text-black">
                 {new Date(internship.deadline).toLocaleDateString('en-IN', {
                   day: 'numeric',
                   month: 'short',
                   year: 'numeric'
                 })}
-              </Badge>
+              </p>
             </div>
           )}
         </div>

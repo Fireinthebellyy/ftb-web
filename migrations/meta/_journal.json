@@ -154,6 +154,29 @@
       "version": "7",
       "when": 1765899182870,
       "tag": "0021_complex_madame_hydra",
+      "when": 1765791851659,
+      "tag": "0021_serious_felicia_hardy",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1765796737770,
+      "tag": "0022_quiet_joseph",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1766095200000,
+      "tag": "0023_add_bunny_video_url",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1766095300000,
+      "tag": "0024_set_default_is_active_false",
       "breakpoints": true
     }
   ]

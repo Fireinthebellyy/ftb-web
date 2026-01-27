@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 
 import { LoginForm } from '@/components/auth/login-form';
 import Image from 'next/image';
@@ -22,7 +23,9 @@ export default function LoginPage() {
           </div>
           Fire in the Belly
         </Link>
-        <LoginForm />
+        <Suspense fallback={<div>Loading...</div>}>
+          <LoginForm />
+        </Suspense>
       </div>
     </div>
   );

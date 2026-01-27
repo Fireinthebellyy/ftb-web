@@ -27,6 +27,7 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "*.cloudfront.net",
+        hostname: "images.unsplash.com",
         pathname: "/**",
       },
       {
@@ -34,6 +35,9 @@ const nextConfig: NextConfig = {
         hostname: "*.duckduckgo.com",
         pathname: "/**",
       }
+        hostname: "placehold.co",
+        pathname: "/**",
+      },
     ],
   },
 };

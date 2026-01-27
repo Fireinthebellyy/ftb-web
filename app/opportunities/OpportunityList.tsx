@@ -8,10 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
+	DropdownMenu,
+	DropdownMenuCheckboxItem,
+	DropdownMenuContent,
+	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
@@ -25,27 +25,27 @@ import CalendarWidget from "@/components/opportunity/CalendarWidget";
 import TaskWidget from "@/components/opportunity/TaskWidget";
 
 const FEATURE_FLAGS = {
-  showTrendingTags: false,
+	showTrendingTags: false,
 };
 
 const AVAILABLE_TAGS = [
-  "ai",
-  "biology",
-  "mba",
-  "startup",
-  "psychology",
-  "web3",
+	"ai",
+	"biology",
+	"mba",
+	"startup",
+	"psychology",
+	"web3",
 ];
 const AVAILABLE_TYPES = ["hackathon", "grant", "competition", "ideathon"];
 
 const formatTypeName = (type: string): string => {
-  return type.charAt(0).toUpperCase() + type.slice(1);
+	return type.charAt(0).toUpperCase() + type.slice(1);
 };
 
 const getTypeDropdownLabel = (selected: string[], compact = false) => {
-  if (selected.length === 0) return compact ? "Types" : "Opportunity types";
-  if (selected.length === 1) return formatTypeName(selected[0]);
-  return `${selected.length} types`;
+	if (selected.length === 0) return compact ? "Types" : "Opportunity types";
+	if (selected.length === 1) return formatTypeName(selected[0]);
+	return `${selected.length} types`;
 };
 
 export default function OpportunityCardsPage() {

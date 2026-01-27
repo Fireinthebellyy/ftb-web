@@ -19,7 +19,10 @@ import {
 } from "@/components/ui/form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ImageDropzone } from "@/components/opportunity/images/ImageDropzone";
-import { createAvatarStorage } from "@/lib/appwrite";
+import {
+  createAvatarStorage,
+  getAppwriteErrorMessage,
+} from "@/lib/appwrite";
 import { FileItem, ProfileUser, UploadProgress } from "@/types/interfaces";
 import FieldInterestSelector from "@/components/profile/FieldInterestSelector";
 import OpportunityInterestSelector from "@/components/profile/OpportunityInterestSelector";
@@ -202,12 +205,13 @@ export default function ProfileForm({
       return publicUrl || null;
     } catch (err) {
       console.error("Avatar upload failed:", err);
+      const errorMessage = getAppwriteErrorMessage(err);
       setFiles((prev) =>
         prev.map((f, idx) =>
           idx === 0 ? { ...f, uploading: false, error: true } : f
         )
       );
-      toast.error("Avatar upload failed. Saving without new image.");
+      toast.error(`Avatar upload failed: ${errorMessage}`);
       return null;
     }
   }, [files]);

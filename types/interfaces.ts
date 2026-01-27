@@ -12,6 +12,7 @@ export type Opportunity = {
   endDate?: string;
   upvoteCount: number;
   upvoterIds: string[];
+  userHasUpvoted?: boolean;
   user: {
     id: string;
     name: string;
@@ -128,4 +129,38 @@ export type TermsType = {
   title: string;
   content: string;
   lastUpdated: string;
+};
+
+export type Toolkit = {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  originalPrice?: number;
+  coverImageUrl?: string;
+  videoUrl?: string;
+  contentUrl?: string;
+  category?: string;
+  highlights?: string[];
+  totalDuration?: string;
+  lessonCount?: number;
+  isActive?: boolean;
+  showSaleBadge?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  userId?: string;
+  creatorName?: string;
+  contentItems?: ToolkitContentItem[];
+};
+
+export type ToolkitContentItem = {
+  id: string;
+  toolkitId: string;
+  title: string;
+  type: "article" | "video";
+  content?: string;
+  bunnyVideoUrl?: string;
+  orderIndex: number;
+  createdAt?: string;
+  updatedAt?: string;
 };

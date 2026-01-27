@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { MapPin, Building2, IndianRupee, ExternalLink, Share2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -143,7 +143,7 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
             
             {/* Apply Button */}
             {internship.link && (
-              <Link href={`${internship.link}?utm_source=ftb_web&utm_medium=internship_detail&utm_campaign=internship_apply`} target="_blank" rel="noopener noreferrer">
+              <Link href={`${internship.link}${internship.link.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=internship_detail&utm_campaign=internship_apply`} target="_blank" rel="noopener noreferrer">
                 <Button className="bg-orange-500 hover:bg-orange-600 text-white font-medium w-full sm:w-auto px-6 py-2">
                   <ExternalLink className="w-4 h-4 mr-2" />
                   Apply
@@ -190,11 +190,13 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
           >
             <Share2 className="w-4 h-4 sm:w-5 sm:h-5 text-black hover:text-orange-500" />
           </button>
+          <DialogContent className="max-w-[90vw] sm:max-w-md">
           <ShareDialog
             shareUrl={shareUrl}
             title={internship.title}
             onCopy={handleCopy}
           />
+          </DialogContent>
         </Dialog>
       </div>
 

@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Copy, Linkedin, Twitter, Facebook, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DialogContent } from "@/components/ui/dialog";
 
 interface ShareDialogProps {
   shareUrl: string;
@@ -14,7 +13,7 @@ export function ShareDialog({ shareUrl, title, onCopy }: ShareDialogProps) {
   const utmParams = `${shareUrl}${shareUrl.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=internship_card&utm_campaign=internship_share`;
 
   return (
-    <DialogContent className="max-w-[90vw] sm:max-w-md">
+    <>
       <DialogHeader className="px-4 sm:px-6">
         <DialogTitle className="text-base sm:text-lg">Share this internship</DialogTitle>
       </DialogHeader>
@@ -85,7 +84,7 @@ export function ShareDialog({ shareUrl, title, onCopy }: ShareDialogProps) {
           </svg>
         </Link>
         <Link
-          href={`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(shareUrl)}`}
+          href={`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(utmParams)}`}
           title="Share via Email"
           aria-label="Share via Email"
           className="inline-flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-2 sm:p-3 text-neutral-600 transition-colors hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-900"
@@ -93,6 +92,6 @@ export function ShareDialog({ shareUrl, title, onCopy }: ShareDialogProps) {
           <Mail className="h-4 w-4 sm:h-5 sm:w-5" />
         </Link>
       </div>
-    </DialogContent>
+    </>
   );
 }

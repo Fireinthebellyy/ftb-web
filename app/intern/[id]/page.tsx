@@ -213,7 +213,7 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
       )}
 
       {/* Eligibility, Experience & Internship Details */}
-      {internship.eligibility  || internship.experience || internship.type || internship.timing || internship.stipend ? (
+      {(internship.eligibility && internship.eligibility.length > 0) || internship.experience || internship.type || internship.timing || internship.stipend ? (
         <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4 sm:text-xl">More Information</h2>
 

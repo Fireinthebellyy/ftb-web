@@ -153,10 +153,6 @@ export default function NewInternshipForm({
         eligibility: data.eligibility || undefined,
       };
 
-      console.log("=== FORM SUBMISSION ===");
-      console.log("Form data:", data);
-      console.log("Payload being sent:", payload);
-
       const res = await axios.post("/api/internships", payload);
       if (res.status !== 200 && res.status !== 201)
         throw new Error("Failed to create internship");

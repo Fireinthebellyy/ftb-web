@@ -4,22 +4,12 @@ import React, { useEffect, useState } from "react";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
 import { MapPin, Building2, IndianRupee, ExternalLink, Share2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
-import TwitterXIcon from "@/components/icons/TwitterX";
-import FacebookIcon from "@/components/icons/Facebook";
-import LinkedInIcon from "@/components/icons/LinkedIn";
-import WhatsAppIcon from "@/components/icons/WhatsApp";
-import EnvelopeIcon from "@/components/icons/Envelope";
+import { ShareDialog } from "@/components/internship/ShareDialog";
 
 interface InternshipData {
   id: string;
@@ -100,6 +90,10 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
     } catch {
       toast.error("Failed to copy link");
     }
+  };
+
+  const handleShareDialogOpenChange = (open: boolean) => {
+    setShareDialogOpen(open);
   };
 
   if (loading || !internship) {
@@ -184,7 +178,7 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
         </div>
 
         {/* Share Dialog */}
-        <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <Dialog open={shareDialogOpen} onOpenChange={handleShareDialogOpenChange}>
           <button
             onClick={(e) => {
               e.preventDefault();
@@ -196,81 +190,11 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
           >
             <Share2 className="w-4 h-4 sm:w-5 sm:h-5 text-black hover:text-orange-500" />
           </button>
-          <DialogContent
-            className="sm:max-w-md"
-            onClick={(e) => e.stopPropagation()}
-            onOpenAutoFocus={(e) => e.preventDefault()}
-          >
-            <DialogHeader>
-              <DialogTitle>Share this internship</DialogTitle>
-            </DialogHeader>
-            <div className="flex items-center gap-2">
-              <Input readOnly value={shareUrl} />
-              <Button type="button" size="sm" onClick={handleCopy}>
-                Copy
-              </Button>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Link
-                href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(
-                  `${shareUrl}${shareUrl.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=internship_detail&utm_campaign=internship_share`
-                )}&text=${encodeURIComponent(internship.title)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Share on Twitter/X"
-                className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <TwitterXIcon className="h-6 w-6" />
-              </Link>
-              <Link
-                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-                  `${shareUrl}${shareUrl.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=internship_detail&utm_campaign=internship_share`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Share on Facebook"
-                className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <FacebookIcon className="h-6 w-6" />
-              </Link>
-              <Link
-                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-                  `${shareUrl}${shareUrl.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=internship_detail&utm_campaign=internship_share`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Share on LinkedIn"
-                className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <LinkedInIcon className="h-6 w-6" />
-              </Link>
-              <Link
-                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
-                  internship.title +
-                  " " +
-                  `${shareUrl}${shareUrl.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=internship_detail&utm_campaign=internship_share`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Share on WhatsApp"
-                className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <WhatsAppIcon className="h-6 w-6" />
-              </Link>
-              <Link
-                href={`mailto:?subject=${encodeURIComponent(internship.title)}&body=${encodeURIComponent(shareUrl)}`}
-                aria-label="Share via Email"
-                className="inline-flex items-center justify-center rounded-full border bg-white p-2 hover:bg-neutral-50"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <EnvelopeIcon className="h-6 w-6" />
-              </Link>
-            </div>
-          </DialogContent>
+          <ShareDialog
+            shareUrl={shareUrl}
+            title={internship.title}
+            onCopy={handleCopy}
+          />
         </Dialog>
       </div>
 

@@ -357,7 +357,7 @@ if (notFoundError) {
                     />
                   ) : (
                     <span className="text-sm text-black">
-                      {internship.user.name?.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                      {internship.user.name?.split(" ").filter(Boolean).map(n => n[0]).join("").slice(0, 2) || "?"}
                     </span>
                   )}
                 </div>

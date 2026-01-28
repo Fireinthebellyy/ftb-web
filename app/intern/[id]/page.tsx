@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -40,20 +40,19 @@ interface InternshipData {
   };
 }
 
-export default function InternshipDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function InternshipDetailPage() {
+  const { id } = useParams<{ id: string }>();
   const [internship, setInternship] = useState<InternshipData | null>(null);
   const [loading, setLoading] = useState(true);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [id, setId] = useState<string>("");
   const [notFoundError, setNotFoundError] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
-      const resolvedParams = await params;
-      setId(resolvedParams.id);
+      if (!id) return;
 
       try {
-        const response = await fetch(`/api/internships/${resolvedParams.id}`);
+        const response = await fetch(`/api/internships/${id}`);
         const data = await response.json();
 
         if (!response.ok || !data.success) {
@@ -72,7 +71,7 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
     };
 
     fetchData();
-  }, [params]);
+  }, [id]);
 
 if (notFoundError) {
   notFound();
@@ -133,7 +132,7 @@ if (notFoundError) {
                   alt={`${internship.hiringOrganization} logo`}
                   width={80}
                   height={80}
-                  className="w-full h-full object-fit"
+                  className="w-full h-full object-contain"
                 />
               </div>
             </div>
@@ -223,7 +222,7 @@ if (notFoundError) {
       )}
 
       {/* Eligibility, Experience & Internship Details */}
-      {(internship.eligibility && internship.eligibility.length > 0) || internship.experience || internship.type || internship.timing || internship.stipend ? (
+      {(internship.eligibility && internship.eligibility.length > 0) || internship.experience || internship.type || internship.timing || typeof internship.stipend === "number" ? (
         <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4 sm:text-xl">More Information</h2>
 
@@ -248,7 +247,7 @@ if (notFoundError) {
           )}
 
           {/* Stipend */}
-          {internship.stipend && (
+          {typeof internship.stipend === "number" && (
             <div className="mb-6">
               <h2 className="font-semibold mb-4 text-sm sm:text-lg">Stipend</h2>
               <p className="text-sm sm:text-base text-black flex items-center gap-1">

@@ -47,8 +47,16 @@ export function TypeSelector({ control, value, onChange }: Props) {
                       onChange(type.id as "in-office" | "work-from-home" | "hybrid");
                       field.onChange(type.id);
                     }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onChange(type.id as "in-office" | "work-from-home" | "hybrid");
+                        field.onChange(type.id);
+                      }
+                    }}
                     role="radio"
                     aria-checked={value === type.id}
+                    tabIndex={0}
                   >
                     {type.label}
                   </Badge>

@@ -17,6 +17,8 @@ import { internships, tags, user } from "@/lib/schema";
 import { upsertTagsAndGetIds } from "@/lib/tags";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth"; 
+import { headers } from "next/headers";
 import { z } from "zod";
 
 const internshipSchema = z.object({
@@ -65,8 +67,8 @@ export async function POST(req: NextRequest) {
     const userRole = user.currentUser.role;
     const canPostDirectly = userRole === "admin" || userRole === "member";
 
-    // Build insertData
-    const insertData: any = {
+    // Build insertData with explicit type
+    const insertData: typeof internships.$inferInsert = {
       type: validatedData.type,
       timing: validatedData.timing,
       title: validatedData.title,
@@ -139,9 +141,14 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Check if current user is admin
-    const currentUser = await getCurrentUser();
-    const isAdmin = currentUser?.currentUser?.role === "admin";
+   // Optionally check if current user is admin (don't redirect)
+    let isAdmin = false;
+    try {
+      const session = await auth.api.getSession({ headers: await headers() });
+      isAdmin = session?.user?.role === "admin";
+    } catch {
+      // No session - treat as non-admin
+    }
 
     // Get pagination and filter parameters
     const { searchParams } = new URL(req.url);

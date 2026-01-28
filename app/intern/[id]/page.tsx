@@ -45,6 +45,7 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
   const [loading, setLoading] = useState(true);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [id, setId] = useState<string>("");
+  const [notFoundError, setNotFoundError] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -56,19 +57,26 @@ export default function InternshipDetailPage({ params }: { params: Promise<{ id:
         const data = await response.json();
 
         if (!response.ok || !data.success) {
-          notFound();
+          setNotFoundError(true);
+          setLoading(false);
+          return;
         }
 
         setInternship(data.internship as InternshipData);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching internship:", error);
-        notFound();
+        setNotFoundError(true);
+        setLoading(false);
       }
     };
 
     fetchData();
   }, [params]);
+
+if (notFoundError) {
+  notFound();
+}
 
   const getTypeColor = (_type?: string): string => {
     return "bg-white border border-gray-300 text-black";

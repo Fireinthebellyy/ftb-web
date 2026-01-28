@@ -93,7 +93,7 @@ export async function GET(
     // Increment view count
     await db
       .update(internships)
-      .set({ viewCount: internship[0].viewCount + 1 })
+      .set({ viewCount: sql`${internships.viewCount} + 1`})
       .where(eq(internships.id, id));
 
     return NextResponse.json({

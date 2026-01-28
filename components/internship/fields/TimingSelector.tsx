@@ -47,6 +47,14 @@ export function TimingSelector({ control, value, onChange }: Props) {
                       onChange(timing.id as "full-time" | "part-time" | "shift-based");
                       field.onChange(timing.id);
                     }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onChange(timing.id as "full-time" | "part-time" | "shift-based");
+                        field.onChange(timing.id);
+                      }
+                    }}
+                    tabIndex={0}
                     role="radio"
                     aria-checked={value === timing.id}
                   >

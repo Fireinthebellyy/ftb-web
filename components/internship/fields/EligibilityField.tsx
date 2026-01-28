@@ -12,43 +12,36 @@ import { Control } from "react-hook-form";
 import { useRef, useState } from "react";
 import { InternshipFormData } from "../schema";
 
-type Props = {
+interface Props {
   control: Control<InternshipFormData>;
-};
+}
 
-type EligibilityInputProps = {
+interface EligibilityInputProps {
   value: string[];
   onChange: (val: string[]) => void;
-};
+}
 
 function EligibilityInput({ value, onChange }: EligibilityInputProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [inputValue, setInputValue] = useState("");
 
-  function addEligibility(eligibility: string) {
-    const trimmed = eligibility.trim();
-    if (!trimmed) return;
-
-    const seen = new Set<string>();
-    const newArray = [...(value || []), trimmed]
-      .filter(Boolean)
-      .filter((t) => {
-        if (seen.has(t.toLowerCase())) return false;
-        seen.add(t.toLowerCase());
-        return true;
-      });
-    onChange(newArray);
-    setInputValue("");
-    inputRef.current?.focus();
-  }
-
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter" && inputValue.trim()) {
       e.preventDefault();
       // Support comma-separated values
-      const items = inputValue.split(",").map(item => item.trim()).filter(Boolean);
+      const items = inputValue.split(",").map((item) => item.trim()).filter(Boolean);
       if (items.length > 0) {
-        items.forEach(item => addEligibility(item));
+        const seen = new Set<string>();
+        const newArray = [...(value || []), ...items]
+          .filter(Boolean)
+          .filter((t) => {
+            if (seen.has(t.toLowerCase())) return false;
+            seen.add(t.toLowerCase());
+            return true;
+          });
+        onChange(newArray);
+        setInputValue("");
+        inputRef.current?.focus();
       }
     } else if (e.key === "Backspace" && !inputValue && value && value.length > 0) {
       onChange(value.slice(0, -1));
@@ -58,9 +51,19 @@ function EligibilityInput({ value, onChange }: EligibilityInputProps) {
   function handleBlur() {
     // Also add items on blur if there's input
     if (inputValue.trim()) {
-      const items = inputValue.split(",").map(item => item.trim()).filter(Boolean);
+      const items = inputValue.split(",").map((item) => item.trim()).filter(Boolean);
       if (items.length > 0) {
-        items.forEach(item => addEligibility(item));
+        const seen = new Set<string>();
+        const newArray = [...(value || []), ...items]
+          .filter(Boolean)
+          .filter((t) => {
+            if (seen.has(t.toLowerCase())) return false;
+            seen.add(t.toLowerCase());
+            return true;
+          });
+        onChange(newArray);
+        setInputValue("");
+        inputRef.current?.focus();
       }
     }
   }
@@ -79,6 +82,7 @@ function EligibilityInput({ value, onChange }: EligibilityInputProps) {
                 type="button"
                 onClick={() => onChange(value.filter((_, i) => i !== index))}
                 className="hover:text-blue-600"
+                aria-label={`Remove ${item}`}
               >
                 ×
               </button>

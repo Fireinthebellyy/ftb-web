@@ -6,7 +6,7 @@ import { differenceInCalendarDays } from "date-fns";
 import { InternshipPostProps } from "@/types/interfaces";
 import Link from "next/link";
 import { Share2 } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { ShareDialog } from "./internship/ShareDialog";
 
@@ -123,13 +123,11 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
       </Link>
 
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-        <DialogContent className="sm:max-w-md">
           <ShareDialog
             shareUrl={shareUrl}
             title={title}
             onCopy={handleCopy}
           />
-        </DialogContent>
       </Dialog>
     </>
   );

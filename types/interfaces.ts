@@ -117,6 +117,7 @@ export interface FileItem {
   progress?: number;
   fileId?: string;
   error?: boolean;
+  errorMessage?: string;
 }
 
 export type PrivacyPolicy = {

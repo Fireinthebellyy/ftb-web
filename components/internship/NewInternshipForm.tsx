@@ -78,8 +78,7 @@ export default function NewInternshipForm({
         throw new Error("Appwrite bucket ID not configured");
       }
 
-      logoFile.uploading = true;
-      logoFile.progress = 0;
+      setLogoFile((prev) => prev ? { ...prev, uploading: true, progress: 0 } : null);
 
       const res = await internshipStorage.createFile(
         bucketId,

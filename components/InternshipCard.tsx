@@ -4,9 +4,8 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { differenceInCalendarDays } from "date-fns";
 import { InternshipPostProps } from "@/types/interfaces";
-import Link from "next/link";
 import { Share2 } from "lucide-react";
-import { Dialog } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { ShareDialog } from "./internship/ShareDialog";
 
@@ -14,15 +13,6 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
   internship,
 }) => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-
-  const formatType = (type: string) => {
-    const typeMap: Record<string, string> = {
-      "work-from-home": "Remote",
-      "hybrid": "Hybrid",
-      "in-office": "In-Office",
-    };
-    return typeMap[type.toLowerCase()] || type;
-  };
 
   const {
     id,
@@ -34,6 +24,19 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
     hiringOrganization,
     experience,
   } = internship;
+
+  const handleCardClick = () => {
+    window.location.href = `/intern/${id}`;
+  };
+
+  const formatType = (type: string) => {
+    const typeMap: Record<string, string> = {
+      "work-from-home": "Remote",
+      "hybrid": "Hybrid",
+      "in-office": "In-Office",
+    };
+    return typeMap[type.toLowerCase()] || type;
+  };
 
   const publicBaseUrl =
     (process.env.NEXT_PUBLIC_SITE_URL as string | undefined) ||
@@ -51,7 +54,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
     }
   };
 
-  const handleShareClick = (e: React.MouseEvent) => {
+  const handleShareClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setShareDialogOpen(true);
@@ -59,9 +62,11 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
 
   return (
     <>
-      <Link href={`/intern/${id}`} className="block">
-        <div className="bg-white rounded-lg border hover:border-gray-300 hover:shadow-md transition-all p-1 cursor-pointer">
-          <div className="flex gap-2">
+      <div
+        className="bg-white rounded-lg border hover:border-gray-300 hover:shadow-md transition-all p-1 cursor-pointer"
+        onClick={handleCardClick}
+      >
+        <div className="flex gap-2">
           {/* Left: Circular Logo */}
           <div className="flex-shrink-0">
             {poster ? (
@@ -85,14 +90,14 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
           <div className="flex-1 min-w-0">
             {/* Title, Company and days ago */}
             <div className="flex mb-1">
-              <h3 className="text-xs sm:text-sm font-bold text-black ">
-                {title} {hiringOrganization && <span className="font-normal">at {hiringOrganization}</span>} 
+              <h3 className="text-xs sm:text-sm font-bold text-black flex-1">
+                {title} {hiringOrganization && <span className="font-normal">at {hiringOrganization}</span>}
                 {createdAt && (
-                <span className="font-normal text-[11px] sm:text-xs text-gray-500 ml-3">
-                  {differenceInCalendarDays(new Date(), new Date(createdAt))}d ago
-                </span>
+                  <span className="font-normal text-[11px] sm:text-xs text-gray-500 ml-3">
+                    {differenceInCalendarDays(new Date(), new Date(createdAt))}d ago
+                  </span>
                 )}
-                </h3>
+              </h3>
             </div>
 
             {/* Bottom Section: Type, Location, Experience and Actions */}
@@ -119,15 +124,16 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
             </div>
           </div>
         </div>
-        </div>
-      </Link>
+      </div>
 
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent>
           <ShareDialog
             shareUrl={shareUrl}
             title={title}
             onCopy={handleCopy}
           />
+        </DialogContent>
       </Dialog>
     </>
   );

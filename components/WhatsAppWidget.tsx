@@ -1,9 +1,11 @@
 "use client";
-
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 export default function WhatsAppWidget() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const source =pathname;
 
   const options = [
     "Appreciate the team",
@@ -38,10 +40,7 @@ export default function WhatsAppWidget() {
             <h3 className="mb-3 text-lg font-semibold">How can we help?</h3>
 
             {options.map((type) => {
-              const source =
-                typeof window !== "undefined"
-                  ? window.location.pathname
-                  : "";
+              
 
               const link = `https://wa.me/917014885565?text=${encodeURIComponent(
                 `Type: ${type}\nSource: ${source}\n\nPlease describe your feedback:`

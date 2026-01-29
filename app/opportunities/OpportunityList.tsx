@@ -20,7 +20,6 @@ import { NewOpportunityButton } from "@/components/opportunity/NewOpportunityBut
 import FeaturedOpportunities from "@/components/opportunity/FeaturedOpportunities";
 import { TagsDropdown } from "@/components/opportunity/TagsDropdown";
 import { useInfiniteOpportunities } from "@/lib/queries";
-import FeedbackWidget from "@/components/FeedbackWidget";
 import CalendarWidget from "@/components/opportunity/CalendarWidget";
 import TaskWidget from "@/components/opportunity/TaskWidget";
 
@@ -747,11 +746,6 @@ export default function OpportunityCardsPage() {
 					)}
 				</div>
 			</div>
-			<FeedbackWidget />
-
- 
-
-
-
-		</div>	);
+		</div>
+	);
 }

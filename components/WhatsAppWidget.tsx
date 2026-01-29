@@ -17,10 +17,9 @@ export default function WhatsAppWidget() {
       {/* WhatsApp Button */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed right-6 bottom-[72px] z-50 flex h-10 w-10 items-center justify-center rounded-full bg-neutral-100 text-neutral-700 shadow-md hover:bg-neutral-200 md:bottom-6 md:h-12 md:w-12"
+        className="fixed right-6 bottom-[72px] z-50 flex h-10 w-10 items-center justify-center rounded-full bg-neutral-200 text-neutral-600 shadow-lg hover:bg-neutral-100 md:bottom-6 md:h-12 md:w-12"
         aria-label="Chat on WhatsApp"
->
-
+      >
         <svg
 
         xmlns="http://www.w3.org/2000/svg"
@@ -53,6 +52,7 @@ export default function WhatsAppWidget() {
                   key={type}
                   href={link}
                   target="_blank"
+                  rel="noopener noreferrer"
                   className="mb-2 block rounded bg-neutral-100 p-2 hover:bg-neutral-200"
                 >
                   {type}

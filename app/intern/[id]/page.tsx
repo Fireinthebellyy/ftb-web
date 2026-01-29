@@ -132,7 +132,7 @@ if (notFoundError) {
                   alt={`${internship.hiringOrganization} logo`}
                   width={80}
                   height={80}
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-fit"
                 />
               </div>
             </div>

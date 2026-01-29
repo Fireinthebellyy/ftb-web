@@ -2,16 +2,18 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { differenceInCalendarDays } from "date-fns";
-import { InternshipPostProps } from "@/types/interfaces";
 import { Share2 } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { InternshipPostProps } from "@/types/interfaces";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ShareDialog } from "./internship/ShareDialog";
 
 const InternshipPost: React.FC<InternshipPostProps> = ({
   internship,
 }) => {
+  const router = useRouter();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   const {
@@ -26,7 +28,14 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
   } = internship;
 
   const handleCardClick = () => {
-    window.location.href = `/intern/${id}`;
+    router.push(`/intern/${id}`);
+  };
+
+  const handleCardKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+      e.preventDefault();
+      handleCardClick();
+    }
   };
 
   const formatType = (type: string) => {
@@ -63,8 +72,11 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
   return (
     <>
       <div
+        role="button"
+        tabIndex={0}
         className="bg-white rounded-lg border hover:border-gray-300 hover:shadow-md transition-all p-1 cursor-pointer"
         onClick={handleCardClick}
+        onKeyDown={handleCardKeyDown}
       >
         <div className="flex gap-2">
           {/* Left: Circular Logo */}

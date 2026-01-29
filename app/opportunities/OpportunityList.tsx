@@ -742,5 +742,6 @@ export default function OpportunityCardsPage() {
           )}
         </div>
       </div>
-    </div>);
+    </div>
+  );
 }

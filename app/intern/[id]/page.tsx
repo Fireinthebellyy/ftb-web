@@ -17,19 +17,19 @@ interface InternshipData {
   timing: string;
   title: string;
   description: string;
-  link: string;
-  poster: string;
+  link?: string | null;
+  poster?: string | null;
   tags: string[];
   location: string;
-  deadline: Date | null;
-  stipend: number;
+  deadline: string | null;
+  stipend?: number | null;
   hiringOrganization: string;
-  hiringManager: string;
-  hiringManagerEmail: string;
+  hiringManager?: string | null;
+  hiringManagerEmail?: string | null;
   experience: string;
   duration?: string;
   eligibility: string[];
-  createdAt: Date | null;
+  createdAt: string | null;
   viewCount: number;
   applicationCount: number;
   user: {

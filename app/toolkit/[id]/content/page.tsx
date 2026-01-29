@@ -96,10 +96,16 @@ export default function ToolkitContentPage() {
   const markComplete = useMarkContentComplete(toolkitId);
 
   const toolkit = toolkitData?.toolkit ?? null;
-  const contentItems = toolkitData?.contentItems ?? [];
+  const contentItems = useMemo(
+    () => toolkitData?.contentItems ?? [],
+    [toolkitData?.contentItems]
+  );
   const hasAccess = toolkitData?.hasPurchased ?? false;
   // Use completedItemIds from API (persisted in DB)
-  const completedItems = toolkitData?.completedItemIds ?? [];
+  const completedItems = useMemo(
+    () => toolkitData?.completedItemIds ?? [],
+    [toolkitData?.completedItemIds]
+  );
 
   const progress =
     contentItems.length > 0

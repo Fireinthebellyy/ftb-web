@@ -41,7 +41,7 @@ const Footer = () => {
     };
   }, []);
 
-  if (pathname === "/opportunities" || pathname === "/onboarding") return null;
+  if (pathname === "/opportunities" || pathname === "/onboarding" || pathname === "/intern") return null;
 
   return (
     <footer className="border-t border-neutral-200 bg-white py-8">

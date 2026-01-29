@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import {
@@ -100,7 +100,7 @@ export default function ToolkitContentManager({
     },
   });
 
-  const fetchContentItems = async () => {
+  const fetchContentItems = useCallback(async () => {
     if (!open) return;
 
     try {
@@ -115,11 +115,11 @@ export default function ToolkitContentManager({
     } finally {
       setLoading(false);
     }
-  };
+  }, [open, toolkitId]);
 
   useEffect(() => {
     fetchContentItems();
-  }, []);
+  }, [fetchContentItems]);
 
   const handleEdit = (contentItem: ContentItem) => {
     setEditingContentItem(contentItem);

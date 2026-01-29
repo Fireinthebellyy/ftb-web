@@ -7,7 +7,9 @@ import { redirect } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminUsersTable from "./AdminUsersTable";
 import AdminOpportunitiesTable from "./AdminOpportunitiesTable";
+import NewInternshipButton from "@/components/internship/NewInternshipButton";
 import AdminToolkitsTable from "./AdminToolkitsTable";
+import AdminUngatekeepTable from "./AdminUngatekeepTable";
 import NewToolkitModal from "@/components/toolkit/NewToolkitModal";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
@@ -37,29 +39,23 @@ export default async function AdminPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="mb-2 text-3xl font-bold">Admin Dashboard</h1>
-              <p className="text-muted-foreground">
-                Manage users and review opportunities
-              </p>
-            </div>
-            <NewToolkitModal>
-              <Button className="gap-2">
-                <PlusCircle className="h-4 w-4" />
-                Create Toolkit
-              </Button>
-            </NewToolkitModal>
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+            <NewInternshipButton />
           </div>
+          <p className="text-muted-foreground">
+            Manage users and review opportunities
+          </p>
         </div>
 
         <Tabs defaultValue="opportunities" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="opportunities">
               Pending Opportunities
             </TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="toolkits">Toolkit Management</TabsTrigger>
+            <TabsTrigger value="ungatekeep">Ungatekeep</TabsTrigger>
           </TabsList>
           <TabsContent value="opportunities">
             <AdminOpportunitiesTable />
@@ -70,8 +66,17 @@ export default async function AdminPage() {
           <TabsContent value="toolkits">
             <AdminToolkitsTable />
           </TabsContent>
+          <TabsContent value="ungatekeep">
+            <AdminUngatekeepTable />
+          </TabsContent>
         </Tabs>
       </div>
+      <NewToolkitModal>
+        <Button className="gap-2">
+          <PlusCircle className="h-4 w-4" />
+          Create Toolkit
+        </Button>
+      </NewToolkitModal>
     </div>
   );
 }

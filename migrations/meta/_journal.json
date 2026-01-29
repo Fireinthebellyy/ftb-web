@@ -162,6 +162,20 @@
       "when": 1765796737770,
       "tag": "0022_quiet_joseph",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1766095200000,
+      "tag": "0023_add_bunny_video_url",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1766095300000,
+      "tag": "0024_set_default_is_active_false",
+      "breakpoints": true
     }
   ]
 }

@@ -19,6 +19,18 @@ export const opportunityTypeEnum = pgEnum("opportunity_type", [
   "ideathon",
 ]);
 
+export const internshipTypeEnum = pgEnum("internship_type", [
+  "in-office",
+  "work-from-home",
+  "hybrid",
+]);
+
+export const internshipTimingEnum = pgEnum("internship_timing", [
+  "full-time",
+  "part-time",
+  "shift-based",
+]);
+
 export const mentors = pgTable("mentors", {
   id: uuid("id").primaryKey().defaultRandom(),
   mentorName: text("mentor_name").notNull(),
@@ -70,6 +82,37 @@ export const opportunities = pgTable("opportunities", {
   isActive: boolean("is_active").default(true),
   upvoterIds: text("upvoter_ids").array().default([]),
   upvoteCount: integer("upvote_count").default(0),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
+
+export const internships = pgTable("internships", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  type: internshipTypeEnum("type").notNull(),
+  timing: internshipTimingEnum("timing").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  link: text("link"),
+  poster: text("poster").notNull(), // Required image URL
+  tagIds: uuid("tag_ids").array().default([]),
+  location: text("location"),
+  deadline: date("deadline"),
+  stipend: integer("stipend"), // Amount in rupees
+  hiringOrganization: text("hiring_organization").notNull(),
+  hiringManager: text("hiring_manager"), // Optional
+  hiringManagerEmail: text("hiring_manager_email"), // Optional
+  experience: text("experience"), // Optional
+  duration: text("duration"), // Optional 
+  eligibility: text("eligibility").array().default([]),
+  isFlagged: boolean("is_flagged").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  deletedAt: timestamp("deleted_at"), // Soft delete
+  isVerified: boolean("is_verified").default(false),
+  isActive: boolean("is_active").default(true),
+  viewCount: integer("view_count").default(0),
+  applicationCount: integer("application_count").default(0),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
@@ -239,7 +282,8 @@ export const toolkits = pgTable("toolkits", {
   highlights: text("highlights").array(), // Bullet points like "10 lessons", "Lifetime access"
   totalDuration: text("total_duration"), // e.g., "2h 30m"
   lessonCount: integer("lesson_count").default(0),
-  isActive: boolean("is_active").default(true),
+  isActive: boolean("is_active").default(false),
+  showSaleBadge: boolean("show_sale_badge").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   userId: text("user_id")
@@ -252,6 +296,12 @@ export const toolkitContentItemTypeEnum = pgEnum("toolkit_content_item_type", [
   "video",
 ]);
 
+export const ungatekeepTagEnum = pgEnum("ungatekeep_tag", [
+  "announcement",
+  "company_experience",
+  "resources",
+]);
+
 export const toolkitContentItems = pgTable("toolkit_content_items", {
   id: uuid("id").primaryKey().defaultRandom(),
   toolkitId: uuid("toolkit_id")
@@ -260,7 +310,7 @@ export const toolkitContentItems = pgTable("toolkit_content_items", {
   title: text("title").notNull(),
   type: toolkitContentItemTypeEnum("type").notNull(),
   content: text("content"), // markdown for articles
-  vimeoVideoId: text("vimeo_video_id"), // Vimeo video ID for video type
+  bunnyVideoUrl: text("bunny_video_url"), // Bunny CDN video URL for video type
   orderIndex: integer("order_index").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -284,11 +334,72 @@ export const userToolkits = pgTable("user_toolkits", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Track user progress on toolkit content items
+export const userToolkitProgress = pgTable(
+  "user_toolkit_progress",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    toolkitId: uuid("toolkit_id")
+      .notNull()
+      .references(() => toolkits.id, { onDelete: "cascade" }),
+    contentItemId: uuid("content_item_id")
+      .notNull()
+      .references(() => toolkitContentItems.id, { onDelete: "cascade" }),
+    completedAt: timestamp("completed_at").defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("user_content_item_unique").on(
+      table.userId,
+      table.contentItemId
+    ),
+  ]
+);
+
+// Ungatekeep broadcast posts
+export const ungatekeepPosts = pgTable("ungatekeep_posts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  images: text("images").array().default([]), // Appwrite file IDs
+  linkUrl: text("link_url"),
+  linkTitle: text("link_title"),
+  linkImage: text("link_image"),
+  tag: ungatekeepTagEnum("tag"),
+  isPinned: boolean("is_pinned").default(false),
+  isPublished: boolean("is_published").default(false),
+  publishedAt: timestamp("published_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
+
+// Newsletter subscribers for future Resend integration
+export const newsletterSubscribers = pgTable(
+  "newsletter_subscribers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull().unique(),
+    userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
+    isSubscribed: boolean("is_subscribed").default(true),
+    createdAt: timestamp("created_at").defaultNow(),
+    unsubscribedAt: timestamp("unsubscribed_at"),
+  },
+  (table) => [
+    uniqueIndex("newsletter_subscribers_email_unique").on(table.email),
+  ]
+);
+
 export const schema = {
   user,
   userOnboardingProfiles,
   mentors,
   opportunities,
+  internships,
   comments,
   session,
   account,
@@ -301,4 +412,7 @@ export const schema = {
   toolkits,
   toolkitContentItems,
   userToolkits,
+  userToolkitProgress,
+  ungatekeepPosts,
+  newsletterSubscribers,
 };

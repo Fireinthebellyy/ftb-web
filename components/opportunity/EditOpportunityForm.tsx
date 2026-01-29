@@ -7,7 +7,10 @@ import { useForm, FormProvider } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { createOpportunityStorage } from "@/lib/appwrite";
+import {
+  createOpportunityStorage,
+  getAppwriteErrorMessage,
+} from "@/lib/appwrite";
 import { TitleField } from "./fields/TitleField";
 import { DescriptionField } from "./fields/DescriptionField";
 import { TagsField } from "./fields/TagsField";
@@ -143,6 +146,7 @@ export default function EditOpportunityForm({
       } catch (err) {
         console.error(`Upload failed for ${file.name}:`, err);
         hasError = true;
+        const errorMessage = getAppwriteErrorMessage(err);
         setFiles((prev) =>
           prev.map((f, idx) =>
             idx === i
@@ -150,15 +154,12 @@ export default function EditOpportunityForm({
                   ...f,
                   uploading: false,
                   error: true,
-                  errorMessage:
-                    err instanceof Error ? err.message : "Unknown upload error",
+                  errorMessage,
                 }
               : f
           )
         );
-        const message =
-          err instanceof Error ? err.message : "Unknown upload error";
-        toast.error(`Failed to upload "${file.name}": ${message}`);
+        toast.error(`Failed to upload "${file.name}": ${errorMessage}`);
       }
     }
 

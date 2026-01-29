@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -16,9 +22,9 @@ import {
 import { cn } from "@/lib/utils";
 import { ToolkitContentItem } from "@/types/interfaces";
 import LessonSidebar from "@/components/toolkit/LessonSidebar";
-import VimeoPlayer from "@/components/toolkit/VimeoPlayer";
+import BunnyPlayer from "@/components/toolkit/BunnyPlayer";
 import MarkdownRenderer from "@/components/toolkit/MarkdownRenderer";
-import { useToolkit } from "@/lib/queries";
+import { useToolkit, useMarkContentComplete } from "@/lib/queries";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface CircularProgressProps {
@@ -78,23 +84,35 @@ function CircularProgress({
 export default function ToolkitContentPage() {
   const params = useParams();
   const router = useRouter();
+  const toolkitId = params.id as string;
+
   const [currentItem, setCurrentItem] = useState<ToolkitContentItem | null>(
     null
   );
-  const [completedItems, setCompletedItems] = useState<string[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
 
-  const { data: toolkitData, isLoading } = useToolkit(params.id as string);
+  const { data: toolkitData, isLoading } = useToolkit(toolkitId);
+  const markComplete = useMarkContentComplete(toolkitId);
 
   const toolkit = toolkitData?.toolkit ?? null;
-  const contentItems = toolkitData?.contentItems ?? [];
+  const contentItems = useMemo(
+    () => toolkitData?.contentItems ?? [],
+    [toolkitData?.contentItems]
+  );
   const hasAccess = toolkitData?.hasPurchased ?? false;
+  // Use completedItemIds from API (persisted in DB)
+  const completedItems = useMemo(
+    () => toolkitData?.completedItemIds ?? [],
+    [toolkitData?.completedItemIds]
+  );
 
   const progress =
     contentItems.length > 0
       ? (completedItems.length / contentItems.length) * 100
       : 0;
+
+  const didRedirectRef = useRef(false);
 
   useEffect(() => {
     if (contentItems.length > 0 && !currentItem) {
@@ -104,8 +122,6 @@ export default function ToolkitContentPage() {
       setCurrentItem(sortedItems[0]);
     }
   }, [contentItems, currentItem]);
-
-  const didRedirectRef = useRef(false);
 
   useEffect(() => {
     if (!isLoading && toolkit && !hasAccess && !didRedirectRef.current) {
@@ -118,40 +134,67 @@ export default function ToolkitContentPage() {
     }
   }, [isLoading, hasAccess, toolkit, params.id, router]);
 
-  const handleItemSelect = (item: ToolkitContentItem): void => {
+  const handleItemSelect = useCallback((item: ToolkitContentItem): void => {
     setCurrentItem(item);
     setSidebarOpen(false);
-  };
+  }, []);
 
-  const handleNavigate = (direction: "prev" | "next") => {
-    if (!currentItem || contentItems.length === 0) return;
+  const sortedItems = useMemo(
+    () => [...contentItems].sort((a, b) => a.orderIndex - b.orderIndex),
+    [contentItems]
+  );
 
-    const sortedItems = [...contentItems].sort(
-      (a, b) => a.orderIndex - b.orderIndex
-    );
-    const currentIndex = sortedItems.findIndex(
-      (item) => item.id === currentItem.id
-    );
+  // Mark item as complete (idempotent - does nothing if already complete)
+  const handleMarkComplete = useCallback(
+    (itemId: string): void => {
+      // Skip if already completed
+      if (completedItems.includes(itemId)) return;
+      // Persist to database
+      markComplete.mutate(itemId);
+    },
+    [completedItems, markComplete]
+  );
 
-    let newIndex: number;
-    if (direction === "prev") {
-      newIndex = currentIndex > 0 ? currentIndex - 1 : currentIndex;
-    } else {
-      newIndex =
-        currentIndex < sortedItems.length - 1 ? currentIndex + 1 : currentIndex;
-    }
+  const handleNavigate = useCallback(
+    (direction: "prev" | "next") => {
+      if (!currentItem || contentItems.length === 0) return;
 
-    setCurrentItem(sortedItems[newIndex]);
-  };
+      const currentIndex = sortedItems.findIndex(
+        (item) => item.id === currentItem.id
+      );
 
-  const handleToggleComplete = (itemId: string): void => {
-    setCompletedItems((prev) => {
-      if (prev.includes(itemId)) {
-        return prev.filter((id) => id !== itemId);
+      let newIndex: number;
+      if (direction === "prev") {
+        newIndex = currentIndex > 0 ? currentIndex - 1 : currentIndex;
+      } else {
+        // Auto-mark current item as complete when moving to next
+        handleMarkComplete(currentItem.id);
+        newIndex =
+          currentIndex < sortedItems.length - 1
+            ? currentIndex + 1
+            : currentIndex;
       }
-      return [...prev, itemId];
-    });
-  };
+
+      setCurrentItem(sortedItems[newIndex]);
+    },
+    [currentItem, contentItems, sortedItems, handleMarkComplete]
+  );
+
+  const handleNavigatePrev = useCallback(
+    () => handleNavigate("prev"),
+    [handleNavigate]
+  );
+  const handleNavigateNext = useCallback(
+    () => handleNavigate("next"),
+    [handleNavigate]
+  );
+
+  const handleMarkCompleteAndCelebrate = useCallback(() => {
+    if (currentItem && !completedItems.includes(currentItem.id)) {
+      handleMarkComplete(currentItem.id);
+      toast.success("Congratulations! You've completed this toolkit!");
+    }
+  }, [currentItem, completedItems, handleMarkComplete]);
 
   if (isLoading) {
     return (
@@ -188,9 +231,6 @@ export default function ToolkitContentPage() {
     );
   }
 
-  const sortedItems = [...contentItems].sort(
-    (a, b) => a.orderIndex - b.orderIndex
-  );
   const currentIndex = currentItem
     ? sortedItems.findIndex((item) => item.id === currentItem.id)
     : -1;
@@ -279,13 +319,11 @@ export default function ToolkitContentPage() {
                 desktopSidebarOpen ? "lg:max-w-3xl" : "lg:max-w-4xl"
               )}
             >
-              {currentItem.type === "video" && currentItem.vimeoVideoId && (
-                <VimeoPlayer
-                  videoId={currentItem.vimeoVideoId}
+              {currentItem.type === "video" && currentItem.bunnyVideoUrl && (
+                <BunnyPlayer
+                  videoId={currentItem.id}
                   title={currentItem.title}
                   className="shadow-sm"
-                  isCompleted={completedItems.includes(currentItem.id)}
-                  onToggleComplete={() => handleToggleComplete(currentItem.id)}
                 />
               )}
 
@@ -296,7 +334,7 @@ export default function ToolkitContentPage() {
                       content={currentItem.content}
                       protected={true}
                       itemId={currentItem.id}
-                      onComplete={handleToggleComplete}
+                      onComplete={handleMarkComplete}
                     />
                   </CardContent>
                 </Card>
@@ -305,7 +343,7 @@ export default function ToolkitContentPage() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <Button
                   variant="outline"
-                  onClick={() => handleNavigate("prev")}
+                  onClick={handleNavigatePrev}
                   disabled={isFirst}
                   className="w-full sm:w-auto"
                 >
@@ -315,7 +353,7 @@ export default function ToolkitContentPage() {
 
                 {!isLast ? (
                   <Button
-                    onClick={() => handleNavigate("next")}
+                    onClick={handleNavigateNext}
                     className="w-full sm:w-auto"
                   >
                     Next
@@ -323,11 +361,7 @@ export default function ToolkitContentPage() {
                   </Button>
                 ) : (
                   <Button
-                    onClick={() => {
-                      toast.success(
-                        "Congratulations! You've completed this toolkit!"
-                      );
-                    }}
+                    onClick={handleMarkCompleteAndCelebrate}
                     className="w-full sm:w-auto"
                   >
                     <Check className="mr-2 h-4 w-4" />

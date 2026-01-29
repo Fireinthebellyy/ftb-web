@@ -22,7 +22,7 @@ export async function PUT(
     const contentItemId = paramsResolved.id;
 
     const body = await request.json();
-    const { title, type, content, vimeoVideoId, orderIndex } = body;
+    const { title, type, content, bunnyVideoUrl, orderIndex } = body;
 
     const updatedContentItem = await db
       .update(toolkitContentItems)
@@ -30,7 +30,7 @@ export async function PUT(
         title,
         type,
         content,
-        vimeoVideoId,
+        bunnyVideoUrl,
         orderIndex,
         updatedAt: new Date(),
       })

@@ -55,7 +55,7 @@ export async function POST(
     const toolkitId = paramsResolved.id;
 
     const body = await request.json();
-    const { title, type, content, vimeoVideoId, orderIndex } = body;
+    const { title, type, content, bunnyVideoUrl, orderIndex } = body;
 
     if (!title || !type) {
       return NextResponse.json(
@@ -71,7 +71,7 @@ export async function POST(
         title,
         type,
         content,
-        vimeoVideoId,
+        bunnyVideoUrl,
         orderIndex: orderIndex || 0,
       })
       .returning();

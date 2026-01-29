@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { user, session, mentors, account, comments, opportunities, userOnboardingProfiles } from "./schema";
+import { user, session, mentors, account, comments, opportunities, userOnboardingProfiles, toolkits, toolkitContentItems, internships } from "./schema";
 
 export const sessionRelations = relations(session, ({one}) => ({
 	user: one(user, {
@@ -15,6 +15,7 @@ export const userRelations = relations(user, ({many}) => ({
 	comments: many(comments),
 	opportunities: many(opportunities),
 	userOnboardingProfiles: many(userOnboardingProfiles),
+	internships: many(internships),
 }));
 
 export const mentorsRelations = relations(mentors, ({one}) => ({
@@ -53,6 +54,24 @@ export const opportunitiesRelations = relations(opportunities, ({one, many}) => 
 export const userOnboardingProfilesRelations = relations(userOnboardingProfiles, ({one}) => ({
 	user: one(user, {
 		fields: [userOnboardingProfiles.userId],
+		references: [user.id]
+	}),
+}));
+
+export const toolkitContentItemsRelations = relations(toolkitContentItems, ({one}) => ({
+	toolkit: one(toolkits, {
+		fields: [toolkitContentItems.toolkitId],
+		references: [toolkits.id]
+	}),
+}));
+
+export const toolkitsRelations = relations(toolkits, ({many}) => ({
+	toolkitContentItems: many(toolkitContentItems),
+}));
+
+export const internshipsRelations = relations(internships, ({one}) => ({
+	user: one(user, {
+		fields: [internships.userId],
 		references: [user.id]
 	}),
 }));

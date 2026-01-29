@@ -7,7 +7,7 @@ import { authClient } from "@/lib/auth-client";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { Righteous } from "next/font/google";
-import { EllipsisVertical } from "lucide-react";
+import { EllipsisVertical, Shield } from "lucide-react";
 
 function useLogout() {
   const router = useRouter();
@@ -91,7 +91,7 @@ export default function Navbar() {
       (document.activeElement === lastItemRef.current
         ? firstItemRef.current
         : ((document.activeElement
-          ?.nextElementSibling as HTMLButtonElement | null) ??
+            ?.nextElementSibling as HTMLButtonElement | null) ??
           firstItemRef.current)
       )?.focus();
       return;
@@ -101,7 +101,7 @@ export default function Navbar() {
       (document.activeElement === firstItemRef.current
         ? lastItemRef.current
         : ((document.activeElement
-          ?.previousElementSibling as HTMLButtonElement | null) ??
+            ?.previousElementSibling as HTMLButtonElement | null) ??
           lastItemRef.current)
       )?.focus();
       return;
@@ -150,7 +150,7 @@ export default function Navbar() {
       transition={{ duration: 0.5 }}
       className="sticky top-0 z-50 flex-none bg-gray-50 backdrop-blur-sm"
     >
-      <div className="container mx-auto grid h-16 grid-cols-[1fr_auto] items-center px-4 md:grid-cols-3 lg:px-6">
+      <div className="container mx-auto grid h-16 max-w-7xl grid-cols-[1fr_auto] items-center px-4 md:grid-cols-3 lg:px-4 xl:px-6">
         <div className="flex items-center justify-start pl-2 md:pl-4">
           <Link href="/" className="flex items-center space-x-3">
             <Image
@@ -171,40 +171,53 @@ export default function Navbar() {
         <nav className="hidden justify-center gap-4 sm:gap-6 md:flex">
           <Link
             href="/opportunities"
-            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/opportunities"
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
+              pathname === "/opportunities"
                 ? "text-primary after:w-full"
                 : "text-neutral-800 after:w-0"
-              }`}
+            }`}
           >
             Opportunities
           </Link>
 
           <Link
-            href="/featured"
-            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/featured"
-                ? "text-primary after:w-full"
-                : "text-neutral-800 after:w-0"
-              }`}
-          >
-            Featured
-          </Link>
-          <Link
             href="/deadlines"
-            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/deadlines"
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
+              pathname === "/deadlines"
                 ? "text-primary after:w-full"
                 : "text-neutral-800 after:w-0"
-              }`}
+            }`}
           >
             Deadlines
           </Link>
           <Link
             href="/toolkit"
-            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/toolkit"
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
+              pathname === "/toolkit"
                 ? "text-primary after:w-full"
                 : "text-neutral-800 after:w-0"
-              }`}
+            }`}
           >
             Toolkit
+          </Link>
+          <Link
+            href="/ungatekeep"
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
+              pathname === "/ungatekeep"
+                ? "text-primary after:w-full"
+                : "text-neutral-800 after:w-0"
+            }`}
+          >
+            Ungatekeep
+          </Link>
+          <Link
+            href="/intern"
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/intern"
+              ? "text-primary after:w-full"
+              : "text-neutral-800 after:w-0"
+              }`}
+          >
+            Internships
           </Link>
         </nav>
 
@@ -235,6 +248,17 @@ export default function Navbar() {
               <span className="hidden text-sm font-medium sm:inline">
                 Hi, {user?.user?.name?.split(" ")[0] || "User"}!
               </span>
+              {/* @ts-ignore - role is added via additionalFields in better-auth config */}
+              {user?.user?.role === "admin" && (
+                <Link
+                  href="/admin"
+                  className="flex items-center gap-1 rounded-md bg-orange-100 px-2 py-1 text-xs font-medium text-orange-700 transition-colors hover:bg-orange-200"
+                  title="Admin Dashboard"
+                >
+                  <Shield className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Admin</span>
+                </Link>
+              )}
               <div className="relative flex items-center">
                 {user.user?.image ? (
                   <div className="rounded-full border-2 border-white shadow-lg">
@@ -380,10 +404,11 @@ export default function Navbar() {
               <Link
                 href="/"
                 onClick={() => setIsOpen(false)}
-                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/"
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
+                  pathname === "/"
                     ? "text-primary font-bold after:w-full"
                     : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                  }`}
+                }`}
               >
                 Home
               </Link>
@@ -392,36 +417,51 @@ export default function Navbar() {
               <Link
                 href="/opportunities"
                 onClick={() => setIsOpen(false)}
-                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/opportunities"
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
+                  pathname === "/opportunities"
                     ? "text-primary font-bold after:w-full"
                     : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                  }`}
+                }`}
               >
                 Opportunities
               </Link>
             </li>
             <li>
               <Link
-                href="/featured"
+                href="/deadlines"
                 onClick={() => setIsOpen(false)}
-                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/featured"
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
+                  pathname === "/deadlines"
                     ? "text-primary font-bold after:w-full"
                     : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                  }`}
+                }`}
               >
-                Featured
+                Deadlines
               </Link>
             </li>
             <li>
               <Link
-                href="/deadlines"
+                href="/ungatekeep"
                 onClick={() => setIsOpen(false)}
-                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/deadlines"
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
+                  pathname === "/ungatekeep"
                     ? "text-primary font-bold after:w-full"
                     : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                }`}
+              >
+                Ungatekeep
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/intern"
+                onClick={() => setIsOpen(false)}
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/intern"
+                  ? "text-primary font-bold after:w-full"
+                  : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
                   }`}
               >
-                Deadlines
+                Internships
               </Link>
             </li>
             {/* If authenticated, show Profile link inside mobile overlay for navigation */}
@@ -430,10 +470,11 @@ export default function Navbar() {
                 <Link
                   href="/profile"
                   onClick={() => setIsOpen(false)}
-                  className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/profile"
+                  className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
+                    pathname === "/profile"
                       ? "text-primary font-bold after:w-full"
                       : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                    }`}
+                  }`}
                 >
                   Profile
                 </Link>

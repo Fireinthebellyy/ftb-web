@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import {
@@ -45,7 +45,7 @@ const contentItemSchema = z
     isArticle: z.boolean().optional().default(false),
     isVideo: z.boolean().optional().default(false),
     content: z.string().optional(),
-    vimeoVideoId: z.string().optional(),
+    bunnyVideoUrl: z.string().optional(),
     orderIndex: z.coerce.number().int().min(0).default(0),
   })
   .refine((data) => data.isArticle || data.isVideo, {
@@ -60,7 +60,7 @@ interface ContentItem {
   title: string;
   type: "article" | "video";
   content: string | null;
-  vimeoVideoId: string | null;
+  bunnyVideoUrl: string | null;
   orderIndex: number;
   createdAt: string;
   updatedAt: string;
@@ -95,12 +95,12 @@ export default function ToolkitContentManager({
       isArticle: true,
       isVideo: false,
       content: "",
-      vimeoVideoId: "",
+      bunnyVideoUrl: "",
       orderIndex: 0,
     },
   });
 
-  const fetchContentItems = async () => {
+  const fetchContentItems = useCallback(async () => {
     if (!open) return;
 
     try {
@@ -115,11 +115,11 @@ export default function ToolkitContentManager({
     } finally {
       setLoading(false);
     }
-  };
+  }, [open, toolkitId]);
 
   useEffect(() => {
     fetchContentItems();
-  }, []);
+  }, [fetchContentItems]);
 
   const handleEdit = (contentItem: ContentItem) => {
     setEditingContentItem(contentItem);
@@ -129,7 +129,7 @@ export default function ToolkitContentManager({
       isArticle: contentItem.type === "article",
       isVideo: contentItem.type === "video",
       content: contentItem.content ?? "",
-      vimeoVideoId: contentItem.vimeoVideoId ?? "",
+      bunnyVideoUrl: contentItem.bunnyVideoUrl ?? "",
       orderIndex: contentItem.orderIndex,
     });
     setEditDialogOpen(true);
@@ -148,10 +148,20 @@ export default function ToolkitContentManager({
       isArticle: true,
       isVideo: false,
       content: "",
-      vimeoVideoId: "",
+      bunnyVideoUrl: "",
       orderIndex: maxOrderIndex + 1,
     });
     setEditDialogOpen(true);
+  };
+
+  const extractVideoUrl = (value: string): string => {
+    if (value.includes("<iframe")) {
+      const match = value.match(/src=["']([^"']*)["']/);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+    return value;
   };
 
   const handleSave = async (data: ContentItemFormValues) => {
@@ -160,6 +170,7 @@ export default function ToolkitContentManager({
 
       const payload = {
         ...rest,
+        bunnyVideoUrl: extractVideoUrl(rest.bunnyVideoUrl || ""),
         type:
           isArticle && isVideo ? "article" : isArticle ? "article" : "video",
       };
@@ -408,7 +419,7 @@ export default function ToolkitContentManager({
                     name="content"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Content (Markdown)</FormLabel>
+                        <FormLabel>Content (Markdown) {"*"}</FormLabel>
                         <FormControl>
                           <Textarea
                             placeholder="Enter markdown content..."
@@ -425,15 +436,36 @@ export default function ToolkitContentManager({
                 {form.watch("isVideo") && (
                   <FormField
                     control={form.control}
-                    name="vimeoVideoId"
+                    name="bunnyVideoUrl"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Vimeo Video ID</FormLabel>
+                        <FormLabel>
+                          Bunny CDN Video URL or Embed Code {"*"}
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., 123456789" {...field} />
+                          <Textarea
+                            placeholder="Paste full embed code or URL..."
+                            className="min-h-[100px]"
+                            {...field}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              let videoUrl = value;
+
+                              if (value.includes("<iframe")) {
+                                const match =
+                                  value.match(/src=["']([^"']*)["']/);
+                                if (match && match[1]) {
+                                  videoUrl = match[1];
+                                }
+                              }
+
+                              field.onChange(videoUrl);
+                            }}
+                          />
                         </FormControl>
                         <p className="text-muted-foreground text-sm">
-                          Enter numeric ID from Vimeo video URL
+                          Paste the full embed code (div + iframe) or just the
+                          URL
                         </p>
                         <FormMessage />
                       </FormItem>

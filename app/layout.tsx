@@ -46,18 +46,18 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <Suspense fallback={<div>Loading ..</div>}>
-          <ProgressProvider>
-            <Navbar />
-            <main className="grow pb-20 md:pb-0">
-              <QueryProvider>{children}</QueryProvider>
-            </main>
-            <BottomNav />
-            <WhatsAppWidget />
+          <QueryProvider>
+            <ProgressProvider>
+              <Navbar />
+              <main className="grow pb-20 md:pb-0">{children}</main>
+              <BottomNav />
+              <Footer />
+              <WhatsAppWidget />
             <FeedbackWidget />
           </ProgressProvider>
-          <Footer />
-          <Toaster />
-          <Analytics />
+            <Toaster />
+            <Analytics />
+          </QueryProvider>
         </Suspense>
       </body>
     </html>

@@ -2,9 +2,10 @@ import { pgTable, uuid, text, timestamp, unique, boolean, date, foreignKey, inte
 import { sql } from "drizzle-orm"
 
 export const internshipTiming = pgEnum("internship_timing", ['full-time', 'part-time', 'shift-based'])
-export const internshipType = pgEnum("internship_type", ['part-time', 'full-time', 'contract', 'remote'])
+export const internshipType = pgEnum("internship_type", ['part-time', 'full-time', 'contract', 'remote', 'work-from-home', 'in-office', 'hybrid'])
 export const opportunityType = pgEnum("opportunity_type", ['hackathon', 'grant application', 'competition', 'ideathon'])
 export const personaType = pgEnum("persona_type", ['student', 'society'])
+export const toolkitContentItemType = pgEnum("toolkit_content_item_type", ['article', 'video'])
 export const userRole = pgEnum("user_role", ['user', 'member', 'admin'])
 
 
@@ -240,4 +241,71 @@ export const toolkits = pgTable("toolkits", {
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
 	userId: text("user_id").notNull(),
-});
+	originalPrice: integer("original_price"),
+	category: text(),
+	highlights: text().array(),
+	totalDuration: text("total_duration"),
+	lessonCount: integer("lesson_count").default(0),
+}, (table) => [
+	index("idx_toolkits_category").using("btree", table.category.asc().nullsLast().op("text_ops")).where(sql`(category IS NOT NULL)`),
+]);
+
+export const toolkitContentItems = pgTable("toolkit_content_items", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	toolkitId: uuid("toolkit_id").notNull(),
+	title: text().notNull(),
+	type: toolkitContentItemType().notNull(),
+	content: text(),
+	orderIndex: integer("order_index").default(0).notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	bunnyVideoUrl: text("bunny_video_url"),
+}, (table) => [
+	index("idx_toolkit_content_items_order").using("btree", table.toolkitId.asc().nullsLast().op("int4_ops"), table.orderIndex.asc().nullsLast().op("int4_ops")),
+	foreignKey({
+			columns: [table.toolkitId],
+			foreignColumns: [toolkits.id],
+			name: "toolkit_content_items_toolkit_id_fkey"
+		}).onDelete("cascade"),
+]);
+
+export const internships = pgTable("internships", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	type: internshipType().notNull(),
+	timing: internshipTiming().notNull(),
+	title: text().notNull(),
+	description: text().notNull(),
+	link: text(),
+	poster: text().notNull(),
+	tagIds: uuid("tag_ids").array().default([""]),
+	location: text(),
+	deadline: date(),
+	stipend: integer(),
+	hiringOrganization: text("hiring_organization").notNull(),
+	hiringManager: text("hiring_manager"),
+	hiringManagerEmail: text("hiring_manager_email"),
+	experience: text(),
+	isFlagged: boolean("is_flagged").default(false),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
+	deletedAt: timestamp("deleted_at", { mode: 'string' }),
+	isVerified: boolean("is_verified").default(false),
+	isActive: boolean("is_active").default(true),
+	viewCount: integer("view_count").default(0),
+	applicationCount: integer("application_count").default(0),
+	userId: text("user_id").notNull(),
+	eligibility: text().array().default([""]),
+	duration: text(),
+}, (table) => [
+	index("idx_internships_created_at").using("btree", table.createdAt.desc().nullsFirst().op("timestamp_ops")),
+	index("idx_internships_deleted_at").using("btree", table.deletedAt.asc().nullsLast().op("timestamp_ops")),
+	index("idx_internships_is_active").using("btree", table.isActive.asc().nullsLast().op("bool_ops")),
+	index("idx_internships_timing").using("btree", table.timing.asc().nullsLast().op("enum_ops")),
+	index("idx_internships_type").using("btree", table.type.asc().nullsLast().op("enum_ops")),
+	index("idx_internships_user_id").using("btree", table.userId.asc().nullsLast().op("text_ops")),
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [user.id],
+			name: "internships_user_id_fkey"
+		}).onDelete("cascade"),
+]);

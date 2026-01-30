@@ -11,6 +11,9 @@ import { Analytics } from "@vercel/analytics/next";
 import QueryProvider from "@/components/Providers";
 import ProgressProvider from "./providers";
 import Script from "next/script";
+import WhatsAppWidget from "@/components/WhatsAppWidget";
+import FeedbackWidget from "@/components/FeedbackWidget";
+
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   weight: ["400", "700"], // or ["400", "700"] if multiple
@@ -49,7 +52,9 @@ export default function RootLayout({
               <main className="grow pb-20 md:pb-0">{children}</main>
               <BottomNav />
               <Footer />
-            </ProgressProvider>
+              <WhatsAppWidget />
+            <FeedbackWidget />
+          </ProgressProvider>
             <Toaster />
             <Analytics />
           </QueryProvider>

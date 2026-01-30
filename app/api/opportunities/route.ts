@@ -141,9 +141,13 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Check if current user is admin to determine what opportunities to show
     const currentUser = await getCurrentUser();
-    const isAdmin = currentUser?.currentUser?.role === "admin";
+    if (!currentUser || !currentUser.currentUser?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check if current user is admin to determine what opportunities to show
+    const isAdmin = currentUser.currentUser.role === "admin";
 
     // Get pagination parameters from URL
     const { searchParams } = new URL(req.url);
@@ -260,7 +264,7 @@ export async function GET(req: NextRequest) {
       .offset(validOffset);
 
     // Calculate userHasUpvoted for each opportunity
-    const currentUserId = currentUser?.currentUser?.id as string | undefined;
+    const currentUserId = currentUser.currentUser.id;
     const opportunitiesWithUpvote = paginated.map((opp) => {
       let userHasUpvoted = false;
       if (currentUserId && Array.isArray(opp.upvoterIds)) {

@@ -31,81 +31,118 @@ export async function PATCH(
     const paramsResolved = await params;
     const couponId = paramsResolved.id;
 
-    const body = await request.json();
-    const validatedData = updateCouponSchema.parse(body);
+    try {
+      const body = await request.json();
+      const validatedData = updateCouponSchema.parse(body);
 
-    // Check if coupon exists
-    const existingCoupon = await db
-      .select()
-      .from(coupons)
-      .where(eq(coupons.id, couponId))
-      .limit(1);
-
-    if (existingCoupon.length === 0) {
-      return NextResponse.json(
-        { error: "Coupon not found" },
-        { status: 404 }
-      );
-    }
-
-    // If code is being updated, check for duplicates
-    if (validatedData.code) {
-      const duplicateCoupon = await db
-        .select()
-        .from(coupons)
-        .where(eq(coupons.code, validatedData.code.toUpperCase().trim()))
-        .limit(1);
-
-      if (
-        duplicateCoupon.length > 0 &&
-        duplicateCoupon[0].id !== couponId
-      ) {
+      // Guard clause: reject empty PATCH payloads
+      if (Object.keys(validatedData).length === 0) {
         return NextResponse.json(
-          { error: "Coupon code already exists" },
+          { error: "Empty update payload. At least one field must be provided." },
           { status: 400 }
         );
       }
-    }
 
-    const updateData: any = {};
-    if (validatedData.code !== undefined) {
-      updateData.code = validatedData.code.toUpperCase().trim();
-    }
-    if (validatedData.discountAmount !== undefined) {
-      updateData.discountAmount = validatedData.discountAmount;
-    }
-    if (validatedData.maxUses !== undefined) {
-      updateData.maxUses = validatedData.maxUses;
-    }
-    if (validatedData.maxUsesPerUser !== undefined) {
-      updateData.maxUsesPerUser = validatedData.maxUsesPerUser;
-    }
-    if (validatedData.isActive !== undefined) {
-      updateData.isActive = validatedData.isActive;
-    }
-    if (validatedData.expiresAt !== undefined) {
-      updateData.expiresAt = validatedData.expiresAt
-        ? new Date(validatedData.expiresAt)
-        : null;
-    }
+      // Check if coupon exists
+      const existingCoupon = await db
+        .select()
+        .from(coupons)
+        .where(eq(coupons.id, couponId))
+        .limit(1);
 
-    const updatedCoupon = await db
-      .update(coupons)
-      .set(updateData)
-      .where(eq(coupons.id, couponId))
-      .returning();
+      if (existingCoupon.length === 0) {
+        return NextResponse.json(
+          { error: "Coupon not found" },
+          { status: 404 }
+        );
+      }
 
-    return NextResponse.json({ coupon: updatedCoupon[0] });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
+      // If code is being updated, check for duplicates
+      if (validatedData.code) {
+        const duplicateCoupon = await db
+          .select()
+          .from(coupons)
+          .where(eq(coupons.code, validatedData.code.toUpperCase().trim()))
+          .limit(1);
+
+        if (
+          duplicateCoupon.length > 0 &&
+          duplicateCoupon[0].id !== couponId
+        ) {
+          return NextResponse.json(
+            { error: "Coupon code already exists" },
+            { status: 400 }
+          );
+        }
+      }
+
+      const updateData: any = {};
+      if (validatedData.code !== undefined) {
+        updateData.code = validatedData.code.toUpperCase().trim();
+      }
+      if (validatedData.discountAmount !== undefined) {
+        updateData.discountAmount = validatedData.discountAmount;
+      }
+      if (validatedData.maxUses !== undefined) {
+        updateData.maxUses = validatedData.maxUses;
+      }
+      if (validatedData.maxUsesPerUser !== undefined) {
+        updateData.maxUsesPerUser = validatedData.maxUsesPerUser;
+      }
+      if (validatedData.isActive !== undefined) {
+        updateData.isActive = validatedData.isActive;
+      }
+      if (validatedData.expiresAt !== undefined) {
+        updateData.expiresAt = validatedData.expiresAt
+          ? new Date(validatedData.expiresAt)
+          : null;
+      }
+
+      const updatedCoupon = await db
+        .update(coupons)
+        .set(updateData)
+        .where(eq(coupons.id, couponId))
+        .returning();
+
+      return NextResponse.json({ coupon: updatedCoupon[0] });
+    } catch (error) {
+      // Handle JSON parsing errors
+      if (error instanceof SyntaxError || error instanceof TypeError) {
+        return NextResponse.json(
+          { error: "Invalid JSON in request body" },
+          { status: 400 }
+        );
+      }
+
+      // Handle Zod validation errors
+      if (error instanceof z.ZodError) {
+        // Format validation errors for frontend display
+        const errorMessages = error.errors.map((err) => {
+          const field = err.path.join(".");
+          return `${field ? `${field}: ` : ""}${err.message}`;
+        });
+        const errorMessage =
+          errorMessages.length === 1
+            ? errorMessages[0]
+            : `Validation failed: ${errorMessages.join("; ")}`;
+        return NextResponse.json(
+          { error: errorMessage, details: error.errors },
+          { status: 400 }
+        );
+      }
+
+      // Handle async/database errors
+      console.error("Error updating coupon:", error);
       return NextResponse.json(
-        { error: "Invalid input", details: error.errors },
-        { status: 400 }
+        { error: "Failed to update coupon" },
+        { status: 500 }
       );
     }
-    console.error("Error updating coupon:", error);
+  } catch (error) {
+    // Handle errors from auth check or params resolution
+    console.error("Error in PATCH handler:", error);
     return NextResponse.json(
-      { error: "Failed to update coupon" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

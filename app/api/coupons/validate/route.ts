@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { coupons, userToolkits } from "@/lib/schema";
+import { coupons, toolkits, userToolkits } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { eq, and, sql } from "drizzle-orm";
 
@@ -16,7 +16,6 @@ export async function POST(request: Request) {
     }
 
     // Fetch toolkit to get base price
-    const { toolkits } = await import("@/lib/schema");
     const toolkitResult = await db
       .select({ price: toolkits.price })
       .from(toolkits)
@@ -65,7 +64,10 @@ export async function POST(request: Request) {
     }
 
     // Check total usage limit
-    if (coupon.maxUses !== null && coupon.currentUses >= coupon.maxUses) {
+    if (
+      typeof coupon.maxUses === "number" &&
+      coupon.currentUses >= coupon.maxUses
+    ) {
       return NextResponse.json(
         { valid: false, error: "Coupon usage limit reached" },
         { status: 200 }
@@ -87,7 +89,11 @@ export async function POST(request: Request) {
         );
 
       const usesCount = Number(userCouponUses[0]?.count || 0);
-      if (usesCount >= coupon.maxUsesPerUser) {
+      const maxPerUser =
+        coupon.maxUsesPerUser == null
+          ? Infinity
+          : Number(coupon.maxUsesPerUser);
+      if (usesCount >= maxPerUser) {
         return NextResponse.json(
           { valid: false, error: "You have already used this coupon" },
           { status: 200 }

@@ -27,16 +27,15 @@ if (!OPENROUTER_API_KEY) {
   process.exit(1);
 }
 
-const prompt = `Generate a customer-facing changelog for the FTB web app based on these commits from the past week:
+const prompt = `Generate a changelog for the FTB web app based on these commits from the past week:
 
 ${commits}
 
 Follow these rules:
-1. ONLY include user-facing changes (features, fixes, improvements users would notice)
-2. EXCLUDE: dependency bumps, internal refactors, CI/CD changes, code cleanup, TypeScript fixes, test updates
-3. Group related commits into single entries
-4. Write descriptions in plain language customers understand
-5. Be concise and focus on what users will actually notice
+1. Include ALL changes: features, fixes, improvements, refactors, dependency updates, CI/CD changes, etc.
+2. Group related commits into single entries
+3. Write clear, concise descriptions
+4. Use appropriate change types for each entry
 
 Create a changelog entry with this exact format (YAML frontmatter + markdown):
 
@@ -44,18 +43,16 @@ Create a changelog entry with this exact format (YAML frontmatter + markdown):
 week: "[Month Day, Year]"
 date: ${date}
 title: "[Brief descriptive title]"
-summary: "[One sentence summary]"
+summary: "[One sentence summary of the week's work]"
 isMajor: false
 author: "FTB Team"
 changes:
-  - type: feature|fix|improvement|performance|security|breaking|deprecated
+  - type: feature|fix|improvement|performance|security|breaking|deprecated|refactor|chore|docs
     title: "[Entry name]"
-    description: "[User-friendly description]"
+    description: "[Clear description of the change]"
 ---
 
 [Brief paragraph about release highlights - 2-3 sentences max]
-
-If there are no user-facing changes, respond with a changelog that has an empty changes array and note in the summary that this was a maintenance week with no user-facing changes.
 
 IMPORTANT: Return ONLY the changelog content, no additional text or explanation.`;
 

@@ -67,7 +67,7 @@ async function generateChangelog() {
         "X-Title": "FTB Weekly Changelog Generator",
       },
       body: JSON.stringify({
-        model: "moonshotai/kimi-k2.5",
+        model: "openai/gpt-oss-safeguard-20b",
         messages: [
           {
             role: "user",

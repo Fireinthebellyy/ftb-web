@@ -1,10 +1,8 @@
 "use client";
 
-import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Pin } from "lucide-react";
 import { createUngatekeepStorage } from "@/lib/appwrite";
 import { formatDistanceToNow } from "date-fns";
@@ -22,6 +20,7 @@ type UngatekeepPost = {
   publishedAt?: string | null;
   createdAt: string;
   creatorName?: string | null;
+  creatorImage?: string | null;
 };
 
 interface UngatekeepCardProps {
@@ -64,110 +63,98 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
     }
   };
 
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return "?";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const hasImage = post.images && post.images.length > 0;
+  const primaryImage = hasImage ? getImageUrl(post.images[0]) : null;
+
   return (
-    <Card className="overflow-hidden shadow-sm">
-      <CardHeader className="pb-2">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
+    <Link
+      href={`/ungatekeep/${post.id}`}
+      className="block group"
+    >
+      <article className="flex gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
+        {/* Left: Square Image */}
+        <div className="relative shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-md overflow-hidden bg-muted">
+          {primaryImage ? (
+            <Image
+              src={primaryImage}
+              alt={post.title}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+              No img
+            </div>
+          )}
+        </div>
+
+        {/* Right: Content */}
+        <div className="flex-1 min-w-0 flex flex-col justify-between">
+          {/* Top: Title + Badge */}
+          <div>
+            <div className="flex items-start gap-1.5 mb-0.5">
               {post.isPinned && (
-                <Pin className="h-4 w-4 text-primary" fill="currentColor" />
+                <Pin className="h-3 w-3 text-primary shrink-0 mt-0.5" fill="currentColor" />
               )}
-              <h3 className="text-xl font-semibold leading-tight text-gray-900">
+              <h3 className="text-sm md:text-base font-semibold leading-tight text-foreground line-clamp-1 group-hover:text-primary transition-colors">
                 {post.title}
               </h3>
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              {post.creatorName && (
-                <>
-                  <span className="font-medium">{post.creatorName}</span>
-                  <span>•</span>
-                </>
-              )}
-              <span>{formatDate(post.publishedAt || post.createdAt)}</span>
-            </div>
+
+            {/* Description */}
+            <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-snug">
+              {post.content}
+            </p>
           </div>
-          {post.tag && (
-            <Badge variant={getTagBadgeVariant(post.tag)} className="shrink-0">
-              {post.tag.replace("_", " ")}
-            </Badge>
-          )}
-        </div>
-      </CardHeader>
 
-      <CardContent className="pt-0 space-y-4">
-        {/* Main content */}
-        <div className="prose prose-base max-w-none">
-          <p className="whitespace-pre-wrap text-base leading-relaxed text-gray-700">
-            {post.content}
-          </p>
-        </div>
-
-        {/* Images */}
-        {post.images && post.images.length > 0 && (
-          <div className="grid gap-2">
-            {post.images.length === 1 ? (
-              <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-muted">
-                <Image
-                  src={getImageUrl(post.images[0])}
-                  alt={post.title}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
-                {post.images.slice(0, 4).map((imageId, idx) => (
-                  <div
-                    key={idx}
-                    className="relative aspect-square overflow-hidden rounded-lg bg-muted"
-                  >
-                    <Image
-                      src={getImageUrl(imageId)}
-                      alt={`${post.title} - Image ${idx + 1}`}
-                      fill
-                      className="object-cover"
-                    />
+          {/* Bottom: User + Time + Badge */}
+          <div className="flex items-center gap-1.5 mt-1">
+            {/* Small profile photo */}
+            {post.creatorName && (
+              <div className="flex items-center gap-1">
+                {post.creatorImage ? (
+                  <Image
+                    src={post.creatorImage}
+                    alt={post.creatorName}
+                    width={14}
+                    height={14}
+                    className="rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-3.5 h-3.5 rounded-full bg-muted-foreground/20 flex items-center justify-center text-[8px] text-muted-foreground font-medium">
+                    {getInitials(post.creatorName)}
                   </div>
-                ))}
+                )}
+                <span className="text-[10px] text-muted-foreground truncate max-w-[80px]">
+                  {post.creatorName}
+                </span>
               </div>
             )}
+            <span className="text-[10px] text-muted-foreground">•</span>
+            <span className="text-[10px] text-muted-foreground shrink-0">
+              {formatDate(post.publishedAt || post.createdAt)}
+            </span>
+            {post.tag && (
+              <Badge
+                variant={getTagBadgeVariant(post.tag)}
+                className="shrink-0 text-[10px] px-1 py-0 h-4 ml-auto"
+              >
+                {post.tag.replace("_", " ")}
+              </Badge>
+            )}
           </div>
-        )}
-
-        {/* Link Preview */}
-        {post.linkUrl && (
-          <div className="border rounded-lg overflow-hidden hover:bg-muted/50 transition-colors">
-            <Link
-              href={post.linkUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block"
-            >
-              {post.linkImage && (
-                <div className="relative aspect-video w-full overflow-hidden bg-muted">
-                  <Image
-                    src={post.linkImage}
-                    alt={post.linkTitle || "Link preview"}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              )}
-              <div className="p-4">
-                {post.linkTitle && (
-                  <h4 className="font-semibold text-sm mb-1 line-clamp-2">
-                    {post.linkTitle}
-                  </h4>
-                )}
-                <p className="text-xs text-muted-foreground truncate">
-                  {new URL(post.linkUrl).hostname}
-                </p>
-              </div>
-            </Link>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      </article>
+    </Link>
   );
 }

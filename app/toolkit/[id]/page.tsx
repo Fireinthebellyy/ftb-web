@@ -5,11 +5,14 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { BookOpen, Clock, Cloud, Check } from "lucide-react";
 import ToolkitSidebar from "@/components/toolkit/ToolkitSidebar";
 import ContentList from "@/components/toolkit/ContentList";
 import { useToolkit, useToolkitPurchase } from "@/lib/queries";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import axios from "axios";
 
 declare global {
   interface Window {
@@ -23,10 +26,21 @@ function getYouTubeVideoId(url: string): string | null {
   return match && match[2].length === 11 ? match[2] : null;
 }
 
+interface CouponValidationResult {
+  valid: boolean;
+  discountAmount?: number;
+  finalPrice?: number;
+  error?: string;
+}
+
 export default function ToolkitDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [isPurchaseLoading, setIsPurchaseLoading] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] =
+    useState<CouponValidationResult | null>(null);
 
   const { data: toolkitData, isLoading } = useToolkit(params.id as string);
   const purchaseMutation = useToolkitPurchase(params.id as string);
@@ -35,10 +49,50 @@ export default function ToolkitDetailPage() {
   const contentItems = toolkitData?.contentItems ?? [];
   const hasPurchased = toolkitData?.hasPurchased ?? false;
 
-  const handlePurchase = async () => {
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim() || !toolkit) {
+      toast.error("Please enter a coupon code");
+      return;
+    }
+
+    setIsValidatingCoupon(true);
+    try {
+      const { data } = await axios.post<CouponValidationResult>(
+        "/api/coupons/validate",
+        {
+          code: couponCode.trim(),
+          toolkitId: toolkit.id,
+        }
+      );
+
+      if (data.valid && data.discountAmount !== undefined && data.finalPrice !== undefined) {
+        setAppliedCoupon(data);
+        toast.success(`Coupon applied! ₹${data.discountAmount} off`);
+      } else {
+        setAppliedCoupon(null);
+        toast.error(data.error || "Invalid coupon code");
+      }
+    } catch (error) {
+      setAppliedCoupon(null);
+      if (axios.isAxiosError(error) && error.response) {
+        toast.error(error.response.data.error || "Failed to validate coupon");
+      } else {
+        toast.error("Failed to validate coupon");
+      }
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setCouponCode("");
+    setAppliedCoupon(null);
+  };
+
+  const handlePurchase = async (couponCode?: string) => {
     try {
       setIsPurchaseLoading(true);
-      await purchaseMutation.mutateAsync();
+      await purchaseMutation.mutateAsync(couponCode);
     } finally {
       setIsPurchaseLoading(false);
     }
@@ -244,26 +298,72 @@ export default function ToolkitDetailPage() {
             Access Content
           </Button>
         ) : (
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-gray-900">
-                ₹{toolkit.price.toLocaleString("en-IN")}
-              </span>
-              {toolkit.originalPrice &&
-                toolkit.originalPrice > toolkit.price && (
+          <div className="space-y-3">
+            {/* Coupon Code Input */}
+            <div className="flex gap-2">
+              <Input
+                type="text"
+                placeholder="Enter coupon code"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !isValidatingCoupon) {
+                    handleApplyCoupon();
+                  }
+                }}
+                disabled={isValidatingCoupon || !!appliedCoupon?.valid}
+                className="flex-1"
+              />
+              {appliedCoupon?.valid ? (
+                <Button
+                  variant="outline"
+                  onClick={handleRemoveCoupon}
+                  disabled={isValidatingCoupon}
+                  size="sm"
+                >
+                  Remove
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={handleApplyCoupon}
+                  disabled={isValidatingCoupon || !couponCode.trim()}
+                  size="sm"
+                >
+                  {isValidatingCoupon ? "..." : "Apply"}
+                </Button>
+              )}
+            </div>
+            {appliedCoupon?.valid && (
+              <p className="text-xs text-green-600 font-medium">
+                Coupon applied! Save ₹{appliedCoupon.discountAmount}
+              </p>
+            )}
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-gray-900">
+                  ₹{(appliedCoupon?.finalPrice ?? toolkit.price).toLocaleString("en-IN")}
+                </span>
+                {toolkit.originalPrice && toolkit.originalPrice > toolkit.price && (
                   <span className="text-sm text-gray-400 line-through">
                     ₹{toolkit.originalPrice.toLocaleString("en-IN")}
                   </span>
                 )}
+                {appliedCoupon?.valid && !toolkit.originalPrice && (
+                  <span className="text-sm text-gray-400 line-through">
+                    ₹{toolkit.price.toLocaleString("en-IN")}
+                  </span>
+                )}
+              </div>
+              <Button
+                onClick={() => handlePurchase(appliedCoupon?.valid ? couponCode.trim() : undefined)}
+                disabled={isPurchaseLoading}
+                size="lg"
+                className="flex-1"
+              >
+                {isPurchaseLoading ? "Processing..." : "Buy Now"}
+              </Button>
             </div>
-            <Button
-              onClick={handlePurchase}
-              disabled={isPurchaseLoading}
-              size="lg"
-              className="flex-1"
-            >
-              {isPurchaseLoading ? "Processing..." : "Buy Now"}
-            </Button>
           </div>
         )}
       </div>

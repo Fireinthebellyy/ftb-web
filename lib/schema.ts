@@ -316,6 +316,18 @@ export const toolkitContentItems = pgTable("toolkit_content_items", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const coupons = pgTable("coupons", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  code: text("code").notNull().unique(), // e.g., "SAVE100"
+  discountAmount: integer("discount_amount").notNull(), // Fixed amount in rupees
+  maxUses: integer("max_uses"), // Total usage limit (null = unlimited)
+  maxUsesPerUser: integer("max_uses_per_user").default(1), // Per-user limit
+  currentUses: integer("current_uses").default(0),
+  isActive: boolean("is_active").default(true),
+  expiresAt: timestamp("expires_at"), // Optional expiration
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const userToolkits = pgTable("user_toolkits", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id")
@@ -331,6 +343,9 @@ export const userToolkits = pgTable("user_toolkits", {
     "pending" | "completed" | "failed"
   >(),
   amountPaid: integer("amount_paid"), // Actual amount paid
+  couponId: uuid("coupon_id").references(() => coupons.id, {
+    onDelete: "set null",
+  }), // Coupon used for this purchase
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -411,6 +426,7 @@ export const schema = {
   tags,
   toolkits,
   toolkitContentItems,
+  coupons,
   userToolkits,
   userToolkitProgress,
   ungatekeepPosts,

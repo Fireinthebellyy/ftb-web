@@ -38,10 +38,10 @@ export function useToolkitPurchase(toolkitId: string) {
         return old;
       });
     },
-    mutationFn: async () => {
+    mutationFn: async (couponCode?: string) => {
       const { data } = await axios.post(
         `/api/toolkits/${toolkitId}`,
-        {},
+        couponCode ? { couponCode } : {},
         {
           headers: {
             "Content-Type": "application/json",

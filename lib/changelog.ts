@@ -9,7 +9,10 @@ export type ChangeType =
   | "performance"
   | "security"
   | "breaking"
-  | "deprecated";
+  | "deprecated"
+  | "refactor"
+  | "chore"
+  | "docs";
 
 export interface ChangelogChange {
   type: ChangeType;
@@ -99,6 +102,9 @@ export function getChangeTypeColor(type: ChangeType): string {
     security: "bg-red-100 text-red-800 border-red-200",
     breaking: "bg-orange-100 text-orange-800 border-orange-200",
     deprecated: "bg-gray-100 text-gray-800 border-gray-200",
+    refactor: "bg-indigo-100 text-indigo-800 border-indigo-200",
+    chore: "bg-slate-100 text-slate-800 border-slate-200",
+    docs: "bg-cyan-100 text-cyan-800 border-cyan-200",
   };
 
   return colors[type] || colors.improvement;

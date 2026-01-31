@@ -96,6 +96,14 @@ export default function UngatekeepPostPage() {
       .slice(0, 2);
   };
 
+  const getHostname = (url: string) => {
+    try {
+      return new URL(url).hostname;
+    } catch {
+      return "";
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="bg-gray-50">
@@ -284,7 +292,7 @@ export default function UngatekeepPostPage() {
                           </h4>
                         )}
                         <p className="text-xs text-muted-foreground">
-                          {new URL(post.linkUrl).hostname}
+                          {getHostname(post.linkUrl)}
                         </p>
                       </div>
                       <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />

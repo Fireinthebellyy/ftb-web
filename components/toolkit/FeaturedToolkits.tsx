@@ -82,14 +82,30 @@ export default function FeaturedToolkits() {
 
                 {/* Bottom: Price + Category */}
                 <div className="flex items-center gap-1.5 mt-1">
-                  <span className="text-sm font-bold text-gray-900">
-                    ₹{toolkit.price.toLocaleString("en-IN")}
-                  </span>
-                  {toolkit.originalPrice && toolkit.originalPrice > toolkit.price && (
-                    <span className="text-[10px] text-gray-400 line-through">
-                      ₹{toolkit.originalPrice.toLocaleString("en-IN")}
-                    </span>
-                  )}
+                  {(() => {
+                    const displayPrice = toolkit.price ?? null;
+                    const currentPrice = toolkit.price ?? 0;
+                    const showOriginalPrice =
+                      toolkit.originalPrice != null &&
+                      toolkit.originalPrice > currentPrice;
+
+                    return (
+                      <>
+                        {displayPrice != null ? (
+                          <span className="text-sm font-bold text-gray-900">
+                            ₹{displayPrice.toLocaleString("en-IN")}
+                          </span>
+                        ) : (
+                          <span className="text-sm font-bold text-gray-900">—</span>
+                        )}
+                        {showOriginalPrice && (
+                          <span className="text-[10px] text-gray-400 line-through">
+                            ₹{toolkit.originalPrice.toLocaleString("en-IN")}
+                          </span>
+                        )}
+                      </>
+                    );
+                  })()}
                   {toolkit.category && (
                     <Badge
                       variant="outline"

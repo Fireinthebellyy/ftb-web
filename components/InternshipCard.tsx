@@ -74,7 +74,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
       <div
         role="button"
         tabIndex={0}
-        className="bg-white rounded-lg border hover:border-gray-300 hover:shadow-md transition-all p-1 cursor-pointer"
+        className="bg-white rounded-lg border hover:border-gray-300 hover:shadow-md transition-all p-2 cursor-pointer"
         onClick={handleCardClick}
         onKeyDown={handleCardKeyDown}
       >

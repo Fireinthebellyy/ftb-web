@@ -10,6 +10,7 @@ import AdminOpportunitiesTable from "./AdminOpportunitiesTable";
 import NewInternshipButton from "@/components/internship/NewInternshipButton";
 import AdminToolkitsTable from "./AdminToolkitsTable";
 import AdminUngatekeepTable from "./AdminUngatekeepTable";
+import AdminCouponsTable from "./AdminCouponsTable";
 import NewToolkitModal from "@/components/toolkit/NewToolkitModal";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
@@ -49,12 +50,13 @@ export default async function AdminPage() {
         </div>
 
         <Tabs defaultValue="opportunities" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="opportunities">
               Pending Opportunities
             </TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="toolkits">Toolkit Management</TabsTrigger>
+            <TabsTrigger value="coupons">Coupons</TabsTrigger>
             <TabsTrigger value="ungatekeep">Ungatekeep</TabsTrigger>
           </TabsList>
           <TabsContent value="opportunities">
@@ -65,6 +67,9 @@ export default async function AdminPage() {
           </TabsContent>
           <TabsContent value="toolkits">
             <AdminToolkitsTable />
+          </TabsContent>
+          <TabsContent value="coupons">
+            <AdminCouponsTable />
           </TabsContent>
           <TabsContent value="ungatekeep">
             <AdminUngatekeepTable />

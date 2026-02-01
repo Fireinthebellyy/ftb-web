@@ -6,9 +6,10 @@ import {
   user,
   userToolkits,
   userToolkitProgress,
+  coupons,
 } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
-import { eq, and, asc } from "drizzle-orm";
+import { eq, and, asc, sql, or, lt, isNull } from "drizzle-orm";
 
 // GET specific toolkit by ID
 export async function GET(
@@ -130,6 +131,9 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const body = await request.json();
+    const couponCode = body.couponCode as string | undefined;
+
     const toolkitResult = await db
       .select()
       .from(toolkits)
@@ -161,9 +165,144 @@ export async function POST(
       );
     }
 
+    // Validate and apply coupon if provided
+    let finalPrice = toolkit.price;
+    let couponId: string | null = null;
+    let discountAmount = 0;
+
+    if (couponCode) {
+      // Perform all coupon operations atomically within a transaction
+      try {
+        const couponResult = await db.transaction(async (tx) => {
+          // Read coupon within transaction
+          const couponData = await tx
+            .select()
+            .from(coupons)
+            .where(eq(coupons.code, couponCode.toUpperCase().trim()))
+            .limit(1);
+
+          if (!couponData || couponData.length === 0) {
+            throw new Error("INVALID_COUPON");
+          }
+
+          const coupon = couponData[0];
+
+          // Validate coupon (non-atomic checks)
+          if (!coupon.isActive) {
+            throw new Error("COUPON_NOT_ACTIVE");
+          }
+
+          if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
+            throw new Error("COUPON_EXPIRED");
+          }
+
+          // Check per-user limit within transaction
+          const userCouponUses = await tx
+            .select({ count: sql<number>`count(*)` })
+            .from(userToolkits)
+            .where(
+              and(
+                eq(userToolkits.userId, userSession.currentUser.id),
+                eq(userToolkits.couponId, coupon.id),
+                eq(userToolkits.paymentStatus, "completed")
+              )
+            );
+
+          const usesCount = Number(userCouponUses[0]?.count || 0);
+          // Only check limit if maxUsesPerUser is set (null/undefined means no limit)
+          if (
+            coupon.maxUsesPerUser != null &&
+            usesCount >= coupon.maxUsesPerUser
+          ) {
+            throw new Error("COUPON_ALREADY_USED");
+          }
+
+          // Check overall coupon usage limit (treat null currentUses as zero)
+          const currentUses = coupon.currentUses ?? 0;
+          if (coupon.maxUses !== null && currentUses >= coupon.maxUses) {
+            throw new Error("COUPON_LIMIT_REACHED");
+          }
+
+          // Conditionally increment coupon usage only if limit not reached
+          // WHERE clause ensures atomic check: currentUses < maxUses OR maxUses IS NULL
+          const updateResult = await tx
+            .update(coupons)
+            .set({
+              currentUses: sql`${coupons.currentUses} + 1`,
+            })
+            .where(
+              and(
+                eq(coupons.id, coupon.id),
+                or(
+                  lt(coupons.currentUses, coupons.maxUses),
+                  isNull(coupons.maxUses)
+                )
+              )
+            )
+            .returning();
+
+          // Verify the update affected exactly one row
+          // If not, throw to rollback transaction
+          if (!updateResult || updateResult.length === 0) {
+            throw new Error("COUPON_LIMIT_REACHED");
+          }
+
+          // Return success with coupon data
+          return {
+            coupon,
+            discountAmount: coupon.discountAmount,
+            couponId: coupon.id,
+          };
+        });
+
+        // Calculate final price
+        discountAmount = couponResult.discountAmount;
+        finalPrice = Math.max(0, toolkit.price - discountAmount);
+        couponId = couponResult.couponId;
+      } catch (error) {
+        // Handle transaction errors and validation failures
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+
+        if (errorMessage === "INVALID_COUPON") {
+          return NextResponse.json(
+            { error: "Invalid coupon code" },
+            { status: 400 }
+          );
+        }
+        if (errorMessage === "COUPON_NOT_ACTIVE") {
+          return NextResponse.json(
+            { error: "Coupon is not active" },
+            { status: 400 }
+          );
+        }
+        if (errorMessage === "COUPON_EXPIRED") {
+          return NextResponse.json(
+            { error: "Coupon has expired" },
+            { status: 400 }
+          );
+        }
+        if (errorMessage === "COUPON_ALREADY_USED") {
+          return NextResponse.json(
+            { error: "You have already used this coupon" },
+            { status: 400 }
+          );
+        }
+        if (errorMessage === "COUPON_LIMIT_REACHED") {
+          return NextResponse.json(
+            { error: "Coupon usage limit reached" },
+            { status: 400 }
+          );
+        }
+
+        // Re-throw unexpected errors
+        throw error;
+      }
+    }
+
     const { createOrder } = await import("@/lib/razorpay");
     const order = await createOrder({
-      amount: toolkit.price * 100,
+      amount: finalPrice * 100, // Convert to paisa
       currency: "INR",
       receipt: `tk_${toolkitId.slice(-8)}_${Date.now().toString().slice(-8)}`,
     });
@@ -176,6 +315,7 @@ export async function POST(
         razorpayOrderId: order.id,
         paymentStatus: "pending",
         amountPaid: Number(order.amount),
+        couponId: couponId,
       })
       .returning();
 
@@ -189,6 +329,8 @@ export async function POST(
       key: process.env.RAZORPAY_KEY_ID,
       purchase: newPurchase[0],
       toolkit,
+      discountAmount,
+      finalPrice,
     });
   } catch (error) {
     console.error("Error initiating purchase:", error);

@@ -22,6 +22,7 @@ import { TagsDropdown } from "@/components/opportunity/TagsDropdown";
 import { useInfiniteOpportunities } from "@/lib/queries";
 import CalendarWidget from "@/components/opportunity/CalendarWidget";
 import TaskWidget from "@/components/opportunity/TaskWidget";
+import FeedbackWidget from "@/components/FeedbackWidget";
 
 const FEATURE_FLAGS = {
 	showTrendingTags: false,

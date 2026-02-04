@@ -1,5 +1,6 @@
 "use server";
 
+import { cache } from "react";
 import { user } from "@/lib/schema";
 import { auth } from "@/lib/auth";
 import { eq } from "drizzle-orm";
@@ -7,10 +8,32 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 
-export const getCurrentUser = async () => {
-  const session = await auth.api.getSession({
+/**
+ * Cached session getter - deduplicates multiple getSession calls within the same request.
+ * Use this instead of calling auth.api.getSession directly.
+ */
+export const getSession = cache(async () => {
+  return auth.api.getSession({
     headers: await headers(),
   });
+});
+
+/**
+ * Get session without redirecting - useful for API routes and optional auth checks.
+ * Returns null if no session exists.
+ */
+export const getSessionOptional = cache(async () => {
+  return auth.api.getSession({
+    headers: await headers(),
+  });
+});
+
+/**
+ * Get current user with full profile data.
+ * Redirects to login if no session exists.
+ */
+export const getCurrentUser = async () => {
+  const session = await getSession();
 
   if (!session) {
     redirect("/login");
@@ -33,6 +56,35 @@ export const getCurrentUser = async () => {
     currentUser,
   };
 };
+
+/**
+ * Get current user without redirecting - useful for API routes.
+ * Returns null if no session or user exists.
+ */
+export const getCurrentUserOptional = cache(async () => {
+  const session = await getSession();
+
+  if (!session) {
+    return null;
+  }
+
+  if (!db) {
+    throw new Error("Database connection not available");
+  }
+
+  const currentUser = await db.query.user.findFirst({
+    where: eq(user.id, session.user.id),
+  });
+
+  if (!currentUser) {
+    return null;
+  }
+
+  return {
+    ...session,
+    currentUser,
+  };
+});
 
 export const signIn = async (email: string, password: string) => {
   try {

@@ -250,6 +250,27 @@ export default function OnboardingPage() {
     }));
   };
 
+  const SWIPE_THRESHOLD = 90;
+
+  const canGoNext = isComplete(currentStep) && !isBusy;
+  const canGoBack = stepIndex > 0 && !isSubmitting;
+
+  const handleSwipeEnd = (_e: unknown, info: { offset: { x: number; y: number } }) => {
+    if (isBusy) return;
+    const x = info?.offset?.x ?? 0;
+
+    // Swipe left => next
+    if (x <= -SWIPE_THRESHOLD) {
+      if (canGoNext) goNext();
+      return;
+    }
+
+    // Swipe right => back
+    if (x >= SWIPE_THRESHOLD) {
+      if (canGoBack) goBack();
+    }
+  };
+
   const questLabel = useMemo(() => {
     // tiny gamification, no cringe.
     return `Quest ${stepIndex + 1} / ${steps.length}`;
@@ -293,14 +314,22 @@ export default function OnboardingPage() {
             <CardHeader className="pb-4">
               <CardTitle>{currentStep.title}</CardTitle>
               <CardDescription>{currentStep.description}</CardDescription>
+              <div className="mt-2 text-xs text-orange-700/80">
+                Tip: swipe left/right to move between cards.
+              </div>
             </CardHeader>
             <CardContent>
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={currentStep.id}
                   {...stepAnim}
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.12}
+                  onDragEnd={handleSwipeEnd}
+                  whileDrag={{ scale: 0.99, rotate: -0.25 }}
                   transition={{ duration: 0.24, ease: "easeOut" }}
-                  className="space-y-6"
+                  className="space-y-6 touch-pan-y"
                 >
                   {currentStep.id === "role" && (
                     <div className="grid gap-4 md:grid-cols-2">

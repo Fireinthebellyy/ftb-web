@@ -6,17 +6,15 @@ export const educationLevels = [
 ];
 
 export const fieldOptions = [
-    "Computer Science / AI",
-    "Product / Management",
-    "Design (UI/UX)",
-    "Electronics / Robotics",
-    "Business / Finance",
-    "Humanities / Psychology",
-    "Biology / Health",
-    "Commerce / Accounts",
-    "GRE / GMAT prep",
-    "Masters abroad",
-    "Fellowships",
+    "Engineering",
+    "Computer Science",
+    "Business / Commerce",
+    "Arts / Humanities",
+    "Psychology",
+    "Science (PCM/PCB)",
+    "Medicine / Health",
+    "Law",
+    "Design",
     "Other",
 ];
 

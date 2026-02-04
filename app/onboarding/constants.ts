@@ -1,10 +1,7 @@
 export const educationLevels = [
-    "School (grades 9-12)",
-    "Undergrad (1st year)",
-    "Undergrad (2nd year)",
-    "Undergrad (3rd year)",
-    "Undergrad (4th/5th year)",
-    "Postgrad / Masters",
+    "School",
+    "Undergrad",
+    "Postgrad",
     "Gap year / prepping",
 ];
 

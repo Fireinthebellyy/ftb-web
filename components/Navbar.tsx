@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { useSession, useInvalidateSession } from "@/hooks/use-session";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { Righteous } from "next/font/google";
@@ -12,19 +13,21 @@ import { EllipsisVertical, Shield } from "lucide-react";
 function useLogout() {
   const router = useRouter();
   const inFlight = useRef(false);
+  const invalidateSession = useInvalidateSession();
 
   const signOut = useCallback(async () => {
     if (inFlight.current) return;
     inFlight.current = true;
     try {
       await authClient.signOut();
+      invalidateSession();
     } catch {
       // ignore errors; we still route home
     } finally {
       router.push("/");
       inFlight.current = false;
     }
-  }, [router]);
+  }, [router, invalidateSession]);
 
   return signOut;
 }
@@ -41,7 +44,7 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
-  const { data: user, isPending } = authClient.useSession();
+  const { data: user, isPending } = useSession();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);

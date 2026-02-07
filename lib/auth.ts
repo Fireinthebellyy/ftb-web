@@ -41,6 +41,7 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      scopes: ["https://www.googleapis.com/auth/calendar.events"],
     },
     linkedin: {
       clientId: process.env.LINKEDIN_CLIENT_ID!,

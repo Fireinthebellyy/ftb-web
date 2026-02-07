@@ -88,20 +88,28 @@ export async function POST(req: NextRequest) {
       insertData.organiserInfo = validatedData.organiserInfo;
     }
 
-    // Date handling - convert to proper date format
+    // Date handling - preserve local timezone dates
     if (validatedData.startDate) {
+      // Parse ISO string and extract date part in local timezone
       const startDate = new Date(validatedData.startDate);
       if (!isNaN(startDate.getTime())) {
-        // Convert to YYYY-MM-DD format for PostgreSQL date type
-        insertData.startDate = startDate.toISOString().split("T")[0];
+        // Get local date components to avoid UTC conversion
+        const year = startDate.getFullYear();
+        const month = String(startDate.getMonth() + 1).padStart(2, '0');
+        const day = String(startDate.getDate()).padStart(2, '0');
+        insertData.startDate = `${year}-${month}-${day}`;
       }
     }
 
     if (validatedData.endDate) {
+      // Parse ISO string and extract date part in local timezone
       const endDate = new Date(validatedData.endDate);
       if (!isNaN(endDate.getTime())) {
-        // Convert to YYYY-MM-DD format for PostgreSQL date type
-        insertData.endDate = endDate.toISOString().split("T")[0];
+        // Get local date components to avoid UTC conversion
+        const year = endDate.getFullYear();
+        const month = String(endDate.getMonth() + 1).padStart(2, '0');
+        const day = String(endDate.getDate()).padStart(2, '0');
+        insertData.endDate = `${year}-${month}-${day}`;
       }
     }
 

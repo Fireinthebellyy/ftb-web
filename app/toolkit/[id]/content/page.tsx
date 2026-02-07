@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -88,7 +88,7 @@ export default function ToolkitContentPage() {
   const { data: toolkitData, isLoading } = useToolkit(params.id as string);
 
   const toolkit = toolkitData?.toolkit ?? null;
-  const contentItems = toolkitData?.contentItems ?? [];
+  const contentItems = useMemo(() => toolkitData?.contentItems ?? [], [toolkitData?.contentItems]);
   const hasAccess = toolkitData?.hasPurchased ?? false;
 
   const progress =

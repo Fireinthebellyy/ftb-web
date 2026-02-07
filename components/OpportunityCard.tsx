@@ -42,6 +42,7 @@ import { authClient } from "@/lib/auth-client";
 import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import CommentSection from "@/components/opportunity/CommentSection";
 import NewOpportunityForm from "@/components/opportunity/NewOpportunityForm";
 import {
@@ -110,14 +111,13 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
       toast.error("Failed to delete post");
     }
   };
-  const [showMessage, setShowMessage] = useState<boolean>(false);
   const [isBookmarkLoading, setIsBookmarkLoading] = useState<boolean>(false);
   const [showComments, setShowComments] = useState<boolean>(false);
-  const showUpvoteCount = false;
   const isExpanded = true;
 
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [modalIndex, setModalIndex] = useState<number>(0);
+  const [bookmarkModalOpen, setBookmarkModalOpen] = useState<boolean>(false);
 
   const modalFileId = images[modalIndex] ?? images[0] ?? null;
 
@@ -126,6 +126,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
   const { data: isBookmarkedServer } = useIsBookmarked(id);
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   useEffect(() => {
     if (typeof isBookmarkedServer === "boolean") {
@@ -133,15 +134,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
     }
   }, [isBookmarkedServer]);
 
-  useEffect(() => {
-    if (showMessage) {
-      toast.success(
-        isBookmarked ? "Added to bookmarks" : "Removed from bookmarks"
-      );
-      const timer = setTimeout(() => setShowMessage(false), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showMessage, isBookmarked]);
+
 
   const handleBookmark = async (): Promise<void> => {
     if (isBookmarkLoading) return;
@@ -188,7 +181,16 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
       queryClient.invalidateQueries({ queryKey: ["bookmark", id] });
 
-      setShowMessage(true);
+      if (newBookmarkState) {
+        const skipBookmarkModal = localStorage.getItem('skipBookmarkModal');
+        if (skipBookmarkModal === 'true') {
+          toast.success("Bookmark added!");
+        } else {
+          setBookmarkModalOpen(true);
+        }
+      } else {
+        toast.success("Removed from bookmarks");
+      }
     } catch (err) {
       console.error("Bookmark request failed:", err);
       toast.error("Failed to update bookmark");
@@ -212,7 +214,6 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
   const opportunityStorage = createOpportunityStorage();
 
-  const upvotes = opportunity.upvoteCount ?? 0;
   const userUpvoted = opportunity.userHasUpvoted ?? false;
 
   const onUpvoteClick = () => {
@@ -574,12 +575,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                 <Heart
                   className={`h-4 w-4 sm:h-5 sm:w-5 ${userUpvoted ? "fill-current" : ""
                     }`}
-                />
-                {showUpvoteCount && (
-                  <span className="pl-1">
-                    {upvotes > 2 ? `${upvotes} ` : ""}
-                  </span>
-                )}
+/>
               </button>
               {/* Comments (clickable to toggle comment section) */}
               <button
@@ -605,7 +601,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
                 ) : (
                   <Bookmark
                     className={`h-4 w-4 sm:h-5 sm:w-5 ${isBookmarked
-                      ? "fill-yellow-400 text-yellow-500"
+                      ? "fill-red-400 text-red-500"
                       : "hover:text-orange-600"
                       }`}
                   />
@@ -746,6 +742,37 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         </Dialog>
 
         {showComments && <CommentSection opportunityId={id} />}
+
+        {/* Bookmark Success Modal */}
+        <Dialog open={bookmarkModalOpen} onOpenChange={setBookmarkModalOpen}>
+          <DialogContent className="mx-auto w-80 p-6">
+            <DialogHeader>
+              <DialogTitle className="text-center text-lg font-semibold">
+                This opportunity has been added to your tracker!
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex justify-center gap-4 mt-4">
+              <Button
+                onClick={() => {
+                  setBookmarkModalOpen(false);
+                  router.push("/deadlines");
+                }}
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                See deadlines
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  localStorage.setItem('skipBookmarkModal', 'true');
+                  setBookmarkModalOpen(false);
+                }}
+              >
+                Skip always
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </article>
   );

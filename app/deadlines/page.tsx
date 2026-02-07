@@ -8,14 +8,19 @@ import {
   AlertTriangle,
   XCircle,
   CircleQuestionMark,
+  Trash2,
 } from "lucide-react";
 import { format, differenceInCalendarDays } from "date-fns";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
 
 type BookmarkItem = {
   title: string;
+  opportunityId: string;
   description?: string;
   endDate?: string | null;
   daysDiff?: number | null;
@@ -46,6 +51,43 @@ export default function BookmarksPage() {
   const [uncategorized, setUncategorized] = useState<BookmarkItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id;
+
+  const handleDelete = async (opportunityId: string) => {
+    if (!userId) {
+      toast.error("Please log in");
+      return;
+    }
+    try {
+      await axios.delete("/api/bookmarks", { data: { userId, opportunityId } });
+      toast.success("Bookmark removed");
+      setLoading(true);
+      // refetch
+      const res = await axios.get("/api/bookmarks");
+      const apiUpcoming: any[] = res.data?.upcoming || [];
+      const apiClosed: any[] = res.data?.closed || [];
+      const apiUncategorized: any[] = res.data?.uncategorized || [];
+
+      const normalize = (arr: any[]) =>
+        arr.map((it) => ({
+          title: it.title,
+          opportunityId: it.opportunityId,
+          description: it.description,
+          type: it.type,
+          endDate: it?.endDate ?? null,
+          daysDiff: typeof it?.daysDiff === "number" ? it.daysDiff : (it?.endDate ? differenceInCalendarDays(new Date(it.endDate), new Date()) : null),
+        }));
+
+      setUpcoming(normalize(apiUpcoming));
+      setClosed(normalize(apiClosed));
+      setUncategorized(normalize(apiUncategorized));
+      setLoading(false);
+    } catch (_err) {
+      toast.error("Failed to remove bookmark");
+    }
+  };
 
   const memoizedUpcoming = useMemo(() => {
     return [...upcoming].sort(
@@ -91,6 +133,7 @@ export default function BookmarksPage() {
                   : null;
             return {
               title: it.title,
+              opportunityId: it.opportunityId,
               description: it.description,
               type: it.type,
               endDate,
@@ -119,7 +162,7 @@ export default function BookmarksPage() {
     };
   }, []);
 
-  const BookmarkCard = ({ item }: { item: BookmarkItem }) => {
+  const BookmarkCard = ({ item, onDelete }: { item: BookmarkItem; onDelete: (id: string) => void; }) => {
     const typeLabel = getTypeLabel(item.type);
     const noDeadlineText = useMemo(() => {
       const options = ["No deadline", "Needs more info?", "Ask the organiser"];
@@ -157,17 +200,28 @@ export default function BookmarksPage() {
           <div className="flex items-center rounded-lg bg-neutral-50 p-2 shadow">
             <div className="w-full">
               <div className="flex items-center justify-between">
-                <h3 className="max-w-[60vw] truncate text-base font-semibold text-gray-900 sm:text-lg">
+                <h3 className="max-w-[50vw] truncate text-base font-semibold text-gray-900 sm:text-lg">
                   {item.title}
                 </h3>
-                {typeLabel ? (
-                  <Badge
-                    variant="secondary"
-                    className={`text-[10px] sm:text-xs ${getTypeBadgeClasses(typeLabel)} px-2 py-0.5`}
+                <div className="flex items-center gap-2">
+                  {typeLabel ? (
+                    <Badge
+                      variant="secondary"
+                      className={`text-[10px] sm:text-xs ${getTypeBadgeClasses(typeLabel)} px-2 py-0.5`}
+                    >
+                      {typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)}
+                    </Badge>
+                  ) : null}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(item.opportunityId)}
+                    title="Remove bookmark"
+                    className="h-6 w-6 p-0"
                   >
-                    {typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)}
-                  </Badge>
-                ) : null}
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               {item.endDate && (
                 <div className="mt-1 flex items-center gap-1 text-xs text-gray-600 sm:text-sm">
@@ -239,7 +293,7 @@ export default function BookmarksPage() {
         {memoizedUpcoming.length ? (
           <div className="space-y-4">
             {memoizedUpcoming.map((item) => (
-              <BookmarkCard key={item.title} item={item} />
+              <BookmarkCard key={item.title} item={item} onDelete={handleDelete} />
             ))}
           </div>
         ) : (
@@ -252,7 +306,7 @@ export default function BookmarksPage() {
         {memoizedClosed.length ? (
           <div className="space-y-4">
             {memoizedClosed.map((item) => (
-              <BookmarkCard key={item.title} item={item} />
+              <BookmarkCard key={item.title} item={item} onDelete={handleDelete} />
             ))}
           </div>
         ) : (
@@ -265,7 +319,7 @@ export default function BookmarksPage() {
         {memoizedUncategorized.length ? (
           <div className="space-y-4">
             {memoizedUncategorized.map((item) => (
-              <BookmarkCard key={item.title} item={item} />
+              <BookmarkCard key={item.title} item={item} onDelete={handleDelete} />
             ))}
           </div>
         ) : (

@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
-import { eq } from "drizzle-orm";
-import { opportunities } from "@/lib/schema";
+import { eq, and } from "drizzle-orm";
+import { opportunities, bookmarks, tasks } from "@/lib/schema";
 import { upsertTagsAndGetIds } from "@/lib/tags";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
@@ -176,6 +176,27 @@ export async function DELETE(
         { status: 403 }
       );
     }
+
+    // Delete associated bookmarks (hard delete since they're user-specific)
+    await db
+      .delete(bookmarks)
+      .where(
+        and(
+          eq(bookmarks.opportunityId, id),
+          eq(bookmarks.userId, user.currentUser.id)
+        )
+      );
+
+    // Update tasks that reference this opportunity (remove the link)
+    await db
+      .update(tasks)
+      .set({ opportunityLink: null, updatedAt: new Date() })
+      .where(
+        and(
+          eq(tasks.userId, user.currentUser.id),
+          eq(tasks.opportunityLink, existingOpportunity[0].title) // Match by title since that's how it's stored
+        )
+      );
 
     // Soft delete by setting deletedAt timestamp
     await db

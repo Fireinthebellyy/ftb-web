@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
+
 export async function POST(req: Request) {
   try {
     const { userId, opportunityId } = await req.json();
@@ -108,6 +109,7 @@ export async function GET(req: Request) {
       const dates = await db
         .select({
           endDate: opportunities.endDate,
+          type: opportunities.type,
         })
         .from(bookmarks)
         .innerJoin(opportunities, eq(bookmarks.opportunityId, opportunities.id))
@@ -120,10 +122,21 @@ export async function GET(req: Request) {
         )
         .orderBy(opportunities.endDate);
 
-      // return unique, sorted dates as strings (YYYY-MM-DD)
-      const formatted = Array.from(
-        new Set(dates.filter((d) => d.endDate).map((d) => d.endDate))
-      ).sort();
+      // group by date and collect all types for each date
+      const dateMap = new Map<string, string[]>();
+      dates
+        .filter((d) => d.endDate)
+        .forEach((d) => {
+          const existing = dateMap.get(d.endDate) || [];
+          if (!existing.includes(d.type)) {
+            dateMap.set(d.endDate, [...existing, d.type]);
+          }
+        });
+
+      // convert to array and sort by date
+      const formatted = Array.from(dateMap.entries())
+        .map(([date, types]) => ({ date, types }))
+        .sort((a, b) => a.date.localeCompare(b.date));
 
       return NextResponse.json({ dates: formatted });
     }
@@ -153,6 +166,7 @@ export async function GET(req: Request) {
       if (item.endDate == null) {
         uncategorized.push({
           title: item.title,
+          opportunityId: item.opportunityId,
           description: item.description,
           type: item.type,
           endDate: null,
@@ -173,6 +187,7 @@ export async function GET(req: Request) {
 
       const payload = {
         title: item.title,
+        opportunityId: item.opportunityId,
         description: item.description,
         type: item.type,
         endDate: item.endDate,

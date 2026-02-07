@@ -208,6 +208,25 @@ export default function OnboardingPage() {
       setStepIndex((i) => i + 1);
       return;
     }
+
+    if (!answers.role) return;
+    try {
+      await saveProfile.mutateAsync({
+        persona: answers.role,
+        locationType: answers.role === "student" && locationValue ? locationType : undefined,
+        locationValue: answers.role === "student" && locationValue ? locationValue : undefined,
+        educationLevel: answers.role === "student" ? answers.educationLevel : undefined,
+        fieldOfStudy: answers.role === "student" ? answers.fieldOfStudy : undefined,
+        fieldOther:
+          answers.role === "student" && answers.fieldOfStudy === "Other"
+            ? answers.fieldOther
+            : undefined,
+        opportunityInterests: answers.role === "student" ? answers.opportunities : [],
+        domainPreferences: answers.role === "student" ? answers.domains : [],
+      });
+    } catch {
+      return;
+    }
   };
 
   const goBack = () => {

@@ -28,25 +28,21 @@ function formatDateToUTC(date: Date) {
 }
 
 function handleAddToCalendar(title: string, endDate: string) {
-  const startDate = new Date(endDate)
-  const endDateObj = new Date(endDate)
+  const date = new Date(endDate);
 
-  const startUTC = formatDateToUTC(startDate)
-  const endUTC = formatDateToUTC(endDateObj)
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
 
-  const baseURL = "https://calendar.google.com/calendar/render"
-  const url = new URL(baseURL)
+  
+  const allDayDate = `${year}${month}${day}`;
 
-  const params = new URLSearchParams({
-    action: "TEMPLATE",
-    text: title,
-    dates: `${startUTC}/${endUTC}`,
-  })
+  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
+    title
+  )}&dates=${allDayDate}/${allDayDate}`;
 
-  url.search = params.toString()
-  window.open(url.toString(), "_blank", "noopener,noreferrer")
+  window.open(url, "_blank", "noopener,noreferrer");
 }
-
 
 type BookmarkItem = {
   title: string;
@@ -213,23 +209,25 @@ export default function BookmarksPage() {
                   </span>
                 </div>
               )}
-              {item.description ? (
-                <div className="mt-1 flex items-start justify-between gap-2">
+              <div className="mt-1 flex items-start justify-between gap-2">
+                {item.description && (
                   <p className="line-clamp-2 max-w-[70ch] text-sm text-gray-700">
                     {item.description}
                   </p>
-                  {item.endDate && (
-                    <button
-                      title="Add to calendar" 
-                      onClick={() => handleAddToCalendar(item.title, item.endDate!)}
-                      className="flex-shrink-0 text-gray-600 hover:text-gray-900 transition-colors"
-                      aria-label="Add to calendar"
-                    >
-                      <CalendarPlus className="h-5 w-5" />
-                    </button>
-                  )}
-                </div>
-              ) : null}
+                )}
+
+                {item.endDate && (
+                  <button
+                    title="Add to calendar"
+                    onClick={() => handleAddToCalendar(item.title, item.endDate!)}
+                    className="flex-shrink-0 text-gray-600 hover:text-gray-900 transition-colors"
+                    aria-label="Add to calendar"
+                  >
+                    <CalendarPlus className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
+
             </div>
           </div>
         </div>

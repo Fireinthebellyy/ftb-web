@@ -29,6 +29,8 @@ import {
   Toolkit,
   ToolkitFormValues,
 } from "@/components/admin/types";
+import NewToolkitModal from "@/components/toolkit/NewToolkitModal";
+import { PlusCircle, RefreshCw } from "lucide-react";
 
 export default function AdminToolkitsTable() {
   const [toolkits, setToolkits] = useState<Toolkit[]>([]);
@@ -150,9 +152,21 @@ export default function AdminToolkitsTable() {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Toolkits Management</h2>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={fetchToolkits} disabled={loading}>
-            Refresh
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={fetchToolkits}
+            disabled={loading}
+            title="Refresh toolkits"
+          >
+            <RefreshCw className="h-4 w-4" />
           </Button>
+          <NewToolkitModal>
+            <Button className="gap-2">
+              <PlusCircle className="h-4 w-4" />
+              Create Toolkit
+            </Button>
+          </NewToolkitModal>
         </div>
       </div>
 

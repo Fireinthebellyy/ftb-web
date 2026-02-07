@@ -19,6 +19,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionCached } from "@/lib/auth-session-cache";
 import { headers } from "next/headers";
 import { z } from "zod";
+import { opportunities } from "@/data/opportunities";
+import { Internship } from "@/types/interfaces";
 
 const internshipSchema = z.object({
   type: z.enum(["in-office", "work-from-home", "hybrid"], {
@@ -186,17 +188,17 @@ export async function GET(req: NextRequest) {
     const searchTerm = searchParam ? searchParam.trim() : "";
     const rawTypes = typesParam
       ? typesParam
-          .split(",")
-          .map((value) => value.trim())
-          .filter(Boolean)
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean)
       : [];
     const allowedTypes = (internships.type.enumValues ?? []) as string[];
     const validTypes = rawTypes.filter((type) => allowedTypes.includes(type));
     const rawTags = tagsParam
       ? tagsParam
-          .split(",")
-          .map((value) => value.trim().toLowerCase())
-          .filter(Boolean)
+        .split(",")
+        .map((value) => value.trim().toLowerCase())
+        .filter(Boolean)
       : [];
     const location = locationParam ? locationParam.trim() : "";
     const minStipend = Number.isNaN(minStipendParam)
@@ -309,15 +311,73 @@ export async function GET(req: NextRequest) {
     const pageItems = hasMore ? paginated.slice(0, limit) : paginated;
     const totalCount = hasMore ? offset + limit + 1 : offset + pageItems.length;
 
+    let finalInternships = paginated;
+    let finalTotal = totalCount;
+    let finalHasMore = hasMore;
+
+    // Fallback to static data if DB is empty and no specific filters are applied
+    // This ensures the "Coming Soon" feeling is replaced by actual data the user expects from the source code
+    if (totalCount === 0 && offset === 0 && !searchTerm && validTypes.length === 0 && rawTags.length === 0 && !location && minStipend === undefined && maxStipend === undefined) {
+      const staticInternships = opportunities.map((opp, index) => {
+        // Map tags to determine type
+        let type = "in-office";
+        if (opp.tags?.some(t => t.toLowerCase().includes("remote"))) type = "work-from-home";
+        else if (opp.tags?.some(t => t.toLowerCase().includes("hybrid"))) type = "hybrid";
+
+        // Map Opportunity to Internship structure
+        return {
+          id: `static-${opp.id}`,
+          title: opp.title,
+          description: opp.description || "",
+          type: type,
+          timing: "full-time", // Default
+          link: "",
+          poster: opp.logo || "",
+          tags: opp.tags || [],
+          location: "Remote", // Default or infer
+          deadline: opp.deadline || new Date().toISOString(),
+          stipend: 0,
+          hiringOrganization: opp.company,
+          hiringManager: "",
+          hiringManagerEmail: "",
+          experience: "Beginner",
+          duration: "3 months",
+          eligibility: [],
+          isFlagged: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          isVerified: true,
+          isActive: true,
+          viewCount: 0,
+          applicationCount: 0,
+          userId: "system",
+          user: {
+            id: "system",
+            name: "System",
+            image: "",
+            role: "admin" as const
+          }
+        } as unknown as typeof paginated[0];
+      });
+
+      // Filter static data if search/filters were meant to be applied (basic client-side filtering for fallback)
+      // For now, just return all since we checked !searchTerm etc above. 
+      // If we want to support filtering on static data, we'd need more logic here.
+
+      finalInternships = staticInternships.slice(offset, offset + limit);
+      finalTotal = staticInternships.length;
+      finalHasMore = offset + limit < finalTotal;
+    }
+
     return NextResponse.json(
       {
         success: true,
-        internships: pageItems,
+        internships: finalInternships,
         pagination: {
           limit,
           offset,
-          total: totalCount,
-          hasMore,
+          total: finalTotal,
+          hasMore: finalHasMore,
         },
       },
       { status: 200 }

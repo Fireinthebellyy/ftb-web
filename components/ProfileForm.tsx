@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -316,11 +316,11 @@ export default function ProfileForm({
     (watchedValues as any).opportunityInterests?.length > 0 ||
     !!(watchedValues as any).opportunityInterestOther ||
     (watchedValues as any).dateOfBirth !==
-      initialValuesRef.current.dateOfBirth ||
+    initialValuesRef.current.dateOfBirth ||
     (watchedValues as any).collegeInstitute !==
-      initialValuesRef.current.collegeInstitute ||
+    initialValuesRef.current.collegeInstitute ||
     (watchedValues as any).contactNumber !==
-      initialValuesRef.current.contactNumber ||
+    initialValuesRef.current.contactNumber ||
     (watchedValues as any).currentRole !== initialValuesRef.current.currentRole;
 
   // Progress bar
@@ -361,12 +361,14 @@ export default function ProfileForm({
     return percent;
   }, [effectiveAvatar, watchedValues]);
 
-  if (typeof onProgressChange === "function") {
-    const percent = computeCompleteness();
-    try {
-      onProgressChange(percent);
-    } catch {}
-  }
+  useEffect(() => {
+    if (typeof onProgressChange === "function") {
+      const percent = computeCompleteness();
+      try {
+        onProgressChange(percent);
+      } catch { }
+    }
+  }, [computeCompleteness, onProgressChange]);
 
   return (
     <div className="space-y-6">
@@ -496,8 +498,8 @@ export default function ProfileForm({
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {field.value
                           ? new Date(
-                              `${field.value}T00:00:00`
-                            ).toLocaleDateString()
+                            `${field.value}T00:00:00`
+                          ).toLocaleDateString()
                           : "Pick a date"}
                       </Button>
                     </PopoverTrigger>

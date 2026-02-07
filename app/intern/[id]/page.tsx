@@ -10,6 +10,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
 import { ShareDialog } from "@/components/internship/ShareDialog";
+import ApplyModal from "@/components/tracker/ApplyModal";
+import { Sparkles } from "lucide-react";
 
 interface InternshipData {
   id: string;
@@ -45,6 +47,7 @@ export default function InternshipDetailPage() {
   const [internship, setInternship] = useState<InternshipData | null>(null);
   const [loading, setLoading] = useState(true);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [smartApplyOpen, setSmartApplyOpen] = useState(false);
   const [notFoundError, setNotFoundError] = useState(false);
 
   useEffect(() => {
@@ -73,9 +76,9 @@ export default function InternshipDetailPage() {
     fetchData();
   }, [id]);
 
-if (notFoundError) {
-  notFound();
-}
+  if (notFoundError) {
+    notFound();
+  }
 
   const getTypeColor = (_type?: string): string => {
     return "bg-white border border-gray-300 text-black";
@@ -137,7 +140,7 @@ if (notFoundError) {
               </div>
             </div>
           )}
-          
+
           {/* Title, Organization and Apply Button */}
           <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div className="min-w-0">
@@ -147,7 +150,7 @@ if (notFoundError) {
                 <span>{internship.hiringOrganization}</span>
               </div>
             </div>
-            
+
             {/* Apply Button */}
             {internship.link && (
               <Link href={`${internship.link}${internship.link.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=internship_detail&utm_campaign=internship_apply`} target="_blank" rel="noopener noreferrer">
@@ -157,6 +160,14 @@ if (notFoundError) {
                 </Button>
               </Link>
             )}
+
+            {/* Smart Apply Button */}
+            <Button
+              onClick={() => setSmartApplyOpen(true)}
+              className="bg-black text-white hover:bg-slate-800 font-bold w-full sm:w-auto px-6 py-2 flex items-center gap-2"
+            >
+              Smart Apply <Sparkles className="w-4 h-4 ml-1" />
+            </Button>
           </div>
         </div>
 
@@ -198,176 +209,190 @@ if (notFoundError) {
             <Share2 className="w-4 h-4 sm:w-5 sm:h-5 text-black hover:text-orange-500" />
           </button>
           <DialogContent className="max-w-[90vw] sm:max-w-md">
-          <ShareDialog
-            shareUrl={shareUrl}
-            title={internship.title}
-            onCopy={handleCopy}
-          />
+            <ShareDialog
+              shareUrl={shareUrl}
+              title={internship.title}
+              onCopy={handleCopy}
+            />
+
           </DialogContent>
         </Dialog>
-      </div>
+
+        {/* Smart Apply Modal */}
+        <ApplyModal
+          isOpen={smartApplyOpen}
+          onClose={() => setSmartApplyOpen(false)}
+          opportunity={internship}
+        />
+      </div >
 
       {/* Description */}
-      {internship.description && (
-        <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
-          <h2 className="font-semibold mb-4 text-lg sm:text-xl">Description</h2>
-          <div className="prose max-w-none text-black text-sm sm:text-base">
-            {typeof internship.description === "string" ? (
-              <p className="whitespace-pre-wrap">{internship.description}</p>
-            ) : (
-              internship.description
-            )}
+      {
+        internship.description && (
+          <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
+            <h2 className="font-semibold mb-4 text-lg sm:text-xl">Description</h2>
+            <div className="prose max-w-none text-black text-sm sm:text-base">
+              {typeof internship.description === "string" ? (
+                <p className="whitespace-pre-wrap">{internship.description}</p>
+              ) : (
+                internship.description
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Eligibility, Experience & Internship Details */}
-      {(internship.eligibility && internship.eligibility.length > 0) || internship.experience || internship.type || internship.timing || typeof internship.stipend === "number" ? (
-        <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4 sm:text-xl">More Information</h2>
+      {
+        (internship.eligibility && internship.eligibility.length > 0) || internship.experience || internship.type || internship.timing || typeof internship.stipend === "number" ? (
+          <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-4 sm:text-xl">More Information</h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Internship Type */}
-            {internship.type && (
-              <div>
-                <h2 className="text-sm font-semibold mb-2 sm:text-lg">Internship Type</h2>
-                <p className="text-sm sm:text-base text-black">
-                  {internship.type?.charAt(0).toUpperCase() + internship.type?.slice(1).replace(/-/g, " ")}
-                </p>
-              </div>
-            )}
-
-            {/* Internship Timing */}
-            {internship.timing && (
-              <div>
-                <h2 className="font-semibold mb-2 text-sm sm:text-lg">Internship Timing</h2>
-                <p className="text-sm sm:text-base text-black">
-                  {internship.timing?.charAt(0).toUpperCase() + internship.timing?.slice(1).replace(/-/g, " ")}
-                </p>
-              </div>
-            )}
-
-            {/* Stipend */}
-            {typeof internship.stipend === "number" && (
-              <div>
-                <h2 className="font-semibold mb-2 text-sm sm:text-lg">Stipend</h2>
-                <p className="text-sm sm:text-base text-black flex items-center gap-1">
-                  <IndianRupee className="w-4 h-4" />
-                  {internship.stipend.toLocaleString()}
-                </p>
-              </div>
-            )}
-
-            {/* Experience */}
-            {internship.experience && (
-              <div>
-                <h2 className="font-semibold mb-2 text-sm sm:text-lg">Experience Required</h2>
-                <p className="text-sm sm:text-base text-black">
-                  {internship.experience}
-                </p>
-              </div>
-            )}
-
-            {/* Duration */}
-            {internship.duration && (
-              <div>
-                <h2 className="text-sm font-semibold mb-2 sm:text-lg">Internship Duration</h2>
-                <p className="text-sm sm:text-base text-black">
-                  {internship.duration}
-                </p>
-              </div>
-            )}
-
-            {/* Deadline */}
-            {internship.deadline && (
-              <div>
-                <h2 className="text-sm font-semibold mb-2 sm:text-lg">Deadline</h2>
-                <p className="text-sm sm:text-base text-black">
-                  {new Date(internship.deadline).toLocaleDateString('en-IN', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric'
-                  })}
-                </p>
-              </div>
-            )}
-
-            {/* Tags */}
-            {internship.tags && internship.tags.length > 0 && (
-              <div className="sm:col-span-2">
-                <h2 className="font-semibold mb-2 text-sm sm:text-lg">Tags</h2>
-                <div className="flex flex-wrap gap-2">
-                  {internship.tags.map((tag, index) => (
-                    <Badge
-                      key={index}
-                      className="border border-gray-300 bg-white text-black text-xs sm:text-sm"
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Internship Type */}
+              {internship.type && (
+                <div>
+                  <h2 className="text-sm font-semibold mb-2 sm:text-lg">Internship Type</h2>
+                  <p className="text-sm sm:text-base text-black">
+                    {internship.type?.charAt(0).toUpperCase() + internship.type?.slice(1).replace(/-/g, " ")}
+                  </p>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Eligibility */}
-            {internship.eligibility && internship.eligibility.length > 0 && (
-              <div className="sm:col-span-2">
-                <h2 className="font-semibold mb-2 text-sm sm:text-lg">Eligibility</h2>
-                <div className="flex flex-wrap gap-2">
-                  {internship.eligibility.map((item, index) => (
-                    <Badge
-                      key={index}
-                      className="border border-gray-300 bg-white text-black text-xs sm:text-sm"
-                    >
-                      {item}
-                    </Badge>
-                  ))}
+              {/* Internship Timing */}
+              {internship.timing && (
+                <div>
+                  <h2 className="font-semibold mb-2 text-sm sm:text-lg">Internship Timing</h2>
+                  <p className="text-sm sm:text-base text-black">
+                    {internship.timing?.charAt(0).toUpperCase() + internship.timing?.slice(1).replace(/-/g, " ")}
+                  </p>
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* Stipend */}
+              {typeof internship.stipend === "number" && (
+                <div>
+                  <h2 className="font-semibold mb-2 text-sm sm:text-lg">Stipend</h2>
+                  <p className="text-sm sm:text-base text-black flex items-center gap-1">
+                    <IndianRupee className="w-4 h-4" />
+                    {internship.stipend.toLocaleString()}
+                  </p>
+                </div>
+              )}
+
+              {/* Experience */}
+              {internship.experience && (
+                <div>
+                  <h2 className="font-semibold mb-2 text-sm sm:text-lg">Experience Required</h2>
+                  <p className="text-sm sm:text-base text-black">
+                    {internship.experience}
+                  </p>
+                </div>
+              )}
+
+              {/* Duration */}
+              {internship.duration && (
+                <div>
+                  <h2 className="text-sm font-semibold mb-2 sm:text-lg">Internship Duration</h2>
+                  <p className="text-sm sm:text-base text-black">
+                    {internship.duration}
+                  </p>
+                </div>
+              )}
+
+              {/* Deadline */}
+              {internship.deadline && (
+                <div>
+                  <h2 className="text-sm font-semibold mb-2 sm:text-lg">Deadline</h2>
+                  <p className="text-sm sm:text-base text-black">
+                    {new Date(internship.deadline).toLocaleDateString('en-IN', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric'
+                    })}
+                  </p>
+                </div>
+              )}
+
+              {/* Tags */}
+              {internship.tags && internship.tags.length > 0 && (
+                <div className="sm:col-span-2">
+                  <h2 className="font-semibold mb-2 text-sm sm:text-lg">Tags</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {internship.tags.map((tag, index) => (
+                      <Badge
+                        key={index}
+                        className="border border-gray-300 bg-white text-black text-xs sm:text-sm"
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Eligibility */}
+              {internship.eligibility && internship.eligibility.length > 0 && (
+                <div className="sm:col-span-2">
+                  <h2 className="font-semibold mb-2 text-sm sm:text-lg">Eligibility</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {internship.eligibility.map((item, index) => (
+                      <Badge
+                        key={index}
+                        className="border border-gray-300 bg-white text-black text-xs sm:text-sm"
+                      >
+                        {item}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      ) : null}
+        ) : null
+      }
 
       {/* Contact Information */}
-      {(internship.hiringManager || internship.hiringManagerEmail || internship.user) && (
-        <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4 sm:text-xl">Contact Information</h2>
-          <div className="space-y-3">
-            {internship.hiringManager && (
-              <div className="flex items-center gap-2">
+      {
+        (internship.hiringManager || internship.hiringManagerEmail || internship.user) && (
+          <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-4 sm:text-xl">Contact Information</h2>
+            <div className="space-y-3">
+              {internship.hiringManager && (
+                <div className="flex items-center gap-2">
                   <span className="font-semibold text-sm sm:text-lg">Hiring Manager:</span> <span className="text-sm sm:text-base">{internship.hiringManager}</span>
-              </div>
-            )}
-            {internship.hiringManagerEmail && (
-              <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm sm:text-lg">Email Id:</span> <span className="text-sm sm:text-base">{internship.hiringManagerEmail}</span>
-              </div>
-            )}
-            {internship.user && (
-              <div className="flex items-center gap-2">
-              
-                  <span className="font-semibold text-sm sm:text-lg">Posted by:</span>   <div className="w-8 h-8 rounded-full border-2 border-amber-500 bg-gray-300 flex items-center justify-center">
-                  {internship.user.image ? (
-                    <Image
-                      src={internship.user.image}
-                      alt={internship.user.name}
-                      width={32}
-                      height={32}
-                      className="rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-sm text-black">
-                      {internship.user.name?.split(" ").filter(Boolean).map(n => n[0]).join("").slice(0, 2) || "?"}
-                    </span>
-                  )}
                 </div>
-                <span className="text-sm sm:text-base">{internship.user.name}</span>
-              </div>
-            )}
+              )}
+              {internship.hiringManagerEmail && (
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-sm sm:text-lg">Email Id:</span> <span className="text-sm sm:text-base">{internship.hiringManagerEmail}</span>
+                </div>
+              )}
+              {internship.user && (
+                <div className="flex items-center gap-2">
+
+                  <span className="font-semibold text-sm sm:text-lg">Posted by:</span>   <div className="w-8 h-8 rounded-full border-2 border-amber-500 bg-gray-300 flex items-center justify-center">
+                    {internship.user.image ? (
+                      <Image
+                        src={internship.user.image}
+                        alt={internship.user.name}
+                        width={32}
+                        height={32}
+                        className="rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-sm text-black">
+                        {internship.user.name?.split(" ").filter(Boolean).map(n => n[0]).join("").slice(0, 2) || "?"}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-sm sm:text-base">{internship.user.name}</span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }

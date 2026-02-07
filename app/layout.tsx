@@ -13,7 +13,7 @@ import ProgressProvider from "./providers";
 import Script from "next/script";
 import WhatsAppWidget from "@/components/WhatsAppWidget";
 import FeedbackWidget from "@/components/FeedbackWidget";
-
+import { TrackerProvider } from "@/components/providers/TrackerProvider";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   weight: ["400", "700"], // or ["400", "700"] if multiple
@@ -48,12 +48,14 @@ export default function RootLayout({
         <Suspense fallback={<div>Loading ..</div>}>
           <QueryProvider>
             <ProgressProvider>
-              <Navbar />
-              <main className="grow pb-20 md:pb-0">{children}</main>
-              <BottomNav />
-              <Footer />
-              <WhatsAppWidget />
-              <FeedbackWidget />
+              <TrackerProvider>
+                <Navbar />
+                <main className="grow pb-20 md:pb-0">{children}</main>
+                <BottomNav />
+                <Footer />
+                <WhatsAppWidget />
+                <FeedbackWidget />
+              </TrackerProvider>
             </ProgressProvider>
             <Toaster />
             <Analytics />

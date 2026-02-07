@@ -4,13 +4,9 @@ import { user as userTable } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import AdminUsersTable from "./AdminUsersTable";
-import AdminOpportunitiesTable from "./AdminOpportunitiesTable";
+import { Suspense } from "react";
 import NewInternshipButton from "@/components/internship/NewInternshipButton";
-import AdminToolkitsTable from "./AdminToolkitsTable";
-import AdminUngatekeepTable from "./AdminUngatekeepTable";
-import AdminCouponsTable from "./AdminCouponsTable";
+import { AdminTabs } from "./AdminTabs";
 
 export default async function AdminPage() {
   const session = await auth.api.getSession({
@@ -46,32 +42,9 @@ export default async function AdminPage() {
           </p>
         </div>
 
-        <Tabs defaultValue="opportunities" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="opportunities">
-              Pending Opportunities
-            </TabsTrigger>
-            <TabsTrigger value="users">User Management</TabsTrigger>
-            <TabsTrigger value="toolkits">Toolkit Management</TabsTrigger>
-            <TabsTrigger value="coupons">Coupons</TabsTrigger>
-            <TabsTrigger value="ungatekeep">Ungatekeep</TabsTrigger>
-          </TabsList>
-          <TabsContent value="opportunities">
-            <AdminOpportunitiesTable />
-          </TabsContent>
-          <TabsContent value="users">
-            <AdminUsersTable currentUserId={session.user.id} />
-          </TabsContent>
-          <TabsContent value="toolkits">
-            <AdminToolkitsTable />
-          </TabsContent>
-          <TabsContent value="coupons">
-            <AdminCouponsTable />
-          </TabsContent>
-          <TabsContent value="ungatekeep">
-            <AdminUngatekeepTable />
-          </TabsContent>
-        </Tabs>
+        <Suspense fallback={<div className="h-64 animate-pulse rounded-lg bg-muted" />}>
+          <AdminTabs currentUserId={session.user.id} />
+        </Suspense>
       </div>
     </div>
   );

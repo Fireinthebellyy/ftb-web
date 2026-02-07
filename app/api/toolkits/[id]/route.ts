@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, dbPool } from "@/lib/db";
 import {
   toolkits,
   toolkitContentItems,
@@ -173,7 +173,7 @@ export async function POST(
     if (couponCode) {
       // Perform all coupon operations atomically within a transaction
       try {
-        const couponResult = await db.transaction(async (tx) => {
+        const couponResult = await dbPool.transaction(async (tx) => {
           // Read coupon within transaction
           const couponData = await tx
             .select()
@@ -300,6 +300,30 @@ export async function POST(
       }
     }
 
+    // If final price is 0 (fully covered by coupon), skip payment and grant access directly
+    if (finalPrice <= 0) {
+      const newPurchase = await db
+        .insert(userToolkits)
+        .values({
+          userId: userSession.currentUser.id,
+          toolkitId: toolkitId,
+          razorpayOrderId: null,
+          paymentStatus: "completed",
+          amountPaid: 0,
+          couponId: couponId,
+        })
+        .returning();
+
+      return NextResponse.json({
+        success: true,
+        free: true,
+        purchase: newPurchase[0],
+        toolkit,
+        discountAmount,
+        finalPrice: 0,
+      });
+    }
+
     const { createOrder } = await import("@/lib/razorpay");
     const order = await createOrder({
       amount: finalPrice * 100, // Convert to paisa
@@ -321,6 +345,7 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
+      free: false,
       order: {
         id: order.id,
         amount: order.amount,

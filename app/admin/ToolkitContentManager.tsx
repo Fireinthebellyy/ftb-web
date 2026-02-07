@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import axios from "axios";
 import { toast } from "sonner";
 import {
@@ -38,6 +39,20 @@ import { MoreVertical, Edit, Trash2, Plus, GripVertical } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import "react-quill-new/dist/quill.snow.css";
+
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
+
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, false] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["blockquote", "code-block"],
+    ["link", "image"],
+    ["clean"],
+  ],
+};
 
 const contentItemSchema = z
   .object({
@@ -326,7 +341,7 @@ export default function ToolkitContentManager({
         </div>
 
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[800px]">
             <DialogHeader>
               <DialogTitle>
                 {isAdding ? "Add Content" : "Edit Content"}
@@ -419,12 +434,15 @@ export default function ToolkitContentManager({
                     name="content"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Content (Markdown) {"*"}</FormLabel>
+                        <FormLabel>Content {"*"}</FormLabel>
                         <FormControl>
-                          <Textarea
-                            placeholder="Enter markdown content..."
+                          <ReactQuill
+                            theme="snow"
+                            value={field.value || ""}
+                            onChange={field.onChange}
+                            modules={quillModules}
+                            placeholder="Write your content here..."
                             className="min-h-[200px]"
-                            {...field}
                           />
                         </FormControl>
                         <FormMessage />

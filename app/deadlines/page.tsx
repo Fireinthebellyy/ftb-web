@@ -8,11 +8,45 @@ import {
   AlertTriangle,
   XCircle,
   CircleQuestionMark,
+  CalendarPlus,
 } from "lucide-react";
 import { format, differenceInCalendarDays } from "date-fns";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+
+
+function formatDateToUTC(date: Date) {
+  const year = date.getUTCFullYear()
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0")
+  const day = String(date.getUTCDate()).padStart(2, "0")
+  const hours = String(date.getUTCHours()).padStart(2, "0")
+  const minutes = String(date.getUTCMinutes()).padStart(2, "0")
+  const seconds = String(date.getUTCSeconds()).padStart(2, "0")
+
+  return `${year}${month}${day}T${hours}${minutes}${seconds}Z`
+}
+
+function handleAddToCalendar(title: string, endDate: string) {
+  const startDate = new Date(endDate)
+  const endDateObj = new Date(endDate)
+
+  const startUTC = formatDateToUTC(startDate)
+  const endUTC = formatDateToUTC(endDateObj)
+
+  const baseURL = "https://calendar.google.com/calendar/render"
+  const url = new URL(baseURL)
+
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: title,
+    dates: `${startUTC}/${endUTC}`,
+  })
+
+  url.search = params.toString()
+  window.open(url.toString(), "_blank", "noopener,noreferrer")
+}
+
 
 type BookmarkItem = {
   title: string;
@@ -180,9 +214,21 @@ export default function BookmarksPage() {
                 </div>
               )}
               {item.description ? (
-                <p className="mt-1 line-clamp-2 max-w-[70ch] text-sm text-gray-700">
-                  {item.description}
-                </p>
+                <div className="mt-1 flex items-start justify-between gap-2">
+                  <p className="line-clamp-2 max-w-[70ch] text-sm text-gray-700">
+                    {item.description}
+                  </p>
+                  {item.endDate && (
+                    <button
+                      title="Add to calendar" 
+                      onClick={() => handleAddToCalendar(item.title, item.endDate!)}
+                      className="flex-shrink-0 text-gray-600 hover:text-gray-900 transition-colors"
+                      aria-label="Add to calendar"
+                    >
+                      <CalendarPlus className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
               ) : null}
             </div>
           </div>

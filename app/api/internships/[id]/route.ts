@@ -5,6 +5,7 @@ import { upsertTagsAndGetIds } from "@/lib/tags";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { opportunities } from "@/data/opportunities";
 
 const internshipUpdateSchema = z.object({
   type: z.enum(["in-office", "work-from-home", "hybrid"]).optional(),
@@ -41,6 +42,60 @@ export async function GET(
     const { id } = await params;
     if (!id) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
+    }
+
+    // Handle static IDs
+    if (id.startsWith("static-")) {
+      const dbId = parseInt(id.replace("static-", ""), 10);
+      const opp = opportunities.find((o) => o.id === dbId);
+
+      if (opp) {
+        // Map tags to determine type
+        let type = "in-office";
+        if (opp.tags?.some(t => t.toLowerCase().includes("remote"))) type = "work-from-home";
+        else if (opp.tags?.some(t => t.toLowerCase().includes("hybrid"))) type = "hybrid";
+
+        const staticInternship = {
+          id: `static-${opp.id}`,
+          title: opp.title,
+          description: opp.description || "",
+          type: type,
+          timing: "full-time",
+          link: "",
+          poster: opp.logo || "",
+          tags: opp.tags || [],
+          location: "Remote",
+          deadline: opp.deadline || new Date().toISOString(),
+          stipend: 0,
+          hiringOrganization: opp.company,
+          hiringManager: "",
+          hiringManagerEmail: "",
+          experience: "Beginner",
+          duration: "3 months",
+          eligibility: [],
+          isFlagged: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          isVerified: true,
+          isActive: true,
+          viewCount: 0,
+          applicationCount: 0,
+          userId: "system",
+          user: {
+            id: "system",
+            name: "System",
+            image: "",
+            role: "admin" as const
+          }
+        };
+
+        return NextResponse.json({
+          success: true,
+          internship: staticInternship
+        });
+      }
+
+      return NextResponse.json({ error: "Internship not found" }, { status: 404 });
     }
 
     const internship = await db
@@ -93,7 +148,7 @@ export async function GET(
     // Increment view count
     await db
       .update(internships)
-      .set({ viewCount: sql`${internships.viewCount} + 1`})
+      .set({ viewCount: sql`${internships.viewCount} + 1` })
       .where(eq(internships.id, id));
 
     return NextResponse.json({

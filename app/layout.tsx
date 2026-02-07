@@ -53,8 +53,8 @@ export default function RootLayout({
               <BottomNav />
               <Footer />
               <WhatsAppWidget />
-            <FeedbackWidget />
-          </ProgressProvider>
+              <FeedbackWidget />
+            </ProgressProvider>
             <Toaster />
             <Analytics />
           </QueryProvider>

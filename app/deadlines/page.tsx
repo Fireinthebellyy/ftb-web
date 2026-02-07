@@ -8,11 +8,30 @@ import {
   AlertTriangle,
   XCircle,
   CircleQuestionMark,
+  CalendarPlus,
 } from "lucide-react";
 import { format, differenceInCalendarDays } from "date-fns";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+
+
+function handleAddToCalendar(title: string, endDate: string) {
+  const date = new Date(endDate);
+
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+
+  
+  const allDayDate = `${year}${month}${day}`;
+
+  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
+    title
+  )}&dates=${allDayDate}/${allDayDate}`;
+
+  window.open(url, "_blank", "noopener,noreferrer");
+}
 
 type BookmarkItem = {
   title: string;
@@ -179,11 +198,25 @@ export default function BookmarksPage() {
                   </span>
                 </div>
               )}
-              {item.description ? (
-                <p className="mt-1 line-clamp-2 max-w-[70ch] text-sm text-gray-700">
-                  {item.description}
-                </p>
-              ) : null}
+              <div className="mt-1 flex items-start justify-between gap-2">
+                {item.description && (
+                  <p className="line-clamp-2 max-w-[70ch] text-sm text-gray-700">
+                    {item.description}
+                  </p>
+                )}
+
+                {item.endDate && (
+                  <button
+                    title="Add to calendar"
+                    onClick={() => handleAddToCalendar(item.title, item.endDate!)}
+                    className="flex-shrink-0 text-gray-600 hover:text-gray-900 transition-colors"
+                    aria-label="Add to calendar"
+                  >
+                    <CalendarPlus className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
+
             </div>
           </div>
         </div>

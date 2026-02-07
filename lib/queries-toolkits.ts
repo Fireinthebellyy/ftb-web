@@ -51,6 +51,18 @@ export function useToolkitPurchase(toolkitId: string) {
       return data;
     },
     onSuccess: async (response: any) => {
+      // Free purchase (coupon covered full amount) — no payment needed
+      if (response.free) {
+        toast.success("Toolkit unlocked for free! Redirecting to content...");
+        qc.setQueryData(["toolkit", toolkitId], (old: any) => {
+          if (old) {
+            return { ...old, hasPurchased: true };
+          }
+          return old;
+        });
+        return;
+      }
+
       const { order, key } = response;
 
       if (typeof window === "undefined" || !window.Razorpay) {
@@ -69,7 +81,7 @@ export function useToolkitPurchase(toolkitId: string) {
             await axios.post(
               `/api/toolkits/${toolkitId}/verify`,
               {
-                razorpay_order_id: order.id,
+                razorpay_order_id: razorpayResponse.razorpay_order_id,
                 razorpay_payment_id: razorpayResponse.razorpay_payment_id,
                 razorpay_signature: razorpayResponse.razorpay_signature,
               },

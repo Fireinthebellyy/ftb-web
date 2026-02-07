@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import NewUngatekeepForm from "@/components/ungatekeep/NewUngatekeepForm";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, RefreshCw, Trash2 } from "lucide-react";
 
 type UngatekeepPost = {
     id: string;
@@ -116,8 +116,14 @@ export default function AdminUngatekeepTable() {
             <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold">Ungatekeep Posts</h2>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" onClick={fetchPosts} disabled={loading}>
-                        Refresh
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={fetchPosts}
+                        disabled={loading}
+                        title="Refresh posts"
+                    >
+                        <RefreshCw className="h-4 w-4" />
                     </Button>
                     <NewUngatekeepForm onSuccess={fetchPosts}>
                         <Button>Create Post</Button>

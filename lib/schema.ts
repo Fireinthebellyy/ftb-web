@@ -309,7 +309,7 @@ export const toolkitContentItems = pgTable("toolkit_content_items", {
     .references(() => toolkits.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   type: toolkitContentItemTypeEnum("type").notNull(),
-  content: text("content"), // markdown for articles
+  content: text("content"), // html for articles
   bunnyVideoUrl: text("bunny_video_url"), // Bunny CDN video URL for video type
   orderIndex: integer("order_index").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),

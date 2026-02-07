@@ -199,35 +199,15 @@ export default function OnboardingPage() {
   });
 
   const goNext = async () => {
+    const trimmedState = answers.state.trim();
+    const trimmedCity = answers.city.trim();
+    const locationValue = trimmedState ? trimmedState : trimmedCity;
+    const locationType = trimmedState ? "state" : "city";
+
     if (stepIndex < steps.length - 1) {
       setStepIndex((i) => i + 1);
       return;
     }
-
-    if (!answers.role) return;
-
-    // Save the lightest possible payload.
-    // Location: prefer state if provided, else city.
-    const locationValue = answers.state.trim() ? answers.state.trim() : answers.city.trim();
-    const locationType = answers.state.trim() ? "state" : "city";
-
-    await saveProfile.mutateAsync({
-      persona: answers.role,
-      locationType: answers.role === "student" && locationValue ? locationType : undefined,
-      locationValue: answers.role === "student" && locationValue ? locationValue : undefined,
-      educationLevel: answers.role === "student" ? (answers.educationLevel || undefined) : undefined,
-      fieldOfStudy:
-        answers.role === "student"
-          ? (answers.fieldOfStudy === "Other" ? "Other" : answers.fieldOfStudy || undefined)
-          : undefined,
-      fieldOther:
-        answers.role === "student" && answers.fieldOfStudy === "Other"
-          ? (answers.fieldOther || undefined)
-          : undefined,
-      opportunityInterests: answers.opportunities,
-      domainPreferences: answers.domains,
-      struggles: [],
-    });
   };
 
   const goBack = () => {

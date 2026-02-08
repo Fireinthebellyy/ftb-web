@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Check, Play, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 interface BunnyPlayerProps {
   videoId: string;

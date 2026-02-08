@@ -1,21 +1,31 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Toolkit, ToolkitContentItem } from "@/types/interfaces";
+import { toast } from "sonner";
+import axios from "axios";
 
 interface PurchaseSidebarProps {
   toolkit: Toolkit;
   contentItems: ToolkitContentItem[];
   hasPurchased: boolean;
   isPurchaseLoading: boolean;
-  onPurchase: () => void;
+  onPurchase: (couponCode?: string) => void;
   onAccessContent: () => void;
   className?: string;
+}
+
+interface CouponValidationResult {
+  valid: boolean;
+  discountAmount?: number;
+  finalPrice?: number;
+  error?: string;
 }
 
 export default function PurchaseSidebar({
@@ -27,6 +37,11 @@ export default function PurchaseSidebar({
   onAccessContent,
   className,
 }: PurchaseSidebarProps) {
+  const [couponCode, setCouponCode] = useState("");
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] =
+    useState<CouponValidationResult | null>(null);
+
   const hasOriginalPrice =
     toolkit.originalPrice && toolkit.originalPrice > toolkit.price;
   const discountPercentage = hasOriginalPrice
@@ -36,6 +51,49 @@ export default function PurchaseSidebar({
     )
     : 0;
 
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast.error("Please enter a coupon code");
+      return;
+    }
+
+    setIsValidatingCoupon(true);
+    try {
+      const { data } = await axios.post<CouponValidationResult>(
+        "/api/coupons/validate",
+        {
+          code: couponCode.trim(),
+          toolkitId: toolkit.id,
+        }
+      );
+
+      if (data.valid && data.discountAmount !== undefined && data.finalPrice !== undefined) {
+        setAppliedCoupon(data);
+        toast.success(`Coupon applied! ₹${data.discountAmount} off`);
+      } else {
+        setAppliedCoupon(null);
+        toast.error(data.error || "Invalid coupon code");
+      }
+    } catch (error) {
+      setAppliedCoupon(null);
+      if (axios.isAxiosError(error) && error.response) {
+        toast.error(error.response.data.error || "Failed to validate coupon");
+      } else {
+        toast.error("Failed to validate coupon");
+      }
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setCouponCode("");
+    setAppliedCoupon(null);
+  };
+
+  const displayPrice = appliedCoupon?.finalPrice ?? toolkit.price;
+  const showCouponDiscount = appliedCoupon?.valid && appliedCoupon.discountAmount;
+
   return (
     <Card
       className={cn("sticky top-8 overflow-hidden border bg-white py-0", className)}
@@ -43,20 +101,27 @@ export default function PurchaseSidebar({
       <CardContent className="p-6">
         <div className="mb-4 flex items-baseline gap-2">
           <span className="text-3xl font-bold text-gray-900">
-            ₹{toolkit.price.toLocaleString("en-IN")}
+            ₹{displayPrice.toLocaleString("en-IN")}
           </span>
-          {hasOriginalPrice && (
+          {(hasOriginalPrice || showCouponDiscount) && (
             <span className="text-lg text-gray-400 line-through">
-              ₹{toolkit.originalPrice!.toLocaleString("en-IN")}
+              ₹{toolkit.price.toLocaleString("en-IN")}
             </span>
           )}
         </div>
 
-        {hasOriginalPrice && (
-          <Badge className="mb-4 bg-green-600 text-white hover:bg-green-700">
-            {discountPercentage}% OFF
-          </Badge>
-        )}
+        <div className="mb-4 flex flex-wrap gap-2">
+          {hasOriginalPrice && (
+            <Badge className="bg-green-600 text-white hover:bg-green-700">
+              {discountPercentage}% OFF
+            </Badge>
+          )}
+          {showCouponDiscount && (
+            <Badge className="bg-blue-600 text-white hover:bg-blue-700">
+              ₹{appliedCoupon.discountAmount} OFF
+            </Badge>
+          )}
+        </div>
 
         {hasPurchased ? (
           <div className="space-y-4">
@@ -83,8 +148,49 @@ export default function PurchaseSidebar({
           </div>
         ) : (
           <div className="space-y-4">
+            {/* Coupon Code Input */}
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder="Enter coupon code"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !isValidatingCoupon) {
+                      handleApplyCoupon();
+                    }
+                  }}
+                  disabled={isValidatingCoupon || !!appliedCoupon?.valid}
+                  className="flex-1"
+                />
+                {appliedCoupon?.valid ? (
+                  <Button
+                    variant="outline"
+                    onClick={handleRemoveCoupon}
+                    disabled={isValidatingCoupon}
+                  >
+                    Remove
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={handleApplyCoupon}
+                    disabled={isValidatingCoupon || !couponCode.trim()}
+                  >
+                    {isValidatingCoupon ? "..." : "Apply"}
+                  </Button>
+                )}
+              </div>
+              {appliedCoupon?.valid && (
+                <p className="text-xs text-green-600 font-medium">
+                  Coupon applied! Save ₹{appliedCoupon.discountAmount}
+                </p>
+              )}
+            </div>
+
             <Button
-              onClick={onPurchase}
+              onClick={() => onPurchase(appliedCoupon?.valid ? couponCode.trim() : undefined)}
               disabled={isPurchaseLoading}
               className="w-full"
               size="lg"

@@ -22,6 +22,7 @@ export async function GET() {
         totalDuration: toolkits.totalDuration,
         lessonCount: toolkits.lessonCount,
         isActive: toolkits.isActive,
+        showSaleBadge: toolkits.showSaleBadge,
         createdAt: toolkits.createdAt,
         updatedAt: toolkits.updatedAt,
         userId: toolkits.userId,
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
       highlights,
       totalDuration,
       lessonCount,
+      showSaleBadge,
     } = body;
 
     if (!title || !description || !price) {
@@ -86,6 +88,7 @@ export async function POST(request: Request) {
         highlights,
         totalDuration,
         lessonCount,
+        showSaleBadge,
         userId: user.currentUser.id,
       })
       .returning();

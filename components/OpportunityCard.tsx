@@ -1,35 +1,20 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import {
-  CalendarDays,
-  MapPin,
-  Bookmark,
-  MessageSquare,
-  Building2,
-  Loader2,
-  Share2,
-  EllipsisVertical,
-  Trash2,
-  PencilLine,
-  Heart,
-  BadgeCheck,
-} from "lucide-react";
-import TwitterXIcon from "@/components/icons/TwitterX";
-import FacebookIcon from "@/components/icons/Facebook";
-import LinkedInIcon from "@/components/icons/LinkedIn";
-import WhatsAppIcon from "@/components/icons/WhatsApp";
-import EnvelopeIcon from "@/components/icons/Envelope";
-import { format } from "date-fns";
-import { Badge } from "@/components/ui/badge";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { createOpportunityStorage } from "@/lib/appwrite";
+import { OpportunityPostProps } from "@/types/interfaces";
+import { useIsBookmarked } from "@/lib/queries";
+import { useSession } from "@/hooks/use-session";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselDots,
-  Autoplay,
 } from "@/components/ui/carousel";
-import { createOpportunityStorage } from "@/lib/appwrite";
 import Image from "next/image";
 import { OpportunityPostProps } from "@/types/interfaces";
 import {
@@ -60,8 +45,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { OpportunityHeader } from "./opportunity/OpportunityHeader";
+import { OpportunityImageGallery } from "./opportunity/OpportunityImageGallery";
+import { OpportunityActions } from "./opportunity/OpportunityActions";
+import NewOpportunityForm from "./opportunity/NewOpportunityForm";
 
-// UUID validation function
 const isValidUUID = (uuid: string): boolean => {
   const uuidRegex =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -72,20 +60,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   opportunity,
   onBookmarkChange,
 }) => {
-  const {
-    id,
-    type,
-    tags,
-    title,
-    description,
-    images = [],
-    organiserInfo,
-    createdAt,
-    location,
-    startDate,
-    endDate,
-    user,
-  } = opportunity;
+  const { id, images, title } = opportunity;
 
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -118,15 +93,12 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [modalIndex, setModalIndex] = useState<number>(0);
   const [bookmarkModalOpen, setBookmarkModalOpen] = useState<boolean>(false);
+  const [showMessage, setShowMessage] = useState<boolean>(false);
 
-  const modalFileId = images[modalIndex] ?? images[0] ?? null;
-
-  const { data: session } = authClient.useSession();
-  const toggleUpvote = useToggleUpvote(id);
-
-  const { data: isBookmarkedServer } = useIsBookmarked(id);
+  const { data: session } = useSession();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const { data: isBookmarkedServer } = useIsBookmarked(id);
 
   useEffect(() => {
     if (typeof isBookmarkedServer === "boolean") {
@@ -136,9 +108,12 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
 
 
-  const handleBookmark = async (): Promise<void> => {
-    if (isBookmarkLoading) return;
+  const handleEditSuccess = () => {
+    setIsEditing(false);
+    queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+  };
 
+  const handleBookmarkChange = async (_id: string, newState: boolean) => {
     if (!session?.user?.id) {
       toast.error("Please log in to bookmark opportunities");
       return;
@@ -150,17 +125,13 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
     }
 
     const currentUserId = session.user.id as string;
-    const newBookmarkState = !isBookmarked;
-
-    setIsBookmarkLoading(true);
 
     try {
-      if (newBookmarkState) {
+      if (newState) {
         const response = await axios.post("/api/bookmarks", {
           userId: currentUserId,
           opportunityId: id,
         });
-
         if (response.data?.message === "Already bookmarked") {
           toast.info("Already bookmarked");
         }
@@ -173,10 +144,10 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         });
       }
 
-      setIsBookmarked(newBookmarkState);
+      setIsBookmarked(newState);
 
       if (onBookmarkChange) {
-        onBookmarkChange(id, newBookmarkState);
+        onBookmarkChange(id, newState);
       }
 
       queryClient.invalidateQueries({ queryKey: ["bookmark", id] });
@@ -239,110 +210,40 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
   return (
     <article className="relative mb-3 w-full rounded-lg border bg-white shadow-sm sm:mb-4">
-      {isExpanded && images.length > 0 ? (
-        images.length === 1 ? (
-          <div className="overflow-hidden">
-            <div
-              className="cursor-pointer"
-              onClick={() => {
-                setModalIndex(0);
-                setModalOpen(true);
-              }}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  setModalIndex(0);
-                  setModalOpen(true);
-                }
-              }}
-            >
-              {images[0] ? (
-                <Image
-                  src={opportunityStorage.getFileView(
-                    process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
-                    images[0]
-                  )}
-                  alt={title}
-                  className="max-h-48 w-full rounded-t-lg object-cover sm:max-h-64"
-                  loading="lazy"
-                  height={256}
-                  width={400}
-                />
-              ) : (
-                <div className="flex h-48 w-full items-center justify-center rounded-t-lg bg-neutral-100 text-sm text-gray-400">
-                  Image not available
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div>
-            <Carousel
-              className="w-full"
-              plugins={[
-                Autoplay({
-                  delay: 3000,
-                }),
-              ]}
-            >
-              <CarouselContent>
-                {images.map((image, i) => (
-                  <CarouselItem key={i}>
-                    <div
-                      className="cursor-pointer overflow-hidden"
-                      onClick={() => {
-                        setModalIndex(i);
-                        setModalOpen(true);
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          setModalIndex(i);
-                          setModalOpen(true);
-                        }
-                      }}
-                    >
-                      {image ? (
-                        <Image
-                          src={opportunityStorage.getFileView(
-                            process.env
-                              .NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
-                            image
-                          )}
-                          alt={`${title} - Image ${i + 1}`}
-                          className="max-h-48 w-full rounded-t-lg object-cover sm:max-h-64"
-                          loading="lazy"
-                          height={256}
-                          width={400}
-                        />
-                      ) : (
-                        <div className="flex h-48 w-full items-center justify-center rounded-t-lg bg-neutral-100 text-sm text-gray-400">
-                          Image not available
-                        </div>
-                      )}
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselDots />
-            </Carousel>
-          </div>
-        )
-      ) : null}
+      <OpportunityImageGallery
+        images={images}
+        title={title}
+        onOpenModal={(index) => {
+          setModalIndex(index);
+          setModalOpen(true);
+        }}
+      />
 
-      <div className="absolute -top-0.5 right-0 z-10">
-        <Badge
-          className={`${getTypeColor(
-            primaryType
-          )} px-2 py-1 text-xs text-[10px] font-medium sm:text-xs rounded-tl-none rounded-br-none`}
+      <OpportunityHeader opportunity={opportunity} />
+
+      <Dialog open={modalOpen} onOpenChange={(open) => setModalOpen(open)}>
+        <DialogContent
+          className="mx-auto min-w-auto p-0 md:min-w-3xl"
+          overlayClassName="bg-black/70"
         >
-          {primaryType?.charAt(0).toUpperCase() + primaryType?.slice(1)}
-        </Badge>
-      </div>
+          <ImageModal
+            images={images}
+            title={title}
+            modalIndex={modalIndex}
+            modalFileId={images[modalIndex] ?? images[0] ?? null}
+          />
+        </DialogContent>
+      </Dialog>
 
       <div className="px-3 py-2 sm:px-4">
+        <OpportunityActions
+          opportunity={opportunity}
+          isBookmarked={isBookmarked}
+          onBookmarkChange={handleBookmarkChange}
+          showComments={showComments}
+          setShowComments={setShowComments}
+          onEdit={() => setIsEditing(true)}
+        />
 
         <h2 className="mb-2 line-clamp-1 truncate text-base leading-tight font-bold text-gray-900 sm:text-lg">
           {title}
@@ -735,8 +636,8 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           >
             <NewOpportunityForm
               opportunity={opportunity}
-              onOpportunityCreated={_handleEditSuccess}
-              onCancel={_handleEditCancel}
+              onOpportunityCreated={handleEditSuccess}
+              onCancel={() => setIsEditing(false)}
             />
           </DialogContent>
         </Dialog>
@@ -777,5 +678,96 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
     </article>
   );
 };
+
+interface ImageModalProps {
+  images: string[];
+  title: string;
+  modalIndex: number;
+  modalFileId: string | null;
+}
+
+function ImageModal({
+  images,
+  title,
+  modalIndex,
+  modalFileId,
+}: ImageModalProps) {
+  const [carouselApi, setCarouselApi] = useState<any>(null);
+  const opportunityStorage = createOpportunityStorage();
+
+  useEffect(() => {
+    if (carouselApi) {
+      setTimeout(() => carouselApi.scrollTo(modalIndex), 0);
+    }
+  }, [modalIndex, carouselApi]);
+
+  if (images.length <= 1) {
+    return (
+      <div className="flex items-center justify-center">
+        {modalFileId ? (
+          <ImageModalContent
+            opportunityStorage={opportunityStorage}
+            fileId={modalFileId}
+            title={title}
+          />
+        ) : (
+          <div className="w-full text-center text-sm text-gray-400">
+            Image not available
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <Carousel className="w-full" setApi={setCarouselApi}>
+      <CarouselContent>
+        {images.map((image, idx) => (
+          <CarouselItem key={idx}>
+            <div className="flex h-full items-center justify-center bg-transparent">
+              {image ? (
+                <ImageModalContent
+                  opportunityStorage={opportunityStorage}
+                  fileId={image}
+                  title={`${title} - Image ${idx + 1}`}
+                />
+              ) : (
+                <div className="w-full text-center text-sm text-gray-400">
+                  Image not available
+                </div>
+              )}
+            </div>
+          </CarouselItem>
+        ))}
+      </CarouselContent>
+      <CarouselDots />
+    </Carousel>
+  );
+}
+
+interface ImageModalContentProps {
+  opportunityStorage: ReturnType<typeof createOpportunityStorage>;
+  fileId: string;
+  title: string;
+}
+
+function ImageModalContent({
+  opportunityStorage,
+  fileId,
+  title,
+}: ImageModalContentProps) {
+  return (
+    <Image
+      src={opportunityStorage.getFileView(
+        process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
+        fileId
+      )}
+      alt={title}
+      className="max-h-[80vh] w-full object-contain"
+      height={600}
+      width={800}
+    />
+  );
+}
 
 export default OpportunityPost;

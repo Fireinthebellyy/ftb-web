@@ -32,6 +32,7 @@ const updateToolkitSchema = z.object({
     .min(0, "Lesson count must be greater than or equal to 0")
     .optional(),
   isActive: z.boolean().optional(),
+  showSaleBadge: z.boolean().optional(),
 });
 
 export async function PUT(
@@ -89,6 +90,8 @@ export async function PUT(
       updates.lessonCount = validatedData.lessonCount;
     if (validatedData.isActive !== undefined)
       updates.isActive = validatedData.isActive;
+    if (validatedData.showSaleBadge !== undefined)
+      updates.showSaleBadge = validatedData.showSaleBadge;
 
     const updatedToolkit = await db
       .update(toolkits)

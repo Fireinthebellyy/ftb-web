@@ -3,12 +3,13 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Briefcase, CalendarClock, Flame, User } from "lucide-react";
+import { Home, Briefcase, CalendarClock, Flame, User, Megaphone } from "lucide-react";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/opportunities", label: "Opportunities", icon: Briefcase },
-  { href: "/internships", label: "Internships", icon: Flame },
+  { href: "/intern", label: "Internships", icon: Flame },
+  { href: "/ungatekeep", label: "Ungatekeep", icon: Megaphone },
   { href: "/deadlines", label: "Deadlines", icon: CalendarClock },
   { href: "/profile", label: "Profile", icon: User },
 ];

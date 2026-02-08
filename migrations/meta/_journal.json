@@ -176,6 +176,13 @@
       "when": 1766095300000,
       "tag": "0024_set_default_is_active_false",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1769698815815,
+      "tag": "0025_wooden_black_cat",
+      "breakpoints": true
     }
   ]
 }

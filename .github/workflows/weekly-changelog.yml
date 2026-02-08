@@ -1,0 +1,84 @@
+name: Weekly Changelog
+
+on:
+  schedule:
+    - cron: "0 9 * * 1" # Every Monday at 9:00 AM UTC
+  workflow_dispatch:
+
+jobs:
+  generate-changelog:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Get last week's commits
+        id: commits
+        run: |
+          COMMITS=$(git log --oneline --since="1 week ago" --no-merges --format="%h %ad %s" --date=short)
+          echo "commits<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMITS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          DATE=$(date +%Y-%m-%d)
+          echo "date=$DATE" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog with OpenRouter
+        id: generate
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          node scripts/generate-changelog.mjs "${{ steps.commits.outputs.commits }}" "${{ steps.commits.outputs.date }}"
+        continue-on-error: true
+
+      - name: Check if changelog was created
+        id: check_file
+        run: |
+          if [ -f "src/content/changelog/${{ steps.commits.outputs.date }}.md" ]; then
+            echo "file_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "file_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.check_file.outputs.file_exists == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME="changelog/${{ steps.commits.outputs.date }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Delete remote branch if it exists
+          git push origin --delete "$BRANCH_NAME" 2>/dev/null || true
+          
+          git checkout -b "$BRANCH_NAME"
+          git add "src/content/changelog/${{ steps.commits.outputs.date }}.md"
+          git commit -m "chore: add changelog for week of ${{ steps.commits.outputs.date }}"
+          git push origin "$BRANCH_NAME"
+          
+          # Check if PR already exists
+          EXISTING_PR=$(gh pr list --head "$BRANCH_NAME" --json number --jq '.[0].number' 2>/dev/null || echo "")
+          
+          if [ -n "$EXISTING_PR" ]; then
+            echo "PR #$EXISTING_PR already exists for this branch"
+          else
+            gh pr create \
+              --title "Changelog: Week of ${{ steps.commits.outputs.date }}" \
+              --body "Automated changelog generated from commits in the past week." \
+              --base main \
+              --head "$BRANCH_NAME"
+          fi

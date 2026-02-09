@@ -1,16 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { ColumnDef } from "@tanstack/react-table";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { PlusCircle, RefreshCw } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import ToolkitContentManager from "./ToolkitContentManager";
+import { AdminDataTable } from "@/components/admin/AdminDataTable";
+import { AdminTableState } from "@/components/admin/AdminTableState";
+import { AdminTabLayout } from "@/components/admin/AdminTabLayout";
+import { ToolkitFormFields } from "@/components/admin/ToolkitFormFields";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Toolkit,
+  toolkitFormSchema,
+  ToolkitFormValues,
+} from "@/components/admin/types";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,25 +26,32 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
-import ToolkitContentManager from "./ToolkitContentManager";
-import { ToolkitFormFields } from "@/components/admin/ToolkitFormFields";
-import { ToolkitTableRow } from "@/components/admin/ToolkitTableRow";
-import {
-  toolkitFormSchema,
-  Toolkit,
-  ToolkitFormValues,
-} from "@/components/admin/types";
+import NewToolkitModal from "@/components/toolkit/NewToolkitModal";
+
+async function fetchToolkits(): Promise<Toolkit[]> {
+  const response = await axios.get<Toolkit[]>("/api/admin/toolkits");
+  return response.data;
+}
 
 export default function AdminToolkitsTable() {
-  const [toolkits, setToolkits] = useState<Toolkit[]>([]);
-  const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingToolkit, setEditingToolkit] = useState<Toolkit | null>(null);
   const [contentManagerOpen, setContentManagerOpen] = useState(false);
   const [managingToolkit, setManagingToolkit] = useState<Toolkit | null>(null);
+  const queryClient = useQueryClient();
+
+  const {
+    data: toolkits = [],
+    isLoading,
+    isError,
+    refetch,
+    isRefetching,
+  } = useQuery({
+    queryKey: ["admin", "toolkits"],
+    queryFn: fetchToolkits,
+    staleTime: 1000 * 30,
+  });
 
   const form = useForm<ToolkitFormValues>({
     resolver: zodResolver(toolkitFormSchema),
@@ -56,147 +71,257 @@ export default function AdminToolkitsTable() {
     },
   });
 
-  const fetchToolkits = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get("/api/admin/toolkits");
-      setToolkits(response.data);
-    } catch (error) {
-      console.error("Error fetching toolkits:", error);
-      toast.error("Failed to fetch toolkits");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchToolkits();
-  }, []);
-
-  const handleEdit = (toolkit: Toolkit) => {
-    setEditingToolkit(toolkit);
-    form.reset({
-      title: toolkit.title,
-      description: toolkit.description,
-      price: toolkit.price,
-      originalPrice: toolkit.originalPrice ?? undefined,
-      category: toolkit.category ?? "",
-      coverImageUrl: toolkit.coverImageUrl ?? "",
-      videoUrl: toolkit.videoUrl ?? "",
-      totalDuration: toolkit.totalDuration ?? "",
-      lessonCount: toolkit.lessonCount ?? 0,
-      highlights: toolkit.highlights ?? [],
-      isActive: toolkit.isActive,
-      showSaleBadge: toolkit.showSaleBadge,
-    });
-    setEditDialogOpen(true);
-  };
-
-  const handleUpdate = async (data: ToolkitFormValues) => {
-    if (!editingToolkit) return;
-
-    try {
-      const cleanedData = {
-        ...data,
-        coverImageUrl: data.coverImageUrl || undefined,
-        videoUrl: data.videoUrl || undefined,
-        category: data.category || undefined,
-        totalDuration: data.totalDuration || undefined,
-        lessonCount: data.lessonCount || undefined,
-        highlights: data.highlights?.filter(Boolean) || undefined,
-      };
-
-      await axios.put(`/api/admin/toolkits/${editingToolkit.id}`, cleanedData);
-      toast.success("Toolkit updated successfully!");
-      setEditDialogOpen(false);
-      fetchToolkits();
-    } catch (error) {
-      console.error("Error updating toolkit:", error);
+  const updateToolkitMutation = useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: Record<string, unknown>;
+    }) => {
+      await axios.put(`/api/admin/toolkits/${id}`, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "toolkits"] });
+    },
+    onError: () => {
       toast.error("Failed to update toolkit");
-    }
-  };
+    },
+  });
 
-  const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
-
-    try {
+  const deleteToolkitMutation = useMutation({
+    mutationFn: async (id: string) => {
       await axios.delete(`/api/admin/toolkits/${id}`);
-      toast.success("Toolkit deleted successfully!");
-      fetchToolkits();
-    } catch (error) {
-      console.error("Error deleting toolkit:", error);
+    },
+    onSuccess: () => {
+      toast.success("Toolkit deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["admin", "toolkits"] });
+    },
+    onError: () => {
       toast.error("Failed to delete toolkit");
+    },
+  });
+
+  const handleEdit = useCallback(
+    (toolkit: Toolkit) => {
+      setEditingToolkit(toolkit);
+      form.reset({
+        title: toolkit.title,
+        description: toolkit.description,
+        price: toolkit.price,
+        originalPrice: toolkit.originalPrice ?? undefined,
+        category: toolkit.category ?? "",
+        coverImageUrl: toolkit.coverImageUrl ?? "",
+        videoUrl: toolkit.videoUrl ?? "",
+        totalDuration: toolkit.totalDuration ?? "",
+        lessonCount: toolkit.lessonCount ?? 0,
+        highlights: toolkit.highlights ?? [],
+        isActive: toolkit.isActive,
+        showSaleBadge: toolkit.showSaleBadge,
+      });
+      setEditDialogOpen(true);
+    },
+    [form]
+  );
+
+  const handleUpdate = (data: ToolkitFormValues) => {
+    if (!editingToolkit) {
+      return;
     }
+
+    const cleanedData = {
+      ...data,
+      coverImageUrl: data.coverImageUrl || undefined,
+      videoUrl: data.videoUrl || undefined,
+      category: data.category || undefined,
+      totalDuration: data.totalDuration || undefined,
+      lessonCount: data.lessonCount || undefined,
+      highlights: data.highlights?.filter(Boolean) || undefined,
+    };
+
+    updateToolkitMutation.mutate(
+      { id: editingToolkit.id, payload: cleanedData },
+      {
+        onSuccess: () => {
+          toast.success("Toolkit updated successfully");
+          setEditDialogOpen(false);
+        },
+      }
+    );
   };
 
-  const handleToggleActive = async (id: string, isActive: boolean) => {
-    try {
-      await axios.put(`/api/admin/toolkits/${id}`, { isActive });
-      toast.success(`Toolkit ${isActive ? "activated" : "deactivated"}`);
-      fetchToolkits();
-    } catch (error) {
-      console.error("Error toggling toolkit active status:", error);
-      toast.error("Failed to update toolkit status");
-    }
-  };
+  const columns = useMemo<ColumnDef<Toolkit>[]>(() => {
+    return [
+      {
+        accessorKey: "title",
+        header: "Title",
+        cell: ({ row }) => (
+          <div className="max-w-xs">
+            <div className="truncate font-medium">{row.original.title}</div>
+            <div className="text-muted-foreground truncate text-sm">
+              {row.original.description}
+            </div>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "category",
+        header: "Category",
+        cell: ({ row }) =>
+          row.original.category ? (
+            <Badge variant="secondary">{row.original.category}</Badge>
+          ) : (
+            <span>-</span>
+          ),
+      },
+      {
+        accessorKey: "price",
+        header: "Price",
+        cell: ({ row }) => (
+          <div className="flex flex-col">
+            <span className="font-medium">INR {row.original.price}</span>
+            {row.original.originalPrice ? (
+              <span className="text-muted-foreground text-sm line-through">
+                INR {row.original.originalPrice}
+              </span>
+            ) : null}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "lessonCount",
+        header: "Lessons",
+        cell: ({ row }) => row.original.lessonCount || 0,
+      },
+      {
+        accessorKey: "isActive",
+        header: "Status",
+        cell: ({ row }) => (
+          <Badge variant={row.original.isActive ? "default" : "secondary"}>
+            {row.original.isActive ? "Active" : "Inactive"}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: "showSaleBadge",
+        header: "Sale Badge",
+        cell: ({ row }) => (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              updateToolkitMutation.mutate(
+                {
+                  id: row.original.id,
+                  payload: { showSaleBadge: !row.original.showSaleBadge },
+                },
+                {
+                  onSuccess: () => {
+                    toast.success(
+                      `Sale badge ${!row.original.showSaleBadge ? "enabled" : "disabled"}`
+                    );
+                  },
+                }
+              )
+            }
+          >
+            {row.original.showSaleBadge ? "Enabled" : "Disabled"}
+          </Button>
+        ),
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => {
+          const toolkit = row.original;
 
-  const handleManageContent = (toolkit: Toolkit) => {
-    setManagingToolkit(toolkit);
-    setContentManagerOpen(true);
-  };
+          return (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setManagingToolkit(toolkit);
+                  setContentManagerOpen(true);
+                }}
+              >
+                Manage Content
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleEdit(toolkit)}
+              >
+                Edit
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (
+                    !confirm(
+                      `Are you sure you want to delete "${toolkit.title}"?`
+                    )
+                  ) {
+                    return;
+                  }
+                  deleteToolkitMutation.mutate(toolkit.id);
+                }}
+              >
+                <span className="text-destructive">Delete</span>
+              </Button>
+            </div>
+          );
+        },
+      },
+    ];
+  }, [deleteToolkitMutation, handleEdit, updateToolkitMutation]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Toolkits Management</h2>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={fetchToolkits} disabled={loading}>
-            Refresh
+    <AdminTabLayout
+      title="Toolkit Management"
+      description="Manage toolkit catalog, pricing, and lesson content"
+      actions={
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => refetch()}
+            disabled={isRefetching}
+            title="Refresh toolkits"
+          >
+            <RefreshCw className="h-4 w-4" />
           </Button>
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center py-8">
-          <div className="text-muted-foreground">Loading toolkits...</div>
-        </div>
-      ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Lessons</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Sale Badge</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {toolkits.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
-                    No toolkits found. Create your first toolkit!
-                  </TableCell>
-                </TableRow>
-              ) : (
-                toolkits.map((toolkit) => (
-                  <ToolkitTableRow
-                    key={toolkit.id}
-                    toolkit={toolkit}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onToggleActive={handleToggleActive}
-                    onManageContent={handleManageContent}
-                  />
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+          <NewToolkitModal>
+            <Button className="gap-2">
+              <PlusCircle className="h-4 w-4" />
+              Create Toolkit
+            </Button>
+          </NewToolkitModal>
+        </>
+      }
+      stats={
+        <p className="text-muted-foreground text-sm">
+          Total toolkits:{" "}
+          <span className="text-foreground font-medium">{toolkits.length}</span>
+        </p>
+      }
+    >
+      <AdminTableState
+        isLoading={isLoading}
+        isError={isError}
+        isEmpty={!toolkits.length}
+        emptyMessage="No toolkits found. Create your first toolkit."
+        errorMessage="Failed to fetch toolkits"
+      >
+        <AdminDataTable
+          columns={columns}
+          data={toolkits}
+          emptyMessage="No toolkits found"
+          filterColumnId="title"
+          filterPlaceholder="Search toolkits"
+        />
+      </AdminTableState>
 
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
@@ -218,22 +343,29 @@ export default function AdminToolkitsTable() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit">Update Toolkit</Button>
+                <Button
+                  type="submit"
+                  disabled={updateToolkitMutation.isPending}
+                >
+                  Update Toolkit
+                </Button>
               </div>
             </form>
           </Form>
         </DialogContent>
       </Dialog>
 
-      {managingToolkit && (
+      {managingToolkit ? (
         <ToolkitContentManager
           toolkitId={managingToolkit.id}
           toolkitTitle={managingToolkit.title}
           open={contentManagerOpen}
           onClose={() => setContentManagerOpen(false)}
-          onUpdate={fetchToolkits}
+          onUpdate={() =>
+            queryClient.invalidateQueries({ queryKey: ["admin", "toolkits"] })
+          }
         />
-      )}
-    </div>
+      ) : null}
+    </AdminTabLayout>
   );
 }

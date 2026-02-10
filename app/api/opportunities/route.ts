@@ -12,8 +12,9 @@ import {
   sql,
 } from "drizzle-orm";
 import { opportunities, tags, user } from "@/lib/schema";
+import { createApiTimer } from "@/lib/api-timing";
+import { getSessionCached } from "@/lib/auth-session-cache";
 import { upsertTagsAndGetIds } from "@/lib/tags";
-import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -51,23 +52,32 @@ async function getUserRoleFromSession(session: {
 }
 
 export async function POST(req: NextRequest) {
+  const timer = createApiTimer("POST /api/opportunities");
+
   try {
     if (!db) {
+      timer.end({ status: 500, reason: "missing_db" });
       return NextResponse.json(
         { error: "Database connection not available" },
         { status: 500 }
       );
     }
 
-    const session = await auth.api.getSession({ headers: await headers() });
+    timer.mark("auth_start");
+    const session = await getSessionCached(await headers());
+    timer.mark("auth_done", { hasSession: Boolean(session?.user?.id) });
     if (!session?.user?.id) {
+      timer.end({ status: 401 });
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    timer.mark("role_start");
     const userRole = await getUserRoleFromSession(
       session as { user: { id: string; role?: string } }
     );
+    timer.mark("role_done", { hasRole: Boolean(userRole) });
     if (!userRole) {
+      timer.end({ status: 401 });
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -91,7 +101,11 @@ export async function POST(req: NextRequest) {
 
     // Handle arrays properly - only add if they have values
     if (validatedData.tags && Array.isArray(validatedData.tags)) {
+      timer.mark("tags_upsert_start", {
+        incomingTags: validatedData.tags.length,
+      });
       const tagIds = await upsertTagsAndGetIds(validatedData.tags);
+      timer.mark("tags_upsert_done", { resolvedTagIds: tagIds.length });
       if (tagIds.length > 0) {
         insertData.tagIds = tagIds;
       }
@@ -131,11 +145,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    timer.mark("insert_start");
     const newOpportunity = await db
       .insert(opportunities)
       .values(insertData)
       .returning();
+    timer.mark("insert_done", { rowCount: newOpportunity.length });
 
+    timer.end({ status: 201, userRole });
     return NextResponse.json(
       {
         success: true,
@@ -146,6 +163,7 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     if (error instanceof z.ZodError) {
+      timer.end({ status: 400, reason: "validation_error" });
       return NextResponse.json({ error: error.errors }, { status: 400 });
     }
 
@@ -154,28 +172,38 @@ export async function POST(req: NextRequest) {
       error instanceof Error ? error.message : "Internal Server Error";
     console.error("Error creating opportunity:", errorMessage);
 
+    timer.end({ status: 500, reason: "exception" });
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
 export async function GET(req: NextRequest) {
+  const timer = createApiTimer("GET /api/opportunities");
+
   try {
     if (!db) {
+      timer.end({ status: 500, reason: "missing_db" });
       return NextResponse.json(
         { error: "Database connection not available" },
         { status: 500 }
       );
     }
 
-    const session = await auth.api.getSession({ headers: await headers() });
+    timer.mark("auth_start");
+    const session = await getSessionCached(await headers());
+    timer.mark("auth_done", { hasSession: Boolean(session?.user?.id) });
     if (!session?.user?.id) {
+      timer.end({ status: 401 });
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    timer.mark("role_start");
     const sessionRole = await getUserRoleFromSession(
       session as { user: { id: string; role?: string } }
     );
+    timer.mark("role_done", { hasRole: Boolean(sessionRole) });
     if (!sessionRole) {
+      timer.end({ status: 401 });
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -212,6 +240,15 @@ export async function GET(req: NextRequest) {
     // Validate pagination parameters
     const validLimit = Math.min(Math.max(limit, 1), 50); // Between 1 and 50
     const validOffset = Math.max(offset, 0); // Non-negative
+
+    timer.mark("query_prep_done", {
+      includeTotal,
+      validLimit,
+      validOffset,
+      hasSearch: Boolean(searchTerm),
+      typeFilters: validTypes.length,
+      tagFilters: rawTags.length,
+    });
 
     const conditions: SQL<unknown>[] = [isNull(opportunities.deletedAt)];
 
@@ -255,6 +292,7 @@ export async function GET(req: NextRequest) {
     const filters =
       conditions.length === 1 ? conditions[0] : and(...conditions);
 
+    timer.mark("query_page_start");
     const paginated = await db
       .select({
         id: opportunities.id,
@@ -292,17 +330,23 @@ export async function GET(req: NextRequest) {
       .orderBy(desc(opportunities.createdAt))
       .limit(validLimit + 1)
       .offset(validOffset);
+    timer.mark("query_page_done", { rows: paginated.length });
 
     const hasMore = paginated.length > validLimit;
     const pageItems = hasMore ? paginated.slice(0, validLimit) : paginated;
 
     const totalCount = includeTotal
-      ? ((
+      ? (timer.mark("query_total_start"),
+        (
           await db.select({ total: count() }).from(opportunities).where(filters)
         )[0]?.total ?? 0)
       : hasMore
         ? validOffset + validLimit + 1
         : validOffset + pageItems.length;
+
+    if (includeTotal) {
+      timer.mark("query_total_done", { totalCount });
+    }
 
     // Calculate userHasUpvoted for each opportunity
     const currentUserId = session.user.id;
@@ -317,6 +361,12 @@ export async function GET(req: NextRequest) {
       };
     });
 
+    timer.mark("transform_done", {
+      rows: opportunitiesWithUpvote.length,
+      hasMore,
+    });
+
+    timer.end({ status: 200 });
     return NextResponse.json(
       {
         success: true,
@@ -332,6 +382,7 @@ export async function GET(req: NextRequest) {
     );
   } catch (error) {
     console.error("Error fetching opportunities:", error);
+    timer.end({ status: 500, reason: "exception" });
     return NextResponse.json(
       { error: "Failed to fetch opportunities" },
       { status: 500 }

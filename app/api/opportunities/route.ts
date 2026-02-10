@@ -13,7 +13,8 @@ import {
 } from "drizzle-orm";
 import { opportunities, tags, user } from "@/lib/schema";
 import { upsertTagsAndGetIds } from "@/lib/tags";
-import { getCurrentUser } from "@/server/users";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -29,6 +30,25 @@ const opportunitySchema = z.object({
   endDate: z.string().optional(),
 });
 
+async function getUserRoleFromSession(session: {
+  user: { id: string; role?: string };
+}) {
+  if (!session?.user?.id) {
+    return null;
+  }
+
+  const roleFromSession = session.user.role;
+  if (roleFromSession) {
+    return roleFromSession;
+  }
+
+  const row = await db.query.user.findFirst({
+    where: eq(user.id, session.user.id),
+    columns: { role: true },
+  });
+
+  return row?.role ?? null;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,8 +59,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const user = await getCurrentUser();
-    if (!user || !user.currentUser?.id) {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userRole = await getUserRoleFromSession(
+      session as { user: { id: string; role?: string } }
+    );
+    if (!userRole) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -48,7 +75,6 @@ export async function POST(req: NextRequest) {
     const validatedData = opportunitySchema.parse(body);
 
     // Check user role - users with role "user" need approval, members and admins can post directly
-    const userRole = user.currentUser.role;
     const canPostDirectly = userRole === "admin" || userRole === "member";
 
     // Build insertData with careful array handling
@@ -56,7 +82,7 @@ export async function POST(req: NextRequest) {
       type: validatedData.type,
       title: validatedData.title,
       description: validatedData.description,
-      userId: user.currentUser.id,
+      userId: session.user.id,
       isFlagged: false,
       isVerified: false,
       // Set isActive based on user role - members and admins post directly, users need approval
@@ -114,7 +140,7 @@ export async function POST(req: NextRequest) {
       {
         success: true,
         data: newOpportunity[0],
-        userRole: user.currentUser.role
+        userRole,
       },
       { status: 201 }
     );
@@ -141,13 +167,20 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const currentUser = await getCurrentUser();
-    if (!currentUser || !currentUser.currentUser?.id) {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const sessionRole = await getUserRoleFromSession(
+      session as { user: { id: string; role?: string } }
+    );
+    if (!sessionRole) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Check if current user is admin to determine what opportunities to show
-    const isAdmin = currentUser.currentUser.role === "admin";
+    const isAdmin = sessionRole === "admin";
 
     // Get pagination parameters from URL
     const { searchParams } = new URL(req.url);
@@ -156,21 +189,24 @@ export async function GET(req: NextRequest) {
     const searchParam = searchParams.get("search");
     const typesParam = searchParams.get("types");
     const tagsParam = searchParams.get("tags");
+    const includeTotalParam = searchParams.get("includeTotal");
     const limit = Number.isNaN(limitParam) ? 10 : limitParam;
     const offset = Number.isNaN(offsetParam) ? 0 : offsetParam;
+    const includeTotal = includeTotalParam === "true";
     const searchTerm = searchParam ? searchParam.trim() : "";
     const rawTypes = typesParam
-      ? typesParam.split(",").map((value) => value.trim()).filter(Boolean)
+      ? typesParam
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean)
       : [];
     const allowedTypes = (opportunities.type.enumValues ?? []) as string[];
-    const validTypes = rawTypes.filter((type) =>
-      allowedTypes.includes(type)
-    );
+    const validTypes = rawTypes.filter((type) => allowedTypes.includes(type));
     const rawTags = tagsParam
       ? tagsParam
-        .split(",")
-        .map((value) => value.trim().toLowerCase())
-        .filter(Boolean)
+          .split(",")
+          .map((value) => value.trim().toLowerCase())
+          .filter(Boolean)
       : [];
 
     // Validate pagination parameters
@@ -199,8 +235,9 @@ export async function GET(req: NextRequest) {
     }
 
     if (rawTags.length > 0) {
-      const tagConditions = rawTags.map((tag) =>
-        sql`EXISTS (
+      const tagConditions = rawTags.map(
+        (tag) =>
+          sql`EXISTS (
           SELECT 1
           FROM ${tags} t
           WHERE lower(t.name) = ${tag}
@@ -217,13 +254,6 @@ export async function GET(req: NextRequest) {
 
     const filters =
       conditions.length === 1 ? conditions[0] : and(...conditions);
-
-    const totalResult = await db
-      .select({ total: count() })
-      .from(opportunities)
-      .where(filters);
-
-    const totalCount = totalResult[0]?.total ?? 0;
 
     const paginated = await db
       .select({
@@ -260,12 +290,23 @@ export async function GET(req: NextRequest) {
       .leftJoin(user, eq(opportunities.userId, user.id))
       .where(filters)
       .orderBy(desc(opportunities.createdAt))
-      .limit(validLimit)
+      .limit(validLimit + 1)
       .offset(validOffset);
 
+    const hasMore = paginated.length > validLimit;
+    const pageItems = hasMore ? paginated.slice(0, validLimit) : paginated;
+
+    const totalCount = includeTotal
+      ? ((
+          await db.select({ total: count() }).from(opportunities).where(filters)
+        )[0]?.total ?? 0)
+      : hasMore
+        ? validOffset + validLimit + 1
+        : validOffset + pageItems.length;
+
     // Calculate userHasUpvoted for each opportunity
-    const currentUserId = currentUser.currentUser.id;
-    const opportunitiesWithUpvote = paginated.map((opp) => {
+    const currentUserId = session.user.id;
+    const opportunitiesWithUpvote = pageItems.map((opp) => {
       let userHasUpvoted = false;
       if (currentUserId && Array.isArray(opp.upvoterIds)) {
         userHasUpvoted = opp.upvoterIds.includes(currentUserId);
@@ -275,8 +316,6 @@ export async function GET(req: NextRequest) {
         userHasUpvoted,
       };
     });
-
-    const hasMore = validOffset + paginated.length < totalCount;
 
     return NextResponse.json(
       {

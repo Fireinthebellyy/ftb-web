@@ -1,8 +1,9 @@
 import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { tasks } from "@/lib/schema";
-import { getCurrentUser } from "@/server/users";
+import { auth } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { z } from "zod";
 
 const taskSchema = z.object({
@@ -20,8 +21,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const user = await getCurrentUser();
-    if (!user || !user.currentUser?.id) {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
         description: validatedData.description,
         opportunityLink: validatedData.opportunityLink,
         completed: false,
-        userId: user.currentUser.id,
+        userId: session.user.id,
       })
       .returning();
 
@@ -66,15 +67,15 @@ export async function GET(_req: NextRequest) {
       );
     }
 
-    const user = await getCurrentUser();
-    if (!user || !user.currentUser?.id) {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const userTasks = await db
       .select()
       .from(tasks)
-      .where(eq(tasks.userId, user.currentUser.id))
+      .where(eq(tasks.userId, session.user.id))
       .orderBy(tasks.completed, tasks.createdAt);
 
     return NextResponse.json(

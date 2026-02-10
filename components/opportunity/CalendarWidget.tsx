@@ -5,7 +5,13 @@ import { useBookmarkDatesForMonth } from "@/lib/queries-opportunities";
 import { Loader2 } from "lucide-react"; // or your preferred loading icon
 import { useRouter } from "next/navigation";
 
-const CalendarWidget = memo(function CalendarWidget() {
+interface CalendarWidgetProps {
+  queryEnabled?: boolean;
+}
+
+const CalendarWidget = memo(function CalendarWidget({
+  queryEnabled = true,
+}: CalendarWidgetProps) {
   const router = useRouter();
   const [month, setMonth] = useState<Date>(() => new Date());
 
@@ -19,7 +25,7 @@ const CalendarWidget = memo(function CalendarWidget() {
     data: bookmarkedDates = [],
     isLoading,
     error,
-  } = useBookmarkDatesForMonth(monthKey);
+  } = useBookmarkDatesForMonth(monthKey, { enabled: queryEnabled });
 
   const dates = useMemo(() => {
     return bookmarkedDates.map((d) => {

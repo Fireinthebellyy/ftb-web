@@ -24,10 +24,11 @@ export async function fetchTasks(): Promise<Task[]> {
   return data.tasks;
 }
 
-export function useTasks() {
+export function useTasks(options?: { enabled?: boolean }) {
   return useQuery<Task[]>({
     queryKey: ["tasks"],
     queryFn: fetchTasks,
+    enabled: options?.enabled ?? true,
     staleTime: 1000 * 60,
   });
 }

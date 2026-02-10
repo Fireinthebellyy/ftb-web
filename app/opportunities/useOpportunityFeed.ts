@@ -79,6 +79,8 @@ export function useOpportunityFeed({
 
   return {
     normalizedSearchTerm,
+    shouldUseBootstrap,
+    isBootstrapPending: shouldUseBootstrap && bootstrapQuery.isPending,
     allOpportunities,
     bookmarkStatuses: bookmarkStatusesQuery.data ?? {},
     isLoading,

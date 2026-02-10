@@ -184,6 +184,8 @@ export default function OpportunityCardsPage() {
   ]);
 
   const {
+    shouldUseBootstrap,
+    isBootstrapPending,
     allOpportunities,
     bookmarkStatuses,
     isLoading,
@@ -196,6 +198,8 @@ export default function OpportunityCardsPage() {
     selectedTypes,
     selectedTags,
   });
+
+  const shouldEnableWidgetQueries = !shouldUseBootstrap || !isBootstrapPending;
 
   // Rotate placeholders every 3 seconds
   useEffect(() => {
@@ -601,8 +605,8 @@ export default function OpportunityCardsPage() {
             <div className="sticky top-6 space-y-6">
               {showSecondaryWidgets ? (
                 <>
-                  <CalendarWidget />
-                  <TaskWidget />
+                  <CalendarWidget queryEnabled={shouldEnableWidgetQueries} />
+                  <TaskWidget queryEnabled={shouldEnableWidgetQueries} />
                 </>
               ) : (
                 <>

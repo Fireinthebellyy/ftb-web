@@ -298,11 +298,14 @@ export async function fetchBookmarkDatesForMonth(
   }
 }
 
-export function useBookmarkDatesForMonth(month?: string) {
+export function useBookmarkDatesForMonth(
+  month?: string,
+  options?: { enabled?: boolean }
+) {
   return useQuery<string[]>({
     queryKey: ["bookmarks", "month", month],
     queryFn: () => fetchBookmarkDatesForMonth(month as string),
-    enabled: Boolean(month),
+    enabled: Boolean(month) && (options?.enabled ?? true),
     staleTime: 1000 * 60 * 5,
   });
 }

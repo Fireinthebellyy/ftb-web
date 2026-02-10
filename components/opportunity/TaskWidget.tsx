@@ -20,7 +20,11 @@ import {
   useDeleteTask,
 } from "@/lib/queries-tasks";
 
-export default function TaskWidget() {
+interface TaskWidgetProps {
+  queryEnabled?: boolean;
+}
+
+export default function TaskWidget({ queryEnabled = true }: TaskWidgetProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskDescription, setNewTaskDescription] = useState("");
@@ -30,7 +34,13 @@ export default function TaskWidget() {
   const [editTaskDescription, setEditTaskDescription] = useState("");
   const [editTaskOpportunityLink, setEditTaskOpportunityLink] = useState("");
 
-  const { data: tasks = [], isLoading, error } = useTasks();
+  const {
+    data: tasks = [],
+    isLoading,
+    error,
+  } = useTasks({
+    enabled: queryEnabled,
+  });
 
   const { mutate: createTask, isPending: isCreating } = useCreateTask();
   const {

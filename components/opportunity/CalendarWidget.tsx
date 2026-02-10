@@ -25,12 +25,15 @@ const CalendarWidget = memo(function CalendarWidget({
     return `${y}-${m}`;
   }, [month]);
 
+  const hasInitialForCurrentMonth =
+    monthKey === initialMonthKey && Array.isArray(initialBookmarkedDates);
+
   const {
     data: bookmarkedDates = [],
     isLoading,
     error,
   } = useBookmarkDatesForMonth(monthKey, {
-    enabled: queryEnabled,
+    enabled: queryEnabled && !hasInitialForCurrentMonth,
     initialData:
       monthKey === initialMonthKey ? initialBookmarkedDates : undefined,
   });

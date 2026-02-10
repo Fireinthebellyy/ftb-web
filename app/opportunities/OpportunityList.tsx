@@ -186,6 +186,9 @@ export default function OpportunityCardsPage() {
   const {
     shouldUseBootstrap,
     isBootstrapPending,
+    bootstrapTasks,
+    bootstrapMonth,
+    bootstrapBookmarkDates,
     allOpportunities,
     bookmarkStatuses,
     isLoading,
@@ -605,8 +608,15 @@ export default function OpportunityCardsPage() {
             <div className="sticky top-6 space-y-6">
               {showSecondaryWidgets ? (
                 <>
-                  <CalendarWidget queryEnabled={shouldEnableWidgetQueries} />
-                  <TaskWidget queryEnabled={shouldEnableWidgetQueries} />
+                  <CalendarWidget
+                    queryEnabled={shouldEnableWidgetQueries}
+                    initialMonthKey={bootstrapMonth}
+                    initialBookmarkedDates={bootstrapBookmarkDates}
+                  />
+                  <TaskWidget
+                    queryEnabled={shouldEnableWidgetQueries}
+                    initialTasks={bootstrapTasks}
+                  />
                 </>
               ) : (
                 <>

@@ -19,12 +19,17 @@ import {
   useUpdateTask,
   useDeleteTask,
 } from "@/lib/queries-tasks";
+import { Task } from "@/types/interfaces";
 
 interface TaskWidgetProps {
   queryEnabled?: boolean;
+  initialTasks?: Task[];
 }
 
-export default function TaskWidget({ queryEnabled = true }: TaskWidgetProps) {
+export default function TaskWidget({
+  queryEnabled = true,
+  initialTasks,
+}: TaskWidgetProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskDescription, setNewTaskDescription] = useState("");
@@ -40,6 +45,7 @@ export default function TaskWidget({ queryEnabled = true }: TaskWidgetProps) {
     error,
   } = useTasks({
     enabled: queryEnabled,
+    initialData: initialTasks,
   });
 
   const { mutate: createTask, isPending: isCreating } = useCreateTask();

@@ -7,10 +7,14 @@ import { useRouter } from "next/navigation";
 
 interface CalendarWidgetProps {
   queryEnabled?: boolean;
+  initialMonthKey?: string;
+  initialBookmarkedDates?: string[];
 }
 
 const CalendarWidget = memo(function CalendarWidget({
   queryEnabled = true,
+  initialMonthKey,
+  initialBookmarkedDates,
 }: CalendarWidgetProps) {
   const router = useRouter();
   const [month, setMonth] = useState<Date>(() => new Date());
@@ -25,7 +29,11 @@ const CalendarWidget = memo(function CalendarWidget({
     data: bookmarkedDates = [],
     isLoading,
     error,
-  } = useBookmarkDatesForMonth(monthKey, { enabled: queryEnabled });
+  } = useBookmarkDatesForMonth(monthKey, {
+    enabled: queryEnabled,
+    initialData:
+      monthKey === initialMonthKey ? initialBookmarkedDates : undefined,
+  });
 
   const dates = useMemo(() => {
     return bookmarkedDates.map((d) => {

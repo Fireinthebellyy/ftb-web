@@ -20,7 +20,10 @@ import OpportunityPost from "@/components/OpportunityCard";
 import { NewOpportunityButton } from "@/components/opportunity/NewOpportunityButton";
 import FeaturedOpportunities from "@/components/opportunity/FeaturedOpportunities";
 import { TagsDropdown } from "@/components/opportunity/TagsDropdown";
-import { useInfiniteOpportunities } from "@/lib/queries-opportunities";
+import {
+  useBookmarkStatuses,
+  useInfiniteOpportunities,
+} from "@/lib/queries-opportunities";
 import FeedbackWidget from "@/components/FeedbackWidget";
 
 const CalendarWidget = dynamic(
@@ -240,8 +243,16 @@ export default function OpportunityCardsPage() {
   }, [searchPlaceholders.length]);
 
   // Flatten all opportunities from all pages
-  const allOpportunities =
-    data?.pages?.flatMap((page) => page.opportunities) || [];
+  const allOpportunities = useMemo(
+    () => data?.pages?.flatMap((page) => page.opportunities) || [],
+    [data]
+  );
+
+  const opportunityIds = useMemo(
+    () => allOpportunities.map((opportunity) => opportunity.id),
+    [allOpportunities]
+  );
+  const { data: bookmarkStatuses = {} } = useBookmarkStatuses(opportunityIds);
 
   // Intersection observer for infinite scroll
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -598,6 +609,9 @@ export default function OpportunityCardsPage() {
                           <OpportunityPost
                             opportunity={opportunity}
                             onBookmarkChange={handleBookmarkChange}
+                            initialIsBookmarked={Boolean(
+                              bookmarkStatuses[opportunity.id]
+                            )}
                           />
                           {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
                           {index ===
@@ -725,6 +739,9 @@ export default function OpportunityCardsPage() {
                         <OpportunityPost
                           opportunity={opportunity}
                           onBookmarkChange={handleBookmarkChange}
+                          initialIsBookmarked={Boolean(
+                            bookmarkStatuses[opportunity.id]
+                          )}
                         />
                         {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
                         {index === Math.max(0, allOpportunities.length - 3) && (

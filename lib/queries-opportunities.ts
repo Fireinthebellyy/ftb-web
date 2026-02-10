@@ -246,6 +246,41 @@ export function useIsBookmarked(id: string) {
   });
 }
 
+export type BookmarkStatusesResponse = {
+  bookmarked: Record<string, boolean>;
+};
+
+export async function fetchBookmarkStatuses(
+  opportunityIds: string[]
+): Promise<Record<string, boolean>> {
+  if (opportunityIds.length === 0) {
+    return {};
+  }
+
+  const { data } = await axios.get<BookmarkStatusesResponse>(
+    "/api/bookmarks/status",
+    {
+      params: {
+        ids: opportunityIds.join(","),
+      },
+    }
+  );
+
+  return data.bookmarked ?? {};
+}
+
+export function useBookmarkStatuses(opportunityIds: string[]) {
+  const serializedIds = opportunityIds.join(",");
+
+  return useQuery<Record<string, boolean>>({
+    queryKey: ["bookmarks", "status", serializedIds],
+    queryFn: () => fetchBookmarkStatuses(opportunityIds),
+    enabled: opportunityIds.length > 0,
+    staleTime: 1000 * 30,
+    retry: false,
+  });
+}
+
 export async function fetchBookmarkDatesForMonth(
   month: string
 ): Promise<string[]> {

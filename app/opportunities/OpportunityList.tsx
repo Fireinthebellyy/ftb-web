@@ -8,10 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-	DropdownMenu,
-	DropdownMenuCheckboxItem,
-	DropdownMenuContent,
-	DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
@@ -22,30 +22,29 @@ import { TagsDropdown } from "@/components/opportunity/TagsDropdown";
 import { useInfiniteOpportunities } from "@/lib/queries";
 import CalendarWidget from "@/components/opportunity/CalendarWidget";
 import TaskWidget from "@/components/opportunity/TaskWidget";
-import FeedbackWidget from "@/components/FeedbackWidget";
 
 const FEATURE_FLAGS = {
-	showTrendingTags: false,
+  showTrendingTags: false,
 };
 
 const AVAILABLE_TAGS = [
-	"ai",
-	"biology",
-	"mba",
-	"startup",
-	"psychology",
-	"web3",
+  "ai",
+  "biology",
+  "mba",
+  "startup",
+  "psychology",
+  "web3",
 ];
 const AVAILABLE_TYPES = ["hackathon", "grant", "competition", "ideathon"];
 
 const formatTypeName = (type: string): string => {
-	return type.charAt(0).toUpperCase() + type.slice(1);
+  return type.charAt(0).toUpperCase() + type.slice(1);
 };
 
 const getTypeDropdownLabel = (selected: string[], compact = false) => {
-	if (selected.length === 0) return compact ? "Types" : "Opportunity types";
-	if (selected.length === 1) return formatTypeName(selected[0]);
-	return `${selected.length} types`;
+  if (selected.length === 0) return compact ? "Types" : "Opportunity types";
+  if (selected.length === 1) return formatTypeName(selected[0]);
+  return `${selected.length} types`;
 };
 
 export default function OpportunityCardsPage() {
@@ -277,8 +276,7 @@ export default function OpportunityCardsPage() {
   ) => {
     // TODO: handle bookmark
     console.log(
-      `Opportunity ${opportunityId} ${
-        isBookmarked ? "bookmarked" : "unbookmarked"
+      `Opportunity ${opportunityId} ${isBookmarked ? "bookmarked" : "unbookmarked"
       }`
     );
   };
@@ -350,11 +348,10 @@ export default function OpportunityCardsPage() {
                   <Badge
                     key={tag}
                     variant={isSelected ? "default" : "outline"}
-                    className={`cursor-pointer px-3 py-1 text-sm ${
-                      isSelected
-                        ? "bg-neutral-700 text-gray-200"
-                        : "bg-white text-gray-700"
-                    }`}
+                    className={`cursor-pointer px-3 py-1 text-sm ${isSelected
+                      ? "bg-neutral-700 text-gray-200"
+                      : "bg-white text-gray-700"
+                      }`}
                     onClick={() => toggleTag(tag)}
                   >
                     <span>{displayTag}</span>
@@ -478,11 +475,10 @@ export default function OpportunityCardsPage() {
                     <Badge
                       key={tag}
                       variant={isSelected ? "default" : "outline"}
-                      className={`cursor-pointer px-3 py-1 text-sm ${
-                        isSelected
-                          ? "bg-neutral-700 text-gray-200"
-                          : "bg-white text-gray-700"
-                      }`}
+                      className={`cursor-pointer px-3 py-1 text-sm ${isSelected
+                        ? "bg-neutral-700 text-gray-200"
+                        : "bg-white text-gray-700"
+                        }`}
                       onClick={() => toggleTag(tag)}
                     >
                       <span>{displayTag}</span>
@@ -494,11 +490,10 @@ export default function OpportunityCardsPage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
-                className={`shrink-0 transition-all hover:bg-orange-600 hover:text-white ${
-                  isFilterBoxOpen
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-gray-400"
-                }`}
+                className={`shrink-0 transition-all hover:bg-orange-600 hover:text-white ${isFilterBoxOpen
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-gray-400"
+                  }`}
               >
                 <Filter className="h-5 w-5" />
               </Button>
@@ -584,8 +579,8 @@ export default function OpportunityCardsPage() {
                           {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
                           {index ===
                             Math.max(0, allOpportunities.length - 3) && (
-                            <div ref={desktopTriggerRef} className="h-1" />
-                          )}
+                              <div ref={desktopTriggerRef} className="h-1" />
+                            )}
                         </div>
                       ))}
                     </div>
@@ -746,33 +741,6 @@ export default function OpportunityCardsPage() {
             </>
           )}
         </div>
-      </div>
-      <FeedbackWidget />
-      <div className="fixed right-6 bottom-6 z-50 flex size-10 items-center justify-center rounded-full bg-neutral-200 text-neutral-600 shadow-lg transition hover:bg-neutral-100 md:size-12">
-        <Link
-          href="https://wa.me/917014885565"
-          target="_blank"
-          rel="noopener noreferrer"
-          title="Chat with us on WhatsApp"
-          aria-label="Chat with us on WhatsApp"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="size-5 md:size-6"
-          >
-            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-            <path d="M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9" />
-            <path d="M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a.5 .5 0 0 0 0 1" />
-          </svg>
-        </Link>
       </div>
     </div>
   );

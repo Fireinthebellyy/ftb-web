@@ -1,5 +1,10 @@
 import sanityClient from "@/lib/sanity";
-import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import axios from "axios";
 import {
   Opportunity,
@@ -190,7 +195,10 @@ export async function fetchOpportunitiesPaginated(
   return data;
 }
 
-export function useOpportunitiesPaginated(limit: number = 10, offset: number = 0) {
+export function useOpportunitiesPaginated(
+  limit: number = 10,
+  offset: number = 0
+) {
   return useQuery<OpportunitiesResponse>({
     queryKey: ["opportunities", "paginated", limit, offset],
     queryFn: () => fetchOpportunitiesPaginated(limit, offset),
@@ -227,7 +235,10 @@ export function useInfiniteOpportunities(
     initialPageParam: 0,
     getNextPageParam: (lastPage) => {
       if (lastPage.pagination?.hasMore) {
-        return (lastPage.pagination.offset || 0) + (lastPage.pagination.limit || limit);
+        return (
+          (lastPage.pagination.offset || 0) +
+          (lastPage.pagination.limit || limit)
+        );
       }
       return undefined;
     },
@@ -493,7 +504,9 @@ export type SaveOnboardingProfileInput = {
 
 export async function fetchOnboardingProfile(): Promise<OnboardingProfile | null> {
   try {
-    const { data } = await axios.get<{ profile?: OnboardingProfile }>("/api/onboarding");
+    const { data } = await axios.get<{ profile?: OnboardingProfile }>(
+      "/api/onboarding"
+    );
     return data?.profile ?? null;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -506,7 +519,10 @@ export async function fetchOnboardingProfile(): Promise<OnboardingProfile | null
 export async function saveOnboardingProfile(
   payload: SaveOnboardingProfileInput
 ): Promise<OnboardingProfile> {
-  const { data } = await axios.post<{ profile: OnboardingProfile }>("/api/onboarding", payload);
+  const { data } = await axios.post<{ profile: OnboardingProfile }>(
+    "/api/onboarding",
+    payload
+  );
   return data.profile;
 }
 
@@ -533,21 +549,18 @@ export async function fetchInternshipsPaginated(
   minStipend?: number,
   maxStipend?: number
 ): Promise<InternshipsResponse> {
-  const { data } = await axios.get<InternshipsResponse>(
-    "/api/internships",
-    {
-      params: {
-        limit,
-        offset,
-        search: search && search.length > 0 ? search : undefined,
-        types: types.length > 0 ? types.join(",") : undefined,
-        tags: tags.length > 0 ? tags.join(",") : undefined,
-        location: location && location.length > 0 ? location : undefined,
-        minStipend: minStipend !== undefined ? minStipend : undefined,
-        maxStipend: maxStipend !== undefined ? maxStipend : undefined,
-      },
-    }
-  );
+  const { data } = await axios.get<InternshipsResponse>("/api/internships", {
+    params: {
+      limit,
+      offset,
+      search: search && search.length > 0 ? search : undefined,
+      types: types.length > 0 ? types.join(",") : undefined,
+      tags: tags.length > 0 ? tags.join(",") : undefined,
+      location: location && location.length > 0 ? location : undefined,
+      minStipend: minStipend !== undefined ? minStipend : undefined,
+      maxStipend: maxStipend !== undefined ? maxStipend : undefined,
+    },
+  });
   return data;
 }
 
@@ -589,7 +602,10 @@ export function useInfiniteInternships(
     initialPageParam: 0,
     getNextPageParam: (lastPage) => {
       if (lastPage.pagination?.hasMore) {
-        return (lastPage.pagination.offset || 0) + (lastPage.pagination.limit || limit);
+        return (
+          (lastPage.pagination.offset || 0) +
+          (lastPage.pagination.limit || limit)
+        );
       }
       return undefined;
     },
@@ -614,3 +630,4 @@ export * from "./queries-tasks";
 export * from "./queries-onboarding";
 export * from "./queries-toolkits";
 export * from "./queries-version";
+export * from "./queries-internships";

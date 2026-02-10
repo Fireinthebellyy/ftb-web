@@ -24,7 +24,7 @@ import { ToolkitContentItem } from "@/types/interfaces";
 import LessonSidebar from "@/components/toolkit/LessonSidebar";
 import BunnyPlayer from "@/components/toolkit/BunnyPlayer";
 import MarkdownRenderer from "@/components/toolkit/MarkdownRenderer";
-import { useToolkit, useMarkContentComplete } from "@/lib/queries";
+import { useToolkit, useMarkContentComplete } from "@/lib/queries-toolkits";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface CircularProgressProps {

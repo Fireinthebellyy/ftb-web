@@ -1,7 +1,7 @@
 "use client";
 import { memo, useMemo, useState } from "react";
 import { Calendar } from "../ui/calendar";
-import { useBookmarkDatesForMonth } from "@/lib/queries";
+import { useBookmarkDatesForMonth } from "@/lib/queries-opportunities";
 import { Loader2 } from "lucide-react"; // or your preferred loading icon
 import { useRouter } from "next/navigation";
 

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { createOpportunityStorage } from "@/lib/appwrite";
 import { OpportunityPostProps } from "@/types/interfaces";
-import { useIsBookmarked } from "@/lib/queries";
+import { useIsBookmarked } from "@/lib/queries-opportunities";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";

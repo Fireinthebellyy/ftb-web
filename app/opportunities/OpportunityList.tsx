@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Search, Filter, Loader2, ChevronDown, X } from "lucide-react";
@@ -8,44 +11,45 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-	DropdownMenu,
-	DropdownMenuCheckboxItem,
-	DropdownMenuContent,
-	DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import Link from "next/link";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import OpportunityPost from "@/components/OpportunityCard";
 import { NewOpportunityButton } from "@/components/opportunity/NewOpportunityButton";
 import FeaturedOpportunities from "@/components/opportunity/FeaturedOpportunities";
 import { TagsDropdown } from "@/components/opportunity/TagsDropdown";
-import { useInfiniteOpportunities } from "@/lib/queries";
-import CalendarWidget from "@/components/opportunity/CalendarWidget";
-import TaskWidget from "@/components/opportunity/TaskWidget";
+import { useInfiniteOpportunities } from "@/lib/queries-opportunities";
 import FeedbackWidget from "@/components/FeedbackWidget";
 
+const CalendarWidget = dynamic(
+  () => import("@/components/opportunity/CalendarWidget")
+);
+const TaskWidget = dynamic(() => import("@/components/opportunity/TaskWidget"));
+
 const FEATURE_FLAGS = {
-	showTrendingTags: false,
+  showTrendingTags: false,
 };
 
 const AVAILABLE_TAGS = [
-	"ai",
-	"biology",
-	"mba",
-	"startup",
-	"psychology",
-	"web3",
+  "ai",
+  "biology",
+  "mba",
+  "startup",
+  "psychology",
+  "web3",
 ];
 const AVAILABLE_TYPES = ["hackathon", "grant", "competition", "ideathon"];
 
 const formatTypeName = (type: string): string => {
-	return type.charAt(0).toUpperCase() + type.slice(1);
+  return type.charAt(0).toUpperCase() + type.slice(1);
 };
 
 const getTypeDropdownLabel = (selected: string[], compact = false) => {
-	if (selected.length === 0) return compact ? "Types" : "Opportunity types";
-	if (selected.length === 1) return formatTypeName(selected[0]);
-	return `${selected.length} types`;
+  if (selected.length === 0) return compact ? "Types" : "Opportunity types";
+  if (selected.length === 1) return formatTypeName(selected[0]);
+  return `${selected.length} types`;
 };
 
 export default function OpportunityCardsPage() {
@@ -72,6 +76,7 @@ export default function OpportunityCardsPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>(getInitialTags);
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
+  const [showSecondaryWidgets, setShowSecondaryWidgets] = useState(false);
 
   // Derive state from URL query parameters whenever searchParams changes (for browser navigation)
   useEffect(() => {
@@ -115,6 +120,17 @@ export default function OpportunityCardsPage() {
       clearTimeout(timer);
     };
   }, [searchTerm]);
+
+  // Defer secondary widgets to prioritize primary opportunity feed.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setShowSecondaryWidgets(true);
+    }, 1000);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, []);
 
   // Update URL query parameters when filters change
   useEffect(() => {
@@ -448,12 +464,14 @@ export default function OpportunityCardsPage() {
                   </p>
                   <Link
                     href="/deadlines"
+                    prefetch={false}
                     className="block text-sm text-gray-600 hover:text-gray-800"
                   >
                     My Deadlines
                   </Link>
                   <Link
                     href="/profile"
+                    prefetch={false}
                     className="block text-sm text-gray-600 hover:text-gray-800"
                   >
                     My Profile
@@ -633,8 +651,17 @@ export default function OpportunityCardsPage() {
           {/* Right Sidebar - Featured Posts - 3 columns */}
           <aside className="col-span-3">
             <div className="sticky top-6 space-y-6">
-              <CalendarWidget />
-              <TaskWidget />
+              {showSecondaryWidgets ? (
+                <>
+                  <CalendarWidget />
+                  <TaskWidget />
+                </>
+              ) : (
+                <>
+                  <div className="h-80 animate-pulse rounded-lg border bg-white" />
+                  <div className="h-52 animate-pulse rounded-lg border bg-white" />
+                </>
+              )}
               {FEATURE_FLAGS.showTrendingTags && (
                 <>
                   {/* Trending Tags */}

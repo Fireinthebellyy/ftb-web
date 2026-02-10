@@ -16,7 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useToggleUpvote } from "@/lib/queries";
+import { useToggleUpvote } from "@/lib/queries-opportunities";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { ShareDialog } from "./ShareDialog";

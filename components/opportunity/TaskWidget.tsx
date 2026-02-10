@@ -18,7 +18,7 @@ import {
   useCreateTask,
   useUpdateTask,
   useDeleteTask,
-} from "@/lib/queries";
+} from "@/lib/queries-tasks";
 
 export default function TaskWidget() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);

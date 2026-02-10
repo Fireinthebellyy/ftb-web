@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import dynamic from "next/dynamic";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -8,7 +9,10 @@ import axios from "axios";
 import { toast } from "sonner";
 import { FileItem, UploadProgress } from "@/types/interfaces";
 import { createUngatekeepStorage, getUngatekeepBucketId } from "@/lib/appwrite";
-import { ImagePicker, SelectedImages } from "@/components/opportunity/images/ImageDropzone";
+import {
+  ImagePicker,
+  SelectedImages,
+} from "@/components/opportunity/images/ImageDropzone";
 import { ExistingImages as UngatekeepExistingImages } from "./ExistingImages";
 
 import {
@@ -28,7 +32,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -37,6 +40,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import "react-quill-new/dist/quill.snow.css";
+
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
+
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, false] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["blockquote", "code-block"],
+    ["link"],
+    ["clean"],
+  ],
+};
 
 const ungatekeepFormSchema = z.object({
   title: z.string().min(3, {
@@ -99,7 +116,9 @@ export default function NewUngatekeepForm({
       linkUrl: post?.linkUrl || "",
       linkTitle: post?.linkTitle || "",
       linkImage: post?.linkImage || "",
-      tag: (post?.tag as "announcement" | "company_experience" | "resources") || undefined,
+      tag:
+        (post?.tag as "announcement" | "company_experience" | "resources") ||
+        undefined,
       isPinned: post?.isPinned || false,
       isPublished: post?.isPublished || false,
     },
@@ -217,7 +236,12 @@ export default function NewUngatekeepForm({
 
       const cleanedData = {
         ...data,
-        images: isEdit && post ? finalImages : imageIds.length > 0 ? imageIds : undefined,
+        images:
+          isEdit && post
+            ? finalImages
+            : imageIds.length > 0
+              ? imageIds
+              : undefined,
         linkUrl: data.linkUrl || undefined,
         linkTitle: data.linkTitle || undefined,
         linkImage: data.linkImage || undefined,
@@ -267,197 +291,203 @@ export default function NewUngatekeepForm({
 
   const formContent = (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Title *</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter post title" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="flex max-h-[calc(90vh-10rem)] flex-col"
+      >
+        <div className="space-y-4 overflow-y-auto pr-1">
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Title *</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter post title" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="content"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Content *</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Enter post content"
-                  className="min-h-[150px]"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="content"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Content *</FormLabel>
+                <FormControl>
+                  <div className="[&_div.ql-container]:min-h-[160px] [&_div.ql-editor]:max-h-[30vh] [&_div.ql-editor]:min-h-[160px] [&_div.ql-editor]:overflow-y-auto">
+                    <ReactQuill
+                      theme="snow"
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      modules={quillModules}
+                      placeholder="Write your post content..."
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        {/* Image Upload Section */}
-        <div className="space-y-2 border-t pt-4">
-          <div className="flex items-center justify-between">
-            <FormLabel>Images (Optional)</FormLabel>
-            <span className="text-xs text-muted-foreground">
-              {files.length + existingImages.length} / {maxFiles}
-            </span>
+          {/* Image Upload Section */}
+          <div className="space-y-2 border-t pt-4">
+            <div className="flex items-center justify-between">
+              <FormLabel>Images (Optional)</FormLabel>
+              <span className="text-muted-foreground text-xs">
+                {files.length + existingImages.length} / {maxFiles}
+              </span>
+            </div>
+
+            {/* Existing images (from post) displayed with remove option */}
+            {isEdit && post && (
+              <UngatekeepExistingImages
+                existingImages={existingImages}
+                onRemoveExisting={handleRemoveExistingImage}
+              />
+            )}
+
+            {/* Selected new images displayed */}
+            <SelectedImages files={files} setFiles={setFiles} />
+
+            {/* Image picker */}
+            <div className="flex items-center gap-2">
+              <ImagePicker
+                files={files}
+                setFiles={setFiles}
+                maxFiles={maxFiles}
+                existingImagesCount={existingImages.length}
+              />
+              <span className="text-muted-foreground text-xs">
+                Click to upload images (max {maxFiles})
+              </span>
+            </div>
           </div>
 
-          {/* Existing images (from post) displayed with remove option */}
-          {isEdit && post && (
-            <UngatekeepExistingImages
-              existingImages={existingImages}
-              onRemoveExisting={handleRemoveExistingImage}
-            />
-          )}
+          <FormField
+            control={form.control}
+            name="tag"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tag</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select tag (optional)" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="announcement">Announcement</SelectItem>
+                    <SelectItem value="company_experience">
+                      Company Experience
+                    </SelectItem>
+                    <SelectItem value="resources">Resources</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-          {/* Selected new images displayed */}
-          <SelectedImages files={files} setFiles={setFiles} />
-
-          {/* Image picker */}
-          <div className="flex items-center gap-2">
-            <ImagePicker
-              files={files}
-              setFiles={setFiles}
-              maxFiles={maxFiles}
-              existingImagesCount={existingImages.length}
+          <div className="space-y-4 border-t pt-4">
+            <h3 className="text-sm font-medium">Link Preview (Optional)</h3>
+            <FormField
+              control={form.control}
+              name="linkUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Link URL</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            <span className="text-xs text-muted-foreground">
-              Click to upload images (max {maxFiles})
-            </span>
+
+            <FormField
+              control={form.control}
+              name="linkTitle"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Link Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Link preview title" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="linkImage"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Link Image URL</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="https://example.com/image.jpg"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="space-y-4 border-t pt-4">
+            <FormField
+              control={form.control}
+              name="isPinned"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Pin Post</FormLabel>
+                    <div className="text-muted-foreground text-sm">
+                      Pinned posts appear at the top of the feed
+                    </div>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="isPublished"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Publish</FormLabel>
+                    <div className="text-muted-foreground text-sm">
+                      Published posts are visible to all users
+                    </div>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
           </div>
         </div>
 
-        <FormField
-          control={form.control}
-          name="tag"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Tag</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select tag (optional)" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="announcement">Announcement</SelectItem>
-                  <SelectItem value="company_experience">
-                    Company Experience
-                  </SelectItem>
-                  <SelectItem value="resources">Resources</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="space-y-4 border-t pt-4">
-          <h3 className="text-sm font-medium">Link Preview (Optional)</h3>
-          <FormField
-            control={form.control}
-            name="linkUrl"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Link URL</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="https://example.com"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="linkTitle"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Link Title</FormLabel>
-                <FormControl>
-                  <Input placeholder="Link preview title" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="linkImage"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Link Image URL</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="https://example.com/image.jpg"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="space-y-4 border-t pt-4">
-          <FormField
-            control={form.control}
-            name="isPinned"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base">Pin Post</FormLabel>
-                  <div className="text-sm text-muted-foreground">
-                    Pinned posts appear at the top of the feed
-                  </div>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="isPublished"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base">Publish</FormLabel>
-                  <div className="text-sm text-muted-foreground">
-                    Published posts are visible to all users
-                  </div>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="flex justify-end space-x-2 pt-4">
+        <div className="mt-4 flex justify-end space-x-2 border-t pt-4">
           {onCancel && (
             <Button
               type="button"

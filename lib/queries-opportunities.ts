@@ -199,7 +199,8 @@ export function useInfiniteOpportunities(
   limit: number = 10,
   search?: string,
   types: string[] = [],
-  tags: string[] = []
+  tags: string[] = [],
+  options?: { enabled?: boolean }
 ) {
   const serializedTypes = types.join(",");
   const serializedTags = tags.join(",");
@@ -231,6 +232,7 @@ export function useInfiniteOpportunities(
       }
       return undefined;
     },
+    enabled: options?.enabled ?? true,
     staleTime: 1000 * 30,
   });
 }

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -27,10 +27,7 @@ import {
   SEARCH_PLACEHOLDERS,
   formatTypeName,
 } from "./constants";
-import {
-  useBookmarkStatuses,
-  useInfiniteOpportunities,
-} from "@/lib/queries-opportunities";
+import { useOpportunityFeed } from "./useOpportunityFeed";
 import FeedbackWidget from "@/components/FeedbackWidget";
 const CalendarWidget = dynamic(
   () => import("@/components/opportunity/CalendarWidget")
@@ -186,21 +183,19 @@ export default function OpportunityCardsPage() {
     searchParams,
   ]);
 
-  const normalizedSearchTerm = debouncedSearchTerm.trim();
-
   const {
-    data,
+    allOpportunities,
+    bookmarkStatuses,
     isLoading,
     error,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteOpportunities(
-    10,
-    normalizedSearchTerm,
-    [...selectedTypes].sort(),
-    selectedTags.map((tag) => tag.toLowerCase()).sort()
-  );
+  } = useOpportunityFeed({
+    debouncedSearchTerm,
+    selectedTypes,
+    selectedTags,
+  });
 
   // Rotate placeholders every 3 seconds
   useEffect(() => {
@@ -212,18 +207,6 @@ export default function OpportunityCardsPage() {
 
     return () => clearInterval(interval);
   }, []);
-
-  // Flatten all opportunities from all pages
-  const allOpportunities = useMemo(
-    () => data?.pages?.flatMap((page) => page.opportunities) || [],
-    [data]
-  );
-
-  const opportunityIds = useMemo(
-    () => allOpportunities.map((opportunity) => opportunity.id),
-    [allOpportunities]
-  );
-  const { data: bookmarkStatuses = {} } = useBookmarkStatuses(opportunityIds);
 
   // Intersection observer for infinite scroll
   const loadMoreRef = useRef<HTMLDivElement>(null);

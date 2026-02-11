@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { Edit, PlusCircle, RefreshCw, Trash2 } from "lucide-react";
+import { Edit, FolderCog, PlusCircle, RefreshCw, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -64,7 +64,6 @@ export default function AdminToolkitsTable() {
       coverImageUrl: "",
       videoUrl: "",
       totalDuration: "",
-      lessonCount: 0,
       highlights: [],
       isActive: true,
       showSaleBadge: false,
@@ -114,7 +113,6 @@ export default function AdminToolkitsTable() {
         coverImageUrl: toolkit.coverImageUrl ?? "",
         videoUrl: toolkit.videoUrl ?? "",
         totalDuration: toolkit.totalDuration ?? "",
-        lessonCount: toolkit.lessonCount ?? 0,
         highlights: toolkit.highlights ?? [],
         isActive: toolkit.isActive,
         showSaleBadge: toolkit.showSaleBadge,
@@ -135,7 +133,6 @@ export default function AdminToolkitsTable() {
       videoUrl: data.videoUrl || undefined,
       category: data.category || undefined,
       totalDuration: data.totalDuration || undefined,
-      lessonCount: data.lessonCount || undefined,
       highlights: data.highlights?.filter(Boolean) || undefined,
     };
 
@@ -178,14 +175,7 @@ export default function AdminToolkitsTable() {
         accessorKey: "price",
         header: "Price",
         cell: ({ row }) => (
-          <div className="flex flex-col">
-            <span className="font-medium">INR {row.original.price}</span>
-            {row.original.originalPrice ? (
-              <span className="text-muted-foreground text-sm line-through">
-                INR {row.original.originalPrice}
-              </span>
-            ) : null}
-          </div>
+          <span className="font-medium">INR {row.original.price}</span>
         ),
       },
       {
@@ -258,14 +248,15 @@ export default function AdminToolkitsTable() {
           return (
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => {
                   setManagingToolkit(toolkit);
                   setContentManagerOpen(true);
                 }}
+                title="Manage content"
               >
-                Manage Content
+                <FolderCog className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"

@@ -123,7 +123,13 @@ export default function AdminUngatekeepTable() {
         accessorKey: "isPublished",
         header: "Status",
         cell: ({ row }) => (
-          <Badge variant={row.original.isPublished ? "default" : "secondary"}>
+          <Badge
+            className={
+              row.original.isPublished
+                ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50"
+                : "border border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-50"
+            }
+          >
             {row.original.isPublished ? "Published" : "Draft"}
           </Badge>
         ),

@@ -157,20 +157,28 @@ export default function AdminUsersTable({
         header: "Role",
         cell: ({ row }) => {
           const role = row.original.role;
-          const variant =
+
+          const roleBadgeClassName =
             role === "admin"
-              ? "destructive"
+              ? "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-50"
               : role === "member"
-                ? "default"
-                : "secondary";
-          return <Badge variant={variant}>{role}</Badge>;
+                ? "border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-50"
+                : "border border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-50";
+
+          return <Badge className={roleBadgeClassName}>{role}</Badge>;
         },
       },
       {
         accessorKey: "emailVerified",
         header: "Status",
         cell: ({ row }) => (
-          <Badge variant={row.original.emailVerified ? "default" : "outline"}>
+          <Badge
+            className={
+              row.original.emailVerified
+                ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50"
+                : "border border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-50"
+            }
+          >
             {row.original.emailVerified ? "Verified" : "Unverified"}
           </Badge>
         ),

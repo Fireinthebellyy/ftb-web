@@ -189,7 +189,13 @@ export default function AdminCouponsTable() {
         accessorKey: "isActive",
         header: "Status",
         cell: ({ row }) => (
-          <Badge variant={row.original.isActive ? "default" : "secondary"}>
+          <Badge
+            className={
+              row.original.isActive
+                ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50"
+                : "border border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-50"
+            }
+          >
             {row.original.isActive ? "Active" : "Inactive"}
           </Badge>
         ),

@@ -295,7 +295,7 @@ export default function NewUngatekeepForm({
         onSubmit={form.handleSubmit(onSubmit)}
         className="flex max-h-[calc(90vh-10rem)] flex-col"
       >
-        <div className="space-y-4 overflow-y-auto pr-1">
+        <div className="space-y-4 overflow-y-auto pr-1 pb-4">
           <FormField
             control={form.control}
             name="title"

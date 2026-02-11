@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { createOpportunityStorage } from "@/lib/appwrite";
 import { OpportunityPostProps } from "@/types/interfaces";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -42,7 +42,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   const [modalIndex, setModalIndex] = useState<number>(0);
   const [showMessage, setShowMessage] = useState<boolean>(false);
 
-  const { data: session } = authClient.useSession();
+  const { data: session } = useSession();
   const queryClient = useQueryClient();
 
   useEffect(() => {

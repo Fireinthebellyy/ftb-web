@@ -28,7 +28,6 @@ import {
   formatTypeName,
 } from "./constants";
 import { useOpportunityFeed } from "./useOpportunityFeed";
-import FeedbackWidget from "@/components/FeedbackWidget";
 const CalendarWidget = dynamic(
   () => import("@/components/opportunity/CalendarWidget")
 );

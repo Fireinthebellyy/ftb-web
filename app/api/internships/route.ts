@@ -2,7 +2,6 @@ import { db } from "@/lib/db";
 import {
   SQL,
   and,
-  count,
   desc,
   eq,
   ilike,
@@ -17,7 +16,7 @@ import { internships, tags, user } from "@/lib/schema";
 import { upsertTagsAndGetIds } from "@/lib/tags";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth"; 
+import { getSessionCached } from "@/lib/auth-session-cache";
 import { headers } from "next/headers";
 import { z } from "zod";
 
@@ -84,14 +83,22 @@ export async function POST(req: NextRequest) {
     // Handle optional fields
     if (validatedData.link) insertData.link = validatedData.link;
     if (validatedData.location) insertData.location = validatedData.location;
-    if (validatedData.hiringManager) insertData.hiringManager = validatedData.hiringManager;
-    if (validatedData.hiringManagerEmail) insertData.hiringManagerEmail = validatedData.hiringManagerEmail;
-    if (validatedData.experience) insertData.experience = validatedData.experience;
+    if (validatedData.hiringManager)
+      insertData.hiringManager = validatedData.hiringManager;
+    if (validatedData.hiringManagerEmail)
+      insertData.hiringManagerEmail = validatedData.hiringManagerEmail;
+    if (validatedData.experience)
+      insertData.experience = validatedData.experience;
     if (validatedData.duration) insertData.duration = validatedData.duration;
-    if (validatedData.eligibility && Array.isArray(validatedData.eligibility) && validatedData.eligibility.length > 0) {
+    if (
+      validatedData.eligibility &&
+      Array.isArray(validatedData.eligibility) &&
+      validatedData.eligibility.length > 0
+    ) {
       insertData.eligibility = validatedData.eligibility;
     }
-    if (validatedData.stipend !== undefined) insertData.stipend = validatedData.stipend;
+    if (validatedData.stipend !== undefined)
+      insertData.stipend = validatedData.stipend;
 
     // Handle tags
     if (validatedData.tags && Array.isArray(validatedData.tags)) {
@@ -118,7 +125,7 @@ export async function POST(req: NextRequest) {
       {
         success: true,
         data: newInternship[0],
-        userRole: user.currentUser.role
+        userRole: user.currentUser.role,
       },
       { status: 201 }
     );
@@ -128,7 +135,10 @@ export async function POST(req: NextRequest) {
     }
 
     console.error("Error creating internship:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -141,11 +151,15 @@ export async function GET(req: NextRequest) {
       );
     }
 
-   // Optionally check if current user is admin (don't redirect)
+    // Optionally check if current user is admin (don't redirect)
     let isAdmin = false;
     try {
-      const session = await auth.api.getSession({ headers: await headers() });
-      isAdmin = session?.user?.role === "admin";
+      const requestHeaders = await headers();
+      const hasCookie = Boolean(requestHeaders.get("cookie"));
+      if (hasCookie) {
+        const session = await getSessionCached(requestHeaders);
+        isAdmin = session?.user?.role === "admin";
+      }
     } catch {
       // No session - treat as non-admin
     }
@@ -158,23 +172,39 @@ export async function GET(req: NextRequest) {
     const typesParam = searchParams.get("types");
     const tagsParam = searchParams.get("tags");
     const locationParam = searchParams.get("location");
-    const minStipendParam = Number.parseInt(searchParams.get("minStipend") ?? "", 10);
-    const maxStipendParam = Number.parseInt(searchParams.get("maxStipend") ?? "", 10);
+    const minStipendParam = Number.parseInt(
+      searchParams.get("minStipend") ?? "",
+      10
+    );
+    const maxStipendParam = Number.parseInt(
+      searchParams.get("maxStipend") ?? "",
+      10
+    );
 
     const limit = Number.isNaN(limitParam) ? 10 : limitParam;
     const offset = Number.isNaN(offsetParam) ? 0 : offsetParam;
     const searchTerm = searchParam ? searchParam.trim() : "";
     const rawTypes = typesParam
-      ? typesParam.split(",").map((value) => value.trim()).filter(Boolean)
+      ? typesParam
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean)
       : [];
     const allowedTypes = (internships.type.enumValues ?? []) as string[];
     const validTypes = rawTypes.filter((type) => allowedTypes.includes(type));
     const rawTags = tagsParam
-      ? tagsParam.split(",").map((value) => value.trim().toLowerCase()).filter(Boolean)
+      ? tagsParam
+          .split(",")
+          .map((value) => value.trim().toLowerCase())
+          .filter(Boolean)
       : [];
     const location = locationParam ? locationParam.trim() : "";
-    const minStipend = Number.isNaN(minStipendParam) ? undefined : minStipendParam;
-    const maxStipend = Number.isNaN(maxStipendParam) ? undefined : maxStipendParam;
+    const minStipend = Number.isNaN(minStipendParam)
+      ? undefined
+      : minStipendParam;
+    const maxStipend = Number.isNaN(maxStipendParam)
+      ? undefined
+      : maxStipendParam;
 
     const conditions: SQL<unknown>[] = [isNull(internships.deletedAt)];
 
@@ -198,8 +228,9 @@ export async function GET(req: NextRequest) {
     }
 
     if (rawTags.length > 0) {
-      const tagConditions = rawTags.map((tag) =>
-        sql`EXISTS (
+      const tagConditions = rawTags.map(
+        (tag) =>
+          sql`EXISTS (
           SELECT 1
           FROM ${tags} t
           WHERE lower(t.name) = ${tag}
@@ -226,14 +257,8 @@ export async function GET(req: NextRequest) {
       conditions.push(lte(internships.stipend, maxStipend));
     }
 
-    const filters = conditions.length === 1 ? conditions[0] : and(...conditions);
-
-    const totalResult = await db
-      .select({ total: count() })
-      .from(internships)
-      .where(filters);
-
-    const totalCount = totalResult[0]?.total ?? 0;
+    const filters =
+      conditions.length === 1 ? conditions[0] : and(...conditions);
 
     const paginated = await db
       .select({
@@ -277,15 +302,17 @@ export async function GET(req: NextRequest) {
       .leftJoin(user, eq(internships.userId, user.id))
       .where(filters)
       .orderBy(desc(internships.createdAt))
-      .limit(limit)
+      .limit(limit + 1)
       .offset(offset);
 
-    const hasMore = offset + paginated.length < totalCount;
+    const hasMore = paginated.length > limit;
+    const pageItems = hasMore ? paginated.slice(0, limit) : paginated;
+    const totalCount = hasMore ? offset + limit + 1 : offset + pageItems.length;
 
     return NextResponse.json(
       {
         success: true,
-        internships: paginated,
+        internships: pageItems,
         pagination: {
           limit,
           offset,

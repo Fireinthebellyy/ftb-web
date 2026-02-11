@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { toolkits, userToolkits } from "@/lib/schema";
-import { getCurrentUser } from "@/server/users";
+import { getSessionCached } from "@/lib/auth-session-cache";
 import { eq, and, inArray } from "drizzle-orm";
+import { headers } from "next/headers";
 
 // GET user's purchased toolkits
 export async function GET() {
   try {
-    const user = await getCurrentUser();
+    const session = await getSessionCached(await headers());
 
-    if (!user || !user.currentUser?.id) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -19,7 +20,7 @@ export async function GET() {
       .from(userToolkits)
       .where(
         and(
-          eq(userToolkits.userId, user.currentUser.id),
+          eq(userToolkits.userId, session.user.id),
           eq(userToolkits.paymentStatus, "completed")
         )
       );

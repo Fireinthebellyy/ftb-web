@@ -8,8 +8,9 @@ import {
   userToolkitProgress,
   coupons,
 } from "@/lib/schema";
-import { getCurrentUser } from "@/server/users";
+import { getSessionCached } from "@/lib/auth-session-cache";
 import { eq, and, asc, sql, or, lt, isNull } from "drizzle-orm";
+import { headers } from "next/headers";
 
 // GET specific toolkit by ID
 export async function GET(
@@ -67,17 +68,17 @@ export async function GET(
       .where(eq(toolkitContentItems.toolkitId, toolkitId))
       .orderBy(asc(toolkitContentItems.orderIndex));
 
-    const userSession = await getCurrentUser();
+    const session = await getSessionCached(await headers());
     let hasPurchased = false;
     let completedItemIds: string[] = [];
 
-    if (userSession && userSession.currentUser?.id) {
+    if (session?.user?.id) {
       const purchase = await db
         .select()
         .from(userToolkits)
         .where(
           and(
-            eq(userToolkits.userId, userSession.currentUser.id),
+            eq(userToolkits.userId, session.user.id),
             eq(userToolkits.toolkitId, toolkitId),
             eq(userToolkits.paymentStatus, "completed")
           )
@@ -93,7 +94,7 @@ export async function GET(
           .from(userToolkitProgress)
           .where(
             and(
-              eq(userToolkitProgress.userId, userSession.currentUser.id),
+              eq(userToolkitProgress.userId, session.user.id),
               eq(userToolkitProgress.toolkitId, toolkitId)
             )
           );
@@ -125,11 +126,13 @@ export async function POST(
   try {
     const paramsResolved = await params;
     const toolkitId = paramsResolved.id;
-    const userSession = await getCurrentUser();
+    const session = await getSessionCached(await headers());
 
-    if (!userSession || !userSession.currentUser?.id) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const userId = session.user.id;
 
     const body = await request.json();
     const couponCode = body.couponCode as string | undefined;
@@ -151,7 +154,7 @@ export async function POST(
       .from(userToolkits)
       .where(
         and(
-          eq(userToolkits.userId, userSession.currentUser.id),
+          eq(userToolkits.userId, userId),
           eq(userToolkits.toolkitId, toolkitId),
           eq(userToolkits.paymentStatus, "completed")
         )
@@ -202,7 +205,7 @@ export async function POST(
             .from(userToolkits)
             .where(
               and(
-                eq(userToolkits.userId, userSession.currentUser.id),
+                eq(userToolkits.userId, userId),
                 eq(userToolkits.couponId, coupon.id),
                 eq(userToolkits.paymentStatus, "completed")
               )
@@ -334,7 +337,7 @@ export async function POST(
     const newPurchase = await db
       .insert(userToolkits)
       .values({
-        userId: userSession.currentUser.id,
+        userId,
         toolkitId: toolkitId,
         razorpayOrderId: order.id,
         paymentStatus: "pending",

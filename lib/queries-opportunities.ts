@@ -199,7 +199,8 @@ export function useInfiniteOpportunities(
   limit: number = 10,
   search?: string,
   types: string[] = [],
-  tags: string[] = []
+  tags: string[] = [],
+  options?: { enabled?: boolean }
 ) {
   const serializedTypes = types.join(",");
   const serializedTags = tags.join(",");
@@ -231,6 +232,7 @@ export function useInfiniteOpportunities(
       }
       return undefined;
     },
+    enabled: options?.enabled ?? true,
     staleTime: 1000 * 30,
   });
 }
@@ -243,6 +245,71 @@ export function useIsBookmarked(id: string) {
       return Boolean(data?.isBookmarked);
     },
     staleTime: 1000 * 30,
+  });
+}
+
+export type BookmarkStatusesResponse = {
+  bookmarked: Record<string, boolean>;
+};
+
+export const bookmarkStatusesQueryKey = ["bookmarks", "status"] as const;
+
+export async function fetchBookmarkStatuses(
+  opportunityIds: string[]
+): Promise<Record<string, boolean>> {
+  if (opportunityIds.length === 0) {
+    return {};
+  }
+
+  const { data } = await axios.get<BookmarkStatusesResponse>(
+    "/api/bookmarks/status",
+    {
+      params: {
+        ids: opportunityIds.join(","),
+      },
+    }
+  );
+
+  return data.bookmarked ?? {};
+}
+
+export function useBookmarkStatuses(opportunityIds: string[]) {
+  const queryClient = useQueryClient();
+
+  return useQuery<Record<string, boolean>>({
+    queryKey: bookmarkStatusesQueryKey,
+    queryFn: async () => {
+      const existingStatuses =
+        queryClient.getQueryData<Record<string, boolean>>(
+          bookmarkStatusesQueryKey
+        ) ?? {};
+
+      const uniqueIds = Array.from(new Set(opportunityIds));
+      const missingIds = uniqueIds.filter(
+        (opportunityId) => !(opportunityId in existingStatuses)
+      );
+
+      if (missingIds.length === 0) {
+        return existingStatuses;
+      }
+
+      const fetchedStatuses = await fetchBookmarkStatuses(missingIds);
+
+      const mergedStatuses = { ...existingStatuses };
+      for (const opportunityId of missingIds) {
+        mergedStatuses[opportunityId] = Boolean(fetchedStatuses[opportunityId]);
+      }
+
+      queryClient.setQueryData<Record<string, boolean>>(
+        bookmarkStatusesQueryKey,
+        mergedStatuses
+      );
+
+      return mergedStatuses;
+    },
+    enabled: opportunityIds.length > 0,
+    staleTime: 1000 * 30,
+    retry: false,
   });
 }
 
@@ -261,11 +328,15 @@ export async function fetchBookmarkDatesForMonth(
   }
 }
 
-export function useBookmarkDatesForMonth(month?: string) {
+export function useBookmarkDatesForMonth(
+  month?: string,
+  options?: { enabled?: boolean; initialData?: string[] }
+) {
   return useQuery<string[]>({
     queryKey: ["bookmarks", "month", month],
     queryFn: () => fetchBookmarkDatesForMonth(month as string),
-    enabled: Boolean(month),
+    enabled: Boolean(month) && (options?.enabled ?? true),
+    initialData: options?.initialData,
     staleTime: 1000 * 60 * 5,
   });
 }

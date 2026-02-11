@@ -24,7 +24,7 @@ import { ToolkitContentItem } from "@/types/interfaces";
 import LessonSidebar from "@/components/toolkit/LessonSidebar";
 import BunnyPlayer from "@/components/toolkit/BunnyPlayer";
 import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
-import { useToolkit, useMarkContentComplete } from "@/lib/queries";
+import { useToolkit, useMarkContentComplete } from "@/lib/queries-toolkits";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface CircularProgressProps {
@@ -122,7 +122,6 @@ export default function ToolkitContentPage() {
       setCurrentItem(sortedItems[0]);
     }
   }, [contentItems, currentItem]);
-
 
   useEffect(() => {
     if (!isLoading && toolkit && !hasAccess && !didRedirectRef.current) {

@@ -16,8 +16,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useToggleUpvote } from "@/lib/queries";
-import { authClient } from "@/lib/auth-client";
+import { useToggleUpvote } from "@/lib/queries-opportunities";
+import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
 import { ShareDialog } from "./ShareDialog";
 import CommentSection from "./CommentSection";
@@ -41,7 +41,7 @@ export function OpportunityActions({
   onEdit,
 }: OpportunityActionsProps) {
   const { id, user, userHasUpvoted } = opportunity;
-  const { data: session } = authClient.useSession();
+  const { data: session } = useSession();
   const toggleUpvote = useToggleUpvote(id);
   const [showMessage, setShowMessage] = useState(false);
 

@@ -1,12 +1,15 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { Lock } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import UngatekeepCard from "@/components/ungatekeep/UngatekeepCard";
 import CalendarWidget from "@/components/opportunity/CalendarWidget";
 import FeaturedToolkits from "@/components/toolkit/FeaturedToolkits";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type UngatekeepPost = {
@@ -24,8 +27,14 @@ type UngatekeepPost = {
   creatorName?: string | null;
 };
 
+type UngatekeepResponse = {
+  posts: UngatekeepPost[];
+  totalCount: number;
+  isLimited: boolean;
+};
+
 export default function UngatekeepPage() {
-  const { data: posts = [], isLoading } = useQuery<UngatekeepPost[]>({
+  const { data, isLoading } = useQuery<UngatekeepResponse>({
     queryKey: ["ungatekeep"],
     queryFn: async () => {
       try {
@@ -39,6 +48,11 @@ export default function UngatekeepPage() {
     },
     staleTime: 1000 * 60 * 5,
   });
+
+  const posts = data?.posts ?? [];
+  const totalCount = data?.totalCount ?? 0;
+  const hasMorePosts = data?.isLimited ?? false;
+  const hiddenCount = totalCount - posts.length;
 
   if (isLoading) {
     return (
@@ -97,6 +111,26 @@ export default function UngatekeepPage() {
                 {posts.map((post) => (
                   <UngatekeepCard key={post.id} post={post} />
                 ))}
+
+                {hasMorePosts ? (
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-50 pointer-events-none" />
+                    <div className="rounded-lg border border-dashed border-gray-300 bg-white/80 backdrop-blur-sm py-8 text-center">
+                      <Lock className="mx-auto h-8 w-8 text-gray-400 mb-3" />
+                      <h3 className="mb-2 text-lg font-semibold text-gray-700">
+                        {hiddenCount} more {hiddenCount === 1 ? "post" : "posts"} available
+                      </h3>
+                      <p className="text-gray-500 mb-4">
+                        Login to see all posts and announcements
+                      </p>
+                      <Button asChild>
+                        <Link href="/login?returnUrl=/ungatekeep">
+                          Login to continue
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             )}
           </div>

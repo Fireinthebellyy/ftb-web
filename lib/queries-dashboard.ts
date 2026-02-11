@@ -1,8 +1,10 @@
 import axios from "axios";
-import { useEffect } from "react";
 import { InfiniteData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Task } from "@/types/interfaces";
-import { OpportunitiesResponse } from "@/lib/queries-opportunities";
+import {
+  bookmarkStatusesQueryKey,
+  OpportunitiesResponse,
+} from "@/lib/queries-opportunities";
 
 type DashboardBootstrapResponse = {
   opportunities: OpportunitiesResponse["opportunities"];
@@ -61,6 +63,9 @@ export function useDashboardBootstrap(
   options?: { enabled?: boolean }
 ) {
   const queryClient = useQueryClient();
+  const normalizedSearch = params.search?.trim() ?? "";
+  const sortedTypes = [...params.types].sort();
+  const sortedTags = params.tags.map((tag) => tag.toLowerCase()).sort();
 
   const query = useQuery({
     queryKey: [
@@ -72,61 +77,51 @@ export function useDashboardBootstrap(
       params.tags.join(","),
       params.month,
     ],
-    queryFn: () => fetchDashboardBootstrap(params),
+    queryFn: async () => {
+      const data = await fetchDashboardBootstrap(params);
+
+      queryClient.setQueryData<InfiniteData<OpportunitiesResponse>>(
+        opportunitiesInfiniteKey(
+          params.limit,
+          normalizedSearch,
+          sortedTypes,
+          sortedTags
+        ),
+        {
+          pages: [
+            {
+              opportunities: data.opportunities,
+              pagination: data.pagination,
+            },
+          ],
+          pageParams: [0],
+        }
+      );
+
+      queryClient.setQueryData<Task[]>(["tasks"], data.tasks);
+      queryClient.setQueryData<string[]>(
+        ["bookmarks", "month", data.month],
+        data.bookmarkDates
+      );
+
+      const existingStatuses =
+        queryClient.getQueryData<Record<string, boolean>>(
+          bookmarkStatusesQueryKey
+        ) ?? {};
+      queryClient.setQueryData<Record<string, boolean>>(
+        bookmarkStatusesQueryKey,
+        {
+          ...existingStatuses,
+          ...data.bookmarkStatuses,
+        }
+      );
+
+      return data;
+    },
     enabled: options?.enabled ?? true,
     staleTime: 1000 * 30,
     retry: false,
   });
-
-  useEffect(() => {
-    if (!query.data) {
-      return;
-    }
-
-    const data = query.data;
-    const normalizedSearch = params.search?.trim() ?? "";
-    const sortedTypes = [...params.types].sort();
-    const sortedTags = params.tags.map((tag) => tag.toLowerCase()).sort();
-
-    queryClient.setQueryData<InfiniteData<OpportunitiesResponse>>(
-      opportunitiesInfiniteKey(
-        params.limit,
-        normalizedSearch,
-        sortedTypes,
-        sortedTags
-      ),
-      {
-        pages: [
-          {
-            opportunities: data.opportunities,
-            pagination: data.pagination,
-          },
-        ],
-        pageParams: [0],
-      }
-    );
-
-    queryClient.setQueryData<Task[]>(["tasks"], data.tasks);
-    queryClient.setQueryData<string[]>(
-      ["bookmarks", "month", data.month],
-      data.bookmarkDates
-    );
-
-    const statusKey = data.opportunities
-      .map((opportunity) => opportunity.id)
-      .join(",");
-    queryClient.setQueryData<Record<string, boolean>>(
-      ["bookmarks", "status", statusKey],
-      data.bookmarkStatuses
-    );
-  }, [
-    params.limit,
-    params.search,
-    params.types,
-    params.tags,
-    query.data,
-    queryClient,
-  ]);
 
   return query;
 }

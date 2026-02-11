@@ -252,6 +252,8 @@ export type BookmarkStatusesResponse = {
   bookmarked: Record<string, boolean>;
 };
 
+export const bookmarkStatusesQueryKey = ["bookmarks", "status"] as const;
+
 export async function fetchBookmarkStatuses(
   opportunityIds: string[]
 ): Promise<Record<string, boolean>> {
@@ -272,11 +274,39 @@ export async function fetchBookmarkStatuses(
 }
 
 export function useBookmarkStatuses(opportunityIds: string[]) {
-  const serializedIds = opportunityIds.join(",");
+  const queryClient = useQueryClient();
 
   return useQuery<Record<string, boolean>>({
-    queryKey: ["bookmarks", "status", serializedIds],
-    queryFn: () => fetchBookmarkStatuses(opportunityIds),
+    queryKey: bookmarkStatusesQueryKey,
+    queryFn: async () => {
+      const existingStatuses =
+        queryClient.getQueryData<Record<string, boolean>>(
+          bookmarkStatusesQueryKey
+        ) ?? {};
+
+      const uniqueIds = Array.from(new Set(opportunityIds));
+      const missingIds = uniqueIds.filter(
+        (opportunityId) => !(opportunityId in existingStatuses)
+      );
+
+      if (missingIds.length === 0) {
+        return existingStatuses;
+      }
+
+      const fetchedStatuses = await fetchBookmarkStatuses(missingIds);
+
+      const mergedStatuses = { ...existingStatuses };
+      for (const opportunityId of missingIds) {
+        mergedStatuses[opportunityId] = Boolean(fetchedStatuses[opportunityId]);
+      }
+
+      queryClient.setQueryData<Record<string, boolean>>(
+        bookmarkStatusesQueryKey,
+        mergedStatuses
+      );
+
+      return mergedStatuses;
+    },
     enabled: opportunityIds.length > 0,
     staleTime: 1000 * 30,
     retry: false,

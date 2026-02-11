@@ -335,17 +335,19 @@ export async function GET(req: NextRequest) {
     const hasMore = paginated.length > validLimit;
     const pageItems = hasMore ? paginated.slice(0, validLimit) : paginated;
 
-    const totalCount = includeTotal
-      ? (timer.mark("query_total_start"),
-        (
-          await db.select({ total: count() }).from(opportunities).where(filters)
-        )[0]?.total ?? 0)
-      : hasMore
-        ? validOffset + validLimit + 1
-        : validOffset + pageItems.length;
+    let totalCount = 0;
 
     if (includeTotal) {
+      timer.mark("query_total_start");
+      totalCount =
+        (
+          await db.select({ total: count() }).from(opportunities).where(filters)
+        )[0]?.total ?? 0;
       timer.mark("query_total_done", { totalCount });
+    } else {
+      totalCount = hasMore
+        ? validOffset + validLimit + 1
+        : validOffset + pageItems.length;
     }
 
     // Calculate userHasUpvoted for each opportunity

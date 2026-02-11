@@ -182,11 +182,27 @@ export default function ToolkitContentManager({
   const normalizeQuillContent = (value: string): string => {
     const trimmed = value.trim();
 
-    if (!trimmed || trimmed === "<p><br></p>") {
+    const decodeHtmlEntities = (input: string): string => {
+      if (typeof window === "undefined") {
+        return input;
+      }
+
+      const textarea = window.document.createElement("textarea");
+      textarea.innerHTML = input;
+      return textarea.value;
+    };
+
+    const withoutTags = trimmed.replace(/<[^>]*>/g, " ");
+    const decodedText = decodeHtmlEntities(withoutTags)
+      .replace(/&nbsp;|&#160;|&#xA0;/gi, " ")
+      .replace(/\u00a0/g, " ");
+    const normalizedText = decodedText.replace(/\s+/g, " ").trim();
+
+    if (!normalizedText) {
       return "";
     }
 
-    return value;
+    return trimmed;
   };
 
   const handleSave = async (data: ContentItemFormValues) => {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Calendar, Type, AlignLeft } from 'lucide-react';
+import { Calendar, Type, AlignLeft } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 interface AddEventModalProps {

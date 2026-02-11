@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, CheckCircle2, ExternalLink, FileText, AlertCircle, AlertTriangle, Play, ArrowRight, Zap, Target, Save, Sparkles, ChevronLeft, Rocket } from 'lucide-react';
+import NextImage from 'next/image';
+import { X, CheckCircle2, ExternalLink, AlertCircle, Play, ArrowRight, Target, Sparkles, ChevronLeft, Rocket } from 'lucide-react';
 import clsx from 'clsx';
 import { useTracker } from '../providers/TrackerProvider';
 import { userProfile } from '@/data/userProfile';
@@ -83,10 +84,12 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
                             <div className="space-y-6">
                                 {/* Video Teaser */}
                                 <div className="relative aspect-video bg-slate-900 rounded-xl overflow-hidden flex items-center justify-center group cursor-pointer shadow-md">
-                                    <img
+                                    <NextImage
                                         src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1000"
                                         className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500"
                                         alt="Office Teaser"
+                                        width={1000}
+                                        height={562}
                                     />
                                     <div className="relative z-10 flex flex-col items-center">
                                         <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50 group-hover:scale-110 transition-transform mb-3">
@@ -122,7 +125,7 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
                                             <CheckCircle2 size={24} />
                                             <div>
                                                 <p className="font-bold">Perfect Skill Match!</p>
-                                                <p className="text-sm opacity-90">You have all the listed requirements. Go get 'em!</p>
+                                                <p className="text-sm opacity-90">You have all the listed requirements. Go get &apos;em!</p>
                                             </div>
                                         </div>
                                     )}
@@ -137,7 +140,7 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
                                 </div>
                                 <h3 className="text-2xl font-bold text-slate-900 mb-2">Ready to Launch?</h3>
                                 <p className="text-slate-500 max-w-md mx-auto mb-8">
-                                    You're about to apply to <b>{opportunity.company || opportunity.hiringOrganization}</b>. We've saved your notes and drafted your responses.
+                                    You&apos;re about to apply to <b>{opportunity.company || opportunity.hiringOrganization}</b>. We&apos;ve saved your notes and drafted your responses.
                                 </p>
 
                                 <div className="bg-slate-50 max-w-sm mx-auto rounded-xl p-4 border border-slate-200 text-left mb-8">

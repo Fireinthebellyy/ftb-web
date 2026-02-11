@@ -28,6 +28,7 @@ export default function Tracker() {
 
     const { items, events, addEvent, removeEvent, updateStatus, addToTracker, removeFromTracker } = useTracker();
     const [viewMode, setViewMode] = useState<'upcoming' | 'pipeline'>('upcoming');
+    const [activeTab, setActiveTab] = useState<'internship' | 'opportunity'>('internship');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEventModalOpen, setIsEventModalOpen] = useState(false);
 
@@ -35,7 +36,8 @@ export default function Tracker() {
     const [smartApplyOpp, setSmartApplyOpp] = useState<any>(null);
 
     // Hydrate & Enhance Logic
-    const trackedOpps = items.map(item => {
+    const filteredItems = items.filter(i => (i.kind || 'internship') === activeTab);
+    const trackedOpps = filteredItems.map(item => {
         const staticOpp = opportunities.find(o => o.id === item.oppId);
         // Fallback for manual entries that might not be in opportunities.js
         const opp = staticOpp || { ...item, id: item.oppId } as any;
@@ -136,10 +138,31 @@ export default function Tracker() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <h2 className="text-3xl font-bold text-slate-900">Personal Tracker</h2>
-                    <p className="text-slate-500">Track, Manage, and Optimize your internship search.</p>
+                    <p className="text-slate-500">Track, Manage, and Optimize your {activeTab} search.</p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                    {/* Tab Switcher */}
+                    <div className="bg-slate-100 p-1 rounded-lg flex items-center justify-center">
+                        <button
+                            onClick={() => setActiveTab('internship')}
+                            className={clsx(
+                                "px-3 py-1.5 rounded-md text-sm font-bold transition-all flex justify-center items-center gap-2",
+                                activeTab === 'internship' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                            )}
+                        >
+                            Internships
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('opportunity')}
+                            className={clsx(
+                                "px-3 py-1.5 rounded-md text-sm font-bold transition-all flex justify-center items-center gap-2",
+                                activeTab === 'opportunity' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                            )}
+                        >
+                            Opportunities
+                        </button>
+                    </div>
                     <div className="bg-slate-100 p-1 rounded-lg hidden sm:flex items-center justify-center">
                         <button
                             onClick={() => setViewMode('upcoming')}
@@ -359,7 +382,7 @@ export default function Tracker() {
             <AddApplicationModal
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
-                onAdd={(opp, status) => addToTracker(opp, status)}
+                onAdd={(opp, status) => addToTracker(opp, status, activeTab)}
             />
 
             <AddEventModal

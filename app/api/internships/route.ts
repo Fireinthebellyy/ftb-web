@@ -20,7 +20,6 @@ import { getSessionCached } from "@/lib/auth-session-cache";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { opportunities } from "@/data/opportunities";
-import { Internship } from "@/types/interfaces";
 
 const internshipSchema = z.object({
   type: z.enum(["in-office", "work-from-home", "hybrid"], {
@@ -318,7 +317,7 @@ export async function GET(req: NextRequest) {
     // Fallback to static data if DB is empty and no specific filters are applied
     // This ensures the "Coming Soon" feeling is replaced by actual data the user expects from the source code
     if (totalCount === 0 && offset === 0 && !searchTerm && validTypes.length === 0 && rawTags.length === 0 && !location && minStipend === undefined && maxStipend === undefined) {
-      const staticInternships = opportunities.map((opp, index) => {
+      const staticInternships = opportunities.map((opp) => {
         // Map tags to determine type
         let type = "in-office";
         if (opp.tags?.some(t => t.toLowerCase().includes("remote"))) type = "work-from-home";

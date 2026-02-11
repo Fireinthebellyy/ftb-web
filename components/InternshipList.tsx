@@ -229,15 +229,10 @@ export default function InternshipList() {
   }, [handleLoadMore, allInternships.length]);
 
   const handleBookmarkChange = (
-    internshipId: string,
-    isBookmarked: boolean
+    _internshipId: string,
+    _isBookmarked: boolean
   ) => {
     // TODO: handle bookmark
-    console.log(
-      `Internship ${internshipId} ${
-        isBookmarked ? "bookmarked" : "unbookmarked"
-      }`
-    );
   };
 
   const clearFilters = () => {
@@ -394,7 +389,9 @@ export default function InternshipList() {
               {/* Filters */}
               {isFilterBoxOpen && (
                 <div className="rounded-lg border bg-white px-4 py-3">
-                  <h3 className="mb-3 font-semibold text-gray-900">Filters</h3>
+                  <h3 className="mb-3 font-semibold text-gray-900">
+                    Filters
+                  </h3>
                   <div className="space-y-4">
                     {/* Internship Type Filter */}
                     <div>

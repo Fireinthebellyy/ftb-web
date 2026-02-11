@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 interface TrackerItem extends Opportunity {
     oppId: number | string;
     status: string; // 'Not Applied' | 'Draft' | 'Applied' | 'Result Awaited' | 'Selected' | 'Rejected'
+    kind?: 'internship' | 'opportunity'; // Default to 'internship' if undefined
     addedAt: string;
     appliedAt: string | null;
     result: string | null;
@@ -25,7 +26,7 @@ interface TrackerEvent {
 interface TrackerContextType {
     items: TrackerItem[];
     events: TrackerEvent[];
-    addToTracker: (oppOrId: number | string | Partial<TrackerItem>, initialStatus?: string) => void;
+    addToTracker: (oppOrId: number | string | Partial<TrackerItem>, initialStatus?: string, kind?: 'internship' | 'opportunity') => void;
     removeFromTracker: (oppId: number | string) => void;
     updateStatus: (oppId: number | string, status: string, extraData?: any) => void;
     getStatus: (oppId: number | string) => string | null;
@@ -76,7 +77,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
         setEvents(prev => prev.filter(e => e.id !== id));
     };
 
-    const addToTracker = (oppOrId: number | string | Partial<TrackerItem>, initialStatus = 'Not Applied') => {
+    const addToTracker = (oppOrId: number | string | Partial<TrackerItem>, initialStatus = 'Not Applied', kind: 'internship' | 'opportunity' = 'internship') => {
         setItems(prevItems => {
             const isManual = typeof oppOrId === 'object';
             const idToCheck = isManual ? (oppOrId as TrackerItem).id || Date.now() : (oppOrId as number | string);
@@ -110,6 +111,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
                 ...(isManual ? (oppOrId as TrackerItem) : staticData as TrackerItem),
                 oppId: idToCheck,
                 status: initialStatus,
+                kind: isManual && (oppOrId as TrackerItem).kind ? (oppOrId as TrackerItem).kind : kind,
                 addedAt: new Date().toISOString(),
                 appliedAt: initialStatus === 'Applied' ? new Date().toISOString() : null,
                 result: null,

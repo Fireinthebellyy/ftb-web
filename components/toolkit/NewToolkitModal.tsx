@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -65,14 +64,17 @@ const toolkitFormSchema = z.object({
 
 type ToolkitFormValues = z.infer<typeof toolkitFormSchema>;
 
+interface NewToolkitModalProps {
+  children: React.ReactNode;
+  onSuccess?: () => void;
+}
+
 export default function NewToolkitModal({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+  onSuccess,
+}: NewToolkitModalProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const router = useRouter();
 
   const form = useForm<ToolkitFormValues>({
     resolver: zodResolver(toolkitFormSchema),
@@ -110,7 +112,7 @@ export default function NewToolkitModal({
         toast.success("Toolkit created successfully!");
         setOpen(false);
         form.reset();
-        router.refresh();
+        onSuccess?.();
       }
     } catch (error) {
       console.error("Error creating toolkit:", error);

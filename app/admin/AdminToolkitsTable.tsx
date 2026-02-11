@@ -292,7 +292,11 @@ export default function AdminToolkitsTable() {
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
-          <NewToolkitModal>
+          <NewToolkitModal
+            onSuccess={() =>
+              queryClient.invalidateQueries({ queryKey: ["admin", "toolkits"] })
+            }
+          >
             <Button className="gap-2">
               <PlusCircle className="h-4 w-4" />
               Create Toolkit

@@ -360,7 +360,7 @@ export default function ToolkitContentManager({
                         control={form.control}
                         name="isArticle"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                          <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                             <FormControl>
                               <input
                                 type="checkbox"
@@ -379,7 +379,7 @@ export default function ToolkitContentManager({
                         control={form.control}
                         name="isVideo"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                          <FormItem className="flex flex-row items-center space-y-0 space-x-3">
                             <FormControl>
                               <input
                                 type="checkbox"

@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { ToolkitContentItem } from "@/types/interfaces";
 import LessonSidebar from "@/components/toolkit/LessonSidebar";
 import BunnyPlayer from "@/components/toolkit/BunnyPlayer";
-import MarkdownRenderer from "@/components/toolkit/MarkdownRenderer";
+import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
 import { useToolkit, useMarkContentComplete } from "@/lib/queries-toolkits";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -329,8 +329,8 @@ export default function ToolkitContentPage() {
 
               {currentItem.type === "article" && currentItem.content && (
                 <Card>
-                  <CardContent className="p-4 sm:p-6">
-                    <MarkdownRenderer
+                  <CardContent className="p-3 sm:p-4">
+                    <HtmlRenderer
                       content={currentItem.content}
                       protected={true}
                       itemId={currentItem.id}

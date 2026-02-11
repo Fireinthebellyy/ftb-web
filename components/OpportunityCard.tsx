@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { createOpportunityStorage } from "@/lib/appwrite";
 import { OpportunityPostProps } from "@/types/interfaces";
-import { useIsBookmarked } from "@/lib/queries";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -30,10 +29,13 @@ const isValidUUID = (uuid: string): boolean => {
 const OpportunityPost: React.FC<OpportunityPostProps> = ({
   opportunity,
   onBookmarkChange,
+  initialIsBookmarked,
 }) => {
   const { id, images, title } = opportunity;
 
-  const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
+  const [isBookmarked, setIsBookmarked] = useState<boolean>(
+    Boolean(initialIsBookmarked)
+  );
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [showComments, setShowComments] = useState<boolean>(false);
   const [modalOpen, setModalOpen] = useState<boolean>(false);
@@ -42,13 +44,10 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
   const { data: session } = useSession();
   const queryClient = useQueryClient();
-  const { data: isBookmarkedServer } = useIsBookmarked(id);
 
   useEffect(() => {
-    if (typeof isBookmarkedServer === "boolean") {
-      setIsBookmarked(isBookmarkedServer);
-    }
-  }, [isBookmarkedServer]);
+    setIsBookmarked(Boolean(initialIsBookmarked));
+  }, [initialIsBookmarked]);
 
   useEffect(() => {
     if (showMessage) {
@@ -102,7 +101,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         onBookmarkChange(id, newState);
       }
 
-      queryClient.invalidateQueries({ queryKey: ["bookmark", id] });
+      queryClient.invalidateQueries({ queryKey: ["bookmarks", "status"] });
 
       setShowMessage(true);
     } catch (err) {

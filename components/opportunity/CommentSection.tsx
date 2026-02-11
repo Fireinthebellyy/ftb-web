@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { useComments, useCreateComment, useDeleteComment } from "@/lib/queries";
+import {
+  useComments,
+  useCreateComment,
+  useDeleteComment,
+} from "@/lib/queries-comments";
 import { Comment } from "@/types/interfaces";
 import { useSession, Session } from "@/hooks/use-session";
 import { toast } from "sonner";

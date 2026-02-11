@@ -1,6 +1,6 @@
 import React, { memo, useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { useFeatured } from "@/lib/queries";
+import { useFeatured } from "@/lib/queries-sanity";
 import { Loader2, ExternalLink } from "lucide-react";
 import {
   Carousel,

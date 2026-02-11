@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Search, Filter, Loader2, X } from "lucide-react";
@@ -10,7 +11,7 @@ import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import InternshipPost from "@/components/InternshipCard";
 import FeedbackWidget from "@/components/FeedbackWidget";
-import { useInfiniteInternships } from "@/lib/queries";
+import { useInfiniteInternships } from "@/lib/queries-internships";
 import {
   Dialog,
   DialogContent,
@@ -18,8 +19,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import FeaturedOpportunities from "./opportunity/FeaturedOpportunities";
-import CalendarWidget from "./opportunity/CalendarWidget";
-import TaskWidget from "./opportunity/TaskWidget";
 import {
   Select,
   SelectContent,
@@ -27,6 +26,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+const CalendarWidget = dynamic(() => import("./opportunity/CalendarWidget"));
+const TaskWidget = dynamic(() => import("./opportunity/TaskWidget"));
 
 export default function InternshipList() {
   const searchParams = useSearchParams();
@@ -46,7 +48,7 @@ export default function InternshipList() {
   const [type, setType] = useState<string>(getInitialType);
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
-
+  const [showSecondaryWidgets, setShowSecondaryWidgets] = useState(false);
 
   // Derive state from URL query parameters whenever searchParams changes (for browser navigation)
   useEffect(() => {
@@ -131,14 +133,17 @@ export default function InternshipList() {
     if (newUrl !== currentUrl) {
       router.replace(newUrl, { scroll: false });
     }
-  }, [
-    debouncedSearchTerm,
-    location,
-    type,
-    pathname,
-    router,
-    searchParams,
-  ]);
+  }, [debouncedSearchTerm, location, type, pathname, router, searchParams]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setShowSecondaryWidgets(true);
+    }, 1000);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, []);
 
   const normalizedSearchTerm = debouncedSearchTerm.trim();
 
@@ -159,7 +164,11 @@ export default function InternshipList() {
     undefined
   );
 
-  const searchPlaceholders = ["Software Engineer Intern", "Data Science Intern", "Marketing Intern"];
+  const searchPlaceholders = [
+    "Software Engineer Intern",
+    "Data Science Intern",
+    "Marketing Intern",
+  ];
 
   // Rotate placeholders every 3 seconds
   useEffect(() => {
@@ -173,8 +182,7 @@ export default function InternshipList() {
   }, [searchPlaceholders.length]);
 
   // Flatten all internships from all pages
-  const allInternships =
-    data?.pages?.flatMap((page) => page.internships) || [];
+  const allInternships = data?.pages?.flatMap((page) => page.internships) || [];
 
   // Intersection observer for infinite scroll
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -226,7 +234,8 @@ export default function InternshipList() {
   ) => {
     // TODO: handle bookmark
     console.log(
-      `Internship ${internshipId} ${isBookmarked ? "bookmarked" : "unbookmarked"
+      `Internship ${internshipId} ${
+        isBookmarked ? "bookmarked" : "unbookmarked"
       }`
     );
   };
@@ -280,7 +289,7 @@ export default function InternshipList() {
               variant="ghost"
               size="sm"
               onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
-              className={`shrink-0 cursor-pointer h-8 sm:h-10 px-2 hover:bg-orange-600 hover:text-white ${isFilterBoxOpen ? 'bg-orange-500 text-white hover:bg-orange-600' : ''}`}
+              className={`h-8 shrink-0 cursor-pointer px-2 hover:bg-orange-600 hover:text-white sm:h-10 ${isFilterBoxOpen ? "bg-orange-500 text-white hover:bg-orange-600" : ""}`}
             >
               <Filter className={`size-4`} />
             </Button>
@@ -294,8 +303,13 @@ export default function InternshipList() {
                 <label className="mb-1.5 block text-xs font-medium text-gray-700 sm:mb-2 sm:text-sm">
                   Internship Type
                 </label>
-                <Select value={type} onValueChange={(value) => setType(value === type ? "" : value)}>
-                  <SelectTrigger className="w-full h-7 text-xs sm:h-8 sm:text-sm cursor-pointer">
+                <Select
+                  value={type}
+                  onValueChange={(value) =>
+                    setType(value === type ? "" : value)
+                  }
+                >
+                  <SelectTrigger className="h-7 w-full cursor-pointer text-xs sm:h-8 sm:text-sm">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -334,7 +348,7 @@ export default function InternshipList() {
               <Button
                 onClick={clearFilters}
                 variant="outline"
-                className="w-full h-7 text-xs sm:h-8 sm:text-sm"
+                className="h-7 w-full text-xs sm:h-8 sm:text-sm"
               >
                 Clear All Filters
               </Button>
@@ -371,7 +385,7 @@ export default function InternshipList() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
-                  className={`shrink-0 cursor-pointer h-8 sm:h-10 px-2 hover:bg-orange-600 hover:text-white ${isFilterBoxOpen ? 'bg-orange-500 text-white hover:bg-orange-600' : ''}`}
+                  className={`h-8 shrink-0 cursor-pointer px-2 hover:bg-orange-600 hover:text-white sm:h-10 ${isFilterBoxOpen ? "bg-orange-500 text-white hover:bg-orange-600" : ""}`}
                 >
                   <Filter className={`size-4`} />
                 </Button>
@@ -380,60 +394,63 @@ export default function InternshipList() {
               {/* Filters */}
               {isFilterBoxOpen && (
                 <div className="rounded-lg border bg-white px-4 py-3">
-                <h3 className="mb-3 font-semibold text-gray-900">
-                  Filters
-                </h3>
-                <div className="space-y-4">
-                  {/* Internship Type Filter */}
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Internship Type
-                    </label>
-                    <Select value={type} onValueChange={(value) => setType(value === type ? "" : value)}>
-                      <SelectTrigger className="w-full h-8 text-sm cursor-pointer">
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="in-office">In-Office</SelectItem>
-                        <SelectItem value="work-from-home">Remote</SelectItem>
-                        <SelectItem value="hybrid">Hybrid</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Location Filter */}
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Location
-                    </label>
-                    <div className="relative">
-                      <Input
-                        placeholder="Location (e.g., Delhi, Mumbai)"
-                        value={location}
-                        onChange={(e) => setLocation(e.target.value)}
-                        className="h-9 pr-10 text-sm"
-                      />
-                      {location && (
-                        <button
-                          type="button"
-                          onClick={() => setLocation("")}
-                          className="absolute top-1/2 right-3 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
+                  <h3 className="mb-3 font-semibold text-gray-900">Filters</h3>
+                  <div className="space-y-4">
+                    {/* Internship Type Filter */}
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Internship Type
+                      </label>
+                      <Select
+                        value={type}
+                        onValueChange={(value) =>
+                          setType(value === type ? "" : value)
+                        }
+                      >
+                        <SelectTrigger className="h-8 w-full cursor-pointer text-sm">
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="in-office">In-Office</SelectItem>
+                          <SelectItem value="work-from-home">Remote</SelectItem>
+                          <SelectItem value="hybrid">Hybrid</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </div>
 
-                  {/* Clear Filters Button */}
-                  <Button
-                    onClick={clearFilters}
-                    variant="outline"
-                    className="w-full h-8"
-                  >
-                    Clear Filters
-                  </Button>
-                </div>
+                    {/* Location Filter */}
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Location
+                      </label>
+                      <div className="relative">
+                        <Input
+                          placeholder="Location (e.g., Delhi, Mumbai)"
+                          value={location}
+                          onChange={(e) => setLocation(e.target.value)}
+                          className="h-9 pr-10 text-sm"
+                        />
+                        {location && (
+                          <button
+                            type="button"
+                            onClick={() => setLocation("")}
+                            className="absolute top-1/2 right-3 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Clear Filters Button */}
+                    <Button
+                      onClick={clearFilters}
+                      variant="outline"
+                      className="h-8 w-full"
+                    >
+                      Clear Filters
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -445,18 +462,21 @@ export default function InternshipList() {
                 <div className="space-y-2">
                   <Link
                     href="/opportunities"
+                    prefetch={false}
                     className="block text-sm text-gray-600 hover:text-gray-800"
                   >
                     Opportunities
                   </Link>
                   <Link
                     href="/deadlines"
+                    prefetch={false}
                     className="block text-sm text-gray-600 hover:text-gray-800"
                   >
                     My Deadlines
                   </Link>
                   <Link
                     href="/profile"
+                    prefetch={false}
                     className="block text-sm text-gray-600 hover:text-gray-800"
                   >
                     My Profile
@@ -505,10 +525,9 @@ export default function InternshipList() {
                             onBookmarkChange={handleBookmarkChange}
                           />
                           {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
-                          {index ===
-                            Math.max(0, allInternships.length - 3) && (
-                              <div ref={desktopTriggerRef} className="h-1" />
-                            )}
+                          {index === Math.max(0, allInternships.length - 3) && (
+                            <div ref={desktopTriggerRef} className="h-1" />
+                          )}
                         </div>
                       ))}
                     </div>
@@ -556,19 +575,31 @@ export default function InternshipList() {
           <aside className="col-span-3">
             {/* deadline calendar */}
             <div className="sticky top-6 space-y-6">
-              <CalendarWidget />
-              <TaskWidget />
+              {showSecondaryWidgets ? (
+                <>
+                  <CalendarWidget />
+                  <TaskWidget />
+                </>
+              ) : (
+                <>
+                  <div className="h-80 animate-pulse rounded-lg border bg-white" />
+                  <div className="h-52 animate-pulse rounded-lg border bg-white" />
+                </>
+              )}
             </div>
-
           </aside>
-
-
         </div>
 
         {/* Mobile Content (single column) */}
         <div className="lg:hidden">
-          <Dialog open={isNewInternshipOpen} onOpenChange={setIsNewInternshipOpen}>
-            <DialogContent className="mx-auto p-4 md:max-h-[600px] md:min-w-[600px]" overlayClassName="backdrop-blur-xs bg-black/30">
+          <Dialog
+            open={isNewInternshipOpen}
+            onOpenChange={setIsNewInternshipOpen}
+          >
+            <DialogContent
+              className="mx-auto p-4 md:max-h-[600px] md:min-w-[600px]"
+              overlayClassName="backdrop-blur-xs bg-black/30"
+            >
               <DialogHeader>
                 <DialogTitle>Post New Internship</DialogTitle>
               </DialogHeader>

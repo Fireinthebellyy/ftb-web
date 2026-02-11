@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { toolkits, user as userTable } from "@/lib/schema";
+import { toolkitContentItems, toolkits, user as userTable } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
-import { eq, desc } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 
 export async function GET() {
   try {
@@ -40,7 +40,24 @@ export async function GET() {
       .leftJoin(userTable, eq(toolkits.userId, userTable.id))
       .orderBy(desc(toolkits.createdAt));
 
-    return NextResponse.json(allToolkits);
+    const lessonCounts = await db
+      .select({
+        toolkitId: toolkitContentItems.toolkitId,
+        lessonCount: sql<number>`count(*)`,
+      })
+      .from(toolkitContentItems)
+      .groupBy(toolkitContentItems.toolkitId);
+
+    const lessonCountByToolkitId = new Map(
+      lessonCounts.map((item) => [item.toolkitId, Number(item.lessonCount)])
+    );
+
+    const toolkitsWithDynamicLessonCount = allToolkits.map((toolkit) => ({
+      ...toolkit,
+      lessonCount: lessonCountByToolkitId.get(toolkit.id) ?? 0,
+    }));
+
+    return NextResponse.json(toolkitsWithDynamicLessonCount);
   } catch (error) {
     console.error("Error fetching toolkits:", error);
     return NextResponse.json(

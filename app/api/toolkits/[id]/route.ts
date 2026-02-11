@@ -308,7 +308,7 @@ export async function POST(
       const newPurchase = await db
         .insert(userToolkits)
         .values({
-          userId: userSession.currentUser.id,
+          userId,
           toolkitId: toolkitId,
           razorpayOrderId: null,
           paymentStatus: "completed",

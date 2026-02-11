@@ -295,7 +295,7 @@ export default function NewUngatekeepForm({
         onSubmit={form.handleSubmit(onSubmit)}
         className="flex max-h-[calc(90vh-10rem)] flex-col"
       >
-        <div className="space-y-4 overflow-y-auto pr-1">
+        <div className="space-y-4 overflow-y-auto pr-1 pb-4">
           <FormField
             control={form.control}
             name="title"
@@ -519,7 +519,7 @@ export default function NewUngatekeepForm({
     return (
       <Dialog open={open} onOpenChange={setOpen}>
         {children && <DialogTrigger asChild>{children}</DialogTrigger>}
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
+        <DialogContent className="max-h-[90vh] overflow-hidden sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Edit Post</DialogTitle>
           </DialogHeader>
@@ -532,7 +532,7 @@ export default function NewUngatekeepForm({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
+      <DialogContent className="max-h-[90vh] overflow-hidden sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Create New Post</DialogTitle>
         </DialogHeader>

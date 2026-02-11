@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { PlusCircle, RefreshCw } from "lucide-react";
+import { Edit, FolderCog, PlusCircle, RefreshCw, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -64,7 +64,6 @@ export default function AdminToolkitsTable() {
       coverImageUrl: "",
       videoUrl: "",
       totalDuration: "",
-      lessonCount: 0,
       highlights: [],
       isActive: true,
       showSaleBadge: false,
@@ -114,7 +113,6 @@ export default function AdminToolkitsTable() {
         coverImageUrl: toolkit.coverImageUrl ?? "",
         videoUrl: toolkit.videoUrl ?? "",
         totalDuration: toolkit.totalDuration ?? "",
-        lessonCount: toolkit.lessonCount ?? 0,
         highlights: toolkit.highlights ?? [],
         isActive: toolkit.isActive,
         showSaleBadge: toolkit.showSaleBadge,
@@ -135,7 +133,6 @@ export default function AdminToolkitsTable() {
       videoUrl: data.videoUrl || undefined,
       category: data.category || undefined,
       totalDuration: data.totalDuration || undefined,
-      lessonCount: data.lessonCount || undefined,
       highlights: data.highlights?.filter(Boolean) || undefined,
     };
 
@@ -178,14 +175,7 @@ export default function AdminToolkitsTable() {
         accessorKey: "price",
         header: "Price",
         cell: ({ row }) => (
-          <div className="flex flex-col">
-            <span className="font-medium">INR {row.original.price}</span>
-            {row.original.originalPrice ? (
-              <span className="text-muted-foreground text-sm line-through">
-                INR {row.original.originalPrice}
-              </span>
-            ) : null}
-          </div>
+          <span className="font-medium">INR {row.original.price}</span>
         ),
       },
       {
@@ -197,7 +187,13 @@ export default function AdminToolkitsTable() {
         accessorKey: "isActive",
         header: "Status",
         cell: ({ row }) => (
-          <Badge variant={row.original.isActive ? "default" : "secondary"}>
+          <Badge
+            className={
+              row.original.isActive
+                ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50"
+                : "border border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-50"
+            }
+          >
             {row.original.isActive ? "Active" : "Inactive"}
           </Badge>
         ),
@@ -207,8 +203,9 @@ export default function AdminToolkitsTable() {
         header: "Sale Badge",
         cell: ({ row }) => (
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
+            className="h-auto p-0"
             onClick={() =>
               updateToolkitMutation.mutate(
                 {
@@ -224,8 +221,21 @@ export default function AdminToolkitsTable() {
                 }
               )
             }
+            title={
+              row.original.showSaleBadge
+                ? "Disable sale badge"
+                : "Enable sale badge"
+            }
           >
-            {row.original.showSaleBadge ? "Enabled" : "Disabled"}
+            <Badge
+              className={
+                row.original.showSaleBadge
+                  ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50"
+                  : "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-50"
+              }
+            >
+              {row.original.showSaleBadge ? "Enabled" : "Disabled"}
+            </Badge>
           </Button>
         ),
       },
@@ -238,25 +248,28 @@ export default function AdminToolkitsTable() {
           return (
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => {
                   setManagingToolkit(toolkit);
                   setContentManagerOpen(true);
                 }}
+                title="Manage content"
               >
-                Manage Content
+                <FolderCog className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => handleEdit(toolkit)}
+                title="Edit toolkit"
               >
-                Edit
+                <Edit className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
+                title="Delete toolkit"
                 onClick={() => {
                   if (
                     !confirm(
@@ -268,7 +281,7 @@ export default function AdminToolkitsTable() {
                   deleteToolkitMutation.mutate(toolkit.id);
                 }}
               >
-                <span className="text-destructive">Delete</span>
+                <Trash2 className="text-destructive h-4 w-4" />
               </Button>
             </div>
           );

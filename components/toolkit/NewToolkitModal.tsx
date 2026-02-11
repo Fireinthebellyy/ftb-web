@@ -58,7 +58,6 @@ const toolkitFormSchema = z.object({
   coverImageUrl: z.string().url().optional().or(z.literal("")),
   videoUrl: z.string().url().optional().or(z.literal("")),
   totalDuration: z.string().optional(),
-  lessonCount: z.coerce.number().int().min(0).optional(),
   highlights: z.array(z.string()).optional(),
 });
 
@@ -87,7 +86,6 @@ export default function NewToolkitModal({
       coverImageUrl: "",
       videoUrl: "",
       totalDuration: "",
-      lessonCount: 0,
       highlights: [],
     },
   });
@@ -102,7 +100,6 @@ export default function NewToolkitModal({
         videoUrl: data.videoUrl || undefined,
         category: data.category || undefined,
         totalDuration: data.totalDuration || undefined,
-        lessonCount: data.lessonCount || undefined,
         highlights: data.highlights?.filter(Boolean) || undefined,
       };
 
@@ -256,32 +253,6 @@ export default function NewToolkitModal({
                 )}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="lessonCount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Number of Lessons</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="10"
-                      {...field}
-                      value={field.value ?? ""}
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value
-                            ? parseInt(e.target.value, 10)
-                            : undefined
-                        )
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <FormField
               control={form.control}

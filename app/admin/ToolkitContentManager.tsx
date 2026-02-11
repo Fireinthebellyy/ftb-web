@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import axios from "axios";
 import { toast } from "sonner";
 import {
@@ -38,6 +39,20 @@ import { MoreVertical, Edit, Trash2, Plus, GripVertical } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import "react-quill-new/dist/quill.snow.css";
+
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
+
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, false] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["blockquote", "code-block"],
+    ["link"],
+    ["clean"],
+  ],
+};
 
 const contentItemSchema = z
   .object({
@@ -164,13 +179,24 @@ export default function ToolkitContentManager({
     return value;
   };
 
+  const normalizeQuillContent = (value: string): string => {
+    const trimmed = value.trim();
+
+    if (!trimmed || trimmed === "<p><br></p>") {
+      return "";
+    }
+
+    return value;
+  };
+
   const handleSave = async (data: ContentItemFormValues) => {
     try {
-      const { isArticle, isVideo, ...rest } = data;
+      const { isArticle, isVideo, content, bunnyVideoUrl, ...rest } = data;
 
       const payload = {
         ...rest,
-        bunnyVideoUrl: extractVideoUrl(rest.bunnyVideoUrl || ""),
+        content: isArticle ? normalizeQuillContent(content ?? "") : "",
+        bunnyVideoUrl: extractVideoUrl(bunnyVideoUrl || ""),
         type:
           isArticle && isVideo ? "article" : isArticle ? "article" : "video",
       };
@@ -422,13 +448,17 @@ export default function ToolkitContentManager({
                       name="content"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Content (Markdown) {"*"}</FormLabel>
+                          <FormLabel>Content (HTML) {"*"}</FormLabel>
                           <FormControl>
-                            <Textarea
-                              placeholder="Enter markdown content..."
-                              className="min-h-[200px]"
-                              {...field}
-                            />
+                            <div className="[&_div.ql-container]:min-h-[220px] [&_div.ql-editor]:max-h-[35vh] [&_div.ql-editor]:min-h-[220px] [&_div.ql-editor]:overflow-y-auto">
+                              <ReactQuill
+                                theme="snow"
+                                value={field.value ?? ""}
+                                onChange={field.onChange}
+                                modules={quillModules}
+                                placeholder="Write article content..."
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>

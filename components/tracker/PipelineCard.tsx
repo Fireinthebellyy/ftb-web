@@ -5,7 +5,6 @@ import clsx from 'clsx';
 interface PipelineCardProps {
     opp: any;
     updateStatus: (id: number, status: string, extraData?: any) => void;
-    _triggerNotification?: (msg: any) => void;
     onClick: (opp: any) => void;
     onResume: () => void;
     onDelete: (id: number) => void;
@@ -23,7 +22,7 @@ function getStatusColor(status: string) {
     }
 }
 
-export default function PipelineCard({ opp, updateStatus, _triggerNotification, onClick, onResume, onDelete }: PipelineCardProps) {
+export default function PipelineCard({ opp, updateStatus, onClick, onResume, onDelete }: PipelineCardProps) {
     return (
         <div
             onClick={() => onClick(opp)}

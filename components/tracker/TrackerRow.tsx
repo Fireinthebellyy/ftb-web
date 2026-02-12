@@ -5,13 +5,12 @@ import clsx from 'clsx';
 interface TrackerRowProps {
     opp: any;
     updateStatus: (id: number, status: string, extraData?: any) => void;
-    _triggerNotification?: (msg: any) => void;
     onClick: (opp: any) => void;
     onResume: () => void;
     onDelete: (id: number) => void;
 }
 
-export default function TrackerRow({ opp, updateStatus, _triggerNotification, onClick, onResume, onDelete }: TrackerRowProps) {
+export default function TrackerRow({ opp, updateStatus, onClick, onResume, onDelete }: TrackerRowProps) {
     return (
         <div
             onClick={() => onClick(opp)}

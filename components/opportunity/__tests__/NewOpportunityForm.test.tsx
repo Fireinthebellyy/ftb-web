@@ -81,14 +81,13 @@ describe("NewOpportunityForm onSubmit", () => {
         } catch (err) {
           hasError = true;
           const errorMessage = getAppwriteErrorMessage(err);
-          mockToast.error(`Failed to upload "${file.name}": ${errorMessage}`);
+          mockToast.error(`Failed to upload "${file.file.name}": ${errorMessage}`);
         }
       }
 
       if (hasError) {
         mockToast.error(
-          `One or more images failed to upload. Fix the failed uploads and try again. ${
-            opportunityId ? "Post was not updated." : "Post was not created."
+          `One or more images failed to upload. Fix the failed uploads and try again. ${opportunityId ? "Post was not updated." : "Post was not created."
           }`
         );
         throw new Error(

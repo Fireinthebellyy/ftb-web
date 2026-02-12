@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTracker } from '@/components/providers/TrackerProvider';
 import { opportunities } from '@/data/opportunities';
 import { Clock, AlertCircle, FileText, BrainCircuit, Plus, GripHorizontal, CalendarDays, TrendingUp } from 'lucide-react';
@@ -28,6 +28,11 @@ export default function Tracker() {
 
     const { items, events, addEvent, removeEvent, updateStatus, addToTracker, removeFromTracker } = useTracker();
     const [viewMode, setViewMode] = useState<'upcoming' | 'pipeline'>('upcoming');
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
     const [activeTab, setActiveTab] = useState<'internship' | 'opportunity'>('internship');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEventModalOpen, setIsEventModalOpen] = useState(false);
@@ -196,34 +201,32 @@ export default function Tracker() {
                 </button>
                 <button
                     onClick={() => setIsAddModalOpen(true)}
-                    className="flex-1 bg-slate-900 text-white px-4 py-3 rounded-xl text-sm font-bold flex justify-center items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm"
+                    className="flex-1 bg-indigo-600 text-white px-4 py-3 rounded-xl text-sm font-bold flex justify-center items-center gap-2 hover:bg-indigo-700 transition-colors shadow-sm"
                 >
                     <Plus size={18} /> Add Task
                 </button>
             </div>
 
             {/* Mobile Metrics Card (Consolidated) */}
-            <div className="md:hidden bg-slate-900 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
-
+            <div className="md:hidden bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden">
                 <div className="flex justify-between items-start mb-6 relative z-10">
                     <div>
-                        <h3 className="text-2xl font-bold">{total}</h3>
-                        <p className="text-slate-400 text-sm">Total Tracked</p>
+                        <h3 className="text-2xl font-bold text-slate-900">{total}</h3>
+                        <p className="text-slate-500 text-sm">Total Tracked</p>
                     </div>
                     <div className="text-right">
-                        <h3 className="text-2xl font-bold text-emerald-400">{successRate}%</h3>
-                        <p className="text-slate-400 text-sm">Success Rate</p>
+                        <h3 className="text-2xl font-bold text-emerald-600">{successRate}%</h3>
+                        <p className="text-slate-500 text-sm">Success Rate</p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4 bg-white/10 p-3 rounded-xl backdrop-blur-sm relative z-10 border border-white/5">
-                    <div className="p-2 bg-amber-500/20 text-amber-400 rounded-lg">
+                <div className="flex items-center gap-4 bg-amber-50 p-3 rounded-xl relative z-10 border border-amber-200">
+                    <div className="p-2 bg-amber-100 text-amber-700 rounded-lg">
                         <Clock size={20} />
                     </div>
                     <div>
-                        <h4 className="font-bold text-lg">{actionNeeded.length}</h4>
-                        <p className="text-xs text-slate-300">Pending Actions</p>
+                        <h4 className="font-bold text-lg text-slate-900">{actionNeeded.length}</h4>
+                        <p className="text-xs text-slate-500">Pending Actions</p>
                     </div>
                     {actionNeeded.length > 0 && (
                         <div className="ml-auto w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
@@ -324,59 +327,70 @@ export default function Tracker() {
                     </div>
                 </div>
             ) : (
-                <DragDropContext onDragEnd={onDragEnd}>
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 overflow-x-auto pb-4 items-start">
-                        {getPipelineGroups().map(group => (
-                            <Droppable key={group.name} droppableId={group.name}>
-                                {(provided, snapshot) => (
-                                    <div
-                                        ref={provided.innerRef}
-                                        {...provided.droppableProps}
-                                        className={clsx(
-                                            "min-w-[250px] rounded-xl p-2 transition-colors",
-                                            snapshot.isDraggingOver ? "bg-slate-50 ring-2 ring-slate-200" : ""
-                                        )}
-                                    >
-                                        <h3 className="font-bold text-slate-700 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide px-2">
-                                            <span className={clsx("w-2 h-2 rounded-full", getStatusColor(group.name))}></span>
-                                            {group.name}
-                                            <span className="bg-slate-100 text-slate-500 px-2 rounded-full text-xs py-0.5">{group.items.length}</span>
-                                        </h3>
-                                        <div className="space-y-3 min-h-[100px]">
-                                            {group.items.map((opp, index) => (
-                                                <Draggable key={opp.oppId.toString()} draggableId={opp.oppId.toString()} index={index}>
-                                                    {(provided, snapshot) => (
-                                                        <div
-                                                            ref={provided.innerRef}
-                                                            {...provided.draggableProps}
-                                                            {...provided.dragHandleProps}
-                                                            style={{ ...provided.draggableProps.style }}
-                                                            className={clsx(snapshot.isDragging ? "opacity-70 rotate-2 scale-105" : "")}
-                                                        >
-                                                            <PipelineCard
-                                                                opp={opp}
-                                                                updateStatus={updateStatus}
-                                                                onClick={setDetailOpp}
-                                                                onResume={() => setSmartApplyOpp(opp)}
-                                                                onDelete={removeFromTracker}
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </Draggable>
-                                            ))}
-                                            {provided.placeholder}
-                                            {group.items.length === 0 && (
-                                                <div className="h-24 border-2 border-dashed border-slate-100 rounded-xl flex items-center justify-center text-slate-400 text-xs">
-                                                    Empty
-                                                </div>
+                isMounted ? (
+                    <DragDropContext onDragEnd={onDragEnd}>
+                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 overflow-x-auto pb-4 items-start">
+                            {getPipelineGroups().map(group => (
+                                <Droppable key={group.name} droppableId={group.name}>
+                                    {(provided, snapshot) => (
+                                        <div
+                                            ref={provided.innerRef}
+                                            {...provided.droppableProps}
+                                            className={clsx(
+                                                "min-w-[250px] rounded-xl p-2 transition-colors",
+                                                snapshot.isDraggingOver ? "bg-slate-50 ring-2 ring-slate-200" : ""
                                             )}
+                                        >
+                                            <h3 className="font-bold text-slate-700 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide px-2">
+                                                <span className={clsx("w-2 h-2 rounded-full", getStatusColor(group.name))}></span>
+                                                {group.name}
+                                                <span className="bg-slate-100 text-slate-500 px-2 rounded-full text-xs py-0.5">{group.items.length}</span>
+                                            </h3>
+                                            <div className="space-y-3 min-h-[100px]">
+                                                {group.items.map((opp, index) => (
+                                                    <Draggable key={opp.oppId.toString()} draggableId={opp.oppId.toString()} index={index}>
+                                                        {(provided, snapshot) => (
+                                                            <div
+                                                                ref={provided.innerRef}
+                                                                {...provided.draggableProps}
+                                                                {...provided.dragHandleProps}
+                                                                style={{ ...provided.draggableProps.style }}
+                                                                className={clsx(snapshot.isDragging ? "opacity-70 rotate-2 scale-105" : "")}
+                                                            >
+                                                                <PipelineCard
+                                                                    opp={opp}
+                                                                    updateStatus={updateStatus}
+                                                                    onClick={setDetailOpp}
+                                                                    onResume={() => setSmartApplyOpp(opp)}
+                                                                    onDelete={removeFromTracker}
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </Draggable>
+                                                ))}
+                                                {provided.placeholder}
+                                                {group.items.length === 0 && (
+                                                    <div className="h-24 border-2 border-dashed border-slate-100 rounded-xl flex items-center justify-center text-slate-400 text-xs">
+                                                        Empty
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-                            </Droppable>
+                                    )}
+                                </Droppable>
+                            ))}
+                        </div>
+                    </DragDropContext>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                        {['Draft', 'Applied', 'Result Awaited', 'Selected', 'Rejected'].map(stage => (
+                            <div key={stage} className="min-w-[250px] rounded-xl p-2">
+                                <h3 className="font-bold text-slate-700 mb-3 text-sm uppercase tracking-wide px-2">{stage}</h3>
+                                <div className="h-24 border-2 border-dashed border-slate-100 rounded-xl flex items-center justify-center text-slate-300 text-xs animate-pulse">Loading...</div>
+                            </div>
                         ))}
                     </div>
-                </DragDropContext>
+                )
             )}
 
             <AddApplicationModal

@@ -35,7 +35,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Edit, Trash2, Plus, GripVertical } from "lucide-react";
+import {
+  MoreVertical,
+  Edit,
+  Trash2,
+  Plus,
+  GripVertical,
+  Loader2,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -281,7 +288,8 @@ export default function ToolkitContentManager({
 
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-muted-foreground">Loading content...</div>
+              <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
+              <span className="sr-only">Loading content</span>
             </div>
           ) : contentItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">

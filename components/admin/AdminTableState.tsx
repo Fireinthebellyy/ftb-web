@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { Loader2 } from "lucide-react";
 
 interface AdminTableStateProps {
   isLoading: boolean;
@@ -20,7 +21,10 @@ export function AdminTableState({
   if (isLoading) {
     return (
       <div className="bg-background rounded-lg border p-10 text-center">
-        <p className="text-muted-foreground text-sm">Loading...</p>
+        <div className="flex items-center justify-center">
+          <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
+          <span className="sr-only">Loading</span>
+        </div>
       </div>
     );
   }

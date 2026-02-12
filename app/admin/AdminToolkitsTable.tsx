@@ -4,7 +4,14 @@ import { useCallback, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { Edit, FolderCog, PlusCircle, RefreshCw, Trash2 } from "lucide-react";
+import {
+  Edit,
+  FolderCog,
+  Loader2,
+  PlusCircle,
+  RefreshCw,
+  Trash2,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -20,6 +27,7 @@ import {
 } from "@/components/admin/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +47,9 @@ export default function AdminToolkitsTable() {
   const [editingToolkit, setEditingToolkit] = useState<Toolkit | null>(null);
   const [contentManagerOpen, setContentManagerOpen] = useState(false);
   const [managingToolkit, setManagingToolkit] = useState<Toolkit | null>(null);
+  const [updatingActiveToolkitIds, setUpdatingActiveToolkitIds] = useState<
+    Set<string>
+  >(new Set());
   const queryClient = useQueryClient();
 
   const {
@@ -199,6 +210,54 @@ export default function AdminToolkitsTable() {
         ),
       },
       {
+        id: "active",
+        header: "Active",
+        cell: ({ row }) => {
+          const toolkitId = row.original.id;
+          const isUpdating = updatingActiveToolkitIds.has(toolkitId);
+
+          return (
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={row.original.isActive}
+                disabled={isUpdating}
+                onCheckedChange={() => {
+                  setUpdatingActiveToolkitIds((prev) => {
+                    const next = new Set(prev);
+                    next.add(toolkitId);
+                    return next;
+                  });
+
+                  updateToolkitMutation.mutate(
+                    {
+                      id: toolkitId,
+                      payload: { isActive: !row.original.isActive },
+                    },
+                    {
+                      onSuccess: () => {
+                        toast.success(
+                          `Toolkit ${!row.original.isActive ? "activated" : "deactivated"}`
+                        );
+                      },
+                      onSettled: () => {
+                        setUpdatingActiveToolkitIds((prev) => {
+                          const next = new Set(prev);
+                          next.delete(toolkitId);
+                          return next;
+                        });
+                      },
+                    }
+                  );
+                }}
+              />
+              {isUpdating ? (
+                <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+              ) : null}
+            </div>
+          );
+        },
+      },
+      {
         accessorKey: "showSaleBadge",
         header: "Sale Badge",
         cell: ({ row }) => (
@@ -288,7 +347,12 @@ export default function AdminToolkitsTable() {
         },
       },
     ];
-  }, [deleteToolkitMutation, handleEdit, updateToolkitMutation]);
+  }, [
+    deleteToolkitMutation,
+    handleEdit,
+    updateToolkitMutation,
+    updatingActiveToolkitIds,
+  ]);
 
   return (
     <AdminTabLayout

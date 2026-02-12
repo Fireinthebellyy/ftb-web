@@ -13,25 +13,20 @@ import { ShareDialog } from "@/components/internship/ShareDialog";
 
 interface InternshipData {
   id: string;
-  type: string;
-  timing: string;
+  type?: string | null;
+  timing?: string | null;
   title: string;
-  description: string;
-  link?: string | null;
-  poster?: string | null;
+  description?: string | null;
+  link: string;
   tags: string[];
-  location: string;
+  location?: string | null;
   deadline: string | null;
   stipend?: number | null;
   hiringOrganization: string;
   hiringManager?: string | null;
-  hiringManagerEmail?: string | null;
-  experience: string;
-  duration?: string;
-  eligibility: string[];
+  experience?: string | null;
+  duration?: string | null;
   createdAt: string | null;
-  viewCount: number;
-  applicationCount: number;
   user: {
     id: string;
     name: string;
@@ -121,23 +116,8 @@ if (notFoundError) {
     <div className="container mx-auto max-w-3xl px-4 py-6">
       {/* Header Section */}
       <div className="bg-white rounded-lg border shadow-sm p-6 mb-6 relative">
-        {/* Logo, Title, Organization */}
+        {/* Title, Organization */}
         <div className="flex gap-4 mb-4">
-          {/* Logo in top left corner */}
-          {internship.poster && (
-            <div className="flex-shrink-0">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center overflow-hidden">
-                <Image
-                  src={internship.poster}
-                  alt={`${internship.hiringOrganization} logo`}
-                  width={80}
-                  height={80}
-                  className="w-full h-full object-fit"
-                />
-              </div>
-            </div>
-          )}
-          
           {/* Title, Organization and Apply Button */}
           <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div className="min-w-0">
@@ -173,13 +153,13 @@ if (notFoundError) {
           <Badge
             className={`${getTypeColor(internship.type)} text-xs sm:text-sm`}
           >
-            {internship.type?.charAt(0).toUpperCase() + internship.type?.slice(1).replace(/-/g, " ")}
+              {internship.type?.charAt(0).toUpperCase() + internship.type?.slice(1).replace(/[_-]/g, " ")}
           </Badge>
           {internship.timing && (
             <Badge
               className={`${getTimingColor(internship.timing)} text-xs sm:text-sm`}
             >
-              {internship.timing?.charAt(0).toUpperCase() + internship.timing?.slice(1).replace(/-/g, " ")}
+              {internship.timing?.charAt(0).toUpperCase() + internship.timing?.slice(1).replace(/[_-]/g, " ")}
             </Badge>
           )}
         </div>
@@ -222,7 +202,7 @@ if (notFoundError) {
       )}
 
       {/* Eligibility, Experience & Internship Details */}
-      {(internship.eligibility && internship.eligibility.length > 0) || internship.experience || internship.type || internship.timing || typeof internship.stipend === "number" ? (
+      {internship.experience || internship.type || internship.timing || typeof internship.stipend === "number" ? (
         <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4 sm:text-xl">More Information</h2>
 
@@ -232,7 +212,7 @@ if (notFoundError) {
               <div>
                 <h2 className="text-sm font-semibold mb-2 sm:text-lg">Internship Type</h2>
                 <p className="text-sm sm:text-base text-black">
-                  {internship.type?.charAt(0).toUpperCase() + internship.type?.slice(1).replace(/-/g, " ")}
+                  {internship.type?.charAt(0).toUpperCase() + internship.type?.slice(1).replace(/[_-]/g, " ")}
                 </p>
               </div>
             )}
@@ -242,7 +222,7 @@ if (notFoundError) {
               <div>
                 <h2 className="font-semibold mb-2 text-sm sm:text-lg">Internship Timing</h2>
                 <p className="text-sm sm:text-base text-black">
-                  {internship.timing?.charAt(0).toUpperCase() + internship.timing?.slice(1).replace(/-/g, " ")}
+                  {internship.timing?.charAt(0).toUpperCase() + internship.timing?.slice(1).replace(/[_-]/g, " ")}
                 </p>
               </div>
             )}
@@ -309,39 +289,18 @@ if (notFoundError) {
               </div>
             )}
 
-            {/* Eligibility */}
-            {internship.eligibility && internship.eligibility.length > 0 && (
-              <div className="sm:col-span-2">
-                <h2 className="font-semibold mb-2 text-sm sm:text-lg">Eligibility</h2>
-                <div className="flex flex-wrap gap-2">
-                  {internship.eligibility.map((item, index) => (
-                    <Badge
-                      key={index}
-                      className="border border-gray-300 bg-white text-black text-xs sm:text-sm"
-                    >
-                      {item}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       ) : null}
 
       {/* Contact Information */}
-      {(internship.hiringManager || internship.hiringManagerEmail || internship.user) && (
+      {(internship.hiringManager || internship.user) && (
         <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4 sm:text-xl">Contact Information</h2>
           <div className="space-y-3">
             {internship.hiringManager && (
               <div className="flex items-center gap-2">
                   <span className="font-semibold text-sm sm:text-lg">Hiring Manager:</span> <span className="text-sm sm:text-base">{internship.hiringManager}</span>
-              </div>
-            )}
-            {internship.hiringManagerEmail && (
-              <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm sm:text-lg">Email Id:</span> <span className="text-sm sm:text-base">{internship.hiringManagerEmail}</span>
               </div>
             )}
             {internship.user && (

@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 import { InternshipPostProps } from "@/types/interfaces";
 
@@ -12,7 +11,7 @@ const CompactInternshipCard: React.FC<InternshipPostProps> = ({
     title,
     type,
     location,
-    poster,
+    hiringOrganization,
     createdAt,
   } = internship;
 
@@ -20,19 +19,11 @@ const CompactInternshipCard: React.FC<InternshipPostProps> = ({
     <div className="flex items-center gap-3 p-3 border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow">
       {/* Left: Rounded image 42px */}
       <div className="flex-shrink-0">
-        {poster ? (
-          <Image
-            src={poster}
-            alt={title}
-            width={42}
-            height={42}
-            className="rounded-full object-cover"
-          />
-        ) : (
-          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-            <span className="text-xs text-gray-500">IMG</span>
-          </div>
-        )}
+        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+          <span className="text-xs text-gray-500">
+            {(hiringOrganization || title).charAt(0).toUpperCase()}
+          </span>
+        </div>
       </div>
 
       {/* Content: Two rows */}
@@ -44,7 +35,8 @@ const CompactInternshipCard: React.FC<InternshipPostProps> = ({
 
         {/* Second row: in-office/remote and location */}
         <div className="text-xs text-gray-600 truncate">
-          {type} ({location})
+          {(type || "internship").replace("_", " ")}
+          {location ? ` (${location})` : ""}
         </div>
       </div>
 

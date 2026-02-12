@@ -1,49 +1,183 @@
 import { db } from "@/lib/db";
+import { internships, user } from "@/lib/schema";
 import {
   SQL,
   and,
   desc,
   eq,
+  gte,
   ilike,
   inArray,
   isNull,
+  lte,
   or,
   sql,
-  gte,
-  lte,
 } from "drizzle-orm";
-import { internships, tags, user } from "@/lib/schema";
-import { upsertTagsAndGetIds } from "@/lib/tags";
-import { getCurrentUser } from "@/server/users";
-import { NextRequest, NextResponse } from "next/server";
 import { getSessionCached } from "@/lib/auth-session-cache";
 import { headers } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+const canonicalTypes = ["remote", "hybrid", "onsite"] as const;
+const canonicalTimings = ["full_time", "part_time"] as const;
+
 const internshipSchema = z.object({
-  type: z.enum(["in-office", "work-from-home", "hybrid"], {
-    required_error: "Please select an internship type.",
-    invalid_type_error: "Please select an internship type.",
-  }),
-  timing: z.enum(["full-time", "part-time", "shift-based"], {
-    required_error: "Please select an internship timing option.",
-    invalid_type_error: "Please select an internship timing option.",
-  }),
   title: z.string().min(1, "Title is required"),
-  description: z.string().min(1, "Description is required"),
-  link: z.string().url().optional().or(z.literal("")),
-  poster: z.string().min(1, "Company logo is required"),
-  tags: z.array(z.string()).optional(),
-  location: z.string().optional(),
-  deadline: z.string().optional(),
-  stipend: z.number().min(0).optional(),
   hiringOrganization: z.string().min(1, "Hiring organization is required"),
-  hiringManager: z.string().optional(),
-  hiringManagerEmail: z.string().email().optional().or(z.literal("")),
-  experience: z.string().optional(),
-  duration: z.string().optional(),
-  eligibility: z.array(z.string()).optional(),
+  link: z.string().url("Valid application link is required"),
+  description: z.string().optional().nullable(),
+  type: z.string().optional().nullable(),
+  timing: z.string().optional().nullable(),
+  stipend: z.union([z.number().min(0), z.string()]).optional().nullable(),
+  duration: z.string().optional().nullable(),
+  experience: z.string().optional().nullable(),
+  location: z.string().optional().nullable(),
+  deadline: z.string().optional().nullable(),
+  tags: z
+    .union([z.array(z.string()), z.string()])
+    .optional()
+    .nullable(),
+  hiringManager: z.string().optional().nullable(),
+  isVerified: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+  rawText: z.string().optional().nullable(),
 });
+
+const internshipBatchSchema = z.array(internshipSchema).min(1);
+
+function normalizeType(value?: string | null, fallbackText?: string | null) {
+  const normalized = (value ?? "").trim().toLowerCase();
+  if (["work-from-home", "work_from_home", "wfh", "remote"].includes(normalized)) {
+    return "remote";
+  }
+  if (["in-office", "in_office", "onsite", "on-site"].includes(normalized)) {
+    return "onsite";
+  }
+  if (canonicalTypes.includes(normalized as (typeof canonicalTypes)[number])) {
+    return normalized as (typeof canonicalTypes)[number];
+  }
+
+  const haystack = (fallbackText ?? "").toLowerCase();
+  if (/\b(remote|wfh|work\s*from\s*home)\b/.test(haystack)) {
+    return "remote";
+  }
+  if (/\b(on\s*-?\s*site|in\s*-?\s*office|office)\b/.test(haystack)) {
+    return "onsite";
+  }
+  if (/\bhybrid\b/.test(haystack)) {
+    return "hybrid";
+  }
+
+  return null;
+}
+
+function normalizeTiming(value?: string | null, fallbackText?: string | null) {
+  const normalized = (value ?? "").trim().toLowerCase();
+  if (["full-time", "full_time", "full time"].includes(normalized)) {
+    return "full_time";
+  }
+  if (["part-time", "part_time", "part time", "shift-based", "shift_based"].includes(normalized)) {
+    return "part_time";
+  }
+  if (canonicalTimings.includes(normalized as (typeof canonicalTimings)[number])) {
+    return normalized as (typeof canonicalTimings)[number];
+  }
+
+  const haystack = (fallbackText ?? "").toLowerCase();
+  if (/\bfull\s*-?\s*time\b/.test(haystack)) {
+    return "full_time";
+  }
+  if (/\bpart\s*-?\s*time\b/.test(haystack) || /\bshift\s*-?\s*based\b/.test(haystack)) {
+    return "part_time";
+  }
+
+  return null;
+}
+
+function normalizeTags(tags: string[] | string | null | undefined) {
+  if (!tags) {
+    return [];
+  }
+
+  if (Array.isArray(tags)) {
+    return tags
+      .map((tag) => tag.trim().toLowerCase())
+      .filter(Boolean);
+  }
+
+  return tags
+    .split(",")
+    .map((tag) => tag.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function parseStipend(stipend: string | number | null | undefined, fallbackText?: string | null) {
+  if (typeof stipend === "number" && Number.isFinite(stipend)) {
+    return stipend;
+  }
+
+  const fromValue = typeof stipend === "string" ? stipend : "";
+  const source = `${fromValue} ${fallbackText ?? ""}`;
+  const match = source.match(/(?:₹|rs\.?|inr)?\s*([0-9][0-9,]*)\s*(?:\/?\s*month|pm|per\s*month)?/i);
+
+  if (!match) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(match[1].replace(/,/g, ""), 10);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function parseDeadline(deadline: string | null | undefined, fallbackText?: string | null) {
+  const raw = (deadline ?? "").trim();
+  if (raw) {
+    const parsed = new Date(raw);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toISOString().split("T")[0];
+    }
+  }
+
+  const text = fallbackText ?? "";
+  const monthDateYear = text.match(
+    /\b(?:deadline|apply\s*by|last\s*date)[:\s-]*([A-Za-z]{3,9}\s+\d{1,2},?\s+\d{4})\b/i
+  );
+  if (monthDateYear?.[1]) {
+    const parsed = new Date(monthDateYear[1]);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toISOString().split("T")[0];
+    }
+  }
+
+  const slashDate = text.match(/\b(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b/);
+  if (slashDate?.[1]) {
+    const parsed = new Date(slashDate[1]);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toISOString().split("T")[0];
+    }
+  }
+
+  return null;
+}
+
+async function getIngestUserId() {
+  const ingestUserId = process.env.INTERNSHIP_INGEST_USER_ID;
+
+  if (!ingestUserId) {
+    throw new Error("INTERNSHIP_INGEST_USER_ID is not configured");
+  }
+
+  const owner = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(eq(user.id, ingestUserId))
+    .limit(1);
+
+  if (owner.length === 0) {
+    throw new Error("INTERNSHIP_INGEST_USER_ID does not match any user");
+  }
+
+  return ingestUserId;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -54,78 +188,49 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const user = await getCurrentUser();
-    if (!user || !user.currentUser?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const body = await req.json();
-    const validatedData = internshipSchema.parse(body);
+    const isBatch = Array.isArray(body);
+    const records = isBatch
+      ? internshipBatchSchema.parse(body)
+      : [internshipSchema.parse(body)];
 
-    // Check user role - users with role "user" need approval, members and admins can post directly
-    const userRole = user.currentUser.role;
-    const canPostDirectly = userRole === "admin" || userRole === "member";
+    const ingestUserId = await getIngestUserId();
 
-    // Build insertData with explicit type
-    const insertData: typeof internships.$inferInsert = {
-      type: validatedData.type,
-      timing: validatedData.timing,
-      title: validatedData.title,
-      description: validatedData.description,
-      poster: validatedData.poster,
-      hiringOrganization: validatedData.hiringOrganization,
-      userId: user.currentUser.id,
-      isFlagged: false,
-      isVerified: false,
-      isActive: canPostDirectly,
-    };
+    const values: typeof internships.$inferInsert[] = records.map((record) => {
+      const fallbackText = `${record.title ?? ""} ${record.description ?? ""} ${record.rawText ?? ""}`;
 
-    // Handle optional fields
-    if (validatedData.link) insertData.link = validatedData.link;
-    if (validatedData.location) insertData.location = validatedData.location;
-    if (validatedData.hiringManager)
-      insertData.hiringManager = validatedData.hiringManager;
-    if (validatedData.hiringManagerEmail)
-      insertData.hiringManagerEmail = validatedData.hiringManagerEmail;
-    if (validatedData.experience)
-      insertData.experience = validatedData.experience;
-    if (validatedData.duration) insertData.duration = validatedData.duration;
-    if (
-      validatedData.eligibility &&
-      Array.isArray(validatedData.eligibility) &&
-      validatedData.eligibility.length > 0
-    ) {
-      insertData.eligibility = validatedData.eligibility;
-    }
-    if (validatedData.stipend !== undefined)
-      insertData.stipend = validatedData.stipend;
+      const normalizedType = normalizeType(record.type, fallbackText);
+      const normalizedTiming = normalizeTiming(record.timing, fallbackText);
+      const parsedStipend = parseStipend(record.stipend, fallbackText);
+      const parsedDeadline = parseDeadline(record.deadline, fallbackText);
 
-    // Handle tags
-    if (validatedData.tags && Array.isArray(validatedData.tags)) {
-      const tagIds = await upsertTagsAndGetIds(validatedData.tags);
-      if (tagIds.length > 0) {
-        insertData.tagIds = tagIds;
-      }
-    }
+      return {
+        title: record.title.trim(),
+        description: record.description?.trim() || null,
+        type: normalizedType,
+        timing: normalizedTiming,
+        link: record.link.trim(),
+        stipend: parsedStipend,
+        duration: record.duration?.trim() || null,
+        experience: record.experience?.trim() || null,
+        location: record.location?.trim() || null,
+        deadline: parsedDeadline,
+        tags: normalizeTags(record.tags),
+        hiringOrganization: record.hiringOrganization.trim(),
+        hiringManager: record.hiringManager?.trim() || null,
+        isVerified: record.isVerified ?? false,
+        isActive: record.isActive ?? true,
+        userId: ingestUserId,
+      };
+    });
 
-    // Handle deadline
-    if (validatedData.deadline) {
-      const deadline = new Date(validatedData.deadline);
-      if (!isNaN(deadline.getTime())) {
-        insertData.deadline = deadline.toISOString().split("T")[0];
-      }
-    }
-
-    const newInternship = await db
-      .insert(internships)
-      .values(insertData)
-      .returning();
+    const inserted = await db.insert(internships).values(values).returning();
 
     return NextResponse.json(
       {
         success: true,
-        data: newInternship[0],
-        userRole: user.currentUser.role,
+        count: inserted.length,
+        data: isBatch ? inserted : inserted[0],
       },
       { status: 201 }
     );
@@ -151,7 +256,6 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Optionally check if current user is admin (don't redirect)
     let isAdmin = false;
     try {
       const requestHeaders = await headers();
@@ -161,15 +265,14 @@ export async function GET(req: NextRequest) {
         isAdmin = session?.user?.role === "admin";
       }
     } catch {
-      // No session - treat as non-admin
+      isAdmin = false;
     }
 
-    // Get pagination and filter parameters
     const { searchParams } = new URL(req.url);
     const limitParam = Number.parseInt(searchParams.get("limit") ?? "", 10);
     const offsetParam = Number.parseInt(searchParams.get("offset") ?? "", 10);
     const searchParam = searchParams.get("search");
-    const typesParam = searchParams.get("types");
+    const typesParam = searchParams.get("types") ?? searchParams.get("type");
     const tagsParam = searchParams.get("tags");
     const locationParam = searchParams.get("location");
     const minStipendParam = Number.parseInt(
@@ -187,11 +290,12 @@ export async function GET(req: NextRequest) {
     const rawTypes = typesParam
       ? typesParam
           .split(",")
-          .map((value) => value.trim())
+          .map((value) => value.trim().toLowerCase())
           .filter(Boolean)
       : [];
-    const allowedTypes = (internships.type.enumValues ?? []) as string[];
-    const validTypes = rawTypes.filter((type) => allowedTypes.includes(type));
+    const validTypes = rawTypes.filter((type) =>
+      canonicalTypes.includes(type as (typeof canonicalTypes)[number])
+    );
     const rawTags = tagsParam
       ? tagsParam
           .split(",")
@@ -208,7 +312,6 @@ export async function GET(req: NextRequest) {
 
     const conditions: SQL<unknown>[] = [isNull(internships.deletedAt)];
 
-    // Only show active internships to non-admin users
     if (!isAdmin) {
       conditions.push(eq(internships.isActive, true));
     }
@@ -224,18 +327,17 @@ export async function GET(req: NextRequest) {
     }
 
     if (validTypes.length > 0) {
-      conditions.push(inArray(internships.type, validTypes as any));
+      conditions.push(inArray(internships.type, validTypes));
     }
 
     if (rawTags.length > 0) {
       const tagConditions = rawTags.map(
         (tag) =>
           sql`EXISTS (
-          SELECT 1
-          FROM ${tags} t
-          WHERE lower(t.name) = ${tag}
-            AND t.id = ANY(${internships.tagIds})
-        )`
+            SELECT 1
+            FROM unnest(coalesce(${internships.tags}, '{}'::text[])) AS t(tag_name)
+            WHERE lower(t.tag_name) = ${tag}
+          )`
       );
 
       if (tagConditions.length === 1) {
@@ -263,33 +365,23 @@ export async function GET(req: NextRequest) {
     const paginated = await db
       .select({
         id: internships.id,
-        type: internships.type,
-        timing: internships.timing,
         title: internships.title,
         description: internships.description,
+        type: internships.type,
+        timing: internships.timing,
         link: internships.link,
-        poster: internships.poster,
-        tags: sql<string[]>`(
-          SELECT coalesce(array_agg(t.name ORDER BY t.name), '{}')
-          FROM ${tags} t
-          WHERE t.id = ANY(${internships.tagIds})
-        )`,
+        tags: internships.tags,
+        stipend: internships.stipend,
+        duration: internships.duration,
+        experience: internships.experience,
         location: internships.location,
         deadline: internships.deadline,
-        stipend: internships.stipend,
         hiringOrganization: internships.hiringOrganization,
         hiringManager: internships.hiringManager,
-        hiringManagerEmail: internships.hiringManagerEmail,
-        experience: internships.experience,
-        duration: internships.duration,
-        eligibility: internships.eligibility,
-        isFlagged: internships.isFlagged,
         createdAt: internships.createdAt,
         updatedAt: internships.updatedAt,
         isVerified: internships.isVerified,
         isActive: internships.isActive,
-        viewCount: internships.viewCount,
-        applicationCount: internships.applicationCount,
         userId: internships.userId,
         user: {
           id: user.id,

@@ -73,7 +73,7 @@ export default function NewInternshipForm({
     try {
       const internshipStorage = createOpportunityStorage();
       const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
-      
+
       if (!bucketId) {
         throw new Error("Appwrite bucket ID not configured");
       }
@@ -86,16 +86,16 @@ export default function NewInternshipForm({
         logoFile.file,
         [],
         (progress: UploadProgress) => {
-          const percent = Math.round((progress.progress || 0) * 100);
+          const percent = Math.round(progress.progress || 0);
           setLogoFile((prev) => prev ? { ...prev, progress: percent } : null);
         }
       );
 
       // Get the file view URL
       const logoUrl = internshipStorage.getFileView(bucketId, res.$id);
-      
+
       setLogoFile((prev) => prev ? { ...prev, uploading: false, fileId: res.$id } : null);
-      
+
       return logoUrl;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown upload error";
@@ -168,7 +168,7 @@ export default function NewInternshipForm({
     } catch (err: unknown) {
       console.error("=== FORM SUBMISSION ERROR ===");
       console.error("Error:", err);
-      
+
       if (axios.isAxiosError(err)) {
         console.error("Axios error response:", err.response?.data);
         console.error("Axios error status:", err.response?.status);
@@ -215,8 +215,8 @@ export default function NewInternshipForm({
 
           <EligibilityField control={form.control} />
 
-          <PosterField 
-            control={form.control} 
+          <PosterField
+            control={form.control}
             logoFile={logoFile}
             setLogoFile={setLogoFile}
           />

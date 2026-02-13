@@ -58,7 +58,7 @@ export default function EditOpportunityForm({
     if (!bucketId) return;
 
     const opportunityStorage = createOpportunityStorage();
-    
+
     for (const imageId of removedImageIds) {
       try {
         await opportunityStorage.deleteFile(bucketId, imageId);
@@ -128,7 +128,7 @@ export default function EditOpportunityForm({
           file.file,
           [],
           (progress: UploadProgress) => {
-            const percent = Math.round((progress.progress || 0) * 100);
+            const percent = Math.round(progress.progress || 0);
             setFiles((prev) =>
               prev.map((f, idx) =>
                 idx === i ? { ...f, progress: percent } : f
@@ -151,11 +151,11 @@ export default function EditOpportunityForm({
           prev.map((f, idx) =>
             idx === i
               ? {
-                  ...f,
-                  uploading: false,
-                  error: true,
-                  errorMessage,
-                }
+                ...f,
+                uploading: false,
+                error: true,
+                errorMessage,
+              }
               : f
           )
         );
@@ -183,7 +183,7 @@ export default function EditOpportunityForm({
 
       // Combine existing images with newly uploaded images
       const finalImages = [...existingImages, ...imageIds];
-      
+
       const res = await axios.put(`/api/opportunities/${opportunity.id}`, {
         ...data,
         startDate: data.dateRange?.from?.toISOString(),

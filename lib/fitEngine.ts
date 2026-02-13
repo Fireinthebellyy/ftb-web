@@ -23,10 +23,13 @@ export const calculateFitScore = (opportunity: Opportunity, userProfile: UserPro
     const missingSkills = requiredSkills.filter(skill => !userSkillsLower.has(skill.toLowerCase()));
 
     // Calculate Score
-    const score = Math.round((matchedSkills.length / requiredSkills.length) * 100);
+    // Guard against division by zero if no skills are required
+    const score = requiredSkills.length > 0
+        ? Math.round((matchedSkills.length / requiredSkills.length) * 100)
+        : 100;
 
     // Dynamic Coloring based on Score directly
-    let color = 'bg-slate-100 text-slate-600 border-slate-200';
+    let color;
     const label = `${score}% Match`;
 
     if (score >= 80) {

@@ -40,18 +40,24 @@ export function useOpportunitySubmit({
             prev.map((file) => ({ ...file, uploading: true, progress: 0 }))
         );
 
+        const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
+        if (!bucketId) {
+            console.error("Missing Appwrite Opportunities Bucket ID");
+            return { ids: [], success: false };
+        }
+
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             try {
                 const opportunityStorage = createOpportunityStorage();
 
                 const res = await opportunityStorage.createFile(
-                    process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID as string,
+                    bucketId,
                     "unique()",
                     file.file,
                     [],
                     (progress: UploadProgress) => {
-                        const percent = Math.round((progress.progress || 0) * 100);
+                        const percent = Math.round(progress.progress || 0);
                         setFiles((prev) =>
                             prev.map((f, idx) =>
                                 idx === i ? { ...f, progress: percent } : f
@@ -125,10 +131,13 @@ export function useOpportunitySubmit({
             // Combine existing images with newly uploaded images
             const finalImages = [...existingImages, ...imageIds];
 
+            // Destructure to prevent leaking complex objects into payload
+            const { dateRange, tags: _tags, ...restData } = data;
+
             const payload = {
-                ...data,
-                startDate: data.dateRange?.from?.toISOString(),
-                endDate: data.dateRange?.to?.toISOString(),
+                ...restData,
+                startDate: dateRange?.from?.toISOString(),
+                endDate: dateRange?.to?.toISOString(),
                 tags:
                     data.tags
                         ?.split(",")

@@ -177,7 +177,7 @@ export default function ProfileForm({
         file.file,
         [],
         (progress: UploadProgress) => {
-          const percent = Math.round((progress.progress || 0) * 100);
+          const percent = Math.round(progress.progress || 0);
           setFiles((prev) =>
             prev.map((f, idx) => (idx === 0 ? { ...f, progress: percent } : f))
           );
@@ -300,10 +300,15 @@ export default function ProfileForm({
   const initialValuesRef = useRef({
     name: user.name ?? "",
     image: user.image ?? null,
+    fieldInterests: user.fieldInterests ?? [],
+    fieldInterestOther: "", // Initial load doesn't populate "Other" text specifically unless parsed, handled by form default
+    opportunityInterests: user.opportunityInterests ?? [],
+    opportunityInterestOther: "",
     dateOfBirth: user.dateOfBirth ?? "",
     collegeInstitute: user.collegeInstitute ?? "",
     contactNumber: user.contactNumber ?? "",
     currentRole: user.currentRole ?? "",
+    currentRoleOther: "",
   });
 
   const watchedValues = form.watch();
@@ -311,14 +316,15 @@ export default function ProfileForm({
   const hasChanges =
     watchedValues.name !== initialValuesRef.current.name ||
     files.length > 0 ||
-    watchedValues.fieldInterests.length > 0 ||
-    !!watchedValues.fieldInterestOther ||
-    watchedValues.opportunityInterests.length > 0 ||
-    !!watchedValues.opportunityInterestOther ||
+    JSON.stringify(watchedValues.fieldInterests) !== JSON.stringify(initialValuesRef.current.fieldInterests) ||
+    watchedValues.fieldInterestOther !== initialValuesRef.current.fieldInterestOther ||
+    JSON.stringify(watchedValues.opportunityInterests) !== JSON.stringify(initialValuesRef.current.opportunityInterests) ||
+    watchedValues.opportunityInterestOther !== initialValuesRef.current.opportunityInterestOther ||
     watchedValues.dateOfBirth !== initialValuesRef.current.dateOfBirth ||
     watchedValues.collegeInstitute !== initialValuesRef.current.collegeInstitute ||
     watchedValues.contactNumber !== initialValuesRef.current.contactNumber ||
-    watchedValues.currentRole !== initialValuesRef.current.currentRole;
+    watchedValues.currentRole !== initialValuesRef.current.currentRole ||
+    watchedValues.currentRoleOther !== initialValuesRef.current.currentRoleOther;
 
   // Progress bar
   // Using JSON.stringify for deep comparison dependency to avoid unnecessary recreations

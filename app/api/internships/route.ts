@@ -361,6 +361,16 @@ export async function GET(req: NextRequest) {
         else if (opp.tags?.some(t => t.toLowerCase().includes("hybrid"))) type = "hybrid";
 
         // Map Opportunity to Internship structure
+        const deadline = opp.deadline
+          ? new Date(opp.deadline).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0];
+
+        const location = type === "work-from-home"
+          ? "Remote"
+          : type === "hybrid"
+            ? "Hybrid"
+            : "On-site";
+
         return {
           id: `static-${opp.id}`,
           title: opp.title,
@@ -370,8 +380,8 @@ export async function GET(req: NextRequest) {
           link: "",
           poster: opp.logo || "",
           tags: opp.tags || [],
-          location: "Remote", // Default or infer
-          deadline: opp.deadline || new Date().toISOString(),
+          location: location,
+          deadline: deadline,
           stipend: 0,
           hiringOrganization: opp.company,
           hiringManager: "",

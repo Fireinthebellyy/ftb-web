@@ -360,7 +360,7 @@ export default function Tracker() {
             ) : (
                 isMounted ? (
                     <DragDropContext onDragEnd={onDragEnd}>
-                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 overflow-x-auto pb-4 items-start">
+                        <div className="flex flex-nowrap md:grid md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 overflow-x-auto pb-4 items-start snap-x snap-mandatory md:snap-none">
                             {getPipelineGroups().map(group => (
                                 <Droppable key={group.name} droppableId={group.name}>
                                     {(provided, snapshot) => (
@@ -413,7 +413,7 @@ export default function Tracker() {
                         </div>
                     </DragDropContext>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                    <div className="flex flex-nowrap md:grid md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 overflow-x-auto pb-4 items-start">
                         {['Not Applied', 'Draft', 'Applied', 'Result Awaited', 'Selected', 'Rejected'].map(stage => (
                             <div key={stage} className="min-w-[250px] rounded-xl p-2">
                                 <h3 className="font-bold text-slate-700 mb-3 text-sm uppercase tracking-wide px-2">{stage}</h3>

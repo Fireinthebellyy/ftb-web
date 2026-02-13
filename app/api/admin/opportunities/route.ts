@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
             );
         }
 
-        // Check if user is admin
+        // Check if user is admin - using optional to avoid redirect on API routes
         const currentUser = await getCurrentUserOptional();
         if (!currentUser || currentUser.currentUser?.role !== "admin") {
             return NextResponse.json({ error: "Unauthorized" }, { status: 403 });

@@ -258,12 +258,7 @@ export default function OpportunityCardsPage() {
     };
   }, [handleLoadMore, allOpportunities.length]);
 
-  const handleBookmarkChange = (
-    _opportunityId: string,
-    _isBookmarked: boolean
-  ) => {
-    // TODO: handle bookmark
-  };
+
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
@@ -329,8 +324,8 @@ export default function OpportunityCardsPage() {
                     key={tag}
                     variant={isSelected ? "default" : "outline"}
                     className={`cursor-pointer px-3 py-1 text-sm ${isSelected
-                        ? "bg-neutral-700 text-gray-200"
-                        : "bg-white text-gray-700"
+                      ? "bg-neutral-700 text-gray-200"
+                      : "bg-white text-gray-700"
                       }`}
                     onClick={() => toggleTag(tag)}
                   >
@@ -448,8 +443,8 @@ export default function OpportunityCardsPage() {
                       key={tag}
                       variant={isSelected ? "default" : "outline"}
                       className={`cursor-pointer px-3 py-1 text-sm ${isSelected
-                          ? "bg-neutral-700 text-gray-200"
-                          : "bg-white text-gray-700"
+                        ? "bg-neutral-700 text-gray-200"
+                        : "bg-white text-gray-700"
                         }`}
                       onClick={() => toggleTag(tag)}
                     >
@@ -463,8 +458,8 @@ export default function OpportunityCardsPage() {
                 size="sm"
                 onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
                 className={`shrink-0 transition-all hover:bg-orange-600 hover:text-white ${isFilterBoxOpen
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-gray-400"
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-gray-400"
                   }`}
               >
                 <Filter className="h-5 w-5" />
@@ -543,7 +538,7 @@ export default function OpportunityCardsPage() {
                         <div key={opportunity.id}>
                           <OpportunityPost
                             opportunity={opportunity}
-                            onBookmarkChange={handleBookmarkChange}
+
                             initialIsBookmarked={Boolean(
                               bookmarkStatuses[opportunity.id]
                             )}
@@ -675,7 +670,7 @@ export default function OpportunityCardsPage() {
                       <div key={opportunity.id}>
                         <OpportunityPost
                           opportunity={opportunity}
-                          onBookmarkChange={handleBookmarkChange}
+
                           initialIsBookmarked={Boolean(
                             bookmarkStatuses[opportunity.id]
                           )}

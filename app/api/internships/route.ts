@@ -19,7 +19,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionCached } from "@/lib/auth-session-cache";
 import { headers } from "next/headers";
 import { z } from "zod";
-import { opportunities } from "@/data/opportunities";
+
 
 const internshipSchema = z.object({
   type: z.enum(["in-office", "work-from-home", "hybrid"], {
@@ -46,40 +46,7 @@ const internshipSchema = z.object({
   eligibility: z.array(z.string()).optional(),
 });
 
-interface StaticInternship {
-  id: string;
-  type: string;
-  timing: string;
-  title: string;
-  description: string;
-  link: string;
-  poster: string;
-  tags: string[];
-  location: string;
-  deadline: string;
-  stipend: number;
-  hiringOrganization: string;
-  hiringManager: string;
-  hiringManagerEmail: string;
-  experience: string;
-  duration: string;
-  eligibility: string[];
-  isFlagged: boolean;
-  createdAt: string;
-  updatedAt: string;
-  isVerified: boolean;
-  isActive: boolean;
-  viewCount: number;
-  applicationCount: number;
-  userId: string;
-  source: "static";
-  user: {
-    id: string;
-    name: string;
-    image: string;
-    role: "admin";
-  };
-}
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -345,76 +312,11 @@ export async function GET(req: NextRequest) {
     const pageItems = hasMore ? paginated.slice(0, limit) : paginated;
     const totalCount = hasMore ? offset + limit + 1 : offset + pageItems.length;
 
-    let finalInternships: (typeof paginated[0] | StaticInternship)[] = pageItems;
-    let finalTotal = totalCount;
-    let finalHasMore = hasMore;
+    const finalInternships: typeof paginated[0][] = pageItems;
+    const finalTotal = totalCount;
+    const finalHasMore = hasMore;
 
-    // Fallback to static data if DB is empty and no specific filters are applied
-    // This ensures the "Coming Soon" feeling is replaced by actual data the user expects from the source code
-    if (totalCount === 0 && offset === 0 && !searchTerm && validTypes.length === 0 && rawTags.length === 0 && !location && minStipend === undefined && maxStipend === undefined) {
-      console.warn("DB empty — falling back to static internships");
 
-      const staticInternships: StaticInternship[] = opportunities.map((opp) => {
-        // Map tags to determine type
-        let type = "in-office";
-        if (opp.tags?.some(t => t.toLowerCase().includes("remote"))) type = "work-from-home";
-        else if (opp.tags?.some(t => t.toLowerCase().includes("hybrid"))) type = "hybrid";
-
-        // Map Opportunity to Internship structure
-        const deadline = opp.deadline
-          ? new Date(opp.deadline).toISOString().split('T')[0]
-          : new Date().toISOString().split('T')[0];
-
-        const location = type === "work-from-home"
-          ? "Remote"
-          : type === "hybrid"
-            ? "Hybrid"
-            : "On-site";
-
-        return {
-          id: `static-${opp.id}`,
-          title: opp.title,
-          description: opp.description || "",
-          type: type,
-          timing: "full-time", // Default
-          link: "",
-          poster: opp.logo || "",
-          tags: opp.tags || [],
-          location: location,
-          deadline: deadline,
-          stipend: 0,
-          hiringOrganization: opp.company,
-          hiringManager: "",
-          hiringManagerEmail: "",
-          experience: "Beginner",
-          duration: "3 months",
-          eligibility: [],
-          isFlagged: false,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          isVerified: false,
-          isActive: true,
-          viewCount: 0,
-          applicationCount: 0,
-          userId: "system",
-          source: "static",
-          user: {
-            id: "system",
-            name: "System",
-            image: "",
-            role: "admin" as const
-          }
-        };
-      });
-
-      // Filter static data if search/filters were meant to be applied (basic client-side filtering for fallback)
-      // For now, just return all since we checked !searchTerm etc above. 
-      // If we want to support filtering on static data, we'd need more logic here.
-
-      finalInternships = staticInternships.slice(offset, offset + limit);
-      finalTotal = staticInternships.length;
-      finalHasMore = offset + limit < finalTotal;
-    }
 
     return NextResponse.json(
       {

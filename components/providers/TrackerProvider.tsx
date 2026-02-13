@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { opportunities, Opportunity } from '@/data/opportunities';
 import { toast } from 'sonner';
 
-interface TrackerItem extends Opportunity {
+export interface TrackerItem extends Opportunity {
     oppId: number | string;
     status: string; // 'Not Applied' | 'Draft' | 'Applied' | 'Result Awaited' | 'Selected' | 'Rejected'
     kind?: 'internship' | 'opportunity'; // Default to 'internship' if undefined
@@ -13,9 +13,16 @@ interface TrackerItem extends Opportunity {
     result: string | null;
     notes: string;
     updatedAt?: string;
+    draftData?: any; // Keep as any for now or define stricter if structure is known
 }
 
-interface TrackerEvent {
+export interface ManualTrackerInput extends Omit<Partial<TrackerItem>, 'id'> {
+    id?: number | string;
+    kind?: 'internship' | 'opportunity';
+    draftData?: any;
+}
+
+export interface TrackerEvent {
     id: number;
     title: string;
     date: string;
@@ -26,9 +33,9 @@ interface TrackerEvent {
 interface TrackerContextType {
     items: TrackerItem[];
     events: TrackerEvent[];
-    addToTracker: (oppOrId: number | string | Partial<TrackerItem>, initialStatus?: string, kind?: 'internship' | 'opportunity') => void;
+    addToTracker: (oppOrId: number | string | ManualTrackerInput, initialStatus?: string, kind?: 'internship' | 'opportunity') => void;
     removeFromTracker: (oppId: number | string) => void;
-    updateStatus: (oppId: number | string, status: string, extraData?: any) => void;
+    updateStatus: (oppId: number | string, status: string, extraData?: Record<string, unknown>) => void;
     getStatus: (oppId: number | string) => string | null;
     addEvent: (event: Omit<TrackerEvent, 'id'>) => void;
     removeEvent: (id: number) => void;
@@ -77,10 +84,10 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
         setEvents(prev => prev.filter(e => e.id !== id));
     };
 
-    const addToTracker = (oppOrId: number | string | Partial<TrackerItem>, initialStatus = 'Not Applied', kind: 'internship' | 'opportunity' = 'internship') => {
+    const addToTracker = (oppOrId: number | string | ManualTrackerInput, initialStatus = 'Not Applied', kind: 'internship' | 'opportunity' = 'internship') => {
         setItems(prevItems => {
             const isManual = typeof oppOrId === 'object';
-            const idToCheck = isManual ? (oppOrId as TrackerItem).id || Date.now() : (oppOrId as number | string);
+            const idToCheck = isManual ? (oppOrId as ManualTrackerInput).id ?? Date.now() : (oppOrId as number | string);
 
             const existingItem = prevItems.find(i => i.oppId === idToCheck);
 
@@ -88,8 +95,8 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
                 if (existingItem.status === 'Draft' && initialStatus !== 'Draft') {
                     return prevItems.map(i => i.oppId === idToCheck ? { ...i, status: initialStatus, appliedAt: new Date().toISOString() } : i);
                 }
-                if (initialStatus === 'Draft' && isManual && (oppOrId as any).draftData) {
-                    return prevItems.map(i => i.oppId === idToCheck ? { ...i, draftData: (oppOrId as any).draftData } : i);
+                if (initialStatus === 'Draft' && isManual && (oppOrId as ManualTrackerInput).draftData) {
+                    return prevItems.map(i => i.oppId === idToCheck ? { ...i, draftData: (oppOrId as ManualTrackerInput).draftData } : i);
                 }
                 return prevItems;
             }
@@ -107,29 +114,31 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
                 if (found) staticData = found;
             }
 
+            const inputData = isManual ? (oppOrId as ManualTrackerInput) : {};
             const newItem: TrackerItem = {
-                ...(isManual ? (oppOrId as TrackerItem) : staticData as TrackerItem),
+                ...staticData,
+                ...inputData,
                 oppId: idToCheck,
                 status: initialStatus,
-                kind: isManual && (oppOrId as TrackerItem).kind ? (oppOrId as TrackerItem).kind : kind,
+                kind: (isManual && (oppOrId as ManualTrackerInput).kind) ? (oppOrId as ManualTrackerInput).kind : kind,
                 addedAt: new Date().toISOString(),
                 appliedAt: initialStatus === 'Applied' ? new Date().toISOString() : null,
                 result: null,
-                notes: '',
-                draftData: isManual && (oppOrId as any).draftData ? (oppOrId as any).draftData : null,
-            };
+                notes: inputData.notes || '',
+                draftData: (isManual && (oppOrId as ManualTrackerInput).draftData) ? (oppOrId as ManualTrackerInput).draftData : null,
+            } as TrackerItem;
 
             return [...prevItems, newItem];
         });
     };
 
-    const updateStatus = (oppId: number | string, status: string, extraData = {}) => {
+    const updateStatus = (oppId: number | string, status: string, extraData: Record<string, unknown> = {}) => {
         setItems(prevItems => prevItems.map(i => {
             if (i.oppId === oppId) {
                 return {
                     ...i,
+                    ...extraData, // Spread extraData first so it doesn't overwrite controlled fields
                     status,
-                    ...extraData,
                     updatedAt: new Date().toISOString()
                 };
             }

@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useTracker } from '@/components/providers/TrackerProvider';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useTracker, TrackerItem } from '@/components/providers/TrackerProvider';
 import { opportunities } from '@/data/opportunities';
-import { Clock, AlertCircle, FileText, BrainCircuit, Plus, GripHorizontal, CalendarDays, TrendingUp } from 'lucide-react';
-import clsx from 'clsx';
+import { Clock, AlertCircle, FileText, BrainCircuit, Plus, GripHorizontal, CalendarDays, TrendingUp, LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { userProfile } from '@/data/userProfile';
 import { calculateFitScore } from '@/lib/fitEngine';
 import TrackerDetailModal from './TrackerDetailModal';
@@ -17,6 +17,26 @@ import MobileTrackerCard from './MobileTrackerCard';
 import PipelineCard from './PipelineCard';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { toast } from 'sonner';
+
+interface EnrichedTrackerItem extends TrackerItem {
+    fitScore: number;
+    fitLabel: string;
+    fitColor: string;
+    isHighPriority: boolean;
+    title: string;
+    company: string;
+    location: string;
+    type: string;
+    deadline?: string;
+}
+
+interface MetricCardProps {
+    icon: LucideIcon;
+    label: string;
+    value: string | number;
+    color: string;
+    highlight?: boolean;
+}
 
 export default function Tracker() {
     // Helper for Priority
@@ -42,23 +62,26 @@ export default function Tracker() {
 
     // Hydrate & Enhance Logic
     const filteredItems = items.filter(i => (i.kind || 'internship') === activeTab);
-    const trackedOpps = filteredItems.map(item => {
-        const staticOpp = opportunities.find(o => o.id === item.oppId);
-        // Fallback for manual entries that might not be in opportunities.js
-        const opp = staticOpp || { ...item, id: item.oppId } as any;
 
-        const { score, label, color } = calculateFitScore(opp, userProfile);
+    const trackedOpps = useMemo(() => {
+        return filteredItems.map(item => {
+            const staticOpp = opportunities.find(o => o.id === item.oppId);
+            // Fallback for manual entries that might not be in opportunities.js
+            const opp = staticOpp || { ...item, id: item.oppId } as any;
 
-        return {
-            ...item,
-            ...opp,
-            fitScore: score,
-            fitLabel: label,
-            fitColor: color,
-            deadline: item.deadline || opp.deadline, // Prefer item override if manual
-            isHighPriority: isHighPriority(item.deadline || opp.deadline)
-        };
-    });
+            const { score, label, color } = calculateFitScore(opp, userProfile);
+
+            return {
+                ...item,
+                ...opp,
+                fitScore: score,
+                fitLabel: label,
+                fitColor: color,
+                deadline: item.deadline || opp.deadline, // Prefer item override if manual
+                isHighPriority: isHighPriority(item.deadline || opp.deadline)
+            } as EnrichedTrackerItem;
+        });
+    }, [filteredItems]);
 
     // Metrics Calculation
     const total = trackedOpps.length;
@@ -68,6 +91,9 @@ export default function Tracker() {
 
     // Agenda Logic (Deadlines + Events)
     const now = new Date();
+    const nextWeek = new Date();
+    nextWeek.setDate(now.getDate() + 7);
+
     const agendaItems = [
         ...events.map(e => ({ ...e, isEvent: true, date: new Date(e.date).getTime() })),
         ...trackedOpps.filter(o => o.deadline && o.status !== 'Selected' && o.status !== 'Rejected').map(o => ({
@@ -79,7 +105,12 @@ export default function Tracker() {
             isEvent: false,
             opp: o
         }))
-    ].sort((a, b) => a.date - b.date).filter(i => i.date >= new Date().setHours(0, 0, 0, 0));
+    ]
+        .sort((a, b) => a.date - b.date)
+        .filter(i => {
+            const d = new Date(i.date);
+            return d >= new Date() && d <= nextWeek;
+        });
 
     // Priority Action Needed
     const actionNeeded = trackedOpps.filter(i => {
@@ -90,7 +121,7 @@ export default function Tracker() {
 
     // View Logic
     const getPipelineGroups = () => {
-        const stages = ['Draft', 'Applied', 'Result Awaited', 'Selected', 'Rejected'];
+        const stages = ['Not Applied', 'Draft', 'Applied', 'Result Awaited', 'Selected', 'Rejected'];
         return stages.map(stage => ({
             name: stage,
             items: trackedOpps.filter(i => i.status === stage)
@@ -151,7 +182,7 @@ export default function Tracker() {
                     <div className="bg-slate-100 p-1 rounded-lg flex items-center justify-center">
                         <button
                             onClick={() => setActiveTab('internship')}
-                            className={clsx(
+                            className={cn(
                                 "px-3 py-1.5 rounded-md text-sm font-bold transition-all flex justify-center items-center gap-2",
                                 activeTab === 'internship' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
                             )}
@@ -160,7 +191,7 @@ export default function Tracker() {
                         </button>
                         <button
                             onClick={() => setActiveTab('opportunity')}
-                            className={clsx(
+                            className={cn(
                                 "px-3 py-1.5 rounded-md text-sm font-bold transition-all flex justify-center items-center gap-2",
                                 activeTab === 'opportunity' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
                             )}
@@ -171,7 +202,7 @@ export default function Tracker() {
                     <div className="bg-slate-100 p-1 rounded-lg hidden sm:flex items-center justify-center">
                         <button
                             onClick={() => setViewMode('upcoming')}
-                            className={clsx(
+                            className={cn(
                                 "flex-1 sm:flex-none px-3 py-1.5 rounded-md text-sm font-bold transition-all flex justify-center items-center gap-2",
                                 viewMode === 'upcoming' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
                             )}
@@ -180,7 +211,7 @@ export default function Tracker() {
                         </button>
                         <button
                             onClick={() => setViewMode('pipeline')}
-                            className={clsx(
+                            className={cn(
                                 "flex-1 sm:flex-none px-3 py-1.5 rounded-md text-sm font-bold transition-all flex justify-center items-center gap-2",
                                 viewMode === 'pipeline' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
                             )}
@@ -261,7 +292,7 @@ export default function Tracker() {
                             <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {agendaItems.slice(0, 3).map((item, _idx) => (
                                     item.isEvent ? (
-                                        <EventCard key={item.id} event={item} onDelete={removeEvent} />
+                                        <EventCard key={item.id} event={item as any} onDelete={removeEvent} />
                                     ) : (
                                         <div key={item.id} className="bg-amber-50 p-4 rounded-xl border border-amber-200 shadow-sm flex flex-col justify-between">
                                             <div className="flex items-start gap-3 mb-3">
@@ -336,13 +367,13 @@ export default function Tracker() {
                                         <div
                                             ref={provided.innerRef}
                                             {...provided.droppableProps}
-                                            className={clsx(
+                                            className={cn(
                                                 "min-w-[250px] rounded-xl p-2 transition-colors",
                                                 snapshot.isDraggingOver ? "bg-slate-50 ring-2 ring-slate-200" : ""
                                             )}
                                         >
                                             <h3 className="font-bold text-slate-700 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide px-2">
-                                                <span className={clsx("w-2 h-2 rounded-full", getStatusColor(group.name))}></span>
+                                                <span className={cn("w-2 h-2 rounded-full", getStatusColor(group.name))}></span>
                                                 {group.name}
                                                 <span className="bg-slate-100 text-slate-500 px-2 rounded-full text-xs py-0.5">{group.items.length}</span>
                                             </h3>
@@ -355,7 +386,7 @@ export default function Tracker() {
                                                                 {...provided.draggableProps}
                                                                 {...provided.dragHandleProps}
                                                                 style={{ ...provided.draggableProps.style }}
-                                                                className={clsx(snapshot.isDragging ? "opacity-70 rotate-2 scale-105" : "")}
+                                                                className={cn(snapshot.isDragging ? "opacity-70 rotate-2 scale-105" : "")}
                                                             >
                                                                 <PipelineCard
                                                                     opp={opp}
@@ -383,7 +414,7 @@ export default function Tracker() {
                     </DragDropContext>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                        {['Draft', 'Applied', 'Result Awaited', 'Selected', 'Rejected'].map(stage => (
+                        {['Not Applied', 'Draft', 'Applied', 'Result Awaited', 'Selected', 'Rejected'].map(stage => (
                             <div key={stage} className="min-w-[250px] rounded-xl p-2">
                                 <h3 className="font-bold text-slate-700 mb-3 text-sm uppercase tracking-wide px-2">{stage}</h3>
                                 <div className="h-24 border-2 border-dashed border-slate-100 rounded-xl flex items-center justify-center text-slate-300 text-xs animate-pulse">Loading...</div>
@@ -425,14 +456,14 @@ export default function Tracker() {
     );
 }
 
-function MetricCard({ icon: Icon, label, value, color, highlight }: any) {
+function MetricCard({ icon: Icon, label, value, color, highlight }: MetricCardProps) {
     return (
-        <div className={clsx(
+        <div className={cn(
             "p-5 rounded-2xl border transition-all",
             highlight ? "bg-white border-amber-300 shadow-md ring-2 ring-amber-100" : "bg-white border-slate-200"
         )}>
             <div className="flex items-center gap-3 mb-2">
-                <div className={clsx("p-2 rounded-lg", color)}>
+                <div className={cn("p-2 rounded-lg", color)}>
                     <Icon size={18} />
                 </div>
                 <span className="text-sm font-medium text-slate-500">{label}</span>

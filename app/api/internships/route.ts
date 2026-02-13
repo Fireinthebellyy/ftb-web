@@ -46,6 +46,41 @@ const internshipSchema = z.object({
   eligibility: z.array(z.string()).optional(),
 });
 
+interface StaticInternship {
+  id: string;
+  type: string;
+  timing: string;
+  title: string;
+  description: string;
+  link: string;
+  poster: string;
+  tags: string[];
+  location: string;
+  deadline: string;
+  stipend: number;
+  hiringOrganization: string;
+  hiringManager: string;
+  hiringManagerEmail: string;
+  experience: string;
+  duration: string;
+  eligibility: string[];
+  isFlagged: boolean;
+  createdAt: string;
+  updatedAt: string;
+  isVerified: boolean;
+  isActive: boolean;
+  viewCount: number;
+  applicationCount: number;
+  userId: string;
+  source: "static";
+  user: {
+    id: string;
+    name: string;
+    image: string;
+    role: "admin";
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     if (!db) {
@@ -310,14 +345,16 @@ export async function GET(req: NextRequest) {
     const pageItems = hasMore ? paginated.slice(0, limit) : paginated;
     const totalCount = hasMore ? offset + limit + 1 : offset + pageItems.length;
 
-    let finalInternships = paginated;
+    let finalInternships: (typeof paginated[0] | StaticInternship)[] = pageItems;
     let finalTotal = totalCount;
     let finalHasMore = hasMore;
 
     // Fallback to static data if DB is empty and no specific filters are applied
     // This ensures the "Coming Soon" feeling is replaced by actual data the user expects from the source code
     if (totalCount === 0 && offset === 0 && !searchTerm && validTypes.length === 0 && rawTags.length === 0 && !location && minStipend === undefined && maxStipend === undefined) {
-      const staticInternships = opportunities.map((opp) => {
+      console.warn("DB empty — falling back to static internships");
+
+      const staticInternships: StaticInternship[] = opportunities.map((opp) => {
         // Map tags to determine type
         let type = "in-office";
         if (opp.tags?.some(t => t.toLowerCase().includes("remote"))) type = "work-from-home";
@@ -345,18 +382,19 @@ export async function GET(req: NextRequest) {
           isFlagged: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          isVerified: true,
+          isVerified: false,
           isActive: true,
           viewCount: 0,
           applicationCount: 0,
           userId: "system",
+          source: "static",
           user: {
             id: "system",
             name: "System",
             image: "",
             role: "admin" as const
           }
-        } as unknown as typeof paginated[0];
+        };
       });
 
       // Filter static data if search/filters were meant to be applied (basic client-side filtering for fallback)

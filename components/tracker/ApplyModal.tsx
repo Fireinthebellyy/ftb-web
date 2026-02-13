@@ -6,13 +6,15 @@ import NextImage from 'next/image';
 import { X, CheckCircle2, ExternalLink, AlertCircle, Play, ArrowRight, Target, Sparkles, ChevronLeft, Rocket } from 'lucide-react';
 import clsx from 'clsx';
 import { useTracker } from '../providers/TrackerProvider';
+import { Opportunity } from '@/data/opportunities';
+import { calculateFitScore } from '@/lib/fitEngine';
 import { userProfile } from '@/data/userProfile';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 interface ApplyModalProps {
     isOpen: boolean;
     onClose: () => void;
-    opportunity: any;
+    opportunity: Opportunity | null;
 }
 
 export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalProps) {
@@ -30,26 +32,25 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
     if (!opportunity) return null;
 
     // --- Logic ---
-    // Gap Analysis
-    const requiredSkills = opportunity.skills || [];
-    const userSkills = userProfile.skills || [];
-    const missingSkills = requiredSkills.filter((skill: string) => !userSkills.includes(skill));
+    // Gap Analysis using shared engine
+    const { missingSkills } = calculateFitScore(opportunity, userProfile);
 
     const handleNext = () => setStep(prev => prev + 1);
     const handleBack = () => setStep(prev => prev - 1);
 
     const handleSubmit = () => {
         // Proceed to tracker (Toolkit access)
-        // Ensure ID is a number or string as expected by addToTracker
-        const oppId = typeof opportunity.id === 'string' && opportunity.id.startsWith('static-')
-            ? parseInt(opportunity.id.replace('static-', '')) // If it was static mapped
-            : opportunity.id;
+        let oppId: number | string = opportunity.id;
 
-        // If it's a real string ID from DB, we might need to handle it.
-        // For now, let's assume the tracker handles whatever ID type.
-        // But wait, the tracker uses `number` for IDs in some places and `string` in others?
-        // Let's pass the whole opportunity object if needed, or just ID.
-        // `addToTracker` in `TrackerProvider` expects `(opp: any, status: string)`
+        // Ensure proper ID format if it's a string static ID
+        const rawId = opportunity.id as unknown as string | number;
+        if (typeof rawId === 'string' && rawId.startsWith('static-')) {
+            const suffix = rawId.replace('static-', '');
+            if (/^\d+$/.test(suffix)) {
+                oppId = parseInt(suffix, 10);
+            }
+            // If not numeric suffix, keep the original string ID
+        }
 
         addToTracker({ ...opportunity, id: oppId }, 'Applied');
         onClose();
@@ -69,7 +70,7 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
                                 </span>
                             </div>
                             <h3 className="text-xl font-bold text-slate-900">
-                                {step === 1 && `Insight: ${opportunity.company || opportunity.hiringOrganization}`}
+                                {step === 1 && `Insight: ${opportunity.company || (opportunity as any).hiringOrganization}`}
                                 {step === 2 && "Review & Submit"}
                             </h3>
                         </div>
@@ -95,7 +96,7 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
                                         <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50 group-hover:scale-110 transition-transform mb-3">
                                             <Play size={24} className="fill-white text-white ml-1" />
                                         </div>
-                                        <span className="text-white font-bold text-lg drop-shadow-md">Insider Look: {opportunity.company || opportunity.hiringOrganization}</span>
+                                        <span className="text-white font-bold text-lg drop-shadow-md">Insider Look: {opportunity.company || (opportunity as any).hiringOrganization}</span>
                                     </div>
                                 </div>
 
@@ -140,7 +141,7 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
                                 </div>
                                 <h3 className="text-2xl font-bold text-slate-900 mb-2">Ready to Launch?</h3>
                                 <p className="text-slate-500 max-w-md mx-auto mb-8">
-                                    You&apos;re about to apply to <b>{opportunity.company || opportunity.hiringOrganization}</b>. We&apos;ve saved your notes and drafted your responses.
+                                    You&apos;re about to apply to <b>{opportunity.company || (opportunity as any).hiringOrganization}</b>. We&apos;ve saved your notes and drafted your responses.
                                 </p>
 
                                 <div className="bg-slate-50 max-w-sm mx-auto rounded-xl p-4 border border-slate-200 text-left mb-8">
@@ -152,7 +153,7 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-slate-500">Company</span>
-                                            <span className="font-medium">{opportunity.company || opportunity.hiringOrganization}</span>
+                                            <span className="font-medium">{opportunity.company || (opportunity as any).hiringOrganization}</span>
                                         </div>
                                     </div>
                                 </div>

@@ -11,21 +11,16 @@ export interface FitResult {
 
 export const calculateFitScore = (opportunity: Opportunity, userProfile: UserProfile): FitResult => {
     // Pure Skill-Based Fit Logic
-    const requiredSkills = (opportunity.skills || []).map(s => s.toLowerCase());
-    const userSkills = (userProfile.skills || []).map(s => s.toLowerCase());
+    // Pure Skill-Based Fit Logic
+    const requiredSkills = opportunity.skills || [];
+    const userSkills = userProfile.skills || [];
 
-    if (requiredSkills.length === 0) {
-        return {
-            score: 0,
-            label: 'No Skills Listed',
-            color: 'bg-slate-100 text-slate-500 border-slate-200',
-            matchedSkills: [],
-            missingSkills: []
-        };
-    }
+    // Create sets for O(1) lookup using lowercase
+    const userSkillsLower = new Set(userSkills.map(s => s.toLowerCase()));
 
-    const matchedSkills = requiredSkills.filter(skill => userSkills.includes(skill));
-    const missingSkills = requiredSkills.filter(skill => !userSkills.includes(skill));
+    // Filter preserving original casing
+    const matchedSkills = requiredSkills.filter(skill => userSkillsLower.has(skill.toLowerCase()));
+    const missingSkills = requiredSkills.filter(skill => !userSkillsLower.has(skill.toLowerCase()));
 
     // Calculate Score
     const score = Math.round((matchedSkills.length / requiredSkills.length) * 100);

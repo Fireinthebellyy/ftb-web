@@ -64,7 +64,7 @@ export async function GET(
           link: "",
           poster: opp.logo || "",
           tags: opp.tags || [],
-          location: "Remote",
+          location: type === "work-from-home" ? "Remote" : type === "hybrid" ? "Hybrid" : "Onsite",
           deadline: opp.deadline || new Date().toISOString(),
           stipend: 0,
           hiringOrganization: opp.company,
@@ -178,6 +178,14 @@ export async function PUT(
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
+    // Guard against static IDs
+    if (id.startsWith("static-")) {
+      return NextResponse.json(
+        { error: "Static internships cannot be modified" },
+        { status: 405 }
+      );
+    }
+
     const currentUser = await getCurrentUser();
     if (!currentUser || !currentUser.currentUser?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -286,6 +294,14 @@ export async function DELETE(
     const { id } = await params;
     if (!id) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
+    }
+
+    // Prevent deletion of static internships
+    if (id.startsWith("static-")) {
+      return NextResponse.json(
+        { error: "Static internships cannot be modified" },
+        { status: 405 }
+      );
     }
 
     const currentUser = await getCurrentUser();

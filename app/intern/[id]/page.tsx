@@ -5,13 +5,13 @@ import { notFound, useParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { MapPin, Building2, IndianRupee, ExternalLink, Share2 } from "lucide-react";
+import { Building2, ExternalLink, IndianRupee, MapPin, Share2, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
 import { ShareDialog } from "@/components/internship/ShareDialog";
 import ApplyModal from "@/components/tracker/ApplyModal";
-import { Sparkles } from "lucide-react";
+import { useSession } from "@/hooks/use-session";
 
 interface InternshipData {
   id: string;
@@ -49,6 +49,7 @@ export default function InternshipDetailPage() {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [smartApplyOpen, setSmartApplyOpen] = useState(false);
   const [notFoundError, setNotFoundError] = useState(false);
+  const { data: session } = useSession();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -162,12 +163,14 @@ export default function InternshipDetailPage() {
             )}
 
             {/* Smart Apply Button */}
-            <Button
-              onClick={() => setSmartApplyOpen(true)}
-              className="bg-black text-white hover:bg-slate-800 font-bold w-full sm:w-auto px-6 py-2 flex items-center gap-2"
-            >
-              Smart Apply <Sparkles className="w-4 h-4 ml-1" />
-            </Button>
+            {internship.link && session?.user && (
+              <Button
+                onClick={() => setSmartApplyOpen(true)}
+                className="bg-black text-white hover:bg-slate-800 font-bold w-full sm:w-auto px-6 py-2 flex items-center gap-2"
+              >
+                Smart Apply <Sparkles className="w-4 h-4 ml-1" />
+              </Button>
+            )}
           </div>
         </div>
 
@@ -222,7 +225,7 @@ export default function InternshipDetailPage() {
         <ApplyModal
           isOpen={smartApplyOpen}
           onClose={() => setSmartApplyOpen(false)}
-          opportunity={internship}
+          opportunity={internship as any}
         />
       </div >
 

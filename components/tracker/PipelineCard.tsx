@@ -1,32 +1,36 @@
+"use client";
+
 import React from 'react';
 import { Calendar, Trash2, Rocket, AlertCircle } from 'lucide-react';
-import clsx from 'clsx';
+import { cn } from '@/lib/utils';
+import { TrackerItem } from '../providers/TrackerProvider';
 
 interface PipelineCardProps {
-    opp: any;
-    updateStatus: (id: number, status: string, extraData?: any) => void;
-    onClick: (opp: any) => void;
+    opp: TrackerItem;
+    updateStatus: (id: number | string, status: string, extraData?: Record<string, unknown>) => void;
+    onClick: (opp: TrackerItem) => void;
     onResume: () => void;
-    onDelete: (id: number) => void;
+    onDelete: (id: number | string) => void;
 }
 
+const STATUS_COLORS: Record<string, string> = {
+    'Not Applied': 'bg-slate-400',
+    'Draft': 'bg-amber-400',
+    'Applied': 'bg-blue-500',
+    'Result Awaited': 'bg-orange-500',
+    'Selected': 'bg-emerald-500',
+    'Rejected': 'bg-rose-500'
+};
+
 function getStatusColor(status: string) {
-    switch (status) {
-        case 'Not Applied': return 'bg-slate-400';
-        case 'Draft': return 'bg-amber-400';
-        case 'Applied': return 'bg-blue-500';
-        case 'Result Awaited': return 'bg-orange-500';
-        case 'Selected': return 'bg-emerald-500';
-        case 'Rejected': return 'bg-rose-500';
-        default: return 'bg-slate-400';
-    }
+    return STATUS_COLORS[status] || 'bg-slate-400';
 }
 
 export default function PipelineCard({ opp, updateStatus, onClick, onResume, onDelete }: PipelineCardProps) {
     return (
         <div
             onClick={() => onClick(opp)}
-            className={clsx(
+            className={cn(
                 "bg-white p-4 rounded-xl border shadow-sm hover:shadow-md transition-shadow cursor-pointer relative group",
                 opp.isHighPriority ? "border-rose-200 ring-1 ring-rose-100" : "border-slate-200"
             )}
@@ -45,7 +49,7 @@ export default function PipelineCard({ opp, updateStatus, onClick, onResume, onD
             )}
             <div className="flex justify-between items-start mb-2">
                 <span className="text-xs font-bold text-slate-400">{opp.company}</span>
-                <span className={clsx("w-2 h-2 rounded-full", getStatusColor(opp.status))}></span>
+                <span className={cn("w-2 h-2 rounded-full", getStatusColor(opp.status))}></span>
             </div>
             <h4 className="font-bold text-slate-900 text-sm mb-1">{opp.title}</h4>
 

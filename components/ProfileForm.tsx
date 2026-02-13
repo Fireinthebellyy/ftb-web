@@ -311,39 +311,37 @@ export default function ProfileForm({
   const hasChanges =
     watchedValues.name !== initialValuesRef.current.name ||
     files.length > 0 ||
-    (watchedValues as any).fieldInterests?.length > 0 ||
-    !!(watchedValues as any).fieldInterestOther ||
-    (watchedValues as any).opportunityInterests?.length > 0 ||
-    !!(watchedValues as any).opportunityInterestOther ||
-    (watchedValues as any).dateOfBirth !==
-    initialValuesRef.current.dateOfBirth ||
-    (watchedValues as any).collegeInstitute !==
-    initialValuesRef.current.collegeInstitute ||
-    (watchedValues as any).contactNumber !==
-    initialValuesRef.current.contactNumber ||
-    (watchedValues as any).currentRole !== initialValuesRef.current.currentRole;
+    watchedValues.fieldInterests.length > 0 ||
+    !!watchedValues.fieldInterestOther ||
+    watchedValues.opportunityInterests.length > 0 ||
+    !!watchedValues.opportunityInterestOther ||
+    watchedValues.dateOfBirth !== initialValuesRef.current.dateOfBirth ||
+    watchedValues.collegeInstitute !== initialValuesRef.current.collegeInstitute ||
+    watchedValues.contactNumber !== initialValuesRef.current.contactNumber ||
+    watchedValues.currentRole !== initialValuesRef.current.currentRole;
 
   // Progress bar
+  // Using JSON.stringify for deep comparison dependency to avoid unnecessary recreations
   const computeCompleteness = useCallback(() => {
     const nameFilled =
-      !!(watchedValues as any).name &&
-      String((watchedValues as any).name).trim().length > 0;
+      !!watchedValues.name &&
+      String(watchedValues.name).trim().length > 0;
     const fieldInterestsFilled =
-      Array.isArray((watchedValues as any).fieldInterests) &&
-      (watchedValues as any).fieldInterests.length > 0;
+      Array.isArray(watchedValues.fieldInterests) &&
+      watchedValues.fieldInterests.length > 0;
     const oppInterestsFilled =
-      Array.isArray((watchedValues as any).opportunityInterests) &&
-      (watchedValues as any).opportunityInterests.length > 0;
-    const dobFilled = !!(watchedValues as any).dateOfBirth;
+      Array.isArray(watchedValues.opportunityInterests) &&
+      watchedValues.opportunityInterests.length > 0;
+    const dobFilled = !!watchedValues.dateOfBirth;
     const collegeFilled =
-      !!(watchedValues as any).collegeInstitute &&
-      String((watchedValues as any).collegeInstitute).trim().length > 0;
+      !!watchedValues.collegeInstitute &&
+      String(watchedValues.collegeInstitute).trim().length > 0;
     const phoneFilled =
-      !!(watchedValues as any).contactNumber &&
-      String((watchedValues as any).contactNumber).trim().length === 10;
+      !!watchedValues.contactNumber &&
+      String(watchedValues.contactNumber).trim().length === 10;
     const roleFilled =
-      !!(watchedValues as any).currentRole &&
-      String((watchedValues as any).currentRole).trim().length > 0;
+      !!watchedValues.currentRole &&
+      String(watchedValues.currentRole).trim().length > 0;
     const imageFilled = !!effectiveAvatar;
 
     const checks = [
@@ -359,7 +357,8 @@ export default function ProfileForm({
     const filled = checks.filter(Boolean).length;
     const percent = Math.round((filled / checks.length) * 100);
     return percent;
-  }, [effectiveAvatar, watchedValues]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveAvatar, JSON.stringify(watchedValues)]);
 
   useEffect(() => {
     if (typeof onProgressChange === "function") {

@@ -1,10 +1,12 @@
+"use client";
+
 import React from 'react';
 import { Calendar, Clock, Video, X, AlertCircle } from 'lucide-react';
-import clsx from 'clsx';
-
+import { cn } from '@/lib/utils';
+import { TrackerEvent } from '../providers/TrackerProvider';
 
 interface EventCardProps {
-    event: any;
+    event: TrackerEvent;
     onDelete: (id: number) => void;
 }
 
@@ -28,8 +30,8 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
     const Icon = getIcon();
 
     return (
-        <div className={clsx("p-4 rounded-xl border flex items-start gap-4 group relative", getTheme())}>
-            <div className={clsx("p-2 rounded-lg bg-white/60", isInterview ? "text-purple-600" : isDeadline ? "text-amber-600" : "text-slate-600")}>
+        <div className={cn("p-4 rounded-xl border flex items-start gap-4 group relative", getTheme())}>
+            <div className={cn("p-2 rounded-lg bg-white/60", isInterview ? "text-purple-600" : isDeadline ? "text-amber-600" : "text-slate-600")}>
                 <Icon size={20} />
             </div>
 

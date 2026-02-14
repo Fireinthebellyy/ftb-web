@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { differenceInCalendarDays } from "date-fns";
 import { Share2 } from "lucide-react";
@@ -21,7 +20,6 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
     title,
     type,
     location,
-    poster,
     createdAt,
     hiringOrganization,
     experience,
@@ -40,9 +38,9 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
 
   const formatType = (type: string) => {
     const typeMap: Record<string, string> = {
-      "work-from-home": "Remote",
+      remote: "Remote",
       "hybrid": "Hybrid",
-      "in-office": "In-Office",
+      onsite: "Onsite",
     };
     return typeMap[type.toLowerCase()] || type;
   };
@@ -81,21 +79,11 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
         <div className="flex gap-2">
           {/* Left: Circular Logo */}
           <div className="flex-shrink-0">
-            {poster ? (
-              <Image
-                src={poster}
-                alt={hiringOrganization || title}
-                width={64}
-                height={64}
-                className="rounded-full object-cover w-11 h-11 sm:w-13 sm:h-13"
-              />
-            ) : (
-              <div className="w-11 h-11 sm:w-13 sm:h-13 bg-gray-200 rounded-full flex items-center justify-center">
-                <span className="text-base sm:text-lg font-semibold text-gray-500">
-                  {hiringOrganization?.charAt(0).toUpperCase() || "I"}
-                </span>
-              </div>
-            )}
+            <div className="w-11 h-11 sm:w-13 sm:h-13 bg-gray-200 rounded-full flex items-center justify-center">
+              <span className="text-base sm:text-lg font-semibold text-gray-500">
+                {hiringOrganization?.charAt(0).toUpperCase() || "I"}
+              </span>
+            </div>
           </div>
 
           {/* Main Content */}
@@ -116,7 +104,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 sm:gap-4 text-[11px] sm:text-sm">
                 <span className="text-gray-600 text-[11px] sm:text-sm">
-                  {formatType(type)}
+                  {type ? formatType(type) : "Internship"}
                   {location && <span className="text-gray-600"> ({location})</span>}
                   {experience && <span className="text-gray-600 ml-1"> • {experience}</span>}
                 </span>

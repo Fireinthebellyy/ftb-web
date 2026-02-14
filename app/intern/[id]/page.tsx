@@ -15,25 +15,20 @@ import { useSession } from "@/hooks/use-session";
 
 interface InternshipData {
   id: string;
-  type: string;
-  timing: string;
+  type?: string | null;
+  timing?: string | null;
   title: string;
-  description: string;
-  link?: string | null;
-  poster?: string | null;
+  description?: string | null;
+  link: string;
   tags: string[];
-  location: string;
+  location?: string | null;
   deadline: string | null;
   stipend?: number | null;
   hiringOrganization: string;
   hiringManager?: string | null;
-  hiringManagerEmail?: string | null;
-  experience: string;
-  duration?: string;
-  eligibility: string[];
+  experience?: string | null;
+  duration?: string | null;
   createdAt: string | null;
-  viewCount: number;
-  applicationCount: number;
   user: {
     id: string;
     name: string;
@@ -125,8 +120,9 @@ export default function InternshipDetailPage() {
     <div className="container mx-auto max-w-3xl px-4 py-6">
       {/* Header Section */}
       <div className="bg-white rounded-lg border shadow-sm p-6 mb-6 relative">
-        {/* Logo, Title, Organization */}
+        {/* Title, Organization */}
         <div className="flex gap-4 mb-4">
+<<<<<<< HEAD
           {/* Logo in top left corner */}
           {internship.poster && (
             <div className="flex-shrink-0">
@@ -142,6 +138,8 @@ export default function InternshipDetailPage() {
             </div>
           )}
 
+=======
+>>>>>>> origin/main
           {/* Title, Organization and Apply Button */}
           <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div className="min-w-0">
@@ -190,13 +188,13 @@ export default function InternshipDetailPage() {
           <Badge
             className={`${getTypeColor(internship.type)} text-xs sm:text-sm`}
           >
-            {internship.type?.charAt(0).toUpperCase() + internship.type?.slice(1).replace(/-/g, " ")}
+              {internship.type?.charAt(0).toUpperCase() + internship.type?.slice(1).replace(/[_-]/g, " ")}
           </Badge>
           {internship.timing && (
             <Badge
               className={`${getTimingColor(internship.timing)} text-xs sm:text-sm`}
             >
-              {internship.timing?.charAt(0).toUpperCase() + internship.timing?.slice(1).replace(/-/g, " ")}
+              {internship.timing?.charAt(0).toUpperCase() + internship.timing?.slice(1).replace(/[_-]/g, " ")}
             </Badge>
           )}
         </div>
@@ -249,6 +247,7 @@ export default function InternshipDetailPage() {
       }
 
       {/* Eligibility, Experience & Internship Details */}
+<<<<<<< HEAD
       {
         (internship.eligibility && internship.eligibility.length > 0) || internship.experience || internship.type || internship.timing || typeof internship.stipend === "number" ? (
           <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
@@ -262,9 +261,95 @@ export default function InternshipDetailPage() {
                   <p className="text-sm sm:text-base text-black">
                     {internship.type?.charAt(0).toUpperCase() + internship.type?.slice(1).replace(/-/g, " ")}
                   </p>
+=======
+      {internship.experience || internship.type || internship.timing || typeof internship.stipend === "number" ? (
+        <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4 sm:text-xl">More Information</h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Internship Type */}
+            {internship.type && (
+              <div>
+                <h2 className="text-sm font-semibold mb-2 sm:text-lg">Internship Type</h2>
+                <p className="text-sm sm:text-base text-black">
+                  {internship.type?.charAt(0).toUpperCase() + internship.type?.slice(1).replace(/[_-]/g, " ")}
+                </p>
+              </div>
+            )}
+
+            {/* Internship Timing */}
+            {internship.timing && (
+              <div>
+                <h2 className="font-semibold mb-2 text-sm sm:text-lg">Internship Timing</h2>
+                <p className="text-sm sm:text-base text-black">
+                  {internship.timing?.charAt(0).toUpperCase() + internship.timing?.slice(1).replace(/[_-]/g, " ")}
+                </p>
+              </div>
+            )}
+
+            {/* Stipend */}
+            {typeof internship.stipend === "number" && (
+              <div>
+                <h2 className="font-semibold mb-2 text-sm sm:text-lg">Stipend</h2>
+                <p className="text-sm sm:text-base text-black flex items-center gap-1">
+                  <IndianRupee className="w-4 h-4" />
+                  {internship.stipend.toLocaleString()}
+                </p>
+              </div>
+            )}
+
+            {/* Experience */}
+            {internship.experience && (
+              <div>
+                <h2 className="font-semibold mb-2 text-sm sm:text-lg">Experience Required</h2>
+                <p className="text-sm sm:text-base text-black">
+                  {internship.experience}
+                </p>
+              </div>
+            )}
+
+            {/* Duration */}
+            {internship.duration && (
+              <div>
+                <h2 className="text-sm font-semibold mb-2 sm:text-lg">Internship Duration</h2>
+                <p className="text-sm sm:text-base text-black">
+                  {internship.duration}
+                </p>
+              </div>
+            )}
+
+            {/* Deadline */}
+            {internship.deadline && (
+              <div>
+                <h2 className="text-sm font-semibold mb-2 sm:text-lg">Deadline</h2>
+                <p className="text-sm sm:text-base text-black">
+                  {new Date(internship.deadline).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                  })}
+                </p>
+              </div>
+            )}
+
+            {/* Tags */}
+            {internship.tags && internship.tags.length > 0 && (
+              <div className="sm:col-span-2">
+                <h2 className="font-semibold mb-2 text-sm sm:text-lg">Tags</h2>
+                <div className="flex flex-wrap gap-2">
+                  {internship.tags.map((tag, index) => (
+                    <Badge
+                      key={index}
+                      className="border border-gray-300 bg-white text-black text-xs sm:text-sm"
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
+>>>>>>> origin/main
                 </div>
               )}
 
+<<<<<<< HEAD
               {/* Internship Timing */}
               {internship.timing && (
                 <div>
@@ -354,11 +439,14 @@ export default function InternshipDetailPage() {
                 </div>
               )}
             </div>
+=======
+>>>>>>> origin/main
           </div>
         ) : null
       }
 
       {/* Contact Information */}
+<<<<<<< HEAD
       {
         (internship.hiringManager || internship.hiringManagerEmail || internship.user) && (
           <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
@@ -367,6 +455,34 @@ export default function InternshipDetailPage() {
               {internship.hiringManager && (
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-sm sm:text-lg">Hiring Manager:</span> <span className="text-sm sm:text-base">{internship.hiringManager}</span>
+=======
+      {(internship.hiringManager || internship.user) && (
+        <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4 sm:text-xl">Contact Information</h2>
+          <div className="space-y-3">
+            {internship.hiringManager && (
+              <div className="flex items-center gap-2">
+                  <span className="font-semibold text-sm sm:text-lg">Hiring Manager:</span> <span className="text-sm sm:text-base">{internship.hiringManager}</span>
+              </div>
+            )}
+            {internship.user && (
+              <div className="flex items-center gap-2">
+              
+                  <span className="font-semibold text-sm sm:text-lg">Posted by:</span>   <div className="w-8 h-8 rounded-full border-2 border-amber-500 bg-gray-300 flex items-center justify-center">
+                  {internship.user.image ? (
+                    <Image
+                      src={internship.user.image}
+                      alt={internship.user.name}
+                      width={32}
+                      height={32}
+                      className="rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-sm text-black">
+                      {internship.user.name?.split(" ").filter(Boolean).map(n => n[0]).join("").slice(0, 2) || "?"}
+                    </span>
+                  )}
+>>>>>>> origin/main
                 </div>
               )}
               {internship.hiringManagerEmail && (

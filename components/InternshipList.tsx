@@ -308,8 +308,8 @@ export default function InternshipList() {
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="in-office">In-Office</SelectItem>
-                    <SelectItem value="work-from-home">Remote</SelectItem>
+                    <SelectItem value="onsite">Onsite</SelectItem>
+                    <SelectItem value="remote">Remote</SelectItem>
                     <SelectItem value="hybrid">Hybrid</SelectItem>
                   </SelectContent>
                 </Select>
@@ -408,8 +408,8 @@ export default function InternshipList() {
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="in-office">In-Office</SelectItem>
-                          <SelectItem value="work-from-home">Remote</SelectItem>
+                          <SelectItem value="onsite">Onsite</SelectItem>
+                          <SelectItem value="remote">Remote</SelectItem>
                           <SelectItem value="hybrid">Hybrid</SelectItem>
                         </SelectContent>
                       </Select>

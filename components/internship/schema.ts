@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 export const internshipFormSchema = z.object({
-  type: z.enum(["in-office", "work-from-home", "hybrid"], {
+  type: z.enum(["onsite", "remote", "hybrid"], {
     message: "Please select an internship type.",
   }),
-  timing: z.enum(["full-time", "part-time", "shift-based"], {
+  timing: z.enum(["full_time", "part_time"], {
     message: "Please select an internship timing.",
   }),
   title: z
@@ -52,11 +52,9 @@ export const internshipFormSchema = z.object({
     .refine((val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), {
       message: "Please enter a valid email address.",
     }),
-  link: z.string().url().optional().or(z.literal("")),
+  link: z.string().url({ message: "Application link is required." }),
   deadline: z.string().optional(),
-  poster: z.string().min(1, {
-    message: "Company logo is required.",
-  }),
+  poster: z.string().optional(),
 });
 
 export type InternshipFormData = z.infer<typeof internshipFormSchema>;

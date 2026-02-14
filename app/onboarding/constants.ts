@@ -1,25 +1,20 @@
 export const educationLevels = [
-    "School (grades 9-12)",
-    "Undergrad (1st year)",
-    "Undergrad (2nd year)",
-    "Undergrad (3rd year)",
-    "Undergrad (4th/5th year)",
-    "Postgrad / Masters",
+    "School",
+    "Undergrad",
+    "Postgrad",
     "Gap year / prepping",
 ];
 
 export const fieldOptions = [
-    "Computer Science / AI",
-    "Product / Management",
-    "Design (UI/UX)",
-    "Electronics / Robotics",
-    "Business / Finance",
-    "Humanities / Psychology",
-    "Biology / Health",
-    "Commerce / Accounts",
-    "GRE / GMAT prep",
-    "Masters abroad",
-    "Fellowships",
+    "Engineering",
+    "Computer Science",
+    "Business / Commerce",
+    "Arts / Humanities",
+    "Psychology",
+    "Science (PCM/PCB)",
+    "Medicine / Health",
+    "Law",
+    "Design",
     "Other",
 ];
 

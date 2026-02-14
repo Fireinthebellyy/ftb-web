@@ -12,8 +12,10 @@ import {
   sql,
 } from "drizzle-orm";
 import { opportunities, tags, user } from "@/lib/schema";
+import { createApiTimer } from "@/lib/api-timing";
+import { getSessionCached } from "@/lib/auth-session-cache";
 import { upsertTagsAndGetIds } from "@/lib/tags";
-import { getCurrentUser } from "@/server/users";
+import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -29,18 +31,53 @@ const opportunitySchema = z.object({
   endDate: z.string().optional(),
 });
 
+async function getUserRoleFromSession(session: {
+  user: { id: string; role?: string };
+}) {
+  if (!session?.user?.id) {
+    return null;
+  }
+
+  const roleFromSession = session.user.role;
+  if (roleFromSession) {
+    return roleFromSession;
+  }
+
+  const row = await db.query.user.findFirst({
+    where: eq(user.id, session.user.id),
+    columns: { role: true },
+  });
+
+  return row?.role ?? null;
+}
 
 export async function POST(req: NextRequest) {
+  const timer = createApiTimer("POST /api/opportunities");
+
   try {
     if (!db) {
+      timer.end({ status: 500, reason: "missing_db" });
       return NextResponse.json(
         { error: "Database connection not available" },
         { status: 500 }
       );
     }
 
-    const user = await getCurrentUser();
-    if (!user || !user.currentUser?.id) {
+    timer.mark("auth_start");
+    const session = await getSessionCached(await headers());
+    timer.mark("auth_done", { hasSession: Boolean(session?.user?.id) });
+    if (!session?.user?.id) {
+      timer.end({ status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    timer.mark("role_start");
+    const userRole = await getUserRoleFromSession(
+      session as { user: { id: string; role?: string } }
+    );
+    timer.mark("role_done", { hasRole: Boolean(userRole) });
+    if (!userRole) {
+      timer.end({ status: 401 });
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -48,7 +85,6 @@ export async function POST(req: NextRequest) {
     const validatedData = opportunitySchema.parse(body);
 
     // Check user role - users with role "user" need approval, members and admins can post directly
-    const userRole = user.currentUser.role;
     const canPostDirectly = userRole === "admin" || userRole === "member";
 
     // Build insertData with careful array handling
@@ -56,7 +92,7 @@ export async function POST(req: NextRequest) {
       type: validatedData.type,
       title: validatedData.title,
       description: validatedData.description,
-      userId: user.currentUser.id,
+      userId: session.user.id,
       isFlagged: false,
       isVerified: false,
       // Set isActive based on user role - members and admins post directly, users need approval
@@ -65,7 +101,11 @@ export async function POST(req: NextRequest) {
 
     // Handle arrays properly - only add if they have values
     if (validatedData.tags && Array.isArray(validatedData.tags)) {
+      timer.mark("tags_upsert_start", {
+        incomingTags: validatedData.tags.length,
+      });
       const tagIds = await upsertTagsAndGetIds(validatedData.tags);
+      timer.mark("tags_upsert_done", { resolvedTagIds: tagIds.length });
       if (tagIds.length > 0) {
         insertData.tagIds = tagIds;
       }
@@ -113,21 +153,25 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    timer.mark("insert_start");
     const newOpportunity = await db
       .insert(opportunities)
       .values(insertData)
       .returning();
+    timer.mark("insert_done", { rowCount: newOpportunity.length });
 
+    timer.end({ status: 201, userRole });
     return NextResponse.json(
       {
         success: true,
         data: newOpportunity[0],
-        userRole: user.currentUser.role
+        userRole,
       },
       { status: 201 }
     );
   } catch (error) {
     if (error instanceof z.ZodError) {
+      timer.end({ status: 400, reason: "validation_error" });
       return NextResponse.json({ error: error.errors }, { status: 400 });
     }
 
@@ -136,22 +180,43 @@ export async function POST(req: NextRequest) {
       error instanceof Error ? error.message : "Internal Server Error";
     console.error("Error creating opportunity:", errorMessage);
 
+    timer.end({ status: 500, reason: "exception" });
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
 export async function GET(req: NextRequest) {
+  const timer = createApiTimer("GET /api/opportunities");
+
   try {
     if (!db) {
+      timer.end({ status: 500, reason: "missing_db" });
       return NextResponse.json(
         { error: "Database connection not available" },
         { status: 500 }
       );
     }
 
+    timer.mark("auth_start");
+    const session = await getSessionCached(await headers());
+    timer.mark("auth_done", { hasSession: Boolean(session?.user?.id) });
+    if (!session?.user?.id) {
+      timer.end({ status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    timer.mark("role_start");
+    const sessionRole = await getUserRoleFromSession(
+      session as { user: { id: string; role?: string } }
+    );
+    timer.mark("role_done", { hasRole: Boolean(sessionRole) });
+    if (!sessionRole) {
+      timer.end({ status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     // Check if current user is admin to determine what opportunities to show
-    const currentUser = await getCurrentUser();
-    const isAdmin = currentUser?.currentUser?.role === "admin";
+    const isAdmin = sessionRole === "admin";
 
     // Get pagination parameters from URL
     const { searchParams } = new URL(req.url);
@@ -160,26 +225,38 @@ export async function GET(req: NextRequest) {
     const searchParam = searchParams.get("search");
     const typesParam = searchParams.get("types");
     const tagsParam = searchParams.get("tags");
+    const includeTotalParam = searchParams.get("includeTotal");
     const limit = Number.isNaN(limitParam) ? 10 : limitParam;
     const offset = Number.isNaN(offsetParam) ? 0 : offsetParam;
+    const includeTotal = includeTotalParam === "true";
     const searchTerm = searchParam ? searchParam.trim() : "";
     const rawTypes = typesParam
-      ? typesParam.split(",").map((value) => value.trim()).filter(Boolean)
+      ? typesParam
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean)
       : [];
     const allowedTypes = (opportunities.type.enumValues ?? []) as string[];
-    const validTypes = rawTypes.filter((type) =>
-      allowedTypes.includes(type)
-    );
+    const validTypes = rawTypes.filter((type) => allowedTypes.includes(type));
     const rawTags = tagsParam
       ? tagsParam
-        .split(",")
-        .map((value) => value.trim().toLowerCase())
-        .filter(Boolean)
+          .split(",")
+          .map((value) => value.trim().toLowerCase())
+          .filter(Boolean)
       : [];
 
     // Validate pagination parameters
     const validLimit = Math.min(Math.max(limit, 1), 50); // Between 1 and 50
     const validOffset = Math.max(offset, 0); // Non-negative
+
+    timer.mark("query_prep_done", {
+      includeTotal,
+      validLimit,
+      validOffset,
+      hasSearch: Boolean(searchTerm),
+      typeFilters: validTypes.length,
+      tagFilters: rawTags.length,
+    });
 
     const conditions: SQL<unknown>[] = [isNull(opportunities.deletedAt)];
 
@@ -203,8 +280,9 @@ export async function GET(req: NextRequest) {
     }
 
     if (rawTags.length > 0) {
-      const tagConditions = rawTags.map((tag) =>
-        sql`EXISTS (
+      const tagConditions = rawTags.map(
+        (tag) =>
+          sql`EXISTS (
           SELECT 1
           FROM ${tags} t
           WHERE lower(t.name) = ${tag}
@@ -222,13 +300,7 @@ export async function GET(req: NextRequest) {
     const filters =
       conditions.length === 1 ? conditions[0] : and(...conditions);
 
-    const totalResult = await db
-      .select({ total: count() })
-      .from(opportunities)
-      .where(filters);
-
-    const totalCount = totalResult[0]?.total ?? 0;
-
+    timer.mark("query_page_start");
     const paginated = await db
       .select({
         id: opportunities.id,
@@ -264,12 +336,31 @@ export async function GET(req: NextRequest) {
       .leftJoin(user, eq(opportunities.userId, user.id))
       .where(filters)
       .orderBy(desc(opportunities.createdAt))
-      .limit(validLimit)
+      .limit(validLimit + 1)
       .offset(validOffset);
+    timer.mark("query_page_done", { rows: paginated.length });
+
+    const hasMore = paginated.length > validLimit;
+    const pageItems = hasMore ? paginated.slice(0, validLimit) : paginated;
+
+    let totalCount = 0;
+
+    if (includeTotal) {
+      timer.mark("query_total_start");
+      totalCount =
+        (
+          await db.select({ total: count() }).from(opportunities).where(filters)
+        )[0]?.total ?? 0;
+      timer.mark("query_total_done", { totalCount });
+    } else {
+      totalCount = hasMore
+        ? validOffset + validLimit + 1
+        : validOffset + pageItems.length;
+    }
 
     // Calculate userHasUpvoted for each opportunity
-    const currentUserId = currentUser?.currentUser?.id as string | undefined;
-    const opportunitiesWithUpvote = paginated.map((opp) => {
+    const currentUserId = session.user.id;
+    const opportunitiesWithUpvote = pageItems.map((opp) => {
       let userHasUpvoted = false;
       if (currentUserId && Array.isArray(opp.upvoterIds)) {
         userHasUpvoted = opp.upvoterIds.includes(currentUserId);
@@ -280,8 +371,12 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    const hasMore = validOffset + paginated.length < totalCount;
+    timer.mark("transform_done", {
+      rows: opportunitiesWithUpvote.length,
+      hasMore,
+    });
 
+    timer.end({ status: 200 });
     return NextResponse.json(
       {
         success: true,
@@ -297,6 +392,7 @@ export async function GET(req: NextRequest) {
     );
   } catch (error) {
     console.error("Error fetching opportunities:", error);
+    timer.end({ status: 500, reason: "exception" });
     return NextResponse.json(
       { error: "Failed to fetch opportunities" },
       { status: 500 }

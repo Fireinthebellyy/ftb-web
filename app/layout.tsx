@@ -11,6 +11,9 @@ import { Analytics } from "@vercel/analytics/next";
 import QueryProvider from "@/components/Providers";
 import ProgressProvider from "./providers";
 import Script from "next/script";
+import WhatsAppWidget from "@/components/WhatsAppWidget";
+import FeedbackWidget from "@/components/FeedbackWidget";
+
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   weight: ["400", "700"], // or ["400", "700"] if multiple
@@ -43,16 +46,18 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <Suspense fallback={<div>Loading ..</div>}>
-          <ProgressProvider>
-            <Navbar />
-            <main className="grow pb-20 md:pb-0">
-              <QueryProvider>{children}</QueryProvider>
-            </main>
-            <BottomNav />
-          </ProgressProvider>
-          <Footer />
-          <Toaster />
-          <Analytics />
+          <QueryProvider>
+            <ProgressProvider>
+              <Navbar />
+              <main className="grow pb-20 md:pb-0">{children}</main>
+              <BottomNav />
+              <Footer />
+              <WhatsAppWidget />
+              <FeedbackWidget />
+            </ProgressProvider>
+            <Toaster />
+            <Analytics />
+          </QueryProvider>
         </Suspense>
       </body>
     </html>

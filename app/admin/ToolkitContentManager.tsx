@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useCallback } from "react";
+import dynamic from "next/dynamic";
 import axios from "axios";
 import { toast } from "sonner";
 import {
@@ -38,6 +39,20 @@ import { MoreVertical, Edit, Trash2, Plus, GripVertical } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import "react-quill-new/dist/quill.snow.css";
+
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
+
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, false] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["blockquote", "code-block"],
+    ["link"],
+    ["clean"],
+  ],
+};
 
 const contentItemSchema = z
   .object({
@@ -164,12 +179,50 @@ export default function ToolkitContentManager({
     return value;
   };
 
+  const normalizeQuillContent = (value: string): string => {
+    const trimmed = value.trim();
+
+    const decodeHtmlEntities = (input: string): string => {
+      if (typeof window === "undefined") {
+        return input;
+      }
+
+      const textarea = window.document.createElement("textarea");
+      textarea.innerHTML = input;
+      return textarea.value;
+    };
+
+    const withoutTags = trimmed.replace(/<[^>]*>/g, " ");
+    const decodedText = decodeHtmlEntities(withoutTags)
+      .replace(/&nbsp;|&#160;|&#xA0;/gi, " ")
+      .replace(/\u00a0/g, " ");
+    const normalizedText = decodedText.replace(/\s+/g, " ").trim();
+
+    if (!normalizedText) {
+      return "";
+    }
+
+    return trimmed;
+  };
+
+  const extractVideoUrl = (value: string): string => {
+    if (value.includes("<iframe")) {
+      const match = value.match(/src=["']([^"']*)["']/);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+    return value;
+  };
+
   const handleSave = async (data: ContentItemFormValues) => {
     try {
-      const { isArticle, isVideo, ...rest } = data;
+      const { isArticle, isVideo, content, bunnyVideoUrl, ...rest } = data;
 
       const payload = {
         ...rest,
+        content: isArticle ? normalizeQuillContent(content ?? "") : "",
+        bunnyVideoUrl: extractVideoUrl(bunnyVideoUrl || ""),
         bunnyVideoUrl: extractVideoUrl(rest.bunnyVideoUrl || ""),
         type:
           isArticle && isVideo ? "article" : isArticle ? "article" : "video",
@@ -326,7 +379,7 @@ export default function ToolkitContentManager({
         </div>
 
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
+          <DialogContent className="max-h-[85vh] overflow-hidden sm:max-w-[600px]">
             <DialogHeader>
               <DialogTitle>
                 {isAdding ? "Add Content" : "Edit Content"}
@@ -336,144 +389,152 @@ export default function ToolkitContentManager({
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(handleSave)}
-                className="space-y-4"
+                className="flex max-h-[calc(85vh-10rem)] flex-col"
               >
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Title *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter content title" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormItem>
-                  <FormLabel>Content Type *</FormLabel>
-                  <div className="flex gap-4">
-                    <FormField
-                      control={form.control}
-                      name="isArticle"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-y-0 space-x-3">
-                          <FormControl>
-                            <input
-                              type="checkbox"
-                              checked={field.value}
-                              onChange={field.onChange}
-                              className="h-4 w-4"
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal">Article</FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="isVideo"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-y-0 space-x-3">
-                          <FormControl>
-                            <input
-                              type="checkbox"
-                              checked={field.value}
-                              onChange={field.onChange}
-                              className="h-4 w-4"
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal">Video</FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </FormItem>
-
-                <FormField
-                  control={form.control}
-                  name="orderIndex"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Order Index</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseInt(e.target.value, 10) || 0)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {form.watch("isArticle") && (
+                <div className="space-y-4 overflow-y-auto pr-1">
                   <FormField
                     control={form.control}
-                    name="content"
+                    name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Content (Markdown) {"*"}</FormLabel>
+                        <FormLabel>Title *</FormLabel>
                         <FormControl>
-                          <Textarea
-                            placeholder="Enter markdown content..."
-                            className="min-h-[200px]"
+                          <Input placeholder="Enter content title" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormItem>
+                    <FormLabel>Content Type *</FormLabel>
+                    <div className="flex gap-4">
+                      <FormField
+                        control={form.control}
+                        name="isArticle"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center space-y-0 space-x-3">
+                            <FormControl>
+                              <input
+                                type="checkbox"
+                                checked={field.value}
+                                onChange={field.onChange}
+                                className="h-4 w-4"
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Article
+                            </FormLabel>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="isVideo"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center space-y-0 space-x-3">
+                            <FormControl>
+                              <input
+                                type="checkbox"
+                                checked={field.value}
+                                onChange={field.onChange}
+                                className="h-4 w-4"
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal">Video</FormLabel>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </FormItem>
+
+                  <FormField
+                    control={form.control}
+                    name="orderIndex"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Order Index</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="0"
                             {...field}
+                            onChange={(e) =>
+                              field.onChange(parseInt(e.target.value, 10) || 0)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                )}
 
-                {form.watch("isVideo") && (
-                  <FormField
-                    control={form.control}
-                    name="bunnyVideoUrl"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          Bunny CDN Video URL or Embed Code {"*"}
-                        </FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Paste full embed code or URL..."
-                            className="min-h-[100px]"
-                            {...field}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              let videoUrl = value;
+                  {form.watch("isArticle") && (
+                    <FormField
+                      control={form.control}
+                      name="content"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Content {"*"} {"*"}</FormLabel>
+                          <FormControl>
+                            <div className="[&_div.ql-container]:min-h-[220px] [&_div.ql-editor]:max-h-[35vh] [&_div.ql-editor]:min-h-[220px] [&_div.ql-editor]:overflow-y-auto">
+                              <ReactQuill
+                                theme="snow"
+                                value={field.value ?? ""}
+                                onChange={field.onChange}
+                                modules={quillModules}
+                                placeholder="Write article content..."
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
 
-                              if (value.includes("<iframe")) {
-                                const match =
-                                  value.match(/src=["']([^"']*)["']/);
-                                if (match && match[1]) {
-                                  videoUrl = match[1];
+                  {form.watch("isVideo") && (
+                    <FormField
+                      control={form.control}
+                      name="bunnyVideoUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Bunny CDN Video URL or Embed Code {"*"}
+                          </FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Paste full embed code or URL..."
+                              className="min-h-[100px]"
+                              {...field}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                let videoUrl = value;
+
+                                if (value.includes("<iframe")) {
+                                  const match =
+                                    value.match(/src=["']([^"']*)["']/);
+                                  if (match && match[1]) {
+                                    videoUrl = match[1];
+                                  }
                                 }
-                              }
 
-                              field.onChange(videoUrl);
-                            }}
-                          />
-                        </FormControl>
-                        <p className="text-muted-foreground text-sm">
-                          Paste the full embed code (div + iframe) or just the
-                          URL
-                        </p>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
+                                field.onChange(videoUrl);
+                              }}
+                            />
+                          </FormControl>
+                          <p className="text-muted-foreground text-sm">
+                            Paste the full embed code (div + iframe) or just the
+                            URL
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </div>
 
-                <div className="flex justify-end space-x-2 pt-4">
+                <div className="mt-4 flex justify-end space-x-2 border-t pt-4">
                   <Button
                     type="button"
                     variant="outline"

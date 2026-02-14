@@ -61,45 +61,49 @@ export default function ToolkitCardNew({
           </div>
         )}
 
-        {hasOriginalPrice && (
-          <Badge className="absolute top-3 right-3 bg-orange-500 text-white hover:bg-green-700">
+        {hasOriginalPrice && toolkit.showSaleBadge && (
+          <Badge className="absolute top-3 right-3 bg-orange-500 text-white hover:bg-orange-600">
             Sale
           </Badge>
         )}
       </div>
 
-      <CardContent className="p-3 sm:p-4">
-        <p className="mb-1.5 text-xs text-gray-500">
+      <CardContent className="p-3">
+        <p className="mb-1 text-xs text-gray-500">
           {toolkit.creatorName && (
             <span className="font-medium text-gray-700">
               {toolkit.creatorName}
             </span>
           )}
           {toolkit.creatorName && toolkit.lessonCount && (
-            <span className="mx-1.5">•</span>
+            <span className="mx-1">•</span>
           )}
           {toolkit.lessonCount && <span>{toolkit.lessonCount} lessons</span>}
           {toolkit.totalDuration && (
             <>
-              <span className="mx-1.5">•</span>
+              <span className="mx-1">•</span>
               <span>{toolkit.totalDuration}</span>
             </>
           )}
         </p>
 
-        <h3 className="mb-1.5 text-lg font-semibold text-gray-900 transition-colors group-hover:text-gray-700">
+        <h3 className="mb-1 line-clamp-1 text-base font-semibold text-gray-900 transition-colors group-hover:text-gray-700">
           {toolkit.title.charAt(0).toUpperCase() + toolkit.title.slice(1)}
         </h3>
 
-        <p className="mb-2 line-clamp-2 text-sm text-gray-600">
+        <p className="mb-2 line-clamp-2 text-xs text-gray-600">
           {toolkit.description.charAt(0).toUpperCase() +
             toolkit.description.slice(1)}
         </p>
 
         {toolkit.highlights && toolkit.highlights.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-1">
-            {toolkit.highlights.slice(0, 2).map((highlight, index) => (
-              <Badge key={index} variant="outline" className="text-gray-600">
+            {toolkit.highlights.slice(0, 1).map((highlight, index) => (
+              <Badge
+                key={index}
+                variant="outline"
+                className="h-5 py-0 text-[10px] text-gray-600"
+              >
                 {highlight}
               </Badge>
             ))}
@@ -107,12 +111,12 @@ export default function ToolkitCardNew({
         )}
 
         <div className="flex items-center justify-between">
-          <div className="flex items-baseline gap-2">
-            <span className="text-xl font-bold text-gray-900">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-lg font-bold text-gray-900">
               ₹{toolkit.price.toLocaleString("en-IN")}
             </span>
             {hasOriginalPrice && (
-              <span className="text-sm text-gray-400 line-through">
+              <span className="text-xs text-gray-400 line-through">
                 ₹{toolkit.originalPrice!.toLocaleString("en-IN")}
               </span>
             )}

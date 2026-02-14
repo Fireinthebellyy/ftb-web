@@ -26,9 +26,18 @@ import {
   useUpdateTask,
   useDeleteTask,
   useBookmarks,
-} from "@/lib/queries";
+} from "@/lib/queries-tasks";
+import { Task } from "@/types/interfaces";
 
-export default function TaskWidget() {
+interface TaskWidgetProps {
+  queryEnabled?: boolean;
+  initialTasks?: Task[];
+}
+
+export default function TaskWidget({
+  queryEnabled = true,
+  initialTasks,
+}: TaskWidgetProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskDescription, setNewTaskDescription] = useState("");
@@ -39,7 +48,14 @@ export default function TaskWidget() {
   const [editTaskDescription, setEditTaskDescription] = useState("");
   const [editTaskOpportunityLink, setEditTaskOpportunityLink] = useState("");
 
-  const { data: tasks = [], isLoading, error } = useTasks();
+  const {
+    data: tasks = [],
+    isLoading,
+    error,
+  } = useTasks({
+    enabled: queryEnabled,
+    initialData: initialTasks,
+  });
   const { data: bookmarks = [] } = useBookmarks();
 
   const bookmarkedOpportunities = bookmarks.map(b => b.opportunity.title);

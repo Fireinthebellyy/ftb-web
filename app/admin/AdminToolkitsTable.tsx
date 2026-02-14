@@ -1,101 +1,57 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { ColumnDef } from "@tanstack/react-table";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { Edit, FolderCog, PlusCircle, RefreshCw, Trash2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import ToolkitContentManager from "./ToolkitContentManager";
+import { AdminDataTable } from "@/components/admin/AdminDataTable";
+import { AdminTableState } from "@/components/admin/AdminTableState";
+import { AdminTabLayout } from "@/components/admin/AdminTabLayout";
+import { ToolkitFormFields } from "@/components/admin/ToolkitFormFields";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
+  Toolkit,
+  toolkitFormSchema,
+  ToolkitFormValues,
+} from "@/components/admin/types";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import {
-  MoreVertical,
-  Edit,
-  Trash2,
-  Eye,
-  EyeOff,
-  FileText,
-} from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import ToolkitContentManager from "./ToolkitContentManager";
+import { Form } from "@/components/ui/form";
+import NewToolkitModal from "@/components/toolkit/NewToolkitModal";
 
-const toolkitFormSchema = z.object({
-  title: z.string().min(3, { message: "Title must be at least 3 characters." }),
-  description: z
-    .string()
-    .min(10, { message: "Description must be at least 10 characters." }),
-  price: z.coerce
-    .number()
-    .min(0, { message: "Price must be a positive number." }),
-  originalPrice: z.coerce.number().min(0).optional(),
-  category: z.string().optional(),
-  coverImageUrl: z.string().url().optional().or(z.literal("")),
-  videoUrl: z.string().url().optional().or(z.literal("")),
-  totalDuration: z.string().optional(),
-  lessonCount: z.coerce.number().int().min(0).optional(),
-  highlights: z.array(z.string()).optional(),
-  isActive: z.boolean().optional(),
-});
-
-type ToolkitFormValues = z.infer<typeof toolkitFormSchema>;
-
-interface Toolkit {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  originalPrice: number | null;
-  coverImageUrl: string | null;
-  videoUrl: string | null;
-  contentUrl: string | null;
-  category: string | null;
-  highlights: string[] | null;
-  totalDuration: string | null;
-  lessonCount: number | null;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  userId: string;
-  creatorName: string | null;
+async function fetchToolkits(): Promise<Toolkit[]> {
+  const response = await axios.get<Toolkit[]>("/api/admin/toolkits");
+  return response.data;
 }
 
 export default function AdminToolkitsTable() {
-  const [toolkits, setToolkits] = useState<Toolkit[]>([]);
-  const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingToolkit, setEditingToolkit] = useState<Toolkit | null>(null);
   const [contentManagerOpen, setContentManagerOpen] = useState(false);
   const [managingToolkit, setManagingToolkit] = useState<Toolkit | null>(null);
+  const queryClient = useQueryClient();
+
+  const {
+    data: toolkits = [],
+    isLoading,
+    isError,
+    refetch,
+    isRefetching,
+  } = useQuery({
+    queryKey: ["admin", "toolkits"],
+    queryFn: fetchToolkits,
+    staleTime: 1000 * 30,
+  });
 
   const form = useForm<ToolkitFormValues>({
     resolver: zodResolver(toolkitFormSchema),
@@ -108,212 +64,281 @@ export default function AdminToolkitsTable() {
       coverImageUrl: "",
       videoUrl: "",
       totalDuration: "",
-      lessonCount: 0,
       highlights: [],
       isActive: true,
+      showSaleBadge: false,
     },
   });
 
-  const fetchToolkits = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get("/api/admin/toolkits");
-      setToolkits(response.data);
-    } catch (error) {
-      console.error("Error fetching toolkits:", error);
-      toast.error("Failed to fetch toolkits");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchToolkits();
-  }, []);
-
-  const handleEdit = (toolkit: Toolkit) => {
-    setEditingToolkit(toolkit);
-    form.reset({
-      title: toolkit.title,
-      description: toolkit.description,
-      price: toolkit.price,
-      originalPrice: toolkit.originalPrice ?? undefined,
-      category: toolkit.category ?? "",
-      coverImageUrl: toolkit.coverImageUrl ?? "",
-      videoUrl: toolkit.videoUrl ?? "",
-      totalDuration: toolkit.totalDuration ?? "",
-      lessonCount: toolkit.lessonCount ?? 0,
-      highlights: toolkit.highlights ?? [],
-      isActive: toolkit.isActive,
-    });
-    setEditDialogOpen(true);
-  };
-
-  const handleUpdate = async (data: ToolkitFormValues) => {
-    if (!editingToolkit) return;
-
-    try {
-      const cleanedData = {
-        ...data,
-        coverImageUrl: data.coverImageUrl || undefined,
-        videoUrl: data.videoUrl || undefined,
-        category: data.category || undefined,
-        totalDuration: data.totalDuration || undefined,
-        lessonCount: data.lessonCount || undefined,
-        highlights: data.highlights?.filter(Boolean) || undefined,
-      };
-
-      await axios.put(`/api/admin/toolkits/${editingToolkit.id}`, cleanedData);
-      toast.success("Toolkit updated successfully!");
-      setEditDialogOpen(false);
-      fetchToolkits();
-    } catch (error) {
-      console.error("Error updating toolkit:", error);
+  const updateToolkitMutation = useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: Record<string, unknown>;
+    }) => {
+      await axios.put(`/api/admin/toolkits/${id}`, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "toolkits"] });
+    },
+    onError: () => {
       toast.error("Failed to update toolkit");
-    }
-  };
+    },
+  });
 
-  const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
-
-    try {
+  const deleteToolkitMutation = useMutation({
+    mutationFn: async (id: string) => {
       await axios.delete(`/api/admin/toolkits/${id}`);
-      toast.success("Toolkit deleted successfully!");
-      fetchToolkits();
-    } catch (error) {
-      console.error("Error deleting toolkit:", error);
+    },
+    onSuccess: () => {
+      toast.success("Toolkit deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["admin", "toolkits"] });
+    },
+    onError: () => {
       toast.error("Failed to delete toolkit");
+    },
+  });
+
+  const handleEdit = useCallback(
+    (toolkit: Toolkit) => {
+      setEditingToolkit(toolkit);
+      form.reset({
+        title: toolkit.title,
+        description: toolkit.description,
+        price: toolkit.price,
+        originalPrice: toolkit.originalPrice ?? undefined,
+        category: toolkit.category ?? "",
+        coverImageUrl: toolkit.coverImageUrl ?? "",
+        videoUrl: toolkit.videoUrl ?? "",
+        totalDuration: toolkit.totalDuration ?? "",
+        highlights: toolkit.highlights ?? [],
+        isActive: toolkit.isActive,
+        showSaleBadge: toolkit.showSaleBadge,
+      });
+      setEditDialogOpen(true);
+    },
+    [form]
+  );
+
+  const handleUpdate = (data: ToolkitFormValues) => {
+    if (!editingToolkit) {
+      return;
     }
+
+    const cleanedData = {
+      ...data,
+      coverImageUrl: data.coverImageUrl || undefined,
+      videoUrl: data.videoUrl || undefined,
+      category: data.category || undefined,
+      totalDuration: data.totalDuration || undefined,
+      highlights: data.highlights?.filter(Boolean) || undefined,
+    };
+
+    updateToolkitMutation.mutate(
+      { id: editingToolkit.id, payload: cleanedData },
+      {
+        onSuccess: () => {
+          toast.success("Toolkit updated successfully");
+          setEditDialogOpen(false);
+        },
+      }
+    );
   };
 
-  const handleToggleActive = async (id: string, isActive: boolean) => {
-    try {
-      await axios.put(`/api/admin/toolkits/${id}`, { isActive });
-      toast.success(`Toolkit ${isActive ? "activated" : "deactivated"}`);
-      fetchToolkits();
-    } catch (error) {
-      console.error("Error toggling toolkit active status:", error);
-      toast.error("Failed to update toolkit status");
-    }
-  };
+  const columns = useMemo<ColumnDef<Toolkit>[]>(() => {
+    return [
+      {
+        accessorKey: "title",
+        header: "Title",
+        cell: ({ row }) => (
+          <div className="max-w-xs">
+            <div className="truncate font-medium">{row.original.title}</div>
+            <div className="text-muted-foreground truncate text-sm">
+              {row.original.description}
+            </div>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "category",
+        header: "Category",
+        cell: ({ row }) =>
+          row.original.category ? (
+            <Badge variant="secondary">{row.original.category}</Badge>
+          ) : (
+            <span>-</span>
+          ),
+      },
+      {
+        accessorKey: "price",
+        header: "Price",
+        cell: ({ row }) => (
+          <span className="font-medium">INR {row.original.price}</span>
+        ),
+      },
+      {
+        accessorKey: "lessonCount",
+        header: "Lessons",
+        cell: ({ row }) => row.original.lessonCount || 0,
+      },
+      {
+        accessorKey: "isActive",
+        header: "Status",
+        cell: ({ row }) => (
+          <Badge
+            className={
+              row.original.isActive
+                ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50"
+                : "border border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-50"
+            }
+          >
+            {row.original.isActive ? "Active" : "Inactive"}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: "showSaleBadge",
+        header: "Sale Badge",
+        cell: ({ row }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-auto p-0"
+            onClick={() =>
+              updateToolkitMutation.mutate(
+                {
+                  id: row.original.id,
+                  payload: { showSaleBadge: !row.original.showSaleBadge },
+                },
+                {
+                  onSuccess: () => {
+                    toast.success(
+                      `Sale badge ${!row.original.showSaleBadge ? "enabled" : "disabled"}`
+                    );
+                  },
+                }
+              )
+            }
+            title={
+              row.original.showSaleBadge
+                ? "Disable sale badge"
+                : "Enable sale badge"
+            }
+          >
+            <Badge
+              className={
+                row.original.showSaleBadge
+                  ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50"
+                  : "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-50"
+              }
+            >
+              {row.original.showSaleBadge ? "Enabled" : "Disabled"}
+            </Badge>
+          </Button>
+        ),
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => {
+          const toolkit = row.original;
+
+          return (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setManagingToolkit(toolkit);
+                  setContentManagerOpen(true);
+                }}
+                title="Manage content"
+              >
+                <FolderCog className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleEdit(toolkit)}
+                title="Edit toolkit"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                title="Delete toolkit"
+                onClick={() => {
+                  if (
+                    !confirm(
+                      `Are you sure you want to delete "${toolkit.title}"?`
+                    )
+                  ) {
+                    return;
+                  }
+                  deleteToolkitMutation.mutate(toolkit.id);
+                }}
+              >
+                <Trash2 className="text-destructive h-4 w-4" />
+              </Button>
+            </div>
+          );
+        },
+      },
+    ];
+  }, [deleteToolkitMutation, handleEdit, updateToolkitMutation]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Toolkits Management</h2>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={fetchToolkits} disabled={loading}>
-            Refresh
+    <AdminTabLayout
+      title="Toolkit Management"
+      description="Manage toolkit catalog, pricing, and lesson content"
+      actions={
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => refetch()}
+            disabled={isRefetching}
+            title="Refresh toolkits"
+          >
+            <RefreshCw className="h-4 w-4" />
           </Button>
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center py-8">
-          <div className="text-muted-foreground">Loading toolkits...</div>
-        </div>
-      ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Lessons</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {toolkits.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
-                    No toolkits found. Create your first toolkit!
-                  </TableCell>
-                </TableRow>
-              ) : (
-                toolkits.map((toolkit) => (
-                  <TableRow key={toolkit.id}>
-                    <TableCell className="max-w-xs">
-                      <div className="truncate font-medium">
-                        {toolkit.title}
-                      </div>
-                      <div className="text-muted-foreground truncate text-sm">
-                        {toolkit.description}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {toolkit.category && (
-                        <Badge variant="secondary">{toolkit.category}</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium">₹{toolkit.price}</span>
-                        {toolkit.originalPrice && (
-                          <span className="text-muted-foreground text-sm line-through">
-                            ₹{toolkit.originalPrice}
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{toolkit.lessonCount || 0}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          handleToggleActive(toolkit.id, !toolkit.isActive)
-                        }
-                      >
-                        {toolkit.isActive ? (
-                          <Eye className="h-4 w-4" />
-                        ) : (
-                          <EyeOff className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setManagingToolkit(toolkit);
-                              setContentManagerOpen(true);
-                            }}
-                          >
-                            <FileText className="mr-2 h-4 w-4" />
-                            Manage Content
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEdit(toolkit)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              handleDelete(toolkit.id, toolkit.title)
-                            }
-                            className="text-destructive"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+          <NewToolkitModal
+            onSuccess={() =>
+              queryClient.invalidateQueries({ queryKey: ["admin", "toolkits"] })
+            }
+          >
+            <Button className="gap-2">
+              <PlusCircle className="h-4 w-4" />
+              Create Toolkit
+            </Button>
+          </NewToolkitModal>
+        </>
+      }
+      stats={
+        <p className="text-muted-foreground text-sm">
+          Total toolkits:{" "}
+          <span className="text-foreground font-medium">{toolkits.length}</span>
+        </p>
+      }
+    >
+      <AdminTableState
+        isLoading={isLoading}
+        isError={isError}
+        isEmpty={!toolkits.length}
+        emptyMessage="No toolkits found. Create your first toolkit."
+        errorMessage="Failed to fetch toolkits"
+      >
+        <AdminDataTable
+          columns={columns}
+          data={toolkits}
+          emptyMessage="No toolkits found"
+          filterColumnId="title"
+          filterPlaceholder="Search toolkits"
+        />
+      </AdminTableState>
 
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
@@ -326,224 +351,7 @@ export default function AdminToolkitsTable() {
               onSubmit={form.handleSubmit(handleUpdate)}
               className="space-y-4"
             >
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter toolkit title" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description *</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Enter detailed description"
-                        className="min-h-[100px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price (₹) *</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="299"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value) || 0)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="originalPrice"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Original Price (₹)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="999"
-                          {...field}
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value
-                                ? parseFloat(e.target.value)
-                                : undefined
-                            )
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter category" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="totalDuration"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Total Duration</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., 2h 30m" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="lessonCount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Number of Lessons</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="10"
-                        {...field}
-                        value={field.value ?? ""}
-                        onChange={(e) =>
-                          field.onChange(
-                            e.target.value
-                              ? parseInt(e.target.value, 10)
-                              : undefined
-                          )
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="coverImageUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cover Image URL</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="https://example.com/image.jpg"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="videoUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>YouTube Promo Video URL</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="https://youtube.com/embed/..."
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="highlights"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Highlights (comma-separated)</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Lifetime access, Downloadable resources, Certificate"
-                        {...field}
-                        value={field.value?.join(", ") ?? ""}
-                        onChange={(e) =>
-                          field.onChange(
-                            e.target.value
-                              .split(",")
-                              .map((s) => s.trim())
-                              .filter(Boolean)
-                          )
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="isActive"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Active</FormLabel>
-                      <div className="text-muted-foreground text-sm">
-                        Show this toolkit to users
-                      </div>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
+              <ToolkitFormFields control={form.control} />
               <div className="flex justify-end space-x-2 pt-4">
                 <Button
                   type="button"
@@ -552,22 +360,29 @@ export default function AdminToolkitsTable() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit">Update Toolkit</Button>
+                <Button
+                  type="submit"
+                  disabled={updateToolkitMutation.isPending}
+                >
+                  Update Toolkit
+                </Button>
               </div>
             </form>
           </Form>
         </DialogContent>
       </Dialog>
 
-      {managingToolkit && (
+      {managingToolkit ? (
         <ToolkitContentManager
           toolkitId={managingToolkit.id}
           toolkitTitle={managingToolkit.title}
           open={contentManagerOpen}
           onClose={() => setContentManagerOpen(false)}
-          onUpdate={fetchToolkits}
+          onUpdate={() =>
+            queryClient.invalidateQueries({ queryKey: ["admin", "toolkits"] })
+          }
         />
-      )}
-    </div>
+      ) : null}
+    </AdminTabLayout>
   );
 }

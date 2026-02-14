@@ -1,10 +1,12 @@
-import { pgTable, uuid, text, timestamp, unique, boolean, date, foreignKey, integer, index, uniqueIndex, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, uuid, text, timestamp, unique, boolean, date, foreignKey, integer, uniqueIndex, index, pgEnum } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const internshipTiming = pgEnum("internship_timing", ['full-time', 'part-time', 'shift-based'])
-export const internshipType = pgEnum("internship_type", ['part-time', 'full-time', 'contract', 'remote'])
+export const internshipType = pgEnum("internship_type", ['part-time', 'full-time', 'contract', 'remote', 'work-from-home', 'in-office', 'hybrid'])
 export const opportunityType = pgEnum("opportunity_type", ['hackathon', 'grant application', 'competition', 'ideathon'])
 export const personaType = pgEnum("persona_type", ['student', 'society'])
+export const toolkitContentItemType = pgEnum("toolkit_content_item_type", ['article', 'video'])
+export const ungatekeepTag = pgEnum("ungatekeep_tag", ['announcement', 'company_experience', 'resources'])
 export const userRole = pgEnum("user_role", ['user', 'member', 'admin'])
 
 
@@ -113,6 +115,70 @@ export const account = pgTable("account", {
 			columns: [table.userId],
 			foreignColumns: [user.id],
 			name: "account_user_id_user_id_fk"
+		}).onDelete("cascade"),
+]);
+
+export const newsletterSubscribers = pgTable("newsletter_subscribers", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	email: text().notNull(),
+	userId: text("user_id"),
+	isSubscribed: boolean("is_subscribed").default(true),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+	unsubscribedAt: timestamp("unsubscribed_at", { mode: 'string' }),
+}, (table) => [
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [user.id],
+			name: "newsletter_subscribers_user_id_user_id_fk"
+		}).onDelete("cascade"),
+	unique("newsletter_subscribers_email_unique").on(table.email),
+]);
+
+export const userToolkitProgress = pgTable("user_toolkit_progress", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	userId: text("user_id").notNull(),
+	toolkitId: uuid("toolkit_id").notNull(),
+	contentItemId: uuid("content_item_id").notNull(),
+	completedAt: timestamp("completed_at", { mode: 'string' }).defaultNow(),
+}, (table) => [
+	uniqueIndex("user_content_item_unique").using("btree", table.userId.asc().nullsLast().op("text_ops"), table.contentItemId.asc().nullsLast().op("text_ops")),
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [user.id],
+			name: "user_toolkit_progress_user_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.toolkitId],
+			foreignColumns: [toolkits.id],
+			name: "user_toolkit_progress_toolkit_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.contentItemId],
+			foreignColumns: [toolkitContentItems.id],
+			name: "user_toolkit_progress_content_item_id_fkey"
+		}).onDelete("cascade"),
+]);
+
+export const ungatekeepPosts = pgTable("ungatekeep_posts", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	title: text().notNull(),
+	content: text().notNull(),
+	images: text().array().default(["RAY"]),
+	linkUrl: text("link_url"),
+	linkTitle: text("link_title"),
+	linkImage: text("link_image"),
+	tag: ungatekeepTag(),
+	isPinned: boolean("is_pinned").default(false),
+	isPublished: boolean("is_published").default(false),
+	publishedAt: timestamp("published_at", { mode: 'string' }),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
+	userId: text("user_id").notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [user.id],
+			name: "ungatekeep_posts_user_id_user_id_fk"
 		}).onDelete("cascade"),
 ]);
 
@@ -228,6 +294,25 @@ export const userToolkits = pgTable("user_toolkits", {
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
 });
 
+export const toolkitContentItems = pgTable("toolkit_content_items", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	toolkitId: uuid("toolkit_id").notNull(),
+	title: text().notNull(),
+	type: toolkitContentItemType().notNull(),
+	content: text(),
+	orderIndex: integer("order_index").default(0).notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	bunnyVideoUrl: text("bunny_video_url"),
+}, (table) => [
+	index("idx_toolkit_content_items_order").using("btree", table.toolkitId.asc().nullsLast().op("int4_ops"), table.orderIndex.asc().nullsLast().op("int4_ops")),
+	foreignKey({
+			columns: [table.toolkitId],
+			foreignColumns: [toolkits.id],
+			name: "toolkit_content_items_toolkit_id_fkey"
+		}).onDelete("cascade"),
+]);
+
 export const toolkits = pgTable("toolkits", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	title: text().notNull(),
@@ -240,4 +325,53 @@ export const toolkits = pgTable("toolkits", {
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
 	userId: text("user_id").notNull(),
-});
+	originalPrice: integer("original_price"),
+	category: text(),
+	highlights: text().array(),
+	totalDuration: text("total_duration"),
+	lessonCount: integer("lesson_count").default(0),
+	showSaleBadge: boolean("show_sale_badge").default(false),
+}, (table) => [
+	index("idx_toolkits_category").using("btree", table.category.asc().nullsLast().op("text_ops")).where(sql`(category IS NOT NULL)`),
+]);
+
+export const internships = pgTable("internships", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	type: internshipType().notNull(),
+	timing: internshipTiming().notNull(),
+	title: text().notNull(),
+	description: text().notNull(),
+	link: text(),
+	poster: text().notNull(),
+	tagIds: uuid("tag_ids").array().default([""]),
+	location: text(),
+	deadline: date(),
+	stipend: integer(),
+	hiringOrganization: text("hiring_organization").notNull(),
+	hiringManager: text("hiring_manager"),
+	hiringManagerEmail: text("hiring_manager_email"),
+	experience: text(),
+	isFlagged: boolean("is_flagged").default(false),
+	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow(),
+	deletedAt: timestamp("deleted_at", { mode: 'string' }),
+	isVerified: boolean("is_verified").default(false),
+	isActive: boolean("is_active").default(true),
+	viewCount: integer("view_count").default(0),
+	applicationCount: integer("application_count").default(0),
+	userId: text("user_id").notNull(),
+	eligibility: text().array().default([""]),
+	duration: text(),
+}, (table) => [
+	index("idx_internships_created_at").using("btree", table.createdAt.desc().nullsFirst().op("timestamp_ops")),
+	index("idx_internships_deleted_at").using("btree", table.deletedAt.asc().nullsLast().op("timestamp_ops")),
+	index("idx_internships_is_active").using("btree", table.isActive.asc().nullsLast().op("bool_ops")),
+	index("idx_internships_timing").using("btree", table.timing.asc().nullsLast().op("enum_ops")),
+	index("idx_internships_type").using("btree", table.type.asc().nullsLast().op("enum_ops")),
+	index("idx_internships_user_id").using("btree", table.userId.asc().nullsLast().op("text_ops")),
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [user.id],
+			name: "internships_user_id_fkey"
+		}).onDelete("cascade"),
+]);

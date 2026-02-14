@@ -1,8 +1,23 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { toolkitContentItems } from "@/lib/schema";
+import { toolkitContentItems, toolkits } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
+
+async function syncToolkitLessonCount(toolkitId: string): Promise<void> {
+  const result = await db
+    .select({ lessonCount: sql<number>`count(*)` })
+    .from(toolkitContentItems)
+    .where(eq(toolkitContentItems.toolkitId, toolkitId));
+
+  await db
+    .update(toolkits)
+    .set({
+      lessonCount: Number(result[0]?.lessonCount ?? 0),
+      updatedAt: new Date(),
+    })
+    .where(eq(toolkits.id, toolkitId));
+}
 
 export async function PUT(
   request: Request,
@@ -82,6 +97,8 @@ export async function DELETE(
         { status: 404 }
       );
     }
+
+    await syncToolkitLessonCount(deletedContentItem[0].toolkitId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

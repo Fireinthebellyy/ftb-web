@@ -1,9 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { useComments, useCreateComment, useDeleteComment } from "@/lib/queries";
+import {
+  useComments,
+  useCreateComment,
+  useDeleteComment,
+} from "@/lib/queries-comments";
 import { Comment } from "@/types/interfaces";
-import { authClient } from "@/lib/auth-client";
+import { useSession, Session } from "@/hooks/use-session";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -86,9 +90,9 @@ const CommentItem: React.FC<{
 
 const CommentInput: React.FC<{
   opportunityId: string;
-}> = ({ opportunityId }) => {
+  session: Session | null | undefined;
+}> = ({ opportunityId, session }) => {
   const [content, setContent] = useState("");
-  const { data: session } = authClient.useSession();
   const createComment = useCreateComment(opportunityId);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -186,7 +190,7 @@ const CommentInput: React.FC<{
 };
 
 const CommentSection: React.FC<CommentSectionProps> = ({ opportunityId }) => {
-  const { data: session } = authClient.useSession();
+  const { data: session } = useSession();
   const { data: comments = [], isLoading, error } = useComments(opportunityId);
   const deleteComment = useDeleteComment(opportunityId);
 
@@ -209,7 +213,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ opportunityId }) => {
 
   return (
     <div className="mt-2 border-t border-gray-100">
-      <CommentInput opportunityId={opportunityId} />
+      <CommentInput opportunityId={opportunityId} session={session} />
 
       <div className="max-h-96 overflow-y-auto">
         {isLoading ? (

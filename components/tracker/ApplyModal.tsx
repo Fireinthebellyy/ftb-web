@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import NextImage from 'next/image';
-import { X, CheckCircle2, ExternalLink, AlertCircle, Play, ArrowRight, Target, Sparkles, ChevronLeft, Rocket } from 'lucide-react';
-import clsx from 'clsx';
+import { X, CheckCircle2, ExternalLink, AlertCircle, Play, Target, Sparkles, Rocket } from 'lucide-react';
 import { useTracker } from '../providers/TrackerProvider';
 import { calculateFitScore } from '@/lib/fitEngine';
-import { userProfile } from '@/data/userProfile';
+import { useUserProfile } from '@/hooks/use-user-profile';
+import { UserProfile } from '@/data/userProfile';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 // Flexible interface to handle TrackerItem, Internship, or Opportunity
@@ -34,14 +34,7 @@ interface ApplyModalProps {
 export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalProps) {
     const { addToTracker } = useTracker();
     const router = useRouter();
-    const [step, setStep] = useState(1);
-
-    // Reset on open
-    useEffect(() => {
-        if (isOpen && opportunity) {
-            setStep(1);
-        }
-    }, [isOpen, opportunity]);
+    const { data: user } = useUserProfile();
 
     if (!opportunity) return null;
 
@@ -52,12 +45,20 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
         title: opportunity.title
     };
 
-    // --- Logic ---
-    // Gap Analysis using shared engine
-    const { missingSkills } = calculateFitScore(opportunity, userProfile);
+    // Construct profile for fit engine from DB data or fallback
+    const fitProfile: UserProfile = {
+        name: user?.name || "Guest",
+        major: "", // Not in DB currently
+        year: "", // Not in DB currently
+        skills: user?.fieldInterests || [], // Mapping fieldInterests to skills as proxy
+        interests: user?.opportunityInterests || [],
+        maxActiveApps: 3
+    };
 
-    const handleNext = () => setStep(prev => prev + 1);
-    const handleBack = () => setStep(prev => prev - 1);
+    // --- Logic ---
+    // Gap Analysis using shared engine with dynamic profile
+    // If user is loading, we might show a loader or just default to empty match (safest to wait or default)
+    const { missingSkills } = calculateFitScore(opportunity, fitProfile);
 
     const handleSubmit = () => {
         // Proceed to tracker (Toolkit access)
@@ -80,19 +81,18 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl p-0 bg-transparent border-none shadow-none text-black">
+            <DialogContent showCloseButton={false} className="max-w-2xl p-0 bg-transparent border-none shadow-none text-black">
                 <div className="relative bg-white rounded-2xl w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
                     {/* Header */}
                     <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
-                                <span className="px-2 py-0.5 rounded-md bg-slate-200 text-slate-600 text-[10px] font-bold uppercase tracking-wider">
-                                    Step {step} of 2
+                                <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                                    <Rocket size={10} /> Smart Apply
                                 </span>
                             </div>
                             <h3 className="text-xl font-bold text-slate-900">
-                                {step === 1 && `Insight: ${displayData.company}`}
-                                {step === 2 && "Review & Submit"}
+                                {displayData.company}
                             </h3>
                         </div>
                         <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-full transition-colors">
@@ -101,115 +101,92 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
                     </div>
 
                     {/* Body - Scrollable */}
-                    <div className="flex-1 overflow-y-auto p-6 max-h-[60vh]">
-                        {step === 1 && (
-                            <div className="space-y-6">
-                                {/* Video Teaser */}
-                                <div className="relative aspect-video bg-slate-900 rounded-xl overflow-hidden flex items-center justify-center group cursor-pointer shadow-md">
-                                    <NextImage
-                                        src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1000"
-                                        className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500"
-                                        alt="Office Teaser"
-                                        width={1000}
-                                        height={562}
-                                    />
-                                    <div className="relative z-10 flex flex-col items-center">
-                                        <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50 group-hover:scale-110 transition-transform mb-3">
-                                            <Play size={24} className="fill-white text-white ml-1" />
-                                        </div>
-                                        <span className="text-white font-bold text-lg drop-shadow-md">Insider Look: {displayData.company}</span>
-                                    </div>
-                                </div>
+                    <div className="flex-1 overflow-y-auto p-6 max-h-[60vh] space-y-8">
 
-                                {/* Gap Analysis */}
-                                <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-                                    <h4 className="font-bold text-slate-900 flex items-center gap-2 mb-3">
-                                        <Target size={18} className="text-indigo-600" />
-                                        Skill Match Analysis
-                                    </h4>
-                                    {missingSkills.length > 0 ? (
-                                        <div className="bg-rose-50 rounded-lg p-4 border border-rose-100">
-                                            <p className="text-sm text-rose-800 font-medium mb-2">Missing Key Skills:</p>
-                                            <div className="flex flex-wrap gap-2">
-                                                {missingSkills.map((s: string) => (
-                                                    <span key={s} className="px-2 py-1 bg-white border border-rose-200 text-rose-600 text-xs font-bold rounded-md flex items-center gap-1">
-                                                        <AlertCircle size={10} /> {s}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                            <p className="text-xs text-rose-600 mt-3 flex items-center gap-1">
-                                                <Sparkles size={12} />
-                                                <b>Tip:</b> Highlight willingness to learn specific missing tech in your cover letter.
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        <div className="bg-emerald-50 text-emerald-700 p-4 rounded-lg flex items-center gap-3 border border-emerald-100">
-                                            <CheckCircle2 size={24} />
-                                            <div>
-                                                <p className="font-bold">Perfect Skill Match!</p>
-                                                <p className="text-sm opacity-90">You have all the listed requirements. Go get &apos;em!</p>
-                                            </div>
-                                        </div>
-                                    )}
+                        {/* 1. Video Teaser */}
+                        <div className="space-y-6">
+                            <div className="relative aspect-video bg-slate-900 rounded-xl overflow-hidden flex items-center justify-center group cursor-pointer shadow-md">
+                                <NextImage
+                                    src={(opportunity.images && opportunity.images.length > 0) ? opportunity.images[0] : (opportunity.poster || "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1000")}
+                                    className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500"
+                                    alt="Office Teaser"
+                                    width={1000}
+                                    height={562}
+                                />
+                                <div className="relative z-10 flex flex-col items-center">
+                                    <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50 group-hover:scale-110 transition-transform mb-3">
+                                        <Play size={24} className="fill-white text-white ml-1" />
+                                    </div>
+                                    <span className="text-white font-bold text-lg drop-shadow-md">{displayData.company}</span>
                                 </div>
                             </div>
-                        )}
 
-                        {step === 2 && (
-                            <div className="text-center py-10">
-                                <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <Rocket size={40} />
-                                </div>
-                                <h3 className="text-2xl font-bold text-slate-900 mb-2">Ready to Launch?</h3>
-                                <p className="text-slate-500 max-w-md mx-auto mb-8">
-                                    You&apos;re about to apply to <b>{displayData.company}</b>. We&apos;ve saved your notes and drafted your responses.
-                                </p>
-
-                                <div className="bg-slate-50 max-w-sm mx-auto rounded-xl p-4 border border-slate-200 text-left mb-8">
-                                    <p className="text-xs font-bold text-slate-500 uppercase mb-2">Summary</p>
-                                    <div className="space-y-2 text-sm">
-                                        <div className="flex justify-between">
-                                            <span className="text-slate-500">Role</span>
-                                            <span className="font-medium">{displayData.title}</span>
+                            {/* Gap Analysis */}
+                            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+                                <h4 className="font-bold text-slate-900 flex items-center gap-2 mb-3">
+                                    <Target size={18} className="text-indigo-600" />
+                                    Skill Match Analysis
+                                </h4>
+                                {missingSkills.length > 0 ? (
+                                    <div className="bg-rose-50 rounded-lg p-4 border border-rose-100">
+                                        <p className="text-sm text-rose-800 font-medium mb-2">Missing Key Skills:</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {missingSkills.map((s: string) => (
+                                                <span key={s} className="px-2 py-1 bg-white border border-rose-200 text-rose-600 text-xs font-bold rounded-md flex items-center gap-1">
+                                                    <AlertCircle size={10} /> {s}
+                                                </span>
+                                            ))}
                                         </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-slate-500">Company</span>
-                                            <span className="font-medium">{displayData.company}</span>
+                                        <p className="text-xs text-rose-600 mt-3 flex items-center gap-1">
+                                            <Sparkles size={12} />
+                                            <b>Tip:</b> Highlight willingness to learn specific missing tech in your cover letter.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="bg-emerald-50 text-emerald-700 p-4 rounded-lg flex items-center gap-3 border border-emerald-100">
+                                        <CheckCircle2 size={24} />
+                                        <div>
+                                            <p className="font-bold">Perfect Skill Match!</p>
+                                            <p className="text-sm opacity-90">You have all the listed requirements. Go get &apos;em!</p>
                                         </div>
                                     </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* 2. Review Summary */}
+                        <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                            <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wide mb-4 flex items-center gap-2">
+                                <Rocket size={16} className="text-slate-500" /> Application Summary
+                            </h4>
+                            <div className="space-y-3 text-sm">
+                                <div className="flex justify-between items-center py-2 border-b border-slate-200/50">
+                                    <span className="text-slate-500">Role</span>
+                                    <span className="font-medium text-slate-900">{displayData.title}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-2 border-b border-slate-200/50">
+                                    <span className="text-slate-500">Company</span>
+                                    <span className="font-medium text-slate-900">{displayData.company}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-2">
+                                    <span className="text-slate-500">Action</span>
+                                    <span className="font-medium text-emerald-600 flex items-center gap-1">
+                                        <CheckCircle2 size={14} /> Draft Responses Saved
+                                    </span>
                                 </div>
                             </div>
-                        )}
+                        </div>
+
                     </div>
 
                     {/* Footer Controls */}
-                    <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-between">
-                        {step > 1 ? (
-                            <button onClick={handleBack} className="px-6 py-2.5 text-slate-600 font-bold hover:bg-slate-200 rounded-xl transition-colors flex items-center gap-2">
-                                <ChevronLeft size={18} /> Back
-                            </button>
-                        ) : (
-                            <div></div>
-                        )}
-
-                        {step < 2 ? (
-                            <button
-                                onClick={handleNext}
-                                className={clsx(
-                                    "px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg",
-                                    "bg-slate-900 text-white hover:bg-slate-800 hover:shadow-xl"
-                                )}
-                            >
-                                Next Step <ArrowRight size={18} />
-                            </button>
-                        ) : (
-                            <button
-                                onClick={handleSubmit}
-                                className="px-8 py-2.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-200 flex items-center gap-2"
-                            >
-                                Proceed <ExternalLink size={18} />
-                            </button>
-                        )}
+                    <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-end">
+                        <button
+                            onClick={handleSubmit}
+                            className="px-8 py-2.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-200 flex items-center gap-2 transition-all hover:scale-[1.02]"
+                        >
+                            Go <ExternalLink size={18} />
+                        </button>
                     </div>
                 </div>
             </DialogContent>

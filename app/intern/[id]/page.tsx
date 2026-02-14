@@ -152,25 +152,28 @@ export default function InternshipDetailPage() {
               </div>
             </div>
 
-            {/* Apply Button */}
-            {internship.link && (
-              <Link href={`${internship.link}${internship.link.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=internship_detail&utm_campaign=internship_apply`} target="_blank" rel="noopener noreferrer">
-                <Button className="bg-orange-500 hover:bg-orange-600 text-white font-medium w-full sm:w-auto px-6 py-2">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Apply
-                </Button>
-              </Link>
-            )}
+            {/* Buttons Group */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+              {/* Apply Button */}
+              {internship.link && (
+                <Link href={`${internship.link}${internship.link.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=internship_detail&utm_campaign=internship_apply`} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
+                  <Button variant="outline" className="w-full sm:w-auto px-6 py-2 border-orange-500 text-orange-600 hover:bg-orange-50 font-medium">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Apply
+                  </Button>
+                </Link>
+              )}
 
-            {/* Smart Apply Button */}
-            {internship.link && session?.user && (
-              <Button
-                onClick={() => setSmartApplyOpen(true)}
-                className="bg-black text-white hover:bg-slate-800 font-bold w-full sm:w-auto px-6 py-2 flex items-center gap-2"
-              >
-                Smart Apply <Sparkles className="w-4 h-4 ml-1" />
-              </Button>
-            )}
+              {/* Smart Apply Button */}
+              {session?.user && (
+                <Button
+                  onClick={() => setSmartApplyOpen(true)}
+                  className="bg-orange-500 text-white hover:bg-orange-600 font-bold w-full sm:w-auto px-6 py-2 flex items-center gap-2"
+                >
+                  Smart Apply <Sparkles className="w-4 h-4 ml-1" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 

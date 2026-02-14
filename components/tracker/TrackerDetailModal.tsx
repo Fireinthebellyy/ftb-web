@@ -57,7 +57,7 @@ export default function TrackerDetailModal({ isOpen, onClose, opportunity, onSma
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-3xl p-0 overflow-hidden bg-white/5 backdrop-blur-3xl border-white/10">
+            <DialogContent showCloseButton={false} className="max-w-3xl p-0 overflow-hidden bg-white/5 backdrop-blur-3xl border-white/10">
                 <div className="relative bg-white w-full h-full flex flex-col max-h-[90vh]">
 
                     {/* Header */}
@@ -153,14 +153,14 @@ export default function TrackerDetailModal({ isOpen, onClose, opportunity, onSma
                         <div className="flex gap-3 w-full md:w-auto">
                             <button
                                 onClick={onSmartApply}
-                                className="flex-1 md:flex-none px-6 py-2.5 bg-black text-white font-bold rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+                                className="flex-1 md:flex-none px-6 py-2.5 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
                             >
                                 <span>Smart Apply</span> <Sparkles size={16} />
                             </button>
                             <a
                                 href="#"
                                 onClick={(e) => { e.preventDefault(); alert("Redirecting to external application..."); }}
-                                className="flex-1 md:flex-none px-6 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
+                                className="flex-1 md:flex-none px-6 py-2.5 bg-white border border-orange-500 text-orange-600 font-bold rounded-xl hover:bg-orange-50 transition-colors flex items-center justify-center gap-2"
                             >
                                 <span>Apply</span> <ExternalLink size={16} />
                             </a>

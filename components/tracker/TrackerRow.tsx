@@ -1,16 +1,18 @@
 import React from 'react';
-import { Clock, AlertCircle, Rocket, Trash2, ChevronDown } from 'lucide-react';
+import { Clock, AlertCircle, Rocket, Trash2, ChevronDown, Calendar, CalendarPlus, CheckSquare } from 'lucide-react';
 import clsx from 'clsx';
 
 interface TrackerRowProps {
     opp: any;
-    updateStatus: (id: number, status: string, extraData?: any) => void;
+    updateStatus: (id: number | string, status: string, extraData?: any) => void;
     onClick: (opp: any) => void;
     onResume: () => void;
-    onDelete: (id: number) => void;
+    onDelete: (id: number | string) => void;
+    onAddCalendar: () => void;
+    onAddTask: () => void;
 }
 
-export default function TrackerRow({ opp, updateStatus, onClick, onResume, onDelete }: TrackerRowProps) {
+export default function TrackerRow({ opp, updateStatus, onClick, onResume, onDelete, onAddCalendar, onAddTask }: TrackerRowProps) {
     return (
         <div
             onClick={() => onClick(opp)}
@@ -36,8 +38,16 @@ export default function TrackerRow({ opp, updateStatus, onClick, onResume, onDel
                     <div className="flex items-center gap-3 text-sm text-slate-500 mt-0.5">
                         <span>{opp.company}</span>
                         {opp.deadline && (
-                            <span className={clsx("flex items-center gap-1", opp.status === 'Draft' ? "text-amber-600" : "")}>
+                            <span className={clsx("flex items-center gap-1",
+                                opp.isHighPriority ? "text-rose-600 font-bold" :
+                                    (opp.status === 'Draft' ? "text-amber-600" : "")
+                            )}>
                                 <Clock size={12} /> {new Date(opp.deadline).toLocaleDateString()}
+                            </span>
+                        )}
+                        {opp.expectedResultWindow && (
+                            <span className="flex items-center gap-1 text-xs text-slate-400">
+                                <Calendar size={12} /> Exp: {opp.expectedResultWindow}
                             </span>
                         )}
                         {opp.isHighPriority && (
@@ -69,6 +79,23 @@ export default function TrackerRow({ opp, updateStatus, onClick, onResume, onDel
                         {['Not Applied', 'Draft', 'Applied', 'Result Awaited', 'Selected', 'Rejected'].map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                     <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
+
+                <div className="flex items-center gap-1">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onAddCalendar(); }}
+                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        title="Add to Calendar"
+                    >
+                        <CalendarPlus size={18} />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onAddTask(); }}
+                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                        title="Add Task"
+                    >
+                        <CheckSquare size={18} />
+                    </button>
                 </div>
 
                 <button

@@ -6,15 +6,29 @@ import NextImage from 'next/image';
 import { X, CheckCircle2, ExternalLink, AlertCircle, Play, ArrowRight, Target, Sparkles, ChevronLeft, Rocket } from 'lucide-react';
 import clsx from 'clsx';
 import { useTracker } from '../providers/TrackerProvider';
-import { Opportunity } from '@/data/opportunities';
 import { calculateFitScore } from '@/lib/fitEngine';
 import { userProfile } from '@/data/userProfile';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
+// Flexible interface to handle TrackerItem, Internship, or Opportunity
+interface ApplyModalOpportunity {
+    id: number | string;
+    title: string;
+    company?: string;
+    hiringOrganization?: string;
+    organiserInfo?: string;
+    logo?: string;
+    poster?: string;
+    images?: string[];
+    skills?: string[];
+    tags?: string[];
+    [key: string]: any;
+}
+
 interface ApplyModalProps {
     isOpen: boolean;
     onClose: () => void;
-    opportunity: Opportunity | null;
+    opportunity: ApplyModalOpportunity | null;
 }
 
 export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalProps) {
@@ -30,6 +44,13 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
     }, [isOpen, opportunity]);
 
     if (!opportunity) return null;
+
+    // Helper to normalize display data
+    const displayData = {
+        company: opportunity.company || opportunity.hiringOrganization || opportunity.organiserInfo || "Unknown Organization",
+        logo: opportunity.logo || opportunity.poster || (opportunity.images && opportunity.images[0]),
+        title: opportunity.title
+    };
 
     // --- Logic ---
     // Gap Analysis using shared engine
@@ -70,7 +91,7 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
                                 </span>
                             </div>
                             <h3 className="text-xl font-bold text-slate-900">
-                                {step === 1 && `Insight: ${opportunity.company || (opportunity as any).hiringOrganization}`}
+                                {step === 1 && `Insight: ${displayData.company}`}
                                 {step === 2 && "Review & Submit"}
                             </h3>
                         </div>
@@ -96,7 +117,7 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
                                         <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50 group-hover:scale-110 transition-transform mb-3">
                                             <Play size={24} className="fill-white text-white ml-1" />
                                         </div>
-                                        <span className="text-white font-bold text-lg drop-shadow-md">Insider Look: {opportunity.company || (opportunity as any).hiringOrganization}</span>
+                                        <span className="text-white font-bold text-lg drop-shadow-md">Insider Look: {displayData.company}</span>
                                     </div>
                                 </div>
 
@@ -141,7 +162,7 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
                                 </div>
                                 <h3 className="text-2xl font-bold text-slate-900 mb-2">Ready to Launch?</h3>
                                 <p className="text-slate-500 max-w-md mx-auto mb-8">
-                                    You&apos;re about to apply to <b>{opportunity.company || (opportunity as any).hiringOrganization}</b>. We&apos;ve saved your notes and drafted your responses.
+                                    You&apos;re about to apply to <b>{displayData.company}</b>. We&apos;ve saved your notes and drafted your responses.
                                 </p>
 
                                 <div className="bg-slate-50 max-w-sm mx-auto rounded-xl p-4 border border-slate-200 text-left mb-8">
@@ -149,11 +170,11 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
                                     <div className="space-y-2 text-sm">
                                         <div className="flex justify-between">
                                             <span className="text-slate-500">Role</span>
-                                            <span className="font-medium">{opportunity.title}</span>
+                                            <span className="font-medium">{displayData.title}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-slate-500">Company</span>
-                                            <span className="font-medium">{opportunity.company || (opportunity as any).hiringOrganization}</span>
+                                            <span className="font-medium">{displayData.company}</span>
                                         </div>
                                     </div>
                                 </div>

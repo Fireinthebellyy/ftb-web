@@ -1,10 +1,11 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { opportunities, Opportunity } from '@/data/opportunities';
 import { toast } from 'sonner';
+import { fetchInternshipsPaginated } from '@/lib/queries-internships';
+import { fetchOpportunitiesPaginated } from '@/lib/queries-opportunities';
 
-export interface TrackerItem extends Opportunity {
+export interface TrackerItem {
     oppId: number | string;
     status: string; // 'Not Applied' | 'Draft' | 'Applied' | 'Result Awaited' | 'Selected' | 'Rejected'
     kind?: 'internship' | 'opportunity'; // Default to 'internship' if undefined
@@ -13,10 +14,18 @@ export interface TrackerItem extends Opportunity {
     result: string | null;
     notes: string;
     updatedAt?: string;
-    draftData?: any; // Keep as any for now or define stricter if structure is known
+    draftData?: any;
+    // Merged fields from API
+    title?: string;
+    company?: string;
+    location?: string;
+    type?: string;
+    deadline?: string;
+    logo?: string;
+    [key: string]: any;
 }
 
-export interface ManualTrackerInput extends Omit<Partial<TrackerItem>, 'id'> {
+export interface ManualTrackerInput extends Omit<Partial<TrackerItem>, 'oppId'> {
     id?: number | string;
     kind?: 'internship' | 'opportunity';
     draftData?: any;
@@ -39,6 +48,7 @@ interface TrackerContextType {
     getStatus: (oppId: number | string) => string | null;
     addEvent: (event: Omit<TrackerEvent, 'id'>) => void;
     removeEvent: (id: number) => void;
+    isLoading: boolean;
 }
 
 const TrackerContext = createContext<TrackerContextType | undefined>(undefined);
@@ -52,27 +62,125 @@ export const useTracker = () => {
 };
 
 export const TrackerProvider = ({ children }: { children: ReactNode }) => {
-    const [items, setItems] = useState<TrackerItem[]>([]);
+    const [trackedItems, setTrackedItems] = useState<TrackerItem[]>([]);
     const [events, setEvents] = useState<TrackerEvent[]>([]);
+    const [hydratedItems, setHydratedItems] = useState<TrackerItem[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
+    const [isFetching, setIsFetching] = useState(false);
 
-    // Initial Load
+    // Initial Load from LocalStorage
     useEffect(() => {
         const savedItems = localStorage.getItem('tracker_items');
         const savedEvents = localStorage.getItem('tracker_events');
-        if (savedItems) setItems(JSON.parse(savedItems));
+        if (savedItems) setTrackedItems(JSON.parse(savedItems));
         if (savedEvents) setEvents(JSON.parse(savedEvents));
         setIsLoaded(true);
     }, []);
 
     // Persistence
     useEffect(() => {
-        if (isLoaded) localStorage.setItem('tracker_items', JSON.stringify(items));
-    }, [items, isLoaded]);
+        if (isLoaded) localStorage.setItem('tracker_items', JSON.stringify(trackedItems));
+    }, [trackedItems, isLoaded]);
 
     useEffect(() => {
         if (isLoaded) localStorage.setItem('tracker_events', JSON.stringify(events));
     }, [events, isLoaded]);
+
+    // Hydrate Data from API
+    useEffect(() => {
+        const fetchDetails = async () => {
+            if (!isLoaded || trackedItems.length === 0) {
+                setHydratedItems([]);
+                return;
+            }
+
+            setIsFetching(true);
+            try {
+                // Separate IDs by kind
+                const internshipIds = trackedItems
+                    .filter(i => (i.kind || 'internship') === 'internship')
+                    .map(i => i.oppId as string);
+
+                const opportunityIds = trackedItems
+                    .filter(i => i.kind === 'opportunity' && typeof i.oppId === 'string')
+                    .map(i => i.oppId as string);
+
+                // Fetch in parallel
+                const [internshipData, opportunityData] = await Promise.all([
+                    internshipIds.length > 0 ? fetchInternshipsPaginated(100, 0, undefined, [], [], undefined, undefined, undefined, internshipIds) : Promise.resolve({ internships: [] }),
+                    opportunityIds.length > 0 ? fetchOpportunitiesPaginated(100, 0, undefined, [], [], opportunityIds) : Promise.resolve({ opportunities: [] })
+                ]);
+
+                // Create lookups
+                const internshipsMap = new Map(internshipData.internships.map((i: any) => [i.id, i]));
+                const opportunitiesMap = new Map(opportunityData.opportunities.map((o: any) => [o.id, o]));
+
+                // Merge Data
+                const merged = trackedItems.map(item => {
+                    let apiData: any = {};
+
+                    if ((item.kind || 'internship') === 'internship') {
+                        const fetched = internshipsMap.get(item.oppId as string);
+                        if (fetched) {
+                            apiData = {
+                                title: fetched.title,
+                                company: fetched.hiringOrganization,
+                                location: fetched.location,
+                                type: fetched.type,
+                                deadline: fetched.deadline,
+                                logo: fetched.poster, // Internship uses 'poster'
+                                ...fetched
+                            };
+                        }
+                    } else if (item.kind === 'opportunity') {
+                        const fetched = opportunitiesMap.get(item.oppId as string);
+                        if (fetched) {
+                            apiData = {
+                                title: fetched.title,
+                                company: fetched.organiserInfo || 'Organizer', // Opportunities use organiserInfo
+                                location: fetched.location,
+                                type: fetched.type,
+                                deadline: fetched.endDate || fetched.startDate, // Use endDate as deadline
+                                logo: fetched.images?.[0], // Use first image if available
+                                ...fetched
+                            };
+                        }
+                    }
+
+                    // Prioritize local overrides (e.g. user edited notes) but prefer API for core fields unless manual
+                    // Check if it's a manual ID (numeric timestamp) vs UUID (string)
+                    // const isManual = typeof item.oppId === 'number';
+
+                    if (Object.keys(apiData).length === 0) {
+                        // Keep item as is if not found in API (might be manual or deleted)
+                        return item;
+                    }
+
+                    return {
+                        ...apiData,
+                        ...item, // Keep local status, notes, etc.
+                        title: apiData.title || item.title, // Prefer API title
+                        company: apiData.company || item.company,
+                        logo: apiData.logo || item.logo, // Prefer API logo
+                    };
+                });
+
+                setHydratedItems(merged);
+
+            } catch (error) {
+                console.error("Failed to hydrate tracker items", error);
+                // Fallback to local items if fetch fails
+                setHydratedItems(trackedItems);
+            } finally {
+                setIsFetching(false);
+            }
+        };
+
+        // Debounce fetching slightly to avoid thrashing on rapid adds
+        const timeout = setTimeout(fetchDetails, 100);
+        return () => clearTimeout(timeout);
+
+    }, [trackedItems, isLoaded]);
 
     const addEvent = (event: Omit<TrackerEvent, 'id'>) => {
         const newItem = { ...event, id: Date.now() };
@@ -85,19 +193,17 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const addToTracker = (oppOrId: number | string | ManualTrackerInput, initialStatus = 'Not Applied', kind: 'internship' | 'opportunity' = 'internship') => {
-        setItems(prevItems => {
+        setTrackedItems(prevItems => {
             const isManual = typeof oppOrId === 'object';
-            const idToCheck = isManual ? (oppOrId as ManualTrackerInput).id ?? Date.now() : (oppOrId as number | string);
+            // If manual input, id might be undefined, so generate one. If id/string passed, use it.
+            const idToCheck = isManual
+                ? (oppOrId as ManualTrackerInput).id ?? Date.now()
+                : (oppOrId as number | string);
 
             const existingItem = prevItems.find(i => i.oppId === idToCheck);
 
             if (existingItem) {
-                if (existingItem.status === 'Draft' && initialStatus !== 'Draft') {
-                    return prevItems.map(i => i.oppId === idToCheck ? { ...i, status: initialStatus, appliedAt: new Date().toISOString() } : i);
-                }
-                if (initialStatus === 'Draft' && isManual && (oppOrId as ManualTrackerInput).draftData) {
-                    return prevItems.map(i => i.oppId === idToCheck ? { ...i, draftData: (oppOrId as ManualTrackerInput).draftData } : i);
-                }
+                toast.info("Already in Tracker");
                 return prevItems;
             }
 
@@ -107,17 +213,9 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
                 toast.success("💾 Draft Saved");
             }
 
-            // If it's an ID from our static data
-            let staticData = {};
-            if (!isManual) {
-                const found = opportunities.find(o => o.id === oppOrId);
-                if (found) staticData = found;
-            }
-
             const inputData = isManual ? (oppOrId as ManualTrackerInput) : {};
+
             const newItem: TrackerItem = {
-                ...staticData,
-                ...inputData,
                 oppId: idToCheck,
                 status: initialStatus,
                 kind: (isManual && (oppOrId as ManualTrackerInput).kind) ? (oppOrId as ManualTrackerInput).kind : kind,
@@ -126,6 +224,8 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
                 result: null,
                 notes: inputData.notes || '',
                 draftData: (isManual && (oppOrId as ManualTrackerInput).draftData) ? (oppOrId as ManualTrackerInput).draftData : null,
+                // If it's manual, we might store partial data here too
+                ...inputData
             } as TrackerItem;
 
             return [...prevItems, newItem];
@@ -133,11 +233,11 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const updateStatus = (oppId: number | string, status: string, extraData: Record<string, unknown> = {}) => {
-        setItems(prevItems => prevItems.map(i => {
+        setTrackedItems(prevItems => prevItems.map(i => {
             if (i.oppId === oppId) {
                 return {
                     ...i,
-                    ...extraData, // Spread extraData first so it doesn't overwrite controlled fields
+                    ...extraData,
                     status,
                     updatedAt: new Date().toISOString()
                 };
@@ -147,17 +247,27 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const removeFromTracker = (oppId: number | string) => {
-        setItems(prevItems => prevItems.filter(i => i.oppId !== oppId));
+        setTrackedItems(prevItems => prevItems.filter(i => i.oppId !== oppId));
         toast.success("Deleted from Tracker");
     };
 
     const getStatus = (oppId: number | string) => {
-        const item = items.find(i => i.oppId === oppId);
+        const item = trackedItems.find(i => i.oppId === oppId);
         return item ? item.status : null;
     };
 
     return (
-        <TrackerContext.Provider value={{ items, events, addToTracker, removeFromTracker, updateStatus, getStatus, addEvent, removeEvent }}>
+        <TrackerContext.Provider value={{
+            items: hydratedItems.length > 0 ? hydratedItems : trackedItems,
+            events,
+            addToTracker,
+            removeFromTracker,
+            updateStatus,
+            getStatus,
+            addEvent,
+            removeEvent,
+            isLoading: !isLoaded || isFetching
+        }}>
             {children}
         </TrackerContext.Provider>
     );

@@ -1,30 +1,59 @@
 import React from 'react';
 import { ExternalLink, Calculator, Target, Lightbulb, AlertTriangle, Sparkles } from 'lucide-react';
 import clsx from 'clsx';
-import { userProfile } from '@/data/userProfile';
+import { useUserProfile } from '@/hooks/use-user-profile';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+
+import { calculateFitScore } from '@/lib/fitEngine';
+import { UserProfile } from '@/data/userProfile';
+
+interface TrackerDetailOpportunity {
+    id: number | string;
+    oppId: number | string;
+    title: string;
+    company: string;
+    logo?: string;
+    type: string;
+    description?: string;
+    expectations?: string[];
+    eligibility?: string[];
+    skills?: string[];
+    tags?: string[];
+    status: string;
+    fitScore?: number;
+    [key: string]: any;
+}
 
 interface TrackerDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
-    opportunity: any;
-    updateStatus: (id: number, status: string) => void;
+    opportunity: TrackerDetailOpportunity;
+    updateStatus: (id: number | string, status: string) => void;
     onSmartApply: () => void;
 }
 
-export default function TrackerDetailModal({ isOpen, onClose, opportunity, updateStatus, onSmartApply }: TrackerDetailModalProps) {
+export default function TrackerDetailModal({ isOpen, onClose, opportunity, onSmartApply }: TrackerDetailModalProps) {
+    const { data: user } = useUserProfile();
+
     if (!opportunity) return null;
 
-    // --- Gap Analysis Logic ---
-    const requiredSkills = opportunity.skills || [];
-    const userSkills = userProfile.skills || [];
-    const missingSkills = requiredSkills.filter((skill: string) => !userSkills.includes(skill));
-    const matchPercentage = opportunity.fitScore || 0;
-
-    // --- Status Logic ---
-    const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        updateStatus(opportunity.oppId, e.target.value);
+    // Construct profile for fit engine from DB data
+    const fitProfile: UserProfile = {
+        name: user?.name || "",
+        major: "", // Not in DB currently
+        year: "", // Not in DB currently
+        skills: user?.fieldInterests || [], // Mapping fieldInterests to skills as proxy
+        interests: user?.opportunityInterests || [],
+        maxActiveApps: 3
     };
+
+    // --- Gap Analysis Logic ---
+    const { score: matchPercentage, missingSkills } = calculateFitScore(opportunity, fitProfile);
+
+    // Normalize expectations/eligibility
+    const expectations = opportunity.expectations || opportunity.eligibility || [];
+
+
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -65,9 +94,13 @@ export default function TrackerDetailModal({ isOpen, onClose, opportunity, updat
                                         <Target size={16} /> What to Expect
                                     </h3>
                                     <ul className="list-disc list-inside space-y-1 text-slate-600">
-                                        {opportunity.expectations?.map((exp: string, i: number) => (
-                                            <li key={i}>{exp}</li>
-                                        )) || <li>Details coming soon...</li>}
+                                        {expectations.length > 0 ? (
+                                            expectations.map((exp: string, i: number) => (
+                                                <li key={i}>{exp}</li>
+                                            ))
+                                        ) : (
+                                            <li>Details coming soon...</li>
+                                        )}
                                     </ul>
                                 </section>
                             </div>
@@ -89,7 +122,7 @@ export default function TrackerDetailModal({ isOpen, onClose, opportunity, updat
                                         <div className="space-y-2">
                                             <p className="text-xs text-emerald-700">You are a strong match! Focus on:</p>
                                             <div className="flex flex-wrap gap-1">
-                                                {userProfile.skills.slice(0, 3).map((s: string) => (
+                                                {fitProfile.skills.slice(0, 3).map((s: string) => (
                                                     <span key={s} className="text-[10px] px-1.5 py-0.5 bg-white rounded border border-emerald-200 text-emerald-700">{s}</span>
                                                 ))}
                                             </div>
@@ -116,22 +149,7 @@ export default function TrackerDetailModal({ isOpen, onClose, opportunity, updat
                     </div>
 
                     {/* Footer Actions */}
-                    <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-4 mt-auto">
-                        <div className="flex items-center gap-3 w-full md:w-auto">
-                            <label className="text-sm font-medium text-slate-500 whitespace-nowrap">Current Status:</label>
-                            <select
-                                value={opportunity.status}
-                                onChange={handleStatusChange}
-                                className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                            >
-                                <option value="Not Applied">Not Applied</option>
-                                <option value="Applied">Applied</option>
-                                <option value="Interview">Interview</option>
-                                <option value="Selected">Selected</option>
-                                <option value="Rejected">Rejected</option>
-                            </select>
-                        </div>
-
+                    <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-end items-center gap-4 mt-auto">
                         <div className="flex gap-3 w-full md:w-auto">
                             <button
                                 onClick={onSmartApply}

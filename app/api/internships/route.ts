@@ -187,6 +187,11 @@ export async function GET(req: NextRequest) {
     const limit = Number.isNaN(limitParam) ? 10 : limitParam;
     const offset = Number.isNaN(offsetParam) ? 0 : offsetParam;
     const searchTerm = searchParam ? searchParam.trim() : "";
+    const idsParam = searchParams.get("ids");
+    const ids = idsParam
+      ? idsParam.split(",").map((id) => id.trim()).filter((id) => id.length > 0)
+      : [];
+
     const rawTypes = typesParam
       ? typesParam
         .split(",")
@@ -210,6 +215,11 @@ export async function GET(req: NextRequest) {
       : maxStipendParam;
 
     const conditions: SQL<unknown>[] = [isNull(internships.deletedAt)];
+
+    if (ids.length > 0) {
+      conditions.push(inArray(internships.id, ids));
+    }
+
 
     // Only show active internships to non-admin users
     if (!isAdmin) {

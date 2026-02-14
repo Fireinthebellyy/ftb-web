@@ -1,4 +1,3 @@
-import { Opportunity } from '@/data/opportunities';
 import { UserProfile } from '@/data/userProfile';
 
 export interface FitResult {
@@ -9,10 +8,18 @@ export interface FitResult {
     missingSkills: string[];
 }
 
-export const calculateFitScore = (opportunity: Opportunity, userProfile: UserProfile): FitResult => {
+export interface FitInput {
+    skills?: string[];
+    tags?: string[];
+    [key: string]: any;
+}
+
+export const calculateFitScore = (opportunity: FitInput, userProfile: UserProfile): FitResult => {
     // Pure Skill-Based Fit Logic
-    // Pure Skill-Based Fit Logic
-    const requiredSkills = opportunity.skills || [];
+    // Use skills if available, otherwise fall back to tags
+    const requiredSkills = opportunity.skills && opportunity.skills.length > 0
+        ? opportunity.skills
+        : (opportunity.tags || []);
     const userSkills = userProfile.skills || [];
 
     // Create sets for O(1) lookup using lowercase

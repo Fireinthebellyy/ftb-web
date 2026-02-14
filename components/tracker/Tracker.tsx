@@ -1,33 +1,23 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTracker, TrackerItem } from '@/components/providers/TrackerProvider';
-import { opportunities } from '@/data/opportunities';
-import { Clock, AlertCircle, FileText, BrainCircuit, Plus, GripHorizontal, CalendarDays, TrendingUp, LucideIcon } from 'lucide-react';
+import { Clock, AlertCircle, FileText, BrainCircuit, CalendarDays, TrendingUp, LucideIcon, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { userProfile } from '@/data/userProfile';
 import { calculateFitScore } from '@/lib/fitEngine';
 import TrackerDetailModal from './TrackerDetailModal';
 import ApplyModal from './ApplyModal';
 import EventCard from './EventCard';
-import AddEventModal from './AddEventModal';
-import AddApplicationModal from './AddApplicationModal';
 import TrackerRow from './TrackerRow';
 import MobileTrackerCard from './MobileTrackerCard';
-import PipelineCard from './PipelineCard';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { toast } from 'sonner';
+import AddEventModal from './AddEventModal';
 
 interface EnrichedTrackerItem extends TrackerItem {
     fitScore: number;
     fitLabel: string;
     fitColor: string;
     isHighPriority: boolean;
-    title: string;
-    company: string;
-    location: string;
-    type: string;
-    deadline?: string;
 }
 
 interface MetricCardProps {
@@ -43,19 +33,14 @@ export default function Tracker() {
     const isHighPriority = (deadline?: string) => {
         if (!deadline) return false;
         const diff = Math.ceil((new Date(deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-        return diff >= 0 && diff <= 5;
+        return diff >= 0 && diff <= 7;
     };
 
-    const { items, events, addEvent, removeEvent, updateStatus, addToTracker, removeFromTracker } = useTracker();
-    const [viewMode, setViewMode] = useState<'upcoming' | 'pipeline'>('upcoming');
-    const [isMounted, setIsMounted] = useState(false);
+    const { items, events, addEvent, removeEvent, updateStatus, removeFromTracker, isLoading } = useTracker();
 
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
     const [activeTab, setActiveTab] = useState<'internship' | 'opportunity'>('internship');
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+    const [eventInitialData, setEventInitialData] = useState<{ title?: string; type?: string; description?: string } | undefined>(undefined);
 
     const [detailOpp, setDetailOpp] = useState<any>(null);
     const [smartApplyOpp, setSmartApplyOpp] = useState<any>(null);
@@ -65,20 +50,16 @@ export default function Tracker() {
 
     const trackedOpps = useMemo(() => {
         return filteredItems.map(item => {
-            const staticOpp = opportunities.find(o => o.id === item.oppId);
-            // Fallback for manual entries that might not be in opportunities.js
-            const opp = staticOpp || { ...item, id: item.oppId } as any;
-
-            const { score, label, color } = calculateFitScore(opp, userProfile);
+            // Data is already hydrated in Provider, just calculate fit score and priority
+            // For manual items that might miss some fields, we handle gracefully
+            const { score, label, color } = calculateFitScore(item, userProfile);
 
             return {
                 ...item,
-                ...opp,
                 fitScore: score,
                 fitLabel: label,
                 fitColor: color,
-                deadline: item.deadline || opp.deadline, // Prefer item override if manual
-                isHighPriority: isHighPriority(item.deadline || opp.deadline)
+                isHighPriority: isHighPriority(item.deadline)
             } as EnrichedTrackerItem;
         });
     }, [filteredItems]);
@@ -119,53 +100,37 @@ export default function Tracker() {
         return ((i.status === 'Not Applied' || i.status === 'Draft') && daysLeft < 5 && daysLeft >= 0);
     });
 
-    // View Logic
-    const getPipelineGroups = () => {
-        const stages = ['Not Applied', 'Draft', 'Applied', 'Result Awaited', 'Selected', 'Rejected'];
-        return stages.map(stage => ({
-            name: stage,
-            items: trackedOpps.filter(i => i.status === stage)
-        }));
+    // Handlers for Add Calendar / Add Task
+    const handleAddCalendar = (opp: any) => {
+        setEventInitialData({
+            title: `Follow up: ${opp.company}`,
+            type: 'Deadline',
+            description: `Regarding ${opp.title} application.`
+        });
+        setIsEventModalOpen(true);
     };
 
-    // Drag End Handler
-    const onDragEnd = (result: DropResult) => {
-        const { destination, source, draggableId } = result;
-
-        if (!destination) return;
-        if (destination.droppableId === source.droppableId && destination.index === source.index) return;
-
-        const newStatus = destination.droppableId;
-        // oppId can be string (static-1) or number (123). 
-        // We should parse it if it looks like a pure number, otherwise keep as string.
-        // Actually, best to treat everything as string if possible, but let's see what updateStatus expects.
-        // If draggableId is "static-1", parseInt returns NaN.
-        const oppId = isNaN(Number(draggableId)) ? draggableId : Number(draggableId);
-
-        // Handle Rejected Special Case prompt
-        if (newStatus === 'Rejected' && source.droppableId !== 'Rejected') {
-            const reason = prompt("What do you think was the reason? (Resume, Interview, Ghosted?)");
-            if (reason) {
-                updateStatus(oppId, newStatus, { failureReason: reason });
-                toast("💡 Suggestion: " + (reason.toLowerCase().includes('resume') ? "Check out the Resume Toolkit." : "Try the Mock Interview tool."));
-            } else {
-                updateStatus(oppId, newStatus);
-            }
-        } else {
-            updateStatus(oppId, newStatus);
-        }
+    const handleAddTask = (opp: any) => {
+        setEventInitialData({
+            title: `Task for ${opp.company}`,
+            type: 'Task',
+            description: ''
+        });
+        setIsEventModalOpen(true);
     };
 
-    function getStatusColor(status: string) {
-        switch (status) {
-            case 'Not Applied': return 'bg-slate-400';
-            case 'Draft': return 'bg-amber-400';
-            case 'Applied': return 'bg-blue-500';
-            case 'Result Awaited': return 'bg-orange-500';
-            case 'Selected': return 'bg-emerald-500';
-            case 'Rejected': return 'bg-rose-500';
-            default: return 'bg-slate-400';
-        }
+    const handleEventSubmit = (eventData: any) => {
+        addEvent(eventData);
+        setIsEventModalOpen(false);
+        setEventInitialData(undefined);
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex h-[50vh] w-full items-center justify-center">
+                <Loader2 className="animate-spin text-slate-400" size={32} />
+            </div>
+        );
     }
 
     return (
@@ -199,44 +164,11 @@ export default function Tracker() {
                             Opportunities
                         </button>
                     </div>
-                    <div className="bg-slate-100 p-1 rounded-lg hidden sm:flex items-center justify-center">
-                        <button
-                            onClick={() => setViewMode('upcoming')}
-                            className={cn(
-                                "flex-1 sm:flex-none px-3 py-1.5 rounded-md text-sm font-bold transition-all flex justify-center items-center gap-2",
-                                viewMode === 'upcoming' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
-                            )}
-                        >
-                            <Clock size={16} /> Upcoming
-                        </button>
-                        <button
-                            onClick={() => setViewMode('pipeline')}
-                            className={cn(
-                                "flex-1 sm:flex-none px-3 py-1.5 rounded-md text-sm font-bold transition-all flex justify-center items-center gap-2",
-                                viewMode === 'pipeline' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
-                            )}
-                        >
-                            <GripHorizontal size={16} /> Pipeline
-                        </button>
-                    </div>
+
                 </div>
             </div>
 
-            {/* Action Bar */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-2 shadow-sm flex flex-row gap-2">
-                <button
-                    onClick={() => setIsEventModalOpen(true)}
-                    className="flex-1 bg-slate-50 text-slate-700 px-4 py-3 rounded-xl text-sm font-bold flex justify-center items-center gap-2 hover:bg-slate-100 transition-colors"
-                >
-                    <CalendarDays size={18} /> Add Event
-                </button>
-                <button
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="flex-1 bg-indigo-600 text-white px-4 py-3 rounded-xl text-sm font-bold flex justify-center items-center gap-2 hover:bg-indigo-700 transition-colors shadow-sm"
-                >
-                    <Plus size={18} /> Add Task
-                </button>
-            </div>
+
 
             {/* Mobile Metrics Card (Consolidated) */}
             <div className="md:hidden bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden">
@@ -274,167 +206,97 @@ export default function Tracker() {
             </div>
 
             {/* View Content */}
-            {viewMode === 'upcoming' ? (
-                <div className="space-y-8">
-                    {/* Agenda Section */}
-                    {agendaItems.length > 0 && (
-                        <section className="bg-white rounded-2xl border border-slate-200 overflow-hidden hidden md:block">
-                            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                                <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
-                                    <CalendarDays size={20} className="text-indigo-600" />
-                                    Your Agenda
-                                </h3>
-                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-                                    Next 7 Days
-                                </span>
-                            </div>
-
-                            <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                                {agendaItems.slice(0, 3).map((item, _idx) => (
-                                    item.isEvent ? (
-                                        <EventCard key={item.id} event={item as any} onDelete={removeEvent} />
-                                    ) : (
-                                        <div key={item.id} className="bg-amber-50 p-4 rounded-xl border border-amber-200 shadow-sm flex flex-col justify-between">
-                                            <div className="flex items-start gap-3 mb-3">
-                                                <div className="p-2 bg-amber-100 rounded-lg text-amber-700">
-                                                    <AlertCircle size={18} />
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-slate-900 text-sm leading-tight">{(item as any).opp.title}</p>
-                                                    <p className="text-xs text-amber-800 mt-1">{(item as any).opp.company}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex justify-between items-center mt-auto">
-                                                <span className="text-xs font-bold text-amber-700">{new Date(item.date).toLocaleDateString()}</span>
-                                                <button
-                                                    onClick={() => updateStatus(item.id, 'Applied')}
-                                                    className="px-3 py-1.5 bg-amber-600 text-white text-xs font-bold rounded-lg hover:bg-amber-700"
-                                                >
-                                                    Apply
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )
-                                ))}
-                            </div>
-                        </section>
-                    )}
-
-                    {/* Main List */}
-                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                            <h3 className="font-bold text-slate-900 text-lg">All Applications by Date</h3>
+            <div className="space-y-8">
+                {/* Agenda Section */}
+                {agendaItems.length > 0 && (
+                    <section className="bg-white rounded-2xl border border-slate-200 overflow-hidden hidden md:block">
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
+                                <CalendarDays size={20} className="text-indigo-600" />
+                                Your Agenda
+                            </h3>
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                                Next 7 Days
+                            </span>
                         </div>
-                        <div className="divide-y divide-slate-100">
-                            {trackedOpps
-                                .sort((a, b) => new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime())
-                                .map(opp => (
-                                    <div key={opp.oppId}>
-                                        <div className="md:hidden">
-                                            <MobileTrackerCard
-                                                opp={opp}
-                                                updateStatus={updateStatus}
-                                                onAddEvent={() => setIsEventModalOpen(true)}
-                                                onDelete={removeFromTracker}
-                                            />
+
+                        <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {agendaItems.slice(0, 3).map((item, _idx) => (
+                                item.isEvent ? (
+                                    <EventCard key={item.id} event={item as any} onDelete={removeEvent} />
+                                ) : (
+                                    <div key={item.id} className="bg-amber-50 p-4 rounded-xl border border-amber-200 shadow-sm flex flex-col justify-between">
+                                        <div className="flex items-start gap-3 mb-3">
+                                            <div className="p-2 bg-amber-100 rounded-lg text-amber-700">
+                                                <AlertCircle size={18} />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-slate-900 text-sm leading-tight">{(item as any).opp.title}</p>
+                                                <p className="text-xs text-amber-800 mt-1">{(item as any).opp.company}</p>
+                                            </div>
                                         </div>
-                                        <div className="hidden md:block">
-                                            <TrackerRow
-                                                opp={opp}
-                                                updateStatus={updateStatus}
-                                                onClick={setDetailOpp}
-                                                onResume={() => setSmartApplyOpp(opp)}
-                                                onDelete={removeFromTracker}
-                                            />
+                                        <div className="flex justify-between items-center mt-auto">
+                                            <span className="text-xs font-bold text-amber-700">{new Date(item.date).toLocaleDateString()}</span>
+                                            <button
+                                                onClick={() => updateStatus(item.id, 'Applied')}
+                                                className="px-3 py-1.5 bg-amber-600 text-white text-xs font-bold rounded-lg hover:bg-amber-700"
+                                            >
+                                                Apply
+                                            </button>
                                         </div>
                                     </div>
-                                ))}
-                            {trackedOpps.length === 0 && (
-                                <div className="p-8 text-center text-slate-500">
-                                    No applications tracked yet. Start by adding one!
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            ) : (
-                isMounted ? (
-                    <DragDropContext onDragEnd={onDragEnd}>
-                        <div className="flex flex-nowrap md:grid md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 overflow-x-auto pb-4 items-start snap-x snap-mandatory md:snap-none">
-                            {getPipelineGroups().map(group => (
-                                <Droppable key={group.name} droppableId={group.name}>
-                                    {(provided, snapshot) => (
-                                        <div
-                                            ref={provided.innerRef}
-                                            {...provided.droppableProps}
-                                            className={cn(
-                                                "min-w-[250px] rounded-xl p-2 transition-colors",
-                                                snapshot.isDraggingOver ? "bg-slate-50 ring-2 ring-slate-200" : ""
-                                            )}
-                                        >
-                                            <h3 className="font-bold text-slate-700 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide px-2">
-                                                <span className={cn("w-2 h-2 rounded-full", getStatusColor(group.name))}></span>
-                                                {group.name}
-                                                <span className="bg-slate-100 text-slate-500 px-2 rounded-full text-xs py-0.5">{group.items.length}</span>
-                                            </h3>
-                                            <div className="space-y-3 min-h-[100px]">
-                                                {group.items.map((opp, index) => (
-                                                    <Draggable key={opp.oppId.toString()} draggableId={opp.oppId.toString()} index={index}>
-                                                        {(provided, snapshot) => (
-                                                            <div
-                                                                ref={provided.innerRef}
-                                                                {...provided.draggableProps}
-                                                                {...provided.dragHandleProps}
-                                                                style={{ ...provided.draggableProps.style }}
-                                                                className={cn(snapshot.isDragging ? "opacity-70 rotate-2 scale-105" : "")}
-                                                            >
-                                                                <PipelineCard
-                                                                    opp={opp}
-                                                                    updateStatus={updateStatus}
-                                                                    onClick={setDetailOpp}
-                                                                    onResume={() => setSmartApplyOpp(opp)}
-                                                                    onDelete={removeFromTracker}
-                                                                />
-                                                            </div>
-                                                        )}
-                                                    </Draggable>
-                                                ))}
-                                                {provided.placeholder}
-                                                {group.items.length === 0 && (
-                                                    <div className="h-24 border-2 border-dashed border-slate-100 rounded-xl flex items-center justify-center text-slate-400 text-xs">
-                                                        Empty
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
-                                </Droppable>
+                                )
                             ))}
                         </div>
-                    </DragDropContext>
-                ) : (
-                    <div className="flex flex-nowrap md:grid md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 overflow-x-auto pb-4 items-start">
-                        {['Not Applied', 'Draft', 'Applied', 'Result Awaited', 'Selected', 'Rejected'].map(stage => (
-                            <div key={stage} className="min-w-[250px] rounded-xl p-2">
-                                <h3 className="font-bold text-slate-700 mb-3 text-sm uppercase tracking-wide px-2">{stage}</h3>
-                                <div className="h-24 border-2 border-dashed border-slate-100 rounded-xl flex items-center justify-center text-slate-300 text-xs animate-pulse">Loading...</div>
-                            </div>
-                        ))}
+                    </section>
+                )}
+
+                {/* Main List */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                        <h3 className="font-bold text-slate-900 text-lg">All Applications by Date</h3>
                     </div>
-                )
-            )}
+                    <div className="divide-y divide-slate-100">
+                        {trackedOpps
+                            .sort((a, b) => {
+                                const dateA = a.deadline ? new Date(a.deadline).getTime() : 9999999999999;
+                                const dateB = b.deadline ? new Date(b.deadline).getTime() : 9999999999999;
+                                return dateA - dateB;
+                            })
+                            .map(opp => (
+                                <div key={opp.oppId}>
+                                    <div className="md:hidden">
+                                        <MobileTrackerCard
+                                            opp={opp}
+                                            updateStatus={updateStatus}
+                                            onDelete={removeFromTracker}
+                                            onAddCalendar={() => handleAddCalendar(opp)}
+                                            onAddTask={() => handleAddTask(opp)}
+                                        />
+                                    </div>
+                                    <div className="hidden md:block">
+                                        <TrackerRow
+                                            opp={opp}
+                                            updateStatus={updateStatus}
+                                            onClick={setDetailOpp}
+                                            onResume={() => setSmartApplyOpp(opp)}
+                                            onDelete={removeFromTracker}
+                                            onAddCalendar={() => handleAddCalendar(opp)}
+                                            onAddTask={() => handleAddTask(opp)}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        {trackedOpps.length === 0 && (
+                            <div className="p-8 text-center text-slate-500">
+                                No applications tracked yet. Start by adding one!
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
 
-            <AddApplicationModal
-                isOpen={isAddModalOpen}
-                onClose={() => setIsAddModalOpen(false)}
-                onAdd={(opp, status) => addToTracker(opp, status, activeTab)}
-            />
 
-            <AddEventModal
-                isOpen={isEventModalOpen}
-                onClose={() => setIsEventModalOpen(false)}
-                onAdd={addEvent}
-            />
 
             <TrackerDetailModal
                 isOpen={!!detailOpp}
@@ -445,6 +307,13 @@ export default function Tracker() {
                     setSmartApplyOpp(detailOpp);
                     setDetailOpp(null);
                 }}
+            />
+
+            <AddEventModal
+                isOpen={isEventModalOpen}
+                onClose={() => setIsEventModalOpen(false)}
+                onAdd={handleEventSubmit}
+                initialData={eventInitialData}
             />
 
             <ApplyModal

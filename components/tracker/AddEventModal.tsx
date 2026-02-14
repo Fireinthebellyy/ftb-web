@@ -6,21 +6,34 @@ interface AddEventModalProps {
     isOpen: boolean;
     onClose: () => void;
     onAdd: (event: any) => void;
+    initialData?: { title?: string; type?: string; description?: string };
 }
 
-export default function AddEventModal({ isOpen, onClose, onAdd }: AddEventModalProps) {
+export default function AddEventModal({ isOpen, onClose, onAdd, initialData }: AddEventModalProps) {
     const [form, setForm] = useState({
         title: '',
-        date: '',
-        type: 'Deadline', // Deadline, Interview, Other
+        date: new Date().toISOString().split('T')[0],
+        type: 'Deadline', // Deadline, Interview, Task, Other
         description: ''
     });
+
+    React.useEffect(() => {
+        if (isOpen) {
+            setForm({
+                title: initialData?.title || '',
+                date: new Date().toISOString().split('T')[0],
+                type: initialData?.type || 'Deadline',
+                description: initialData?.description || ''
+            });
+        }
+    }, [isOpen, initialData]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onAdd(form);
         onClose();
-        setForm({ title: '', date: '', type: 'Deadline', description: '' });
+        onClose();
+        // Form reset handled by useEffect
     };
 
     return (
@@ -67,6 +80,7 @@ export default function AddEventModal({ isOpen, onClose, onAdd }: AddEventModalP
                             >
                                 <option value="Deadline">Deadline</option>
                                 <option value="Interview">Interview</option>
+                                <option value="Task">Task</option>
                                 <option value="Other">Other</option>
                             </select>
                         </div>

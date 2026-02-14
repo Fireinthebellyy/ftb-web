@@ -224,22 +224,26 @@ export async function GET(req: NextRequest) {
     const searchTerm = searchParam ? searchParam.trim() : "";
     const rawTypes = typesParam
       ? typesParam
-          .split(",")
-          .map((value) => value.trim())
-          .filter(Boolean)
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean)
       : [];
     const allowedTypes = (opportunities.type.enumValues ?? []) as string[];
     const validTypes = rawTypes.filter((type) => allowedTypes.includes(type));
     const rawTags = tagsParam
       ? tagsParam
-          .split(",")
-          .map((value) => value.trim().toLowerCase())
-          .filter(Boolean)
+        .split(",")
+        .map((value) => value.trim().toLowerCase())
+        .filter(Boolean)
       : [];
 
     // Validate pagination parameters
     const validLimit = Math.min(Math.max(limit, 1), 50); // Between 1 and 50
     const validOffset = Math.max(offset, 0); // Non-negative
+    const idsParam = searchParams.get("ids");
+    const ids = idsParam
+      ? idsParam.split(",").map((id) => id.trim()).filter(Boolean)
+      : [];
 
     timer.mark("query_prep_done", {
       includeTotal,
@@ -251,6 +255,10 @@ export async function GET(req: NextRequest) {
     });
 
     const conditions: SQL<unknown>[] = [isNull(opportunities.deletedAt)];
+
+    if (ids.length > 0) {
+      conditions.push(inArray(opportunities.id, ids));
+    }
 
     // Only show active (approved) opportunities to non-admin users
     // Admins can see all opportunities including pending ones

@@ -81,7 +81,9 @@ describe("NewOpportunityForm onSubmit", () => {
         } catch (err) {
           hasError = true;
           const errorMessage = getAppwriteErrorMessage(err);
-          mockToast.error(`Failed to upload "${file.name}": ${errorMessage}`);
+          mockToast.error(
+            `Failed to upload "${file.file.name}": ${errorMessage}`
+          );
         }
       }
 
@@ -99,6 +101,11 @@ describe("NewOpportunityForm onSubmit", () => {
       // Combine existing images with newly uploaded images
       const finalImages = [...existingImages, ...uploadedFileIds];
 
+      const normalizedPublishAt =
+        data.publishAt && data.publishAt.trim().length > 0
+          ? new Date(data.publishAt).toISOString()
+          : undefined;
+
       // Prepare payload
       const payload = {
         ...data,
@@ -114,6 +121,9 @@ describe("NewOpportunityForm onSubmit", () => {
           : uploadedFileIds.length > 0
             ? uploadedFileIds
             : undefined,
+        ...(normalizedPublishAt !== undefined
+          ? { publishAt: normalizedPublishAt }
+          : {}),
       };
 
       // Mock API call
@@ -139,13 +149,18 @@ describe("NewOpportunityForm onSubmit", () => {
       // Check user role to show appropriate message
       const userRole = res.data?.userRole || "user";
       const needsReview = userRole === "user";
+      const isScheduled =
+        typeof payload.publishAt === "string" &&
+        new Date(payload.publishAt).getTime() > Date.now();
 
       mockToast.success(
         opportunityId
           ? "Opportunity updated successfully!"
           : needsReview
             ? "Opportunity submitted for review! It will be visible once approved by an admin."
-            : "Opportunity submitted successfully!"
+            : isScheduled
+              ? "Opportunity scheduled successfully!"
+              : "Opportunity submitted successfully!"
       );
 
       queryClientInvalidate();
@@ -317,8 +332,14 @@ describe("NewOpportunityForm onSubmit", () => {
     });
 
     expect(mockStorage.deleteFile).toHaveBeenCalledTimes(2);
-    expect(mockStorage.deleteFile).toHaveBeenCalledWith("bucket-id", "removed-1");
-    expect(mockStorage.deleteFile).toHaveBeenCalledWith("bucket-id", "removed-2");
+    expect(mockStorage.deleteFile).toHaveBeenCalledWith(
+      "bucket-id",
+      "removed-1"
+    );
+    expect(mockStorage.deleteFile).toHaveBeenCalledWith(
+      "bucket-id",
+      "removed-2"
+    );
   });
 
   it("should show review message for regular users", async () => {
@@ -355,5 +376,30 @@ describe("NewOpportunityForm onSubmit", () => {
 
     await expect(mockOnSubmit(formData)).rejects.toThrow("Network error");
     expect(mockToast.error).toHaveBeenCalledWith("Network error");
+  });
+
+  it("should show scheduled message when publishAt is in future", async () => {
+    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const formData: FormData = {
+      type: "internship",
+      title: "Scheduled Opportunity",
+      description: "This is a scheduled opportunity description",
+      tags: "tech",
+      publishAt: `${tomorrow.getFullYear()}-${String(
+        tomorrow.getMonth() + 1
+      ).padStart(2, "0")}-${String(tomorrow.getDate()).padStart(2, "0")}T10:00`,
+    };
+
+    const mockAxiosPost = vi.mocked(axios.post);
+    mockAxiosPost.mockResolvedValue({
+      status: 201,
+      data: { id: "123", userRole: "admin" },
+    });
+
+    await mockOnSubmit(formData);
+
+    expect(mockToast.success).toHaveBeenCalledWith(
+      "Opportunity scheduled successfully!"
+    );
   });
 });

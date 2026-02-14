@@ -63,6 +63,7 @@ export const opportunities = pgTable("opportunities", {
   startDate: date("start_date"),
   endDate: date("end_date"),
   isFlagged: boolean("is_flagged").default(false),
+  publishAt: timestamp("publish_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   deletedAt: timestamp("deleted_at"), // Soft delete

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar, Type, AlignLeft } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 interface AddEventModalProps {
     isOpen: boolean;
@@ -41,7 +41,7 @@ export default function AddEventModal({ isOpen, onClose, onAdd, initialData }: A
             <DialogContent className="max-w-sm p-6 bg-white rounded-2xl">
                 <div className="relative">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-bold text-slate-900">Add New Event</h3>
+                        <DialogTitle className="text-xl font-bold text-slate-900">Add New Event</DialogTitle>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">

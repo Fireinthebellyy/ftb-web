@@ -8,7 +8,7 @@ import { useTracker } from '../providers/TrackerProvider';
 import { calculateFitScore } from '@/lib/fitEngine';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { UserProfile } from '@/data/userProfile';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 // Flexible interface to handle TrackerItem, Internship, or Opportunity
 interface ApplyModalOpportunity {
@@ -91,9 +91,9 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
                                     <Rocket size={10} /> Smart Apply
                                 </span>
                             </div>
-                            <h3 className="text-xl font-bold text-slate-900">
+                            <DialogTitle className="text-xl font-bold text-slate-900">
                                 {displayData.company}
-                            </h3>
+                            </DialogTitle>
                         </div>
                         <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-full transition-colors">
                             <X size={20} />

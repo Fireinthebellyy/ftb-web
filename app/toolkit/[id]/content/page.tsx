@@ -21,10 +21,11 @@ import {
 import { cn } from "@/lib/utils";
 import { ToolkitContentItem } from "@/types/interfaces";
 import LessonSidebar from "@/components/toolkit/LessonSidebar";
-import VimeoPlayer from "@/components/toolkit/VimeoPlayer";
-import MarkdownRenderer from "@/components/toolkit/MarkdownRenderer";
 import { useToolkit } from "@/lib/queries";
+import { useMarkContentComplete } from "@/lib/queries-toolkits";
 import { Skeleton } from "@/components/ui/skeleton";
+import BunnyPlayer from "@/components/toolkit/BunnyPlayer";
+import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
 
 interface CircularProgressProps {
   progress: number;
@@ -95,8 +96,8 @@ export default function ToolkitContentPage() {
   const markComplete = useMarkContentComplete(toolkitId);
 
   const toolkit = toolkitData?.toolkit ?? null;
-  const contentItems = useMemo(() => useMemo(
-    () => toolkitData?.contentItems ?? [], [toolkitData?.contentItems]),
+  const contentItems = useMemo(
+    () => toolkitData?.contentItems ?? [],
     [toolkitData?.contentItems]
   );
   const hasAccess = toolkitData?.hasPurchased ?? false;

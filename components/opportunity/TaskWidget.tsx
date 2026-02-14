@@ -25,8 +25,8 @@ import {
   useCreateTask,
   useUpdateTask,
   useDeleteTask,
-  useBookmarks,
 } from "@/lib/queries-tasks";
+import { useBookmarks } from "@/lib/queries";
 import { Task } from "@/types/interfaces";
 
 interface TaskWidgetProps {

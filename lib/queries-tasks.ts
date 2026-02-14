@@ -9,6 +9,7 @@ export type TasksResponse = {
 export type CreateTaskData = {
   title: string;
   description?: string;
+  opportunityLink?: string;
 };
 
 export type UpdateTaskData = {

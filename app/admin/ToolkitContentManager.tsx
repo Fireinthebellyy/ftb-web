@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import axios from "axios";
 import { toast } from "sonner";
@@ -212,16 +212,6 @@ export default function ToolkitContentManager({
     return trimmed;
   };
 
-  const extractVideoUrl = (value: string): string => {
-    if (value.includes("<iframe")) {
-      const match = value.match(/src=["']([^"']*)["']/);
-      if (match && match[1]) {
-        return match[1];
-      }
-    }
-    return value;
-  };
-
   const handleSave = async (data: ContentItemFormValues) => {
     try {
       const { isArticle, isVideo, content, bunnyVideoUrl, ...rest } = data;
@@ -230,7 +220,6 @@ export default function ToolkitContentManager({
         ...rest,
         content: isArticle ? normalizeQuillContent(content ?? "") : "",
         bunnyVideoUrl: extractVideoUrl(bunnyVideoUrl || ""),
-        bunnyVideoUrl: extractVideoUrl(rest.bunnyVideoUrl || ""),
         type:
           isArticle && isVideo ? "article" : isArticle ? "article" : "video",
       };

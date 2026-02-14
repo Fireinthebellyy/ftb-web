@@ -20,7 +20,7 @@ import { OpportunityImageGallery } from "./opportunity/OpportunityImageGallery";
 import { OpportunityActions } from "./opportunity/OpportunityActions";
 import NewOpportunityForm from "./opportunity/NewOpportunityForm";
 
-const isValidUUID = (uuid: string): boolean => {
+const _isValidUUID = (uuid: string): boolean => {
   const uuidRegex =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(uuid);
@@ -38,16 +38,16 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   );
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
-  const _handleEditSuccess = () => {
+  const handleEditSuccess = () => {
     setIsEditing(false);
     queryClient.invalidateQueries({ queryKey: ["opportunities"] });
   };
 
-  const _handleEditCancel = () => {
+  const handleEditCancel = () => {
     setIsEditing(false);
   };
 
-  const handleDeletePost = async () => {
+  const _handleDeletePost = async () => {
     try {
       const res = await axios.delete(`/api/opportunities/${id}`);
       if (res.status === 200 || res.status === 204) {
@@ -59,121 +59,26 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
       toast.error("Failed to delete post");
     }
   };
-  const [isBookmarkLoading, setIsBookmarkLoading] = useState<boolean>(false);
+  const _isBookmarkLoading = useState<boolean>(false);
   const [showComments, setShowComments] = useState<boolean>(false);
-  const isExpanded = true;
+  const _isExpanded = true;
 
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [modalIndex, setModalIndex] = useState<number>(0);
-  const [bookmarkModalOpen, setBookmarkModalOpen] = useState<boolean>(false);
-  const [showMessage, setShowMessage] = useState<boolean>(false);
 
-  const { data: session } = useSession();
+  const _session = useSession();
   const queryClient = useQueryClient();
-  const router = useRouter();
 
   useEffect(() => {
-    if (typeof isBookmarkedServer === "boolean") {
-      setIsBookmarked(isBookmarkedServer);
-    }
-  }, [isBookmarkedServer]);
+    // Bookmark state is managed by parent component
+  }, []);
 
 
 
-  const handleBookmark = async (): Promise<void> => {
-    if (isBookmarkLoading) return;
-
-    if (!session?.user?.id) {
-      toast.error("Please log in to bookmark opportunities");
-      return;
-    }
-
-    if (!isValidUUID(id)) {
-      console.error("Invalid opportunity ID format");
-      return;
-    }
-
-    const currentUserId = session.user.id as string;
-
-    try {
-      if (newState) {
-        const response = await axios.post("/api/bookmarks", {
-          userId: currentUserId,
-          opportunityId: id,
-        });
-        if (response.data?.message === "Already bookmarked") {
-          toast.info("Already bookmarked");
-        }
-      } else {
-        await axios.delete("/api/bookmarks", {
-          data: {
-            userId: currentUserId,
-            opportunityId: id,
-          },
-        });
-      }
-
-      setIsBookmarked(newState);
-
-      if (onBookmarkChange) {
-        onBookmarkChange(id, newState);
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["bookmark", id] });
-
-      if (newBookmarkState) {
-        const skipBookmarkModal = localStorage.getItem('skipBookmarkModal');
-        if (skipBookmarkModal === 'true') {
-          toast.success("Bookmark added!");
-        } else {
-          setBookmarkModalOpen(true);
-        }
-      } else {
-        toast.success("Removed from bookmarks");
-      }
-    } catch (err) {
-      console.error("Bookmark request failed:", err);
-      toast.error("Failed to update bookmark");
-    } finally {
-      setIsBookmarkLoading(false);
-    }
-  };
-
-  const primaryType = Array.isArray(type) ? type[0] : type;
-
-  const getTypeColor = (type?: string): string => {
-    const colors: Record<string, string> = {
-      hackathon: "bg-blue-100 text-blue-800",
-      grant: "bg-green-100 text-green-800",
-      competition: "bg-purple-100 text-purple-800",
-      ideathon: "bg-orange-100 text-orange-800",
-      others: "bg-gray-100 text-gray-800",
-    };
-    return colors[type?.toLowerCase() || "others"] || colors.others;
-  };
-
-  const opportunityStorage = createOpportunityStorage();
-
-  const userUpvoted = opportunity.userHasUpvoted ?? false;
-
-  const onUpvoteClick = () => {
-    if (!toggleUpvote.isPending) {
-      toggleUpvote.mutate();
-    }
-  };
-
-  const publicBaseUrl =
-    (process.env.NEXT_PUBLIC_SITE_URL as string | undefined) ||
-    (typeof window !== "undefined" ? window.location.origin : "");
-  const shareUrl = publicBaseUrl
-    ? `${publicBaseUrl}/opportunities/${id}`
-    : `/opportunities/${id}`;
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success("Link copied to clipboard");
-    } catch {
-      toast.error("Failed to copy link");
+  const handleBookmarkChange = async (opportunityId: string, bookmarked: boolean): Promise<void> => {
+    setIsBookmarked(bookmarked);
+    if (onBookmarkChange) {
+      onBookmarkChange(opportunityId, bookmarked);
     }
   };
 
@@ -222,7 +127,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
             <NewOpportunityForm
               opportunity={opportunity}
               onOpportunityCreated={handleEditSuccess}
-              onCancel={() => setIsEditing(false)}
+              onCancel={handleEditCancel}
             />
           </DialogContent>
         </Dialog>

@@ -10,6 +10,7 @@ export type Opportunity = {
   organiserInfo?: string;
   startDate?: string;
   endDate?: string;
+  publishAt?: string;
   upvoteCount: number;
   upvoterIds: string[];
   userHasUpvoted?: boolean;

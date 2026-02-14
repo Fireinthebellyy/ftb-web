@@ -86,6 +86,12 @@ export async function GET(req: NextRequest) {
 
     if (!isAdmin) {
       conditions.push(eq(opportunities.isActive, true));
+      conditions.push(
+        or(
+          isNull(opportunities.publishAt),
+          lte(opportunities.publishAt, new Date())
+        )
+      );
     }
 
     if (search) {
@@ -146,6 +152,7 @@ export async function GET(req: NextRequest) {
             organiserInfo: opportunities.organiserInfo,
             startDate: opportunities.startDate,
             endDate: opportunities.endDate,
+            publishAt: opportunities.publishAt,
             isFlagged: opportunities.isFlagged,
             createdAt: opportunities.createdAt,
             updatedAt: opportunities.updatedAt,

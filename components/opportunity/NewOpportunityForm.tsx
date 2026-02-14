@@ -16,10 +16,30 @@ import { DescriptionField } from "./fields/DescriptionField";
 import { TagsField } from "./fields/TagsField";
 import { TypeSelector } from "./fields/TypeSelector";
 import { MetaPopovers } from "./fields/MetaPopovers";
-import { ImagePicker, SelectedImages, ExistingImages } from "./images/ImageDropzone";
+import {
+  ImagePicker,
+  SelectedImages,
+  ExistingImages,
+} from "./images/ImageDropzone";
 import { formSchema, FormData } from "./schema";
 import { FileItem, Opportunity, UploadProgress } from "@/types/interfaces";
 import { useQueryClient } from "@tanstack/react-query";
+
+function toDateTimeLocalValue(isoDateTime?: string): string {
+  if (!isoDateTime) {
+    return "";
+  }
+
+  const date = new Date(isoDateTime);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const timezoneOffsetMs = date.getTimezoneOffset() * 60 * 1000;
+  const localDate = new Date(date.getTime() - timezoneOffsetMs);
+  return localDate.toISOString().slice(0, 16);
+}
+
 export default function NewOpportunityForm({
   opportunity,
   onOpportunityCreated,
@@ -52,6 +72,7 @@ export default function NewOpportunityForm({
       location: opportunity?.location || "",
       organiserInfo: opportunity?.organiserInfo || "",
       dateRange: undefined,
+      publishAt: toDateTimeLocalValue(opportunity?.publishAt),
     },
   });
 
@@ -62,6 +83,7 @@ export default function NewOpportunityForm({
   const watchedTitle = form.watch("title");
   const watchedDescription = form.watch("description");
   const watchedTags = form.watch("tags");
+  const watchedPublishAt = form.watch("publishAt");
 
   useEffect(() => {
     // Set initial date range if available
@@ -73,6 +95,8 @@ export default function NewOpportunityForm({
         to: opportunity.endDate ? new Date(opportunity.endDate) : undefined,
       });
     }
+
+    form.setValue("publishAt", toDateTimeLocalValue(opportunity?.publishAt));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opportunity]);
 
@@ -97,6 +121,7 @@ export default function NewOpportunityForm({
           : null,
         to: watchedDateRange?.to ? watchedDateRange.to.toISOString() : null,
       },
+      publishAt: watchedPublishAt || "",
     });
 
     const originalSnapshot = JSON.stringify({
@@ -114,15 +139,16 @@ export default function NewOpportunityForm({
           ? new Date(opportunity.endDate).toISOString()
           : null,
       },
+      publishAt: toDateTimeLocalValue(opportunity.publishAt),
     });
 
     // Check if images have changed (either new files added or existing images removed)
     const originalImages = opportunity.images || [];
-    const imagesChanged = 
-      files.length > 0 || 
+    const imagesChanged =
+      files.length > 0 ||
       existingImages.length !== originalImages.length ||
       !existingImages.every((img) => originalImages.includes(img));
-    
+
     setHasChanges(currentSnapshot !== originalSnapshot || imagesChanged);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -131,6 +157,7 @@ export default function NewOpportunityForm({
     watchedTitle,
     watchedDescription,
     watchedTags,
+    watchedPublishAt,
     watchedLocation,
     watchedOrganiser,
     watchedDateRange,
@@ -152,7 +179,7 @@ export default function NewOpportunityForm({
     if (!bucketId) return;
 
     const opportunityStorage = createOpportunityStorage();
-    
+
     for (const imageId of removedImageIds) {
       try {
         await opportunityStorage.deleteFile(bucketId, imageId);
@@ -211,11 +238,11 @@ export default function NewOpportunityForm({
           prev.map((f, idx) =>
             idx === i
               ? {
-                ...f,
-                uploading: false,
-                error: true,
-                errorMessage,
-              }
+                  ...f,
+                  uploading: false,
+                  error: true,
+                  errorMessage,
+                }
               : f
           )
         );
@@ -243,7 +270,14 @@ export default function NewOpportunityForm({
 
       // Combine existing images with newly uploaded images
       const finalImages = [...existingImages, ...imageIds];
-      
+
+      const normalizedPublishAt =
+        data.publishAt && data.publishAt.trim().length > 0
+          ? new Date(data.publishAt).toISOString()
+          : opportunity?.publishAt
+            ? null
+            : undefined;
+
       const payload = {
         ...data,
         startDate: data.dateRange?.from?.toISOString(),
@@ -255,16 +289,21 @@ export default function NewOpportunityForm({
             .filter(Boolean) || [],
         // For edit mode: always send the final images array (existing + new)
         // For create mode: only send if there are images
-        images: opportunity?.id 
-          ? finalImages 
-          : (imageIds.length > 0 ? imageIds : undefined),
+        images: opportunity?.id
+          ? finalImages
+          : imageIds.length > 0
+            ? imageIds
+            : undefined,
+        ...(normalizedPublishAt !== undefined
+          ? { publishAt: normalizedPublishAt }
+          : {}),
       };
 
       let res;
       if (opportunity?.id) {
         res = await axios.put(`/api/opportunities/${opportunity.id}`, payload);
         if (res.status !== 200) throw new Error("Failed to update opportunity");
-        
+
         // Delete removed images from Appwrite storage after successful update
         await deleteRemovedImages();
       } else {
@@ -280,13 +319,18 @@ export default function NewOpportunityForm({
       // Check user role to show appropriate message
       const userRole = res.data?.userRole || "user"; // The API should return user role
       const needsReview = userRole === "user";
+      const isScheduled =
+        typeof payload.publishAt === "string" &&
+        new Date(payload.publishAt).getTime() > Date.now();
 
       toast.success(
         opportunity?.id
           ? "Opportunity updated successfully!"
           : needsReview
             ? "Opportunity submitted for review! It will be visible once approved by an admin."
-            : "Opportunity submitted successfully!"
+            : isScheduled
+              ? "Opportunity scheduled successfully!"
+              : "Opportunity submitted successfully!"
       );
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
       onOpportunityCreated();
@@ -336,6 +380,7 @@ export default function NewOpportunityForm({
                 watchedLocation={watchedLocation}
                 watchedOrganiser={watchedOrganiser}
                 watchedDateRange={watchedDateRange}
+                watchedPublishAt={watchedPublishAt}
               />
               {/* Image picker trigger (no previews here) */}
               <ImagePicker

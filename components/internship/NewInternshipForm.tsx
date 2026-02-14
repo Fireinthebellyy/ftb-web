@@ -59,11 +59,11 @@ export default function NewInternshipForm({
   const watchedType = form.watch("type");
   const watchedTiming = form.watch("timing");
 
-  function handleTypeChange(type: "in-office" | "work-from-home" | "hybrid") {
+  function handleTypeChange(type: "onsite" | "remote" | "hybrid") {
     form.setValue("type", type, { shouldValidate: true, shouldTouch: true });
   }
 
-  function handleTimingChange(timing: "full-time" | "part-time" | "shift-based") {
+  function handleTimingChange(timing: "full_time" | "part_time") {
     form.setValue("timing", timing, { shouldValidate: true, shouldTouch: true });
   }
 
@@ -144,7 +144,7 @@ export default function NewInternshipForm({
           ?.split(",")
           .map((t) => t.trim())
           .filter(Boolean) || [],
-        link: data.link || undefined,
+        link: data.link,
         hiringManager: data.hiringManager || undefined,
         hiringManagerEmail: data.hiringManagerEmail || undefined,
         experience: data.experience || undefined,

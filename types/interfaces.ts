@@ -24,24 +24,21 @@ export type Opportunity = {
 export type Internship = {
   id: string;
   title: string;
-  description: string;
-  type: string;
-  timing: string;
+  description?: string | null;
+  type?: string | null;
+  timing?: string | null;
+  link: string;
   tags?: string[];
-  poster?: string;
-  link?: string;
-  location?: string;
-  deadline?: string;
-  stipend?: number;
+  location?: string | null;
+  deadline?: string | null;
+  stipend?: number | null;
   hiringOrganization: string;
-  hiringManager?: string;
-  hiringManagerEmail?: string;
-  experience?: string;
-  duration?: string;
-  eligibility?: string[];
+  hiringManager?: string | null;
+  experience?: string | null;
+  duration?: string | null;
   createdAt?: string;
-  viewCount: number;
-  applicationCount: number;
+  isVerified?: boolean;
+  isActive?: boolean;
   user: {
     id: string;
     name: string;

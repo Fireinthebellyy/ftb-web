@@ -19,9 +19,9 @@ export default function TrackerRow({ opp, updateStatus, onClick, onResume, onDel
             className="p-5 hover:bg-slate-50 transition-colors flex flex-col md:flex-row md:items-center gap-4 group cursor-pointer"
         >
             <div className="flex items-center gap-4 flex-1 min-w-0">
-                {opp.logo ? (
+                {(opp.logo || opp.poster || opp.images?.[0]) ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={opp.logo} alt={opp.company} className="w-12 h-12 rounded-xl object-contain bg-white border border-slate-100 p-1" />
+                    <img src={opp.logo || opp.poster || opp.images?.[0]} alt={opp.company} className="w-12 h-12 rounded-xl object-contain bg-white border border-slate-100 p-1" />
                 ) : (
                     <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 font-bold text-lg">
                         {opp.company ? opp.company.charAt(0) : '?'}
@@ -106,6 +106,6 @@ export default function TrackerRow({ opp, updateStatus, onClick, onResume, onDel
                     <Trash2 size={16} />
                 </button>
             </div>
-        </div >
+        </div>
     );
 }

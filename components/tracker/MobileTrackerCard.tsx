@@ -42,9 +42,9 @@ export default function MobileTrackerCard({ opp, updateStatus, onDelete, onAddCa
 
             <div className="flex justify-between items-start mb-4 pr-6">
                 <div className="flex items-center gap-3">
-                    {opp.logo ? (
+                    {(opp.logo || opp.poster || opp.images?.[0]) ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={opp.logo} alt={opp.company} className="w-10 h-10 rounded-lg object-contain bg-white border border-slate-100 p-0.5" />
+                        <img src={opp.logo || opp.poster || opp.images?.[0]} alt={opp.company} className="w-10 h-10 rounded-lg object-contain bg-white border border-slate-100 p-0.5" />
                     ) : (
                         <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 font-bold text-sm">
                             {opp.company ? opp.company.charAt(0) : '?'}

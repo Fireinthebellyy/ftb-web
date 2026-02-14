@@ -1,12 +1,3 @@
-import { UserProfile } from '@/data/userProfile';
-
-export interface FitResult {
-    score: number;
-    label: string;
-    color: string;
-    matchedSkills: string[];
-    missingSkills: string[];
-}
 
 export interface FitInput {
     skills?: string[];
@@ -14,44 +5,52 @@ export interface FitInput {
     [key: string]: any;
 }
 
-export const calculateFitScore = (opportunity: FitInput, userProfile: UserProfile): FitResult => {
-    // Pure Skill-Based Fit Logic
-    // Use skills if available, otherwise fall back to tags
-    const requiredSkills = opportunity.skills && opportunity.skills.length > 0
-        ? opportunity.skills
-        : (opportunity.tags || []);
-    const userSkills = userProfile.skills || [];
+export interface FitResult {
+    score: number;
+    label: string;
+    color: string;
+    missingSkills: string[];
+}
 
-    // Create sets for O(1) lookup using lowercase
-    const userSkillsLower = new Set(userSkills.map(s => s.toLowerCase()));
-
-    // Filter preserving original casing
-    const matchedSkills = requiredSkills.filter(skill => userSkillsLower.has(skill.toLowerCase()));
-    const missingSkills = requiredSkills.filter(skill => !userSkillsLower.has(skill.toLowerCase()));
-
-    // Calculate Score
-    // Guard against division by zero if no skills are required
-    const score = requiredSkills.length > 0
-        ? Math.round((matchedSkills.length / requiredSkills.length) * 100)
-        : 100;
-
-    // Dynamic Coloring based on Score directly
-    let color;
-    const label = `${score}% Match`;
-
-    if (score >= 80) {
-        color = 'bg-emerald-100 text-emerald-700 border-emerald-200';
-    } else if (score >= 50) {
-        color = 'bg-amber-100 text-amber-700 border-amber-200';
-    } else {
-        color = 'bg-rose-100 text-rose-700 border-rose-200';
+export const calculateFitScore = (opportunity: FitInput, userProfile: any): FitResult => {
+    if (!userProfile || !userProfile.skills) {
+        return { score: 0, label: 'No Profile', color: 'bg-slate-100 text-slate-500', missingSkills: [] };
     }
 
-    return {
-        score,
-        label,
-        color,
-        matchedSkills,
-        missingSkills
-    };
+    const oppSkills = (opportunity.skills || []).map(s => s.toLowerCase());
+    const oppTags = (opportunity.tags || []).map(t => t.toLowerCase());
+
+    // Combine useful keywords from opportunity
+    const keyTerms = new Set([...oppSkills, ...oppTags]);
+    if (keyTerms.size === 0) {
+        return { score: 100, label: 'Open', color: 'bg-emerald-50 text-emerald-700', missingSkills: [] };
+    }
+
+    const userSkills = new Set((userProfile.skills || []).map((s: string) => s.toLowerCase()));
+
+    let matchCount = 0;
+    const missingSkills: string[] = [];
+
+    keyTerms.forEach(term => {
+        if (userSkills.has(term)) {
+            matchCount++;
+        } else {
+            missingSkills.push(term);
+        }
+    });
+
+    const score = Math.round((matchCount / keyTerms.size) * 100);
+
+    let label = 'Low Match';
+    let color = 'bg-rose-50 text-rose-700';
+
+    if (score >= 80) {
+        label = 'High Match';
+        color = 'bg-emerald-50 text-emerald-700';
+    } else if (score >= 50) {
+        label = 'Medium Match';
+        color = 'bg-amber-50 text-amber-700';
+    }
+
+    return { score, label, color, missingSkills };
 };

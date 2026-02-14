@@ -138,15 +138,11 @@ export async function GET(
       );
     }
 
-<<<<<<< HEAD
     // Increment view count
     await db
       .update(internships)
       .set({ viewCount: sql`${internships.viewCount} + 1` })
       .where(eq(internships.id, id));
-
-=======
->>>>>>> origin/main
     return NextResponse.json({
       success: true,
       internship: internship[0],

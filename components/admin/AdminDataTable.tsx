@@ -89,13 +89,19 @@ export function AdminDataTable<TData, TValue>({
         ) : null}
       </div>
 
-      <div className="bg-background rounded-lg border">
+      <div className="bg-background overflow-hidden rounded-md border">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted/35">
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow
+                key={headerGroup.id}
+                className="border-border/80 bg-muted/35 hover:bg-muted/35"
+              >
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead
+                    key={header.id}
+                    className="text-foreground/90 h-11 px-4 first:pl-6"
+                  >
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -109,13 +115,18 @@ export function AdminDataTable<TData, TValue>({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
+              table.getRowModel().rows.map((row, index) => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className={
+                    index % 2 === 0
+                      ? "bg-background hover:bg-muted/40 data-[state=selected]:bg-muted/55"
+                      : "bg-muted/20 hover:bg-muted/40 data-[state=selected]:bg-muted/55"
+                  }
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className="px-4 py-3 first:pl-6">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -128,7 +139,7 @@ export function AdminDataTable<TData, TValue>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center"
+                  className="h-24 px-4 text-center first:pl-6"
                 >
                   {emptyMessage}
                 </TableCell>

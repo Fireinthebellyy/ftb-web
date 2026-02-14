@@ -77,7 +77,10 @@ export async function GET(
       .limit(1);
 
     if (internship.length === 0) {
-      return NextResponse.json({ error: "Internship not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Internship not found" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({
@@ -86,7 +89,10 @@ export async function GET(
     });
   } catch (error) {
     console.error("Error fetching internship:", error);
-    return NextResponse.json({ error: "Failed to fetch internship" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch internship" },
+      { status: 500 }
+    );
   }
 }
 
@@ -122,7 +128,10 @@ export async function PUT(
       .limit(1);
 
     if (existingInternship.length === 0) {
-      return NextResponse.json({ error: "Internship not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Internship not found" },
+        { status: 404 }
+      );
     }
 
     const internship = existingInternship[0];
@@ -204,7 +213,7 @@ export async function PUT(
 
     return NextResponse.json({
       success: true,
-      data: updatedInternship[0],
+      internship: updatedInternship[0],
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -212,7 +221,10 @@ export async function PUT(
     }
 
     console.error("Error updating internship:", error);
-    return NextResponse.json({ error: "Failed to update internship" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update internship" },
+      { status: 500 }
+    );
   }
 }
 
@@ -245,7 +257,10 @@ export async function DELETE(
       .limit(1);
 
     if (existingInternship.length === 0) {
-      return NextResponse.json({ error: "Internship not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Internship not found" },
+        { status: 404 }
+      );
     }
 
     const internship = existingInternship[0];
@@ -264,6 +279,9 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting internship:", error);
-    return NextResponse.json({ error: "Failed to delete internship" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete internship" },
+      { status: 500 }
+    );
   }
 }

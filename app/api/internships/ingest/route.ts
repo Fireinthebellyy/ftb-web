@@ -5,6 +5,7 @@ import {
   internshipIngestBatchSchema,
 } from "@/lib/internships-ingest";
 import { internships } from "@/lib/schema";
+import { timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -21,6 +22,20 @@ function getTokenFromRequest(request: NextRequest) {
   );
 }
 
+function isTokenMatch(expectedToken: string, incomingToken: string | null) {
+  const expectedBuffer = Buffer.from(expectedToken, "utf8");
+  const incomingBuffer = Buffer.from(incomingToken ?? "", "utf8");
+  const maxLength = Math.max(expectedBuffer.length, incomingBuffer.length, 1);
+
+  const expectedPadded = Buffer.alloc(maxLength);
+  const incomingPadded = Buffer.alloc(maxLength);
+  expectedBuffer.copy(expectedPadded);
+  incomingBuffer.copy(incomingPadded);
+
+  const valuesMatch = timingSafeEqual(expectedPadded, incomingPadded);
+  return valuesMatch && expectedBuffer.length === incomingBuffer.length;
+}
+
 export async function POST(req: NextRequest) {
   try {
     if (!db) {
@@ -33,13 +48,13 @@ export async function POST(req: NextRequest) {
     const expectedToken = process.env.INTERNSHIP_INGEST_API_KEY;
     if (!expectedToken) {
       return NextResponse.json(
-        { error: "INTERNSHIP_INGEST_API_KEY is not configured" },
+        { error: "Internal Server Error" },
         { status: 500 }
       );
     }
 
     const incomingToken = getTokenFromRequest(req);
-    if (!incomingToken || incomingToken !== expectedToken) {
+    if (!isTokenMatch(expectedToken, incomingToken)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

@@ -271,12 +271,17 @@ export default function NewOpportunityForm({
       // Combine existing images with newly uploaded images
       const finalImages = [...existingImages, ...imageIds];
 
-      const normalizedPublishAt =
-        data.publishAt && data.publishAt.trim().length > 0
-          ? new Date(data.publishAt).toISOString()
-          : opportunity?.publishAt
+      let normalizedPublishAt: string | null | undefined;
+      if (data.publishAt && data.publishAt.trim().length > 0) {
+        const parsedPublishAt = new Date(data.publishAt);
+        normalizedPublishAt = Number.isNaN(parsedPublishAt.getTime())
+          ? opportunity?.publishAt
             ? null
-            : undefined;
+            : undefined
+          : parsedPublishAt.toISOString();
+      } else {
+        normalizedPublishAt = opportunity?.publishAt ? null : undefined;
+      }
 
       const payload = {
         ...data,

@@ -30,7 +30,13 @@ import {
   saveOnboardingProfile,
   SaveOnboardingProfileInput,
 } from "@/lib/queries";
-import { Check, ChevronLeft, ChevronRight, Loader2, Sparkles } from "lucide-react";
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Sparkles,
+} from "lucide-react";
 import Image from "next/image";
 import {
   OptionCard,
@@ -132,8 +138,14 @@ export default function OnboardingPage() {
       setAnswers((prev) => ({
         ...prev,
         role: persona,
-        state: profile.locationType === "state" ? (profile.locationValue ?? "") : prev.state,
-        city: profile.locationType === "city" ? (profile.locationValue ?? "") : prev.city,
+        state:
+          profile.locationType === "state"
+            ? (profile.locationValue ?? "")
+            : prev.state,
+        city:
+          profile.locationType === "city"
+            ? (profile.locationValue ?? "")
+            : prev.city,
         educationLevel: profile.educationLevel ?? "",
         fieldOfStudy: profile.fieldOfStudy ?? "",
         fieldOther: profile.fieldOther ?? "",
@@ -152,7 +164,9 @@ export default function OnboardingPage() {
     setAnswers((prev) => {
       const list = prev[field];
       const exists = list.includes(value);
-      const next = exists ? list.filter((item) => item !== value) : [...list, value];
+      const next = exists
+        ? list.filter((item) => item !== value)
+        : [...list, value];
       return { ...prev, [field]: next };
     });
   };
@@ -181,7 +195,8 @@ export default function OnboardingPage() {
   };
 
   const saveProfile = useMutation({
-    mutationFn: (payload: SaveOnboardingProfileInput) => saveOnboardingProfile(payload),
+    mutationFn: (payload: SaveOnboardingProfileInput) =>
+      saveOnboardingProfile(payload),
     onError: (error) => {
       const err = error as Error;
       toast.error(err.message || "Failed to save preferences");
@@ -213,15 +228,24 @@ export default function OnboardingPage() {
     try {
       await saveProfile.mutateAsync({
         persona: answers.role,
-        locationType: answers.role === "student" && locationValue ? locationType : undefined,
-        locationValue: answers.role === "student" && locationValue ? locationValue : undefined,
-        educationLevel: answers.role === "student" ? answers.educationLevel : undefined,
-        fieldOfStudy: answers.role === "student" ? answers.fieldOfStudy : undefined,
+        locationType:
+          answers.role === "student" && locationValue
+            ? locationType
+            : undefined,
+        locationValue:
+          answers.role === "student" && locationValue
+            ? locationValue
+            : undefined,
+        educationLevel:
+          answers.role === "student" ? answers.educationLevel : undefined,
+        fieldOfStudy:
+          answers.role === "student" ? answers.fieldOfStudy : undefined,
         fieldOther:
           answers.role === "student" && answers.fieldOfStudy === "Other"
             ? answers.fieldOther
             : undefined,
-        opportunityInterests: answers.role === "student" ? answers.opportunities : [],
+        opportunityInterests:
+          answers.role === "student" ? answers.opportunities : [],
         domainPreferences: answers.role === "student" ? answers.domains : [],
       });
     } catch {
@@ -254,7 +278,10 @@ export default function OnboardingPage() {
   const canGoNext = isComplete(currentStep) && !isBusy;
   const canGoBack = stepIndex > 0 && !isSubmitting;
 
-  const handleSwipeEnd = (_e: unknown, info: { offset: { x: number; y: number } }) => {
+  const handleSwipeEnd = (
+    _e: unknown,
+    info: { offset: { x: number; y: number } }
+  ) => {
     if (isBusy) return;
     const x = info?.offset?.x ?? 0;
 
@@ -298,13 +325,16 @@ export default function OnboardingPage() {
             Set up your feed — stress-free
           </h1>
           <p className="text-muted-foreground max-w-2xl text-sm md:text-base">
-            This is for students. Pick what feels right and we’ll surface internships, scholarships, and resources that match.
-            You can skip anything and edit later.
+            This is for students. Pick what feels right and we’ll surface
+            internships, scholarships, and resources that match. You can skip
+            anything and edit later.
           </p>
 
           <div className="flex w-full max-w-xl items-center gap-3">
             <Progress value={progressValue} className="h-2 flex-1" />
-            <span className="text-sm font-medium text-gray-700">{questLabel}</span>
+            <span className="text-sm font-medium text-gray-700">
+              {questLabel}
+            </span>
           </div>
         </div>
 
@@ -328,7 +358,7 @@ export default function OnboardingPage() {
                   onDragEnd={handleSwipeEnd}
                   whileDrag={{ scale: 0.99, rotate: -0.25 }}
                   transition={{ duration: 0.24, ease: "easeOut" }}
-                  className="space-y-6 touch-pan-y"
+                  className="touch-pan-y space-y-6"
                 >
                   {currentStep.id === "role" && (
                     <div className="grid gap-4 md:grid-cols-2">
@@ -358,17 +388,25 @@ export default function OnboardingPage() {
                         <div className="rounded-lg border border-orange-200 bg-orange-50/60 p-4 text-sm text-orange-900">
                           <div className="font-medium">Quick note</div>
                           <div className="mt-1 text-orange-800/80">
-                            This flow is optimized for students. You can still pick interests on the next step.
+                            This flow is optimized for students. You can still
+                            pick interests on the next step.
                           </div>
                         </div>
                       ) : null}
 
                       <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2">
-                          <label className="text-sm font-medium text-gray-700">State (optional)</label>
+                          <label className="text-sm font-medium text-gray-700">
+                            State (optional)
+                          </label>
                           <select
                             value={answers.state}
-                            onChange={(e) => setAnswers((prev) => ({ ...prev, state: e.target.value }))}
+                            onChange={(e) =>
+                              setAnswers((prev) => ({
+                                ...prev,
+                                state: e.target.value,
+                              }))
+                            }
                             onKeyDown={handleKeyDown}
                             className="flex h-11 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                             disabled={isBusy}
@@ -380,34 +418,52 @@ export default function OnboardingPage() {
                               </option>
                             ))}
                           </select>
-                          <p className="text-muted-foreground text-xs">Helps us show nearby events & campus programs.</p>
+                          <p className="text-muted-foreground text-xs">
+                            Helps us show nearby events & campus programs.
+                          </p>
                         </div>
 
                         <div className="space-y-2">
-                          <label className="text-sm font-medium text-gray-700">City (optional)</label>
+                          <label className="text-sm font-medium text-gray-700">
+                            City (optional)
+                          </label>
                           <Input
                             placeholder="e.g. Pune"
                             value={answers.city}
-                            onChange={(e) => setAnswers((prev) => ({ ...prev, city: e.target.value }))}
+                            onChange={(e) =>
+                              setAnswers((prev) => ({
+                                ...prev,
+                                city: e.target.value,
+                              }))
+                            }
                             onKeyDown={handleKeyDown}
                             className="h-11"
                             disabled={isBusy}
                           />
-                          <p className="text-muted-foreground text-xs">If you skip this, no problem.</p>
+                          <p className="text-muted-foreground text-xs">
+                            If you skip this, no problem.
+                          </p>
                         </div>
                       </div>
 
                       <Separator />
 
                       <div className="space-y-3">
-                        <div className="text-sm font-medium text-gray-800">Education (optional)</div>
+                        <div className="text-sm font-medium text-gray-800">
+                          Education (optional)
+                        </div>
                         <div className="grid gap-3 md:grid-cols-2">
                           {educationLevels.map((level) => (
                             <SelectableButton
                               key={level}
                               label={level}
                               selected={answers.educationLevel === level}
-                              onClick={() => setAnswers((prev) => ({ ...prev, educationLevel: level }))}
+                              onClick={() =>
+                                setAnswers((prev) => ({
+                                  ...prev,
+                                  educationLevel: level,
+                                }))
+                              }
                               onKeyDown={handleKeyDown}
                               disabled={isBusy}
                             />
@@ -416,7 +472,9 @@ export default function OnboardingPage() {
                       </div>
 
                       <div className="space-y-3">
-                        <div className="text-sm font-medium text-gray-800">Field (optional)</div>
+                        <div className="text-sm font-medium text-gray-800">
+                          Field (optional)
+                        </div>
                         <div className="grid gap-3 md:grid-cols-2">
                           {fieldOptions.map((field) => (
                             <SelectableButton
@@ -433,7 +491,12 @@ export default function OnboardingPage() {
                           <Input
                             placeholder="Add your field"
                             value={answers.fieldOther}
-                            onChange={(e) => setAnswers((prev) => ({ ...prev, fieldOther: e.target.value }))}
+                            onChange={(e) =>
+                              setAnswers((prev) => ({
+                                ...prev,
+                                fieldOther: e.target.value,
+                              }))
+                            }
                             onKeyDown={handleKeyDown}
                             disabled={isBusy}
                           />
@@ -447,10 +510,16 @@ export default function OnboardingPage() {
                       <div className="space-y-3">
                         <div className="flex items-center justify-between gap-3">
                           <div>
-                            <div className="text-sm font-medium text-gray-800">Pick what you want right now</div>
-                            <div className="text-xs text-muted-foreground">A few picks is perfect.</div>
+                            <div className="text-sm font-medium text-gray-800">
+                              Pick what you want right now
+                            </div>
+                            <div className="text-muted-foreground text-xs">
+                              A few picks is perfect.
+                            </div>
                           </div>
-                          <div className="text-xs text-neutral-500">Selected: {answers.opportunities.length}</div>
+                          <div className="text-xs text-neutral-500">
+                            Selected: {answers.opportunities.length}
+                          </div>
                         </div>
                         <div className="grid gap-3 md:grid-cols-2">
                           {opportunityOptions.map((item) => (
@@ -460,7 +529,11 @@ export default function OnboardingPage() {
                               selected={answers.opportunities.includes(item)}
                               onClick={() => updateArray("opportunities", item)}
                               onKeyDown={handleKeyDown}
-                              icon={answers.opportunities.includes(item) ? <Check /> : undefined}
+                              icon={
+                                answers.opportunities.includes(item) ? (
+                                  <Check />
+                                ) : undefined
+                              }
                               disabled={isBusy}
                             />
                           ))}
@@ -472,10 +545,16 @@ export default function OnboardingPage() {
                       <div className="space-y-3">
                         <div className="flex items-center justify-between gap-3">
                           <div>
-                            <div className="text-sm font-medium text-gray-800">Topics you like (optional)</div>
-                            <div className="text-xs text-muted-foreground">This shapes your feed.</div>
+                            <div className="text-sm font-medium text-gray-800">
+                              Topics you like (optional)
+                            </div>
+                            <div className="text-muted-foreground text-xs">
+                              This shapes your feed.
+                            </div>
                           </div>
-                          <div className="text-xs text-neutral-500">Selected: {answers.domains.length}</div>
+                          <div className="text-xs text-neutral-500">
+                            Selected: {answers.domains.length}
+                          </div>
                         </div>
                         <div className="grid gap-3 md:grid-cols-2">
                           {domainOptions.map((item) => (
@@ -485,7 +564,11 @@ export default function OnboardingPage() {
                               selected={answers.domains.includes(item)}
                               onClick={() => updateArray("domains", item)}
                               onKeyDown={handleKeyDown}
-                              icon={answers.domains.includes(item) ? <Check /> : undefined}
+                              icon={
+                                answers.domains.includes(item) ? (
+                                  <Check />
+                                ) : undefined
+                              }
                               disabled={isBusy}
                             />
                           ))}
@@ -499,21 +582,32 @@ export default function OnboardingPage() {
                       <div className="rounded-lg border border-dashed border-orange-200 bg-orange-50/60 p-4 text-sm text-gray-800">
                         <p className="font-medium text-orange-700">All set.</p>
                         <p className="text-muted-foreground mt-1">
-                          We’ll personalize your feed based on these signals. You can edit anytime from your profile.
+                          We’ll personalize your feed based on these signals.
+                          You can edit anytime from your profile.
                         </p>
                       </div>
 
                       <div className="grid gap-3 md:grid-cols-2">
-                        <SummaryItem title="Role" value={answers.role ? titleCase(answers.role) : "Not set"} />
+                        <SummaryItem
+                          title="Role"
+                          value={
+                            answers.role ? titleCase(answers.role) : "Not set"
+                          }
+                        />
                         <SummaryItem
                           title="Location"
                           value={
                             answers.state.trim() || answers.city.trim()
-                              ? (answers.state.trim() ? answers.state.trim() : answers.city.trim())
+                              ? answers.state.trim()
+                                ? answers.state.trim()
+                                : answers.city.trim()
                               : "Skipped"
                           }
                         />
-                        <SummaryItem title="Education" value={answers.educationLevel || "Skipped"} />
+                        <SummaryItem
+                          title="Education"
+                          value={answers.educationLevel || "Skipped"}
+                        />
                         <SummaryItem
                           title="Field"
                           value={
@@ -522,9 +616,18 @@ export default function OnboardingPage() {
                               : answers.fieldOfStudy || "Skipped"
                           }
                         />
-                        <SummaryItem title="Wants" value={pickLabel(answers.opportunities)} />
-                        <SummaryItem title="Topics" value={pickLabel(answers.domains)} />
-                        <SummaryList title="Opportunities" items={answers.opportunities} />
+                        <SummaryItem
+                          title="Wants"
+                          value={pickLabel(answers.opportunities)}
+                        />
+                        <SummaryItem
+                          title="Topics"
+                          value={pickLabel(answers.domains)}
+                        />
+                        <SummaryList
+                          title="Opportunities"
+                          items={answers.opportunities}
+                        />
                         <SummaryList title="Domains" items={answers.domains} />
                       </div>
                     </div>
@@ -558,7 +661,7 @@ export default function OnboardingPage() {
 
                 <Button
                   type="button"
-                  variant="primary"
+                  variant="default"
                   onClick={goNext}
                   disabled={!isComplete(currentStep) || isBusy}
                   className="gap-2"
@@ -581,19 +684,29 @@ export default function OnboardingPage() {
           <Card className="max-h-[600px] overflow-y-auto border-orange-100/60 bg-white/70 shadow-sm backdrop-blur-sm">
             <CardHeader>
               <CardTitle>Live preview</CardTitle>
-              <CardDescription>Just a quick glance at what we’ll use.</CardDescription>
+              <CardDescription>
+                Just a quick glance at what we’ll use.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
-              <PreviewItem label="Role" value={answers.role ? titleCase(answers.role) : "—"} />
+              <PreviewItem
+                label="Role"
+                value={answers.role ? titleCase(answers.role) : "—"}
+              />
               <PreviewItem
                 label="Location"
                 value={
                   answers.state.trim() || answers.city.trim()
-                    ? (answers.state.trim() ? answers.state.trim() : answers.city.trim())
+                    ? answers.state.trim()
+                      ? answers.state.trim()
+                      : answers.city.trim()
                     : "—"
                 }
               />
-              <PreviewItem label="Education" value={answers.educationLevel || "—"} />
+              <PreviewItem
+                label="Education"
+                value={answers.educationLevel || "—"}
+              />
               <PreviewItem
                 label="Field"
                 value={
@@ -607,13 +720,16 @@ export default function OnboardingPage() {
 
               {answers.role === "society" ? (
                 <div className="rounded-md bg-orange-50 p-3 text-xs text-orange-700">
-                  Tip: switch to Student if you want student-tailored recommendations.
+                  Tip: switch to Student if you want student-tailored
+                  recommendations.
                 </div>
               ) : null}
 
               <Separator />
               <div className="text-muted-foreground flex items-center justify-between text-xs">
-                <span>{profileQuery.isFetching ? "Loading…" : "Ready when you are"}</span>
+                <span>
+                  {profileQuery.isFetching ? "Loading…" : "Ready when you are"}
+                </span>
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
                   <span>Saved to your profile</span>

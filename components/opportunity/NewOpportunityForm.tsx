@@ -11,9 +11,29 @@ import { DescriptionField } from "./fields/DescriptionField";
 import { TagsField } from "./fields/TagsField";
 import { TypeSelector } from "./fields/TypeSelector";
 import { MetaPopovers } from "./fields/MetaPopovers";
-import { ImagePicker, SelectedImages, ExistingImages } from "./images/ImageDropzone";
+import {
+  ImagePicker,
+  SelectedImages,
+  ExistingImages,
+} from "./images/ImageDropzone";
 import { formSchema, FormData } from "./schema";
 import { FileItem, Opportunity } from "@/types/interfaces";
+
+function toDateTimeLocalValue(isoDateTime?: string): string {
+  if (!isoDateTime) {
+    return "";
+  }
+
+  const date = new Date(isoDateTime);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const timezoneOffsetMs = date.getTimezoneOffset() * 60 * 1000;
+  const localDate = new Date(date.getTime() - timezoneOffsetMs);
+  return localDate.toISOString().slice(0, 16);
+}
+
 export default function NewOpportunityForm({
   opportunity,
   onOpportunityCreated,
@@ -55,6 +75,7 @@ export default function NewOpportunityForm({
       location: opportunity?.location || "",
       organiserInfo: opportunity?.organiserInfo || "",
       dateRange: undefined,
+      publishAt: toDateTimeLocalValue(opportunity?.publishAt),
     },
   });
 
@@ -65,6 +86,7 @@ export default function NewOpportunityForm({
   const watchedTitle = form.watch("title");
   const watchedDescription = form.watch("description");
   const watchedTags = form.watch("tags");
+  const watchedPublishAt = form.watch("publishAt");
 
   useEffect(() => {
     // Set initial date range if available
@@ -76,6 +98,8 @@ export default function NewOpportunityForm({
         to: opportunity.endDate ? new Date(opportunity.endDate) : undefined,
       });
     }
+
+    form.setValue("publishAt", toDateTimeLocalValue(opportunity?.publishAt));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opportunity]);
 
@@ -100,6 +124,7 @@ export default function NewOpportunityForm({
           : null,
         to: watchedDateRange?.to ? watchedDateRange.to.toISOString() : null,
       },
+      publishAt: watchedPublishAt || "",
     });
 
     const originalSnapshot = JSON.stringify({
@@ -117,6 +142,7 @@ export default function NewOpportunityForm({
           ? new Date(opportunity.endDate).toISOString()
           : null,
       },
+      publishAt: toDateTimeLocalValue(opportunity.publishAt),
     });
 
     // Check if images have changed (either new files added or existing images removed)
@@ -134,6 +160,7 @@ export default function NewOpportunityForm({
     watchedTitle,
     watchedDescription,
     watchedTags,
+    watchedPublishAt,
     watchedLocation,
     watchedOrganiser,
     watchedDateRange,
@@ -186,6 +213,7 @@ export default function NewOpportunityForm({
                 watchedLocation={watchedLocation}
                 watchedOrganiser={watchedOrganiser}
                 watchedDateRange={watchedDateRange}
+                watchedPublishAt={watchedPublishAt}
               />
               {/* Image picker trigger (no previews here) */}
               <ImagePicker

@@ -8,6 +8,7 @@ import {
   ilike,
   inArray,
   isNull,
+  lte,
   or,
   sql,
 } from "drizzle-orm";
@@ -29,6 +30,9 @@ const opportunitySchema = z.object({
   organiserInfo: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
+  publishAt: z
+    .union([z.string().datetime(), z.literal(""), z.null()])
+    .optional(),
 });
 
 async function getUserRoleFromSession(session: {
@@ -49,6 +53,25 @@ async function getUserRoleFromSession(session: {
   });
 
   return row?.role ?? null;
+}
+
+function parsePublishAt(
+  publishAt: string | "" | null | undefined
+): Date | null | undefined {
+  if (publishAt === undefined) {
+    return undefined;
+  }
+
+  if (publishAt === "" || publishAt === null) {
+    return null;
+  }
+
+  const parsedPublishAt = new Date(publishAt);
+  if (Number.isNaN(parsedPublishAt.getTime())) {
+    return undefined;
+  }
+
+  return parsedPublishAt;
 }
 
 export async function POST(req: NextRequest) {
@@ -143,6 +166,11 @@ export async function POST(req: NextRequest) {
         // Convert to YYYY-MM-DD format for PostgreSQL date type
         insertData.endDate = endDate.toISOString().split("T")[0];
       }
+    }
+
+    const parsedPublishAt = parsePublishAt(validatedData.publishAt);
+    if (parsedPublishAt !== undefined) {
+      insertData.publishAt = parsedPublishAt;
     }
 
     timer.mark("insert_start");
@@ -264,6 +292,12 @@ export async function GET(req: NextRequest) {
     // Admins can see all opportunities including pending ones
     if (!isAdmin) {
       conditions.push(eq(opportunities.isActive, true));
+      conditions.push(
+        or(
+          isNull(opportunities.publishAt),
+          lte(opportunities.publishAt, new Date())
+        )
+      );
     }
 
     if (searchTerm) {
@@ -317,6 +351,7 @@ export async function GET(req: NextRequest) {
         organiserInfo: opportunities.organiserInfo,
         startDate: opportunities.startDate,
         endDate: opportunities.endDate,
+        publishAt: opportunities.publishAt,
         isFlagged: opportunities.isFlagged,
         createdAt: opportunities.createdAt,
         updatedAt: opportunities.updatedAt,

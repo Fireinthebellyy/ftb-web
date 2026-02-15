@@ -42,6 +42,7 @@ interface InternshipData {
 
 const mapInternshipToApplyOpportunity = (period: InternshipData): ApplyModalOpportunity => {
   return {
+    ...period, // spread other properties
     id: period.id,
     title: period.title,
     hiringOrganization: period.hiringOrganization,
@@ -51,7 +52,6 @@ const mapInternshipToApplyOpportunity = (period: InternshipData): ApplyModalOppo
     skills: period.tags,
     tags: period.tags,
     returnUrl: `/intern/${period.id}`,
-    ...period // spread other properties
   };
 };
 

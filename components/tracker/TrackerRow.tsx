@@ -1,11 +1,11 @@
-import React from 'react';
 import { Clock, AlertCircle, Trash2, ChevronDown, Calendar } from 'lucide-react';
 import clsx from 'clsx';
+import { TrackerItem } from '@/components/providers/TrackerProvider';
 
 interface TrackerRowProps {
-    opp: any;
-    updateStatus: (id: number | string, status: string, extraData?: any) => void;
-    onClick: (opp: any) => void;
+    opp: TrackerItem & { isHighPriority?: boolean };
+    updateStatus: (id: number | string, status: string, extraData?: Record<string, unknown>) => void;
+    onClick: (opp: TrackerItem) => void;
     onDelete: (id: number | string) => void;
 
 }

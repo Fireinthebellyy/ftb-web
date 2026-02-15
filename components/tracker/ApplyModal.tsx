@@ -21,7 +21,7 @@ export interface ApplyModalOpportunity {
     images?: string[];
     skills?: string[];
     tags?: string[];
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 interface ApplyModalProps {

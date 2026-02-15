@@ -15,7 +15,7 @@ export interface TrackerItem {
     result: string | null;
     notes: string;
     updatedAt?: string;
-    draftData?: any;
+    draftData?: unknown;
     // Merged fields from API
     title?: string;
     company?: string;
@@ -23,13 +23,23 @@ export interface TrackerItem {
     type?: string;
     deadline?: string;
     logo?: string;
-    [key: string]: any;
+    fit?: string;
+    fitColor?: string;
+    fitLabel?: string;
+    matchReason?: string;
+    expectedResultWindow?: string;
+    description?: string;
+    expectations?: string[];
+    eligibility?: string[];
+    skills?: string[];
+    tags?: string[];
+    [key: string]: unknown;
 }
 
 export interface ManualTrackerInput extends Omit<Partial<TrackerItem>, 'oppId'> {
     id?: number | string;
     kind?: 'internship' | 'opportunity';
-    draftData?: any;
+    draftData?: unknown;
 }
 
 export interface TrackerEvent {
@@ -136,7 +146,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
 
                 // Merge Data
                 const merged = trackedItems.map(item => {
-                    let apiData: any = {};
+                    let apiData: Partial<TrackerItem> = {};
 
                     if ((item.kind || 'internship') === 'internship') {
                         const fetched = internshipsMap.get(item.oppId as string);

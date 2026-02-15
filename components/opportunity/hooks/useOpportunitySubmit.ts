@@ -152,14 +152,11 @@ export function useOpportunitySubmit({
             let res;
             if (opportunity?.id) {
                 res = await axios.put(`/api/opportunities/${opportunity.id}`, payload);
-                if (res.status !== 200) throw new Error("Failed to update opportunity");
 
                 // Delete removed images from Appwrite storage after successful update
                 await deleteRemovedImages();
             } else {
                 res = await axios.post("/api/opportunities", payload);
-                if (res.status !== 200 && res.status !== 201)
-                    throw new Error("Failed to create opportunity");
             }
 
             files.forEach((file) => URL.revokeObjectURL(file.preview));
@@ -185,7 +182,7 @@ export function useOpportunitySubmit({
             } else {
                 toast.error("Unknown error occurred");
             }
-            throw err; // Re-throw for testing if needed
+
         } finally {
             setLoading(false);
         }

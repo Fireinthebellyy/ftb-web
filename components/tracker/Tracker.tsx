@@ -9,7 +9,7 @@ import Link from 'next/link';
 
 
 import TrackerDetailModal from './TrackerDetailModal';
-import ApplyModal from './ApplyModal';
+import ApplyModal, { ApplyModalOpportunity } from './ApplyModal';
 import EventCard from './EventCard';
 import TrackerRow from './TrackerRow';
 import MobileTrackerCard from './MobileTrackerCard';
@@ -41,8 +41,8 @@ export default function Tracker() {
     const [activeTab, setActiveTab] = useState<'internship' | 'opportunity'>('internship');
 
 
-    const [detailOpp, setDetailOpp] = useState<any>(null);
-    const [smartApplyOpp, setSmartApplyOpp] = useState<any>(null);
+    const [detailOpp, setDetailOpp] = useState<TrackerItem | null>(null);
+    const [smartApplyOpp, setSmartApplyOpp] = useState<TrackerItem | null>(null);
     const [showInsights, setShowInsights] = useState(false);
 
 
@@ -335,7 +335,11 @@ export default function Tracker() {
             <ApplyModal
                 isOpen={!!smartApplyOpp}
                 onClose={() => setSmartApplyOpp(null)}
-                opportunity={smartApplyOpp}
+                opportunity={smartApplyOpp ? {
+                    ...smartApplyOpp,
+                    id: smartApplyOpp.oppId,
+                    title: smartApplyOpp.title || "Untitled Opportunity"
+                } as unknown as ApplyModalOpportunity : null}
             />
         </div>
     );

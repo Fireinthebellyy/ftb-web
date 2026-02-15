@@ -1,12 +1,13 @@
 import React from 'react';
 import { Trash2, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
+import { TrackerItem } from '@/components/providers/TrackerProvider';
 
 interface MobileTrackerCardProps {
-    opp: any;
-    updateStatus: (id: number | string, status: string, extraData?: any) => void;
+    opp: TrackerItem;
+    updateStatus: (id: number | string, status: string, extraData?: Record<string, unknown>) => void;
     onDelete: (id: number | string) => void;
-    onClick: (opp: any) => void;
+    onClick: (opp: TrackerItem) => void;
 }
 
 export default function MobileTrackerCard({ opp, updateStatus, onDelete, onClick }: MobileTrackerCardProps) {

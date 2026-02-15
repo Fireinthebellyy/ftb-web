@@ -49,6 +49,7 @@ describe("useOpportunitySubmit", () => {
       mockStorage
     );
     global.URL.revokeObjectURL = vi.fn();
+    vi.stubEnv("NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID", "test-bucket");
   });
 
   it("should successfully create a new opportunity without images", async () => {
@@ -91,11 +92,15 @@ describe("useOpportunitySubmit", () => {
     await result.current.onSubmit(formData);
 
     expect(mockAxiosPost).toHaveBeenCalledWith("/api/opportunities", {
-      ...formData,
-      startDate: "2025-02-01T00:00:00.000Z",
-      endDate: "2025-02-28T00:00:00.000Z",
       tags: ["tech", "remote"],
       images: undefined,
+      description: "Test description",
+      location: "Remote",
+      organiserInfo: "Test Organiser",
+      title: "Test Opportunity",
+      type: "internship",
+      startDate: "2025-02-01T00:00:00.000Z",
+      endDate: "2025-02-28T00:00:00.000Z"
     });
     expect(mockToast.success).toHaveBeenCalledWith(
       "Opportunity submitted successfully!"
@@ -181,16 +186,14 @@ describe("useOpportunitySubmit", () => {
 
     mockStorage.createFile.mockRejectedValue(new Error("Upload failed"));
 
-    await expect(
-      result.current.onSubmit({
-        title: "Test",
-        type: "internship",
-        description: "Desc",
-      })
-    ).rejects.toThrow("One or more images failed to upload");
+    await result.current.onSubmit({
+      title: "Test",
+      type: "internship",
+      description: "Desc",
+    });
 
     expect(mockToast.error).toHaveBeenCalledWith(
-      expect.stringContaining("Failed to upload")
+      expect.stringMatching(/failed to upload/i)
     );
     expect(axios.post).not.toHaveBeenCalled();
   });
@@ -241,5 +244,31 @@ describe("useOpportunitySubmit", () => {
     expect(mockToast.success).toHaveBeenCalledWith(
       "Opportunity updated successfully!"
     );
+  });
+
+  it("should handle API submission failure", async () => {
+    const { result } = renderHook(
+      () =>
+        useOpportunitySubmit({
+          files: [],
+          setFiles: vi.fn(),
+          existingImages: [],
+          onOpportunityCreated: vi.fn(),
+          setRemovedImageIds: vi.fn(),
+          removedImageIds: [],
+        }),
+      { wrapper }
+    );
+
+    const mockAxiosPost = vi.mocked(axios.post);
+    mockAxiosPost.mockRejectedValue(new Error("API Error"));
+
+    await result.current.onSubmit({
+      title: "Test",
+      type: "internship",
+      description: "Desc",
+    });
+
+    expect(mockToast.error).toHaveBeenCalledWith("API Error");
   });
 });

@@ -4,30 +4,16 @@ import React from 'react';
 import { ExternalLink, Calculator, Target, Sparkles } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { TrackerItem } from '@/components/providers/TrackerProvider';
 
 
 
-interface TrackerDetailOpportunity {
-    id: number | string;
-    oppId: number | string;
-    title: string;
-    company: string;
-    logo?: string;
-    type: string;
-    description?: string;
-    expectations?: string[];
-    eligibility?: string[];
-    skills?: string[];
-    tags?: string[];
-    status: string;
 
-    [key: string]: any;
-}
 
 interface TrackerDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
-    opportunity: TrackerDetailOpportunity;
+    opportunity: TrackerItem;
     updateStatus: (id: number | string, status: string) => void;
     onSmartApply: () => void;
 }

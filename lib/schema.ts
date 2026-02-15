@@ -427,7 +427,9 @@ export const trackerEvents = pgTable("tracker_events", {
   description: text("description"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  uniqueIndex("tracker_events_user_title_date_unique").on(table.userId, table.title, table.date),
+]);
 
 // Export schema object last
 export const schema = {

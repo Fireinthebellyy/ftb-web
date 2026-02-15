@@ -7,7 +7,7 @@ import { TrackerEvent } from '../providers/TrackerProvider';
 
 interface EventCardProps {
     event: TrackerEvent;
-    onDelete: (id: number) => void;
+    onDelete: (id: string) => void;
 }
 
 export default function EventCard({ event, onDelete }: EventCardProps) {

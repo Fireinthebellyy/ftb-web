@@ -43,7 +43,7 @@ export interface ManualTrackerInput extends Omit<Partial<TrackerItem>, 'oppId'> 
 }
 
 export interface TrackerEvent {
-    id: number;
+    id: string; // Changed to string (UUID)
     title: string;
     date: string;
     type: string;
@@ -58,7 +58,7 @@ interface TrackerContextType {
     updateStatus: (oppId: number | string, status: string, extraData?: Record<string, unknown>) => void;
     getStatus: (oppId: number | string) => string | null;
     addEvent: (event: Omit<TrackerEvent, 'id'>) => void;
-    removeEvent: (id: number) => void;
+    removeEvent: (id: string) => void; // Changed to string
     isLoading: boolean;
 }
 
@@ -105,8 +105,21 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
                 let localItems: TrackerItem[] = [];
                 let localEvents: TrackerEvent[] = [];
 
-                if (savedItems) localItems = JSON.parse(savedItems);
-                if (savedEvents) localEvents = JSON.parse(savedEvents);
+                if (savedItems) {
+                    try {
+                        localItems = JSON.parse(savedItems);
+                    } catch (e) {
+                        console.error("Failed to parse local tracker_items", e);
+                    }
+                }
+
+                if (savedEvents) {
+                    try {
+                        localEvents = JSON.parse(savedEvents);
+                    } catch (e) {
+                        console.error("Failed to parse local tracker_events", e);
+                    }
+                }
 
                 // 4. MIGRATION: If we have local data but API was empty, sync to backend
                 if ((localItems.length > 0 || localEvents.length > 0) && response.ok) {
@@ -136,9 +149,14 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
 
             } catch (error) {
                 console.error('Failed to initialize tracker:', error);
-                // Last resort fallback
-                const savedItems = localStorage.getItem('tracker_items');
-                if (savedItems) setTrackedItems(JSON.parse(savedItems));
+
+                try {
+                    const savedItems = localStorage.getItem('tracker_items');
+                    if (savedItems) setTrackedItems(JSON.parse(savedItems));
+                } catch (e) {
+                    console.error("Failed to recover from local storage", e);
+                }
+
             } finally {
                 setIsLoaded(true);
             }
@@ -161,7 +179,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const syncStatusToBackend = async (oppId: string | number, status: string, extraData?: any) => {
+    const syncStatusToBackend = async (oppId: string | number, status: string, extraData?: Record<string, unknown>) => {
         try {
             await fetch('/api/tracker', {
                 method: 'PATCH',
@@ -284,7 +302,8 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     }, [trackedItems, isLoaded]);
 
     const addEvent = (event: Omit<TrackerEvent, 'id'>) => {
-        const newItem = { ...event, id: Date.now() }; // Optimistic ID
+        const optimisticId = Date.now().toString(); // Use string ID
+        const newItem = { ...event, id: optimisticId };
         setEvents(prev => [...prev, newItem]);
         toast.success(`📅 Event Added: ${event.title}`);
 
@@ -293,10 +312,18 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'add_event', data: event })
-        }).catch(err => console.error("Event sync failed", err));
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.event) {
+                    // Update with backend ID
+                    setEvents(prev => prev.map(e => e.id === optimisticId ? { ...e, id: data.event.id } : e));
+                }
+            })
+            .catch(err => console.error("Event sync failed", err));
     };
 
-    const removeEvent = (id: number) => {
+    const removeEvent = (id: string) => {
         setEvents(prev => prev.filter(e => e.id !== id));
         deleteFromBackend(id, 'event');
     };
@@ -350,7 +377,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
 
     const updateStatus = (oppId: number | string, status: string, extraData: Record<string, unknown> = {}) => {
         setTrackedItems(prevItems => prevItems.map(i => {
-            if (i.oppId === oppId) {
+            if (String(i.oppId) === String(oppId)) { // String comparison
                 const updated = {
                     ...i,
                     ...extraData,
@@ -366,13 +393,13 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const removeFromTracker = (oppId: number | string) => {
-        setTrackedItems(prevItems => prevItems.filter(i => i.oppId !== oppId));
+        setTrackedItems(prevItems => prevItems.filter(i => String(i.oppId) !== String(oppId))); // String comparison
         toast.success("Deleted from Tracker");
         deleteFromBackend(oppId, 'item');
     };
 
     const getStatus = (oppId: number | string) => {
-        const item = trackedItems.find(i => i.oppId === oppId);
+        const item = trackedItems.find(i => String(i.oppId) === String(oppId)); // String comparison
         return item ? item.status : null;
     };
 

@@ -7,7 +7,6 @@ import { headers } from "next/headers";
 import { eq, and, desc } from "drizzle-orm";
 import { z } from "zod";
 
-// Schema for validating tracker items
 const trackerItemSchema = z.object({
     oppId: z.string().or(z.number().transform(String)),
     status: z.string(),
@@ -17,7 +16,7 @@ const trackerItemSchema = z.object({
     appliedAt: z.string().nullable().optional(),
     result: z.string().nullable().optional(),
     isManual: z.boolean().optional(),
-    manualData: z.any().optional(), // Will be stringified
+    manualData: z.unknown().optional(), // Safer than z.any(), requires checking before use
 });
 
 const trackerEventSchema = z.object({
@@ -25,6 +24,16 @@ const trackerEventSchema = z.object({
     date: z.string(),
     type: z.string(),
     description: z.string().optional(),
+});
+
+// Patch Schema for validation
+const patchSchema = z.object({
+    action: z.enum(['update_status']),
+    id: z.string().or(z.number()),
+    data: z.object({
+        status: z.string(),
+        extraData: z.record(z.unknown()).optional(),
+    })
 });
 
 export async function GET() {
@@ -52,11 +61,22 @@ export async function GET() {
 
         timer.mark("fetch_done");
 
-        // Process items to parse manualData if it exists
-        const processedItems = items.map(item => ({
-            ...item,
-            manualData: item.manualData ? JSON.parse(item.manualData) : null
-        }));
+        // Process items to parse manualData safely
+        const processedItems = items.map(item => {
+            let parsedManualData = null;
+            if (item.manualData) {
+                try {
+                    parsedManualData = JSON.parse(item.manualData);
+                } catch (e) {
+                    console.error(`Failed to parse manualData for item ${item.id}`, e);
+                    parsedManualData = null; // Fallback
+                }
+            }
+            return {
+                ...item,
+                manualData: parsedManualData
+            };
+        });
 
         timer.end({ status: 200 });
         return NextResponse.json({
@@ -121,50 +141,69 @@ export async function POST(req: NextRequest) {
         }
 
         if (action === 'sync_items') {
-            // Bulk insert/update from local storage migration
             if (!Array.isArray(data)) return NextResponse.json({ error: "Invalid data" }, { status: 400 });
 
+            if (data.length === 0) return NextResponse.json({ success: true });
+
+            const validItems = [];
             for (const item of data) {
-                try {
-                    const validated = trackerItemSchema.parse(item);
-                    await db.insert(trackerItems).values({
+                const parsed = trackerItemSchema.safeParse(item);
+                if (parsed.success) {
+                    validItems.push({
                         userId: session.user.id,
-                        oppId: validated.oppId,
-                        kind: validated.kind,
-                        status: validated.status,
-                        notes: validated.notes,
-                        addedAt: validated.addedAt ? new Date(validated.addedAt) : undefined,
-                        appliedAt: validated.appliedAt ? new Date(validated.appliedAt) : null,
-                        result: validated.result,
-                        isManual: validated.isManual || false,
-                        manualData: validated.manualData ? JSON.stringify(validated.manualData) : null,
-                    }).onConflictDoNothing(); // Don't overwrite if already exists during sync
-                } catch (e) {
-                    console.warn("Skipping invalid item during sync", e);
+                        oppId: parsed.data.oppId,
+                        kind: parsed.data.kind,
+                        status: parsed.data.status,
+                        notes: parsed.data.notes,
+                        addedAt: parsed.data.addedAt ? new Date(parsed.data.addedAt) : undefined,
+                        appliedAt: parsed.data.appliedAt ? new Date(parsed.data.appliedAt) : null,
+                        result: parsed.data.result,
+                        isManual: parsed.data.isManual || false,
+                        manualData: parsed.data.manualData ? JSON.stringify(parsed.data.manualData) : null,
+                    });
                 }
             }
+
+            if (validItems.length > 0) {
+                await db.transaction(async (tx) => {
+                    await tx.insert(trackerItems)
+                        .values(validItems)
+                        .onConflictDoNothing();
+                });
+            }
+
             return NextResponse.json({ success: true });
         }
 
         if (action === 'sync_events') {
             if (!Array.isArray(data)) return NextResponse.json({ error: "Invalid data" }, { status: 400 });
 
-            // For events, we might want to just insert them if they don't look like duplicates?
-            // Implementing basic sync: just insert all
+            if (data.length === 0) return NextResponse.json({ success: true });
+
+            const validEvents = [];
             for (const event of data) {
-                try {
-                    const validated = trackerEventSchema.parse(event);
-                    await db.insert(trackerEvents).values({
+                const parsed = trackerEventSchema.safeParse(event);
+                if (parsed.success) {
+                    validEvents.push({
                         userId: session.user.id,
-                        title: validated.title,
-                        date: new Date(validated.date),
-                        type: validated.type,
-                        description: validated.description,
+                        title: parsed.data.title,
+                        date: new Date(parsed.data.date),
+                        type: parsed.data.type,
+                        description: parsed.data.description,
                     });
-                } catch (e) {
-                    console.warn("Skipping invalid event during sync", e);
                 }
             }
+
+            if (validEvents.length > 0) {
+                await db.transaction(async (tx) => {
+                    await tx.insert(trackerEvents)
+                        .values(validEvents)
+                        .onConflictDoNothing({
+                            target: [trackerEvents.userId, trackerEvents.title, trackerEvents.date] // Using the new unique index
+                        });
+                });
+            }
+
             return NextResponse.json({ success: true });
         }
 
@@ -184,21 +223,46 @@ export async function PATCH(req: NextRequest) {
         if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         const body = await req.json();
-        const { action, id, data } = body;
+
+        // Validate request body
+        const parsed = patchSchema.safeParse(body);
+        if (!parsed.success) {
+            return NextResponse.json({ error: "Invalid request body", details: parsed.error }, { status: 400 });
+        }
+
+        const { action, id, data } = parsed.data;
 
         if (action === 'update_status') {
+            // Safe allowlist for extraData updates to prevent mass assignment
+            const allowedExtraKeys = ['notes', 'result', 'manualData', 'isManual']; // Add specific keys as needed
+            const sanitizedExtraData: Record<string, unknown> = {};
+
+            if (data.extraData) {
+                for (const key of allowedExtraKeys) {
+                    if (key in data.extraData) {
+                        sanitizedExtraData[key] = data.extraData[key];
+                    }
+                }
+            }
+
+            // If manualData is being updated, stringify it
+            if (sanitizedExtraData.manualData && typeof sanitizedExtraData.manualData !== 'string') {
+                sanitizedExtraData.manualData = JSON.stringify(sanitizedExtraData.manualData);
+            }
+
             await db.update(trackerItems)
                 .set({
                     status: data.status,
-                    appliedAt: data.status === 'Applied' ? new Date() : undefined, // Logic handled in frontend mostly, but good to have
+                    appliedAt: data.status === 'Applied' ? new Date() : undefined,
                     updatedAt: new Date(),
-                    ...data.extraData // Catch-all for other fields
+                    ...sanitizedExtraData
                 })
                 .where(and(eq(trackerItems.userId, session.user.id), eq(trackerItems.oppId, String(id))));
 
             return NextResponse.json({ success: true });
         }
 
+        // Unreachable due to validation but good for type safety
         return NextResponse.json({ error: "Invalid action" }, { status: 400 });
 
     } catch (error) {

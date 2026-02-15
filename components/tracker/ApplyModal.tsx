@@ -60,7 +60,7 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
             // If not numeric suffix, keep the original string ID
         }
 
-        addToTracker({ ...opportunity, id: oppId }, 'Applied');
+        addToTracker({ ...opportunity, id: oppId }, 'Not Applied');
         onClose();
         router.push('/tracker');
     };

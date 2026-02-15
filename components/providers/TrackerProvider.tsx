@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { toast } from 'sonner';
 import { fetchInternshipsPaginated } from '@/lib/queries-internships';
 import { fetchOpportunitiesPaginated } from '@/lib/queries-opportunities';
+import { Internship, Opportunity } from '@/types/interfaces';
 
 export interface TrackerItem {
     oppId: number | string;
@@ -112,8 +113,8 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
                 ]);
 
                 // Create lookups
-                const internshipsMap = new Map(internshipData.internships.map((i: any) => [i.id, i]));
-                const opportunitiesMap = new Map(opportunityData.opportunities.map((o: any) => [o.id, o]));
+                const internshipsMap = new Map(internshipData.internships.map((i: Internship) => [i.id, i]));
+                const opportunitiesMap = new Map((opportunityData.opportunities || []).map((o: Opportunity) => [o.id, o]));
 
                 // Merge Data
                 const merged = trackedItems.map(item => {
@@ -193,24 +194,30 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const addToTracker = (oppOrId: number | string | ManualTrackerInput, initialStatus = 'Not Applied', kind: 'internship' | 'opportunity' = 'internship') => {
+        const isManual = typeof oppOrId === 'object';
+        const idToCheck = isManual
+            ? (oppOrId as ManualTrackerInput).id ?? Date.now()
+            : (oppOrId as number | string);
+
+        // Check against current items to avoid double toasts and duplicate additions
+        const isAlreadyAdded = trackedItems.some(i => String(i.oppId) === String(idToCheck));
+
+        if (isAlreadyAdded) {
+            toast.info("Already in Tracker");
+            return;
+        }
+
+        // Trigger toasts outside the state updater to avoid double-toasting in StrictMode
+        if (initialStatus === 'Not Applied') {
+            toast.success("Saved to Tracker");
+        } else if (initialStatus === 'Draft') {
+            toast.success("Draft Saved");
+        }
+
         setTrackedItems(prevItems => {
-            const isManual = typeof oppOrId === 'object';
-            // If manual input, id might be undefined, so generate one. If id/string passed, use it.
-            const idToCheck = isManual
-                ? (oppOrId as ManualTrackerInput).id ?? Date.now()
-                : (oppOrId as number | string);
-
-            const existingItem = prevItems.find(i => i.oppId === idToCheck);
-
-            if (existingItem) {
-                toast.info("Already in Tracker");
+            // Final check inside setter for race conditions
+            if (prevItems.some(i => String(i.oppId) === String(idToCheck))) {
                 return prevItems;
-            }
-
-            if (initialStatus === 'Not Applied') {
-                toast.success("✅ Saved to Tracker");
-            } else if (initialStatus === 'Draft') {
-                toast.success("💾 Draft Saved");
             }
 
             const inputData = isManual ? (oppOrId as ManualTrackerInput) : {};
@@ -224,7 +231,6 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
                 result: null,
                 notes: inputData.notes || '',
                 draftData: (isManual && (oppOrId as ManualTrackerInput).draftData) ? (oppOrId as ManualTrackerInput).draftData : null,
-                // If it's manual, we might store partial data here too
                 ...inputData
             } as TrackerItem;
 

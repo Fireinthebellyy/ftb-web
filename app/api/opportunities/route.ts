@@ -8,7 +8,6 @@ import {
   ilike,
   inArray,
   isNull,
-  lte,
   or,
   sql,
 } from "drizzle-orm";
@@ -292,12 +291,12 @@ export async function GET(req: NextRequest) {
     // Admins can see all opportunities including pending ones
     if (!isAdmin) {
       conditions.push(eq(opportunities.isActive, true));
-      conditions.push(
-        or(
-          isNull(opportunities.publishAt),
-          lte(opportunities.publishAt, new Date())
-        )
-      );
+      // conditions.push(
+      //   or(
+      //     isNull(opportunities.publishAt),
+      //     lte(opportunities.publishAt, new Date())
+      //   )
+      // );
     }
 
     if (searchTerm) {
@@ -338,8 +337,8 @@ export async function GET(req: NextRequest) {
     const paginated = await db
       .select({
         id: opportunities.id,
-        type: opportunities.type,
         title: opportunities.title,
+        type: opportunities.type,
         description: opportunities.description,
         images: opportunities.images,
         tags: sql<string[]>`(
@@ -351,7 +350,7 @@ export async function GET(req: NextRequest) {
         organiserInfo: opportunities.organiserInfo,
         startDate: opportunities.startDate,
         endDate: opportunities.endDate,
-        publishAt: opportunities.publishAt,
+        // publishAt: opportunities.publishAt,
         isFlagged: opportunities.isFlagged,
         createdAt: opportunities.createdAt,
         updatedAt: opportunities.updatedAt,
@@ -425,7 +424,7 @@ export async function GET(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching opportunities:", error);
     timer.end({ status: 500, reason: "exception" });
     return NextResponse.json(

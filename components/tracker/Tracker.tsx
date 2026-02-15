@@ -2,8 +2,10 @@
 
 import React, { useState, useMemo } from 'react';
 import { useTracker, TrackerItem } from '@/components/providers/TrackerProvider';
-import { AlertCircle, FileText, CalendarDays, TrendingUp, LucideIcon, Loader2, Activity } from 'lucide-react';
+import { AlertCircle, FileText, CalendarDays, TrendingUp, LucideIcon, Loader2, Activity, ChevronRight, X, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 
 
 import TrackerDetailModal from './TrackerDetailModal';
@@ -11,6 +13,7 @@ import ApplyModal from './ApplyModal';
 import EventCard from './EventCard';
 import TrackerRow from './TrackerRow';
 import MobileTrackerCard from './MobileTrackerCard';
+import { useRouter } from 'next/navigation';
 
 
 interface EnrichedTrackerItem extends TrackerItem {
@@ -40,6 +43,8 @@ export default function Tracker() {
 
     const [detailOpp, setDetailOpp] = useState<any>(null);
     const [smartApplyOpp, setSmartApplyOpp] = useState<any>(null);
+    const [showInsights, setShowInsights] = useState(false);
+    const router = useRouter();
 
     // Hydrate & Enhance Logic
     const filteredItems = items.filter(i => (i.kind || 'internship') === activeTab);
@@ -138,36 +143,81 @@ export default function Tracker() {
 
 
 
-            {/* Mobile Metrics Card (Consolidated) */}
-            <div className="md:hidden bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden">
-                <div className="flex justify-between items-start mb-6 relative z-10">
-                    <div>
-                        <h3 className="text-2xl font-bold text-slate-900">{total}</h3>
-                        <p className="text-slate-500 text-sm">Total Tracked</p>
+            {/* Insights Toggle Bar */}
+            {!showInsights && (
+                <button
+                    onClick={() => setShowInsights(true)}
+                    className="w-full bg-orange-600 hover:bg-orange-700 text-white p-4 rounded-xl shadow-lg border border-orange-500/30 flex items-center justify-between group transition-all"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white/20 rounded-lg group-hover:scale-110 transition-transform">
+                            <TrendingUp size={20} className="text-white" />
+                        </div>
+                        <div className="text-left">
+                            <span className="font-bold text-lg">Check Insights</span>
+                            <p className="text-orange-100 text-sm">View your success rate and tracking progress</p>
+                        </div>
                     </div>
-                    <div className="text-right">
-                        <h3 className="text-2xl font-bold text-emerald-600">{successRate}%</h3>
-                        <p className="text-slate-500 text-sm">Success Rate</p>
-                    </div>
-                </div>
+                    <ChevronRight size={24} className="text-orange-200 group-hover:translate-x-1 transition-transform" />
+                </button>
+            )}
 
-                <div className="flex items-center gap-4 bg-blue-50 p-3 rounded-xl relative z-10 border border-blue-200">
-                    <div className="p-2 bg-blue-100 text-blue-700 rounded-lg">
-                        <Activity size={20} />
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-lg text-slate-900">{actionRate}%</h4>
-                        <p className="text-xs text-slate-500">Action Rate</p>
-                    </div>
-                </div>
-            </div>
+            <AnimatePresence>
+                {showInsights && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        className="overflow-hidden space-y-6"
+                    >
+                        <div className="flex items-center justify-between mb-2 px-2">
+                            <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
+                                <TrendingUp className="text-orange-500" size={20} />
+                                Tracking Insights
+                            </h3>
+                            <button
+                                onClick={() => setShowInsights(false)}
+                                className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
+                                title="Close Insights"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
 
-            {/* Desktop Metrics Grid */}
-            <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-6">
-                <MetricCard icon={FileText} label="Total Tracked" value={total} color="bg-slate-100 text-slate-700" />
-                <MetricCard icon={TrendingUp} label="Success Rate" value={`${successRate}%`} color="bg-emerald-50 text-emerald-700" />
-                <MetricCard icon={Activity} label="Action Rate" value={`${actionRate}%`} color="bg-blue-50 text-blue-700" />
-            </div>
+                        {/* Mobile Metrics Card (Consolidated) */}
+                        <div className="md:hidden bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden">
+                            <div className="flex justify-between items-start mb-6 relative z-10">
+                                <div>
+                                    <h3 className="text-2xl font-bold text-slate-900">{total}</h3>
+                                    <p className="text-slate-500 text-sm">Total Tracked</p>
+                                </div>
+                                <div className="text-right">
+                                    <h3 className="text-2xl font-bold text-emerald-600">{successRate}%</h3>
+                                    <p className="text-slate-500 text-sm">Success Rate</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-4 bg-blue-50 p-3 rounded-xl relative z-10 border border-blue-200">
+                                <div className="p-2 bg-blue-100 text-blue-700 rounded-lg">
+                                    <Activity size={20} />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-lg text-slate-900">{actionRate}%</h4>
+                                    <p className="text-xs text-slate-500">Action Rate</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Desktop Metrics Grid */}
+                        <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <MetricCard icon={FileText} label="Total Tracked" value={total} color="bg-slate-100 text-slate-700" />
+                            <MetricCard icon={TrendingUp} label="Success Rate" value={`${successRate}%`} color="bg-emerald-50 text-emerald-700" />
+                            <MetricCard icon={Activity} label="Action Rate" value={`${actionRate}%`} color="bg-blue-50 text-blue-700" />
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* View Content */}
             <div className="space-y-8">
@@ -216,9 +266,16 @@ export default function Tracker() {
                 )}
 
                 {/* Main List */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                        <h3 className="font-bold text-slate-900 text-lg">Saved {activeTab === 'internship' ? 'Internships' : 'Opportunities'}</h3>
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="p-4 md:p-5 border-b border-slate-100 flex justify-between items-center sticky top-0 z-20 bg-white/95 backdrop-blur-md rounded-t-2xl">
+                        <h3 className="font-bold text-slate-900 text-sm md:text-lg shrink-0">Saved {activeTab === 'internship' ? 'Internships' : 'Opportunities'}</h3>
+                        <Link
+                            href="/toolkit"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-[10px] md:text-sm font-bold transition-all shadow-sm hover:shadow-orange-200"
+                        >
+                            <Zap size={14} className="fill-white" />
+                            <span>10x Chances</span>
+                        </Link>
                     </div>
                     <div className="divide-y divide-slate-100">
                         {trackedOpps
@@ -234,16 +291,21 @@ export default function Tracker() {
                                             opp={opp}
                                             updateStatus={updateStatus}
                                             onDelete={removeFromTracker}
-
+                                            onClick={(o) => {
+                                                const path = o.kind === 'internship' ? `/intern/${o.oppId}` : `/opportunities/${o.oppId}`;
+                                                router.push(path);
+                                            }}
                                         />
                                     </div>
                                     <div className="hidden md:block">
                                         <TrackerRow
                                             opp={opp}
                                             updateStatus={updateStatus}
-                                            onClick={setDetailOpp}
                                             onDelete={removeFromTracker}
-
+                                            onClick={(o) => {
+                                                const path = o.kind === 'internship' ? `/intern/${o.oppId}` : `/opportunities/${o.oppId}`;
+                                                router.push(path);
+                                            }}
                                         />
                                     </div>
                                 </div>

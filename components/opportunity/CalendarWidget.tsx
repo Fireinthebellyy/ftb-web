@@ -1,5 +1,5 @@
 "use client";
-import { memo, useMemo, useState } from "react";
+import { memo, useMemo, useState, useCallback } from "react";
 import { Calendar } from "../ui/calendar";
 import { useBookmarkDatesForMonth } from "@/lib/queries-opportunities";
 import { Loader2 } from "lucide-react"; // or your preferred loading icon
@@ -47,11 +47,59 @@ const CalendarWidget = memo(function CalendarWidget({
 
 
 
-  const handleSelect = (dates: Date[] | undefined) => {
+  const handleSelect = useCallback((dates: Date[] | undefined) => {
     if (dates && dates.length > 0) {
       router.push("/deadlines");
     }
-  };
+  }, [router]);
+
+  // Extract DayButton to stable component to prevent remounts
+  const DayButton = useCallback(({ day, ...props }: any) => {
+    const isSelected = dates.some(d =>
+      d.getDate() === day.date.getDate() &&
+      d.getMonth() === day.date.getMonth() &&
+      d.getFullYear() === day.date.getFullYear()
+    );
+
+    // Find the bookmark data for this date to count the rings
+    // Use local date components to avoid timezone issues
+    const year = day.date.getFullYear();
+    const month = String(day.date.getMonth() + 1).padStart(2, '0');
+    const dayNum = String(day.date.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${dayNum}`;
+    const isBookmarked = bookmarkedDates.includes(dateStr);
+    const ringsCount = isBookmarked ? 1 : 0;
+
+    return (
+      <div className="relative flex w-full h-full items-center justify-center">
+        <button
+          {...props}
+          onClick={() => handleSelect([day.date])}
+          className={`relative flex items-center justify-center w-full h-full rounded-full transition-colors hover:bg-gray-100 ${
+            isSelected
+              ? 'border-2 border-orange-500 bg-orange-50'
+              : 'text-gray-900'
+          }`}
+          style={{
+            width: '2rem',
+            height: '2rem',
+            borderRadius: '50%',
+            boxShadow: isSelected ? '0 0 0 1px rgba(249, 115, 22, 0.5)' : undefined,
+          }}
+        >
+          {/* Render ring if bookmarked */}
+          {ringsCount > 0 && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="absolute w-[26px] h-[26px] border-2 border-orange-400 rounded-full"></div>
+            </div>
+          )}
+          <span className={`text-sm relative z-10 ${isSelected ? 'font-semibold text-orange-700' : ''}`}>
+            {day.date.getDate()}
+          </span>
+        </button>
+      </div>
+    );
+  }, [dates, bookmarkedDates, handleSelect]);
 
   return (
     <div className="rounded-lg border bg-white px-4 py-3">
@@ -79,54 +127,7 @@ const CalendarWidget = memo(function CalendarWidget({
           aria-label="Opportunity deadlines calendar"
           disabled={isLoading}
           components={{
-            DayButton: ({ day, ...props }) => {
-              const isSelected = dates.some(d =>
-                d.getDate() === day.date.getDate() &&
-                d.getMonth() === day.date.getMonth() &&
-                d.getFullYear() === day.date.getFullYear()
-              );
-
-              // Find the bookmark data for this date to count the rings
-              // Use local date components to avoid timezone issues
-              const year = day.date.getFullYear();
-              const month = String(day.date.getMonth() + 1).padStart(2, '0');
-              const dayNum = String(day.date.getDate()).padStart(2, '0');
-              const dateStr = `${year}-${month}-${dayNum}`;
-              const isBookmarked = bookmarkedDates.includes(dateStr);
-              const ringsCount = isBookmarked ? 1 : 0;
-
-
-
-              return (
-                <div className="relative flex w-full h-full items-center justify-center">
-                  <button
-                    {...props}
-                    onClick={() => handleSelect([day.date])}
-                    className={`relative flex items-center justify-center w-full h-full rounded-full transition-colors hover:bg-gray-100 ${
-                      isSelected
-                        ? 'border-2 border-orange-500 bg-orange-50'
-                        : 'text-gray-900'
-                    }`}
-                    style={{
-                      width: '2rem',
-                      height: '2rem',
-                      borderRadius: '50%',
-                      boxShadow: isSelected ? '0 0 0 1px rgba(249, 115, 22, 0.5)' : undefined,
-                    }}
-                  >
-                    {/* Render ring if bookmarked */}
-                    {ringsCount > 0 && (
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="absolute w-[26px] h-[26px] border-2 border-orange-400 rounded-full"></div>
-                      </div>
-                    )}
-                    <span className={`text-sm relative z-10 ${isSelected ? 'font-semibold text-orange-700' : ''}`}>
-                      {day.date.getDate()}
-                    </span>
-                  </button>
-                </div>
-              );
-            }
+            DayButton,
           }}
         />
       </div>

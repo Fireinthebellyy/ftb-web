@@ -105,6 +105,7 @@ export default function BookmarksPage() {
       setLoading(false);
     } catch (_err) {
       toast.error("Failed to remove bookmark");
+      setLoading(false); // Reset loading state on error
     }
   };
 

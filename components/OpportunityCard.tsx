@@ -1,11 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { createOpportunityStorage } from "@/lib/appwrite";
 import { OpportunityPostProps } from "@/types/interfaces";
-import { useSession } from "@/hooks/use-session";
-import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
@@ -20,18 +17,13 @@ import { OpportunityImageGallery } from "./opportunity/OpportunityImageGallery";
 import { OpportunityActions } from "./opportunity/OpportunityActions";
 import NewOpportunityForm from "./opportunity/NewOpportunityForm";
 
-const _isValidUUID = (uuid: string): boolean => {
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(uuid);
-};
 
 const OpportunityPost: React.FC<OpportunityPostProps> = ({
   opportunity,
   onBookmarkChange,
   initialIsBookmarked,
 }) => {
-  const { id, images, title } = opportunity;
+  const { images, title } = opportunity;
 
   const [isBookmarked, setIsBookmarked] = useState<boolean>(
     Boolean(initialIsBookmarked)
@@ -47,31 +39,11 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
     setIsEditing(false);
   };
 
-  const _handleDeletePost = async () => {
-    try {
-      const res = await axios.delete(`/api/opportunities/${id}`);
-      if (res.status === 200 || res.status === 204) {
-        toast.success("Post deleted successfully!");
-        queryClient.invalidateQueries({ queryKey: ["opportunities"] });
-      }
-    } catch (error) {
-      console.error("Error deleting post:", error);
-      toast.error("Failed to delete post");
-    }
-  };
-  const _isBookmarkLoading = useState<boolean>(false);
   const [showComments, setShowComments] = useState<boolean>(false);
-  const _isExpanded = true;
-
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [modalIndex, setModalIndex] = useState<number>(0);
 
-  const _session = useSession();
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    // Bookmark state is managed by parent component
-  }, []);
 
 
 

@@ -1,5 +1,5 @@
-import { db } from "@/lib/db";
-import { eq, and } from "drizzle-orm";
+import { db, dbPool } from "@/lib/db";
+import { eq } from "drizzle-orm";
 import { opportunities, bookmarks, tasks } from "@/lib/schema";
 import { upsertTagsAndGetIds } from "@/lib/tags";
 import { getCurrentUser } from "@/server/users";
@@ -87,12 +87,16 @@ export async function PUT(
       updateData.organiserInfo = validatedData.organiserInfo;
     }
 
-    // Handle date fields
+    // Handle date fields - use local timezone to match POST handler
     if (validatedData.startDate !== undefined) {
       if (validatedData.startDate) {
         const startDate = new Date(validatedData.startDate);
         if (!isNaN(startDate.getTime())) {
-          updateData.startDate = startDate.toISOString().split("T")[0];
+          // Get local date components to avoid UTC conversion
+          const year = startDate.getFullYear();
+          const month = String(startDate.getMonth() + 1).padStart(2, '0');
+          const day = String(startDate.getDate()).padStart(2, '0');
+          updateData.startDate = `${year}-${month}-${day}`;
         }
       } else {
         updateData.startDate = null;
@@ -103,7 +107,11 @@ export async function PUT(
       if (validatedData.endDate) {
         const endDate = new Date(validatedData.endDate);
         if (!isNaN(endDate.getTime())) {
-          updateData.endDate = endDate.toISOString().split("T")[0];
+          // Get local date components to avoid UTC conversion
+          const year = endDate.getFullYear();
+          const month = String(endDate.getMonth() + 1).padStart(2, '0');
+          const day = String(endDate.getDate()).padStart(2, '0');
+          updateData.endDate = `${year}-${month}-${day}`;
         }
       } else {
         updateData.endDate = null;
@@ -177,35 +185,31 @@ export async function DELETE(
       );
     }
 
-    // Delete associated bookmarks (hard delete since they're user-specific)
-    await db
-      .delete(bookmarks)
-      .where(
-        and(
-          eq(bookmarks.opportunityId, id),
-          eq(bookmarks.userId, user.currentUser.id)
-        )
-      );
+    // Use transaction to ensure atomicity
+    await dbPool.transaction(async (tx) => {
+      // Delete ALL bookmarks for this opportunity (not just current user's)
+      // This prevents dangling bookmarks pointing to soft-deleted opportunities
+      await tx
+        .delete(bookmarks)
+        .where(eq(bookmarks.opportunityId, id));
 
-    // Update tasks that reference this opportunity (remove the link)
-    await db
-      .update(tasks)
-      .set({ opportunityLink: null, updatedAt: new Date() })
-      .where(
-        and(
-          eq(tasks.userId, user.currentUser.id),
-          eq(tasks.opportunityLink, existingOpportunity[0].title) // Match by title since that's how it's stored
-        )
-      );
+      // Update tasks that reference this opportunity by title
+      // Note: This is fragile - if title changes, tasks won't be updated
+      // TODO: Consider adding opportunityId column to tasks table for proper FK relationship
+      await tx
+        .update(tasks)
+        .set({ opportunityLink: null, updatedAt: new Date() })
+        .where(eq(tasks.opportunityLink, existingOpportunity[0].title));
 
-    // Soft delete by setting deletedAt timestamp
-    await db
-      .update(opportunities)
-      .set({
-        deletedAt: new Date(),
-        isActive: false,
-      })
-      .where(eq(opportunities.id, id));
+      // Soft delete by setting deletedAt timestamp
+      await tx
+        .update(opportunities)
+        .set({
+          deletedAt: new Date(),
+          isActive: false,
+        })
+        .where(eq(opportunities.id, id));
+    });
 
     return NextResponse.json(
       { message: "Opportunity deleted successfully" },

@@ -108,18 +108,18 @@ export async function GET(req: NextRequest) {
     const searchTerm = searchParam ? searchParam.trim() : "";
     const rawTypes = typesParam
       ? typesParam
-          .split(",")
-          .map((value) => value.trim().toLowerCase())
-          .filter(Boolean)
+        .split(",")
+        .map((value) => value.trim().toLowerCase())
+        .filter(Boolean)
       : [];
     const validTypes = rawTypes.filter((type) =>
       canonicalTypes.includes(type as (typeof canonicalTypes)[number])
     );
     const rawTags = tagsParam
       ? tagsParam
-          .split(",")
-          .map((value) => value.trim().toLowerCase())
-          .filter(Boolean)
+        .split(",")
+        .map((value) => value.trim().toLowerCase())
+        .filter(Boolean)
       : [];
     const location = locationParam ? locationParam.trim() : "";
     const minStipend = Number.isNaN(minStipendParam)
@@ -236,7 +236,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error("Error fetching internships:", error);
     return NextResponse.json(
-      { error: "Failed to fetch internships" },
+      { error: "Failed to fetch internships", details: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined },
       { status: 500 }
     );
   }

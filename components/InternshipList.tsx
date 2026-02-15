@@ -182,7 +182,7 @@ export default function InternshipList() {
   }, [searchPlaceholders.length]);
 
   // Flatten all internships from all pages
-  const allInternships = data?.pages?.flatMap((page) => page.internships) || [];
+  const allInternships = (data?.pages?.flatMap((page) => page.internships) || []).filter(Boolean);
 
   // Intersection observer for infinite scroll
   const loadMoreRef = useRef<HTMLDivElement>(null);

@@ -3,11 +3,10 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import NextImage from 'next/image';
-import { X, CheckCircle2, ExternalLink, AlertCircle, Play, Target, Sparkles, Rocket } from 'lucide-react';
+import { X, ExternalLink, Play, Rocket } from 'lucide-react';
 import { useTracker } from '../providers/TrackerProvider';
-import { calculateFitScore } from '@/lib/fitEngine';
-import { useUserProfile } from '@/hooks/use-user-profile';
-import { UserProfile } from '@/data/userProfile';
+
+
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 // Flexible interface to handle TrackerItem, Internship, or Opportunity
@@ -34,7 +33,7 @@ interface ApplyModalProps {
 export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalProps) {
     const { addToTracker } = useTracker();
     const router = useRouter();
-    const { data: user } = useUserProfile();
+
 
     if (!opportunity) return null;
 
@@ -45,20 +44,7 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
         title: opportunity.title
     };
 
-    // Construct profile for fit engine from DB data or fallback
-    const fitProfile: UserProfile = {
-        name: user?.name || "Guest",
-        major: "", // Not in DB currently
-        year: "", // Not in DB currently
-        skills: user?.fieldInterests || [], // Mapping fieldInterests to skills as proxy
-        interests: user?.opportunityInterests || [],
-        maxActiveApps: 3
-    };
 
-    // --- Logic ---
-    // Gap Analysis using shared engine with dynamic profile
-    // If user is loading, we might show a loader or just default to empty match (safest to wait or default)
-    const { missingSkills } = calculateFitScore(opportunity, fitProfile);
 
     const handleSubmit = () => {
         // Proceed to tracker (Toolkit access)
@@ -121,61 +107,10 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
                                 </div>
                             </div>
 
-                            {/* Gap Analysis */}
-                            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-                                <h4 className="font-bold text-slate-900 flex items-center gap-2 mb-3">
-                                    <Target size={18} className="text-indigo-600" />
-                                    Skill Match Analysis
-                                </h4>
-                                {missingSkills.length > 0 ? (
-                                    <div className="bg-rose-50 rounded-lg p-4 border border-rose-100">
-                                        <p className="text-sm text-rose-800 font-medium mb-2">Missing Key Skills:</p>
-                                        <div className="flex flex-wrap gap-2">
-                                            {missingSkills.map((s: string) => (
-                                                <span key={s} className="px-2 py-1 bg-white border border-rose-200 text-rose-600 text-xs font-bold rounded-md flex items-center gap-1">
-                                                    <AlertCircle size={10} /> {s}
-                                                </span>
-                                            ))}
-                                        </div>
-                                        <p className="text-xs text-rose-600 mt-3 flex items-center gap-1">
-                                            <Sparkles size={12} />
-                                            <b>Tip:</b> Highlight willingness to learn specific missing tech in your cover letter.
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div className="bg-emerald-50 text-emerald-700 p-4 rounded-lg flex items-center gap-3 border border-emerald-100">
-                                        <CheckCircle2 size={24} />
-                                        <div>
-                                            <p className="font-bold">Perfect Skill Match!</p>
-                                            <p className="text-sm opacity-90">You have all the listed requirements. Go get &apos;em!</p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+
                         </div>
 
-                        {/* 2. Review Summary */}
-                        <div className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                            <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wide mb-4 flex items-center gap-2">
-                                <Rocket size={16} className="text-slate-500" /> Application Summary
-                            </h4>
-                            <div className="space-y-3 text-sm">
-                                <div className="flex justify-between items-center py-2 border-b border-slate-200/50">
-                                    <span className="text-slate-500">Role</span>
-                                    <span className="font-medium text-slate-900">{displayData.title}</span>
-                                </div>
-                                <div className="flex justify-between items-center py-2 border-b border-slate-200/50">
-                                    <span className="text-slate-500">Company</span>
-                                    <span className="font-medium text-slate-900">{displayData.company}</span>
-                                </div>
-                                <div className="flex justify-between items-center py-2">
-                                    <span className="text-slate-500">Action</span>
-                                    <span className="font-medium text-emerald-600 flex items-center gap-1">
-                                        <CheckCircle2 size={14} /> Draft Responses Saved
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+
 
                     </div>
 

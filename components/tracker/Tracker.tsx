@@ -2,21 +2,18 @@
 
 import React, { useState, useMemo } from 'react';
 import { useTracker, TrackerItem } from '@/components/providers/TrackerProvider';
-import { Clock, AlertCircle, FileText, BrainCircuit, CalendarDays, TrendingUp, LucideIcon, Loader2 } from 'lucide-react';
+import { AlertCircle, FileText, CalendarDays, TrendingUp, LucideIcon, Loader2, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { userProfile } from '@/data/userProfile';
-import { calculateFitScore } from '@/lib/fitEngine';
+
+
 import TrackerDetailModal from './TrackerDetailModal';
 import ApplyModal from './ApplyModal';
 import EventCard from './EventCard';
 import TrackerRow from './TrackerRow';
 import MobileTrackerCard from './MobileTrackerCard';
-import AddEventModal from './AddEventModal';
+
 
 interface EnrichedTrackerItem extends TrackerItem {
-    fitScore: number;
-    fitLabel: string;
-    fitColor: string;
     isHighPriority: boolean;
 }
 
@@ -36,11 +33,10 @@ export default function Tracker() {
         return diff >= 0 && diff <= 7;
     };
 
-    const { items, events, addEvent, removeEvent, updateStatus, removeFromTracker, isLoading } = useTracker();
+    const { items, events, removeEvent, updateStatus, removeFromTracker, isLoading } = useTracker();
 
     const [activeTab, setActiveTab] = useState<'internship' | 'opportunity'>('internship');
-    const [isEventModalOpen, setIsEventModalOpen] = useState(false);
-    const [eventInitialData, setEventInitialData] = useState<{ title?: string; type?: string; description?: string } | undefined>(undefined);
+
 
     const [detailOpp, setDetailOpp] = useState<any>(null);
     const [smartApplyOpp, setSmartApplyOpp] = useState<any>(null);
@@ -50,15 +46,11 @@ export default function Tracker() {
 
     const trackedOpps = useMemo(() => {
         return filteredItems.map(item => {
-            // Data is already hydrated in Provider, just calculate fit score and priority
+            // Data is already hydrated in Provider, just calculate priority
             // For manual items that might miss some fields, we handle gracefully
-            const { score, label, color } = calculateFitScore(item, userProfile);
 
             return {
                 ...item,
-                fitScore: score,
-                fitLabel: label,
-                fitColor: color,
                 isHighPriority: isHighPriority(item.deadline)
             } as EnrichedTrackerItem;
         });
@@ -66,9 +58,13 @@ export default function Tracker() {
 
     // Metrics Calculation
     const total = trackedOpps.length;
-    const applied = trackedOpps.filter(i => i.status !== 'Not Applied' && i.status !== 'Draft').length;
-    const selected = trackedOpps.filter(i => i.status === 'Selected').length;
-    const successRate = applied > 0 ? Math.round((selected / applied) * 100) : 0;
+
+    // Total Applied: Everything where status is NOT 'Not Applied' and NOT 'Draft'
+    const totalApplications = trackedOpps.filter(i => i.status !== 'Not Applied' && i.status !== 'Draft').length;
+    const totalSelected = trackedOpps.filter(i => i.status === 'Selected').length;
+
+    const successRate = totalApplications > 0 ? Math.round((totalSelected / totalApplications) * 100) : 0;
+    const actionRate = total > 0 ? Math.round((totalApplications / total) * 100) : 0;
 
     // Agenda Logic (Deadlines + Events)
     const now = new Date();
@@ -93,37 +89,9 @@ export default function Tracker() {
             return d >= new Date() && d <= nextWeek;
         });
 
-    // Priority Action Needed
-    const actionNeeded = trackedOpps.filter(i => {
-        if (!i.deadline) return false;
-        const daysLeft = Math.ceil((new Date(i.deadline).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        return ((i.status === 'Not Applied' || i.status === 'Draft') && daysLeft < 5 && daysLeft >= 0);
-    });
 
-    // Handlers for Add Calendar / Add Task
-    const handleAddCalendar = (opp: any) => {
-        setEventInitialData({
-            title: `Follow up: ${opp.company}`,
-            type: 'Deadline',
-            description: `Regarding ${opp.title} application.`
-        });
-        setIsEventModalOpen(true);
-    };
 
-    const handleAddTask = (opp: any) => {
-        setEventInitialData({
-            title: `Task for ${opp.company}`,
-            type: 'Task',
-            description: ''
-        });
-        setIsEventModalOpen(true);
-    };
 
-    const handleEventSubmit = (eventData: any) => {
-        addEvent(eventData);
-        setIsEventModalOpen(false);
-        setEventInitialData(undefined);
-    };
 
     if (isLoading) {
         return (
@@ -183,26 +151,22 @@ export default function Tracker() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4 bg-amber-50 p-3 rounded-xl relative z-10 border border-amber-200">
-                    <div className="p-2 bg-amber-100 text-amber-700 rounded-lg">
-                        <Clock size={20} />
+                <div className="flex items-center gap-4 bg-blue-50 p-3 rounded-xl relative z-10 border border-blue-200">
+                    <div className="p-2 bg-blue-100 text-blue-700 rounded-lg">
+                        <Activity size={20} />
                     </div>
                     <div>
-                        <h4 className="font-bold text-lg text-slate-900">{actionNeeded.length}</h4>
-                        <p className="text-xs text-slate-500">Pending Actions</p>
+                        <h4 className="font-bold text-lg text-slate-900">{actionRate}%</h4>
+                        <p className="text-xs text-slate-500">Action Rate</p>
                     </div>
-                    {actionNeeded.length > 0 && (
-                        <div className="ml-auto w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
-                    )}
                 </div>
             </div>
 
             {/* Desktop Metrics Grid */}
-            <div className="hidden md:grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-6">
                 <MetricCard icon={FileText} label="Total Tracked" value={total} color="bg-slate-100 text-slate-700" />
                 <MetricCard icon={TrendingUp} label="Success Rate" value={`${successRate}%`} color="bg-emerald-50 text-emerald-700" />
-                <MetricCard icon={Clock} label="Pending Actions" value={actionNeeded.length} color="bg-amber-50 text-amber-700" highlight={actionNeeded.length > 0} />
-                <MetricCard icon={BrainCircuit} label="Avg Fit Score" value={`${Math.round(trackedOpps.reduce((acc, curr) => acc + curr.fitScore, 0) / (total || 1))}%`} color="bg-indigo-50 text-indigo-700" />
+                <MetricCard icon={Activity} label="Action Rate" value={`${actionRate}%`} color="bg-blue-50 text-blue-700" />
             </div>
 
             {/* View Content */}
@@ -254,7 +218,7 @@ export default function Tracker() {
                 {/* Main List */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                        <h3 className="font-bold text-slate-900 text-lg">All Applications by Date</h3>
+                        <h3 className="font-bold text-slate-900 text-lg">Saved {activeTab === 'internship' ? 'Internships' : 'Opportunities'}</h3>
                     </div>
                     <div className="divide-y divide-slate-100">
                         {trackedOpps
@@ -270,8 +234,7 @@ export default function Tracker() {
                                             opp={opp}
                                             updateStatus={updateStatus}
                                             onDelete={removeFromTracker}
-                                            onAddCalendar={() => handleAddCalendar(opp)}
-                                            onAddTask={() => handleAddTask(opp)}
+
                                         />
                                     </div>
                                     <div className="hidden md:block">
@@ -279,10 +242,8 @@ export default function Tracker() {
                                             opp={opp}
                                             updateStatus={updateStatus}
                                             onClick={setDetailOpp}
-                                            onResume={() => setSmartApplyOpp(opp)}
                                             onDelete={removeFromTracker}
-                                            onAddCalendar={() => handleAddCalendar(opp)}
-                                            onAddTask={() => handleAddTask(opp)}
+
                                         />
                                     </div>
                                 </div>
@@ -309,12 +270,7 @@ export default function Tracker() {
                 }}
             />
 
-            <AddEventModal
-                isOpen={isEventModalOpen}
-                onClose={() => setIsEventModalOpen(false)}
-                onAdd={handleEventSubmit}
-                initialData={eventInitialData}
-            />
+
 
             <ApplyModal
                 isOpen={!!smartApplyOpp}

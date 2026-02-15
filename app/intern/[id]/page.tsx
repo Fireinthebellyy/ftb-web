@@ -29,6 +29,9 @@ interface InternshipData {
   experience?: string | null;
   duration?: string | null;
   createdAt: string | null;
+  poster?: string | null;
+  eligibility?: string[];
+  hiringManagerEmail?: string | null;
   user: {
     id: string;
     name: string;
@@ -182,11 +185,13 @@ export default function InternshipDetailPage() {
 
         {/* Type and Timing Badges */}
         <div className="flex gap-2">
-          <Badge
-            className={`${getTypeColor(internship.type)} text-xs sm:text-sm`}
-          >
-            {internship.type?.charAt(0).toUpperCase() + internship.type?.slice(1).replace(/[_-]/g, " ")}
-          </Badge>
+          {internship.type && (
+            <Badge
+              className={`${getTypeColor(internship.type)} text-xs sm:text-sm`}
+            >
+              {internship.type?.charAt(0).toUpperCase() + internship.type?.slice(1).replace(/[_-]/g, " ")}
+            </Badge>
+          )}
           {internship.timing && (
             <Badge
               className={`${getTimingColor(internship.timing)} text-xs sm:text-sm`}

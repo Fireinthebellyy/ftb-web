@@ -54,9 +54,10 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
 
             <button
                 onClick={() => onDelete(event.id)}
-                className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-black/5 rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                aria-label="Delete event"
+                className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-black/5 rounded-full opacity-0 group-hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-slate-400 transition-all outline-none"
             >
-                <X size={14} />
+                <X size={14} aria-hidden="true" />
             </button>
         </div>
     );

@@ -145,6 +145,11 @@ export async function POST(req: NextRequest) {
 
             if (data.length === 0) return NextResponse.json({ success: true });
 
+            const MAX_SYNC_BATCH = 500;
+            if (data.length > MAX_SYNC_BATCH) {
+                return NextResponse.json({ error: "Too many items" }, { status: 413 });
+            }
+
             const validItems = [];
             for (const item of data) {
                 const parsed = trackerItemSchema.safeParse(item);
@@ -179,6 +184,11 @@ export async function POST(req: NextRequest) {
             if (!Array.isArray(data)) return NextResponse.json({ error: "Invalid data" }, { status: 400 });
 
             if (data.length === 0) return NextResponse.json({ success: true });
+
+            const MAX_SYNC_BATCH = 500;
+            if (data.length > MAX_SYNC_BATCH) {
+                return NextResponse.json({ error: "Too many items" }, { status: 413 });
+            }
 
             const validEvents = [];
             for (const event of data) {
@@ -290,6 +300,8 @@ export async function DELETE(req: NextRequest) {
         } else if (type === 'event') {
             await db.delete(trackerEvents)
                 .where(and(eq(trackerEvents.userId, session.user.id), eq(trackerEvents.id, id)));
+        } else {
+            return NextResponse.json({ error: "Invalid type" }, { status: 400 });
         }
 
         return NextResponse.json({ success: true });

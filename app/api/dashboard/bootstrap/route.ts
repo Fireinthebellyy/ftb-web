@@ -81,18 +81,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const isAdmin = resolvedRole === "admin";
     const conditions: SQL<unknown>[] = [isNull(opportunities.deletedAt)];
 
-    if (!isAdmin) {
-      conditions.push(eq(opportunities.isActive, true));
-      conditions.push(
-        or(
-          isNull(opportunities.publishAt),
-          lte(opportunities.publishAt, new Date())
-        )
-      );
-    }
+    conditions.push(eq(opportunities.isActive, true));
+    conditions.push(
+      or(
+        isNull(opportunities.publishAt),
+        lte(opportunities.publishAt, new Date())
+      )
+    );
 
     if (search) {
       conditions.push(

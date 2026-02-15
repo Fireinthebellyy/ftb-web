@@ -252,9 +252,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if current user is admin to determine what opportunities to show
-    const isAdmin = sessionRole === "admin";
-
     // Get pagination parameters from URL
     const { searchParams } = new URL(req.url);
     const limitParam = Number.parseInt(searchParams.get("limit") ?? "", 10);
@@ -298,16 +295,14 @@ export async function GET(req: NextRequest) {
     const buildFilters = (usePublishAt: boolean) => {
       const conditions: SQL<unknown>[] = [isNull(opportunities.deletedAt)];
 
-      if (!isAdmin) {
-        conditions.push(eq(opportunities.isActive, true));
-        if (usePublishAt) {
-          conditions.push(
-            or(
-              isNull(opportunities.publishAt),
-              lte(opportunities.publishAt, new Date())
-            )
-          );
-        }
+      conditions.push(eq(opportunities.isActive, true));
+      if (usePublishAt) {
+        conditions.push(
+          or(
+            isNull(opportunities.publishAt),
+            lte(opportunities.publishAt, new Date())
+          )
+        );
       }
 
       if (searchTerm) {

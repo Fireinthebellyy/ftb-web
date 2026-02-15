@@ -1,7 +1,9 @@
+"use client";
+
 import React from 'react';
 import { ExternalLink, Calculator, Target, Sparkles } from 'lucide-react';
 
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 
 
@@ -46,6 +48,9 @@ export default function TrackerDetailModal({ isOpen, onClose, opportunity, onSma
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent showCloseButton={false} className="max-w-3xl p-0 overflow-hidden bg-white/5 backdrop-blur-3xl border-white/10">
                 <div className="relative bg-white w-full h-full flex flex-col max-h-[90vh]">
+                    <DialogTitle className="sr-only">
+                        {opportunity.title}
+                    </DialogTitle>
 
                     {/* Header */}
                     <div className="p-6 border-b border-slate-100 flex items-start gap-4 sticky top-0 bg-white z-10">

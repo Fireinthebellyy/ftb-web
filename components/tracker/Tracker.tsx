@@ -13,7 +13,7 @@ import ApplyModal from './ApplyModal';
 import EventCard from './EventCard';
 import TrackerRow from './TrackerRow';
 import MobileTrackerCard from './MobileTrackerCard';
-import { useRouter } from 'next/navigation';
+
 
 
 interface EnrichedTrackerItem extends TrackerItem {
@@ -44,7 +44,7 @@ export default function Tracker() {
     const [detailOpp, setDetailOpp] = useState<any>(null);
     const [smartApplyOpp, setSmartApplyOpp] = useState<any>(null);
     const [showInsights, setShowInsights] = useState(false);
-    const router = useRouter();
+
 
     // Hydrate & Enhance Logic
     const filteredItems = items.filter(i => (i.kind || 'internship') === activeTab);
@@ -292,8 +292,7 @@ export default function Tracker() {
                                             updateStatus={updateStatus}
                                             onDelete={removeFromTracker}
                                             onClick={(o) => {
-                                                const path = o.kind === 'internship' ? `/intern/${o.oppId}` : `/opportunities/${o.oppId}`;
-                                                router.push(path);
+                                                setDetailOpp(o);
                                             }}
                                         />
                                     </div>
@@ -303,8 +302,7 @@ export default function Tracker() {
                                             updateStatus={updateStatus}
                                             onDelete={removeFromTracker}
                                             onClick={(o) => {
-                                                const path = o.kind === 'internship' ? `/intern/${o.oppId}` : `/opportunities/${o.oppId}`;
-                                                router.push(path);
+                                                setDetailOpp(o);
                                             }}
                                         />
                                     </div>

@@ -236,7 +236,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error("Error fetching internships:", error);
     return NextResponse.json(
-      { error: "Failed to fetch internships", details: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined },
+      { error: "Failed to fetch internships" },
       { status: 500 }
     );
   }

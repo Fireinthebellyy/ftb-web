@@ -10,7 +10,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
 import { ShareDialog } from "@/components/internship/ShareDialog";
-import ApplyModal from "@/components/tracker/ApplyModal";
+import ApplyModal, { ApplyModalOpportunity } from "@/components/tracker/ApplyModal";
 import { useSession } from "@/hooks/use-session";
 
 interface InternshipData {
@@ -39,6 +39,21 @@ interface InternshipData {
     role: string;
   };
 }
+
+const mapInternshipToApplyOpportunity = (period: InternshipData): ApplyModalOpportunity => {
+  return {
+    id: period.id,
+    title: period.title,
+    hiringOrganization: period.hiringOrganization,
+    company: period.hiringOrganization,
+    poster: period.poster || undefined,
+    logo: period.poster || undefined,
+    skills: period.tags,
+    tags: period.tags,
+    returnUrl: `/intern/${period.id}`,
+    ...period // spread other properties
+  };
+};
 
 export default function InternshipDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -228,7 +243,7 @@ export default function InternshipDetailPage() {
         <ApplyModal
           isOpen={smartApplyOpen}
           onClose={() => setSmartApplyOpen(false)}
-          opportunity={internship as any}
+          opportunity={internship ? mapInternshipToApplyOpportunity(internship) : null}
         />
       </div >
 

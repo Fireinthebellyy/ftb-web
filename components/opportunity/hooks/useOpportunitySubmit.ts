@@ -119,13 +119,12 @@ export function useOpportunitySubmit({
         try {
             const { ids: imageIds, success: imagesOk } = await uploadImages();
 
+
             if (!imagesOk) {
                 toast.error(
                     `One or more images failed to upload. Fix the failed uploads and try again. ${opportunity ? "Post was not updated." : "Post was not created."}`
                 );
-                throw new Error(
-                    "One or more images failed to upload. Post was not updated/created."
-                );
+                return;
             }
 
             // Combine existing images with newly uploaded images

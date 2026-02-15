@@ -1,9 +1,9 @@
-export interface Opportunity {
+export interface StaticOpportunity {
   id: number;
   title: string;
   company: string;
   deadline?: string;
-  type: string; // 'Internship' | 'Hackathon' | 'Job' | 'Fellowship'
+  type: 'Internship' | 'Hackathon' | 'Job' | 'Fellowship';
   fit?: string;
   fitColor?: string;
   matchReason?: string;
@@ -14,18 +14,18 @@ export interface Opportunity {
   description?: string;
   expectations?: string[];
   // For Tracker State
-  status?: string;
+  status?: 'Not Applied' | 'Applied' | 'Result Awaited' | 'Selected' | 'Rejected';
   addedAt?: string;
   appliedAt?: string;
   result?: string | null;
   notes?: string;
-  draftData?: any;
+  draftData?: unknown;
   isHighPriority?: boolean;
   fitScore?: number;
   fitLabel?: string;
 }
 
-export const opportunities: Opportunity[] = [
+export const opportunities: StaticOpportunity[] = [
   {
     id: 1,
     title: "Product Design Intern",

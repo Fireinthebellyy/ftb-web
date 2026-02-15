@@ -10,7 +10,7 @@ import { useTracker } from '../providers/TrackerProvider';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 // Flexible interface to handle TrackerItem, Internship, or Opportunity
-interface ApplyModalOpportunity {
+export interface ApplyModalOpportunity {
     id: number | string;
     title: string;
     company?: string;

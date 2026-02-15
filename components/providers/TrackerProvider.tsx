@@ -71,10 +71,28 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
 
     // Initial Load from LocalStorage
     useEffect(() => {
-        const savedItems = localStorage.getItem('tracker_items');
-        const savedEvents = localStorage.getItem('tracker_events');
-        if (savedItems) setTrackedItems(JSON.parse(savedItems));
-        if (savedEvents) setEvents(JSON.parse(savedEvents));
+        try {
+            const savedItems = localStorage.getItem('tracker_items');
+            if (savedItems) {
+                setTrackedItems(JSON.parse(savedItems));
+            }
+        } catch (error) {
+            console.error('Failed to parse tracker items:', error);
+            setTrackedItems([]);
+            localStorage.removeItem('tracker_items');
+        }
+
+        try {
+            const savedEvents = localStorage.getItem('tracker_events');
+            if (savedEvents) {
+                setEvents(JSON.parse(savedEvents));
+            }
+        } catch (error) {
+            console.error('Failed to parse tracker events:', error);
+            setEvents([]);
+            localStorage.removeItem('tracker_events');
+        }
+
         setIsLoaded(true);
     }, []);
 

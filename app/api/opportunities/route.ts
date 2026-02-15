@@ -74,6 +74,23 @@ function parsePublishAt(
   return parsedPublishAt;
 }
 
+function isMissingPublishAtColumnError(error: unknown) {
+  const err = error as {
+    message?: string;
+    cause?: { code?: string; column?: string; message?: string };
+  };
+
+  if (err?.cause?.code !== "42703") {
+    return false;
+  }
+
+  return (
+    err?.cause?.column === "publish_at" ||
+    err?.cause?.message?.includes("publish_at") ||
+    err?.message?.includes("publish_at")
+  );
+}
+
 export async function POST(req: NextRequest) {
   const timer = createApiTimer("POST /api/opportunities");
 
@@ -278,108 +295,140 @@ export async function GET(req: NextRequest) {
       tagFilters: rawTags.length,
     });
 
-    const conditions: SQL<unknown>[] = [isNull(opportunities.deletedAt)];
+    const buildFilters = (usePublishAt: boolean) => {
+      const conditions: SQL<unknown>[] = [isNull(opportunities.deletedAt)];
 
-    // Only show active (approved) opportunities to non-admin users
-    // Admins can see all opportunities including pending ones
-    if (!isAdmin) {
-      conditions.push(eq(opportunities.isActive, true));
-      conditions.push(
-        or(
-          isNull(opportunities.publishAt),
-          lte(opportunities.publishAt, new Date())
-        )
-      );
-    }
-
-    if (searchTerm) {
-      conditions.push(
-        or(
-          ilike(opportunities.title, `%${searchTerm}%`),
-          ilike(opportunities.description, `%${searchTerm}%`)
-        )
-      );
-    }
-
-    if (validTypes.length > 0) {
-      conditions.push(inArray(opportunities.type, validTypes as any));
-    }
-
-    if (rawTags.length > 0) {
-      const tagConditions = rawTags.map(
-        (tag) =>
-          sql`EXISTS (
-          SELECT 1
-          FROM ${tags} t
-          WHERE lower(t.name) = ${tag}
-            AND t.id = ANY(${opportunities.tagIds})
-        )`
-      );
-
-      if (tagConditions.length === 1) {
-        conditions.push(tagConditions[0]);
-      } else {
-        conditions.push(or(...tagConditions));
+      if (!isAdmin) {
+        conditions.push(eq(opportunities.isActive, true));
+        if (usePublishAt) {
+          conditions.push(
+            or(
+              isNull(opportunities.publishAt),
+              lte(opportunities.publishAt, new Date())
+            )
+          );
+        }
       }
+
+      if (searchTerm) {
+        conditions.push(
+          or(
+            ilike(opportunities.title, `%${searchTerm}%`),
+            ilike(opportunities.description, `%${searchTerm}%`)
+          )
+        );
+      }
+
+      if (validTypes.length > 0) {
+        conditions.push(inArray(opportunities.type, validTypes as any));
+      }
+
+      if (rawTags.length > 0) {
+        const tagConditions = rawTags.map(
+          (tag) =>
+            sql`EXISTS (
+            SELECT 1
+            FROM ${tags} t
+            WHERE lower(t.name) = ${tag}
+              AND t.id = ANY(${opportunities.tagIds})
+          )`
+        );
+
+        if (tagConditions.length === 1) {
+          conditions.push(tagConditions[0]);
+        } else {
+          conditions.push(or(...tagConditions));
+        }
+      }
+
+      return conditions.length === 1 ? conditions[0] : and(...conditions);
+    };
+
+    const fetchPage = async (usePublishAt: boolean) => {
+      const filters = buildFilters(usePublishAt);
+
+      timer.mark("query_page_start", { usePublishAt });
+      const paginated = await db
+        .select({
+          id: opportunities.id,
+          type: opportunities.type,
+          title: opportunities.title,
+          description: opportunities.description,
+          images: opportunities.images,
+          tags: sql<string[]>`(
+            SELECT coalesce(array_agg(t.name ORDER BY t.name), '{}')
+            FROM ${tags} t
+            WHERE t.id = ANY(${opportunities.tagIds})
+          )`,
+          location: opportunities.location,
+          organiserInfo: opportunities.organiserInfo,
+          startDate: opportunities.startDate,
+          endDate: opportunities.endDate,
+          publishAt: usePublishAt
+            ? opportunities.publishAt
+            : sql<Date | null>`null`.as("publish_at"),
+          isFlagged: opportunities.isFlagged,
+          createdAt: opportunities.createdAt,
+          updatedAt: opportunities.updatedAt,
+          isVerified: opportunities.isVerified,
+          isActive: opportunities.isActive,
+          upvoteCount: opportunities.upvoteCount,
+          upvoterIds: opportunities.upvoterIds,
+          userId: opportunities.userId,
+          user: {
+            id: user.id,
+            name: user.name,
+            image: user.image,
+            role: user.role,
+          },
+        })
+        .from(opportunities)
+        .leftJoin(user, eq(opportunities.userId, user.id))
+        .where(filters)
+        .orderBy(desc(opportunities.createdAt))
+        .limit(validLimit + 1)
+        .offset(validOffset);
+
+      let totalCount = 0;
+      if (includeTotal) {
+        timer.mark("query_total_start", { usePublishAt });
+        totalCount =
+          (
+            await db
+              .select({ total: count() })
+              .from(opportunities)
+              .where(filters)
+          )[0]?.total ?? 0;
+        timer.mark("query_total_done", { totalCount, usePublishAt });
+      }
+
+      return { paginated, totalCount };
+    };
+
+    let paginated: Awaited<ReturnType<typeof fetchPage>>["paginated"];
+    let totalCount = 0;
+
+    try {
+      const result = await fetchPage(true);
+      paginated = result.paginated;
+      totalCount = result.totalCount;
+    } catch (error) {
+      if (!isMissingPublishAtColumnError(error)) {
+        throw error;
+      }
+
+      timer.mark("publish_at_fallback");
+      const result = await fetchPage(false);
+      paginated = result.paginated;
+      totalCount = result.totalCount;
     }
 
-    const filters =
-      conditions.length === 1 ? conditions[0] : and(...conditions);
-
-    timer.mark("query_page_start");
-    const paginated = await db
-      .select({
-        id: opportunities.id,
-        type: opportunities.type,
-        title: opportunities.title,
-        description: opportunities.description,
-        images: opportunities.images,
-        tags: sql<string[]>`(
-          SELECT coalesce(array_agg(t.name ORDER BY t.name), '{}')
-          FROM ${tags} t
-          WHERE t.id = ANY(${opportunities.tagIds})
-        )`,
-        location: opportunities.location,
-        organiserInfo: opportunities.organiserInfo,
-        startDate: opportunities.startDate,
-        endDate: opportunities.endDate,
-        publishAt: opportunities.publishAt,
-        isFlagged: opportunities.isFlagged,
-        createdAt: opportunities.createdAt,
-        updatedAt: opportunities.updatedAt,
-        isVerified: opportunities.isVerified,
-        isActive: opportunities.isActive,
-        upvoteCount: opportunities.upvoteCount,
-        upvoterIds: opportunities.upvoterIds,
-        userId: opportunities.userId,
-        user: {
-          id: user.id,
-          name: user.name,
-          image: user.image,
-          role: user.role,
-        },
-      })
-      .from(opportunities)
-      .leftJoin(user, eq(opportunities.userId, user.id))
-      .where(filters)
-      .orderBy(desc(opportunities.createdAt))
-      .limit(validLimit + 1)
-      .offset(validOffset);
     timer.mark("query_page_done", { rows: paginated.length });
 
     const hasMore = paginated.length > validLimit;
     const pageItems = hasMore ? paginated.slice(0, validLimit) : paginated;
 
-    let totalCount = 0;
-
-    if (includeTotal) {
-      timer.mark("query_total_start");
-      totalCount =
-        (
-          await db.select({ total: count() }).from(opportunities).where(filters)
-        )[0]?.total ?? 0;
-      timer.mark("query_total_done", { totalCount });
-    } else {
+    if (!includeTotal) {
       totalCount = hasMore
         ? validOffset + validLimit + 1
         : validOffset + pageItems.length;

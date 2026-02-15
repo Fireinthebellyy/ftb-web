@@ -79,34 +79,110 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     const [isLoaded, setIsLoaded] = useState(false);
     const [isFetching, setIsFetching] = useState(false);
 
-    // Initial Load from LocalStorage
+    // Initial Load from API with LocalStorage Fallback/Sync
     useEffect(() => {
-        try {
-            const savedItems = localStorage.getItem('tracker_items');
-            if (savedItems) {
-                setTrackedItems(JSON.parse(savedItems));
-            }
-        } catch (error) {
-            console.error('Failed to parse tracker items:', error);
-            setTrackedItems([]);
-            localStorage.removeItem('tracker_items');
-        }
+        const initializeTracker = async () => {
+            try {
+                // 1. Fetch from API
+                const response = await fetch('/api/tracker');
 
-        try {
-            const savedEvents = localStorage.getItem('tracker_events');
-            if (savedEvents) {
-                setEvents(JSON.parse(savedEvents));
-            }
-        } catch (error) {
-            console.error('Failed to parse tracker events:', error);
-            setEvents([]);
-            localStorage.removeItem('tracker_events');
-        }
+                if (response.ok) {
+                    const data = await response.json();
 
-        setIsLoaded(true);
+                    // 2. Check if API has data
+                    if (data.items && data.items.length > 0) {
+                        setTrackedItems(data.items);
+                        setEvents(data.events || []);
+                        setIsLoaded(true);
+                        return; // API is source of truth
+                    }
+                }
+
+                // 3. Fallback: If API empty (or failed), load from LocalStorage
+                const savedItems = localStorage.getItem('tracker_items');
+                const savedEvents = localStorage.getItem('tracker_events');
+
+                let localItems: TrackerItem[] = [];
+                let localEvents: TrackerEvent[] = [];
+
+                if (savedItems) localItems = JSON.parse(savedItems);
+                if (savedEvents) localEvents = JSON.parse(savedEvents);
+
+                // 4. MIGRATION: If we have local data but API was empty, sync to backend
+                if ((localItems.length > 0 || localEvents.length > 0) && response.ok) {
+                    console.log("Migrating local data to backend...");
+
+                    if (localItems.length > 0) {
+                        await fetch('/api/tracker', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'sync_items', data: localItems })
+                        });
+                    }
+
+                    if (localEvents.length > 0) {
+                        await fetch('/api/tracker', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'sync_events', data: localEvents })
+                        });
+                    }
+
+                    // After sync, setting state from local is fine as it matches backend now
+                }
+
+                setTrackedItems(localItems);
+                setEvents(localEvents);
+
+            } catch (error) {
+                console.error('Failed to initialize tracker:', error);
+                // Last resort fallback
+                const savedItems = localStorage.getItem('tracker_items');
+                if (savedItems) setTrackedItems(JSON.parse(savedItems));
+            } finally {
+                setIsLoaded(true);
+            }
+        };
+
+        initializeTracker();
     }, []);
 
-    // Persistence
+    // Helper to sync state changes to API (Optimistic updates)
+    const syncItemToBackend = async (item: TrackerItem) => {
+        try {
+            await fetch('/api/tracker', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'add_item', data: item })
+            });
+        } catch (e) {
+            console.error("Failed to sync item", e);
+            toast.error("Failed to save changes to cloud");
+        }
+    };
+
+    const syncStatusToBackend = async (oppId: string | number, status: string, extraData?: any) => {
+        try {
+            await fetch('/api/tracker', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'update_status', id: oppId, data: { status, ...extraData } })
+            });
+        } catch (e) {
+            console.error("Failed to sync status", e);
+        }
+    }
+
+    const deleteFromBackend = async (id: string | number, type: 'item' | 'event') => {
+        try {
+            await fetch(`/api/tracker?type=${type}&id=${id}`, { method: 'DELETE' });
+        } catch (e) {
+            console.error("Failed to delete from backend", e);
+        }
+    }
+
+
+    // Persistence (Keep LocalStorage as backup/cache)
     useEffect(() => {
         if (isLoaded) localStorage.setItem('tracker_items', JSON.stringify(trackedItems));
     }, [trackedItems, isLoaded]);
@@ -122,6 +198,9 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
                 setHydratedItems([]);
                 return;
             }
+
+            // Avoid hydration if items are already fully hydrated (unlikely but possible optimization)
+            // For now, we always hydrate to get latest company info/logos etc.
 
             setIsFetching(true);
             try {
@@ -176,12 +255,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
                         }
                     }
 
-                    // Prioritize local overrides (e.g. user edited notes) but prefer API for core fields unless manual
-                    // Check if it's a manual ID (numeric timestamp) vs UUID (string)
-                    // const isManual = typeof item.oppId === 'number';
-
                     if (Object.keys(apiData).length === 0) {
-                        // Keep item as is if not found in API (might be manual or deleted)
                         return item;
                     }
 
@@ -198,27 +272,33 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
 
             } catch (error) {
                 console.error("Failed to hydrate tracker items", error);
-                // Fallback to local items if fetch fails
                 setHydratedItems(trackedItems);
             } finally {
                 setIsFetching(false);
             }
         };
 
-        // Debounce fetching slightly to avoid thrashing on rapid adds
         const timeout = setTimeout(fetchDetails, 100);
         return () => clearTimeout(timeout);
 
     }, [trackedItems, isLoaded]);
 
     const addEvent = (event: Omit<TrackerEvent, 'id'>) => {
-        const newItem = { ...event, id: Date.now() };
+        const newItem = { ...event, id: Date.now() }; // Optimistic ID
         setEvents(prev => [...prev, newItem]);
         toast.success(`📅 Event Added: ${event.title}`);
+
+        // Backend Sync
+        fetch('/api/tracker', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'add_event', data: event })
+        }).catch(err => console.error("Event sync failed", err));
     };
 
     const removeEvent = (id: number) => {
         setEvents(prev => prev.filter(e => e.id !== id));
+        deleteFromBackend(id, 'event');
     };
 
     const addToTracker = (oppOrId: number | string | ManualTrackerInput, initialStatus = 'Not Applied', kind: 'internship' | 'opportunity' = 'internship') => {
@@ -227,7 +307,6 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
             ? (oppOrId as ManualTrackerInput).id ?? Date.now()
             : (oppOrId as number | string);
 
-        // Check against current items to avoid double toasts and duplicate additions
         const isAlreadyAdded = trackedItems.some(i => String(i.oppId) === String(idToCheck));
 
         if (isAlreadyAdded) {
@@ -235,22 +314,22 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
 
-        // Trigger toasts outside the state updater to avoid double-toasting in StrictMode
         if (initialStatus === 'Not Applied') {
             toast.success("Saved to Tracker");
         } else if (initialStatus === 'Draft') {
             toast.success("Draft Saved");
         }
 
+        let newItem: TrackerItem;
+
         setTrackedItems(prevItems => {
-            // Final check inside setter for race conditions
             if (prevItems.some(i => String(i.oppId) === String(idToCheck))) {
                 return prevItems;
             }
 
             const inputData = isManual ? (oppOrId as ManualTrackerInput) : {};
 
-            const newItem: TrackerItem = {
+            newItem = {
                 oppId: idToCheck,
                 status: initialStatus,
                 kind: (isManual && (oppOrId as ManualTrackerInput).kind) ? (oppOrId as ManualTrackerInput).kind : kind,
@@ -262,6 +341,9 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
                 ...inputData
             } as TrackerItem;
 
+            // Trigger sync (side effect inside setter is bad practice usually, but doing it after calculation)
+            setTimeout(() => syncItemToBackend(newItem), 0);
+
             return [...prevItems, newItem];
         });
     };
@@ -269,20 +351,24 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     const updateStatus = (oppId: number | string, status: string, extraData: Record<string, unknown> = {}) => {
         setTrackedItems(prevItems => prevItems.map(i => {
             if (i.oppId === oppId) {
-                return {
+                const updated = {
                     ...i,
                     ...extraData,
                     status,
                     updatedAt: new Date().toISOString()
                 };
+                return updated;
             }
             return i;
         }));
+
+        syncStatusToBackend(oppId, status, extraData);
     };
 
     const removeFromTracker = (oppId: number | string) => {
         setTrackedItems(prevItems => prevItems.filter(i => i.oppId !== oppId));
         toast.success("Deleted from Tracker");
+        deleteFromBackend(oppId, 'item');
     };
 
     const getStatus = (oppId: number | string) => {

@@ -392,6 +392,44 @@ export const newsletterSubscribers = pgTable(
   ]
 );
 
+// Define tables first
+export const trackerItems = pgTable(
+  "tracker_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    oppId: text("opp_id").notNull(),
+    kind: text("kind").default("internship"), // 'internship' | 'opportunity'
+    status: text("status").notNull(),
+    notes: text("notes"),
+    addedAt: timestamp("added_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+    appliedAt: timestamp("applied_at"),
+    result: text("result"),
+    isManual: boolean("is_manual").default(false),
+    manualData: text("manual_data"), // storing JSON stringified manual data
+  },
+  (table) => [
+    uniqueIndex("tracker_items_user_opp_unique").on(table.userId, table.oppId),
+  ]
+);
+
+export const trackerEvents = pgTable("tracker_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  date: timestamp("date").notNull(),
+  type: text("type").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Export schema object last
 export const schema = {
   user,
   userOnboardingProfiles,
@@ -414,4 +452,6 @@ export const schema = {
   userToolkitProgress,
   ungatekeepPosts,
   newsletterSubscribers,
+  trackerItems,
+  trackerEvents,
 };

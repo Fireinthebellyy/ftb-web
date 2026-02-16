@@ -225,7 +225,7 @@ export async function GET(req: Request) {
     console.error(error);
     timer.end({ status: 500, reason: "exception" });
     return NextResponse.json(
-      { error: "Something went wrong" },
+      { error: "Something went wrong", details: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined },
       { status: 500 }
     );
   }

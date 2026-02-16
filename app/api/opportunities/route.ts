@@ -8,7 +8,6 @@ import {
   ilike,
   inArray,
   isNull,
-  lte,
   or,
   sql,
 } from "drizzle-orm";
@@ -252,22 +251,26 @@ export async function GET(req: NextRequest) {
     const searchTerm = searchParam ? searchParam.trim() : "";
     const rawTypes = typesParam
       ? typesParam
-          .split(",")
-          .map((value) => value.trim())
-          .filter(Boolean)
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean)
       : [];
     const allowedTypes = (opportunities.type.enumValues ?? []) as string[];
     const validTypes = rawTypes.filter((type) => allowedTypes.includes(type));
     const rawTags = tagsParam
       ? tagsParam
-          .split(",")
-          .map((value) => value.trim().toLowerCase())
-          .filter(Boolean)
+        .split(",")
+        .map((value) => value.trim().toLowerCase())
+        .filter(Boolean)
       : [];
 
     // Validate pagination parameters
     const validLimit = Math.min(Math.max(limit, 1), 50); // Between 1 and 50
     const validOffset = Math.max(offset, 0); // Non-negative
+    const idsParam = searchParams.get("ids");
+    const ids = idsParam
+      ? idsParam.split(",").map((id) => id.trim()).filter(Boolean)
+      : [];
 
     timer.mark("query_prep_done", {
       includeTotal,
@@ -280,16 +283,20 @@ export async function GET(req: NextRequest) {
 
     const conditions: SQL<unknown>[] = [isNull(opportunities.deletedAt)];
 
+    if (ids.length > 0) {
+      conditions.push(inArray(opportunities.id, ids));
+    }
+
     // Only show active (approved) opportunities to non-admin users
     // Admins can see all opportunities including pending ones
     if (!isAdmin) {
       conditions.push(eq(opportunities.isActive, true));
-      conditions.push(
-        or(
-          isNull(opportunities.publishAt),
-          lte(opportunities.publishAt, new Date())
-        )
-      );
+      // conditions.push(
+      //   or(
+      //     isNull(opportunities.publishAt),
+      //     lte(opportunities.publishAt, new Date())
+      //   )
+      // );
     }
 
     if (searchTerm) {
@@ -330,8 +337,8 @@ export async function GET(req: NextRequest) {
     const paginated = await db
       .select({
         id: opportunities.id,
-        type: opportunities.type,
         title: opportunities.title,
+        type: opportunities.type,
         description: opportunities.description,
         images: opportunities.images,
         tags: sql<string[]>`(
@@ -343,7 +350,7 @@ export async function GET(req: NextRequest) {
         organiserInfo: opportunities.organiserInfo,
         startDate: opportunities.startDate,
         endDate: opportunities.endDate,
-        publishAt: opportunities.publishAt,
+        // publishAt: opportunities.publishAt,
         isFlagged: opportunities.isFlagged,
         createdAt: opportunities.createdAt,
         updatedAt: opportunities.updatedAt,
@@ -417,7 +424,7 @@ export async function GET(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching opportunities:", error);
     timer.end({ status: 500, reason: "exception" });
     return NextResponse.json(

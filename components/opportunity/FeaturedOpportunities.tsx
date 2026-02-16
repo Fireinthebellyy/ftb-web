@@ -92,7 +92,7 @@ const FeaturedOpportunities: React.FC = memo(() => {
                   <div className="group relative">
                     {/* Image Container */}
                     <div className="relative aspect-[4/5] w-full overflow-hidden rounded-lg bg-gray-100">
-                      {item.thumbnail ? (
+                      {item.thumbnail?.asset?.url ? (
                         <Image
                           src={item.thumbnail.asset.url}
                           alt={item.title}
@@ -147,11 +147,10 @@ const FeaturedOpportunities: React.FC = memo(() => {
                 <button
                   key={index}
                   onClick={() => handleDotClick(index)}
-                  className={`h-2 w-2 rounded-full transition-all duration-200 ${
-                    index === currentSlide
+                  className={`h-2 w-2 rounded-full transition-all duration-200 ${index === currentSlide
                       ? "w-6 bg-blue-600"
                       : "bg-gray-300 hover:bg-gray-400"
-                  }`}
+                    }`}
                   aria-label={`Go to slide ${index + 1}`}
                 />
               ))}

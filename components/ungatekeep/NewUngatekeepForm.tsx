@@ -176,7 +176,7 @@ export default function NewUngatekeepForm({
           file.file,
           [],
           (progress: UploadProgress) => {
-            const percent = Math.round((progress.progress || 0) * 100);
+            const percent = Math.round(progress.progress || 0);
             setFiles((prev) =>
               prev.map((f, idx) =>
                 idx === i ? { ...f, progress: percent } : f
@@ -198,12 +198,12 @@ export default function NewUngatekeepForm({
           prev.map((f, idx) =>
             idx === i
               ? {
-                  ...f,
-                  uploading: false,
-                  error: true,
-                  errorMessage:
-                    err instanceof Error ? err.message : "Unknown upload error",
-                }
+                ...f,
+                uploading: false,
+                error: true,
+                errorMessage:
+                  err instanceof Error ? err.message : "Unknown upload error",
+              }
               : f
           )
         );

@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { opportunities, user, tags } from "@/lib/schema";
-import { getCurrentUser } from "@/server/users";
+import { getCurrentUserOptional } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { eq, and, isNull, sql, desc } from "drizzle-orm";
 
@@ -13,9 +13,9 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Check if user is admin
-    const currentUser = await getCurrentUser();
-    if (currentUser?.currentUser?.role !== "admin") {
+    // Check if user is admin - using optional to avoid redirect on API routes
+    const currentUser = await getCurrentUserOptional();
+    if (!currentUser || currentUser.currentUser?.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

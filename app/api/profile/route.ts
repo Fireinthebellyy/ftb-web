@@ -116,7 +116,7 @@ export async function POST(request: Request) {
         }
       );
     }
-    
+
     const [updated] = await db
       .update(userTable)
       .set({
@@ -152,6 +152,58 @@ export async function POST(request: Request) {
     }
 
     return new Response(JSON.stringify({ user: updated }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (e) {
+    const err = e as Error;
+    return new Response(
+      JSON.stringify({ error: err.message || "Internal error" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+}
+
+export async function GET(_request: Request) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const current = await db.query.user.findFirst({
+      where: eq(userTable.id, session.user.id),
+      columns: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        fieldInterests: true,
+        opportunityInterests: true,
+        dateOfBirth: true,
+        collegeInstitute: true,
+        contactNumber: true,
+        currentRole: true,
+      },
+    });
+
+    if (!current) {
+      return new Response(JSON.stringify({ error: "User not found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify({ user: current }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

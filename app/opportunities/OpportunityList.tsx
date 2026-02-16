@@ -258,17 +258,7 @@ export default function OpportunityCardsPage() {
     };
   }, [handleLoadMore, allOpportunities.length]);
 
-  const handleBookmarkChange = (
-    opportunityId: string,
-    isBookmarked: boolean
-  ) => {
-    // TODO: handle bookmark
-    console.log(
-      `Opportunity ${opportunityId} ${
-        isBookmarked ? "bookmarked" : "unbookmarked"
-      }`
-    );
-  };
+
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
@@ -333,11 +323,10 @@ export default function OpportunityCardsPage() {
                   <Badge
                     key={tag}
                     variant={isSelected ? "default" : "outline"}
-                    className={`cursor-pointer px-3 py-1 text-sm ${
-                      isSelected
-                        ? "bg-neutral-700 text-gray-200"
-                        : "bg-white text-gray-700"
-                    }`}
+                    className={`cursor-pointer px-3 py-1 text-sm ${isSelected
+                      ? "bg-neutral-700 text-gray-200"
+                      : "bg-white text-gray-700"
+                      }`}
                     onClick={() => toggleTag(tag)}
                   >
                     <span>{displayTag}</span>
@@ -453,11 +442,10 @@ export default function OpportunityCardsPage() {
                     <Badge
                       key={tag}
                       variant={isSelected ? "default" : "outline"}
-                      className={`cursor-pointer px-3 py-1 text-sm ${
-                        isSelected
-                          ? "bg-neutral-700 text-gray-200"
-                          : "bg-white text-gray-700"
-                      }`}
+                      className={`cursor-pointer px-3 py-1 text-sm ${isSelected
+                        ? "bg-neutral-700 text-gray-200"
+                        : "bg-white text-gray-700"
+                        }`}
                       onClick={() => toggleTag(tag)}
                     >
                       <span>{displayTag}</span>
@@ -469,11 +457,10 @@ export default function OpportunityCardsPage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
-                className={`shrink-0 transition-all hover:bg-orange-600 hover:text-white ${
-                  isFilterBoxOpen
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-gray-400"
-                }`}
+                className={`shrink-0 transition-all hover:bg-orange-600 hover:text-white ${isFilterBoxOpen
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-gray-400"
+                  }`}
               >
                 <Filter className="h-5 w-5" />
               </Button>
@@ -551,15 +538,15 @@ export default function OpportunityCardsPage() {
                         <div key={opportunity.id}>
                           <OpportunityPost
                             opportunity={opportunity}
-                            onBookmarkChange={handleBookmarkChange}
+
                             initialIsBookmarked={Boolean(
                               bookmarkStatuses[opportunity.id]
                             )}
                           />
                           {index ===
                             Math.max(0, allOpportunities.length - 3) && (
-                            <div ref={desktopTriggerRef} className="h-1" />
-                          )}
+                              <div ref={desktopTriggerRef} className="h-1" />
+                            )}
                         </div>
                       ))}
                     </div>
@@ -683,7 +670,7 @@ export default function OpportunityCardsPage() {
                       <div key={opportunity.id}>
                         <OpportunityPost
                           opportunity={opportunity}
-                          onBookmarkChange={handleBookmarkChange}
+
                           initialIsBookmarked={Boolean(
                             bookmarkStatuses[opportunity.id]
                           )}

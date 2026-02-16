@@ -3,9 +3,10 @@ import { db } from "@/lib/db";
 import { bookmarks, opportunities } from "@/lib/schema";
 import { getSessionCached } from "@/lib/auth-session-cache";
 import { createApiTimer } from "@/lib/api-timing";
-import { and, eq, gte, lte, sql } from "drizzle-orm";
+import { and, eq, gte, lte, sql, isNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
+
 
 export async function POST(req: Request) {
   const timer = createApiTimer("POST /api/bookmarks");
@@ -127,16 +128,19 @@ export async function GET(req: Request) {
       const endStr = endDate.toISOString().split("T")[0];
 
       // fetch only dates for this user within the month range
+      // Filter out soft-deleted opportunities
       timer.mark("month_query_start");
       const dates = await db
         .select({
           endDate: opportunities.endDate,
+          type: opportunities.type,
         })
         .from(bookmarks)
         .innerJoin(opportunities, eq(bookmarks.opportunityId, opportunities.id))
         .where(
           and(
             eq(bookmarks.userId, session.user.id),
+            isNull(opportunities.deletedAt),
             gte(opportunities.endDate, startStr),
             lte(opportunities.endDate, endStr)
           )
@@ -144,16 +148,27 @@ export async function GET(req: Request) {
         .orderBy(opportunities.endDate);
       timer.mark("month_query_done", { rows: dates.length });
 
-      // return unique, sorted dates as strings (YYYY-MM-DD)
-      const formatted = Array.from(
-        new Set(dates.filter((d) => d.endDate).map((d) => d.endDate))
-      ).sort();
+      // group by date and collect all types for each date
+      const dateMap = new Map<string, string[]>();
+      dates
+        .filter((d) => d.endDate)
+        .forEach((d) => {
+          const existing = dateMap.get(d.endDate) || [];
+          if (!existing.includes(d.type)) {
+            dateMap.set(d.endDate, [...existing, d.type]);
+          }
+        });
+
+      // convert to array and sort by date
+      const formatted = Array.from(dateMap.entries())
+        .map(([date, types]) => ({ date, types }))
+        .sort((a, b) => a.date.localeCompare(b.date));
 
       timer.end({ status: 200, mode: "month", uniqueDates: formatted.length });
       return NextResponse.json({ dates: formatted });
     }
 
-    // Fetch user's bookmarks
+    // Fetch user's bookmarks - filter out soft-deleted opportunities
     timer.mark("list_query_start");
     const data = await db
       .select({
@@ -167,7 +182,12 @@ export async function GET(req: Request) {
       })
       .from(bookmarks)
       .innerJoin(opportunities, eq(bookmarks.opportunityId, opportunities.id))
-      .where(eq(bookmarks.userId, session.user.id));
+      .where(
+        and(
+          eq(bookmarks.userId, session.user.id),
+          isNull(opportunities.deletedAt)
+        )
+      );
     timer.mark("list_query_done", { rows: data.length });
 
     // Separate into upcoming, closed and uncategorized (endDate IS NULL)
@@ -180,6 +200,7 @@ export async function GET(req: Request) {
       if (item.endDate == null) {
         uncategorized.push({
           title: item.title,
+          opportunityId: item.opportunityId,
           description: item.description,
           type: item.type,
           endDate: null,
@@ -200,6 +221,7 @@ export async function GET(req: Request) {
 
       const payload = {
         title: item.title,
+        opportunityId: item.opportunityId,
         description: item.description,
         type: item.type,
         endDate: item.endDate,

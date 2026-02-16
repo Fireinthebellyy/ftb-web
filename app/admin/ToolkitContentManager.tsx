@@ -472,7 +472,7 @@ export default function ToolkitContentManager({
                       name="content"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Content {"*"}</FormLabel>
+                          <FormLabel>Content {"*"} {"*"}</FormLabel>
                           <FormControl>
                             <div className="[&_div.ql-container]:min-h-[220px] [&_div.ql-editor]:max-h-[35vh] [&_div.ql-editor]:min-h-[220px] [&_div.ql-editor]:overflow-y-auto">
                               <ReactQuill

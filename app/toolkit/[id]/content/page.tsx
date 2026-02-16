@@ -3,9 +3,8 @@
 import React, {
   useState,
   useEffect,
-  useRef,
+  useRef, useMemo,
   useCallback,
-  useMemo,
 } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -22,10 +21,11 @@ import {
 import { cn } from "@/lib/utils";
 import { ToolkitContentItem } from "@/types/interfaces";
 import LessonSidebar from "@/components/toolkit/LessonSidebar";
+import { useToolkit } from "@/lib/queries";
+import { useMarkContentComplete } from "@/lib/queries-toolkits";
+import { Skeleton } from "@/components/ui/skeleton";
 import BunnyPlayer from "@/components/toolkit/BunnyPlayer";
 import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
-import { useToolkit, useMarkContentComplete } from "@/lib/queries-toolkits";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface CircularProgressProps {
   progress: number;

@@ -21,6 +21,7 @@ import { Control, useFormContext } from "react-hook-form";
 import { useState } from "react";
 import { FormData } from "../schema";
 import { cn } from "@/lib/utils";
+import { toDateTimeLocalValue } from "@/lib/date-utils";
 import { DateRange } from "react-day-picker";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -225,10 +226,6 @@ function parsePublishDateTime(value?: string) {
   }
 
   return parsed;
-}
-
-function toDateTimeLocalValue(date: Date) {
-  return format(date, "yyyy-MM-dd'T'HH:mm");
 }
 
 function getCurrentTimeValue() {

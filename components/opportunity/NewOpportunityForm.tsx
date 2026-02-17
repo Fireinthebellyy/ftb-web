@@ -11,6 +11,7 @@ import {
   createOpportunityStorage,
   getAppwriteErrorMessage,
 } from "@/lib/appwrite";
+import { toDateTimeLocalValue } from "@/lib/date-utils";
 import { TitleField } from "./fields/TitleField";
 import { DescriptionField } from "./fields/DescriptionField";
 import { TagsField } from "./fields/TagsField";
@@ -24,21 +25,6 @@ import {
 import { formSchema, FormData } from "./schema";
 import { FileItem, Opportunity, UploadProgress } from "@/types/interfaces";
 import { useQueryClient } from "@tanstack/react-query";
-
-function toDateTimeLocalValue(isoDateTime?: string): string {
-  if (!isoDateTime) {
-    return "";
-  }
-
-  const date = new Date(isoDateTime);
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  const timezoneOffsetMs = date.getTimezoneOffset() * 60 * 1000;
-  const localDate = new Date(date.getTime() - timezoneOffsetMs);
-  return localDate.toISOString().slice(0, 16);
-}
 
 export default function NewOpportunityForm({
   opportunity,

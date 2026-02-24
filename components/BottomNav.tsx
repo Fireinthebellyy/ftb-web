@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Briefcase, CalendarClock, Flame, User, Megaphone, Target } from "lucide-react";
+import { Home, Briefcase, Flame, User, Megaphone, Target } from "lucide-react";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },

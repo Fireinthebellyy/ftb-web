@@ -10,7 +10,7 @@ import { TitleField } from "./fields/TitleField";
 import { DescriptionField } from "./fields/DescriptionField";
 import { TagsField } from "./fields/TagsField";
 import { TypeSelector } from "./fields/TypeSelector";
-import { MetaPopovers } from "./fields/MetaPopovers";
+import { MetaPopovers, SchedulePublishPopover } from "./fields/MetaPopovers";
 import {
   ImagePicker,
   SelectedImages,
@@ -18,21 +18,6 @@ import {
 } from "./images/ImageDropzone";
 import { formSchema, FormData } from "./schema";
 import { FileItem, Opportunity } from "@/types/interfaces";
-
-function toDateTimeLocalValue(isoDateTime?: string): string {
-  if (!isoDateTime) {
-    return "";
-  }
-
-  const date = new Date(isoDateTime);
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  const timezoneOffsetMs = date.getTimezoneOffset() * 60 * 1000;
-  const localDate = new Date(date.getTime() - timezoneOffsetMs);
-  return localDate.toISOString().slice(0, 16);
-}
 
 export default function NewOpportunityForm({
   opportunity,
@@ -43,6 +28,7 @@ export default function NewOpportunityForm({
   onOpportunityCreated: () => void;
   onCancel?: () => void;
 }) {
+  const [scheduleMessage, setScheduleMessage] = useState<string | null>(null);
   const [files, setFiles] = useState<FileItem[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [existingImages, setExistingImages] = useState<string[]>(
@@ -178,6 +164,7 @@ export default function NewOpportunityForm({
     form.setValue("type", type, { shouldValidate: true, shouldTouch: true });
   }
 
+
   return (
     <FormProvider {...form}>
       <Form {...form}>
@@ -225,6 +212,11 @@ export default function NewOpportunityForm({
             </div>
 
             <div className="flex items-center gap-2">
+              <SchedulePublishPopover
+                control={form.control}
+                watchedPublishAt={watchedPublishAt}
+                onConfirmMessageChange={setScheduleMessage}
+              />
               {onCancel && (
                 <Button
                   type="button"
@@ -238,6 +230,7 @@ export default function NewOpportunityForm({
               )}
               <Button
                 type="submit"
+                variant="default"
                 disabled={loading || (opportunity ? !hasChanges : false)}
                 size="sm"
                 className="px-6"
@@ -251,6 +244,12 @@ export default function NewOpportunityForm({
                     : "Post"}
               </Button>
             </div>
+
+            {scheduleMessage && (
+              <p className="text-muted-foreground w-full pt-1 text-right text-xs">
+                This will go live on {scheduleMessage}.
+              </p>
+            )}
           </div>
         </form>
       </Form>

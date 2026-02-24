@@ -67,7 +67,7 @@ export default function LandingPage() {
               >
                 <Button
                   size="lg"
-                  variant="primary"
+                  variant="default"
                   className="px-8 text-base text-shadow-sm"
                   onClick={() => router.push("/opportunities")}
                 >
@@ -175,12 +175,14 @@ export default function LandingPage() {
                     Frequently Asked Questions
                   </h2>
                   <p className="text-muted-foreground mb-6 text-base leading-relaxed md:text-lg">
-                    Everything you need to know about finding and managing opportunities
+                    Everything you need to know about finding and managing
+                    opportunities
                   </p>
                   <p className="text-muted-foreground text-sm leading-relaxed md:text-base">
-                    Have questions? We&apos;ve got answers. Browse through our most commonly
-                    asked questions to learn more about how our platform works and how it
-                    can help you discover your next big opportunity.
+                    Have questions? We&apos;ve got answers. Browse through our
+                    most commonly asked questions to learn more about how our
+                    platform works and how it can help you discover your next
+                    big opportunity.
                   </p>
                 </motion.div>
 
@@ -189,7 +191,11 @@ export default function LandingPage() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5, delay: 0.2 }}
                 >
-                  <Accordion type="single" collapsible className="w-full space-y-4">
+                  <Accordion
+                    type="single"
+                    collapsible
+                    className="w-full space-y-4"
+                  >
                     <AccordionItem
                       value="item-1"
                       className="rounded-lg border border-gray-200 bg-white px-6 shadow-sm transition-shadow hover:shadow-md"
@@ -198,11 +204,12 @@ export default function LandingPage() {
                         What types of opportunities can I find on this platform?
                       </AccordionTrigger>
                       <AccordionContent className="text-muted-foreground text-base leading-relaxed">
-                        Our platform features a wide range of opportunities including
-                        hackathons, grants, competitions, internships, scholarships, and
-                        other programs designed for ambitious students. You can browse by
-                        category, filter by deadline, and discover opportunities that match
-                        your interests and goals.
+                        Our platform features a wide range of opportunities
+                        including hackathons, grants, competitions, internships,
+                        scholarships, and other programs designed for ambitious
+                        students. You can browse by category, filter by
+                        deadline, and discover opportunities that match your
+                        interests and goals.
                       </AccordionContent>
                     </AccordionItem>
 
@@ -214,11 +221,12 @@ export default function LandingPage() {
                         How do bookmarks work?
                       </AccordionTrigger>
                       <AccordionContent className="text-muted-foreground text-base leading-relaxed">
-                        You can bookmark any opportunity that interests you to save it for
-                        later. Bookmarked opportunities are stored in your profile, making
-                        it easy to track deadlines and revisit opportunities you&apos;re
-                        considering. This helps you stay organized and never miss an
-                        important deadline.
+                        You can bookmark any opportunity that interests you to
+                        save it for later. Bookmarked opportunities are stored
+                        in your profile, making it easy to track deadlines and
+                        revisit opportunities you&apos;re considering. This
+                        helps you stay organized and never miss an important
+                        deadline.
                       </AccordionContent>
                     </AccordionItem>
 
@@ -230,10 +238,11 @@ export default function LandingPage() {
                         Is the platform free to use?
                       </AccordionTrigger>
                       <AccordionContent className="text-muted-foreground text-base leading-relaxed">
-                        Yes! Our platform is completely free for students. You can browse
-                        opportunities, create bookmarks, set up your profile, and access all
-                        features without any cost. We&apos;re committed to making opportunities
-                        accessible to all ambitious students.
+                        Yes! Our platform is completely free for students. You
+                        can browse opportunities, create bookmarks, set up your
+                        profile, and access all features without any cost.
+                        We&apos;re committed to making opportunities accessible
+                        to all ambitious students.
                       </AccordionContent>
                     </AccordionItem>
 
@@ -245,10 +254,11 @@ export default function LandingPage() {
                         How do I stay updated on new opportunities?
                       </AccordionTrigger>
                       <AccordionContent className="text-muted-foreground text-base leading-relaxed">
-                        New opportunities are added regularly to the platform. You can
-                        browse the opportunities page to see the latest additions, filter by
-                        date, and check the featured section for curated highlights. Make
-                        sure to bookmark opportunities you&apos;re interested in to track their
+                        New opportunities are added regularly to the platform.
+                        You can browse the opportunities page to see the latest
+                        additions, filter by date, and check the featured
+                        section for curated highlights. Make sure to bookmark
+                        opportunities you&apos;re interested in to track their
                         deadlines.
                       </AccordionContent>
                     </AccordionItem>
@@ -261,11 +271,12 @@ export default function LandingPage() {
                         Can I submit my own opportunities?
                       </AccordionTrigger>
                       <AccordionContent className="text-muted-foreground text-base leading-relaxed">
-                        Currently, opportunities are curated by our team to ensure quality
-                        and relevance. If you know of an opportunity that should be featured
-                        on our platform, please reach out through our feedback system. We&apos;re
-                        always looking to expand our database with valuable opportunities for
-                        students.
+                        Currently, opportunities are curated by our team to
+                        ensure quality and relevance. If you know of an
+                        opportunity that should be featured on our platform,
+                        please reach out through our feedback system. We&apos;re
+                        always looking to expand our database with valuable
+                        opportunities for students.
                       </AccordionContent>
                     </AccordionItem>
 
@@ -277,10 +288,11 @@ export default function LandingPage() {
                         What information do I need to create an account?
                       </AccordionTrigger>
                       <AccordionContent className="text-muted-foreground text-base leading-relaxed">
-                        Creating an account is simple and quick. You&apos;ll need a valid email
-                        address to sign up. Once registered, you can enhance your profile
-                        with information about your interests, current role, and field of
-                        study to get personalized opportunity recommendations.
+                        Creating an account is simple and quick. You&apos;ll
+                        need a valid email address to sign up. Once registered,
+                        you can enhance your profile with information about your
+                        interests, current role, and field of study to get
+                        personalized opportunity recommendations.
                       </AccordionContent>
                     </AccordionItem>
                   </Accordion>

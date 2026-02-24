@@ -1,14 +1,14 @@
-'use client';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
-import { Righteous } from 'next/font/google';
-import { useRouter } from 'next/navigation';
+"use client";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
+import { Righteous } from "next/font/google";
+import { useRouter } from "next/navigation";
 
 const righteous = Righteous({
-  weight: '400',
-  subsets: ['latin'],
-  variable: '--font-righteous',
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-righteous",
 });
 
 export default function LandingPage() {
@@ -34,7 +34,7 @@ export default function LandingPage() {
                 transition={{ duration: 0.5, delay: 0.2 }}
                 className={`${righteous.className} text-foreground mb-6 text-4xl leading-tight font-semibold tracking-tight md:text-7xl`}
               >
-                Because the right{' '}
+                Because the right{" "}
                 <span className="text-orange-600/70">opportunity</span> changes
                 everything.
               </motion.h1>
@@ -61,9 +61,9 @@ export default function LandingPage() {
               >
                 <Button
                   size="lg"
-                  variant="primary"
+                  variant="default"
                   className="px-8 text-base text-shadow-sm"
-                  onClick={() => router.push('/opportunities')}
+                  onClick={() => router.push("/opportunities")}
                 >
                   Find your next opportunity
                   <ArrowRight />
@@ -84,7 +84,7 @@ export default function LandingPage() {
               transition={{ duration: 0.5, delay: 0.1 }}
               whileHover={{
                 scale: 1.05,
-                boxShadow: '0 10px 20px rgba(0,0,0,0.12)',
+                boxShadow: "0 10px 20px rgba(0,0,0,0.12)",
               }}
               className="flex cursor-pointer flex-col overflow-hidden rounded-xl border border-gray-200 bg-white"
             >
@@ -108,7 +108,7 @@ export default function LandingPage() {
               transition={{ duration: 0.5, delay: 0.3 }}
               whileHover={{
                 scale: 1.05,
-                boxShadow: '0 10px 20px rgba(0,0,0,0.12)',
+                boxShadow: "0 10px 20px rgba(0,0,0,0.12)",
               }}
               className="flex cursor-pointer flex-col overflow-hidden rounded-xl border border-gray-200 bg-white"
             >
@@ -133,7 +133,7 @@ export default function LandingPage() {
               transition={{ duration: 0.5, delay: 0.5 }}
               whileHover={{
                 scale: 1.05,
-                boxShadow: '0 10px 20px rgba(0,0,0,0.12)',
+                boxShadow: "0 10px 20px rgba(0,0,0,0.12)",
               }}
               className="flex cursor-pointer flex-col overflow-hidden rounded-xl border border-gray-200 bg-white"
             >

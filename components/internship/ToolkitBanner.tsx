@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { ChevronRight, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function ToolkitBanner() {
@@ -53,25 +53,8 @@ export default function ToolkitBanner() {
                 </div>
             </div>
 
-            {/* Swipe hint */}
-            <div className="flex justify-center items-center text-sm font-medium text-slate-400">
-                Swipe to learn more <ChevronRight className="w-4 h-4 ml-1" />
-            </div>
-
             {/* Premium Toolkits Section */}
             <div className="pt-2">
-                <div className="flex items-center justify-between mb-2">
-                    <div>
-                        <h3 className="text-sm font-bold tracking-wider text-slate-600 uppercase">Premium Toolkits</h3>
-                        <p className="text-sm text-orange-600 font-medium flex items-center">
-                            See why 80% more students get hired <ArrowRight className="w-4 h-4 ml-1" />
-                        </p>
-                    </div>
-                    <Link href="/toolkit" className="text-orange-600 font-semibold text-sm hover:underline">
-                        See All
-                    </Link>
-                </div>
-
                 {/* Horizontal Scrolling List */}
                 <div className="flex overflow-x-auto gap-4 pb-4 snap-x hide-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                     {toolkits.map((toolkit) => (

@@ -73,7 +73,7 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
                     <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
-                                <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                                <span className="px-2 py-0.5 rounded-md bg-orange-100 text-orange-700 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
                                     <Rocket size={10} /> Smart Apply
                                 </span>
                             </div>
@@ -118,7 +118,7 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
                     <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-end">
                         <button
                             onClick={handleSubmit}
-                            className="px-8 py-2.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-200 flex items-center gap-2 transition-all hover:scale-[1.02]"
+                            className="px-8 py-2.5 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 shadow-lg shadow-orange-200 flex items-center gap-2 transition-all hover:scale-[1.02]"
                         >
                             Go <ExternalLink size={18} />
                         </button>

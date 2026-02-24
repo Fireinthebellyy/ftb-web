@@ -28,11 +28,11 @@ export default function ToolkitBanner() {
         <div className="w-full flex flex-col space-y-3 mb-5">
             {/* Banner Section */}
             <div
-                className="w-full rounded-xl p-4 sm:p-5 text-white relative overflow-hidden"
+                className="w-full rounded-xl p-3 sm:py-3 sm:px-4 text-white relative overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, #0b4f8c 0%, #2f8ee6 100%)' }}
             >
-                <div className="flex items-end justify-between w-full relative z-10">
-                    <h2 className="text-[1.1rem] sm:text-lg font-bold leading-snug max-w-[85%] pr-2">
+                <div className="flex items-center justify-between w-full relative z-10">
+                    <h2 className="text-sm sm:text-base font-bold leading-tight max-w-[85%] pr-2">
                         Boost your hireability by 80% with our expert-led toolkits
                     </h2>
 

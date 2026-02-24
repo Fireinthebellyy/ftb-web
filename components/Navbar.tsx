@@ -324,6 +324,16 @@ export default function Navbar() {
                       className="hover:bg-accent focus:bg-accent w-full rounded px-3 py-2 text-left text-sm focus:outline-none"
                       onClick={() => {
                         setMenuOpen(false);
+                        window.location.href = "/tracker";
+                      }}
+                    >
+                      Tracker
+                    </button>
+                    <button
+                      role="menuitem"
+                      className="hover:bg-accent focus:bg-accent w-full rounded px-3 py-2 text-left text-sm focus:outline-none"
+                      onClick={() => {
+                        setMenuOpen(false);
                         window.location.href = "/deadlines";
                       }}
                     >

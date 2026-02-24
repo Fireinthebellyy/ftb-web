@@ -77,17 +77,20 @@ function parsePublishAt(
 function isMissingPublishAtColumnError(error: unknown) {
   const err = error as {
     message?: string;
+    code?: string;
     cause?: { code?: string; column?: string; message?: string };
   };
 
-  if (err?.cause?.code !== "42703") {
+  const code = err?.code || err?.cause?.code;
+  if (code !== "42703") {
     return false;
   }
 
   return (
     err?.cause?.column === "publish_at" ||
     err?.cause?.message?.includes("publish_at") ||
-    err?.message?.includes("publish_at")
+    err?.message?.includes("publish_at") ||
+    err?.message?.includes('"publish_at"')
   );
 }
 

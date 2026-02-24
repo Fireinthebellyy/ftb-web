@@ -175,27 +175,27 @@ export default function Navbar() {
           <Link
             href="/opportunities"
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/opportunities"
-                ? "text-primary after:w-full"
-                : "text-neutral-800 after:w-0"
+              ? "text-primary after:w-full"
+              : "text-neutral-800 after:w-0"
               }`}
           >
             Opportunities
           </Link>
 
           <Link
-            href="/deadlines"
-            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/deadlines"
-                ? "text-primary after:w-full"
-                : "text-neutral-800 after:w-0"
+            href="/tracker"
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/tracker"
+              ? "text-primary after:w-full"
+              : "text-neutral-800 after:w-0"
               }`}
           >
-            Deadlines
+            Tracker
           </Link>
           <Link
             href="/toolkit"
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/toolkit"
-                ? "text-primary after:w-full"
-                : "text-neutral-800 after:w-0"
+              ? "text-primary after:w-full"
+              : "text-neutral-800 after:w-0"
               }`}
           >
             Toolkit
@@ -203,8 +203,8 @@ export default function Navbar() {
           <Link
             href="/ungatekeep"
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/ungatekeep"
-                ? "text-primary after:w-full"
-                : "text-neutral-800 after:w-0"
+              ? "text-primary after:w-full"
+              : "text-neutral-800 after:w-0"
               }`}
           >
             Ungatekeep
@@ -324,10 +324,10 @@ export default function Navbar() {
                       className="hover:bg-accent focus:bg-accent w-full rounded px-3 py-2 text-left text-sm focus:outline-none"
                       onClick={() => {
                         setMenuOpen(false);
-                        window.location.href = "/tracker";
+                        window.location.href = "/deadlines";
                       }}
                     >
-                      Tracker
+                      Deadlines
                     </button>
                     <button
                       ref={lastItemRef}
@@ -414,8 +414,8 @@ export default function Navbar() {
                 href="/"
                 onClick={() => setIsOpen(false)}
                 className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/"
-                    ? "text-primary font-bold after:w-full"
-                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                  ? "text-primary font-bold after:w-full"
+                  : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
                   }`}
               >
                 Home
@@ -426,8 +426,8 @@ export default function Navbar() {
                 href="/opportunities"
                 onClick={() => setIsOpen(false)}
                 className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/opportunities"
-                    ? "text-primary font-bold after:w-full"
-                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                  ? "text-primary font-bold after:w-full"
+                  : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
                   }`}
               >
                 Opportunities
@@ -435,14 +435,14 @@ export default function Navbar() {
             </li>
             <li>
               <Link
-                href="/deadlines"
+                href="/tracker"
                 onClick={() => setIsOpen(false)}
-                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/deadlines"
-                    ? "text-primary font-bold after:w-full"
-                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/tracker"
+                  ? "text-primary font-bold after:w-full"
+                  : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
                   }`}
               >
-                Deadlines
+                Tracker
               </Link>
             </li>
             <li>
@@ -450,8 +450,8 @@ export default function Navbar() {
                 href="/ungatekeep"
                 onClick={() => setIsOpen(false)}
                 className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/ungatekeep"
-                    ? "text-primary font-bold after:w-full"
-                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                  ? "text-primary font-bold after:w-full"
+                  : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
                   }`}
               >
                 Ungatekeep
@@ -476,8 +476,8 @@ export default function Navbar() {
                   href="/profile"
                   onClick={() => setIsOpen(false)}
                   className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/profile"
-                      ? "text-primary font-bold after:w-full"
-                      : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                    ? "text-primary font-bold after:w-full"
+                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
                     }`}
                 >
                   Profile

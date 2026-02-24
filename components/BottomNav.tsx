@@ -3,14 +3,14 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Briefcase, CalendarClock, Flame, User, Megaphone } from "lucide-react";
+import { Home, Briefcase, CalendarClock, Flame, User, Megaphone, Target } from "lucide-react";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/opportunities", label: "Opportunities", icon: Briefcase },
   { href: "/intern", label: "Internships", icon: Flame },
   { href: "/ungatekeep", label: "Ungatekeep", icon: Megaphone },
-  { href: "/deadlines", label: "Deadlines", icon: CalendarClock },
+  { href: "/tracker", label: "Tracker", icon: Target },
   { href: "/profile", label: "Profile", icon: User },
 ];
 
@@ -47,18 +47,16 @@ export default function BottomNav() {
                   y: isActive ? -1 : 0,
                 }}
                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                className={`flex h-6 w-6 items-center justify-center rounded-full transition-colors duration-200 ${
-                  isActive
-                    ? "bg-primary/10"
-                    : "text-neutral-700 group-hover:bg-neutral-100 group-hover:text-neutral-600"
-                }`}
+                className={`flex h-6 w-6 items-center justify-center rounded-full transition-colors duration-200 ${isActive
+                  ? "bg-primary/10"
+                  : "text-neutral-700 group-hover:bg-neutral-100 group-hover:text-neutral-600"
+                  }`}
               >
                 <Icon
                   size={16}
                   strokeWidth={2.5}
-                  className={`transition-colors duration-200 ${
-                    isActive ? "text-primary" : ""
-                  }`}
+                  className={`transition-colors duration-200 ${isActive ? "text-primary" : ""
+                    }`}
                 />
               </motion.div>
 
@@ -69,9 +67,8 @@ export default function BottomNav() {
                   y: isActive ? 0 : 1,
                 }}
                 transition={{ duration: 0.2 }}
-                className={`text-[9px] font-bold transition-colors duration-200 ${
-                  isActive ? "text-primary" : "text-neutral-400"
-                }`}
+                className={`text-[9px] font-bold transition-colors duration-200 ${isActive ? "text-primary" : "text-neutral-400"
+                  }`}
               >
                 {item.label}
               </motion.span>

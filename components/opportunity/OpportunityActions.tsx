@@ -23,6 +23,7 @@ import { ShareDialog } from "./ShareDialog";
 import CommentSection from "./CommentSection";
 import { OpportunityPostProps } from "@/types/interfaces";
 import { useTracker } from "@/components/providers/TrackerProvider";
+import { createOpportunityStorage } from "@/lib/appwrite";
 
 interface OpportunityActionsProps {
   opportunity: OpportunityPostProps["opportunity"];
@@ -133,7 +134,12 @@ export function OpportunityActions({
                       opportunityId: id,
                       title: opportunity.title,
                       company: (opportunity as any).hiringOrganization || opportunity.organiserInfo || "Unknown Organization",
-                      logo: opportunity.images?.[0], // Pick first image as logo
+                      logo: opportunity.images?.[0]
+                        ? createOpportunityStorage().getFileView(
+                          process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID || "",
+                          opportunity.images[0]
+                        ).toString()
+                        : undefined,
                       type: opportunity.type,
                       location: opportunity.location,
                       deadline: opportunity.endDate,

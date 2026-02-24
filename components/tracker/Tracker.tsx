@@ -224,7 +224,7 @@ export default function Tracker() {
             {/* View Content */}
             <div className="space-y-8">
                 {/* Agenda Section */}
-                {agendaItems.length > 0 && (
+                {agendaItems.length > 0 && activeTab === 'internship' && (
                     <section className="bg-white rounded-2xl border border-slate-200 overflow-hidden hidden md:block">
                         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                             <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">

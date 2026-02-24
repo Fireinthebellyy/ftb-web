@@ -25,10 +25,10 @@ export default function ToolkitBanner() {
     ];
 
     return (
-        <div className="w-full flex flex-col space-y-3 mb-5">
+        <div className="w-full flex flex-col space-y-4 mb-3 sm:mb-4">
             {/* Banner Section */}
             <div
-                className="w-full rounded-xl p-3 sm:py-3 sm:px-4 text-white relative overflow-hidden"
+                className="w-full rounded-lg p-3 sm:py-3 sm:px-4 text-white relative overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, #0b4f8c 0%, #2f8ee6 100%)' }}
             >
                 <div className="flex items-center justify-between w-full relative z-10">
@@ -53,7 +53,7 @@ export default function ToolkitBanner() {
                         <Link
                             href={`/toolkit/${toolkit.id}`}
                             key={toolkit.id}
-                            className="relative min-w-[150px] sm:min-w-[170px] h-[100px] sm:h-[110px] rounded-xl overflow-hidden shrink-0 snap-start group"
+                            className="relative min-w-[130px] sm:min-w-[140px] h-[85px] sm:h-[95px] rounded-lg overflow-hidden shrink-0 snap-start group"
                         >
                             {/* Background Image */}
                             <div
@@ -65,12 +65,12 @@ export default function ToolkitBanner() {
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
                             {/* Content */}
-                            <div className="absolute bottom-0 left-0 right-0 p-3 text-white flex justify-between items-end">
+                            <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-2.5 text-white flex justify-between items-end">
                                 <div className="flex flex-col">
-                                    <span className="font-semibold text-xs sm:text-sm leading-tight mb-0.5">{toolkit.title}</span>
-                                    <span className="text-[10px] sm:text-xs text-gray-200">{toolkit.price}</span>
+                                    <span className="font-semibold text-[11px] sm:text-xs leading-tight mb-0.5">{toolkit.title}</span>
+                                    <span className="text-[9px] sm:text-[10px] text-gray-200">{toolkit.price}</span>
                                 </div>
-                                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white shrink-0 ml-1" />
+                                <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white shrink-0 ml-1" />
                             </div>
                         </Link>
                     ))}

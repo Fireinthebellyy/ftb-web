@@ -67,17 +67,17 @@ export async function GET(req: NextRequest) {
 
     const rawTypes = typesParam
       ? typesParam
-          .split(",")
-          .map((value) => value.trim())
-          .filter(Boolean)
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean)
       : [];
     const allowedTypes = (opportunities.type.enumValues ?? []) as string[];
     const validTypes = rawTypes.filter((type) => allowedTypes.includes(type));
     const rawTags = tagsParam
       ? tagsParam
-          .split(",")
-          .map((value) => value.trim().toLowerCase())
-          .filter(Boolean)
+        .split(",")
+        .map((value) => value.trim().toLowerCase())
+        .filter(Boolean)
       : [];
 
     timer.mark("role_start");
@@ -303,14 +303,14 @@ export async function GET(req: NextRequest) {
     const bookmarkRows =
       opportunityIds.length > 0
         ? await db
-            .select({ opportunityId: bookmarks.opportunityId })
-            .from(bookmarks)
-            .where(
-              and(
-                eq(bookmarks.userId, session.user.id),
-                inArray(bookmarks.opportunityId, opportunityIds)
-              )
+          .select({ opportunityId: bookmarks.opportunityId })
+          .from(bookmarks)
+          .where(
+            and(
+              eq(bookmarks.userId, session.user.id),
+              inArray(bookmarks.opportunityId, opportunityIds)
             )
+          )
         : [];
 
     const bookmarkStatuses = bookmarkRows.reduce<Record<string, boolean>>(

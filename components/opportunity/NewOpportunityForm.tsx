@@ -225,11 +225,11 @@ export default function NewOpportunityForm({
           prev.map((f, idx) =>
             idx === i
               ? {
-                  ...f,
-                  uploading: false,
-                  error: true,
-                  errorMessage,
-                }
+                ...f,
+                uploading: false,
+                error: true,
+                errorMessage,
+              }
               : f
           )
         );
@@ -372,6 +372,7 @@ export default function NewOpportunityForm({
                 watchedLocation={watchedLocation}
                 watchedOrganiser={watchedOrganiser}
                 watchedDateRange={watchedDateRange}
+                watchedPublishAt={watchedPublishAt}
               />
               {/* Image picker trigger (no previews here) */}
               <ImagePicker

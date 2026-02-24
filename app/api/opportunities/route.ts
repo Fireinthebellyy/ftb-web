@@ -266,17 +266,17 @@ export async function GET(req: NextRequest) {
     const searchTerm = searchParam ? searchParam.trim() : "";
     const rawTypes = typesParam
       ? typesParam
-          .split(",")
-          .map((value) => value.trim())
-          .filter(Boolean)
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean)
       : [];
     const allowedTypes = (opportunities.type.enumValues ?? []) as string[];
     const validTypes = rawTypes.filter((type) => allowedTypes.includes(type));
     const rawTags = tagsParam
       ? tagsParam
-          .split(",")
-          .map((value) => value.trim().toLowerCase())
-          .filter(Boolean)
+        .split(",")
+        .map((value) => value.trim().toLowerCase())
+        .filter(Boolean)
       : [];
 
     // Validate pagination parameters
@@ -418,6 +418,7 @@ export async function GET(req: NextRequest) {
       totalCount = result.totalCount;
     }
 
+    // (Resolved merge conflict: nothing needed here, this block is redundant and should be removed.)
     timer.mark("query_page_done", { rows: paginated.length });
 
     const hasMore = paginated.length > validLimit;

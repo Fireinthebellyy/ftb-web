@@ -3,7 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import NextImage from 'next/image';
-import { X, ExternalLink, Play, Rocket } from 'lucide-react';
+import { X, Play, Rocket } from 'lucide-react';
 import { useTracker } from '../providers/TrackerProvider';
 
 
@@ -120,7 +120,7 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
                             onClick={handleSubmit}
                             className="px-8 py-2.5 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 shadow-lg shadow-orange-200 flex items-center gap-2 transition-all hover:scale-[1.02]"
                         >
-                            Go <ExternalLink size={18} />
+                            Go
                         </button>
                     </div>
                 </div>

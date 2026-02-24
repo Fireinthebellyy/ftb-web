@@ -5,6 +5,7 @@ import { useTracker, TrackerItem } from '@/components/providers/TrackerProvider'
 import { AlertCircle, FileText, CalendarDays, TrendingUp, LucideIcon, Loader2, Activity, ChevronRight, X, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 
@@ -29,6 +30,7 @@ interface MetricCardProps {
 }
 
 export default function Tracker() {
+    const router = useRouter();
     // Helper for Priority
     const isHighPriority = (deadline?: string) => {
         if (!deadline) return false;
@@ -292,7 +294,10 @@ export default function Tracker() {
                                             updateStatus={updateStatus}
                                             onDelete={removeFromTracker}
                                             onClick={(o) => {
-                                                setDetailOpp(o);
+                                                const path = (o.kind || 'internship') === 'internship'
+                                                    ? `/intern/${o.oppId}`
+                                                    : `/opportunities/${o.oppId}`;
+                                                router.push(path);
                                             }}
                                         />
                                     </div>
@@ -302,7 +307,10 @@ export default function Tracker() {
                                             updateStatus={updateStatus}
                                             onDelete={removeFromTracker}
                                             onClick={(o) => {
-                                                setDetailOpp(o);
+                                                const path = (o.kind || 'internship') === 'internship'
+                                                    ? `/intern/${o.oppId}`
+                                                    : `/opportunities/${o.oppId}`;
+                                                router.push(path);
                                             }}
                                         />
                                     </div>

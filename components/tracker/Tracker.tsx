@@ -147,18 +147,18 @@ export default function Tracker() {
             {!showInsights && (
                 <button
                     onClick={() => setShowInsights(true)}
-                    className="w-full bg-orange-600 hover:bg-orange-700 text-white p-4 rounded-xl shadow-lg border border-orange-500/30 flex items-center justify-between group transition-all"
+                    className="w-full bg-white hover:bg-slate-50 text-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between group transition-all"
                 >
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white/20 rounded-lg group-hover:scale-110 transition-transform">
-                            <TrendingUp size={20} className="text-white" />
+                        <div className="p-2 bg-slate-100 rounded-lg group-hover:scale-110 transition-transform">
+                            <TrendingUp size={20} className="text-slate-600" />
                         </div>
                         <div className="text-left">
                             <span className="font-bold text-lg">Check Insights</span>
-                            <p className="text-orange-100 text-sm">View your success rate and tracking progress</p>
+                            <p className="text-slate-500 text-sm">View your success rate and tracking progress</p>
                         </div>
                     </div>
-                    <ChevronRight size={24} className="text-orange-200 group-hover:translate-x-1 transition-transform" />
+                    <ChevronRight size={24} className="text-slate-400 group-hover:translate-x-1 transition-transform" />
                 </button>
             )}
 

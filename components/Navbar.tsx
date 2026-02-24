@@ -215,10 +215,11 @@ export default function Navbar() {
           </Link>
           <Link
             href="/intern"
-            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/intern"
-              ? "text-primary after:w-full"
-              : "text-neutral-800 after:w-0"
-              }`}
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
+              pathname === "/intern"
+                ? "text-primary after:w-full"
+                : "text-neutral-800 after:w-0"
+            }`}
           >
             Internships
           </Link>
@@ -343,7 +344,7 @@ export default function Navbar() {
               <Button asChild variant="outline" size="sm">
                 <Link href="/login">Log in</Link>
               </Button>
-              <Button asChild size="sm" variant="primary">
+              <Button asChild size="sm" variant="default">
                 <Link href="/signup">Get Started</Link>
               </Button>
             </div>
@@ -459,10 +460,11 @@ export default function Navbar() {
               <Link
                 href="/intern"
                 onClick={() => setIsOpen(false)}
-                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/intern"
-                  ? "text-primary font-bold after:w-full"
-                  : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                  }`}
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
+                  pathname === "/intern"
+                    ? "text-primary font-bold after:w-full"
+                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                }`}
               >
                 Internships
               </Link>

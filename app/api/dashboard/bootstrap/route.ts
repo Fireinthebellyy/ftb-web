@@ -18,6 +18,23 @@ import {
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
+function isMissingPublishAtColumnError(error: unknown) {
+  const err = error as {
+    message?: string;
+    cause?: { code?: string; column?: string; message?: string };
+  };
+
+  if (err?.cause?.code !== "42703") {
+    return false;
+  }
+
+  return (
+    err?.cause?.column === "publish_at" ||
+    err?.cause?.message?.includes("publish_at") ||
+    err?.message?.includes("publish_at")
+  );
+}
+
 export async function GET(req: NextRequest) {
   const timer = createApiTimer("GET /api/dashboard/bootstrap");
 
@@ -50,17 +67,17 @@ export async function GET(req: NextRequest) {
 
     const rawTypes = typesParam
       ? typesParam
-          .split(",")
-          .map((value) => value.trim())
-          .filter(Boolean)
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean)
       : [];
     const allowedTypes = (opportunities.type.enumValues ?? []) as string[];
     const validTypes = rawTypes.filter((type) => allowedTypes.includes(type));
     const rawTags = tagsParam
       ? tagsParam
-          .split(",")
-          .map((value) => value.trim().toLowerCase())
-          .filter(Boolean)
+        .split(",")
+        .map((value) => value.trim().toLowerCase())
+        .filter(Boolean)
       : [];
 
     timer.mark("role_start");
@@ -81,50 +98,50 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const isAdmin = resolvedRole === "admin";
-    const conditions: SQL<unknown>[] = [isNull(opportunities.deletedAt)];
+    const buildFilters = (usePublishAt: boolean) => {
+      const conditions: SQL<unknown>[] = [isNull(opportunities.deletedAt)];
 
-    if (!isAdmin) {
       conditions.push(eq(opportunities.isActive, true));
-      conditions.push(
-        or(
-          isNull(opportunities.publishAt),
-          lte(opportunities.publishAt, new Date())
-        )
-      );
-    }
+      if (usePublishAt) {
+        conditions.push(
+          or(
+            isNull(opportunities.publishAt),
+            lte(opportunities.publishAt, new Date())
+          )
+        );
+      }
 
-    if (search) {
-      conditions.push(
-        or(
-          ilike(opportunities.title, `%${search}%`),
-          ilike(opportunities.description, `%${search}%`)
-        )
-      );
-    }
+      if (search) {
+        conditions.push(
+          or(
+            ilike(opportunities.title, `%${search}%`),
+            ilike(opportunities.description, `%${search}%`)
+          )
+        );
+      }
 
-    if (validTypes.length > 0) {
-      conditions.push(inArray(opportunities.type, validTypes as any));
-    }
+      if (validTypes.length > 0) {
+        conditions.push(inArray(opportunities.type, validTypes as any));
+      }
 
-    if (rawTags.length > 0) {
-      const tagConditions = rawTags.map(
-        (tag) =>
-          sql`EXISTS (
+      if (rawTags.length > 0) {
+        const tagConditions = rawTags.map(
+          (tag) =>
+            sql`EXISTS (
             SELECT 1
             FROM ${tags} t
             WHERE lower(t.name) = ${tag}
               AND t.id = ANY(${opportunities.tagIds})
           )`
-      );
+        );
 
-      conditions.push(
-        tagConditions.length === 1 ? tagConditions[0] : or(...tagConditions)
-      );
-    }
+        conditions.push(
+          tagConditions.length === 1 ? tagConditions[0] : or(...tagConditions)
+        );
+      }
 
-    const filters =
-      conditions.length === 1 ? conditions[0] : and(...conditions);
+      return conditions.length === 1 ? conditions[0] : and(...conditions);
+    };
 
     const [year, monthNumber] = month.split("-").map(Number);
     const startDate = new Date(year, monthNumber - 1, 1, 0, 0, 0, 0);
@@ -134,9 +151,10 @@ export async function GET(req: NextRequest) {
 
     timer.mark("queries_start");
 
-    const [opportunitiesResult, tasksResult, monthDatesResult] =
-      await Promise.all([
-        db
+    const fetchOpportunities = async (usePublishAt: boolean) => {
+      const filters = buildFilters(usePublishAt);
+      if (usePublishAt) {
+        return db
           .select({
             id: opportunities.id,
             type: opportunities.type,
@@ -173,7 +191,63 @@ export async function GET(req: NextRequest) {
           .where(filters)
           .orderBy(desc(opportunities.createdAt))
           .limit(limit + 1)
-          .offset(offset),
+          .offset(offset);
+      }
+
+      return db
+        .select({
+          id: opportunities.id,
+          type: opportunities.type,
+          title: opportunities.title,
+          description: opportunities.description,
+          images: opportunities.images,
+          tags: sql<string[]>`(
+            SELECT coalesce(array_agg(t.name ORDER BY t.name), '{}')
+            FROM ${tags} t
+            WHERE t.id = ANY(${opportunities.tagIds})
+          )`,
+          location: opportunities.location,
+          organiserInfo: opportunities.organiserInfo,
+          startDate: opportunities.startDate,
+          endDate: opportunities.endDate,
+          isFlagged: opportunities.isFlagged,
+          createdAt: opportunities.createdAt,
+          updatedAt: opportunities.updatedAt,
+          isVerified: opportunities.isVerified,
+          isActive: opportunities.isActive,
+          upvoteCount: opportunities.upvoteCount,
+          upvoterIds: opportunities.upvoterIds,
+          userId: opportunities.userId,
+          user: {
+            id: user.id,
+            name: user.name,
+            image: user.image,
+            role: user.role,
+          },
+        })
+        .from(opportunities)
+        .leftJoin(user, eq(opportunities.userId, user.id))
+        .where(filters)
+        .orderBy(desc(opportunities.createdAt))
+        .limit(limit + 1)
+        .offset(offset);
+    };
+
+    const fetchOpportunitiesWithFallback = async () => {
+      try {
+        return await fetchOpportunities(true);
+      } catch (error) {
+        if (!isMissingPublishAtColumnError(error)) {
+          throw error;
+        }
+        timer.mark("publish_at_fallback");
+        return fetchOpportunities(false);
+      }
+    };
+
+    const [opportunitiesResult, tasksResult, monthDatesResult] =
+      await Promise.all([
+        fetchOpportunitiesWithFallback(),
         db
           .select()
           .from(tasks)
@@ -229,14 +303,14 @@ export async function GET(req: NextRequest) {
     const bookmarkRows =
       opportunityIds.length > 0
         ? await db
-            .select({ opportunityId: bookmarks.opportunityId })
-            .from(bookmarks)
-            .where(
-              and(
-                eq(bookmarks.userId, session.user.id),
-                inArray(bookmarks.opportunityId, opportunityIds)
-              )
+          .select({ opportunityId: bookmarks.opportunityId })
+          .from(bookmarks)
+          .where(
+            and(
+              eq(bookmarks.userId, session.user.id),
+              inArray(bookmarks.opportunityId, opportunityIds)
             )
+          )
         : [];
 
     const bookmarkStatuses = bookmarkRows.reduce<Record<string, boolean>>(

@@ -11,11 +11,12 @@ import {
   createOpportunityStorage,
   getAppwriteErrorMessage,
 } from "@/lib/appwrite";
+import { toDateTimeLocalValue } from "@/lib/date-utils";
 import { TitleField } from "./fields/TitleField";
 import { DescriptionField } from "./fields/DescriptionField";
 import { TagsField } from "./fields/TagsField";
 import { TypeSelector } from "./fields/TypeSelector";
-import { MetaPopovers } from "./fields/MetaPopovers";
+import { MetaPopovers, SchedulePublishPopover } from "./fields/MetaPopovers";
 import {
   ImagePicker,
   SelectedImages,
@@ -24,21 +25,6 @@ import {
 import { formSchema, FormData } from "./schema";
 import { FileItem, Opportunity, UploadProgress } from "@/types/interfaces";
 import { useQueryClient } from "@tanstack/react-query";
-
-function toDateTimeLocalValue(isoDateTime?: string): string {
-  if (!isoDateTime) {
-    return "";
-  }
-
-  const date = new Date(isoDateTime);
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  const timezoneOffsetMs = date.getTimezoneOffset() * 60 * 1000;
-  const localDate = new Date(date.getTime() - timezoneOffsetMs);
-  return localDate.toISOString().slice(0, 16);
-}
 
 export default function NewOpportunityForm({
   opportunity,
@@ -50,6 +36,7 @@ export default function NewOpportunityForm({
   onCancel?: () => void;
 }) {
   const [loading, setLoading] = useState(false);
+  const [scheduleMessage, setScheduleMessage] = useState<string | null>(null);
   const [files, setFiles] = useState<FileItem[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [existingImages, setExistingImages] = useState<string[]>(
@@ -238,11 +225,11 @@ export default function NewOpportunityForm({
           prev.map((f, idx) =>
             idx === i
               ? {
-                  ...f,
-                  uploading: false,
-                  error: true,
-                  errorMessage,
-                }
+                ...f,
+                uploading: false,
+                error: true,
+                errorMessage,
+              }
               : f
           )
         );
@@ -397,6 +384,11 @@ export default function NewOpportunityForm({
             </div>
 
             <div className="flex items-center gap-2">
+              <SchedulePublishPopover
+                control={form.control}
+                watchedPublishAt={watchedPublishAt}
+                onConfirmMessageChange={setScheduleMessage}
+              />
               {onCancel && (
                 <Button
                   type="button"
@@ -410,6 +402,7 @@ export default function NewOpportunityForm({
               )}
               <Button
                 type="submit"
+                variant="default"
                 disabled={loading || (opportunity ? !hasChanges : false)}
                 size="sm"
                 className="px-6"
@@ -423,6 +416,12 @@ export default function NewOpportunityForm({
                     : "Post"}
               </Button>
             </div>
+
+            {scheduleMessage && (
+              <p className="text-muted-foreground w-full pt-1 text-right text-xs">
+                This will go live on {scheduleMessage}.
+              </p>
+            )}
           </div>
         </form>
       </Form>

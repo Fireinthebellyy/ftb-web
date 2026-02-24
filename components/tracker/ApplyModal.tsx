@@ -67,7 +67,7 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent showCloseButton={false} className="max-w-2xl p-0 bg-transparent border-none shadow-none text-black">
+            <DialogContent showCloseButton={false} aria-describedby={undefined} className="max-w-2xl p-0 bg-transparent border-none shadow-none text-black">
                 <div className="relative bg-white rounded-2xl w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
                     {/* Header */}
                     <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">

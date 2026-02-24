@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { notFound, useParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Building2, ExternalLink, IndianRupee, MapPin, Share2, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -230,6 +230,8 @@ export default function InternshipDetailPage() {
             <Share2 className="w-4 h-4 sm:w-5 sm:h-5 text-black hover:text-orange-500" />
           </button>
           <DialogContent className="max-w-[90vw] sm:max-w-md">
+            <DialogTitle className="sr-only">Share {internship.title}</DialogTitle>
+            <DialogDescription className="sr-only">Share this internship via social media or copy the link</DialogDescription>
             <ShareDialog
               shareUrl={shareUrl}
               title={internship.title}

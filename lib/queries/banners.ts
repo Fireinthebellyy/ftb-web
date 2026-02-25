@@ -15,6 +15,9 @@ export type Banner = {
 };
 
 async function fetchBanners(): Promise<Banner[]> {
+    if (typeof window === "undefined") {
+        return [];
+    }
     const { data } = await axios.get<Banner[]>("/api/banners");
     return data;
 }

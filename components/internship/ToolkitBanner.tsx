@@ -1,4 +1,6 @@
-import React from 'react';
+"use client";
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import {
@@ -12,10 +14,15 @@ import { useToolkits } from '@/lib/queries/toolkits';
 import { useBanners } from '@/lib/queries/banners';
 
 export default function ToolkitBanner() {
+    const [mounted, setMounted] = useState(false);
     const { data: toolkits = [], isLoading: toolkitsLoading } = useToolkits();
     const { data: bannerSlides = [], isLoading: bannersLoading } = useBanners();
 
-    if (toolkitsLoading || bannersLoading) {
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted || toolkitsLoading || bannersLoading) {
         return <div className="w-full h-24 animate-pulse bg-slate-100 rounded-lg mb-4" />;
     }
 

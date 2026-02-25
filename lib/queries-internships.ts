@@ -23,6 +23,9 @@ export async function fetchInternshipsPaginated(
   maxStipend?: number,
   ids?: string[]
 ): Promise<InternshipsResponse> {
+  if (typeof window === "undefined") {
+    return { internships: [] };
+  }
   const { data } = await axios.get<InternshipsResponse>("/api/internships", {
     params: {
       limit,

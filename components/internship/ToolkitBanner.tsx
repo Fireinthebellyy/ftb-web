@@ -52,38 +52,40 @@ export default function ToolkitBanner() {
         <div className="w-full flex flex-col space-y-4 mb-3 sm:mb-4">
             {/* Banner Section */}
             {/* Banner Section Carousel */}
-            <Carousel
-                opts={{
-                    align: "start",
-                    loop: true,
-                }}
-                plugins={[
-                    Autoplay({
-                        delay: 4000,
-                    }),
-                ]}
-                className="w-full relative overflow-hidden rounded-lg group"
-            >
-                <CarouselContent className="-ml-0">
-                    {bannerSlides.map((slide, index) => (
-                        <CarouselItem key={index} className="pl-0 cursor-grab active:cursor-grabbing">
-                            <div
-                                className="w-full h-full min-h-[50px] sm:min-h-[60px] p-3 sm:py-3 sm:px-4 text-white relative flex flex-col justify-center"
-                                style={{ background: slide.background }}
-                            >
-                                <div className="flex items-center justify-between w-full relative z-10 w-full mb-1 sm:mb-2 pointer-events-none">
-                                    <h2 className="text-sm sm:text-base font-bold leading-tight max-w-[85%] pr-2">
-                                        {slide.title}
-                                    </h2>
+            <div className="w-full sm:max-w-[70%] lg:max-w-[80%] xl:max-w-[75%] mx-auto">
+                <Carousel
+                    opts={{
+                        align: "start",
+                        loop: true,
+                    }}
+                    plugins={[
+                        Autoplay({
+                            delay: 4000,
+                        }),
+                    ]}
+                    className="w-full relative overflow-hidden rounded-lg group"
+                >
+                    <CarouselContent className="-ml-0">
+                        {bannerSlides.map((slide, index) => (
+                            <CarouselItem key={index} className="pl-0 cursor-grab active:cursor-grabbing">
+                                <div
+                                    className="w-full h-full min-h-[50px] sm:min-h-[60px] p-3 sm:py-3 sm:px-4 text-white relative flex flex-col justify-center"
+                                    style={{ background: slide.background }}
+                                >
+                                    <div className="flex items-center justify-between w-full relative z-10 w-full mb-1 sm:mb-2 pointer-events-none">
+                                        <h2 className="text-sm sm:text-base font-bold leading-tight max-w-[85%] pr-2">
+                                            {slide.title}
+                                        </h2>
+                                    </div>
+                                    <p className="text-xs sm:text-sm text-white/90 pointer-events-none">
+                                        {slide.subtitle}
+                                    </p>
                                 </div>
-                                <p className="text-xs sm:text-sm text-white/90 pointer-events-none">
-                                    {slide.subtitle}
-                                </p>
-                            </div>
-                        </CarouselItem>
-                    ))}
-                </CarouselContent>
-            </Carousel>
+                            </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                </Carousel>
+            </div>
 
             {/* Premium Toolkits Section */}
             <div className="pt-1">

@@ -52,7 +52,7 @@ export default function ToolkitBanner() {
         <div className="w-full flex flex-col space-y-4 mb-3 sm:mb-4">
             {/* Banner Section */}
             {/* Banner Section Carousel */}
-            <div className="w-full max-w-[320px] sm:max-w-[400px] mx-auto">
+            <div className="w-full">
                 <Carousel
                     opts={{
                         align: "start",
@@ -69,17 +69,17 @@ export default function ToolkitBanner() {
                         {bannerSlides.map((slide, index) => (
                             <CarouselItem key={index} className="pl-0 cursor-grab active:cursor-grabbing">
                                 <div
-                                    className="w-full h-full min-h-[50px] sm:min-h-[60px] p-3 sm:py-3 sm:px-4 text-white relative flex flex-col justify-center"
+                                    className="w-full px-3 py-2 sm:px-4 sm:py-2.5 text-white relative flex items-center"
                                     style={{ background: slide.background }}
                                 >
-                                    <div className="flex items-center justify-between w-full relative z-10 w-full mb-1 sm:mb-2 pointer-events-none">
-                                        <h2 className="text-sm sm:text-base font-bold leading-tight max-w-[85%] pr-2">
+                                    <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2 w-full relative z-10 pointer-events-none">
+                                        <h2 className="text-[13px] sm:text-sm font-semibold leading-tight">
                                             {slide.title}
                                         </h2>
+                                        <p className="text-[11px] sm:text-xs text-white/90 leading-tight">
+                                            {slide.subtitle}
+                                        </p>
                                     </div>
-                                    <p className="text-xs sm:text-sm text-white/90 pointer-events-none">
-                                        {slide.subtitle}
-                                    </p>
                                 </div>
                             </CarouselItem>
                         ))}

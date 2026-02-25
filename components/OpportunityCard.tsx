@@ -1,11 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { createOpportunityStorage } from "@/lib/appwrite";
 import { OpportunityPostProps } from "@/types/interfaces";
-import { useSession } from "@/hooks/use-session";
-import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
@@ -20,93 +17,40 @@ import { OpportunityImageGallery } from "./opportunity/OpportunityImageGallery";
 import { OpportunityActions } from "./opportunity/OpportunityActions";
 import NewOpportunityForm from "./opportunity/NewOpportunityForm";
 
-const isValidUUID = (uuid: string): boolean => {
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(uuid);
-};
 
 const OpportunityPost: React.FC<OpportunityPostProps> = ({
   opportunity,
   onBookmarkChange,
   initialIsBookmarked,
 }) => {
-  const { id, images, title } = opportunity;
+  const { images, title } = opportunity;
 
   const [isBookmarked, setIsBookmarked] = useState<boolean>(
     Boolean(initialIsBookmarked)
   );
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [showComments, setShowComments] = useState<boolean>(false);
-  const [modalOpen, setModalOpen] = useState<boolean>(false);
-  const [modalIndex, setModalIndex] = useState<number>(0);
-  const [showMessage, setShowMessage] = useState<boolean>(false);
-
-  const { data: session } = useSession();
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    setIsBookmarked(Boolean(initialIsBookmarked));
-  }, [initialIsBookmarked]);
-
-  useEffect(() => {
-    if (showMessage) {
-      toast.success(
-        isBookmarked ? "Added to bookmarks" : "Removed from bookmarks"
-      );
-      const timer = setTimeout(() => setShowMessage(false), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showMessage, isBookmarked]);
 
   const handleEditSuccess = () => {
     setIsEditing(false);
     queryClient.invalidateQueries({ queryKey: ["opportunities"] });
   };
 
-  const handleBookmarkChange = async (_id: string, newState: boolean) => {
-    if (!session?.user?.id) {
-      toast.error("Please log in to bookmark opportunities");
-      return;
-    }
+  const handleEditCancel = () => {
+    setIsEditing(false);
+  };
 
-    if (!isValidUUID(id)) {
-      console.error("Invalid opportunity ID format");
-      return;
-    }
+  const [showComments, setShowComments] = useState<boolean>(false);
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [modalIndex, setModalIndex] = useState<number>(0);
 
-    const currentUserId = session.user.id as string;
+  const queryClient = useQueryClient();
 
-    try {
-      if (newState) {
-        const response = await axios.post("/api/bookmarks", {
-          userId: currentUserId,
-          opportunityId: id,
-        });
-        if (response.data?.message === "Already bookmarked") {
-          toast.info("Already bookmarked");
-        }
-      } else {
-        await axios.delete("/api/bookmarks", {
-          data: {
-            userId: currentUserId,
-            opportunityId: id,
-          },
-        });
-      }
 
-      setIsBookmarked(newState);
 
-      if (onBookmarkChange) {
-        onBookmarkChange(id, newState);
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["bookmarks", "status"] });
-
-      setShowMessage(true);
-    } catch (err) {
-      console.error("Bookmark request failed:", err);
-      toast.error("Failed to update bookmark");
+  const handleBookmarkChange = async (opportunityId: string, bookmarked: boolean): Promise<void> => {
+    setIsBookmarked(bookmarked);
+    if (onBookmarkChange) {
+      onBookmarkChange(opportunityId, bookmarked);
     }
   };
 
@@ -155,7 +99,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
             <NewOpportunityForm
               opportunity={opportunity}
               onOpportunityCreated={handleEditSuccess}
-              onCancel={() => setIsEditing(false)}
+              onCancel={handleEditCancel}
             />
           </DialogContent>
         </Dialog>

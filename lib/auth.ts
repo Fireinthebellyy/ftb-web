@@ -51,6 +51,8 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      // Note: Calendar scope removed - use incremental authorization if calendar access is needed
+      // Consider using calendar.events.readonly if only read access is required
     },
     linkedin: {
       clientId: process.env.LINKEDIN_CLIENT_ID!,

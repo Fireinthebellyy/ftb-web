@@ -46,7 +46,7 @@ describe("NewOpportunityForm onSubmit", () => {
   async function mockOnSubmit(
     data: FormData,
     options: {
-      files?: Array<{ file: File; fileId?: string }>;
+      files?: Array<{ file: File; fileId?: string; name: string }>;
       existingImages?: string[];
       removedImageIds?: string[];
       opportunityId?: string;
@@ -229,7 +229,7 @@ describe("NewOpportunityForm onSubmit", () => {
     };
 
     const mockFile = new File(["test"], "test.png", { type: "image/png" });
-    const files = [{ file: mockFile }];
+    const files = [{ file: mockFile, name: mockFile.name }];
 
     const mockAxiosPost = vi.mocked(axios.post);
     mockAxiosPost.mockResolvedValue({
@@ -261,7 +261,7 @@ describe("NewOpportunityForm onSubmit", () => {
     };
 
     const mockFile = new File(["test"], "test.png", { type: "image/png" });
-    const files = [{ file: mockFile }];
+    const files = [{ file: mockFile, name: mockFile.name }];
 
     mockStorage.createFile.mockRejectedValue(
       new Error("CORS Error: Domain not whitelisted")

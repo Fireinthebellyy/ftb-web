@@ -341,13 +341,13 @@ export function useDeleteComment(opportunityId: string) {
 
 export async function fetchBookmarkDatesForMonth(
   month: string
-): Promise<string[]> {
+): Promise<{date: string, types: string[]}[]> {
   try {
-    const { data } = await axios.get<{ dates?: string[] }>("/api/bookmarks", {
+    const { data } = await axios.get<{ dates?: {date: string, types: string[]}[] }>("/api/bookmarks", {
       params: { month },
     });
 
-    // Normalize to an array of strings
+    // Normalize to an array of objects
     return Array.isArray(data?.dates) ? data.dates : [];
   } catch (error) {
     console.error("Error fetching bookmark dates for month:", error);
@@ -356,11 +356,68 @@ export async function fetchBookmarkDatesForMonth(
 }
 
 export function useBookmarkDatesForMonth(month?: string) {
-  return useQuery<string[]>({
+  return useQuery<{date: string, types: string[]}[]>({
     queryKey: ["bookmarks", "month", month],
     queryFn: () => fetchBookmarkDatesForMonth(month as string),
     enabled: Boolean(month),
     staleTime: 1000 * 60 * 5,
+  });
+}
+
+/**
+ * Bookmarks: fetch user's bookmarked opportunities
+ */
+export type Bookmark = {
+  bookmarkId: string;
+  opportunityId: string;
+  opportunity: {
+    id: string;
+    title: string;
+    description: string;
+    type: string;
+    deadline?: string;
+    endDate?: string;
+  };
+};
+
+export async function fetchBookmarks(): Promise<Bookmark[]> {
+  try {
+    const { data } = await axios.get<{
+      upcoming: any[];
+      closed: any[];
+      uncategorized: any[];
+    }>("/api/bookmarks");
+
+    // Combine all bookmarks and normalize the structure
+    const allBookmarks = [
+      ...(data.upcoming || []),
+      ...(data.closed || []),
+      ...(data.uncategorized || []),
+    ];
+
+    return allBookmarks.map((item) => ({
+      bookmarkId: item.bookmarkId || `${item.opportunityId}-bookmark`,
+      opportunityId: item.opportunityId,
+      opportunity: {
+        id: item.opportunityId,
+        title: item.title,
+        description: item.description,
+        type: item.type,
+        deadline: item.endDate || item.deadline,
+        endDate: item.endDate,
+      },
+    }));
+  } catch (error) {
+    console.error("Error fetching bookmarks:", error);
+    return [];
+  }
+}
+
+export function useBookmarks() {
+  return useQuery<Bookmark[]>({
+    queryKey: ["bookmarks"],
+    queryFn: fetchBookmarks,
+    staleTime: 1000 * 60, // 1 minute
   });
 }
 
@@ -387,6 +444,7 @@ export function useTasks() {
 export type CreateTaskData = {
   title: string;
   description?: string;
+  opportunityLink?: string;
 };
 
 export function useCreateTask() {

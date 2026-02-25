@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,6 +12,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Circle, Plus, SquareArrowOutUpRight, Trash2 } from "lucide-react";
 import {
   useTasks,
@@ -19,6 +26,7 @@ import {
   useUpdateTask,
   useDeleteTask,
 } from "@/lib/queries-tasks";
+import { useBookmarks } from "@/lib/queries";
 import { Task } from "@/types/interfaces";
 
 interface TaskWidgetProps {
@@ -33,11 +41,12 @@ export default function TaskWidget({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskDescription, setNewTaskDescription] = useState("");
+  const [newTaskOpportunityId, setNewTaskOpportunityId] = useState("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<any>(null);
   const [editTaskTitle, setEditTaskTitle] = useState("");
   const [editTaskDescription, setEditTaskDescription] = useState("");
-  const [editTaskOpportunityLink, setEditTaskOpportunityLink] = useState("");
+  const [editTaskOpportunityId, setEditTaskOpportunityId] = useState("");
 
   const {
     data: tasks = [],
@@ -47,6 +56,14 @@ export default function TaskWidget({
     enabled: queryEnabled,
     initialData: initialTasks,
   });
+  const { data: bookmarks = [] } = useBookmarks();
+
+  const bookmarkedOpportunities = useMemo(() => {
+    return bookmarks.map(b => ({
+      id: b.opportunity.id,
+      title: b.opportunity.title,
+    }));
+  }, [bookmarks]);
 
   const { mutate: createTask, isPending: isCreating } = useCreateTask();
   const {
@@ -59,16 +76,21 @@ export default function TaskWidget({
   const handleCreateTask = async () => {
     if (!newTaskTitle.trim()) return;
 
+    const selectedOpportunity = bookmarkedOpportunities.find(
+      opp => opp.id === newTaskOpportunityId
+    );
     createTask(
       {
         title: newTaskTitle,
         description: newTaskDescription,
+        opportunityLink: selectedOpportunity?.title || newTaskOpportunityId,
       },
       {
         onSuccess: () => {
           setIsDialogOpen(false);
           setNewTaskTitle("");
           setNewTaskDescription("");
+          setNewTaskOpportunityId("");
         },
       }
     );
@@ -114,6 +136,23 @@ export default function TaskWidget({
                   onChange={(e) => setNewTaskDescription(e.target.value)}
                   placeholder="Task description (optional)"
                 />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">
+                  Related Opportunity
+                </label>
+                <Select value={newTaskOpportunityId} onValueChange={setNewTaskOpportunityId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a bookmarked opportunity (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bookmarkedOpportunities.map((opp) => (
+                      <SelectItem key={opp.id} value={opp.id}>
+                        {opp.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex justify-end gap-2">
                 <Button
@@ -177,6 +216,11 @@ export default function TaskWidget({
                   >
                     {task.title}
                   </p>
+                  {task.opportunityLink && (
+                    <p className={`text-xs ${task.completed ? "text-gray-300 line-through" : "text-gray-500"} mt-1`}>
+                      ({task.opportunityLink})
+                    </p>
+                  )}
                 </div>
                 <div className="flex gap-1">
                   <Button
@@ -188,7 +232,11 @@ export default function TaskWidget({
                       setEditingTask(task);
                       setEditTaskTitle(task.title);
                       setEditTaskDescription(task.description || "");
-                      setEditTaskOpportunityLink(task.opportunityLink || "");
+                      // Find opportunity ID from title match
+                      const matchedOpp = bookmarkedOpportunities.find(
+                        opp => opp.title === task.opportunityLink
+                      );
+                      setEditTaskOpportunityId(matchedOpp?.id || "");
                       setIsEditDialogOpen(true);
                     }}
                   >
@@ -242,13 +290,20 @@ export default function TaskWidget({
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">
-                Related Opportunity Link
+                Related Opportunity
               </label>
-              <Input
-                value={editTaskOpportunityLink}
-                onChange={(e) => setEditTaskOpportunityLink(e.target.value)}
-                placeholder="https://example.com/opportunity"
-              />
+              <Select value={editTaskOpportunityId} onValueChange={setEditTaskOpportunityId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a bookmarked opportunity (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {bookmarkedOpportunities.map((opp) => (
+                    <SelectItem key={opp.id} value={opp.id}>
+                      {opp.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex justify-end gap-2">
               <Button
@@ -261,12 +316,15 @@ export default function TaskWidget({
                 disabled={isUpdating}
                 onClick={() => {
                   if (editingTask && editTaskTitle.trim()) {
+                    const selectedOpportunity = bookmarkedOpportunities.find(
+                      opp => opp.id === editTaskOpportunityId
+                    );
                     updateTask(
                       {
                         id: editingTask.id,
                         title: editTaskTitle,
                         description: editTaskDescription,
-                        opportunityLink: editTaskOpportunityLink,
+                        opportunityLink: selectedOpportunity?.title || editTaskOpportunityId,
                       },
                       {
                         onSuccess: () => {
@@ -274,7 +332,7 @@ export default function TaskWidget({
                           setEditingTask(null);
                           setEditTaskTitle("");
                           setEditTaskDescription("");
-                          setEditTaskOpportunityLink("");
+                          setEditTaskOpportunityId("");
                         },
                       }
                     );

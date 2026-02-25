@@ -43,6 +43,40 @@ const FEATURE_ENABLE_BOTTOM_NAV = true;
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const mobileRouteLabel = useMemo(() => {
+    const normalizedPath =
+      pathname === "/" ? "/" : pathname.replace(/\/+$/, "");
+
+    if (normalizedPath === "/") {
+      return "Home";
+    }
+
+    const routeLabels: Array<[string, string]> = [
+      ["/opportunities", "Opportunities"],
+      ["/deadlines", "Deadlines"],
+      ["/toolkit", "Toolkit"],
+      ["/ungatekeep", "Ungatekeep"],
+      ["/intern", "Internships"],
+      ["/profile", "Profile"],
+      ["/admin", "Admin"],
+      ["/login", "Log in"],
+      ["/signup", "Sign up"],
+    ];
+
+    const matchedRoute = routeLabels.find(
+      ([route]) =>
+        normalizedPath === route || normalizedPath.startsWith(`${route}/`)
+    );
+
+    if (matchedRoute) {
+      return matchedRoute[1];
+    }
+
+    const firstSegment = normalizedPath.split("/").filter(Boolean)[0];
+    return firstSegment
+      ? `${firstSegment.charAt(0).toUpperCase()}${firstSegment.slice(1)}`
+      : "Home";
+  }, [pathname]);
 
   const { data: user, isPending } = useSession();
 
@@ -153,7 +187,7 @@ export default function Navbar() {
       transition={{ duration: 0.5 }}
       className="sticky top-0 z-50 flex-none bg-gray-50 backdrop-blur-sm"
     >
-      <div className="container mx-auto grid h-16 max-w-7xl grid-cols-[1fr_auto] items-center px-4 md:grid-cols-3 lg:px-4 xl:px-6">
+      <div className="relative container mx-auto grid h-16 max-w-7xl grid-cols-[1fr_auto] items-center px-4 md:grid-cols-3 lg:px-4 xl:px-6">
         <div className="flex items-center justify-start pl-2 md:pl-4">
           <Link href="/" className="flex items-center space-x-3">
             <Image
@@ -169,6 +203,12 @@ export default function Navbar() {
               Fire in the Belly
             </span>
           </Link>
+        </div>
+
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center md:hidden">
+          <span className="max-w-[45vw] truncate text-sm font-semibold tracking-wide text-neutral-700">
+            {mobileRouteLabel}
+          </span>
         </div>
 
         <nav className="hidden justify-center gap-4 sm:gap-6 md:flex">

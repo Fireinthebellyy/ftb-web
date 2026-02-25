@@ -48,7 +48,7 @@ export default async function ProfilePage() {
       aria-label="Profile background"
     >
       <div className="absolute inset-0 -z-10 bg-black/10" aria-hidden="true" />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 pt-2 pb-4 md:py-8">
         <div className="mx-auto max-w-3xl">
           <ProfileCard
             user={{

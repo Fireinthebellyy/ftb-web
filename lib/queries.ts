@@ -256,19 +256,6 @@ export function useFeatured(limit?: number) {
   });
 }
 
-/**
- * Bookmarks: per-opportunity status (recommended approach, mirrors upvote flow)
- */
-export function useIsBookmarked(id: string) {
-  return useQuery<boolean>({
-    queryKey: ["bookmark", id],
-    queryFn: async () => {
-      const { data } = await axios.get(`/api/bookmarks/${id}`);
-      return Boolean(data?.isBookmarked);
-    },
-    staleTime: 1000 * 30,
-  });
-}
 
 /**
  * Comments: fetch and manage comments for opportunities
@@ -339,30 +326,6 @@ export function useDeleteComment(opportunityId: string) {
   });
 }
 
-export async function fetchBookmarkDatesForMonth(
-  month: string
-): Promise<string[]> {
-  try {
-    const { data } = await axios.get<{ dates?: string[] }>("/api/bookmarks", {
-      params: { month },
-    });
-
-    // Normalize to an array of strings
-    return Array.isArray(data?.dates) ? data.dates : [];
-  } catch (error) {
-    console.error("Error fetching bookmark dates for month:", error);
-    return [];
-  }
-}
-
-export function useBookmarkDatesForMonth(month?: string) {
-  return useQuery<string[]>({
-    queryKey: ["bookmarks", "month", month],
-    queryFn: () => fetchBookmarkDatesForMonth(month as string),
-    enabled: Boolean(month),
-    staleTime: 1000 * 60 * 5,
-  });
-}
 
 /**
  * Tasks: fetch and manage user tasks

@@ -48,17 +48,7 @@ export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalP
 
     const handleSubmit = () => {
         // Proceed to tracker (Toolkit access)
-        let oppId: number | string = opportunity.id;
-
-        // Ensure proper ID format if it's a string static ID
-        const rawId = opportunity.id as unknown as string | number;
-        if (typeof rawId === 'string' && rawId.startsWith('static-')) {
-            const suffix = rawId.replace('static-', '');
-            if (/^\d+$/.test(suffix)) {
-                oppId = parseInt(suffix, 10);
-            }
-            // If not numeric suffix, keep the original string ID
-        }
+        const oppId: number | string = opportunity.id;
 
         addToTracker({ ...opportunity, id: oppId }, 'Not Applied');
         onClose();

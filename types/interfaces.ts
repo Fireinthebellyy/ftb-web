@@ -63,7 +63,6 @@ export interface OpportunityPostProps {
   opportunity: Opportunity;
   onBookmarkChange?: (id: string, isBookmarked: boolean) => void;
   isCardExpanded?: boolean;
-  initialIsBookmarked?: boolean;
 }
 
 export interface InternshipPostProps {

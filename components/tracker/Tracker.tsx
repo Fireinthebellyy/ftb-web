@@ -2,16 +2,16 @@
 
 import React, { useState, useMemo } from 'react';
 import { useTracker, TrackerItem } from '@/components/providers/TrackerProvider';
-import { AlertCircle, FileText, CalendarDays, TrendingUp, LucideIcon, Loader2, Activity, ChevronRight, X, Zap } from 'lucide-react';
+import { FileText, TrendingUp, LucideIcon, Loader2, Activity, ChevronRight, X, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
 
 import TrackerDetailModal from './TrackerDetailModal';
 import ApplyModal, { ApplyModalOpportunity } from './ApplyModal';
-import EventCard from './EventCard';
+
 import TrackerRow from './TrackerRow';
 import MobileTrackerCard from './MobileTrackerCard';
 
@@ -31,6 +31,9 @@ interface MetricCardProps {
 
 export default function Tracker() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+
     // Helper for Priority
     const isHighPriority = (deadline?: string) => {
         if (!deadline) return false;
@@ -38,9 +41,19 @@ export default function Tracker() {
         return diff >= 0 && diff <= 7;
     };
 
-    const { items, events, removeEvent, updateStatus, removeFromTracker, isLoading } = useTracker();
+    const { items, updateStatus, removeFromTracker, isLoading } = useTracker();
 
-    const [activeTab, setActiveTab] = useState<'internship' | 'opportunity'>('internship');
+    const tabParam = searchParams.get('tab');
+    const initialTab = (tabParam === 'opportunity' || tabParam === 'internship') ? tabParam : 'internship';
+    const [activeTab, setActiveTab] = useState<'internship' | 'opportunity'>(initialTab);
+
+    // Sync tab to URL when changed
+    const handleTabChange = (tab: 'internship' | 'opportunity') => {
+        setActiveTab(tab);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('tab', tab);
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    };
 
 
     const [detailOpp, setDetailOpp] = useState<TrackerItem | null>(null);
@@ -73,32 +86,6 @@ export default function Tracker() {
     const successRate = totalApplications > 0 ? Math.round((totalSelected / totalApplications) * 100) : 0;
     const actionRate = total > 0 ? Math.round((totalApplications / total) * 100) : 0;
 
-    // Agenda Logic (Deadlines + Events)
-    const now = new Date();
-    const nextWeek = new Date();
-    nextWeek.setDate(now.getDate() + 7);
-
-    const agendaItems = [
-        ...events.map(e => ({ ...e, isEvent: true, date: new Date(e.date).getTime() })),
-        ...trackedOpps.filter(o => o.deadline && o.status !== 'Selected' && o.status !== 'Rejected').map(o => ({
-            id: o.oppId,
-            title: `Deadline: ${o.title}`,
-            date: new Date(o.deadline!).getTime(),
-            type: 'Deadline',
-            description: o.company,
-            isEvent: false,
-            opp: o
-        }))
-    ]
-        .sort((a, b) => a.date - b.date)
-        .filter(i => {
-            const d = new Date(i.date);
-            return d >= new Date() && d <= nextWeek;
-        });
-
-
-
-
 
     if (isLoading) {
         return (
@@ -121,7 +108,7 @@ export default function Tracker() {
                     {/* Tab Switcher */}
                     <div className="bg-slate-100 p-1 rounded-lg flex items-center justify-center">
                         <button
-                            onClick={() => setActiveTab('internship')}
+                            onClick={() => handleTabChange('internship')}
                             className={cn(
                                 "px-3 py-1.5 rounded-md text-sm font-bold transition-all flex justify-center items-center gap-2",
                                 activeTab === 'internship' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
@@ -130,7 +117,7 @@ export default function Tracker() {
                             Internships
                         </button>
                         <button
-                            onClick={() => setActiveTab('opportunity')}
+                            onClick={() => handleTabChange('opportunity')}
                             className={cn(
                                 "px-3 py-1.5 rounded-md text-sm font-bold transition-all flex justify-center items-center gap-2",
                                 activeTab === 'opportunity' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
@@ -223,49 +210,6 @@ export default function Tracker() {
 
             {/* View Content */}
             <div className="space-y-8">
-                {/* Agenda Section */}
-                {agendaItems.length > 0 && activeTab === 'internship' && (
-                    <section className="bg-white rounded-2xl border border-slate-200 overflow-hidden hidden md:block">
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                            <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
-                                <CalendarDays size={20} className="text-indigo-600" />
-                                Your Agenda
-                            </h3>
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-                                Next 7 Days
-                            </span>
-                        </div>
-
-                        <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {agendaItems.slice(0, 3).map((item, _idx) => (
-                                item.isEvent ? (
-                                    <EventCard key={item.id} event={item as any} onDelete={removeEvent} />
-                                ) : (
-                                    <div key={item.id} className="bg-amber-50 p-4 rounded-xl border border-amber-200 shadow-sm flex flex-col justify-between">
-                                        <div className="flex items-start gap-3 mb-3">
-                                            <div className="p-2 bg-amber-100 rounded-lg text-amber-700">
-                                                <AlertCircle size={18} />
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-slate-900 text-sm leading-tight">{(item as any).opp.title}</p>
-                                                <p className="text-xs text-amber-800 mt-1">{(item as any).opp.company}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-between items-center mt-auto">
-                                            <span className="text-xs font-bold text-amber-700">{new Date(item.date).toLocaleDateString()}</span>
-                                            <button
-                                                onClick={() => updateStatus(item.id, 'Applied')}
-                                                className="px-3 py-1.5 bg-amber-600 text-white text-xs font-bold rounded-lg hover:bg-amber-700"
-                                            >
-                                                Apply
-                                            </button>
-                                        </div>
-                                    </div>
-                                )
-                            ))}
-                        </div>
-                    </section>
-                )}
 
                 {/* Main List */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">

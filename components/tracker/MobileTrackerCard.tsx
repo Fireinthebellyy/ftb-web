@@ -2,6 +2,16 @@ import React from 'react';
 import { Trash2, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { TrackerItem } from '@/components/providers/TrackerProvider';
+import { differenceInCalendarDays } from 'date-fns';
+
+function DeadlineBadge({ deadline }: { deadline: string }) {
+    const daysDiff = differenceInCalendarDays(new Date(deadline), new Date());
+    if (daysDiff < 0) return <span className="text-[10px] font-bold bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded-full">Closed</span>;
+    if (daysDiff === 0) return <span className="text-[10px] font-bold bg-orange-50 text-orange-600 border border-orange-200 px-2 py-0.5 rounded-full animate-pulse">Today!</span>;
+    if (daysDiff <= 3) return <span className="text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200 px-2 py-0.5 rounded-full">{daysDiff}d left</span>;
+    if (daysDiff <= 7) return <span className="text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-2 py-0.5 rounded-full">{daysDiff} days left</span>;
+    return <span className="text-[10px] font-bold bg-green-50 text-green-600 border border-green-200 px-2 py-0.5 rounded-full">{daysDiff} days left</span>;
+}
 
 interface MobileTrackerCardProps {
     opp: TrackerItem;
@@ -91,6 +101,7 @@ export default function MobileTrackerCard({ opp, updateStatus, onDelete, onClick
                             <span className="text-[10px] uppercase font-black tracking-wider text-slate-600 whitespace-nowrap">
                                 {new Date(opp.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                             </span>
+                            {opp.kind === 'opportunity' && <DeadlineBadge deadline={opp.deadline} />}
                         </div>
                     )}
                 </div>

@@ -466,13 +466,6 @@ export default function InternshipList() {
                     Opportunities
                   </Link>
                   <Link
-                    href="/deadlines"
-                    prefetch={false}
-                    className="block text-sm text-gray-600 hover:text-gray-800"
-                  >
-                    My Deadlines
-                  </Link>
-                  <Link
                     href="/profile"
                     prefetch={false}
                     className="block text-sm text-gray-600 hover:text-gray-800"

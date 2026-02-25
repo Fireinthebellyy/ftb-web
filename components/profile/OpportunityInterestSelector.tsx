@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, Fragment } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   FormField,
@@ -70,7 +70,7 @@ export default function OpportunityInterestSelector({ control, isEditing }: Prop
                         opt === "Other" && (selected.includes("Other") || hasCustom) && (otherValue || "").trim().length > 0;
 
                       return (
-                        <>
+                        <Fragment key={opt}>
                           {showCustomBadge && (
                             <Badge
                               key={`${opt}-custom`}
@@ -100,7 +100,7 @@ export default function OpportunityInterestSelector({ control, isEditing }: Prop
                           >
                             {opt}
                           </Badge>
-                        </>
+                        </Fragment>
                       );
                     })}
                   </div>

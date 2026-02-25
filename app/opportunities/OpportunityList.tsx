@@ -189,7 +189,6 @@ export default function OpportunityCardsPage() {
     bootstrapMonth,
     bootstrapBookmarkDates,
     allOpportunities,
-    bookmarkStatuses,
     isLoading,
     error,
     fetchNextPage,
@@ -412,13 +411,6 @@ export default function OpportunityCardsPage() {
                     Post Opportunity
                   </p>
                   <Link
-                    href="/deadlines"
-                    prefetch={false}
-                    className="block text-sm text-gray-600 hover:text-gray-800"
-                  >
-                    My Deadlines
-                  </Link>
-                  <Link
                     href="/profile"
                     prefetch={false}
                     className="block text-sm text-gray-600 hover:text-gray-800"
@@ -538,10 +530,6 @@ export default function OpportunityCardsPage() {
                         <div key={opportunity.id}>
                           <OpportunityPost
                             opportunity={opportunity}
-
-                            initialIsBookmarked={Boolean(
-                              bookmarkStatuses[opportunity.id]
-                            )}
                           />
                           {index ===
                             Math.max(0, allOpportunities.length - 3) && (
@@ -670,10 +658,6 @@ export default function OpportunityCardsPage() {
                       <div key={opportunity.id}>
                         <OpportunityPost
                           opportunity={opportunity}
-
-                          initialIsBookmarked={Boolean(
-                            bookmarkStatuses[opportunity.id]
-                          )}
                         />
                         {index === Math.max(0, allOpportunities.length - 3) && (
                           <div ref={mobileTriggerRef} className="h-1" />

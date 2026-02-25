@@ -1,6 +1,24 @@
 import { Clock, AlertCircle, Trash2, ChevronDown, Calendar } from 'lucide-react';
 import clsx from 'clsx';
 import { TrackerItem } from '@/components/providers/TrackerProvider';
+import { differenceInCalendarDays } from 'date-fns';
+
+function DeadlineBadge({ deadline }: { deadline: string }) {
+    const daysDiff = differenceInCalendarDays(new Date(deadline), new Date());
+    if (daysDiff < 0) {
+        return <span className="text-[10px] font-bold bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded-full">Closed</span>;
+    }
+    if (daysDiff === 0) {
+        return <span className="text-[10px] font-bold bg-orange-50 text-orange-600 border border-orange-200 px-2 py-0.5 rounded-full animate-pulse">Deadline today!</span>;
+    }
+    if (daysDiff <= 3) {
+        return <span className="text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200 px-2 py-0.5 rounded-full">{daysDiff}d left</span>;
+    }
+    if (daysDiff <= 7) {
+        return <span className="text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-2 py-0.5 rounded-full">{daysDiff} days left</span>;
+    }
+    return <span className="text-[10px] font-bold bg-green-50 text-green-600 border border-green-200 px-2 py-0.5 rounded-full">{daysDiff} days left</span>;
+}
 
 interface TrackerRowProps {
     opp: TrackerItem & { isHighPriority?: boolean };
@@ -40,6 +58,9 @@ export default function TrackerRow({ opp, updateStatus, onClick, onDelete }: Tra
                             )}>
                                 <Clock size={12} /> {new Date(opp.deadline).toLocaleDateString()}
                             </span>
+                        )}
+                        {opp.deadline && opp.kind === 'opportunity' && (
+                            <DeadlineBadge deadline={opp.deadline} />
                         )}
                         {opp.expectedResultWindow && (
                             <span className="flex items-center gap-1 text-xs text-slate-400">

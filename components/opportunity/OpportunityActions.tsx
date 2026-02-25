@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+
 import {
   Heart,
   MessageSquare,
@@ -45,7 +45,6 @@ export function OpportunityActions({
   const { id, user, userHasUpvoted } = opportunity;
   const { data: session } = useSession();
   const toggleUpvote = useToggleUpvote(id);
-  const [showMessage, setShowMessage] = useState(false);
   const { addToTracker, items } = useTracker();
 
   const isTracked = items.some(item => item.oppId === id && (item.kind === 'opportunity' || !item.kind));
@@ -77,16 +76,6 @@ export function OpportunityActions({
       toast.error("Failed to delete post");
     }
   };
-
-  useEffect(() => {
-    if (showMessage) {
-      toast.success(
-        isBookmarked ? "Added to tracker" : "Removed from tracker"
-      );
-      const timer = setTimeout(() => setShowMessage(false), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showMessage, isBookmarked]);
 
   return (
     <>
@@ -151,7 +140,6 @@ export function OpportunityActions({
                 }
 
                 onBookmarkChange(id, !isBookmarked);
-                setShowMessage(true);
               }}
               aria-label="Track"
               className="flex cursor-pointer items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"

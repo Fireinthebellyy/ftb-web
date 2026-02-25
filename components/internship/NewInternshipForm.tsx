@@ -4,12 +4,11 @@ import axios from "axios";
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, FormProvider } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { internshipFormSchema, InternshipFormData } from "./schema";
-import { createOpportunityStorage } from "@/lib/appwrite";
-import { FileItem, UploadProgress } from "@/types/interfaces";
 import { TitleField } from "./fields/TitleField";
 import { DescriptionField } from "./fields/DescriptionField";
 import { HiringOrganizationField } from "./fields/HiringOrganizationField";
@@ -18,8 +17,6 @@ import { TimingSelector } from "./fields/TimingSelector";
 import { MetaFields } from "./fields/MetaFields";
 import { TagsField } from "./fields/TagsField";
 import { EligibilityField } from "./fields/EligibilityField";
-import { PosterField } from "./fields/PosterField";
-import { useQueryClient } from "@tanstack/react-query";
 
 export default function NewInternshipForm({
   onInternshipCreated,
@@ -29,7 +26,6 @@ export default function NewInternshipForm({
   onCancel?: () => void;
 }) {
   const [loading, setLoading] = useState(false);
-  const [logoFile, setLogoFile] = useState<FileItem | null>(null);
   const queryClient = useQueryClient();
 
   const form = useForm<InternshipFormData>({
@@ -52,7 +48,6 @@ export default function NewInternshipForm({
       duration: "",
       link: "",
       deadline: "",
-      poster: "",
     },
   });
 
@@ -64,86 +59,23 @@ export default function NewInternshipForm({
   }
 
   function handleTimingChange(timing: "full_time" | "part_time") {
-    form.setValue("timing", timing, { shouldValidate: true, shouldTouch: true });
-  }
-
-  async function uploadLogo(): Promise<string | null> {
-    if (!logoFile) return null;
-
-    try {
-      const internshipStorage = createOpportunityStorage();
-      const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
-
-      if (!bucketId) {
-        throw new Error("Appwrite bucket ID not configured");
-      }
-
-      setLogoFile((prev) => prev ? { ...prev, uploading: true, progress: 0 } : null);
-
-      const res = await internshipStorage.createFile(
-        bucketId,
-        "unique()",
-        logoFile.file,
-        [],
-        (progress: UploadProgress) => {
-          const percent = Math.round(progress.progress || 0);
-          setLogoFile((prev) => prev ? { ...prev, progress: percent } : null);
-        }
-      );
-
-      // Get the file view URL
-      const logoUrl = internshipStorage.getFileView(bucketId, res.$id);
-
-      setLogoFile((prev) => prev ? { ...prev, uploading: false, fileId: res.$id } : null);
-
-      return logoUrl;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown upload error";
-      toast.error(`Failed to upload logo: ${message}`);
-      setLogoFile((prev) => prev ? { ...prev, uploading: false, error: true, errorMessage: message } : null);
-      throw err;
-    }
+    form.setValue("timing", timing, {
+      shouldValidate: true,
+      shouldTouch: true,
+    });
   }
 
   async function onSubmit(data: InternshipFormData) {
     setLoading(true);
 
     try {
-      // Upload logo if a new file is selected
-      let logoUrl = data.poster;
-      if (logoFile && !logoFile.error) {
-        try {
-          logoUrl = await uploadLogo();
-          if (!logoUrl) {
-            toast.error("Failed to upload logo. Please try again.");
-            setLoading(false);
-            return;
-          }
-        } catch {
-          // Error already shown in uploadLogo
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Validate that logo is present (either uploaded file or existing URL)
-      if (!logoUrl && !data.poster) {
-        form.setError("poster", {
-          type: "manual",
-          message: "Company logo is required.",
-        });
-        toast.error("Please upload a company logo.");
-        setLoading(false);
-        return;
-      }
-
       const payload = {
         ...data,
-        poster: logoUrl || data.poster || "",
-        tags: data.tags
-          ?.split(",")
-          .map((t) => t.trim())
-          .filter(Boolean) || [],
+        tags:
+          data.tags
+            ?.split(",")
+            .map((t) => t.trim())
+            .filter(Boolean) || [],
         link: data.link,
         hiringManager: data.hiringManager || undefined,
         hiringManagerEmail: data.hiringManagerEmail || undefined,
@@ -155,12 +87,6 @@ export default function NewInternshipForm({
       const res = await axios.post("/api/internships", payload);
       if (res.status !== 200 && res.status !== 201)
         throw new Error("Failed to create internship");
-
-      // Cleanup
-      if (logoFile) {
-        URL.revokeObjectURL(logoFile.preview);
-        setLogoFile(null);
-      }
 
       toast.success("Internship submitted successfully!");
       queryClient.invalidateQueries({ queryKey: ["internships"] });
@@ -175,12 +101,16 @@ export default function NewInternshipForm({
         const errorData = err.response?.data;
         if (errorData?.error && Array.isArray(errorData.error)) {
           // Zod validation errors
-          const errorMessages = errorData.error.map((e: any) => e.message).join(", ");
+          const errorMessages = errorData.error
+            .map((e: any) => e.message)
+            .join(", ");
           toast.error(`Validation error: ${errorMessages}`);
         } else if (errorData?.message) {
           toast.error(errorData.message);
         } else {
-          toast.error("Failed to create internship. Please check all required fields.");
+          toast.error(
+            "Failed to create internship. Please check all required fields."
+          );
         }
       } else if (err instanceof Error) {
         console.error("Error message:", err.message);
@@ -189,12 +119,6 @@ export default function NewInternshipForm({
       } else {
         console.error("Unknown error type:", typeof err);
         toast.error("Unknown error occurred");
-      }
-
-      // Cleanup on error
-      if (logoFile) {
-        URL.revokeObjectURL(logoFile.preview);
-        setLogoFile(null);
       }
     } finally {
       setLoading(false);
@@ -215,11 +139,6 @@ export default function NewInternshipForm({
 
           <EligibilityField control={form.control} />
 
-          <PosterField
-            control={form.control}
-            logoFile={logoFile}
-            setLogoFile={setLogoFile}
-          />
 
           <TypeSelector
             control={form.control}
@@ -235,7 +154,7 @@ export default function NewInternshipForm({
 
           <MetaFields control={form.control} />
 
-          <div className="flex items-center gap-2 justify-end pt-4">
+          <div className="flex items-center justify-end gap-2 pt-4">
             {onCancel && (
               <Button
                 type="button"
@@ -246,11 +165,7 @@ export default function NewInternshipForm({
                 Cancel
               </Button>
             )}
-            <Button
-              type="submit"
-              disabled={loading}
-              className="px-6"
-            >
+            <Button type="submit" disabled={loading} className="px-6">
               {loading ? "Creating..." : "Create Internship"}
             </Button>
           </div>

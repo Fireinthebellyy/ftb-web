@@ -92,6 +92,9 @@ export type OpportunityVoteState = {
 async function fetchOpportunityVoteState(
   id: string
 ): Promise<OpportunityVoteState> {
+  if (typeof window === "undefined") {
+    return { id, upvotes: 0, hasUserUpvoted: false };
+  }
   // Hits the dedicated upvote GET endpoint which returns { count, userHasUpvoted }
   const { data } = await axios.get(`/api/opportunities/${id}/upvote`);
   return {
@@ -179,6 +182,9 @@ export async function fetchOpportunitiesPaginated(
   types: string[] = [],
   tags: string[] = []
 ): Promise<OpportunitiesResponse> {
+  if (typeof window === "undefined") {
+    return { opportunities: [] };
+  }
   const { data } = await axios.get<OpportunitiesResponse>(
     "/api/opportunities",
     {
@@ -264,6 +270,7 @@ export function useComments(opportunityId: string) {
   return useQuery<Comment[]>({
     queryKey: ["comments", opportunityId],
     queryFn: async () => {
+      if (typeof window === "undefined") return [];
       const { data } = await axios.get(
         `/api/opportunities/${opportunityId}/comments`
       );
@@ -335,6 +342,7 @@ export type TasksResponse = {
 };
 
 export async function fetchTasks(): Promise<Task[]> {
+  if (typeof window === "undefined") return [];
   const { data } = await axios.get<TasksResponse>("/api/tasks");
   return data.tasks;
 }
@@ -465,6 +473,7 @@ export type SaveOnboardingProfileInput = {
 };
 
 export async function fetchOnboardingProfile(): Promise<OnboardingProfile | null> {
+  if (typeof window === "undefined") return null;
   try {
     const { data } = await axios.get<{ profile?: OnboardingProfile }>(
       "/api/onboarding"
@@ -496,3 +505,4 @@ export * from "./queries-onboarding";
 export * from "./queries-toolkits";
 export * from "./queries-version";
 export * from "./queries-internships";
+export * from "./queries/banners";

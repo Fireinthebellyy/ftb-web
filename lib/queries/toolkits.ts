@@ -9,6 +9,7 @@ export type ToolkitWithContent = Toolkit & {
 };
 
 async function fetchToolkits(): Promise<Toolkit[]> {
+  if (typeof window === "undefined") return [];
   const { data } = await axios.get<Toolkit[]>("/api/toolkits");
   return data;
 }
@@ -25,6 +26,7 @@ export const useToolkit = (toolkitId: string) => {
   return useQuery({
     queryKey: ["toolkit", toolkitId],
     queryFn: async () => {
+      if (typeof window === "undefined") return null;
       const { data } = await axios.get<ToolkitWithContent>(
         `/api/toolkits/${toolkitId}`
       );

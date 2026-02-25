@@ -69,10 +69,10 @@ export default function ToolkitBanner() {
                         {bannerSlides.map((slide, index) => (
                             <CarouselItem key={index} className="pl-0 cursor-grab active:cursor-grabbing">
                                 <div
-                                    className="w-full px-3 py-2 sm:px-4 sm:py-2.5 text-white relative flex items-center"
+                                    className="w-full h-full min-h-[56px] sm:min-h-[48px] px-3 py-2 sm:px-4 sm:py-2.5 text-white relative flex items-center justify-center sm:justify-start"
                                     style={{ background: slide.background }}
                                 >
-                                    <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2 w-full relative z-10 pointer-events-none">
+                                    <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2 w-full relative z-10 pointer-events-none text-center sm:text-left">
                                         <h2 className="text-[13px] sm:text-sm font-semibold leading-tight">
                                             {slide.title}
                                         </h2>

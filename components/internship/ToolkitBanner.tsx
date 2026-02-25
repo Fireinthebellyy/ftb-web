@@ -1,6 +1,12 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+} from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 
 export default function ToolkitBanner() {
     const toolkits = [
@@ -24,26 +30,60 @@ export default function ToolkitBanner() {
         }
     ];
 
+    const bannerSlides = [
+        {
+            title: "Boost your hireability by 80% with our expert-led toolkits",
+            subtitle: "Learn exactly what recruiters are looking for.",
+            background: "linear-gradient(135deg, #0b4f8c 0%, #2f8ee6 100%)",
+        },
+        {
+            title: "Tired of getting ghosted after applying?",
+            subtitle: "See how our ATS-friendly resume templates can help.",
+            background: "linear-gradient(135deg, #d35400 0%, #e67e22 100%)",
+        },
+        {
+            title: "Ace your next technical interview",
+            subtitle: "Practice with our comprehensive mock interview guide.",
+            background: "linear-gradient(135deg, #16a085 0%, #1abc9c 100%)",
+        }
+    ];
+
     return (
         <div className="w-full flex flex-col space-y-4 mb-3 sm:mb-4">
             {/* Banner Section */}
-            <div
-                className="w-full rounded-lg p-3 sm:py-3 sm:px-4 text-white relative overflow-hidden"
-                style={{ background: 'linear-gradient(135deg, #0b4f8c 0%, #2f8ee6 100%)' }}
+            {/* Banner Section Carousel */}
+            <Carousel
+                opts={{
+                    align: "start",
+                    loop: true,
+                }}
+                plugins={[
+                    Autoplay({
+                        delay: 4000,
+                    }),
+                ]}
+                className="w-full relative overflow-hidden rounded-lg group"
             >
-                <div className="flex items-center justify-between w-full relative z-10">
-                    <h2 className="text-sm sm:text-base font-bold leading-tight max-w-[85%] pr-2">
-                        Boost your hireability by 80% with our expert-led toolkits
-                    </h2>
-
-                    {/* Pagination dots */}
-                    <div className="flex gap-1.5 opacity-80 shrink-0 mb-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                        <div className="w-1.5 h-1.5 rounded-full bg-white/50"></div>
-                        <div className="w-1.5 h-1.5 rounded-full bg-white/50"></div>
-                    </div>
-                </div>
-            </div>
+                <CarouselContent className="-ml-0">
+                    {bannerSlides.map((slide, index) => (
+                        <CarouselItem key={index} className="pl-0 cursor-grab active:cursor-grabbing">
+                            <div
+                                className="w-full h-full min-h-[50px] sm:min-h-[60px] p-3 sm:py-3 sm:px-4 text-white relative flex flex-col justify-center"
+                                style={{ background: slide.background }}
+                            >
+                                <div className="flex items-center justify-between w-full relative z-10 w-full mb-1 sm:mb-2 pointer-events-none">
+                                    <h2 className="text-sm sm:text-base font-bold leading-tight max-w-[85%] pr-2">
+                                        {slide.title}
+                                    </h2>
+                                </div>
+                                <p className="text-xs sm:text-sm text-white/90 pointer-events-none">
+                                    {slide.subtitle}
+                                </p>
+                            </div>
+                        </CarouselItem>
+                    ))}
+                </CarouselContent>
+            </Carousel>
 
             {/* Premium Toolkits Section */}
             <div className="pt-1">

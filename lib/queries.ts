@@ -496,3 +496,4 @@ export * from "./queries-onboarding";
 export * from "./queries-toolkits";
 export * from "./queries-version";
 export * from "./queries-internships";
+export * from "./queries/banners";

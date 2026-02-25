@@ -311,6 +311,19 @@ export const coupons = pgTable("coupons", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const banners = pgTable("banners", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  subtitle: text("subtitle"),
+  background: text("background"), // CSS background property (e.g., linear-gradient)
+  imageUrl: text("image_url"), // Optional background image
+  link: text("link"), // Optional link when clicked
+  priority: integer("priority").default(0), // For ordering posters
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const userToolkits = pgTable("user_toolkits", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id")
@@ -450,6 +463,7 @@ export const schema = {
   toolkits,
   toolkitContentItems,
   coupons,
+  banners,
   userToolkits,
   userToolkitProgress,
   ungatekeepPosts,

@@ -31,8 +31,7 @@ export const internshipFormSchema = z.object({
   location: z.string().optional(),
   experience: z.string().optional(),
   duration: z.string().optional(),
-  stipend: z
-    .coerce
+  stipend: z.coerce
     .number({
       message: "Stipend must be a number.",
     })
@@ -54,7 +53,6 @@ export const internshipFormSchema = z.object({
     }),
   link: z.string().url({ message: "Application link is required." }),
   deadline: z.string().optional(),
-  poster: z.string().optional(),
 });
 
 export type InternshipFormData = z.infer<typeof internshipFormSchema>;

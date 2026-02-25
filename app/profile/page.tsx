@@ -39,9 +39,7 @@ export default async function ProfilePage() {
   const dobStr = current.dateOfBirth
     ? typeof current.dateOfBirth === "string"
       ? current.dateOfBirth
-      : new Date(current.dateOfBirth as unknown as string)
-          .toISOString()
-          .split("T")[0]
+      : new Date(current.dateOfBirth).toISOString().split("T")[0]
     : null;
 
   return (

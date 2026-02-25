@@ -52,7 +52,7 @@ export default function ToolkitBanner() {
         <div className="w-full flex flex-col space-y-4 mb-3 sm:mb-4">
             {/* Banner Section */}
             {/* Banner Section Carousel */}
-            <div className="w-full sm:max-w-[70%] lg:max-w-[80%] xl:max-w-[75%] mx-auto">
+            <div className="w-full max-w-[320px] sm:max-w-[400px] mx-auto">
                 <Carousel
                     opts={{
                         align: "start",

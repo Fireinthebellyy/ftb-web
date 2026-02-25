@@ -86,7 +86,7 @@ export default function MobileTrackerCard({ opp, updateStatus, onDelete, onClick
                                 title="Add to Google Calendar"
                             >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src="/images/google-calendar.png" alt="Google Calendar" className="w-4 h-4 object-contain" />
+                                <img src="/images/google-calendar.webp" alt="Google Calendar" className="w-4 h-4 object-contain" />
                             </a>
                             <span className="text-[10px] uppercase font-black tracking-wider text-slate-600 whitespace-nowrap">
                                 {new Date(opp.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}

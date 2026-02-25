@@ -254,7 +254,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
                                 location: fetched.location,
                                 type: fetched.type,
                                 deadline: fetched.deadline,
-                                logo: fetched.poster, // Internship uses 'poster'
+                                logo: undefined, // Internship uses 'poster' (was removed)
                                 ...fetched
                             };
                         }

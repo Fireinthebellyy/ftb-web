@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import FeaturedOpportunities from "./opportunity/FeaturedOpportunities";
+import ToolkitBanner from "./internship/ToolkitBanner";
 import {
   Select,
   SelectContent,
@@ -487,7 +488,9 @@ export default function InternshipList() {
           </aside>
 
           {/* Main Content - 6 columns */}
-          <main className="col-span-6 max-h-[90vh] overflow-y-scroll pr-2">
+          <main className="col-span-6 max-h-[90vh] overflow-y-scroll pr-2 hide-scrollbar">
+            <ToolkitBanner />
+
             {/* Tags in Horizontal Box with Filter Icon */}
             {isLoading && (
               <div className="space-y-4">
@@ -604,6 +607,8 @@ export default function InternshipList() {
               <div>Internship form coming soon</div>
             </DialogContent>
           </Dialog>
+
+          <ToolkitBanner />
 
           {isLoading && (
             <div className="space-y-4">

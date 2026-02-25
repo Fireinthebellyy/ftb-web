@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { fetchInternshipsPaginated } from '@/lib/queries-internships';
 import { fetchOpportunitiesPaginated } from '@/lib/queries-opportunities';
 import { Internship, Opportunity } from '@/types/interfaces';
+import { createOpportunityStorage } from '@/lib/appwrite';
 
 export interface TrackerItem {
     oppId: number | string;
@@ -241,6 +242,29 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
                 const internshipsMap = new Map(internshipData.internships.map((i: Internship) => [i.id, i]));
                 const opportunitiesMap = new Map((opportunityData.opportunities || []).map((o: Opportunity) => [o.id, o]));
 
+                let opportunityStorage: ReturnType<typeof createOpportunityStorage> | null = null;
+                const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
+                if (bucketId) {
+                    try {
+                        opportunityStorage = createOpportunityStorage();
+                    } catch (e) {
+                        console.error('Failed to init storage', e);
+                    }
+                }
+
+                const getImageUrl = (imageId: string | undefined): string | undefined => {
+                    if (!imageId) return undefined;
+                    if (imageId.startsWith('http') || imageId.startsWith('/')) return imageId;
+                    if (opportunityStorage && bucketId) {
+                        try {
+                            return opportunityStorage.getFileView(bucketId, imageId).toString();
+                        } catch {
+                            return imageId;
+                        }
+                    }
+                    return imageId;
+                };
+
                 // Merge Data
                 const merged = trackedItems.map(item => {
                     let apiData: Partial<TrackerItem> = {};
@@ -254,7 +278,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
                                 location: fetched.location,
                                 type: fetched.type,
                                 deadline: fetched.deadline,
-                                logo: fetched.poster, // Internship uses 'poster'
+                                logo: undefined, // Internship uses 'poster' (was removed)
                                 ...fetched
                             };
                         }
@@ -267,7 +291,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
                                 location: fetched.location,
                                 type: fetched.type,
                                 deadline: fetched.endDate || fetched.startDate, // Use endDate as deadline
-                                logo: fetched.images?.[0], // Use first image if available
+                                logo: getImageUrl(fetched.images?.[0]), // Use first image if available, resolving to URL
                                 ...fetched
                             };
                         }

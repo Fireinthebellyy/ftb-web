@@ -79,7 +79,7 @@ export default function TrackerRow({ opp, updateStatus, onClick, onDelete }: Tra
                         title="Add to Google Calendar"
                     >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/images/google-calendar.png" alt="Google Calendar" className="w-5 h-5 object-contain" />
+                        <img src="/images/google-calendar.webp" alt="Google Calendar" className="w-5 h-5 object-contain" />
                     </a>
                 )}
                 <button

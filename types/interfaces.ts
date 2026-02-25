@@ -40,7 +40,6 @@ export type Internship = {
   createdAt?: string;
   isVerified?: boolean;
   isActive?: boolean;
-  poster?: string | null;
   user: {
     id: string;
     name: string;

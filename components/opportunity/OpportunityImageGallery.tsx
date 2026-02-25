@@ -45,7 +45,7 @@ export function OpportunityImageGallery({
                   images[0]
                 )}
                 alt={title}
-                className="max-h-48 w-full rounded-t-lg object-cover sm:max-h-64"
+                className="max-h-48 w-full rounded-t-lg object-cover object-left-top sm:max-h-64"
                 loading="lazy"
                 height={256}
                 width={400}
@@ -89,7 +89,7 @@ export function OpportunityImageGallery({
                           image
                         )}
                         alt={`${title} - Image ${i + 1}`}
-                        className="max-h-48 w-full rounded-t-lg object-cover sm:max-h-64"
+                        className="max-h-48 w-full rounded-t-lg object-cover object-left-top sm:max-h-64"
                         loading="lazy"
                         height={256}
                         width={400}

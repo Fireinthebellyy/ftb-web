@@ -5,7 +5,7 @@ import { useTracker, TrackerItem } from '@/components/providers/TrackerProvider'
 import { AlertCircle, FileText, CalendarDays, TrendingUp, LucideIcon, Loader2, Activity, ChevronRight, X, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
 
@@ -31,6 +31,9 @@ interface MetricCardProps {
 
 export default function Tracker() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+
     // Helper for Priority
     const isHighPriority = (deadline?: string) => {
         if (!deadline) return false;
@@ -40,7 +43,17 @@ export default function Tracker() {
 
     const { items, events, removeEvent, updateStatus, removeFromTracker, isLoading } = useTracker();
 
-    const [activeTab, setActiveTab] = useState<'internship' | 'opportunity'>('internship');
+    const tabParam = searchParams.get('tab');
+    const initialTab = (tabParam === 'opportunity' || tabParam === 'internship') ? tabParam : 'internship';
+    const [activeTab, setActiveTab] = useState<'internship' | 'opportunity'>(initialTab);
+
+    // Sync tab to URL when changed
+    const handleTabChange = (tab: 'internship' | 'opportunity') => {
+        setActiveTab(tab);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('tab', tab);
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    };
 
 
     const [detailOpp, setDetailOpp] = useState<TrackerItem | null>(null);
@@ -121,7 +134,7 @@ export default function Tracker() {
                     {/* Tab Switcher */}
                     <div className="bg-slate-100 p-1 rounded-lg flex items-center justify-center">
                         <button
-                            onClick={() => setActiveTab('internship')}
+                            onClick={() => handleTabChange('internship')}
                             className={cn(
                                 "px-3 py-1.5 rounded-md text-sm font-bold transition-all flex justify-center items-center gap-2",
                                 activeTab === 'internship' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
@@ -130,7 +143,7 @@ export default function Tracker() {
                             Internships
                         </button>
                         <button
-                            onClick={() => setActiveTab('opportunity')}
+                            onClick={() => handleTabChange('opportunity')}
                             className={cn(
                                 "px-3 py-1.5 rounded-md text-sm font-bold transition-all flex justify-center items-center gap-2",
                                 activeTab === 'opportunity' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"

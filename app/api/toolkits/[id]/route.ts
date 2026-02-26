@@ -52,23 +52,27 @@ export async function GET(
 
     const toolkit = toolkitResult[0];
 
-    const contentItemsResult = await db
-      .select({
-        id: toolkitContentItems.id,
-        toolkitId: toolkitContentItems.toolkitId,
-        title: toolkitContentItems.title,
-        type: toolkitContentItems.type,
-        content: toolkitContentItems.content,
-        bunnyVideoUrl: toolkitContentItems.bunnyVideoUrl,
-        orderIndex: toolkitContentItems.orderIndex,
-        createdAt: toolkitContentItems.createdAt,
-        updatedAt: toolkitContentItems.updatedAt,
-      })
-      .from(toolkitContentItems)
-      .where(eq(toolkitContentItems.toolkitId, toolkitId))
-      .orderBy(asc(toolkitContentItems.orderIndex));
+    const requestHeaders = await headers();
 
-    const session = await getSessionCached(await headers());
+    const [contentItemsResult, session] = await Promise.all([
+      db
+        .select({
+          id: toolkitContentItems.id,
+          toolkitId: toolkitContentItems.toolkitId,
+          title: toolkitContentItems.title,
+          type: toolkitContentItems.type,
+          content: toolkitContentItems.content,
+          bunnyVideoUrl: toolkitContentItems.bunnyVideoUrl,
+          orderIndex: toolkitContentItems.orderIndex,
+          createdAt: toolkitContentItems.createdAt,
+          updatedAt: toolkitContentItems.updatedAt,
+        })
+        .from(toolkitContentItems)
+        .where(eq(toolkitContentItems.toolkitId, toolkitId))
+        .orderBy(asc(toolkitContentItems.orderIndex)),
+      getSessionCached(requestHeaders),
+    ]);
+
     let hasPurchased = false;
     let completedItemIds: string[] = [];
 

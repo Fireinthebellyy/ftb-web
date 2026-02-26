@@ -3,14 +3,15 @@
 import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { BookOpen, Clock, Cloud, Check } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock, Cloud, Check } from "lucide-react";
 import ToolkitSidebar from "@/components/toolkit/ToolkitSidebar";
 import ContentList from "@/components/toolkit/ContentList";
+import ToolkitDetailSkeleton from "@/components/toolkit/ToolkitDetailSkeleton";
 import { useToolkit, useToolkitPurchase } from "@/lib/queries-toolkits";
-import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import axios from "axios";
 
@@ -111,31 +112,7 @@ export default function ToolkitDetailPage() {
     : null;
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-6">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Skeleton className="h-10 w-64" />
-              <Skeleton className="h-10 w-32" />
-            </div>
-            <Skeleton className="h-[400px] w-full rounded-lg" />
-            <div className="space-y-4">
-              <div className="flex gap-4">
-                <Skeleton className="h-40 w-full" />
-                <div className="w-72 space-y-4">
-                  <Skeleton className="h-10 w-48" />
-                  <div className="space-y-4">
-                    <Skeleton className="h-16 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <ToolkitDetailSkeleton />;
   }
 
   if (!toolkit) {
@@ -157,13 +134,13 @@ export default function ToolkitDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto max-w-7xl px-4 py-6">
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/toolkit")}
-          className="mb-6 text-gray-600 hover:text-gray-900"
+        <Link
+          href="/toolkit"
+          className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900"
         >
-          ← Back to Toolkits
-        </Button>
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Link>
 
         <div className="grid gap-8 xl:grid-cols-3">
           <div className="xl:col-span-2">

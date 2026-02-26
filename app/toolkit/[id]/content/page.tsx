@@ -11,20 +11,19 @@ import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import LessonSidebar from "@/components/toolkit/LessonSidebar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import {
-  PanelRight,
-  ArrowLeft,
-  Check,
-  ChevronRight,
-  PanelLeft,
-} from "lucide-react";
+import { ArrowLeft, PanelLeft, PanelRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ToolkitContentItem } from "@/types/interfaces";
-import LessonSidebar from "@/components/toolkit/LessonSidebar";
-import BunnyPlayer from "@/components/toolkit/BunnyPlayer";
-import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
-import { useToolkit, useMarkContentComplete } from "@/lib/queries-toolkits";
+import ToolkitContentMain from "@/components/toolkit/content/ToolkitContentMain";
+import ToolkitContentPageSkeleton from "@/components/toolkit/content/ToolkitContentPageSkeleton";
+import ToolkitContentSidebar from "@/components/toolkit/content/ToolkitContentSidebar";
+import {
+  useMarkContentComplete,
+  useToolkitAccess,
+  useToolkitContent,
+} from "@/lib/queries-toolkits";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface CircularProgressProps {
@@ -92,19 +91,21 @@ export default function ToolkitContentPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
 
-  const { data: toolkitData, isLoading } = useToolkit(toolkitId);
+  const { data: contentData, isLoading: isContentLoading } =
+    useToolkitContent(toolkitId);
+  const { data: accessData, isLoading: isAccessLoading } =
+    useToolkitAccess(toolkitId);
   const markComplete = useMarkContentComplete(toolkitId);
 
-  const toolkit = toolkitData?.toolkit ?? null;
+  const toolkit = contentData?.toolkit ?? null;
   const contentItems = useMemo(
-    () => toolkitData?.contentItems ?? [],
-    [toolkitData?.contentItems]
+    () => contentData?.contentItems ?? [],
+    [contentData?.contentItems]
   );
-  const hasAccess = toolkitData?.hasPurchased ?? false;
-  // Use completedItemIds from API (persisted in DB)
+  const hasAccess = accessData?.hasPurchased ?? false;
   const completedItems = useMemo(
-    () => toolkitData?.completedItemIds ?? [],
-    [toolkitData?.completedItemIds]
+    () => accessData?.completedItemIds ?? [],
+    [accessData?.completedItemIds]
   );
 
   const progress =
@@ -124,15 +125,25 @@ export default function ToolkitContentPage() {
   }, [contentItems, currentItem]);
 
   useEffect(() => {
-    if (!isLoading && toolkit && !hasAccess && !didRedirectRef.current) {
+    if (
+      !isContentLoading &&
+      !isAccessLoading &&
+      toolkit &&
+      !hasAccess &&
+      !didRedirectRef.current
+    ) {
       didRedirectRef.current = true;
       toast.warning("You need to purchase this toolkit to access content");
-      const timeoutId = setTimeout(() => {
-        router.push(`/toolkit/${params.id}`);
-      }, 3000);
-      return () => clearTimeout(timeoutId);
+      router.push(`/toolkit/${params.id}`);
     }
-  }, [isLoading, hasAccess, toolkit, params.id, router]);
+  }, [
+    isAccessLoading,
+    isContentLoading,
+    hasAccess,
+    toolkit,
+    params.id,
+    router,
+  ]);
 
   const handleItemSelect = useCallback((item: ToolkitContentItem): void => {
     setCurrentItem(item);
@@ -196,24 +207,29 @@ export default function ToolkitContentPage() {
     }
   }, [currentItem, completedItems, handleMarkComplete]);
 
-  if (isLoading) {
+  if (isContentLoading) {
+    return <ToolkitContentPageSkeleton />;
+  }
+
+  if (!toolkit) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="mx-auto max-w-4xl space-y-4">
-          <Skeleton className="h-24 w-full rounded-lg" />
-          <Skeleton className="aspect-video w-full rounded-lg" />
-          <div className="space-y-2">
-            <Skeleton className="h-6 w-3/4" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-2/3" />
-          </div>
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+        <Card className="w-full max-w-sm text-center">
+          <CardContent className="pt-6">
+            <h2 className="mb-2 text-xl font-bold">Toolkit Not Found</h2>
+            <p className="mb-4 text-sm text-gray-600">
+              We could not load this toolkit.
+            </p>
+            <Button onClick={() => router.push("/toolkit")} className="w-full">
+              Back to Toolkits
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  if (!toolkit || !hasAccess) {
+  if (!isAccessLoading && !hasAccess) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
         <Card className="w-full max-w-sm text-center">
@@ -222,8 +238,11 @@ export default function ToolkitContentPage() {
             <p className="mb-4 text-sm text-gray-600">
               You need to purchase this toolkit to access the content.
             </p>
-            <Button onClick={() => router.push("/toolkit")} className="w-full">
-              Back to Toolkits
+            <Button
+              onClick={() => router.push(`/toolkit/${toolkitId}`)}
+              className="w-full"
+            >
+              Go to Toolkit Overview
             </Button>
           </CardContent>
         </Card>
@@ -271,12 +290,24 @@ export default function ToolkitContentPage() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-80 p-0">
-                <LessonSidebar
-                  items={contentItems}
-                  currentItemId={currentItem?.id || ""}
-                  onItemSelect={handleItemSelect}
-                  completedItems={completedItems}
-                />
+                {isAccessLoading ? (
+                  <div className="space-y-3 p-4">
+                    <Skeleton className="h-6 w-36" />
+                    {Array.from({ length: 8 }).map((_, index) => (
+                      <Skeleton
+                        key={index}
+                        className="h-14 w-full rounded-lg"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <LessonSidebar
+                    items={contentItems}
+                    currentItemId={currentItem?.id || ""}
+                    onItemSelect={handleItemSelect}
+                    completedItems={completedItems}
+                  />
+                )}
               </SheetContent>
             </Sheet>
 
@@ -312,86 +343,28 @@ export default function ToolkitContentPage() {
           className="flex-1 p-4 sm:p-6 lg:min-w-0 lg:overflow-y-auto"
           style={{ width: "100%" }}
         >
-          {currentItem ? (
-            <div
-              className={cn(
-                "mx-auto space-y-6 transition-all duration-300",
-                desktopSidebarOpen ? "lg:max-w-3xl" : "lg:max-w-4xl"
-              )}
-            >
-              {currentItem.type === "video" && currentItem.bunnyVideoUrl && (
-                <BunnyPlayer
-                  videoId={currentItem.id}
-                  title={currentItem.title}
-                  className="shadow-sm"
-                />
-              )}
-
-              {currentItem.type === "article" && currentItem.content && (
-                <Card>
-                  <CardContent className="p-3 sm:p-4">
-                    <HtmlRenderer
-                      content={currentItem.content}
-                      protected={true}
-                      itemId={currentItem.id}
-                      onComplete={handleMarkComplete}
-                    />
-                  </CardContent>
-                </Card>
-              )}
-
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <Button
-                  variant="outline"
-                  onClick={handleNavigatePrev}
-                  disabled={isFirst}
-                  className="w-full sm:w-auto"
-                >
-                  <ChevronRight className="mr-2 h-4 w-4 rotate-180" />
-                  Previous
-                </Button>
-
-                {!isLast ? (
-                  <Button
-                    onClick={handleNavigateNext}
-                    className="w-full sm:w-auto"
-                  >
-                    Next
-                    <ChevronRight className="ml-2 h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleMarkCompleteAndCelebrate}
-                    className="w-full sm:w-auto"
-                  >
-                    <Check className="mr-2 h-4 w-4" />
-                    Complete
-                  </Button>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="flex h-40 items-center justify-center text-center">
-              <p className="text-sm text-gray-500">
-                No content available for this toolkit yet.
-              </p>
-            </div>
-          )}
+          <ToolkitContentMain
+            currentItem={currentItem}
+            completedItems={completedItems}
+            isAccessLoading={isAccessLoading}
+            isFirst={isFirst}
+            isLast={isLast}
+            desktopSidebarOpen={desktopSidebarOpen}
+            onMarkComplete={handleMarkComplete}
+            onNavigatePrev={handleNavigatePrev}
+            onNavigateNext={handleNavigateNext}
+            onCompleteLast={handleMarkCompleteAndCelebrate}
+          />
         </main>
 
-        <aside
-          className={cn(
-            "hidden w-72 shrink-0 lg:order-last lg:block lg:h-[calc(100vh-4rem)] lg:overflow-y-auto lg:border-l lg:bg-white",
-            !desktopSidebarOpen && "lg:hidden"
-          )}
-        >
-          <LessonSidebar
-            items={contentItems}
-            currentItemId={currentItem?.id || ""}
-            onItemSelect={handleItemSelect}
-            completedItems={completedItems}
-          />
-        </aside>
+        <ToolkitContentSidebar
+          items={contentItems}
+          currentItemId={currentItem?.id || ""}
+          completedItems={completedItems}
+          isAccessLoading={isAccessLoading}
+          desktopSidebarOpen={desktopSidebarOpen}
+          onItemSelect={handleItemSelect}
+        />
       </div>
     </div>
   );

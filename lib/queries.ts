@@ -92,6 +92,9 @@ export type OpportunityVoteState = {
 async function fetchOpportunityVoteState(
   id: string
 ): Promise<OpportunityVoteState> {
+  if (typeof window === "undefined") {
+    return { id, upvotes: 0, hasUserUpvoted: false };
+  }
   // Hits the dedicated upvote GET endpoint which returns { count, userHasUpvoted }
   const { data } = await axios.get(`/api/opportunities/${id}/upvote`);
   return {
@@ -179,6 +182,9 @@ export async function fetchOpportunitiesPaginated(
   types: string[] = [],
   tags: string[] = []
 ): Promise<OpportunitiesResponse> {
+  if (typeof window === "undefined") {
+    return { opportunities: [] };
+  }
   const { data } = await axios.get<OpportunitiesResponse>(
     "/api/opportunities",
     {
@@ -256,19 +262,6 @@ export function useFeatured(limit?: number) {
   });
 }
 
-/**
- * Bookmarks: per-opportunity status (recommended approach, mirrors upvote flow)
- */
-export function useIsBookmarked(id: string) {
-  return useQuery<boolean>({
-    queryKey: ["bookmark", id],
-    queryFn: async () => {
-      const { data } = await axios.get(`/api/bookmarks/${id}`);
-      return Boolean(data?.isBookmarked);
-    },
-    staleTime: 1000 * 30,
-  });
-}
 
 /**
  * Comments: fetch and manage comments for opportunities
@@ -277,6 +270,7 @@ export function useComments(opportunityId: string) {
   return useQuery<Comment[]>({
     queryKey: ["comments", opportunityId],
     queryFn: async () => {
+      if (typeof window === "undefined") return [];
       const { data } = await axios.get(
         `/api/opportunities/${opportunityId}/comments`
       );
@@ -339,30 +333,6 @@ export function useDeleteComment(opportunityId: string) {
   });
 }
 
-export async function fetchBookmarkDatesForMonth(
-  month: string
-): Promise<string[]> {
-  try {
-    const { data } = await axios.get<{ dates?: string[] }>("/api/bookmarks", {
-      params: { month },
-    });
-
-    // Normalize to an array of strings
-    return Array.isArray(data?.dates) ? data.dates : [];
-  } catch (error) {
-    console.error("Error fetching bookmark dates for month:", error);
-    return [];
-  }
-}
-
-export function useBookmarkDatesForMonth(month?: string) {
-  return useQuery<string[]>({
-    queryKey: ["bookmarks", "month", month],
-    queryFn: () => fetchBookmarkDatesForMonth(month as string),
-    enabled: Boolean(month),
-    staleTime: 1000 * 60 * 5,
-  });
-}
 
 /**
  * Tasks: fetch and manage user tasks
@@ -372,6 +342,7 @@ export type TasksResponse = {
 };
 
 export async function fetchTasks(): Promise<Task[]> {
+  if (typeof window === "undefined") return [];
   const { data } = await axios.get<TasksResponse>("/api/tasks");
   return data.tasks;
 }
@@ -502,6 +473,7 @@ export type SaveOnboardingProfileInput = {
 };
 
 export async function fetchOnboardingProfile(): Promise<OnboardingProfile | null> {
+  if (typeof window === "undefined") return null;
   try {
     const { data } = await axios.get<{ profile?: OnboardingProfile }>(
       "/api/onboarding"
@@ -533,3 +505,4 @@ export * from "./queries-onboarding";
 export * from "./queries-toolkits";
 export * from "./queries-version";
 export * from "./queries-internships";
+export * from "./queries/banners";

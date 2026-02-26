@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import FeaturedOpportunities from "./opportunity/FeaturedOpportunities";
+import ToolkitBanner from "./internship/ToolkitBanner";
 import {
   Select,
   SelectContent,
@@ -182,7 +183,7 @@ export default function InternshipList() {
   }, [searchPlaceholders.length]);
 
   // Flatten all internships from all pages
-  const allInternships = data?.pages?.flatMap((page) => page.internships) || [];
+  const allInternships = (data?.pages?.flatMap((page) => page.internships) || []).filter(Boolean);
 
   // Intersection observer for infinite scroll
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -229,15 +230,10 @@ export default function InternshipList() {
   }, [handleLoadMore, allInternships.length]);
 
   const handleBookmarkChange = (
-    internshipId: string,
-    isBookmarked: boolean
+    _internshipId: string,
+    _isBookmarked: boolean
   ) => {
     // TODO: handle bookmark
-    console.log(
-      `Internship ${internshipId} ${
-        isBookmarked ? "bookmarked" : "unbookmarked"
-      }`
-    );
   };
 
   const clearFilters = () => {
@@ -394,7 +390,9 @@ export default function InternshipList() {
               {/* Filters */}
               {isFilterBoxOpen && (
                 <div className="rounded-lg border bg-white px-4 py-3">
-                  <h3 className="mb-3 font-semibold text-gray-900">Filters</h3>
+                  <h3 className="mb-3 font-semibold text-gray-900">
+                    Filters
+                  </h3>
                   <div className="space-y-4">
                     {/* Internship Type Filter */}
                     <div>
@@ -468,13 +466,6 @@ export default function InternshipList() {
                     Opportunities
                   </Link>
                   <Link
-                    href="/deadlines"
-                    prefetch={false}
-                    className="block text-sm text-gray-600 hover:text-gray-800"
-                  >
-                    My Deadlines
-                  </Link>
-                  <Link
                     href="/profile"
                     prefetch={false}
                     className="block text-sm text-gray-600 hover:text-gray-800"
@@ -490,7 +481,9 @@ export default function InternshipList() {
           </aside>
 
           {/* Main Content - 6 columns */}
-          <main className="col-span-6 max-h-[90vh] overflow-y-scroll pr-2">
+          <main className="col-span-6 max-h-[90vh] overflow-y-scroll pr-2 hide-scrollbar">
+            <ToolkitBanner />
+
             {/* Tags in Horizontal Box with Filter Icon */}
             {isLoading && (
               <div className="space-y-4">
@@ -607,6 +600,8 @@ export default function InternshipList() {
               <div>Internship form coming soon</div>
             </DialogContent>
           </Dialog>
+
+          <ToolkitBanner />
 
           {isLoading && (
             <div className="space-y-4">

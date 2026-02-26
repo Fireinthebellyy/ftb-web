@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -177,7 +177,7 @@ export default function ProfileForm({
         file.file,
         [],
         (progress: UploadProgress) => {
-          const percent = Math.round((progress.progress || 0) * 100);
+          const percent = Math.round(progress.progress || 0);
           setFiles((prev) =>
             prev.map((f, idx) => (idx === 0 ? { ...f, progress: percent } : f))
           );
@@ -300,10 +300,15 @@ export default function ProfileForm({
   const initialValuesRef = useRef({
     name: user.name ?? "",
     image: user.image ?? null,
+    fieldInterests: user.fieldInterests ?? [],
+    fieldInterestOther: "", // Initial load doesn't populate "Other" text specifically unless parsed, handled by form default
+    opportunityInterests: user.opportunityInterests ?? [],
+    opportunityInterestOther: "",
     dateOfBirth: user.dateOfBirth ?? "",
     collegeInstitute: user.collegeInstitute ?? "",
     contactNumber: user.contactNumber ?? "",
     currentRole: user.currentRole ?? "",
+    currentRoleOther: "",
   });
 
   const watchedValues = form.watch();
@@ -311,39 +316,38 @@ export default function ProfileForm({
   const hasChanges =
     watchedValues.name !== initialValuesRef.current.name ||
     files.length > 0 ||
-    (watchedValues as any).fieldInterests?.length > 0 ||
-    !!(watchedValues as any).fieldInterestOther ||
-    (watchedValues as any).opportunityInterests?.length > 0 ||
-    !!(watchedValues as any).opportunityInterestOther ||
-    (watchedValues as any).dateOfBirth !==
-      initialValuesRef.current.dateOfBirth ||
-    (watchedValues as any).collegeInstitute !==
-      initialValuesRef.current.collegeInstitute ||
-    (watchedValues as any).contactNumber !==
-      initialValuesRef.current.contactNumber ||
-    (watchedValues as any).currentRole !== initialValuesRef.current.currentRole;
+    JSON.stringify(watchedValues.fieldInterests) !== JSON.stringify(initialValuesRef.current.fieldInterests) ||
+    watchedValues.fieldInterestOther !== initialValuesRef.current.fieldInterestOther ||
+    JSON.stringify(watchedValues.opportunityInterests) !== JSON.stringify(initialValuesRef.current.opportunityInterests) ||
+    watchedValues.opportunityInterestOther !== initialValuesRef.current.opportunityInterestOther ||
+    watchedValues.dateOfBirth !== initialValuesRef.current.dateOfBirth ||
+    watchedValues.collegeInstitute !== initialValuesRef.current.collegeInstitute ||
+    watchedValues.contactNumber !== initialValuesRef.current.contactNumber ||
+    watchedValues.currentRole !== initialValuesRef.current.currentRole ||
+    watchedValues.currentRoleOther !== initialValuesRef.current.currentRoleOther;
 
   // Progress bar
+  // Using JSON.stringify for deep comparison dependency to avoid unnecessary recreations
   const computeCompleteness = useCallback(() => {
     const nameFilled =
-      !!(watchedValues as any).name &&
-      String((watchedValues as any).name).trim().length > 0;
+      !!watchedValues.name &&
+      String(watchedValues.name).trim().length > 0;
     const fieldInterestsFilled =
-      Array.isArray((watchedValues as any).fieldInterests) &&
-      (watchedValues as any).fieldInterests.length > 0;
+      Array.isArray(watchedValues.fieldInterests) &&
+      watchedValues.fieldInterests.length > 0;
     const oppInterestsFilled =
-      Array.isArray((watchedValues as any).opportunityInterests) &&
-      (watchedValues as any).opportunityInterests.length > 0;
-    const dobFilled = !!(watchedValues as any).dateOfBirth;
+      Array.isArray(watchedValues.opportunityInterests) &&
+      watchedValues.opportunityInterests.length > 0;
+    const dobFilled = !!watchedValues.dateOfBirth;
     const collegeFilled =
-      !!(watchedValues as any).collegeInstitute &&
-      String((watchedValues as any).collegeInstitute).trim().length > 0;
+      !!watchedValues.collegeInstitute &&
+      String(watchedValues.collegeInstitute).trim().length > 0;
     const phoneFilled =
-      !!(watchedValues as any).contactNumber &&
-      String((watchedValues as any).contactNumber).trim().length === 10;
+      !!watchedValues.contactNumber &&
+      String(watchedValues.contactNumber).trim().length === 10;
     const roleFilled =
-      !!(watchedValues as any).currentRole &&
-      String((watchedValues as any).currentRole).trim().length > 0;
+      !!watchedValues.currentRole &&
+      String(watchedValues.currentRole).trim().length > 0;
     const imageFilled = !!effectiveAvatar;
 
     const checks = [
@@ -359,14 +363,17 @@ export default function ProfileForm({
     const filled = checks.filter(Boolean).length;
     const percent = Math.round((filled / checks.length) * 100);
     return percent;
-  }, [effectiveAvatar, watchedValues]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveAvatar, JSON.stringify(watchedValues)]);
 
-  if (typeof onProgressChange === "function") {
-    const percent = computeCompleteness();
-    try {
-      onProgressChange(percent);
-    } catch {}
-  }
+  useEffect(() => {
+    if (typeof onProgressChange === "function") {
+      const percent = computeCompleteness();
+      try {
+        onProgressChange(percent);
+      } catch { }
+    }
+  }, [computeCompleteness, onProgressChange]);
 
   return (
     <div className="space-y-6">
@@ -496,8 +503,8 @@ export default function ProfileForm({
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {field.value
                           ? new Date(
-                              `${field.value}T00:00:00`
-                            ).toLocaleDateString()
+                            `${field.value}T00:00:00`
+                          ).toLocaleDateString()
                           : "Pick a date"}
                       </Button>
                     </PopoverTrigger>

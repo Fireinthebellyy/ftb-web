@@ -8,9 +8,9 @@ import {
   ilike,
   inArray,
   isNull,
-  lte,
   or,
   sql,
+  lte,
 } from "drizzle-orm";
 import { opportunities, tags, user } from "@/lib/schema";
 import { createApiTimer } from "@/lib/api-timing";
@@ -77,17 +77,20 @@ function parsePublishAt(
 function isMissingPublishAtColumnError(error: unknown) {
   const err = error as {
     message?: string;
+    code?: string;
     cause?: { code?: string; column?: string; message?: string };
   };
 
-  if (err?.cause?.code !== "42703") {
+  const code = err?.code || err?.cause?.code;
+  if (code !== "42703") {
     return false;
   }
 
   return (
     err?.cause?.column === "publish_at" ||
     err?.cause?.message?.includes("publish_at") ||
-    err?.message?.includes("publish_at")
+    err?.message?.includes("publish_at") ||
+    err?.message?.includes('"publish_at"')
   );
 }
 
@@ -282,6 +285,10 @@ export async function GET(req: NextRequest) {
     // Validate pagination parameters
     const validLimit = Math.min(Math.max(limit, 1), 50); // Between 1 and 50
     const validOffset = Math.max(offset, 0); // Non-negative
+    const idsParam = searchParams.get("ids");
+    const ids = idsParam
+      ? idsParam.split(",").map((id) => id.trim()).filter(Boolean)
+      : [];
 
     timer.mark("query_prep_done", {
       includeTotal,
@@ -295,14 +302,22 @@ export async function GET(req: NextRequest) {
     const buildFilters = (usePublishAt: boolean) => {
       const conditions: SQL<unknown>[] = [isNull(opportunities.deletedAt)];
 
-      conditions.push(eq(opportunities.isActive, true));
-      if (usePublishAt) {
-        conditions.push(
-          or(
-            isNull(opportunities.publishAt),
-            lte(opportunities.publishAt, new Date())
-          )
-        );
+      if (ids.length > 0) {
+        conditions.push(inArray(opportunities.id, ids));
+      }
+
+      // Only show active (approved) opportunities to non-admin users
+      // Admins can see all opportunities including pending ones
+      if (sessionRole !== "admin") {
+        conditions.push(eq(opportunities.isActive, true));
+        if (usePublishAt) {
+          conditions.push(
+            or(
+              isNull(opportunities.publishAt),
+              lte(opportunities.publishAt, new Date())
+            )
+          );
+        }
       }
 
       if (searchTerm) {
@@ -462,7 +477,7 @@ export async function GET(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching opportunities:", error);
     timer.end({ status: 500, reason: "exception" });
     return NextResponse.json(

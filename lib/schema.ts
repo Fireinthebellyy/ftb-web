@@ -311,6 +311,19 @@ export const coupons = pgTable("coupons", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const banners = pgTable("banners", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  subtitle: text("subtitle"),
+  background: text("background"), // CSS background property (e.g., linear-gradient)
+  imageUrl: text("image_url"), // Optional background image
+  link: text("link"), // Optional link when clicked
+  priority: integer("priority").default(0), // For ordering posters
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const userToolkits = pgTable("user_toolkits", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id")
@@ -392,6 +405,46 @@ export const newsletterSubscribers = pgTable(
   ]
 );
 
+// Define tables first
+export const trackerItems = pgTable(
+  "tracker_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    oppId: text("opp_id").notNull(),
+    kind: text("kind").default("internship"), // 'internship' | 'opportunity'
+    status: text("status").notNull(),
+    notes: text("notes"),
+    addedAt: timestamp("added_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+    appliedAt: timestamp("applied_at"),
+    result: text("result"),
+    isManual: boolean("is_manual").default(false),
+    manualData: text("manual_data"), // storing JSON stringified manual data
+  },
+  (table) => [
+    uniqueIndex("tracker_items_user_opp_unique").on(table.userId, table.oppId),
+  ]
+);
+
+export const trackerEvents = pgTable("tracker_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  date: timestamp("date").notNull(),
+  type: text("type").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  uniqueIndex("tracker_events_user_title_date_unique").on(table.userId, table.title, table.date),
+]);
+
+// Export schema object last
 export const schema = {
   user,
   userOnboardingProfiles,
@@ -410,8 +463,11 @@ export const schema = {
   toolkits,
   toolkitContentItems,
   coupons,
+  banners,
   userToolkits,
   userToolkitProgress,
   ungatekeepPosts,
   newsletterSubscribers,
+  trackerItems,
+  trackerEvents,
 };

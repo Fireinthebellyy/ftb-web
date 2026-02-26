@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+
 import {
   Heart,
   MessageSquare,
@@ -22,6 +22,8 @@ import { toast } from "sonner";
 import { ShareDialog } from "./ShareDialog";
 import CommentSection from "./CommentSection";
 import { OpportunityPostProps } from "@/types/interfaces";
+import { useTracker } from "@/components/providers/TrackerProvider";
+import { createOpportunityStorage } from "@/lib/appwrite";
 
 interface OpportunityActionsProps {
   opportunity: OpportunityPostProps["opportunity"];
@@ -43,7 +45,9 @@ export function OpportunityActions({
   const { id, user, userHasUpvoted } = opportunity;
   const { data: session } = useSession();
   const toggleUpvote = useToggleUpvote(id);
-  const [showMessage, setShowMessage] = useState(false);
+  const { addToTracker, items } = useTracker();
+
+  const isTracked = items.some(item => item.oppId === id && (item.kind === 'opportunity' || !item.kind));
 
   const publicBaseUrl =
     (process.env.NEXT_PUBLIC_SITE_URL as string | undefined) ||
@@ -73,16 +77,6 @@ export function OpportunityActions({
     }
   };
 
-  useEffect(() => {
-    if (showMessage) {
-      toast.success(
-        isBookmarked ? "Added to bookmarks" : "Removed from bookmarks"
-      );
-      const timer = setTimeout(() => setShowMessage(false), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showMessage, isBookmarked]);
-
   return (
     <>
       <footer className="flex items-center justify-between border-t border-gray-100 pt-1">
@@ -93,16 +87,14 @@ export function OpportunityActions({
               title="Upvote"
               aria-label="Upvote"
               disabled={toggleUpvote.isPending}
-              className={`flex cursor-pointer place-items-center text-xs transition-colors sm:text-sm ${
-                userHasUpvoted
-                  ? "fill-orange-500 text-orange-600"
-                  : "hover:text-orange-600"
-              } ${toggleUpvote.isPending ? "cursor-not-allowed opacity-60" : ""}`}
+              className={`flex cursor-pointer place-items-center text-xs transition-colors sm:text-sm ${userHasUpvoted
+                ? "fill-orange-500 text-orange-600"
+                : "hover:text-orange-600"
+                } ${toggleUpvote.isPending ? "cursor-not-allowed opacity-60" : ""}`}
             >
               <Heart
-                className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                  userHasUpvoted ? "fill-current" : ""
-                }`}
+                className={`h-4 w-4 sm:h-5 sm:w-5 ${userHasUpvoted ? "fill-current" : ""
+                  }`}
               />
             </button>
             <button
@@ -116,24 +108,47 @@ export function OpportunityActions({
             </button>
             <button
               type="button"
-              title="Bookmark"
+              title="Track"
               onClick={() => {
                 if (!session?.user?.id) {
-                  toast.error("Please log in to bookmark opportunities");
+                  toast.error("Please log in to track opportunities");
                   return;
                 }
+
+                // Track when they bookmark (only if they aren't un-bookmarking)
+                if (!isBookmarked && !isTracked) {
+                  addToTracker(
+                    {
+                      id,
+                      opportunityId: id,
+                      title: opportunity.title,
+                      company: (opportunity as any).hiringOrganization || opportunity.organiserInfo || "Unknown Organization",
+                      logo: opportunity.images?.[0]
+                        ? createOpportunityStorage().getFileView(
+                          process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID || "",
+                          opportunity.images[0]
+                        ).toString()
+                        : undefined,
+                      type: opportunity.type,
+                      location: opportunity.location,
+                      deadline: opportunity.endDate,
+                      kind: 'opportunity'
+                    } as any,
+                    'Not Applied',
+                    'opportunity'
+                  );
+                }
+
                 onBookmarkChange(id, !isBookmarked);
-                setShowMessage(true);
               }}
-              aria-label="Bookmark"
+              aria-label="Track"
               className="flex cursor-pointer items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
             >
               <Bookmark
-                className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                  isBookmarked
-                    ? "fill-yellow-400 text-yellow-500"
-                    : "hover:text-orange-600"
-                }`}
+                className={`h-4 w-4 sm:h-5 sm:w-5 ${isBookmarked
+                  ? "fill-yellow-400 text-yellow-500"
+                  : "hover:text-orange-600"
+                  }`}
               />
             </button>
             <Dialog>

@@ -139,6 +139,7 @@ export default function NewInternshipForm({
 
           <EligibilityField control={form.control} />
 
+
           <TypeSelector
             control={form.control}
             value={watchedType}

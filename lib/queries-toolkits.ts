@@ -10,9 +10,37 @@ export type ToolkitDetailResponse = {
   completedItemIds: string[];
 };
 
+export type ToolkitContentResponse = {
+  toolkit: Pick<Toolkit, "id" | "title">;
+  contentItems: ToolkitContentItem[];
+};
+
+export type ToolkitAccessResponse = {
+  hasPurchased: boolean;
+  completedItemIds: string[];
+};
+
 async function fetchToolkit(toolkitId: string): Promise<ToolkitDetailResponse> {
   const { data } = await axios.get<ToolkitDetailResponse>(
     `/api/toolkits/${toolkitId}`
+  );
+  return data;
+}
+
+async function fetchToolkitContent(
+  toolkitId: string
+): Promise<ToolkitContentResponse> {
+  const { data } = await axios.get<ToolkitContentResponse>(
+    `/api/toolkits/${toolkitId}/content`
+  );
+  return data;
+}
+
+async function fetchToolkitAccess(
+  toolkitId: string
+): Promise<ToolkitAccessResponse> {
+  const { data } = await axios.get<ToolkitAccessResponse>(
+    `/api/toolkits/${toolkitId}/access`
   );
   return data;
 }
@@ -22,6 +50,22 @@ export function useToolkit(toolkitId: string) {
     queryKey: ["toolkit", toolkitId],
     queryFn: () => fetchToolkit(toolkitId),
     staleTime: 1000 * 60,
+  });
+}
+
+export function useToolkitContent(toolkitId: string) {
+  return useQuery({
+    queryKey: ["toolkit-content", toolkitId],
+    queryFn: () => fetchToolkitContent(toolkitId),
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+export function useToolkitAccess(toolkitId: string) {
+  return useQuery({
+    queryKey: ["toolkit-access", toolkitId],
+    queryFn: () => fetchToolkitAccess(toolkitId),
+    staleTime: 1000 * 30,
   });
 }
 
@@ -155,6 +199,19 @@ export function useMarkContentComplete(toolkitId: string) {
       qc.setQueryData(
         ["toolkit", toolkitId],
         (old: ToolkitDetailResponse | undefined) => {
+          if (old && !old.completedItemIds.includes(contentItemId)) {
+            return {
+              ...old,
+              completedItemIds: [...old.completedItemIds, contentItemId],
+            };
+          }
+          return old;
+        }
+      );
+
+      qc.setQueryData(
+        ["toolkit-access", toolkitId],
+        (old: ToolkitAccessResponse | undefined) => {
           if (old && !old.completedItemIds.includes(contentItemId)) {
             return {
               ...old,

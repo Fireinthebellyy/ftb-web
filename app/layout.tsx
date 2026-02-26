@@ -5,7 +5,6 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import BottomNav from "@/components/BottomNav";
 import Footer from "@/components/Footer";
-import { Suspense } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/next";
 import QueryProvider from "@/components/Providers";
@@ -13,7 +12,6 @@ import ProgressProvider from "./providers";
 import Script from "next/script";
 import WhatsAppWidget from "@/components/WhatsAppWidget";
 import FeedbackWidget from "@/components/FeedbackWidget";
-
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   weight: ["400", "700"], // or ["400", "700"] if multiple
@@ -45,20 +43,18 @@ export default function RootLayout({
         className={`${plusJakartaSans.className} flex min-h-screen flex-col bg-neutral-50 font-sans antialiased`}
         suppressHydrationWarning
       >
-        <Suspense fallback={<div>Loading ..</div>}>
-          <QueryProvider>
-            <ProgressProvider>
-              <Navbar />
-              <main className="grow pb-20 md:pb-0">{children}</main>
-              <BottomNav />
-              <Footer />
-              <WhatsAppWidget />
-              <FeedbackWidget />
-            </ProgressProvider>
-            <Toaster />
-            <Analytics />
-          </QueryProvider>
-        </Suspense>
+        <QueryProvider>
+          <ProgressProvider>
+            <Navbar />
+            <main className="grow pb-20 md:pb-0">{children}</main>
+            <BottomNav />
+            <Footer />
+            <WhatsAppWidget />
+            <FeedbackWidget />
+          </ProgressProvider>
+          <Toaster />
+          <Analytics />
+        </QueryProvider>
       </body>
     </html>
   );

@@ -62,7 +62,7 @@ export default function UngatekeepPage() {
             <div className="flex-1">
               <div className="mb-8">
                 <Skeleton className="mb-2 h-8 w-48" />
-                <Skeleton className="h-4 w-96" />
+                <Skeleton className="h-4 w-full max-w-md" />
               </div>
               {[...Array(3)].map((_, index) => (
                 <div key={index} className="mb-4">

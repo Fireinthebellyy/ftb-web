@@ -208,6 +208,7 @@ export async function GET(_request: Request) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (e) {
+    console.error("[API/Profile/GET] Error:", e);
     const err = e as Error;
     return new Response(
       JSON.stringify({ error: err.message || "Internal error" }),

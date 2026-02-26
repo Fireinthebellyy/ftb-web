@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
+import { headers } from "next/headers";
+import { getSessionCached } from "@/lib/auth-session-cache";
 import { db } from "@/lib/db";
-import { toolkitContentItems, toolkits } from "@/lib/schema";
+import { toolkitContentItems, toolkits, userToolkits } from "@/lib/schema";
 
 export async function GET(
   _request: Request,
@@ -9,6 +11,31 @@ export async function GET(
 ) {
   try {
     const { id: toolkitId } = await params;
+
+    const session = await getSessionCached(await headers());
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const purchase = await db
+      .select({ id: userToolkits.id })
+      .from(userToolkits)
+      .where(
+        and(
+          eq(userToolkits.userId, session.user.id),
+          eq(userToolkits.toolkitId, toolkitId),
+          eq(userToolkits.paymentStatus, "completed")
+        )
+      )
+      .limit(1);
+
+    if (purchase.length === 0) {
+      return NextResponse.json(
+        { error: "You do not have access to this toolkit" },
+        { status: 403 }
+      );
+    }
 
     const toolkitResult = await db
       .select({

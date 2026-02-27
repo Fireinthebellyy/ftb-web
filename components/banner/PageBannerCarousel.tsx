@@ -1,0 +1,73 @@
+"use client";
+
+import Image from "next/image";
+import Autoplay from "embla-carousel-autoplay";
+
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
+import { PageBannerPlacement, usePageBanners } from "@/lib/queries-sanity";
+
+interface PageBannerCarouselProps {
+  placement: PageBannerPlacement;
+  className?: string;
+}
+
+export default function PageBannerCarousel({
+  placement,
+  className,
+}: PageBannerCarouselProps) {
+  const { data: banners = [], isLoading } = usePageBanners(placement);
+
+  if (isLoading) {
+    return (
+      <div
+        className={`h-[96px] w-full animate-pulse overflow-hidden rounded-xl bg-slate-100 sm:h-[84px] ${className ?? ""}`.trim()}
+      />
+    );
+  }
+
+  if (banners.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className={`overflow-hidden rounded-xl ${className ?? ""}`.trim()}>
+      <Carousel
+        opts={{
+          align: "start",
+          loop: banners.length > 1,
+        }}
+        plugins={[
+          Autoplay({
+            delay: 4000,
+          }),
+        ]}
+        className="relative w-full overflow-hidden"
+      >
+        <CarouselContent className="-ml-0">
+          {banners.map((banner) => (
+            <CarouselItem key={banner._id} className="pl-0">
+              <div className="relative h-[96px] w-full overflow-hidden rounded-xl sm:h-[84px]">
+                {banner.image?.asset?.url ? (
+                  <Image
+                    src={banner.image.asset.url}
+                    alt={banner.image.alt || `${placement} banner`}
+                    fill
+                    className="object-contain sm:object-cover"
+                    sizes="(max-width: 640px) 100vw, 1200px"
+                    priority={placement === "internship"}
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-slate-100" />
+                )}
+              </div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+      </Carousel>
+    </div>
+  );
+}

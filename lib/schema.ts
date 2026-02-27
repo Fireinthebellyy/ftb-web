@@ -109,6 +109,9 @@ export const user = pgTable("user", {
     .$defaultFn(() => false)
     .notNull(),
   image: text("image"),
+  calendarReminderWeek: boolean("calendar_reminder_week").default(true),
+  calendarReminderDay: boolean("calendar_reminder_day").default(true),
+  calendarReminderHour: boolean("calendar_reminder_hour").default(true),
   fieldInterests: text("field_interests").array().default([]),
   opportunityInterests: text("opportunity_interests").array().default([]),
   dateOfBirth: date("date_of_birth"),
@@ -423,26 +426,36 @@ export const trackerItems = pgTable(
     result: text("result"),
     isManual: boolean("is_manual").default(false),
     manualData: text("manual_data"), // storing JSON stringified manual data
+    calendarEventId: text("calendar_event_id"),
+    calendarEventSyncedAt: timestamp("calendar_event_synced_at"),
   },
   (table) => [
     uniqueIndex("tracker_items_user_opp_unique").on(table.userId, table.oppId),
   ]
 );
 
-export const trackerEvents = pgTable("tracker_events", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  date: timestamp("date").notNull(),
-  type: text("type").notNull(),
-  description: text("description"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => [
-  uniqueIndex("tracker_events_user_title_date_unique").on(table.userId, table.title, table.date),
-]);
+export const trackerEvents = pgTable(
+  "tracker_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    date: timestamp("date").notNull(),
+    type: text("type").notNull(),
+    description: text("description"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("tracker_events_user_title_date_unique").on(
+      table.userId,
+      table.title,
+      table.date
+    ),
+  ]
+);
 
 // Export schema object last
 export const schema = {

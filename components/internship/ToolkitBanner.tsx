@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
@@ -40,14 +41,17 @@ export default function ToolkitBanner() {
                 className="group relative h-[85px] min-w-[130px] shrink-0 snap-start overflow-hidden rounded-lg sm:h-[95px] sm:min-w-[140px]"
               >
                 {/* Background Image */}
-                <div
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-105"
-                  style={{
-                    backgroundImage: toolkit.coverImageUrl
-                      ? `url(${toolkit.coverImageUrl})`
-                      : "none",
-                  }}
-                />
+                {toolkit.coverImageUrl ? (
+                  <div className="absolute inset-0 overflow-hidden">
+                    <Image
+                      src={toolkit.coverImageUrl}
+                      alt={`${toolkit.title} cover`}
+                      fill
+                      sizes="(max-width: 640px) 130px, 140px"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                ) : null}
                 {!toolkit.coverImageUrl && (
                   <div className="absolute inset-0 bg-slate-200" />
                 )}

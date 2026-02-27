@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export type PageBannerPlacement = "internship" | "ungatekeep";
 
-export type PageBanner = {
+export interface PageBanner {
   _id: string;
   placement: PageBannerPlacement;
   isActive?: boolean;
@@ -13,7 +13,7 @@ export type PageBanner = {
       url: string;
     };
   };
-};
+}
 
 const privacyPolicyQuery = `*[_type == "privacy"][0]{
     title,

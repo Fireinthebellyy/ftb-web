@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import Image from "next/image";
 import Autoplay from "embla-carousel-autoplay";
 
@@ -8,6 +9,7 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
+import { cn } from "@/lib/utils";
 import { PageBannerPlacement, usePageBanners } from "@/lib/queries-sanity";
 
 interface PageBannerCarouselProps {
@@ -20,11 +22,15 @@ export default function PageBannerCarousel({
   className,
 }: PageBannerCarouselProps) {
   const { data: banners = [], isLoading } = usePageBanners(placement);
+  const autoplayRef = useRef(Autoplay({ delay: 4000 }));
 
   if (isLoading) {
     return (
       <div
-        className={`h-[96px] w-full animate-pulse overflow-hidden rounded-xl bg-slate-100 sm:h-[84px] ${className ?? ""}`.trim()}
+        className={cn(
+          "h-[96px] w-full animate-pulse overflow-hidden rounded-xl bg-slate-100 sm:h-[84px]",
+          className
+        )}
       />
     );
   }
@@ -34,17 +40,13 @@ export default function PageBannerCarousel({
   }
 
   return (
-    <div className={`overflow-hidden rounded-xl ${className ?? ""}`.trim()}>
+    <div className={cn("overflow-hidden rounded-xl", className)}>
       <Carousel
         opts={{
           align: "start",
           loop: banners.length > 1,
         }}
-        plugins={[
-          Autoplay({
-            delay: 4000,
-          }),
-        ]}
+        plugins={[autoplayRef.current]}
         className="relative w-full overflow-hidden"
       >
         <CarouselContent className="-ml-0">

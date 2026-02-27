@@ -262,7 +262,6 @@ export function useFeatured(limit?: number) {
   });
 }
 
-
 /**
  * Comments: fetch and manage comments for opportunities
  */
@@ -332,7 +331,6 @@ export function useDeleteComment(opportunityId: string) {
     },
   });
 }
-
 
 /**
  * Tasks: fetch and manage user tasks
@@ -505,4 +503,3 @@ export * from "./queries-onboarding";
 export * from "./queries-toolkits";
 export * from "./queries-version";
 export * from "./queries-internships";
-export * from "./queries/banners";

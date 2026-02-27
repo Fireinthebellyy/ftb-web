@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
+import PageBannerCarousel from "@/components/banner/PageBannerCarousel";
 import UngatekeepCard from "@/components/ungatekeep/UngatekeepCard";
 import FeaturedToolkits from "@/components/toolkit/FeaturedToolkits";
 import { Button } from "@/components/ui/button";
@@ -87,6 +88,10 @@ export default function UngatekeepPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
           {/* Main Content */}
           <div className="min-w-0 flex-1">
+            <div className="mb-1">
+              <PageBannerCarousel placement="ungatekeep" className="w-full" />
+            </div>
+
             <div className="mb-6">
               <h1 className="mb-1 text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
                 Ungatekeep

@@ -12,6 +12,7 @@ import ProgressProvider from "./providers";
 import Script from "next/script";
 import WhatsAppWidget from "@/components/WhatsAppWidget";
 import FeedbackWidget from "@/components/FeedbackWidget";
+import PostOnboardingSurveyWidget from "@/components/PostOnboardingSurveyWidget";
 import { TrackerProvider } from "@/components/providers/TrackerProvider";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -54,6 +55,7 @@ export default function RootLayout({
                 <Footer />
                 <WhatsAppWidget />
                 <FeedbackWidget />
+                <PostOnboardingSurveyWidget />
               </TrackerProvider>
             </ProgressProvider>
             <Toaster />

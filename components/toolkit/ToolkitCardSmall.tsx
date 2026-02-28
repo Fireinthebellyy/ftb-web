@@ -6,6 +6,7 @@ import { Play } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import posthog from "posthog-js";
 import { Toolkit } from "@/types/interfaces";
 
 interface ToolkitCardSmallProps {
@@ -19,13 +20,18 @@ export default function ToolkitCardSmall({
   onClick,
   className,
 }: ToolkitCardSmallProps) {
+  const handleClick = (e: React.MouseEvent) => {
+    posthog.capture("toolkit_card_clicked", { toolkit_id: toolkit.id, title: toolkit.title });
+    if (onClick) onClick();
+  }
+
   return (
     <Card
       className={cn(
         "group flex cursor-pointer overflow-hidden transition-all duration-200 hover:shadow-md",
         className
       )}
-      onClick={onClick}
+      onClick={handleClick}
     >
       <div className="relative h-24 w-32 flex-shrink-0 overflow-hidden bg-gray-100">
         {toolkit.coverImageUrl ? (

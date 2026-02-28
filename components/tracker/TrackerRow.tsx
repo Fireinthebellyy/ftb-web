@@ -2,6 +2,7 @@ import { Clock, AlertCircle, Trash2, ChevronDown, Calendar } from 'lucide-react'
 import clsx from 'clsx';
 import { TrackerItem } from '@/components/providers/TrackerProvider';
 import { differenceInCalendarDays } from 'date-fns';
+import posthog from 'posthog-js';
 
 function DeadlineBadge({ deadline }: { deadline: string }) {
     const daysDiff = differenceInCalendarDays(new Date(deadline), new Date());
@@ -29,9 +30,19 @@ interface TrackerRowProps {
 }
 
 export default function TrackerRow({ opp, updateStatus, onClick, onDelete }: TrackerRowProps) {
+    const handleRowClick = () => {
+        posthog.capture('tracker_row_clicked', { tracker_id: opp.oppId, company: opp.company, title: opp.title });
+        onClick(opp);
+    };
+
+    const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        posthog.capture('tracker_status_changed', { tracker_id: opp.oppId, old_status: opp.status, new_status: e.target.value });
+        updateStatus(opp.oppId, e.target.value);
+    };
+
     return (
         <div
-            onClick={() => onClick(opp)}
+            onClick={handleRowClick}
             className="p-5 hover:bg-slate-50 transition-colors flex flex-col md:flex-row md:items-center gap-4 group cursor-pointer"
         >
             <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -80,7 +91,7 @@ export default function TrackerRow({ opp, updateStatus, onClick, onDelete }: Tra
                 <div className="relative" onClick={(e) => e.stopPropagation()}>
                     <select
                         value={opp.status}
-                        onChange={(e) => updateStatus(opp.oppId, e.target.value)}
+                        onChange={handleStatusChange}
                         className="appearance-none bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-200 cursor-pointer pl-3 pr-8 py-2"
                     >
                         {['Not Applied', 'Applied', 'Result Awaited', 'Selected', 'Rejected'].map(s => <option key={s} value={s}>{s}</option>)}

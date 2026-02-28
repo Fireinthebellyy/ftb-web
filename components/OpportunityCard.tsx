@@ -72,11 +72,12 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               "Unknown Organization",
             logo: opportunity.images?.[0]
               ? createOpportunityStorage()
-                .getFileView(
-                  process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID || "",
-                  opportunity.images[0]
-                )
-                .toString()
+                  .getFileView(
+                    process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID ||
+                      "",
+                    opportunity.images[0]
+                  )
+                  .toString()
               : undefined,
             type: opportunity.type,
             location: opportunity.location,
@@ -95,8 +96,6 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
       if (onBookmarkChange) {
         onBookmarkChange(id, newState);
       }
-
-      toast.success(newState ? "Added to bookmarks" : "Removed from bookmarks");
     } catch (err) {
       console.error("Bookmark request failed:", err);
       toast.error("Failed to update bookmark");

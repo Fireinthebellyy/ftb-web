@@ -212,6 +212,7 @@ export default function AdminToolkitsTable() {
       {
         id: "active",
         header: "Active",
+        enableSorting: false,
         cell: ({ row }) => {
           const toolkitId = row.original.id;
           const isUpdating = updatingActiveToolkitIds.has(toolkitId);
@@ -301,6 +302,7 @@ export default function AdminToolkitsTable() {
       {
         id: "actions",
         header: "Actions",
+        enableSorting: false,
         cell: ({ row }) => {
           const toolkit = row.original;
 
@@ -396,6 +398,7 @@ export default function AdminToolkitsTable() {
         errorMessage="Failed to fetch toolkits"
       >
         <AdminDataTable
+          tableId="toolkits"
           columns={columns}
           data={toolkits}
           emptyMessage="No toolkits found"

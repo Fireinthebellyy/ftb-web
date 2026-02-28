@@ -121,6 +121,9 @@ export const user = pgTable("user", {
     .$defaultFn(() => false)
     .notNull(),
   image: text("image"),
+  calendarReminderWeek: boolean("calendar_reminder_week").default(true),
+  calendarReminderDay: boolean("calendar_reminder_day").default(true),
+  calendarReminderHour: boolean("calendar_reminder_hour").default(true),
   fieldInterests: text("field_interests").array().default([]),
   opportunityInterests: text("opportunity_interests").array().default([]),
   dateOfBirth: date("date_of_birth"),
@@ -452,6 +455,8 @@ export const trackerItems = pgTable(
     result: text("result"),
     isManual: boolean("is_manual").default(false),
     manualData: text("manual_data"), // storing JSON stringified manual data
+    calendarEventId: text("calendar_event_id"),
+    calendarEventSyncedAt: timestamp("calendar_event_synced_at"),
   },
   (table) => [
     uniqueIndex("tracker_items_user_opp_unique").on(table.userId, table.oppId),

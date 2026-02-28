@@ -33,7 +33,9 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   const { id, images, title } = opportunity;
 
   const { items, addToTracker, removeFromTracker } = useTracker();
-  const trackedItem = items.find((i) => String(i.oppId) === String(id));
+  const trackedItem = items.find(
+    (i) => i.kind === "opportunity" && String(i.oppId) === String(id)
+  );
   const isBookmarked = Boolean(trackedItem);
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -89,7 +91,10 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         );
       } else {
         if (trackedItem) {
-          removeFromTracker(trackedItem.oppId as string | number);
+          removeFromTracker(
+            trackedItem.oppId as string | number,
+            trackedItem.kind ?? "opportunity"
+          );
         }
       }
 

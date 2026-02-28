@@ -69,13 +69,20 @@ interface TrackerContextType {
     initialStatus?: string,
     kind?: "internship" | "opportunity"
   ) => void;
-  removeFromTracker: (oppId: number | string) => void;
+  removeFromTracker: (
+    oppId: number | string,
+    kind?: "internship" | "opportunity"
+  ) => void;
   updateStatus: (
     oppId: number | string,
     status: string,
-    extraData?: Record<string, unknown>
+    extraData?: Record<string, unknown>,
+    kind?: "internship" | "opportunity"
   ) => void;
-  getStatus: (oppId: number | string) => string | null;
+  getStatus: (
+    oppId: number | string,
+    kind?: "internship" | "opportunity"
+  ) => string | null;
   addEvent: (event: Omit<TrackerEvent, "id">) => void;
   removeEvent: (id: string) => void; // Changed to string
   isLoading: boolean;
@@ -203,7 +210,8 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
   const syncStatusToBackend = async (
     oppId: string | number,
     status: string,
-    extraData?: Record<string, unknown>
+    extraData?: Record<string, unknown>,
+    kind?: "internship" | "opportunity"
   ) => {
     try {
       await fetch("/api/tracker", {
@@ -212,6 +220,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
         body: JSON.stringify({
           action: "update_status",
           id: oppId,
+          kind: resolveTrackerKind(kind),
           data: { status, ...extraData },
         }),
       });
@@ -222,10 +231,16 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteFromBackend = async (
     id: string | number,
-    type: "item" | "event"
+    type: "item" | "event",
+    kind?: "internship" | "opportunity"
   ) => {
     try {
-      await fetch(`/api/tracker?type=${type}&id=${id}`, { method: "DELETE" });
+      const params = new URLSearchParams({ type, id: String(id) });
+      if (type === "item") {
+        params.set("kind", resolveTrackerKind(kind));
+      }
+
+      await fetch(`/api/tracker?${params.toString()}`, { method: "DELETE" });
     } catch (e) {
       console.error("Failed to delete from backend", e);
     }
@@ -433,9 +448,14 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     const idToCheck = isManual
       ? ((oppOrId as ManualTrackerInput).id ?? Date.now())
       : (oppOrId as number | string);
+    const effectiveKind =
+      isManual && (oppOrId as ManualTrackerInput).kind
+        ? (oppOrId as ManualTrackerInput).kind
+        : kind;
+    const nextKey = getTrackerKey(idToCheck, effectiveKind);
 
     const isAlreadyAdded = trackedItems.some(
-      (i) => String(i.oppId) === String(idToCheck)
+      (i) => getTrackerKey(i.oppId, i.kind) === nextKey
     );
 
     if (isAlreadyAdded) {
@@ -457,7 +477,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     let newItem: TrackerItem;
 
     setTrackedItems((prevItems) => {
-      if (prevItems.some((i) => String(i.oppId) === String(idToCheck))) {
+      if (prevItems.some((i) => getTrackerKey(i.oppId, i.kind) === nextKey)) {
         return prevItems;
       }
 
@@ -466,10 +486,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
       newItem = {
         oppId: idToCheck,
         status: initialStatus,
-        kind:
-          isManual && (oppOrId as ManualTrackerInput).kind
-            ? (oppOrId as ManualTrackerInput).kind
-            : kind,
+        kind: effectiveKind,
         addedAt: new Date().toISOString(),
         appliedAt:
           initialStatus === "Applied" ? new Date().toISOString() : null,
@@ -492,12 +509,14 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
   const updateStatus = (
     oppId: number | string,
     status: string,
-    extraData: Record<string, unknown> = {}
+    extraData: Record<string, unknown> = {},
+    kind?: "internship" | "opportunity"
   ) => {
+    const targetKey = getTrackerKey(oppId, kind);
+
     setTrackedItems((prevItems) =>
       prevItems.map((i) => {
-        if (String(i.oppId) === String(oppId)) {
-          // String comparison
+        if (getTrackerKey(i.oppId, i.kind) === targetKey) {
           const updated = {
             ...i,
             ...extraData,
@@ -510,19 +529,30 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
       })
     );
 
-    syncStatusToBackend(oppId, status, extraData);
+    syncStatusToBackend(oppId, status, extraData, kind);
   };
 
-  const removeFromTracker = (oppId: number | string) => {
+  const removeFromTracker = (
+    oppId: number | string,
+    kind?: "internship" | "opportunity"
+  ) => {
+    const targetKey = getTrackerKey(oppId, kind);
+
     setTrackedItems((prevItems) =>
-      prevItems.filter((i) => String(i.oppId) !== String(oppId))
-    ); // String comparison
+      prevItems.filter((i) => getTrackerKey(i.oppId, i.kind) !== targetKey)
+    );
     toast.success("Deleted from Tracker");
-    deleteFromBackend(oppId, "item");
+    deleteFromBackend(oppId, "item", kind);
   };
 
-  const getStatus = (oppId: number | string) => {
-    const item = trackedItems.find((i) => String(i.oppId) === String(oppId)); // String comparison
+  const getStatus = (
+    oppId: number | string,
+    kind?: "internship" | "opportunity"
+  ) => {
+    const targetKey = getTrackerKey(oppId, kind);
+    const item = trackedItems.find(
+      (i) => getTrackerKey(i.oppId, i.kind) === targetKey
+    );
     return item ? item.status : null;
   };
 
@@ -544,3 +574,11 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     </TrackerContext.Provider>
   );
 };
+const resolveTrackerKind = (
+  kind?: "internship" | "opportunity"
+): "internship" | "opportunity" => kind ?? "internship";
+
+const getTrackerKey = (
+  oppId: number | string,
+  kind?: "internship" | "opportunity"
+) => `${resolveTrackerKind(kind)}:${String(oppId)}`;

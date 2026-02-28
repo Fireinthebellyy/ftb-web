@@ -218,6 +218,13 @@
       "when": 1772294465760,
       "tag": "0030_add_tracker_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1772313600000,
+      "tag": "0031_tracker_kind_identity",
+      "breakpoints": true
     }
   ]
 }

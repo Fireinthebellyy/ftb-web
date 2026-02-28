@@ -7,10 +7,12 @@ import Autoplay from "embla-carousel-autoplay";
 import {
   Carousel,
   CarouselContent,
+  CarouselDots,
   CarouselItem,
 } from "@/components/ui/carousel";
-import { cn } from "@/lib/utils";
+import { CAROUSEL_AUTOPLAY_DELAY_MS } from "@/lib/carousel";
 import { PageBannerPlacement, usePageBanners } from "@/lib/queries-sanity";
+import { cn } from "@/lib/utils";
 
 interface PageBannerCarouselProps {
   placement: PageBannerPlacement;
@@ -22,7 +24,7 @@ export default function PageBannerCarousel({
   className,
 }: PageBannerCarouselProps) {
   const { data: banners = [], isLoading } = usePageBanners(placement);
-  const autoplayRef = useRef(Autoplay({ delay: 4000 }));
+  const autoplayRef = useRef(Autoplay({ delay: CAROUSEL_AUTOPLAY_DELAY_MS }));
 
   if (isLoading) {
     return (
@@ -69,6 +71,17 @@ export default function PageBannerCarousel({
             </CarouselItem>
           ))}
         </CarouselContent>
+        {banners.length > 1 ? (
+          <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex justify-center sm:bottom-1">
+            <div className="pointer-events-auto rounded-full bg-black/40 px-2 py-1 backdrop-blur-sm">
+              <CarouselDots
+                className="gap-1.5 py-0"
+                dotClassName="bg-white/45 hover:bg-white/70"
+                activeDotClassName="h-1.5 w-3 rounded-full bg-white"
+              />
+            </div>
+          </div>
+        ) : null}
       </Carousel>
     </div>
   );

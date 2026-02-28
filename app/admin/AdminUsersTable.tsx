@@ -124,17 +124,17 @@ export default function AdminUsersTable({
           return (
             <div className="flex items-center gap-3">
               {user.image ? (
-                <div className="rounded-full border-2 border-white shadow-sm">
+                <div className="h-6 w-6 shrink-0 rounded-full border-2 border-white shadow-sm">
                   <Image
                     src={user.image}
                     alt={user.name || "User avatar"}
-                    className="size-6 rounded-full object-cover"
+                    className="h-6 w-6 rounded-full object-cover"
                     width={24}
                     height={24}
                   />
                 </div>
               ) : (
-                <div className="flex size-6 items-center justify-center rounded-full border-2 border-neutral-300 bg-neutral-200 text-xs font-semibold text-neutral-600 uppercase">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-neutral-300 bg-neutral-200 text-xs font-semibold text-neutral-600 uppercase">
                   {user.name
                     .split(" ")
                     .map((n) => n[0])
@@ -192,6 +192,7 @@ export default function AdminUsersTable({
       {
         id: "actions",
         header: "Actions",
+        enableSorting: false,
         cell: ({ row }) => {
           const user = row.original;
           return (
@@ -239,6 +240,7 @@ export default function AdminUsersTable({
         errorMessage="Failed to load users"
       >
         <AdminDataTable
+          tableId="users"
           columns={columns}
           data={users}
           emptyMessage="No users found"

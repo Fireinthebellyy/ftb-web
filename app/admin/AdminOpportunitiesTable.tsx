@@ -186,15 +186,17 @@ export default function AdminOpportunitiesTable() {
           return (
             <div className="flex items-center gap-2">
               {user?.image ? (
-                <Image
-                  src={user.image}
-                  alt={user.name || "User avatar"}
-                  className="size-6 rounded-full object-cover"
-                  width={24}
-                  height={24}
-                />
+                <div className="h-6 w-6 shrink-0 rounded-full">
+                  <Image
+                    src={user.image}
+                    alt={user.name || "User avatar"}
+                    className="h-6 w-6 rounded-full object-cover"
+                    width={24}
+                    height={24}
+                  />
+                </div>
               ) : (
-                <div className="flex size-6 items-center justify-center rounded-full border-2 border-neutral-300 bg-neutral-200 text-xs font-semibold text-neutral-600 uppercase">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-neutral-300 bg-neutral-200 text-xs font-semibold text-neutral-600 uppercase">
                   {user?.name
                     .split(" ")
                     .map((n) => n[0])
@@ -246,6 +248,7 @@ export default function AdminOpportunitiesTable() {
       {
         id: "actions",
         header: "Actions",
+        enableSorting: false,
         cell: ({ row }) => {
           const opportunity = row.original;
           const disabled = updatingOpportunities.has(opportunity.id);
@@ -308,6 +311,7 @@ export default function AdminOpportunitiesTable() {
         errorMessage="Failed to load pending opportunities"
       >
         <AdminDataTable
+          tableId="opportunities"
           columns={columns}
           data={opportunities}
           emptyMessage="No pending opportunities"

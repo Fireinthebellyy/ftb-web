@@ -193,7 +193,6 @@
     },
     {
       "idx": 27,
-
       "version": "7",
       "when": 1771100400000,
       "tag": "0027_internships_ingestion_schema",
@@ -204,6 +203,20 @@
       "version": "7",
       "when": 1771100500000,
       "tag": "0028_schedule_opportunity_publish",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1772255400000,
+      "tag": "0029_collect_onboarding_survey",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1772294465760,
+      "tag": "0030_add_tracker_tables",
       "breakpoints": true
     }
   ]

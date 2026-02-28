@@ -8,6 +8,7 @@ import {
   Carousel,
   CarouselContent,
   CarouselDots,
+  CarouselDotsOverlay,
   CarouselItem,
 } from "@/components/ui/carousel";
 import { CAROUSEL_AUTOPLAY_DELAY_MS } from "@/lib/carousel";
@@ -72,15 +73,13 @@ export default function PageBannerCarousel({
           ))}
         </CarouselContent>
         {banners.length > 1 ? (
-          <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex justify-center sm:bottom-1">
-            <div className="pointer-events-auto rounded-full bg-black/40 px-2 py-1 backdrop-blur-sm">
-              <CarouselDots
-                className="gap-1.5 py-0"
-                dotClassName="bg-white/45 hover:bg-white/70"
-                activeDotClassName="h-1.5 w-3 rounded-full bg-white"
-              />
-            </div>
-          </div>
+          <CarouselDotsOverlay>
+            <CarouselDots
+              className="gap-1.5 py-0"
+              dotClassName="bg-white/45 hover:bg-white/70"
+              activeDotClassName="h-1.5 w-3 rounded-full bg-white"
+            />
+          </CarouselDotsOverlay>
         ) : null}
       </Carousel>
     </div>

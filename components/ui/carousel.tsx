@@ -237,6 +237,12 @@ interface CarouselDotsProps extends React.ComponentProps<"div"> {
   activeDotClassName?: string;
 }
 
+interface CarouselDotsOverlayProps extends React.ComponentProps<"div"> {
+  containerClassName?: string;
+  dotClassName?: string;
+  activeDotClassName?: string;
+}
+
 function CarouselDots({
   className,
   dotClassName,
@@ -296,6 +302,40 @@ function CarouselDots({
   );
 }
 
+function CarouselDotsOverlay({
+  className,
+  containerClassName,
+  dotClassName,
+  activeDotClassName,
+  children,
+  ...props
+}: CarouselDotsOverlayProps) {
+  return (
+    <div
+      className={cn(
+        "pointer-events-none absolute inset-x-0 bottom-3 z-10 flex justify-center sm:bottom-1",
+        className
+      )}
+      {...props}
+    >
+      <div
+        className={cn(
+          "pointer-events-auto rounded-full bg-black/40 px-2 py-1 backdrop-blur-sm",
+          containerClassName
+        )}
+      >
+        {children ?? (
+          <CarouselDots
+            className="gap-1.5 py-0"
+            dotClassName={dotClassName}
+            activeDotClassName={activeDotClassName}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
 export {
   type CarouselApi,
   Carousel,
@@ -304,5 +344,6 @@ export {
   CarouselPrevious,
   CarouselNext,
   CarouselDots,
+  CarouselDotsOverlay,
   Autoplay,
 };

@@ -9,7 +9,6 @@ const sourceValues = [
   "instagram",
   "reddit",
   "youtube",
-  "x_twitter",
   "linkedin",
   "chatgpt",
   "google_search",

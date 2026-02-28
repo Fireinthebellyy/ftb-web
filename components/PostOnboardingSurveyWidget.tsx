@@ -11,7 +11,6 @@ type SurveySource =
   | "instagram"
   | "reddit"
   | "youtube"
-  | "x_twitter"
   | "linkedin"
   | "chatgpt"
   | "google_search"
@@ -29,7 +28,6 @@ const sourceOptions: Array<{ value: SurveySource; label: string }> = [
   { value: "instagram", label: "Instagram" },
   { value: "reddit", label: "Reddit" },
   { value: "youtube", label: "YouTube" },
-  { value: "x_twitter", label: "X (Twitter)" },
   { value: "linkedin", label: "LinkedIn" },
   { value: "chatgpt", label: "ChatGPT / LLM" },
   { value: "google_search", label: "Google Search" },

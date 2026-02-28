@@ -2,7 +2,6 @@ CREATE TYPE "public"."onboarding_traffic_source" AS ENUM(
   'instagram',
   'reddit',
   'youtube',
-  'x_twitter',
   'linkedin',
   'chatgpt',
   'google_search',

@@ -16,7 +16,6 @@ export const onboardingTrafficSourceEnum = pgEnum("onboarding_traffic_source", [
   "instagram",
   "reddit",
   "youtube",
-  "x_twitter",
   "linkedin",
   "chatgpt",
   "google_search",

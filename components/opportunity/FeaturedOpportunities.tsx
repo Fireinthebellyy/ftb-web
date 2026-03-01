@@ -1,3 +1,4 @@
+"use client";
 import React, { memo, useRef } from "react";
 import Image from "next/image";
 import { Loader2, ExternalLink } from "lucide-react";

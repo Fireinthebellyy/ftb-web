@@ -141,6 +141,11 @@ migrations/       # Drizzle migrations
 
 Use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`. Branch naming: `k/` for features, `fix/` for bugs.
 
+When committing or pushing, always clearly report:
+
+- which files were included in the commit/push
+- which local modified files were intentionally not included (if any)
+
 ### Additional Notes
 
 - Use `.env.local` for local environment variables

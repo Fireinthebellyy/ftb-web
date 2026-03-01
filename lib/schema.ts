@@ -454,7 +454,11 @@ export const trackerItems = pgTable(
     manualData: text("manual_data"), // storing JSON stringified manual data
   },
   (table) => [
-    uniqueIndex("tracker_items_user_opp_unique").on(table.userId, table.oppId),
+    uniqueIndex("tracker_items_user_kind_opp_unique").on(
+      table.userId,
+      table.kind,
+      table.oppId
+    ),
   ]
 );
 

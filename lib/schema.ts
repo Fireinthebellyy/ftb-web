@@ -12,6 +12,18 @@ import {
 
 export const userRoleEnum = pgEnum("user_role", ["user", "member", "admin"]);
 export const personaEnum = pgEnum("persona_type", ["student", "society"]);
+export const onboardingTrafficSourceEnum = pgEnum("onboarding_traffic_source", [
+  "instagram",
+  "reddit",
+  "youtube",
+  "linkedin",
+  "chatgpt",
+  "google_search",
+  "whatsapp_group",
+  "friend_or_senior",
+  "campus_event",
+  "other",
+]);
 export const opportunityTypeEnum = pgEnum("opportunity_type", [
   "hackathon",
   "grant",
@@ -244,6 +256,23 @@ export const feedback = pgTable("feedback", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const onboardingSurveyResponses = pgTable(
+  "onboarding_survey_responses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    source: onboardingTrafficSourceEnum("source").notNull(),
+    sourceOther: text("source_other"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("onboarding_survey_responses_user_id_unique").on(table.userId),
+  ]
+);
+
 // Tags for autosuggest
 export const tags = pgTable("tags", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -429,20 +458,28 @@ export const trackerItems = pgTable(
   ]
 );
 
-export const trackerEvents = pgTable("tracker_events", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  date: timestamp("date").notNull(),
-  type: text("type").notNull(),
-  description: text("description"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => [
-  uniqueIndex("tracker_events_user_title_date_unique").on(table.userId, table.title, table.date),
-]);
+export const trackerEvents = pgTable(
+  "tracker_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    date: timestamp("date").notNull(),
+    type: text("type").notNull(),
+    description: text("description"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("tracker_events_user_title_date_unique").on(
+      table.userId,
+      table.title,
+      table.date
+    ),
+  ]
+);
 
 // Export schema object last
 export const schema = {
@@ -459,6 +496,7 @@ export const schema = {
   waitlist,
   tasks,
   feedback,
+  onboardingSurveyResponses,
   tags,
   toolkits,
   toolkitContentItems,

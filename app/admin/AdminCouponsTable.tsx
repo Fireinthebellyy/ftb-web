@@ -218,6 +218,7 @@ export default function AdminCouponsTable() {
       {
         id: "actions",
         header: "Actions",
+        enableSorting: false,
         cell: ({ row }) => (
           <div className="flex gap-2">
             <Button
@@ -270,6 +271,7 @@ export default function AdminCouponsTable() {
         errorMessage="Failed to load coupons"
       >
         <AdminDataTable
+          tableId="coupons"
           columns={columns}
           data={coupons}
           emptyMessage="No coupons found"

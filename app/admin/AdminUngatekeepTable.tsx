@@ -137,6 +137,7 @@ export default function AdminUngatekeepTable() {
       {
         id: "pinned",
         header: "Pinned",
+        enableSorting: false,
         cell: ({ row }) => (
           <Switch
             checked={row.original.isPinned}
@@ -152,6 +153,7 @@ export default function AdminUngatekeepTable() {
       {
         id: "published",
         header: "Published",
+        enableSorting: false,
         cell: ({ row }) => (
           <Switch
             checked={row.original.isPublished}
@@ -173,6 +175,7 @@ export default function AdminUngatekeepTable() {
       {
         id: "actions",
         header: "Actions",
+        enableSorting: false,
         cell: ({ row }) => {
           const post = row.original;
           return (
@@ -263,6 +266,7 @@ export default function AdminUngatekeepTable() {
         errorMessage="Failed to fetch posts"
       >
         <AdminDataTable
+          tableId="ungatekeep"
           columns={columns}
           data={posts}
           emptyMessage="No posts found"

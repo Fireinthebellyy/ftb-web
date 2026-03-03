@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { opportunities, tags, user } from "@/lib/schema";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, isNull, lte, or, sql } from "drizzle-orm";
 import OpportunityCard from "@/components/OpportunityCard";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -8,6 +8,27 @@ import { headers } from "next/headers";
 
 export default async function OpportunityDetailPage({ params }: any) {
   const id = params.id;
+
+  let currentUserId: string | undefined;
+
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    currentUserId = session?.user?.id as string | undefined;
+  } catch {
+    // Anonymous viewer.
+  }
+
+  const visibilityConditions = [
+    eq(opportunities.id, id),
+    isNull(opportunities.deletedAt),
+    eq(opportunities.isActive, true),
+    or(
+      isNull(opportunities.publishAt),
+      lte(opportunities.publishAt, new Date())
+    ),
+  ];
 
   const result = await db
     .select({
@@ -37,7 +58,7 @@ export default async function OpportunityDetailPage({ params }: any) {
     })
     .from(opportunities)
     .leftJoin(user, eq(opportunities.userId, user.id))
-    .where(eq(opportunities.id, id))
+    .where(and(...visibilityConditions))
     .limit(1);
 
   const opportunity = result?.[0];
@@ -47,16 +68,8 @@ export default async function OpportunityDetailPage({ params }: any) {
 
   // Calculate userHasUpvoted (non-redirecting check for public access)
   let userHasUpvoted = false;
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    const currentUserId = session?.user?.id as string | undefined;
-    if (currentUserId && Array.isArray(opportunity.upvoterIds)) {
-      userHasUpvoted = opportunity.upvoterIds.includes(currentUserId);
-    }
-  } catch {
-    // User not authenticated - allow public viewing with userHasUpvoted = false
+  if (currentUserId && Array.isArray(opportunity.upvoterIds)) {
+    userHasUpvoted = opportunity.upvoterIds.includes(currentUserId);
   }
 
   const opportunityWithUpvote = {
@@ -66,7 +79,10 @@ export default async function OpportunityDetailPage({ params }: any) {
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-6">
-      <OpportunityCard opportunity={opportunityWithUpvote as any} isCardExpanded={true} />
+      <OpportunityCard
+        opportunity={opportunityWithUpvote as any}
+        isCardExpanded={true}
+      />
     </div>
   );
 }

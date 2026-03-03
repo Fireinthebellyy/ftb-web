@@ -319,18 +319,14 @@ export async function GET(req: NextRequest) {
         conditions.push(inArray(opportunities.id, ids));
       }
 
-      // Only show active (approved) opportunities to non-admin users
-      // Admins can see all opportunities including pending ones
-      if (sessionRole !== "admin") {
-        conditions.push(eq(opportunities.isActive, true));
-        if (usePublishAt) {
-          conditions.push(
-            or(
-              isNull(opportunities.publishAt),
-              lte(opportunities.publishAt, new Date())
-            )
-          );
-        }
+      conditions.push(eq(opportunities.isActive, true));
+      if (usePublishAt) {
+        conditions.push(
+          or(
+            isNull(opportunities.publishAt),
+            lte(opportunities.publishAt, new Date())
+          )
+        );
       }
 
       if (searchTerm) {

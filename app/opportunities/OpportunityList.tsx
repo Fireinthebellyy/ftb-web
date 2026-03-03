@@ -257,8 +257,6 @@ export default function OpportunityCardsPage() {
     };
   }, [handleLoadMore, allOpportunities.length]);
 
-
-
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
@@ -322,10 +320,11 @@ export default function OpportunityCardsPage() {
                   <Badge
                     key={tag}
                     variant={isSelected ? "default" : "outline"}
-                    className={`cursor-pointer px-3 py-1 text-sm ${isSelected
-                      ? "bg-neutral-700 text-gray-200"
-                      : "bg-white text-gray-700"
-                      }`}
+                    className={`cursor-pointer px-3 py-1 text-sm ${
+                      isSelected
+                        ? "bg-neutral-700 text-gray-200"
+                        : "bg-white text-gray-700"
+                    }`}
                     onClick={() => toggleTag(tag)}
                   >
                     <span>{displayTag}</span>
@@ -335,12 +334,16 @@ export default function OpportunityCardsPage() {
             </div>
 
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
-              className="shrink-0 cursor-pointer hover:bg-orange-600 hover:text-white"
+              className={`shrink-0 cursor-pointer px-2 transition-colors ${
+                isFilterBoxOpen
+                  ? "border-orange-500 bg-orange-50 text-orange-700 hover:bg-orange-100"
+                  : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              }`}
             >
-              <Filter className="size-4 text-gray-600" />
+              <Filter className="size-4" />
             </Button>
           </div>
 
@@ -434,10 +437,11 @@ export default function OpportunityCardsPage() {
                     <Badge
                       key={tag}
                       variant={isSelected ? "default" : "outline"}
-                      className={`cursor-pointer px-3 py-1 text-sm ${isSelected
-                        ? "bg-neutral-700 text-gray-200"
-                        : "bg-white text-gray-700"
-                        }`}
+                      className={`cursor-pointer px-3 py-1 text-sm ${
+                        isSelected
+                          ? "bg-neutral-700 text-gray-200"
+                          : "bg-white text-gray-700"
+                      }`}
                       onClick={() => toggleTag(tag)}
                     >
                       <span>{displayTag}</span>
@@ -446,13 +450,14 @@ export default function OpportunityCardsPage() {
                 })}
               </div>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
-                className={`shrink-0 transition-all hover:bg-orange-600 hover:text-white ${isFilterBoxOpen
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-gray-400"
-                  }`}
+                className={`shrink-0 px-2 transition-colors ${
+                  isFilterBoxOpen
+                    ? "border-orange-500 bg-orange-50 text-orange-700 hover:bg-orange-100"
+                    : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                }`}
               >
                 <Filter className="h-5 w-5" />
               </Button>
@@ -528,13 +533,11 @@ export default function OpportunityCardsPage() {
                     <div className="space-y-4">
                       {allOpportunities.map((opportunity, index) => (
                         <div key={opportunity.id}>
-                          <OpportunityPost
-                            opportunity={opportunity}
-                          />
+                          <OpportunityPost opportunity={opportunity} />
                           {index ===
                             Math.max(0, allOpportunities.length - 3) && (
-                              <div ref={desktopTriggerRef} className="h-1" />
-                            )}
+                            <div ref={desktopTriggerRef} className="h-1" />
+                          )}
                         </div>
                       ))}
                     </div>
@@ -656,9 +659,7 @@ export default function OpportunityCardsPage() {
                   <div className="space-y-3 sm:space-y-4">
                     {allOpportunities.map((opportunity, index) => (
                       <div key={opportunity.id}>
-                        <OpportunityPost
-                          opportunity={opportunity}
-                        />
+                        <OpportunityPost opportunity={opportunity} />
                         {index === Math.max(0, allOpportunities.length - 3) && (
                           <div ref={mobileTriggerRef} className="h-1" />
                         )}

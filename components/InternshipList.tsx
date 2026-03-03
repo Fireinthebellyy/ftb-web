@@ -183,7 +183,9 @@ export default function InternshipList() {
   }, [searchPlaceholders.length]);
 
   // Flatten all internships from all pages
-  const allInternships = (data?.pages?.flatMap((page) => page.internships) || []).filter(Boolean);
+  const allInternships = (
+    data?.pages?.flatMap((page) => page.internships) || []
+  ).filter(Boolean);
 
   // Intersection observer for infinite scroll
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -282,10 +284,14 @@ export default function InternshipList() {
               )}
             </div>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
-              className={`h-8 shrink-0 cursor-pointer px-2 hover:bg-orange-600 hover:text-white sm:h-10 ${isFilterBoxOpen ? "bg-orange-500 text-white hover:bg-orange-600" : ""}`}
+              className={`h-8 shrink-0 cursor-pointer px-2 transition-colors sm:h-10 ${
+                isFilterBoxOpen
+                  ? "border-orange-500 bg-orange-50 text-orange-700 hover:bg-orange-100"
+                  : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              }`}
             >
               <Filter className={`size-4`} />
             </Button>
@@ -378,10 +384,14 @@ export default function InternshipList() {
                   )}
                 </div>
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
-                  className={`h-8 shrink-0 cursor-pointer px-2 hover:bg-orange-600 hover:text-white sm:h-10 ${isFilterBoxOpen ? "bg-orange-500 text-white hover:bg-orange-600" : ""}`}
+                  className={`h-8 shrink-0 cursor-pointer px-2 transition-colors sm:h-10 ${
+                    isFilterBoxOpen
+                      ? "border-orange-500 bg-orange-50 text-orange-700 hover:bg-orange-100"
+                      : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  }`}
                 >
                   <Filter className={`size-4`} />
                 </Button>
@@ -390,9 +400,7 @@ export default function InternshipList() {
               {/* Filters */}
               {isFilterBoxOpen && (
                 <div className="rounded-lg border bg-white px-4 py-3">
-                  <h3 className="mb-3 font-semibold text-gray-900">
-                    Filters
-                  </h3>
+                  <h3 className="mb-3 font-semibold text-gray-900">Filters</h3>
                   <div className="space-y-4">
                     {/* Internship Type Filter */}
                     <div>
@@ -481,7 +489,7 @@ export default function InternshipList() {
           </aside>
 
           {/* Main Content - 6 columns */}
-          <main className="col-span-6 max-h-[90vh] overflow-y-scroll pr-2 hide-scrollbar">
+          <main className="hide-scrollbar col-span-6 max-h-[90vh] overflow-y-scroll pr-2">
             <ToolkitBanner />
 
             {/* Tags in Horizontal Box with Filter Icon */}

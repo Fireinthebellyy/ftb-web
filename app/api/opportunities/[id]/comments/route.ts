@@ -1,13 +1,36 @@
 import { db } from "@/lib/db";
-import { comments, user } from "@/lib/schema";
+import { comments, opportunities, user } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
-import { eq, desc } from "drizzle-orm";
+import { and, desc, eq, isNull, lte, or } from "drizzle-orm";
 import { z } from "zod";
 
 const commentSchema = z.object({
-  content: z.string().min(1, "Comment cannot be empty").max(1000, "Comment too long"),
+  content: z
+    .string()
+    .min(1, "Comment cannot be empty")
+    .max(1000, "Comment too long"),
 });
+
+async function isOpportunityPubliclyVisible(opportunityId: string) {
+  const rows = await db
+    .select({ id: opportunities.id })
+    .from(opportunities)
+    .where(
+      and(
+        eq(opportunities.id, opportunityId),
+        isNull(opportunities.deletedAt),
+        eq(opportunities.isActive, true),
+        or(
+          isNull(opportunities.publishAt),
+          lte(opportunities.publishAt, new Date())
+        )
+      )
+    )
+    .limit(1);
+
+  return rows.length > 0;
+}
 
 export async function GET(
   req: NextRequest,
@@ -22,6 +45,14 @@ export async function GET(
     }
 
     const { id: opportunityId } = await params;
+
+    const isVisible = await isOpportunityPubliclyVisible(opportunityId);
+    if (!isVisible) {
+      return NextResponse.json(
+        { error: "Opportunity not found" },
+        { status: 404 }
+      );
+    }
 
     // Fetch comments with user information, ordered by newest first
     const commentsWithUsers = await db
@@ -71,6 +102,15 @@ export async function POST(
     }
 
     const { id: opportunityId } = await params;
+
+    const isVisible = await isOpportunityPubliclyVisible(opportunityId);
+    if (!isVisible) {
+      return NextResponse.json(
+        { error: "Opportunity not found" },
+        { status: 404 }
+      );
+    }
+
     const body = await req.json();
     const validatedData = commentSchema.parse(body);
 
@@ -124,9 +164,9 @@ export async function POST(
       .where(eq(comments.id, newComment.id))
       .limit(1);
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       comment: commentWithUser[0],
-      message: "Comment posted successfully" 
+      message: "Comment posted successfully",
     });
   } catch (error) {
     console.error("Error creating comment:", error);

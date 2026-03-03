@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logAdminActivity } from "@/lib/admin-activity";
 import { db } from "@/lib/db";
 import { ungatekeepPosts, user as userTable } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
@@ -17,14 +18,21 @@ const createPostSchema = z.object({
   isPublished: z.boolean().optional(),
 });
 
-export async function GET() {
+export async function GET(request: Request) {
+  let activityStatus = 500;
+  let activityError: unknown = null;
+  let activityAdminUserId: string | null = null;
+
   try {
     const currentUser = await getCurrentUser();
+    activityAdminUserId = currentUser?.currentUser?.id ?? null;
     if (
       !currentUser ||
       !currentUser.currentUser?.id ||
       currentUser.currentUser.role !== "admin"
     ) {
+      activityStatus = 401;
+      activityError = "Unauthorized";
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -50,24 +58,45 @@ export async function GET() {
       .leftJoin(userTable, eq(ungatekeepPosts.userId, userTable.id))
       .orderBy(desc(ungatekeepPosts.createdAt));
 
+    activityStatus = 200;
     return NextResponse.json(allPosts);
   } catch (error) {
+    activityError = error;
     console.error("Error fetching ungatekeep posts:", error);
+    activityStatus = 500;
     return NextResponse.json(
       { error: "Failed to fetch posts" },
       { status: 500 }
     );
+  } finally {
+    await logAdminActivity({
+      request,
+      action: "admin.ungatekeep.list",
+      statusCode: activityStatus,
+      success: activityStatus >= 200 && activityStatus < 300,
+      adminUserId: activityAdminUserId,
+      entityType: "ungatekeep_post",
+      error: activityError,
+    });
   }
 }
 
 export async function POST(request: Request) {
+  let activityStatus = 500;
+  let activityError: unknown = null;
+  let activityAdminUserId: string | null = null;
+  let activityAfterState: unknown = null;
+
   try {
     const currentUser = await getCurrentUser();
+    activityAdminUserId = currentUser?.currentUser?.id ?? null;
     if (
       !currentUser ||
       !currentUser.currentUser?.id ||
       currentUser.currentUser.role !== "admin"
     ) {
+      activityStatus = 401;
+      activityError = "Unauthorized";
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -75,6 +104,8 @@ export async function POST(request: Request) {
     const validationResult = createPostSchema.safeParse(body);
 
     if (!validationResult.success) {
+      activityStatus = 400;
+      activityError = validationResult.error.errors;
       return NextResponse.json(
         { error: "Validation failed", details: validationResult.error.errors },
         { status: 400 }
@@ -100,12 +131,27 @@ export async function POST(request: Request) {
       })
       .returning();
 
+    activityAfterState = newPost[0];
+    activityStatus = 201;
     return NextResponse.json(newPost[0], { status: 201 });
   } catch (error) {
+    activityError = error;
     console.error("Error creating ungatekeep post:", error);
+    activityStatus = 500;
     return NextResponse.json(
       { error: "Failed to create post" },
       { status: 500 }
     );
+  } finally {
+    await logAdminActivity({
+      request,
+      action: "admin.ungatekeep.create",
+      statusCode: activityStatus,
+      success: activityStatus >= 200 && activityStatus < 300,
+      adminUserId: activityAdminUserId,
+      entityType: "ungatekeep_post",
+      afterState: activityAfterState,
+      error: activityError,
+    });
   }
 }

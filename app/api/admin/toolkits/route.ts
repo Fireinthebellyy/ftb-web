@@ -1,17 +1,25 @@
 import { NextResponse } from "next/server";
+import { logAdminActivity } from "@/lib/admin-activity";
 import { db } from "@/lib/db";
 import { toolkitContentItems, toolkits, user as userTable } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { desc, eq, sql } from "drizzle-orm";
 
-export async function GET() {
+export async function GET(request: Request) {
+  let activityStatus = 500;
+  let activityError: unknown = null;
+  let activityAdminUserId: string | null = null;
+
   try {
     const currentUser = await getCurrentUser();
+    activityAdminUserId = currentUser?.currentUser?.id ?? null;
     if (
       !currentUser ||
       !currentUser.currentUser?.id ||
       currentUser.currentUser.role !== "admin"
     ) {
+      activityStatus = 401;
+      activityError = "Unauthorized";
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -57,12 +65,25 @@ export async function GET() {
       lessonCount: lessonCountByToolkitId.get(toolkit.id) ?? 0,
     }));
 
+    activityStatus = 200;
     return NextResponse.json(toolkitsWithDynamicLessonCount);
   } catch (error) {
+    activityError = error;
     console.error("Error fetching toolkits:", error);
+    activityStatus = 500;
     return NextResponse.json(
       { error: "Failed to fetch toolkits" },
       { status: 500 }
     );
+  } finally {
+    await logAdminActivity({
+      request,
+      action: "admin.toolkits.list",
+      statusCode: activityStatus,
+      success: activityStatus >= 200 && activityStatus < 300,
+      adminUserId: activityAdminUserId,
+      entityType: "toolkit",
+      error: activityError,
+    });
   }
 }

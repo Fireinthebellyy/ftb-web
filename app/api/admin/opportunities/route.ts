@@ -1,10 +1,15 @@
 import { db } from "@/lib/db";
+import { logAdminActivity } from "@/lib/admin-activity";
 import { opportunities, user, tags } from "@/lib/schema";
 import { getCurrentUserOptional } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { eq, and, isNull, sql, desc } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
+  let activityStatus = 500;
+  let activityError: unknown = null;
+  let activityAdminUserId: string | null = null;
+
   try {
     if (!db) {
       return NextResponse.json(
@@ -15,7 +20,10 @@ export async function GET(req: NextRequest) {
 
     // Check if user is admin - using optional to avoid redirect on API routes
     const currentUser = await getCurrentUserOptional();
+    activityAdminUserId = currentUser?.currentUser?.id ?? null;
     if (!currentUser || currentUser.currentUser?.role !== "admin") {
+      activityStatus = 403;
+      activityError = "Unauthorized";
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
@@ -81,6 +89,7 @@ export async function GET(req: NextRequest) {
     const totalCount = totalResult[0]?.total ?? 0;
     const hasMore = validOffset + pendingOpportunities.length < totalCount;
 
+    activityStatus = 200;
     return NextResponse.json(
       {
         success: true,
@@ -95,11 +104,23 @@ export async function GET(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
+    activityError = error;
     console.error("Error fetching pending opportunities:", error);
+    activityStatus = 500;
     return NextResponse.json(
       { error: "Failed to fetch pending opportunities" },
       { status: 500 }
     );
+  } finally {
+    await logAdminActivity({
+      request: req,
+      action: "admin.opportunities.pending_list",
+      statusCode: activityStatus,
+      success: activityStatus >= 200 && activityStatus < 300,
+      adminUserId: activityAdminUserId,
+      entityType: "opportunity",
+      error: activityError,
+    });
   }
 }
 

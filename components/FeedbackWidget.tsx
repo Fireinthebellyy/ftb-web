@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { MessageSquareHeart } from "lucide-react";
 
 type FeedbackMood = 1 | 2 | 3 | 4 | 5;
 
@@ -15,12 +16,12 @@ const moods: {
 	emoji: string;
 	meaning: string;
 }[] = [
-	{ value: 1, label: "Very Bad", emoji: "😡", meaning: "Angry" },
-	{ value: 2, label: "Bad", emoji: "😞", meaning: "Sad" },
-	{ value: 3, label: "Medium", emoji: "😐", meaning: "Neutral" },
-	{ value: 4, label: "Good", emoji: "🙂", meaning: "Good" },
-	{ value: 5, label: "Great", emoji: "😍", meaning: "Excellent" },
-];
+		{ value: 1, label: "Very Bad", emoji: "😡", meaning: "Angry" },
+		{ value: 2, label: "Bad", emoji: "😞", meaning: "Sad" },
+		{ value: 3, label: "Medium", emoji: "😐", meaning: "Neutral" },
+		{ value: 4, label: "Good", emoji: "🙂", meaning: "Good" },
+		{ value: 5, label: "Great", emoji: "😍", meaning: "Excellent" },
+	];
 
 const FEEDBACK_STORAGE_PREFIX = "feedback_submitted";
 const FEEDBACK_BLOCK_DAYS = 30;
@@ -119,9 +120,9 @@ export default function FeedbackWidget() {
 					aria-label="Open feedback"
 					title="Share feedback"
 					onClick={() => setOpen(true)}
-					className="fixed right-6 bottom-[124px] z-50 flex size-10 cursor-pointer items-center justify-center rounded-full bg-neutral-200 text-neutral-600 shadow-lg transition hover:bg-neutral-100 focus:ring-2 focus:ring-orange-400 focus:outline-none md:bottom-20 md:size-12"
+					className="fixed right-6 bottom-31 z-50 flex size-10 cursor-pointer items-center justify-center rounded-full bg-neutral-200 text-neutral-600 shadow-lg transition hover:bg-neutral-100 focus:ring-2 focus:ring-orange-400 focus:outline-none md:bottom-20 md:size-12"
 				>
-					<svg
+					{/* <svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="24"
 						height="24"
@@ -139,7 +140,9 @@ export default function FeedbackWidget() {
 						<path d="M12.5 20.5l-.5 .5l-3 -3h-3a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v5.5" />
 						<path d="M16 19h6" />
 						<path d="M19 16v6" />
-					</svg>
+					</svg> */}
+
+					<MessageSquareHeart />
 				</button>
 			)}
 

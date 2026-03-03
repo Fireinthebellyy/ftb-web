@@ -17,7 +17,17 @@ const updateOpportunitySchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   publishAt: z
-    .union([z.string().datetime(), z.literal(""), z.null()])
+    .union([
+      z.string().datetime(),
+      z
+        .string()
+        .regex(
+          /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/,
+          "Invalid local datetime format"
+        ),
+      z.literal(""),
+      z.null(),
+    ])
     .optional(),
 });
 

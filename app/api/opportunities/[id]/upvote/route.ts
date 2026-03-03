@@ -1,8 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { opportunities } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull, lte, or } from "drizzle-orm";
 import { getCurrentUser } from "@/server/users";
+
+async function isOpportunityPubliclyVisible(opportunityId: string) {
+  const rows = await db
+    .select({ id: opportunities.id })
+    .from(opportunities)
+    .where(
+      and(
+        eq(opportunities.id, opportunityId),
+        isNull(opportunities.deletedAt),
+        eq(opportunities.isActive, true),
+        or(
+          isNull(opportunities.publishAt),
+          lte(opportunities.publishAt, new Date())
+        )
+      )
+    )
+    .limit(1);
+
+  return rows.length > 0;
+}
 
 // GET: returns { count, userHasUpvoted }
 export async function GET(
@@ -11,6 +31,11 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+
+    const isVisible = await isOpportunityPubliclyVisible(id);
+    if (!isVisible) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     const rows = await db
       .select({
@@ -55,6 +80,11 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
+
+    const isVisible = await isOpportunityPubliclyVisible(id);
+    if (!isVisible) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     const auth = await getCurrentUser();
     const currentUserId = auth?.currentUser?.id as string | undefined;

@@ -31,7 +31,16 @@ const opportunitySchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   publishAt: z
-    .union([z.string().datetime(), z.literal(""), z.null()])
+    .union([
+      z
+        .string()
+        .min(1)
+        .refine((s) => !Number.isNaN(new Date(s).getTime()), {
+          message: "Invalid datetime",
+        }),
+      z.literal(""),
+      z.null(),
+    ])
     .optional(),
 });
 
@@ -269,17 +278,17 @@ export async function GET(req: NextRequest) {
     const searchTerm = searchParam ? searchParam.trim() : "";
     const rawTypes = typesParam
       ? typesParam
-        .split(",")
-        .map((value) => value.trim())
-        .filter(Boolean)
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean)
       : [];
     const allowedTypes = (opportunities.type.enumValues ?? []) as string[];
     const validTypes = rawTypes.filter((type) => allowedTypes.includes(type));
     const rawTags = tagsParam
       ? tagsParam
-        .split(",")
-        .map((value) => value.trim().toLowerCase())
-        .filter(Boolean)
+          .split(",")
+          .map((value) => value.trim().toLowerCase())
+          .filter(Boolean)
       : [];
 
     // Validate pagination parameters
@@ -287,7 +296,10 @@ export async function GET(req: NextRequest) {
     const validOffset = Math.max(offset, 0); // Non-negative
     const idsParam = searchParams.get("ids");
     const ids = idsParam
-      ? idsParam.split(",").map((id) => id.trim()).filter(Boolean)
+      ? idsParam
+          .split(",")
+          .map((id) => id.trim())
+          .filter(Boolean)
       : [];
 
     timer.mark("query_prep_done", {
@@ -306,18 +318,17 @@ export async function GET(req: NextRequest) {
         conditions.push(inArray(opportunities.id, ids));
       }
 
-      // Only show active (approved) opportunities to non-admin users
-      // Admins can see all opportunities including pending ones
+      if (usePublishAt) {
+        conditions.push(
+          or(
+            isNull(opportunities.publishAt),
+            lte(opportunities.publishAt, new Date())
+          )
+        );
+      }
+
       if (sessionRole !== "admin") {
         conditions.push(eq(opportunities.isActive, true));
-        if (usePublishAt) {
-          conditions.push(
-            or(
-              isNull(opportunities.publishAt),
-              lte(opportunities.publishAt, new Date())
-            )
-          );
-        }
       }
 
       if (searchTerm) {

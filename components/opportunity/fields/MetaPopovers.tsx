@@ -166,7 +166,7 @@ export function MetaPopovers({
                                 {Math.ceil(
                                   (field.value.to.getTime() -
                                     field.value.from.getTime()) /
-                                  (1000 * 60 * 60 * 24)
+                                    (1000 * 60 * 60 * 24)
                                 ) + 1}{" "}
                                 days)
                               </span>
@@ -394,6 +394,12 @@ export function SchedulePublishPopover({
                               ? format(selectedPublishDate, "HH:mm")
                               : getCurrentTimeValue()
                           }
+                          onFocus={(e) => {
+                            e.currentTarget.showPicker?.();
+                          }}
+                          onClick={(e) => {
+                            e.currentTarget.showPicker?.();
+                          }}
                           onChange={(event) => {
                             const [hours, minutes] = event.target.value
                               .split(":")

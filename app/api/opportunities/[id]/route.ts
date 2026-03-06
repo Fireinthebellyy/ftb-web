@@ -17,7 +17,16 @@ const updateOpportunitySchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   publishAt: z
-    .union([z.string().datetime(), z.literal(""), z.null()])
+    .union([
+      z
+        .string()
+        .min(1)
+        .refine((s) => !Number.isNaN(new Date(s).getTime()), {
+          message: "Invalid datetime",
+        }),
+      z.literal(""),
+      z.null(),
+    ])
     .optional(),
 });
 

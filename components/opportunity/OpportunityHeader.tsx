@@ -37,6 +37,7 @@ export function OpportunityHeader({
     user,
     type,
     createdAt,
+    publishAt,
   } = opportunity;
 
   const primaryType = Array.isArray(type) ? type[0] : type;
@@ -164,7 +165,7 @@ export function OpportunityHeader({
           </div>
         </div>
         <p className="text-xs text-gray-400">
-          {createdAt ? formatDate(createdAt) : ""}
+          {formatDate(publishAt || createdAt)}
         </p>
       </header>
     </div>

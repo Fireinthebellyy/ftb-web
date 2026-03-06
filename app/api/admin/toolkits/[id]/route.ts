@@ -153,7 +153,7 @@ export async function PUT(
       { status: 500 }
     );
   } finally {
-    await logAdminActivity({
+    void logAdminActivity({
       request,
       action: "admin.toolkits.update",
       statusCode: activityStatus,
@@ -230,7 +230,7 @@ export async function DELETE(
       { status: 500 }
     );
   } finally {
-    await logAdminActivity({
+    void logAdminActivity({
       request,
       action: "admin.toolkits.delete",
       statusCode: activityStatus,

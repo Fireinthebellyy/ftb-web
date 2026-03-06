@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
       { status: 500 }
     );
   } finally {
-    await logAdminActivity({
+    void logAdminActivity({
       request: req,
       action: "admin.opportunities.pending_list",
       statusCode: activityStatus,

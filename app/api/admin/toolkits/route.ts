@@ -76,7 +76,7 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   } finally {
-    await logAdminActivity({
+    void logAdminActivity({
       request,
       action: "admin.toolkits.list",
       statusCode: activityStatus,

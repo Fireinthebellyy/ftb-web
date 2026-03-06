@@ -174,7 +174,7 @@ export async function PATCH(
       { status: 500 }
     );
   } finally {
-    await logAdminActivity({
+    void logAdminActivity({
       request,
       action: "admin.coupons.update",
       statusCode: activityStatus,
@@ -243,7 +243,7 @@ export async function DELETE(
       { status: 500 }
     );
   } finally {
-    await logAdminActivity({
+    void logAdminActivity({
       request,
       action: "admin.coupons.delete",
       statusCode: activityStatus,

@@ -544,4 +544,5 @@ export const schema = {
   newsletterSubscribers,
   trackerItems,
   trackerEvents,
+  adminActivityLogs,
 };

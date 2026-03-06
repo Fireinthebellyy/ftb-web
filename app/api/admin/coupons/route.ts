@@ -49,7 +49,7 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   } finally {
-    await logAdminActivity({
+    void logAdminActivity({
       request,
       action: "admin.coupons.list",
       statusCode: activityStatus,
@@ -134,7 +134,7 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   } finally {
-    await logAdminActivity({
+    void logAdminActivity({
       request,
       action: "admin.coupons.create",
       statusCode: activityStatus,

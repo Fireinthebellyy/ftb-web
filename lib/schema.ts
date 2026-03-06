@@ -6,7 +6,9 @@ import {
   boolean,
   integer,
   date,
+  jsonb,
   uuid,
+  index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
@@ -136,6 +138,36 @@ export const user = pgTable("user", {
   deletedAt: timestamp("deleted_at"),
   role: userRoleEnum("role").default("user").notNull(),
 });
+
+export const adminActivityLogs = pgTable(
+  "admin_activity_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    adminUserId: text("admin_user_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    action: text("action").notNull(),
+    entityType: text("entity_type"),
+    entityId: text("entity_id"),
+    method: text("method").notNull(),
+    path: text("path").notNull(),
+    statusCode: integer("status_code").notNull(),
+    success: boolean("success").default(false).notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    requestId: text("request_id"),
+    metadata: jsonb("metadata"),
+    beforeState: jsonb("before_state"),
+    afterState: jsonb("after_state"),
+    error: text("error"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("admin_activity_logs_admin_user_id_idx").on(table.adminUserId),
+    index("admin_activity_logs_action_idx").on(table.action),
+    index("admin_activity_logs_created_at_idx").on(table.createdAt),
+  ]
+);
 
 export const userOnboardingProfiles = pgTable(
   "user_onboarding_profiles",
@@ -512,4 +544,5 @@ export const schema = {
   newsletterSubscribers,
   trackerItems,
   trackerEvents,
+  adminActivityLogs,
 };

@@ -63,7 +63,7 @@ export async function GET(
       { status: 500 }
     );
   } finally {
-    await logAdminActivity({
+    void logAdminActivity({
       request,
       action: "admin.toolkits.content.list",
       statusCode: activityStatus,
@@ -141,7 +141,7 @@ export async function POST(
       { status: 500 }
     );
   } finally {
-    await logAdminActivity({
+    void logAdminActivity({
       request,
       action: "admin.toolkits.content.create",
       statusCode: activityStatus,

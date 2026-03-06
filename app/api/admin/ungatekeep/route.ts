@@ -69,7 +69,7 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   } finally {
-    await logAdminActivity({
+    void logAdminActivity({
       request,
       action: "admin.ungatekeep.list",
       statusCode: activityStatus,
@@ -143,7 +143,7 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   } finally {
-    await logAdminActivity({
+    void logAdminActivity({
       request,
       action: "admin.ungatekeep.create",
       statusCode: activityStatus,

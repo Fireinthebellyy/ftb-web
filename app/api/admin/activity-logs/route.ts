@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { and, desc, eq, gte, lte, SQL } from "drizzle-orm";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { adminActivityLogs, user } from "@/lib/schema";
-import { getCurrentUser } from "@/server/users";
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,12 +13,18 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const currentUser = await getCurrentUser();
-    if (
-      !currentUser ||
-      !currentUser.currentUser?.id ||
-      currentUser.currentUser.role !== "admin"
-    ) {
+    const session = await auth.api.getSession({
+      headers: req.headers,
+    });
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const currentUser = await db.query.user.findFirst({
+      where: eq(user.id, session.user.id),
+      columns: { role: true },
+    });
+    if (!currentUser || currentUser.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -36,6 +42,25 @@ export async function GET(req: NextRequest) {
       : Math.min(Math.max(limitParam, 1), 200);
     const offset = Number.isNaN(offsetParam) ? 0 : Math.max(offsetParam, 0);
 
+    if (from) {
+      const fromDate = new Date(from);
+      if (Number.isNaN(fromDate.getTime())) {
+        return NextResponse.json(
+          { error: "Invalid from date parameter" },
+          { status: 400 }
+        );
+      }
+    }
+    if (to) {
+      const toDate = new Date(to);
+      if (Number.isNaN(toDate.getTime())) {
+        return NextResponse.json(
+          { error: "Invalid to date parameter" },
+          { status: 400 }
+        );
+      }
+    }
+
     const filters: SQL<unknown>[] = [];
     if (action) {
       filters.push(eq(adminActivityLogs.action, action));
@@ -48,17 +73,10 @@ export async function GET(req: NextRequest) {
     }
 
     if (from) {
-      const fromDate = new Date(from);
-      if (!Number.isNaN(fromDate.getTime())) {
-        filters.push(gte(adminActivityLogs.createdAt, fromDate));
-      }
+      filters.push(gte(adminActivityLogs.createdAt, new Date(from)));
     }
-
     if (to) {
-      const toDate = new Date(to);
-      if (!Number.isNaN(toDate.getTime())) {
-        filters.push(lte(adminActivityLogs.createdAt, toDate));
-      }
+      filters.push(lte(adminActivityLogs.createdAt, new Date(to)));
     }
 
     const whereClause = filters.length > 0 ? and(...filters) : undefined;

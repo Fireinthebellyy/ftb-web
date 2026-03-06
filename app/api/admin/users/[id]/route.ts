@@ -118,7 +118,7 @@ export async function PATCH(
       { status: 500 }
     );
   } finally {
-    await logAdminActivity({
+    void logAdminActivity({
       request,
       action: "admin.users.update_role",
       statusCode: activityStatus,

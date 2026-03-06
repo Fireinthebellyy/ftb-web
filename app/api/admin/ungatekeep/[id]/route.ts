@@ -65,7 +65,7 @@ export async function GET(
       { status: 500 }
     );
   } finally {
-    await logAdminActivity({
+    void logAdminActivity({
       request,
       action: "admin.ungatekeep.get",
       statusCode: activityStatus,
@@ -196,7 +196,7 @@ export async function PUT(
       { status: 500 }
     );
   } finally {
-    await logAdminActivity({
+    void logAdminActivity({
       request,
       action: "admin.ungatekeep.update",
       statusCode: activityStatus,
@@ -271,7 +271,7 @@ export async function DELETE(
       { status: 500 }
     );
   } finally {
-    await logAdminActivity({
+    void logAdminActivity({
       request,
       action: "admin.ungatekeep.delete",
       statusCode: activityStatus,

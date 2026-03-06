@@ -105,7 +105,7 @@ export async function PATCH(
     return NextResponse.json(
       {
         success: true,
-        message: `Opportunity ${validatedData.action}d successfully`,
+        message: `Opportunity ${validatedData.action === "approve" ? "approved" : "rejected"} successfully`,
         opportunity: updatedOpportunity[0],
       },
       { status: 200 }
@@ -125,7 +125,7 @@ export async function PATCH(
       { status: 500 }
     );
   } finally {
-    await logAdminActivity({
+    void logAdminActivity({
       request: req,
       action: "admin.opportunities.review",
       statusCode: activityStatus,

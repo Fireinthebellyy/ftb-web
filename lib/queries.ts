@@ -444,6 +444,44 @@ export function useDeleteTask() {
 }
 
 /**
+ * Tracker deadline counts
+ */
+export type TrackerKind = "internship" | "opportunity";
+
+export type TrackerDeadlineCountsResponse = {
+  deadlineCounts?: Record<string, number>;
+};
+
+export async function fetchTrackerDeadlineCounts(
+  kind: TrackerKind = "opportunity"
+): Promise<TrackerDeadlineCountsResponse> {
+  if (typeof window === "undefined") {
+    return { deadlineCounts: {} };
+  }
+
+  const { data } = await axios.get<TrackerDeadlineCountsResponse>(
+    "/api/tracker",
+    {
+      params: { kind },
+    }
+  );
+
+  return data;
+}
+
+export function useTrackerDeadlineCounts(
+  kind: TrackerKind = "opportunity",
+  queryEnabled: boolean = true
+) {
+  return useQuery<TrackerDeadlineCountsResponse>({
+    queryKey: ["tracker", "deadline-counts", kind],
+    queryFn: () => fetchTrackerDeadlineCounts(kind),
+    enabled: queryEnabled,
+    staleTime: 1000 * 30, // 30s
+  });
+}
+
+/**
  * Onboarding profile
  */
 export type OnboardingProfile = {

@@ -375,7 +375,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
                 company: fetched.organiserInfo || "Organizer", // Opportunities use organiserInfo
                 location: fetched.location,
                 type: fetched.type,
-                deadline: fetched.endDate || fetched.startDate, // Use endDate as deadline
+                deadline: fetched.startDate || fetched.endDate, // Prefer startDate as deadline
                 logo: getImageUrl(fetched.images?.[0]), // Use first image if available, resolving to URL
                 ...fetched,
               };

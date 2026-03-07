@@ -97,7 +97,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               : undefined,
             type: opportunity.type,
             location: opportunity.location,
-            deadline: opportunity.endDate,
+            deadline: opportunity.startDate || opportunity.endDate,
             kind: "opportunity",
           } as any,
           "Not Applied",

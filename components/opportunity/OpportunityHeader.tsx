@@ -25,7 +25,6 @@ export function OpportunityHeader({
     startDate,
     endDate,
     user,
-    type,
     createdAt,
     publishAt,
   } = opportunity;
@@ -86,7 +85,7 @@ export function OpportunityHeader({
                     <>
                       {" - "}
                       {format(new Date(startDate), "MMM") ===
-                      format(new Date(endDate), "MMM")
+                        format(new Date(endDate), "MMM")
                         ? format(new Date(endDate), "dd")
                         : format(new Date(endDate), "MMM dd")}
                     </>
@@ -102,8 +101,8 @@ export function OpportunityHeader({
       <header className="flex items-end space-x-2 pb-2 sm:items-center sm:pb-3">
         <div className="shrink-0">
           {user &&
-          user.image &&
-          !user.image.includes("https://media.licdn.com") ? (
+            user.image &&
+            !user.image.includes("https://media.licdn.com") ? (
             <div className="size-4 overflow-hidden rounded-full border border-gray-100 shadow sm:size-5">
               <Image
                 src={user.image}
@@ -117,10 +116,10 @@ export function OpportunityHeader({
             <div className="flex size-4 items-center justify-center rounded-full bg-gray-300 text-xs font-semibold text-gray-600 uppercase sm:size-5">
               {user && user.name
                 ? user.name
-                    .split(" ")
-                    .map((word) => word[0])
-                    .join("")
-                    .slice(0, 2)
+                  .split(" ")
+                  .map((word) => word[0])
+                  .join("")
+                  .slice(0, 2)
                 : "OP"}
             </div>
           )}

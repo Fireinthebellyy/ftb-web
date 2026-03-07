@@ -33,7 +33,9 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   const { id, images, title } = opportunity;
 
   const { items, addToTracker, removeFromTracker } = useTracker();
-  const trackedItem = items.find((i) => String(i.oppId) === String(id));
+  const trackedItem = items.find(
+    (i) => i.kind === "opportunity" && String(i.oppId) === String(id)
+  );
   const isBookmarked = Boolean(trackedItem);
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -72,11 +74,12 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               "Unknown Organization",
             logo: opportunity.images?.[0]
               ? createOpportunityStorage()
-                .getFileView(
-                  process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID || "",
-                  opportunity.images[0]
-                )
-                .toString()
+                  .getFileView(
+                    process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID ||
+                      "",
+                    opportunity.images[0]
+                  )
+                  .toString()
               : undefined,
             type: opportunity.type,
             location: opportunity.location,
@@ -88,15 +91,16 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         );
       } else {
         if (trackedItem) {
-          removeFromTracker(trackedItem.oppId as string | number);
+          removeFromTracker(
+            trackedItem.oppId as string | number,
+            trackedItem.kind ?? "opportunity"
+          );
         }
       }
 
       if (onBookmarkChange) {
         onBookmarkChange(id, newState);
       }
-
-      toast.success(newState ? "Added to bookmarks" : "Removed from bookmarks");
     } catch (err) {
       console.error("Bookmark request failed:", err);
       toast.error("Failed to update bookmark");

@@ -49,6 +49,18 @@ interface AdminDataTableProps<TData, TValue> {
   tableId?: string;
 }
 
+const DEFAULT_VISIBILITY_STATE: VisibilityState = {};
+
+const isValidVisibilityState = (parsed: unknown): parsed is VisibilityState => {
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return false;
+  }
+
+  return Object.values(parsed as Record<string, unknown>).every(
+    (value) => typeof value === "boolean"
+  );
+};
+
 export function AdminDataTable<TData, TValue>({
   columns,
   data,
@@ -75,11 +87,19 @@ export function AdminDataTable<TData, TValue>({
     try {
       const raw = window.localStorage.getItem(storageKey);
       if (raw) {
-        const parsed = JSON.parse(raw) as VisibilityState;
-        setColumnVisibility(parsed);
+        const parsed: unknown = JSON.parse(raw);
+
+        if (isValidVisibilityState(parsed)) {
+          setColumnVisibility(parsed);
+        } else {
+          setColumnVisibility(DEFAULT_VISIBILITY_STATE);
+        }
+      } else {
+        setColumnVisibility(DEFAULT_VISIBILITY_STATE);
       }
     } catch {
       // Ignore invalid stored state and continue with defaults.
+      setColumnVisibility(DEFAULT_VISIBILITY_STATE);
     } finally {
       setHasRestoredVisibility(true);
     }

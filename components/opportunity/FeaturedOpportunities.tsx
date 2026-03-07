@@ -1,57 +1,21 @@
-import React, { memo, useState, useEffect, useCallback } from "react";
+"use client";
+import React, { memo, useRef } from "react";
 import Image from "next/image";
-import { useFeatured } from "@/lib/queries-sanity";
 import { Loader2, ExternalLink } from "lucide-react";
 import {
+  Autoplay,
   Carousel,
   CarouselContent,
+  CarouselDots,
+  CarouselDotsOverlay,
   CarouselItem,
 } from "@/components/ui/carousel";
+import { CAROUSEL_AUTOPLAY_DELAY_MS } from "@/lib/carousel";
+import { useFeatured } from "@/lib/queries-sanity";
 
 const FeaturedOpportunities: React.FC = memo(() => {
   const { data: featured = [], isLoading, error } = useFeatured(4);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [carouselApi, setCarouselApi] = useState<any>(null);
-
-  // Auto-rotation effect
-  useEffect(() => {
-    if (!carouselApi || featured.length <= 1) return;
-
-    const interval = setInterval(() => {
-      carouselApi.scrollNext();
-    }, 4000); // Change slide every 4 seconds
-
-    return () => clearInterval(interval);
-  }, [carouselApi, featured.length]);
-
-  // Track carousel slide changes to update dots
-  useEffect(() => {
-    if (!carouselApi) return;
-
-    const handleSlideChange = () => {
-      const currentIndex = carouselApi.selectedScrollSnap();
-      setCurrentSlide(currentIndex);
-    };
-
-    carouselApi.on("select", handleSlideChange);
-
-    // Set initial slide
-    setCurrentSlide(carouselApi.selectedScrollSnap());
-
-    return () => {
-      carouselApi.off("select", handleSlideChange);
-    };
-  }, [carouselApi]);
-
-  const handleDotClick = useCallback(
-    (index: number) => {
-      if (carouselApi) {
-        carouselApi.scrollTo(index);
-        setCurrentSlide(index);
-      }
-    },
-    [carouselApi]
-  );
+  const autoplayRef = useRef(Autoplay({ delay: CAROUSEL_AUTOPLAY_DELAY_MS }));
 
   if (error) {
     return <div>Error loading featured opportunities</div>;
@@ -78,10 +42,10 @@ const FeaturedOpportunities: React.FC = memo(() => {
           <Carousel
             opts={{
               align: "center",
-              loop: true,
+              loop: featured.length > 1,
             }}
-            className="w-full"
-            setApi={setCarouselApi}
+            plugins={featured.length > 1 ? [autoplayRef.current] : undefined}
+            className="relative w-full"
           >
             <CarouselContent>
               {featured.map((item, index) => (
@@ -138,24 +102,16 @@ const FeaturedOpportunities: React.FC = memo(() => {
                 </CarouselItem>
               ))}
             </CarouselContent>
-          </Carousel>
-
-          {/* Pagination Dots */}
-          {featured.length > 1 && (
-            <div className="mt-4 flex justify-center space-x-2">
-              {featured.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleDotClick(index)}
-                  className={`h-2 w-2 rounded-full transition-all duration-200 ${index === currentSlide
-                      ? "w-6 bg-blue-600"
-                      : "bg-gray-300 hover:bg-gray-400"
-                    }`}
-                  aria-label={`Go to slide ${index + 1}`}
+            {featured.length > 1 ? (
+              <CarouselDotsOverlay>
+                <CarouselDots
+                  className="gap-1.5 py-0"
+                  dotClassName="bg-white/45 hover:bg-white/70"
+                  activeDotClassName="h-1.5 w-3 rounded-full bg-white"
                 />
-              ))}
-            </div>
-          )}
+              </CarouselDotsOverlay>
+            ) : null}
+          </Carousel>
         </div>
       ) : (
         <div className="py-8 text-center text-gray-500">

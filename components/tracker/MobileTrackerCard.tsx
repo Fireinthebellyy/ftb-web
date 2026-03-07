@@ -1,111 +1,185 @@
-import React from 'react';
-import { Trash2, ChevronDown } from 'lucide-react';
-import { toast } from 'sonner';
-import { TrackerItem } from '@/components/providers/TrackerProvider';
-import { differenceInCalendarDays } from 'date-fns';
+import React from "react";
+import { Trash2, ChevronDown } from "lucide-react";
+import { toast } from "sonner";
+import { TrackerItem } from "@/components/providers/TrackerProvider";
+import { differenceInCalendarDays } from "date-fns";
 
 function DeadlineBadge({ deadline }: { deadline: string }) {
-    const daysDiff = differenceInCalendarDays(new Date(deadline), new Date());
-    if (daysDiff < 0) return <span className="text-[10px] font-bold bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded-full">Closed</span>;
-    if (daysDiff === 0) return <span className="text-[10px] font-bold bg-orange-50 text-orange-600 border border-orange-200 px-2 py-0.5 rounded-full animate-pulse">Today!</span>;
-    if (daysDiff <= 3) return <span className="text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200 px-2 py-0.5 rounded-full">{daysDiff}d left</span>;
-    if (daysDiff <= 7) return <span className="text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-2 py-0.5 rounded-full">{daysDiff} days left</span>;
-    return <span className="text-[10px] font-bold bg-green-50 text-green-600 border border-green-200 px-2 py-0.5 rounded-full">{daysDiff} days left</span>;
+  const daysDiff = differenceInCalendarDays(new Date(deadline), new Date());
+  if (daysDiff < 0)
+    return (
+      <span className="rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600">
+        Closed
+      </span>
+    );
+  if (daysDiff === 0)
+    return (
+      <span className="animate-pulse rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-bold text-orange-600">
+        Today!
+      </span>
+    );
+  if (daysDiff <= 3)
+    return (
+      <span className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-600">
+        {daysDiff}d left
+      </span>
+    );
+  if (daysDiff <= 7)
+    return (
+      <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-600">
+        {daysDiff} days left
+      </span>
+    );
+  return (
+    <span className="rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-600">
+      {daysDiff} days left
+    </span>
+  );
 }
 
 interface MobileTrackerCardProps {
-    opp: TrackerItem;
-    updateStatus: (id: number | string, status: string, extraData?: Record<string, unknown>) => void;
-    onDelete: (id: number | string) => void;
-    onClick: (opp: TrackerItem) => void;
+  opp: TrackerItem;
+  updateStatus: (
+    id: number | string,
+    status: string,
+    extraData?: Record<string, unknown>,
+    kind?: "internship" | "opportunity"
+  ) => void;
+  onDelete: (id: number | string, kind?: "internship" | "opportunity") => void;
+  onClick: (opp: TrackerItem) => void;
 }
 
-export default function MobileTrackerCard({ opp, updateStatus, onDelete, onClick }: MobileTrackerCardProps) {
-    const statuses = ['Not Applied', 'Applied', 'Result Awaited', 'Selected', 'Rejected'];
+export default function MobileTrackerCard({
+  opp,
+  updateStatus,
+  onDelete,
+  onClick,
+}: MobileTrackerCardProps) {
+  const statuses = [
+    "Not Applied",
+    "Applied",
+    "Result Awaited",
+    "Selected",
+    "Rejected",
+  ];
 
-    const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const newStatus = e.target.value;
-        if (newStatus === 'Rejected') {
-            const reason = prompt("What do you think was the reason? (Resume, Interview, Ghosted?)");
-            if (reason) {
-                updateStatus(opp.oppId, newStatus, { failureReason: reason });
-                toast.message("💡 Suggestion", {
-                    description: reason.toLowerCase().includes('resume') ? "Check out the Resume Toolkit." : "Try the Mock Interview tool.",
-                });
-            } else {
-                updateStatus(opp.oppId, newStatus);
-            }
-        } else {
-            updateStatus(opp.oppId, newStatus);
-        }
-    };
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newStatus = e.target.value;
+    if (newStatus === "Rejected") {
+      const reason = prompt(
+        "What do you think was the reason? (Resume, Interview, Ghosted?)"
+      );
+      if (reason) {
+        updateStatus(opp.oppId, newStatus, { failureReason: reason }, opp.kind);
+        toast.message("💡 Suggestion", {
+          description: reason.toLowerCase().includes("resume")
+            ? "Check out the Resume Toolkit."
+            : "Try the Mock Interview tool.",
+        });
+      } else {
+        updateStatus(opp.oppId, newStatus, undefined, opp.kind);
+      }
+    } else {
+      updateStatus(opp.oppId, newStatus, undefined, opp.kind);
+    }
+  };
 
-    return (
-        <div
-            onClick={() => onClick(opp)}
-            className="p-4 border-b border-slate-100 bg-white relative cursor-pointer active:bg-slate-50 transition-colors group"
-        >
-            {/* Top Row: Logo, Info, and Delete */}
-            <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-3 pr-2 min-w-0 flex-1">
-                    {(opp.logo || opp.poster || opp.images?.[0]) ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={opp.logo || opp.poster || opp.images?.[0]} alt={opp.company} className="w-10 h-10 rounded-lg object-contain bg-white border border-slate-100 p-0.5 shrink-0" />
-                    ) : (
-                        <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 font-bold text-sm shrink-0">
-                            {opp.company ? opp.company.charAt(0) : '?'}
-                        </div>
-                    )}
-                    <div className="min-w-0">
-                        <h4 className="font-bold text-slate-900 text-base leading-tight mb-0.5 truncate pr-1">{opp.title}</h4>
-                        <p className="text-slate-500 text-xs font-medium truncate">{opp.company}</p>
-                    </div>
-                </div>
-
-                <button
-                    onClick={(e) => { e.stopPropagation(); onDelete(opp.oppId); }}
-                    className="p-2 text-rose-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg shrink-0 transition-colors"
-                    title="Delete"
-                >
-                    <Trash2 size={18} />
-                </button>
+  return (
+    <div
+      onClick={() => onClick(opp)}
+      className="group relative cursor-pointer border-b border-slate-100 bg-white p-4 transition-colors active:bg-slate-50"
+    >
+      {/* Top Row: Logo, Info, and Delete */}
+      <div className="mb-4 flex items-start justify-between">
+        <div className="flex min-w-0 flex-1 items-center gap-3 pr-2">
+          {opp.logo || opp.poster || opp.images?.[0] ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={opp.logo || opp.poster || opp.images?.[0]}
+              alt={opp.company}
+              className="h-10 w-10 shrink-0 rounded-lg border border-slate-100 bg-white object-contain p-0.5"
+            />
+          ) : (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-sm font-bold text-slate-500">
+              {opp.company ? opp.company.charAt(0) : "?"}
             </div>
-
-            {/* Bottom Row: Status and Metadata */}
-            <div className="flex flex-wrap items-center justify-between gap-3 mt-1">
-                <div className="relative flex-1 min-w-[140px]" onClick={(e) => e.stopPropagation()}>
-                    <select
-                        value={opp.status}
-                        onChange={handleStatusChange}
-                        className="appearance-none bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-200 cursor-pointer w-full py-2 px-3 pr-8 transition-all"
-                    >
-                        {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0 ml-auto">
-                    {opp.deadline && (
-                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5">
-                            <a
-                                href={`https://www.google.com/calendar/render?action=TEMPLATE&text=Deadline: ${encodeURIComponent(opp.title)}&dates=${new Date(opp.deadline).toISOString().replace(/-|:|\.\d\d\d/g, "")}/${new Date(opp.deadline).toISOString().replace(/-|:|\.\d\d\d/g, "")}&details=Company: ${encodeURIComponent(opp.company)}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="text-slate-400 hover:text-blue-600 transition-colors shrink-0"
-                                title="Add to Google Calendar"
-                            >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src="/images/google-calendar.webp" alt="Google Calendar" className="w-4 h-4 object-contain" />
-                            </a>
-                            <span className="text-[10px] uppercase font-black tracking-wider text-slate-600 whitespace-nowrap">
-                                {new Date(opp.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                            </span>
-                            {opp.kind === 'opportunity' && <DeadlineBadge deadline={opp.deadline} />}
-                        </div>
-                    )}
-                </div>
-            </div>
+          )}
+          <div className="min-w-0">
+            <h4 className="mb-0.5 truncate pr-1 text-base leading-tight font-bold text-slate-900">
+              {opp.title}
+            </h4>
+            <p className="truncate text-xs font-medium text-slate-500">
+              {opp.company}
+            </p>
+          </div>
         </div>
-    );
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(opp.oppId, opp.kind);
+          }}
+          className="shrink-0 rounded-lg p-2 text-rose-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
+          title="Delete"
+        >
+          <Trash2 size={18} />
+        </button>
+      </div>
+
+      {/* Bottom Row: Status and Metadata */}
+      <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
+        <div
+          className="relative min-w-[140px] flex-1"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <select
+            value={opp.status}
+            onChange={handleStatusChange}
+            className="w-full cursor-pointer appearance-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-8 text-xs font-bold text-slate-700 transition-all focus:ring-2 focus:ring-orange-200 focus:outline-none"
+          >
+            {statuses.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            size={14}
+            className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-slate-400"
+          />
+        </div>
+
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          {opp.deadline && (
+            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5">
+              <a
+                href={`https://www.google.com/calendar/render?action=TEMPLATE&text=Deadline: ${encodeURIComponent(opp.title)}&dates=${new Date(opp.deadline).toISOString().replace(/-|:|\.\d\d\d/g, "")}/${new Date(opp.deadline).toISOString().replace(/-|:|\.\d\d\d/g, "")}&details=Company: ${encodeURIComponent(opp.company)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="shrink-0 text-slate-400 transition-colors hover:text-blue-600"
+                title="Add to Google Calendar"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/images/google-calendar.webp"
+                  alt="Google Calendar"
+                  className="h-4 w-4 object-contain"
+                />
+              </a>
+              <span className="text-[10px] font-black tracking-wider whitespace-nowrap text-slate-600 uppercase">
+                {new Date(opp.deadline).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                })}
+              </span>
+              {opp.kind === "opportunity" && (
+                <DeadlineBadge deadline={opp.deadline} />
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -5,6 +5,7 @@ export type Opportunity = {
   type: string;
   tags?: string[];
   images?: string[];
+  attachments?: string[];
   createdAt?: string;
   location?: string;
   organiserInfo?: string;
@@ -106,11 +107,14 @@ export type UploadProgress = {
   progress: number;
 };
 
+export type FileKind = "image" | "pdf" | "ppt";
+
 export interface FileItem {
   name: string;
   size: number;
   file: File;
   preview: string;
+  kind: FileKind;
   uploading?: boolean;
   progress?: number;
   fileId?: string;

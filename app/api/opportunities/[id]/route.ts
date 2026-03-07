@@ -11,6 +11,7 @@ const updateOpportunitySchema = z.object({
   title: z.string().min(1, "Title is required").optional(),
   description: z.string().min(1, "Description is required").optional(),
   images: z.array(z.string()).optional(),
+  attachments: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
   location: z.string().optional(),
   organiserInfo: z.string().optional(),
@@ -106,6 +107,9 @@ export async function PUT(
     }
     if (validatedData.images !== undefined) {
       updateData.images = validatedData.images;
+    }
+    if (validatedData.attachments !== undefined) {
+      updateData.attachments = validatedData.attachments;
     }
     if (validatedData.tags !== undefined) {
       updateData.tagIds = await upsertTagsAndGetIds(validatedData.tags);

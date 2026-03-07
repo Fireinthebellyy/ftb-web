@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTracker } from "@/components/providers/TrackerProvider";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import {
   Carousel,
   CarouselContent,
@@ -17,6 +18,7 @@ import {
 import Image from "next/image";
 import { OpportunityHeader } from "./opportunity/OpportunityHeader";
 import { OpportunityImageGallery } from "./opportunity/OpportunityImageGallery";
+import { OpportunityAttachments } from "./opportunity/OpportunityAttachments";
 import { OpportunityActions } from "./opportunity/OpportunityActions";
 import NewOpportunityForm from "./opportunity/NewOpportunityForm";
 
@@ -26,11 +28,37 @@ const isValidUUID = (uuid: string): boolean => {
   return uuidRegex.test(uuid);
 };
 
+const getTypeBadgeColor = (type?: string): string => {
+  const colors: Record<string, string> = {
+    hackathon: "bg-blue-100 text-blue-800",
+    grant: "bg-green-100 text-green-800",
+    competition: "bg-purple-100 text-purple-800",
+    ideathon: "bg-orange-100 text-orange-800",
+    others: "bg-gray-100 text-gray-800",
+  };
+  return colors[type?.toLowerCase() || "others"] || colors.others;
+};
+
+function resolveImageUrl(imageId: string | undefined): string | undefined {
+  if (!imageId) return undefined;
+  if (imageId.startsWith("http") || imageId.startsWith("/")) return imageId;
+
+  const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
+  if (!bucketId) return imageId;
+
+  try {
+    return createOpportunityStorage().getFileView(bucketId, imageId).toString();
+  } catch {
+    return imageId;
+  }
+}
+
 const OpportunityPost: React.FC<OpportunityPostProps> = ({
   opportunity,
   onBookmarkChange,
 }) => {
-  const { id, images, title } = opportunity;
+  const { id, images, title, type } = opportunity;
+  const primaryType = Array.isArray(type) ? type[0] : type;
 
   const { items, addToTracker, removeFromTracker } = useTracker();
   const trackedItem = items.find(
@@ -72,18 +100,10 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               (opportunity as any).hiringOrganization ||
               opportunity.organiserInfo ||
               "Unknown Organization",
-            logo: opportunity.images?.[0]
-              ? createOpportunityStorage()
-                  .getFileView(
-                    process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID ||
-                      "",
-                    opportunity.images[0]
-                  )
-                  .toString()
-              : undefined,
+            logo: resolveImageUrl(opportunity.images?.[0]),
             type: opportunity.type,
             location: opportunity.location,
-            deadline: opportunity.endDate,
+            deadline: opportunity.startDate || opportunity.endDate,
             kind: "opportunity",
           } as any,
           "Not Applied",
@@ -109,6 +129,18 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
   return (
     <article className="relative mb-3 w-full rounded-lg border bg-white shadow-sm sm:mb-4">
+      {primaryType && (
+        <div className="absolute -top-0.5 right-0 z-20">
+          <Badge
+            className={`${getTypeBadgeColor(
+              primaryType
+            )} rounded-tl-none rounded-br-none px-2 py-1 text-[10px] font-medium sm:text-xs`}
+          >
+            {primaryType.charAt(0).toUpperCase() + primaryType.slice(1)}
+          </Badge>
+        </div>
+      )}
+
       <OpportunityImageGallery
         images={images}
         title={title}
@@ -119,6 +151,8 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
       />
 
       <OpportunityHeader opportunity={opportunity} />
+
+      <OpportunityAttachments attachments={opportunity.attachments} />
 
       <Dialog open={modalOpen} onOpenChange={(open) => setModalOpen(open)}>
         <DialogContent
@@ -148,6 +182,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           <DialogContent
             className="mx-auto p-4 md:max-h-[600px] md:min-w-[600px]"
             overlayClassName="backdrop-blur-xs bg-black/30"
+            onOpenAutoFocus={(event) => event.preventDefault()}
           >
             <NewOpportunityForm
               opportunity={opportunity}

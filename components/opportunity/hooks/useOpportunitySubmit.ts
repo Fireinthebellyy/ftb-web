@@ -15,127 +15,154 @@ interface UseOpportunitySubmitProps {
   opportunity?: Opportunity;
   files: FileItem[];
   setFiles: React.Dispatch<React.SetStateAction<FileItem[]>>;
+  attachmentFiles: FileItem[];
+  setAttachmentFiles: React.Dispatch<React.SetStateAction<FileItem[]>>;
   existingImages: string[];
+  existingAttachments: string[];
   onOpportunityCreated: () => void;
   setRemovedImageIds: React.Dispatch<React.SetStateAction<string[]>>;
   removedImageIds: string[];
+  setRemovedAttachmentIds: React.Dispatch<React.SetStateAction<string[]>>;
+  removedAttachmentIds: string[];
+}
+
+async function uploadFilesToBucket(
+  items: FileItem[],
+  setItems: React.Dispatch<React.SetStateAction<FileItem[]>>
+): Promise<{ ids: string[]; success: boolean }> {
+  if (items.length === 0) return { ids: [], success: true };
+
+  const uploadedIds: string[] = [];
+  let hasError = false;
+
+  const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
+  if (!bucketId) {
+    console.error("Missing Appwrite Opportunities Bucket ID");
+    setItems((prev) =>
+      prev.map((f) => ({ ...f, uploading: false, progress: 0 }))
+    );
+    return { ids: [], success: false };
+  }
+
+  const itemsToUpload = items.filter((f) => !f.fileId);
+  const alreadyUploadedIds = items
+    .filter((f) => f.fileId)
+    .map((f) => f.fileId as string);
+
+  setItems((prev) =>
+    prev.map((f) => (f.fileId ? f : { ...f, uploading: true, progress: 0 }))
+  );
+
+  for (let i = 0; i < itemsToUpload.length; i++) {
+    const file = itemsToUpload[i];
+    const originalIndex = items.findIndex((item) => item === file);
+    try {
+      const storage = createOpportunityStorage();
+
+      const res = await storage.createFile(
+        bucketId,
+        "unique()",
+        file.file,
+        [],
+        (progress: UploadProgress) => {
+          const percent = Math.round(progress.progress || 0);
+          setItems((prev) =>
+            prev.map((f, idx) =>
+              idx === originalIndex ? { ...f, progress: percent } : f
+            )
+          );
+        }
+      );
+
+      uploadedIds.push(res.$id);
+      setItems((prev) =>
+        prev.map((f, idx) =>
+          idx === originalIndex
+            ? { ...f, uploading: false, fileId: res.$id }
+            : f
+        )
+      );
+    } catch (err) {
+      console.error(`Upload failed for ${file.name}:`, err);
+      hasError = true;
+      const errorMessage = getAppwriteErrorMessage(err);
+
+      await deleteFileIds(uploadedIds);
+
+      setItems((prev) =>
+        prev.map((f, idx) =>
+          idx === originalIndex
+            ? { ...f, uploading: false, error: true, errorMessage }
+            : f
+        )
+      );
+      toast.error(`Failed to upload "${file.name}": ${errorMessage}`);
+      return { ids: [], success: false };
+    }
+  }
+
+  return { ids: [...alreadyUploadedIds, ...uploadedIds], success: !hasError };
+}
+
+async function deleteFileIds(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+
+  const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
+  if (!bucketId) return;
+
+  const storage = createOpportunityStorage();
+
+  for (const fileId of ids) {
+    try {
+      await storage.deleteFile(bucketId, fileId);
+    } catch (err) {
+      console.error(`Failed to delete file ${fileId}:`, err);
+    }
+  }
 }
 
 export function useOpportunitySubmit({
   opportunity,
   files,
   setFiles,
+  attachmentFiles,
+  setAttachmentFiles,
   existingImages,
+  existingAttachments,
   onOpportunityCreated,
   setRemovedImageIds,
   removedImageIds,
+  setRemovedAttachmentIds,
+  removedAttachmentIds,
 }: UseOpportunitySubmitProps) {
   const [loading, setLoading] = useState(false);
   const queryClient = useQueryClient();
-
-  async function uploadImages(): Promise<{ ids: string[]; success: boolean }> {
-    if (files.length === 0) return { ids: [], success: true };
-
-    const uploadedFileIds: string[] = [];
-    let hasError = false;
-
-    setFiles((prev) =>
-      prev.map((file) => ({ ...file, uploading: true, progress: 0 }))
-    );
-
-    const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
-    if (!bucketId) {
-      console.error("Missing Appwrite Opportunities Bucket ID");
-      return { ids: [], success: false };
-    }
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      try {
-        const opportunityStorage = createOpportunityStorage();
-
-        const res = await opportunityStorage.createFile(
-          bucketId,
-          "unique()",
-          file.file,
-          [],
-          (progress: UploadProgress) => {
-            const percent = Math.round(progress.progress || 0);
-            setFiles((prev) =>
-              prev.map((f, idx) =>
-                idx === i ? { ...f, progress: percent } : f
-              )
-            );
-          }
-        );
-
-        uploadedFileIds.push(res.$id);
-        setFiles((prev) =>
-          prev.map((f, idx) =>
-            idx === i ? { ...f, uploading: false, fileId: res.$id } : f
-          )
-        );
-      } catch (err) {
-        console.error(`Upload failed for ${file.name}:`, err);
-        hasError = true;
-        const errorMessage = getAppwriteErrorMessage(err);
-        setFiles((prev) =>
-          prev.map((f, idx) =>
-            idx === i
-              ? {
-                  ...f,
-                  uploading: false,
-                  error: true,
-                  errorMessage,
-                }
-              : f
-          )
-        );
-        toast.error(`Failed to upload "${file.name}": ${errorMessage}`);
-      }
-    }
-
-    return { ids: uploadedFileIds, success: !hasError };
-  }
-
-  async function deleteRemovedImages(): Promise<void> {
-    if (removedImageIds.length === 0) return;
-
-    const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
-    if (!bucketId) return;
-
-    const opportunityStorage = createOpportunityStorage();
-
-    for (const imageId of removedImageIds) {
-      try {
-        await opportunityStorage.deleteFile(bucketId, imageId);
-      } catch (err) {
-        console.error(`Failed to delete image ${imageId}:`, err);
-        // Continue deleting other images even if one fails
-      }
-    }
-  }
 
   async function onSubmit(data: FormData) {
     setLoading(true);
 
     try {
-      const { ids: imageIds, success: imagesOk } = await uploadImages();
+      const [imageResult, attachmentResult] = await Promise.all([
+        uploadFilesToBucket(files, setFiles),
+        uploadFilesToBucket(attachmentFiles, setAttachmentFiles),
+      ]);
 
-      if (!imagesOk) {
+      if (!imageResult.success || !attachmentResult.success) {
         toast.error(
-          `One or more images failed to upload. Fix the failed uploads and try again. ${opportunity ? "Post was not updated." : "Post was not created."}`
+          `One or more files failed to upload. Fix the failed uploads and try again. ${opportunity ? "Post was not updated." : "Post was not created."}`
         );
         return;
       }
 
-      // Combine existing images with newly uploaded images
-      const finalImages = [...existingImages, ...imageIds];
+      const finalImages = [...existingImages, ...imageResult.ids];
+      const finalAttachments = [
+        ...existingAttachments,
+        ...attachmentResult.ids,
+      ];
 
-      // Destructure to prevent leaking complex objects into payload
       const { dateRange, tags: _tags, ...restData } = data;
 
-      const payload = {
+      const payload: Record<string, unknown> = {
         ...restData,
         startDate: dateRange?.from?.toISOString(),
         endDate: dateRange?.to?.toISOString(),
@@ -144,17 +171,20 @@ export function useOpportunitySubmit({
             ?.split(",")
             .map((t) => t.trim())
             .filter(Boolean) || [],
-        // For edit mode: always send the final images array (existing + new)
-        // For create mode: only send if there are images
         images: opportunity?.id
           ? finalImages
-          : imageIds.length > 0
-            ? imageIds
+          : imageResult.ids.length > 0
+            ? imageResult.ids
+            : undefined,
+        attachments: opportunity?.id
+          ? finalAttachments
+          : attachmentResult.ids.length > 0
+            ? attachmentResult.ids
             : undefined,
       };
 
       if (payload.publishAt) {
-        const localPublishAt = new Date(payload.publishAt);
+        const localPublishAt = new Date(payload.publishAt as string);
         if (!Number.isNaN(localPublishAt.getTime())) {
           payload.publishAt = localPublishAt.toISOString();
         }
@@ -165,18 +195,23 @@ export function useOpportunitySubmit({
         delete payload.publishAt;
         res = await axios.put(`/api/opportunities/${opportunity.id}`, payload);
 
-        // Delete removed images from Appwrite storage after successful update
-        await deleteRemovedImages();
+        await Promise.all([
+          deleteFileIds(removedImageIds),
+          deleteFileIds(removedAttachmentIds),
+        ]);
       } else {
         res = await axios.post("/api/opportunities", payload);
       }
 
-      files.forEach((file) => URL.revokeObjectURL(file.preview));
+      files.forEach((f) => {
+        if (f.preview) URL.revokeObjectURL(f.preview);
+      });
       setFiles([]);
+      setAttachmentFiles([]);
       setRemovedImageIds([]);
+      setRemovedAttachmentIds([]);
 
-      // Check user role to show appropriate message
-      const userRole = res.data?.userRole || "user"; // The API should return user role
+      const userRole = res.data?.userRole || "user";
       const needsReview = userRole === "user";
 
       toast.success(
@@ -199,5 +234,5 @@ export function useOpportunitySubmit({
     }
   }
 
-  return { onSubmit, loading, uploadImages, deleteRemovedImages };
+  return { onSubmit, loading };
 }

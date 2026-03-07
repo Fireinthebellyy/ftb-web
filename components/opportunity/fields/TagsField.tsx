@@ -81,8 +81,8 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
         const data = await res.json();
         const list = Array.isArray(data.tags)
           ? data.tags.filter(
-              (tag: string) => !selectedTagSet.has(tag.toLowerCase())
-            )
+            (tag: string) => !selectedTagSet.has(tag.toLowerCase())
+          )
           : [];
         setSuggestions(list);
         setShow(list.length > 0);
@@ -184,7 +184,7 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
       </div>
       {show && (
         <div
-          className="absolute z-50 mt-2 w-full rounded-md border bg-white shadow-md max-h-60 overflow-y-auto"
+          className="absolute z-50 mt-2 max-h-60 w-full overflow-y-auto rounded-md border bg-white shadow-md"
           onMouseEnter={() => setHovering(true)}
           onMouseLeave={() => setHovering(false)}
           onMouseDown={(e) => e.preventDefault()}
@@ -196,7 +196,7 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => addTag(tag)}
-              className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm"
+              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
             >
               {tag}
             </button>

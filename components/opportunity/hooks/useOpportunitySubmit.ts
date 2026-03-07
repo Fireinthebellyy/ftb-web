@@ -35,9 +35,7 @@ async function uploadFilesToBucket(
   const uploadedIds: string[] = [];
   let hasError = false;
 
-  setItems((prev) =>
-    prev.map((f) => ({ ...f, uploading: true, progress: 0 }))
-  );
+  setItems((prev) => prev.map((f) => ({ ...f, uploading: true, progress: 0 })));
 
   const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
   if (!bucketId) {
@@ -58,9 +56,7 @@ async function uploadFilesToBucket(
         (progress: UploadProgress) => {
           const percent = Math.round(progress.progress || 0);
           setItems((prev) =>
-            prev.map((f, idx) =>
-              idx === i ? { ...f, progress: percent } : f
-            )
+            prev.map((f, idx) => (idx === i ? { ...f, progress: percent } : f))
           );
         }
       );
@@ -77,9 +73,7 @@ async function uploadFilesToBucket(
       const errorMessage = getAppwriteErrorMessage(err);
       setItems((prev) =>
         prev.map((f, idx) =>
-          idx === i
-            ? { ...f, uploading: false, error: true, errorMessage }
-            : f
+          idx === i ? { ...f, uploading: false, error: true, errorMessage } : f
         )
       );
       toast.error(`Failed to upload "${file.name}": ${errorMessage}`);

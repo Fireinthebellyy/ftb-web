@@ -56,6 +56,7 @@ export default function EditOpportunityForm({
     []
   );
   const queryClient = useQueryClient();
+  const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
 
   const handleRemoveExistingImage = (imageId: string) => {
     setExistingImages((prev) => prev.filter((id) => id !== imageId));
@@ -73,7 +74,6 @@ export default function EditOpportunityForm({
     const toDelete = [...removedImageIds, ...removedAttachmentIds];
     if (toDelete.length === 0) return;
 
-    const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
     if (!bucketId) return;
 
     const opportunityStorage = createOpportunityStorage();
@@ -132,7 +132,6 @@ export default function EditOpportunityForm({
     if (items.length === 0) return { ids: [], success: true };
 
     const uploadedFileIds: string[] = [];
-    let hasError = false;
 
     setItems((prev) =>
       prev.map((file) => ({ ...file, uploading: true, progress: 0 }))
@@ -144,7 +143,7 @@ export default function EditOpportunityForm({
         const opportunityStorage = createOpportunityStorage();
 
         const res = await opportunityStorage.createFile(
-          process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
+          bucketId,
           "unique()",
           file.file,
           [],
@@ -161,12 +160,13 @@ export default function EditOpportunityForm({
         uploadedFileIds.push(res.$id);
         setItems((prev) =>
           prev.map((f, idx) =>
-            idx === i ? { ...f, uploading: false, fileId: res.$id } : f
+            idx === i
+              ? { ...f, uploading: false, fileId: res.$id }
+              : f
           )
         );
       } catch (err) {
         console.error(`Upload failed for ${file.name}:`, err);
-        hasError = true;
         const errorMessage = getAppwriteErrorMessage(err);
         setItems((prev) =>
           prev.map((f, idx) =>
@@ -176,10 +176,11 @@ export default function EditOpportunityForm({
           )
         );
         toast.error(`Failed to upload "${file.name}": ${errorMessage}`);
+        return { ids: [], success: false };
       }
     }
 
-    return { ids: uploadedFileIds, success: !hasError };
+    return { ids: uploadedFileIds, success: true };
   }
 
   async function onSubmit(data: FormData) {

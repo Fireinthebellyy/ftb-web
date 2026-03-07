@@ -58,11 +58,11 @@ export function MetaPopovers({
 }: Props) {
   const triggerClassName = showLabels
     ? cn(
-        "h-auto flex-col gap-1 p-1.5 text-gray-600",
-        compactLabels
-          ? "w-11 text-[10px] leading-none md:w-14 md:text-[11px]"
-          : "w-14 text-[11px]"
-      )
+      "h-auto flex-col gap-1 p-1.5 text-gray-600",
+      compactLabels
+        ? "w-11 text-[10px] leading-none md:w-14 md:text-[11px]"
+        : "w-14 text-[11px]"
+    )
     : "h-8 w-8 p-2";
 
   return (
@@ -220,7 +220,7 @@ export function MetaPopovers({
                                 {Math.ceil(
                                   (field.value.to.getTime() -
                                     field.value.from.getTime()) /
-                                    (1000 * 60 * 60 * 24)
+                                  (1000 * 60 * 60 * 24)
                                 ) + 1}{" "}
                                 days)
                               </span>
@@ -281,18 +281,18 @@ export function MetaPopovers({
               )}
             >
               <Clock3 className="h-4 w-4" />
-            {showLabels && (
-              <>
-                {compactLabels ? (
-                  <>
-                    <span className="md:hidden">SCHD</span>
-                    <span className="hidden md:inline">Schedule</span>
-                  </>
-                ) : (
-                  <span>Schedule</span>
-                )}
-              </>
-            )}
+              {showLabels && (
+                <>
+                  {compactLabels ? (
+                    <>
+                      <span className="md:hidden">SCHD</span>
+                      <span className="hidden md:inline">Schedule</span>
+                    </>
+                  ) : (
+                    <span>Schedule</span>
+                  )}
+                </>
+              )}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-72" align="start">

@@ -32,6 +32,7 @@ type Props = {
   watchedOrganiser?: string | null;
   watchedDateRange?: { from?: Date; to?: Date } | undefined;
   watchedPublishAt?: string;
+  showSchedule?: boolean;
 };
 
 type SchedulePublishPopoverProps = {
@@ -46,6 +47,7 @@ export function MetaPopovers({
   watchedOrganiser,
   watchedDateRange,
   watchedPublishAt,
+  showSchedule = true,
 }: Props) {
   return (
     <div className="flex items-center gap-2 md:gap-4">
@@ -214,46 +216,47 @@ export function MetaPopovers({
         </PopoverContent>
       </Popover>
 
-      {/* Scheduled Publish Time */}
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "h-8 w-8 p-2",
-              watchedPublishAt && "bg-blue-50 text-blue-600"
-            )}
-          >
-            <Clock3 className="h-4 w-4" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-72" align="start">
-          <FormField
-            control={control}
-            name="publishAt"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">
-                      Schedule Publish (optional)
-                    </label>
-                    <Input
-                      {...field}
-                      value={field.value ?? ""}
-                      type="datetime-local"
-                      className="text-sm"
-                    />
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </PopoverContent>
-      </Popover>
+      {showSchedule && (
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "h-8 w-8 p-2",
+                watchedPublishAt && "bg-blue-50 text-blue-600"
+              )}
+            >
+              <Clock3 className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-72" align="start">
+            <FormField
+              control={control}
+              name="publishAt"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        Schedule Publish (optional)
+                      </label>
+                      <Input
+                        {...field}
+                        value={field.value ?? ""}
+                        type="datetime-local"
+                        className="text-sm"
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </PopoverContent>
+        </Popover>
+      )}
     </div>
   );
 }

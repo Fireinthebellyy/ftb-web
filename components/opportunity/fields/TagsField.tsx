@@ -22,21 +22,19 @@ type AutosuggestProps = {
   onChange: (val: string) => void;
 };
 
-function composeTagsValue(committed: string[], activeToken = ""): string {
-  const normalizedActiveToken = activeToken.trim();
-  if (committed.length === 0) return normalizedActiveToken;
-  if (!normalizedActiveToken) return `${committed.join(", ")}, `;
-  return `${committed.join(", ")}, ${normalizedActiveToken}`;
+function composeTagsValue(committed: string[]): string {
+  return committed.join(", ");
 }
 
 function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
+  const [activeToken, setActiveToken] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [show, setShow] = useState(false);
   const [hovering, setHovering] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const normalizedValue = value || "";
-  const allTokens = useMemo(
+  const committedTokens = useMemo(
     () =>
       normalizedValue
         .split(",")
@@ -44,21 +42,6 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
         .filter(Boolean),
     [normalizedValue]
   );
-
-  const currentToken = useMemo(() => {
-    const parts = normalizedValue.split(",");
-    return parts[parts.length - 1]?.trim() || "";
-  }, [normalizedValue]);
-
-  const hasTrailingComma = useMemo(
-    () => /,\s*$/.test(normalizedValue),
-    [normalizedValue]
-  );
-
-  const committedTokens = useMemo(() => {
-    if (allTokens.length === 0) return [];
-    return hasTrailingComma ? allTokens : allTokens.slice(0, -1);
-  }, [allTokens, hasTrailingComma]);
 
   const selectedTagSet = useMemo(
     () => new Set(committedTokens.map((token) => token.toLowerCase())),
@@ -68,16 +51,19 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
   useEffect(() => {
     const controller = new AbortController();
     const id = setTimeout(async () => {
-      const q = currentToken;
+      const q = activeToken;
       if (!q || q.length < 2) {
         setSuggestions([]);
         setShow(false);
         return;
       }
       try {
-        const res = await fetch(`/api/tags?q=${encodeURIComponent(q)}&limit=8`, {
-          signal: controller.signal,
-        });
+        const res = await fetch(
+          `/api/tags?q=${encodeURIComponent(q)}&limit=8`,
+          {
+            signal: controller.signal,
+          }
+        );
         const data = await res.json();
         const list = Array.isArray(data.tags)
           ? data.tags.filter(
@@ -95,7 +81,7 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
       clearTimeout(id);
       controller.abort();
     };
-  }, [currentToken, selectedTagSet]);
+  }, [activeToken, selectedTagSet]);
 
   function addTag(tag: string) {
     const seen = new Set<string>();
@@ -106,6 +92,7 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
       return true;
     });
     onChange(composeTagsValue(result));
+    setActiveToken("");
     setShow(false);
     requestAnimationFrame(() => inputRef.current?.focus());
   }
@@ -114,25 +101,25 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
     const result = committedTokens.filter(
       (token) => token.toLowerCase() !== tagToRemove.toLowerCase()
     );
-    onChange(composeTagsValue(result, currentToken));
+    onChange(composeTagsValue(result));
   }
 
   function handleInputChange(nextValue: string) {
-    onChange(composeTagsValue(committedTokens, nextValue));
+    setActiveToken(nextValue);
   }
 
   function handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if ((e.key === "Enter" || e.key === ",") && currentToken.trim()) {
-      e.preventDefault();
-      addTag(currentToken.trim());
+    if (e.nativeEvent.isComposing) {
       return;
     }
 
-    if (
-      e.key === "Backspace" &&
-      !currentToken &&
-      committedTokens.length > 0
-    ) {
+    if ((e.key === "Enter" || e.key === ",") && activeToken.trim()) {
+      e.preventDefault();
+      addTag(activeToken.trim());
+      return;
+    }
+
+    if (e.key === "Backspace" && !activeToken && committedTokens.length > 0) {
       e.preventDefault();
       const result = committedTokens.slice(0, -1);
       onChange(composeTagsValue(result));
@@ -142,7 +129,7 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
   return (
     <div className="relative w-full">
       <div
-        className="flex min-h-10 w-full flex-wrap items-center gap-1.5 rounded-md bg-transparent px-2 py-1 text-sm focus-within:ring-1 focus-within:ring-ring"
+        className="focus-within:ring-ring flex min-h-10 w-full flex-wrap items-center gap-1.5 rounded-md bg-transparent px-2 py-1 text-sm focus-within:ring-1"
         onClick={() => inputRef.current?.focus()}
       >
         {committedTokens.map((tag) => (
@@ -167,7 +154,7 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
           </Badge>
         ))}
         <Input
-          value={currentToken}
+          value={activeToken}
           ref={inputRef}
           autoComplete="off"
           placeholder={committedTokens.length === 0 ? "Add tags *" : "Add more"}
@@ -184,7 +171,7 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
       </div>
       {show && (
         <div
-          className="absolute z-50 mt-2 w-full rounded-md border bg-white shadow-md max-h-60 overflow-y-auto"
+          className="absolute z-50 mt-2 max-h-60 w-full overflow-y-auto rounded-md border bg-white shadow-md"
           onMouseEnter={() => setHovering(true)}
           onMouseLeave={() => setHovering(false)}
           onMouseDown={(e) => e.preventDefault()}
@@ -196,7 +183,7 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => addTag(tag)}
-              className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm"
+              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
             >
               {tag}
             </button>

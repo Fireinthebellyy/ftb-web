@@ -63,9 +63,7 @@ export default function EditOpportunityForm({
   };
 
   const handleRemoveExistingAttachment = (attachmentId: string) => {
-    setExistingAttachments((prev) =>
-      prev.filter((id) => id !== attachmentId)
-    );
+    setExistingAttachments((prev) => prev.filter((id) => id !== attachmentId));
     setRemovedAttachmentIds((prev) => [...prev, attachmentId]);
   };
 
@@ -131,20 +129,34 @@ export default function EditOpportunityForm({
   ): Promise<{ ids: string[]; success: boolean }> {
     if (items.length === 0) return { ids: [], success: true };
 
+    const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
+    if (!bucketId) {
+      console.error("Missing Appwrite Opportunities Bucket ID");
+      setItems((prev) =>
+        prev.map((file) => ({ ...file, uploading: false, progress: 0 }))
+      );
+      return { ids: [], success: false };
+    }
+
     const uploadedFileIds: string[] = [];
-    let hasError = false;
+
+    const itemsToUpload = items.filter((f) => !f.fileId);
+    const alreadyUploadedIds = items
+      .filter((f) => f.fileId)
+      .map((f) => f.fileId as string);
 
     setItems((prev) =>
-      prev.map((file) => ({ ...file, uploading: true, progress: 0 }))
+      prev.map((f) => (f.fileId ? f : { ...f, uploading: true, progress: 0 }))
     );
 
-    for (let i = 0; i < items.length; i++) {
-      const file = items[i];
+    for (let i = 0; i < itemsToUpload.length; i++) {
+      const file = itemsToUpload[i];
+      const originalIndex = items.findIndex((item) => item === file);
       try {
         const opportunityStorage = createOpportunityStorage();
 
         const res = await opportunityStorage.createFile(
-          process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
+          bucketId,
           "unique()",
           file.file,
           [],
@@ -152,7 +164,7 @@ export default function EditOpportunityForm({
             const percent = Math.round(progress.progress || 0);
             setItems((prev) =>
               prev.map((f, idx) =>
-                idx === i ? { ...f, progress: percent } : f
+                idx === originalIndex ? { ...f, progress: percent } : f
               )
             );
           }
@@ -161,25 +173,38 @@ export default function EditOpportunityForm({
         uploadedFileIds.push(res.$id);
         setItems((prev) =>
           prev.map((f, idx) =>
-            idx === i ? { ...f, uploading: false, fileId: res.$id } : f
+            idx === originalIndex
+              ? { ...f, uploading: false, fileId: res.$id }
+              : f
           )
         );
       } catch (err) {
         console.error(`Upload failed for ${file.name}:`, err);
-        hasError = true;
         const errorMessage = getAppwriteErrorMessage(err);
+
+        // Rollback: delete successfully uploaded files
+        for (const fileId of uploadedFileIds) {
+          try {
+            const storage = createOpportunityStorage();
+            await storage.deleteFile(bucketId, fileId);
+          } catch (deleteErr) {
+            console.error(`Failed to rollback file ${fileId}:`, deleteErr);
+          }
+        }
+
         setItems((prev) =>
           prev.map((f, idx) =>
-            idx === i
+            idx === originalIndex
               ? { ...f, uploading: false, error: true, errorMessage }
               : f
           )
         );
         toast.error(`Failed to upload "${file.name}": ${errorMessage}`);
+        return { ids: [], success: false };
       }
     }
 
-    return { ids: uploadedFileIds, success: !hasError };
+    return { ids: [...alreadyUploadedIds, ...uploadedFileIds], success: true };
   }
 
   async function onSubmit(data: FormData) {

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import {
   Clock,
   AlertCircle,
@@ -162,11 +163,12 @@ export default function TrackerRow({
             className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
             title="Add to Google Calendar"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src="/images/google-calendar.webp"
               alt="Google Calendar"
-              className="h-5 w-5 object-contain"
+              width={20}
+              height={20}
+              className="object-contain"
             />
           </a>
         )}

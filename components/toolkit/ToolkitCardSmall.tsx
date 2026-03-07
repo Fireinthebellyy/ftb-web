@@ -20,7 +20,7 @@ export default function ToolkitCardSmall({
   onClick,
   className,
 }: ToolkitCardSmallProps) {
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = () => {
     posthog.capture("toolkit_card_clicked", { toolkit_id: toolkit.id, title: toolkit.title });
     if (onClick) onClick();
   }

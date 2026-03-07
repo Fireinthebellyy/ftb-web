@@ -13,9 +13,11 @@ import { TagsField } from "./fields/TagsField";
 import { TypeSelector } from "./fields/TypeSelector";
 import { MetaPopovers, SchedulePublishPopover } from "./fields/MetaPopovers";
 import {
-  ImagePicker,
+  UnifiedFilePicker,
   SelectedImages,
   ExistingImages,
+  SelectedAttachments,
+  ExistingAttachments,
 } from "./images/ImageDropzone";
 import { formSchema, FormData } from "./schema";
 import { FileItem, Opportunity } from "@/types/interfaces";
@@ -31,24 +33,36 @@ export default function NewOpportunityForm({
 }) {
   const [scheduleMessage, setScheduleMessage] = useState<string | null>(null);
   const [files, setFiles] = useState<FileItem[]>([]);
+  const [attachmentFiles, setAttachmentFiles] = useState<FileItem[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [existingImages, setExistingImages] = useState<string[]>(
     opportunity?.images || []
   );
+  const [existingAttachments, setExistingAttachments] = useState<string[]>(
+    opportunity?.attachments || []
+  );
   const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
+  const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>(
+    []
+  );
 
   const { onSubmit, loading } = useOpportunitySubmit({
     opportunity,
     files,
     setFiles,
+    attachmentFiles,
+    setAttachmentFiles,
     existingImages,
+    existingAttachments,
     onOpportunityCreated,
     setRemovedImageIds,
-    removedImageIds
+    removedImageIds,
+    setRemovedAttachmentIds,
+    removedAttachmentIds,
   });
 
-
   const maxFiles = 4;
+  const maxAttachments = 2;
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -76,7 +90,6 @@ export default function NewOpportunityForm({
   const watchedPublishAt = form.watch("publishAt");
 
   useEffect(() => {
-    // Set initial date range if available
     if (opportunity?.startDate || opportunity?.endDate) {
       form.setValue("dateRange", {
         from: opportunity.startDate
@@ -91,10 +104,10 @@ export default function NewOpportunityForm({
   }, [opportunity]);
 
   useEffect(() => {
-    // Only run change detection when editing an existing opportunity
     if (!opportunity) {
-      // Creating new opportunity -> enable submit when form is dirty or images present
-      setHasChanges(form.formState.isDirty || files.length > 0);
+      setHasChanges(
+        form.formState.isDirty || files.length > 0 || attachmentFiles.length > 0
+      );
       return;
     }
 
@@ -132,14 +145,23 @@ export default function NewOpportunityForm({
       publishAt: toDateTimeLocalValue(opportunity.publishAt),
     });
 
-    // Check if images have changed (either new files added or existing images removed)
     const originalImages = opportunity.images || [];
     const imagesChanged =
       files.length > 0 ||
       existingImages.length !== originalImages.length ||
       !existingImages.every((img) => originalImages.includes(img));
 
-    setHasChanges(currentSnapshot !== originalSnapshot || imagesChanged);
+    const originalAttachments = opportunity.attachments || [];
+    const attachmentsChanged =
+      attachmentFiles.length > 0 ||
+      existingAttachments.length !== originalAttachments.length ||
+      !existingAttachments.every((a) => originalAttachments.includes(a));
+
+    setHasChanges(
+      currentSnapshot !== originalSnapshot ||
+        imagesChanged ||
+        attachmentsChanged
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     opportunity,
@@ -153,18 +175,23 @@ export default function NewOpportunityForm({
     watchedDateRange,
     files,
     existingImages,
+    attachmentFiles,
+    existingAttachments,
   ]);
 
-  // Handle removing an existing image - track for deletion on submit
   const handleRemoveExistingImage = (imageId: string) => {
     setExistingImages((prev) => prev.filter((id) => id !== imageId));
     setRemovedImageIds((prev) => [...prev, imageId]);
   };
 
+  const handleRemoveExistingAttachment = (attachmentId: string) => {
+    setExistingAttachments((prev) => prev.filter((id) => id !== attachmentId));
+    setRemovedAttachmentIds((prev) => [...prev, attachmentId]);
+  };
+
   function handleTypeChange(type: string) {
     form.setValue("type", type, { shouldValidate: true, shouldTouch: true });
   }
-
 
   return (
     <FormProvider {...form}>
@@ -174,7 +201,6 @@ export default function NewOpportunityForm({
 
           <DescriptionField control={form.control} />
 
-          {/* Existing images (from opportunity) displayed with remove option */}
           {opportunity && (
             <ExistingImages
               existingImages={existingImages}
@@ -182,8 +208,19 @@ export default function NewOpportunityForm({
             />
           )}
 
-          {/* Selected new images displayed above the bottom action bar */}
           <SelectedImages files={files} setFiles={setFiles} />
+
+          {opportunity && (
+            <ExistingAttachments
+              existingAttachments={existingAttachments}
+              onRemoveExisting={handleRemoveExistingAttachment}
+            />
+          )}
+
+          <SelectedAttachments
+            files={attachmentFiles}
+            setFiles={setAttachmentFiles}
+          />
 
           <TagsField control={form.control} />
 
@@ -194,56 +231,70 @@ export default function NewOpportunityForm({
           />
 
           {/* Bottom Action Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
-            <div className="flex items-center gap-2 md:gap-4">
-              <MetaPopovers
-                control={form.control}
-                watchedLocation={watchedLocation}
-                watchedOrganiser={watchedOrganiser}
-                watchedDateRange={watchedDateRange}
-                watchedPublishAt={watchedPublishAt}
-              />
-              {/* Image picker trigger (no previews here) */}
-              <ImagePicker
-                files={files}
-                setFiles={setFiles}
-                maxFiles={maxFiles}
-                existingImagesCount={existingImages.length}
-              />
-            </div>
+          <div className="space-y-1 pt-2">
+            <div className="flex flex-wrap items-end justify-between gap-2 pb-1 min-[412px]:flex-nowrap">
+              <div className="flex items-center gap-1.5 md:gap-2.5 min-[412px]:shrink-0">
+                <MetaPopovers
+                  control={form.control}
+                  watchedLocation={watchedLocation}
+                  watchedOrganiser={watchedOrganiser}
+                  watchedDateRange={watchedDateRange}
+                  watchedPublishAt={watchedPublishAt}
+                  showSchedule={false}
+                  showLabels
+                  compactLabels
+                />
+                <UnifiedFilePicker
+                  imageFiles={files}
+                  setImageFiles={setFiles}
+                  maxImageFiles={maxFiles}
+                  existingImagesCount={existingImages.length}
+                  attachmentFiles={attachmentFiles}
+                  setAttachmentFiles={setAttachmentFiles}
+                  maxAttachmentFiles={maxAttachments}
+                  existingAttachmentsCount={existingAttachments.length}
+                  showLabel
+                  label="Uploads"
+                  compactLabel="UPLD"
+                />
+              </div>
 
-            <div className="flex items-center gap-2">
-              <SchedulePublishPopover
-                control={form.control}
-                watchedPublishAt={watchedPublishAt}
-                onConfirmMessageChange={setScheduleMessage}
-              />
-              {onCancel && (
+              <div className="ml-auto flex w-full flex-nowrap items-end justify-end gap-1.5 sm:gap-2 min-[412px]:w-auto min-[412px]:shrink-0">
+                <SchedulePublishPopover
+                  control={form.control}
+                  watchedPublishAt={watchedPublishAt}
+                  onConfirmMessageChange={setScheduleMessage}
+                  showLabel
+                  label="Schedule"
+                  compactLabel="SCHD"
+                />
+                {onCancel && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onCancel}
+                    disabled={loading}
+                    size="sm"
+                  >
+                    Cancel
+                  </Button>
+                )}
                 <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onCancel}
-                  disabled={loading}
+                  type="submit"
+                  variant="default"
+                  disabled={loading || (opportunity ? !hasChanges : false)}
                   size="sm"
+                  className="px-6"
                 >
-                  Cancel
+                  {loading
+                    ? opportunity
+                      ? "Updating..."
+                      : "Posting..."
+                    : opportunity
+                      ? "Update"
+                      : "Post"}
                 </Button>
-              )}
-              <Button
-                type="submit"
-                variant="default"
-                disabled={loading || (opportunity ? !hasChanges : false)}
-                size="sm"
-                className="px-6"
-              >
-                {loading
-                  ? opportunity
-                    ? "Updating..."
-                    : "Posting..."
-                  : opportunity
-                    ? "Update"
-                    : "Post"}
-              </Button>
+              </div>
             </div>
 
             {scheduleMessage && (

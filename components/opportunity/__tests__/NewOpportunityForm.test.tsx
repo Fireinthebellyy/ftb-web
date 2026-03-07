@@ -14,6 +14,14 @@ vi.mock("axios");
 vi.mock("sonner");
 vi.mock("@/lib/appwrite");
 
+const defaultAttachmentProps = {
+  attachmentFiles: [],
+  setAttachmentFiles: vi.fn(),
+  existingAttachments: [],
+  setRemovedAttachmentIds: vi.fn(),
+  removedAttachmentIds: [],
+};
+
 describe("useOpportunitySubmit", () => {
   const mockToast = {
     error: vi.fn(),
@@ -66,6 +74,7 @@ describe("useOpportunitySubmit", () => {
           onOpportunityCreated,
           setRemovedImageIds,
           removedImageIds: [],
+          ...defaultAttachmentProps,
         }),
       { wrapper }
     );
@@ -94,6 +103,7 @@ describe("useOpportunitySubmit", () => {
     expect(mockAxiosPost).toHaveBeenCalledWith("/api/opportunities", {
       tags: ["tech", "remote"],
       images: undefined,
+      attachments: undefined,
       description: "Test description",
       location: "Remote",
       organiserInfo: "Test Organiser",
@@ -116,7 +126,8 @@ describe("useOpportunitySubmit", () => {
       uploading: false,
       name: "test.png",
       size: 1024,
-      preview: "blob:url"
+      preview: "blob:url",
+      kind: "image" as const,
     }];
     const setFiles = vi.fn();
 
@@ -129,6 +140,7 @@ describe("useOpportunitySubmit", () => {
           onOpportunityCreated: vi.fn(),
           setRemovedImageIds: vi.fn(),
           removedImageIds: [],
+          ...defaultAttachmentProps,
         }),
       { wrapper }
     );
@@ -157,6 +169,7 @@ describe("useOpportunitySubmit", () => {
       endDate: undefined,
       tags: ["tech"],
       images: ["image-123"],
+      attachments: undefined,
     });
   });
 
@@ -168,7 +181,8 @@ describe("useOpportunitySubmit", () => {
       uploading: false,
       name: "test.png",
       size: 1024,
-      preview: "blob:url"
+      preview: "blob:url",
+      kind: "image" as const,
     }];
 
     const { result } = renderHook(
@@ -180,6 +194,7 @@ describe("useOpportunitySubmit", () => {
           onOpportunityCreated: vi.fn(),
           setRemovedImageIds: vi.fn(),
           removedImageIds: [],
+          ...defaultAttachmentProps,
         }),
       { wrapper }
     );
@@ -215,6 +230,7 @@ describe("useOpportunitySubmit", () => {
           onOpportunityCreated: vi.fn(),
           setRemovedImageIds: vi.fn(),
           removedImageIds: [],
+          ...defaultAttachmentProps,
         }),
       { wrapper }
     );
@@ -240,6 +256,7 @@ describe("useOpportunitySubmit", () => {
       endDate: undefined,
       tags: ["tech", "updated"],
       images: ["existing-1"],
+      attachments: [],
     });
     expect(mockToast.success).toHaveBeenCalledWith(
       "Opportunity updated successfully!"
@@ -256,6 +273,7 @@ describe("useOpportunitySubmit", () => {
           onOpportunityCreated: vi.fn(),
           setRemovedImageIds: vi.fn(),
           removedImageIds: [],
+          ...defaultAttachmentProps,
         }),
       { wrapper }
     );

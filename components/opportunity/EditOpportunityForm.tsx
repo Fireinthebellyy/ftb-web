@@ -16,7 +16,13 @@ import { DescriptionField } from "./fields/DescriptionField";
 import { TagsField } from "./fields/TagsField";
 import { TypeSelector } from "./fields/TypeSelector";
 import { MetaPopovers } from "./fields/MetaPopovers";
-import { ImagePicker, SelectedImages, ExistingImages } from "./images/ImageDropzone";
+import {
+  UnifiedFilePicker,
+  SelectedImages,
+  ExistingImages,
+  SelectedAttachments,
+  ExistingAttachments,
+} from "./images/ImageDropzone";
 import { formSchema, FormData } from "./schema";
 import { FileItem, UploadProgress } from "@/types/interfaces";
 import { useQueryClient } from "@tanstack/react-query";
@@ -38,38 +44,51 @@ export default function EditOpportunityForm({
 }: EditOpportunityFormProps) {
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState<FileItem[]>([]);
+  const [attachmentFiles, setAttachmentFiles] = useState<FileItem[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>(
     opportunity?.images || []
   );
+  const [existingAttachments, setExistingAttachments] = useState<string[]>(
+    (opportunity as any)?.attachments || []
+  );
   const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
+  const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>(
+    []
+  );
   const queryClient = useQueryClient();
 
-  // Handle removing an existing image - track for deletion on submit
   const handleRemoveExistingImage = (imageId: string) => {
     setExistingImages((prev) => prev.filter((id) => id !== imageId));
     setRemovedImageIds((prev) => [...prev, imageId]);
   };
 
-  // Delete removed images from Appwrite storage
-  async function deleteRemovedImages(): Promise<void> {
-    if (removedImageIds.length === 0) return;
+  const handleRemoveExistingAttachment = (attachmentId: string) => {
+    setExistingAttachments((prev) =>
+      prev.filter((id) => id !== attachmentId)
+    );
+    setRemovedAttachmentIds((prev) => [...prev, attachmentId]);
+  };
+
+  async function deleteRemovedFiles(): Promise<void> {
+    const toDelete = [...removedImageIds, ...removedAttachmentIds];
+    if (toDelete.length === 0) return;
 
     const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
     if (!bucketId) return;
 
     const opportunityStorage = createOpportunityStorage();
 
-    for (const imageId of removedImageIds) {
+    for (const fileId of toDelete) {
       try {
-        await opportunityStorage.deleteFile(bucketId, imageId);
+        await opportunityStorage.deleteFile(bucketId, fileId);
       } catch (err) {
-        console.error(`Failed to delete image ${imageId}:`, err);
-        // Continue deleting other images even if one fails
+        console.error(`Failed to delete file ${fileId}:`, err);
       }
     }
   }
 
   const maxFiles = 4;
+  const maxAttachments = 2;
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -92,7 +111,6 @@ export default function EditOpportunityForm({
   const watchedDateRange = form.watch("dateRange");
 
   useEffect(() => {
-    // Set initial date range if available
     if (opportunity.startDate || opportunity.endDate) {
       form.setValue("dateRange", {
         from: opportunity.startDate
@@ -107,18 +125,21 @@ export default function EditOpportunityForm({
     form.setValue("type", type, { shouldValidate: true, shouldTouch: true });
   }
 
-  async function uploadImages(): Promise<{ ids: string[]; success: boolean }> {
-    if (files.length === 0) return { ids: [], success: true };
+  async function uploadFiles(
+    items: FileItem[],
+    setItems: React.Dispatch<React.SetStateAction<FileItem[]>>
+  ): Promise<{ ids: string[]; success: boolean }> {
+    if (items.length === 0) return { ids: [], success: true };
 
     const uploadedFileIds: string[] = [];
     let hasError = false;
 
-    setFiles((prev) =>
+    setItems((prev) =>
       prev.map((file) => ({ ...file, uploading: true, progress: 0 }))
     );
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    for (let i = 0; i < items.length; i++) {
+      const file = items[i];
       try {
         const opportunityStorage = createOpportunityStorage();
 
@@ -129,7 +150,7 @@ export default function EditOpportunityForm({
           [],
           (progress: UploadProgress) => {
             const percent = Math.round(progress.progress || 0);
-            setFiles((prev) =>
+            setItems((prev) =>
               prev.map((f, idx) =>
                 idx === i ? { ...f, progress: percent } : f
               )
@@ -138,7 +159,7 @@ export default function EditOpportunityForm({
         );
 
         uploadedFileIds.push(res.$id);
-        setFiles((prev) =>
+        setItems((prev) =>
           prev.map((f, idx) =>
             idx === i ? { ...f, uploading: false, fileId: res.$id } : f
           )
@@ -147,15 +168,10 @@ export default function EditOpportunityForm({
         console.error(`Upload failed for ${file.name}:`, err);
         hasError = true;
         const errorMessage = getAppwriteErrorMessage(err);
-        setFiles((prev) =>
+        setItems((prev) =>
           prev.map((f, idx) =>
             idx === i
-              ? {
-                ...f,
-                uploading: false,
-                error: true,
-                errorMessage,
-              }
+              ? { ...f, uploading: false, error: true, errorMessage }
               : f
           )
         );
@@ -170,19 +186,25 @@ export default function EditOpportunityForm({
     setLoading(true);
 
     try {
-      const { ids: imageIds, success: imagesOk } = await uploadImages();
+      const [imageResult, attachmentResult] = await Promise.all([
+        uploadFiles(files, setFiles),
+        uploadFiles(attachmentFiles, setAttachmentFiles),
+      ]);
 
-      if (!imagesOk) {
+      if (!imageResult.success || !attachmentResult.success) {
         toast.error(
-          "One or more images failed to upload. Fix the failed uploads and try again. Post was not updated."
+          "One or more files failed to upload. Fix the failed uploads and try again. Post was not updated."
         );
         throw new Error(
-          "One or more images failed to upload. Post was not updated."
+          "One or more files failed to upload. Post was not updated."
         );
       }
 
-      // Combine existing images with newly uploaded images
-      const finalImages = [...existingImages, ...imageIds];
+      const finalImages = [...existingImages, ...imageResult.ids];
+      const finalAttachments = [
+        ...existingAttachments,
+        ...attachmentResult.ids,
+      ];
 
       const res = await axios.put(`/api/opportunities/${opportunity.id}`, {
         ...data,
@@ -194,18 +216,22 @@ export default function EditOpportunityForm({
             .map((t) => t.trim())
             .filter(Boolean) || [],
         images: finalImages,
+        attachments: finalAttachments,
       });
 
       if (res.status !== 200) {
         throw new Error("Failed to update opportunity");
       }
 
-      // Delete removed images from Appwrite storage after successful update
-      await deleteRemovedImages();
+      await deleteRemovedFiles();
 
-      files.forEach((file) => URL.revokeObjectURL(file.preview));
+      files.forEach((file) => {
+        if (file.preview) URL.revokeObjectURL(file.preview);
+      });
       setFiles([]);
+      setAttachmentFiles([]);
       setRemovedImageIds([]);
+      setRemovedAttachmentIds([]);
 
       toast.success("Opportunity updated successfully!");
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
@@ -229,14 +255,22 @@ export default function EditOpportunityForm({
 
           <DescriptionField control={form.control} />
 
-          {/* Existing images (from opportunity) displayed with remove option */}
           <ExistingImages
             existingImages={existingImages}
             onRemoveExisting={handleRemoveExistingImage}
           />
 
-          {/* Selected new images displayed above the bottom action bar */}
           <SelectedImages files={files} setFiles={setFiles} />
+
+          <ExistingAttachments
+            existingAttachments={existingAttachments}
+            onRemoveExisting={handleRemoveExistingAttachment}
+          />
+
+          <SelectedAttachments
+            files={attachmentFiles}
+            setFiles={setAttachmentFiles}
+          />
 
           <TagsField control={form.control} />
 
@@ -255,12 +289,15 @@ export default function EditOpportunityForm({
                 watchedOrganiser={watchedOrganiser}
                 watchedDateRange={watchedDateRange}
               />
-              {/* Image picker trigger (no previews here) */}
-              <ImagePicker
-                files={files}
-                setFiles={setFiles}
-                maxFiles={maxFiles}
+              <UnifiedFilePicker
+                imageFiles={files}
+                setImageFiles={setFiles}
+                maxImageFiles={maxFiles}
                 existingImagesCount={existingImages.length}
+                attachmentFiles={attachmentFiles}
+                setAttachmentFiles={setAttachmentFiles}
+                maxAttachmentFiles={maxAttachments}
+                existingAttachmentsCount={existingAttachments.length}
               />
             </div>
 

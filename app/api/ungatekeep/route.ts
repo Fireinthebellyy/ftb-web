@@ -2,13 +2,18 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { ungatekeepPosts, user as userTable } from "@/lib/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
 const FREE_POST_LIMIT = 5;
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const offset = (page - 1) * limit;
+
     // Check if user is authenticated
     let isAuthenticated = false;
     try {
@@ -20,7 +25,16 @@ export async function GET() {
       // Not authenticated
     }
 
-    // Fetch only published posts, ordered by pinned first, then by published date
+    // Fetch total count for metadata
+    const totalCountResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(ungatekeepPosts)
+      .where(eq(ungatekeepPosts.isPublished, true));
+    
+    const totalCount = Number(totalCountResult[0]?.count ?? 0);
+
+    // Fetch posts with pagination
+    // Note: For non-authenticated users, we still respect the FREE_POST_LIMIT globally
     const publishedPosts = await db
       .select({
         id: ungatekeepPosts.id,
@@ -39,16 +53,15 @@ export async function GET() {
       .from(ungatekeepPosts)
       .leftJoin(userTable, eq(ungatekeepPosts.userId, userTable.id))
       .where(eq(ungatekeepPosts.isPublished, true))
-      .orderBy(desc(ungatekeepPosts.isPinned), desc(ungatekeepPosts.publishedAt));
-
-    // Limit posts for non-authenticated users
-    const posts = isAuthenticated ? publishedPosts : publishedPosts.slice(0, FREE_POST_LIMIT);
-    const totalCount = publishedPosts.length;
+      .orderBy(desc(ungatekeepPosts.publishedAt))
+      .limit(isAuthenticated ? limit : FREE_POST_LIMIT)
+      .offset(isAuthenticated ? offset : 0);
 
     return NextResponse.json({
-      posts,
+      posts: publishedPosts,
       totalCount,
       isLimited: !isAuthenticated && totalCount > FREE_POST_LIMIT,
+      hasMore: isAuthenticated ? offset + publishedPosts.length < totalCount : false,
     });
   } catch (error) {
     console.error("Error fetching published ungatekeep posts:", error);

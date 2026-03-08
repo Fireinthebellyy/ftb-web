@@ -1,15 +1,17 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { Lock } from "lucide-react";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { Lock, Bookmark, Loader2, Pin } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
+import { useInView } from "react-intersection-observer";
 import UngatekeepCard from "@/components/ungatekeep/UngatekeepCard";
 import FeaturedToolkits from "@/components/toolkit/FeaturedToolkits";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { motion, useAnimation } from "framer-motion";
 
 type UngatekeepPost = {
   id: string;
@@ -30,14 +32,46 @@ type UngatekeepResponse = {
   posts: UngatekeepPost[];
   totalCount: number;
   isLimited: boolean;
+  hasMore: boolean;
 };
 
 export default function UngatekeepPage() {
-  const { data, isLoading } = useQuery<UngatekeepResponse>({
+  const { ref, inView } = useInView();
+  const savedButtonControls = useAnimation();
+  const [savedCount, setSavedCount] = useState(0);
+
+  useEffect(() => {
+    // Initial count
+    const saved = JSON.parse(localStorage.getItem("ungatekeep_saved") || "[]");
+    setSavedCount(saved.length);
+
+    const handlePostSaved = () => {
+      // Update count
+      const updatedSaved = JSON.parse(localStorage.getItem("ungatekeep_saved") || "[]");
+      setSavedCount(updatedSaved.length);
+      
+      // Trigger animation
+      savedButtonControls.start({
+        scale: [1, 1.2, 1],
+        transition: { duration: 0.3 }
+      });
+    };
+
+    window.addEventListener("ungatekeep-post-saved", handlePostSaved);
+    return () => window.removeEventListener("ungatekeep-post-saved", handlePostSaved);
+  }, [savedButtonControls]);
+
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery<UngatekeepResponse>({
     queryKey: ["ungatekeep"],
-    queryFn: async () => {
+    queryFn: async ({ pageParam = 1 }) => {
       try {
-        const response = await axios.get("/api/ungatekeep");
+        const response = await axios.get(`/api/ungatekeep?page=${pageParam}&limit=10`);
         return response.data;
       } catch (error) {
         console.error("Error fetching ungatekeep posts:", error);
@@ -45,12 +79,40 @@ export default function UngatekeepPage() {
         throw error;
       }
     },
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.hasMore) {
+        return allPages.length + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 1,
     staleTime: 1000 * 60 * 5,
   });
 
-  const posts = data?.posts ?? [];
-  const totalCount = data?.totalCount ?? 0;
-  const hasMorePosts = data?.isLimited ?? false;
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const posts = data?.pages.flatMap((page) => page.posts) ?? [];
+  const pinnedPosts = posts.filter(post => post.isPinned);
+  const firstPage = data?.pages[0];
+
+  const scrollToPost = (id: string) => {
+    const element = document.getElementById(`post-${id}`);
+    if (element) {
+      const navbarHeight = 80;
+      const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({
+        top: elementPosition - navbarHeight,
+        behavior: "smooth"
+      });
+    }
+  };
+
+  const totalCount = firstPage?.totalCount ?? 0;
+  const isLimited = firstPage?.isLimited ?? false;
   const hiddenCount = totalCount - posts.length;
 
   if (isLoading) {
@@ -87,14 +149,51 @@ export default function UngatekeepPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
           {/* Main Content */}
           <div className="min-w-0 flex-1">
-            <div className="mb-6">
-              <h1 className="mb-1 text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
-                Ungatekeep
-              </h1>
-              <p className="text-sm text-gray-600 md:text-base">
-                Value-adding posts and announcements from the team
-              </p>
+            <div className="mb-6 flex items-start justify-between">
+              <div>
+                <h1 className="mb-1 text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
+                  Ungatekeep
+                </h1>
+                <p className="text-sm text-gray-600 md:text-base">
+                  Posting everything students usually figure out too late. 
+                </p>
+              </div>
+              <motion.div animate={savedButtonControls}>
+                <Link
+                  href="/ungatekeep/saved"
+                  className="group relative flex items-center gap-1.5 rounded-full border bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm transition-all hover:bg-gray-50 hover:text-primary active:scale-95"
+                >
+                  <Bookmark className="h-3 w-3 sm:h-4 sm:w-4 transition-colors group-hover:fill-primary group-hover:text-primary" />
+                  {savedCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-white">
+                      {savedCount}
+                    </span>
+                  )}
+                </Link>
+              </motion.div>
             </div>
+
+            {/* Pinned Posts Quick Access */}
+            {pinnedPosts.length > 0 && (
+              <div className="sticky top-[72px] z-30 mb-4 space-y-2">
+                {pinnedPosts.map((post) => (
+                  <motion.div
+                    key={`pin-${post.id}`}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    onClick={() => scrollToPost(post.id)}
+                    className="cursor-pointer rounded-lg border border-yellow-200 bg-yellow-50/95 p-2 shadow-sm backdrop-blur-md transition-all hover:bg-yellow-100/95 active:scale-[0.98]"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Pin className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                      <p className="line-clamp-2 flex-1 text-[11px] font-medium text-yellow-800 leading-tight">
+                        {post.content}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
 
             {posts.length === 0 ? (
               <div className="rounded-lg border bg-white py-12 text-center">
@@ -111,7 +210,15 @@ export default function UngatekeepPage() {
                   <UngatekeepCard key={post.id} post={post} />
                 ))}
 
-                {hasMorePosts ? (
+                {hasNextPage && (
+                  <div ref={ref} className="flex justify-center py-4">
+                    {isFetchingNextPage && (
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    )}
+                  </div>
+                )}
+
+                {isLimited ? (
                   <div className="relative">
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent to-gray-50" />
                     <div className="rounded-lg border border-dashed border-gray-300 bg-white/80 py-8 text-center backdrop-blur-sm">

@@ -583,6 +583,7 @@ export default function OpportunityCardsPage() {
               {showSecondaryWidgets ? (
                 <>
                   <CalendarWidget
+                    kind="opportunity"
                     queryEnabled={shouldEnableWidgetQueries}
                     initialMonthKey={bootstrapMonth}
                     initialBookmarkedDates={bootstrapBookmarkDates}

@@ -25,6 +25,7 @@ const opportunitySchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   images: z.array(z.string()).optional(),
+  attachments: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
   location: z.string().optional(),
   organiserInfo: z.string().optional(),
@@ -169,6 +170,14 @@ export async function POST(req: NextRequest) {
       validatedData.images.length > 0
     ) {
       insertData.images = validatedData.images;
+    }
+
+    if (
+      validatedData.attachments &&
+      Array.isArray(validatedData.attachments) &&
+      validatedData.attachments.length > 0
+    ) {
+      insertData.attachments = validatedData.attachments;
     }
 
     // Optional string fields
@@ -376,6 +385,7 @@ export async function GET(req: NextRequest) {
           title: opportunities.title,
           description: opportunities.description,
           images: opportunities.images,
+          attachments: opportunities.attachments,
           tags: sql<string[]>`(
             SELECT coalesce(array_agg(t.name ORDER BY t.name), '{}')
             FROM ${tags} t

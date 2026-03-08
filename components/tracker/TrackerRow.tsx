@@ -1,3 +1,4 @@
+import Image from "next/image";
 import {
     Clock,
     AlertCircle,
@@ -90,10 +91,11 @@ export default function TrackerRow({
         >
             <div className="flex min-w-0 flex-1 items-center gap-4">
                 {opp.logo || opp.poster || opp.images?.[0] ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                         src={opp.logo || opp.poster || opp.images?.[0]}
                         alt={opp.company}
+                        width={48}
+                        height={48}
                         className="h-12 w-12 rounded-xl border border-slate-100 bg-white object-contain p-1"
                     />
                 ) : (
@@ -122,8 +124,7 @@ export default function TrackerRow({
                                     opp.isHighPriority ? "font-bold text-rose-600" : ""
                                 )}
                             >
-                                <Clock size={12} />{" "}
-                                {new Date(opp.deadline).toLocaleDateString()}
+                                <Clock size={12} /> {new Date(opp.deadline).toLocaleDateString()}
                             </span>
                         )}
                         {opp.deadline && opp.kind === "opportunity" && (
@@ -179,11 +180,12 @@ export default function TrackerRow({
                         className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
                         title="Add to Google Calendar"
                     >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                        <Image
                             src="/images/google-calendar.webp"
                             alt="Google Calendar"
-                            className="h-5 w-5 object-contain"
+                            width={20}
+                            height={20}
+                            className="object-contain"
                         />
                     </a>
                 )}

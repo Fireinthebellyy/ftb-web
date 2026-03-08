@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ImagePlus, X } from "lucide-react";
+import { ImagePlus, Paperclip, FileText, FileSpreadsheet, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useDropzone } from "react-dropzone";
-import { FileItem } from "@/types/interfaces";
+import { FileItem, FileKind } from "@/types/interfaces";
 import { createOpportunityStorage } from "@/lib/appwrite";
 import {
   Dialog,
@@ -49,6 +49,7 @@ export function ImagePicker({
       size: file.size,
       file,
       preview: URL.createObjectURL(file),
+      kind: "image" as const,
     }));
 
     setFiles((prev) => [...prev, ...newFiles]);
@@ -239,6 +240,315 @@ export function ExistingImages({
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Attachment (PDF / PPT) picker and preview components
+// ---------------------------------------------------------------------------
+
+function resolveFileKind(file: File): FileKind {
+  const ext = file.name.split(".").pop()?.toLowerCase();
+  if (ext === "pdf") return "pdf";
+  if (ext === "ppt" || ext === "pptx") return "ppt";
+  return "image";
+}
+
+function AttachmentIcon({ kind }: { kind: FileKind }) {
+  if (kind === "pdf")
+    return <FileText className="w-5 h-5 text-red-500 shrink-0" />;
+  return <FileSpreadsheet className="w-5 h-5 text-orange-500 shrink-0" />;
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+type AttachmentBaseProps = {
+  files: FileItem[];
+  setFiles: (updater: (prev: FileItem[]) => FileItem[]) => void;
+  maxFiles: number;
+  className?: string;
+  buttonClassName?: string;
+};
+
+const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024; // 10 MB
+
+export function AttachmentPicker({
+  files,
+  setFiles,
+  maxFiles,
+  className,
+  buttonClassName,
+  existingAttachmentsCount = 0,
+}: AttachmentBaseProps & { existingAttachmentsCount?: number }) {
+  const totalAttachments = files.length + existingAttachmentsCount;
+
+  const onDrop = (acceptedFiles: File[]) => {
+    const remainingSlots = maxFiles - totalAttachments;
+    if (remainingSlots <= 0) return;
+
+    const filesToAdd = acceptedFiles.slice(0, remainingSlots);
+
+    const newFiles: FileItem[] = filesToAdd.map((file) => ({
+      name: file.name,
+      size: file.size,
+      file,
+      preview: "",
+      kind: resolveFileKind(file),
+    }));
+
+    setFiles((prev) => [...prev, ...newFiles]);
+  };
+
+  const { getRootProps, getInputProps } = useDropzone({
+    onDrop,
+    accept: {
+      "application/pdf": [".pdf"],
+      "application/vnd.ms-powerpoint": [".ppt"],
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+        [".pptx"],
+    },
+    multiple: true,
+    maxFiles: Math.max(0, maxFiles - totalAttachments),
+    maxSize: MAX_ATTACHMENT_SIZE,
+    noClick: totalAttachments >= maxFiles,
+  });
+
+  return (
+    <div {...getRootProps()} className={className}>
+      <input {...getInputProps()} />
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className={cn(
+          "p-2 h-8 w-8",
+          totalAttachments > 0 && "text-blue-600 bg-blue-50",
+          totalAttachments >= maxFiles && "opacity-50 cursor-not-allowed",
+          buttonClassName
+        )}
+        disabled={totalAttachments >= maxFiles}
+      >
+        <Paperclip className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Unified file picker: single button for images + documents (PDF/PPT)
+// ---------------------------------------------------------------------------
+
+type UnifiedFilePickerProps = {
+  imageFiles: FileItem[];
+  setImageFiles: (updater: (prev: FileItem[]) => FileItem[]) => void;
+  maxImageFiles: number;
+  existingImagesCount?: number;
+  attachmentFiles: FileItem[];
+  setAttachmentFiles: (updater: (prev: FileItem[]) => FileItem[]) => void;
+  maxAttachmentFiles: number;
+  existingAttachmentsCount?: number;
+  className?: string;
+  buttonClassName?: string;
+  showLabel?: boolean;
+  label?: string;
+  compactLabel?: string;
+};
+
+const IMAGE_EXTENSIONS = new Set(["jpeg", "jpg", "png", "gif", "webp"]);
+
+function isImageFile(file: File): boolean {
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  return IMAGE_EXTENSIONS.has(ext) || file.type.startsWith("image/");
+}
+
+export function UnifiedFilePicker({
+  imageFiles,
+  setImageFiles,
+  maxImageFiles,
+  existingImagesCount = 0,
+  attachmentFiles,
+  setAttachmentFiles,
+  maxAttachmentFiles,
+  existingAttachmentsCount = 0,
+  className,
+  buttonClassName,
+  showLabel = false,
+  label = "Uploads",
+  compactLabel,
+}: UnifiedFilePickerProps) {
+  const totalImages = imageFiles.length + existingImagesCount;
+  const totalAttachments = attachmentFiles.length + existingAttachmentsCount;
+  const allFull = totalImages >= maxImageFiles && totalAttachments >= maxAttachmentFiles;
+  const hasAnyFiles = totalImages > 0 || totalAttachments > 0;
+
+  const onDrop = (acceptedFiles: File[]) => {
+    const newImages: FileItem[] = [];
+    const newAttachments: FileItem[] = [];
+
+    for (const file of acceptedFiles) {
+      if (isImageFile(file)) {
+        if (totalImages + newImages.length < maxImageFiles) {
+          newImages.push({
+            name: file.name,
+            size: file.size,
+            file,
+            preview: URL.createObjectURL(file),
+            kind: "image" as const,
+          });
+        }
+      } else {
+        if (totalAttachments + newAttachments.length < maxAttachmentFiles) {
+          newAttachments.push({
+            name: file.name,
+            size: file.size,
+            file,
+            preview: "",
+            kind: resolveFileKind(file),
+          });
+        }
+      }
+    }
+
+    if (newImages.length > 0) setImageFiles((prev) => [...prev, ...newImages]);
+    if (newAttachments.length > 0) setAttachmentFiles((prev) => [...prev, ...newAttachments]);
+  };
+
+  const { getRootProps, getInputProps } = useDropzone({
+    onDrop,
+    accept: {
+      "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"],
+      "application/pdf": [".pdf"],
+      "application/vnd.ms-powerpoint": [".ppt"],
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+        [".pptx"],
+    },
+    multiple: true,
+    maxSize: MAX_ATTACHMENT_SIZE,
+    noClick: allFull,
+  });
+
+  return (
+    <div {...getRootProps()} className={className}>
+      <input {...getInputProps()} />
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className={cn(
+          showLabel
+            ? "h-auto w-11 flex-col gap-1 p-1.5 text-[10px] leading-none text-gray-600 md:w-14 md:text-[11px]"
+            : "h-8 w-8 p-2",
+          hasAnyFiles && "text-blue-600 bg-blue-50",
+          allFull && "opacity-50 cursor-not-allowed",
+          buttonClassName
+        )}
+        disabled={allFull}
+      >
+        <Paperclip className="w-4 h-4" />
+        {showLabel && (
+          <>
+            {compactLabel ? (
+              <>
+                <span className="md:hidden">{compactLabel}</span>
+                <span className="hidden md:inline">{label}</span>
+              </>
+            ) : (
+              <span>{label}</span>
+            )}
+          </>
+        )}
+      </Button>
+    </div>
+  );
+}
+
+export function SelectedAttachments({
+  files,
+  setFiles,
+}: Pick<AttachmentBaseProps, "files" | "setFiles">) {
+  const removeFile = (index: number) => {
+    setFiles((prev) => {
+      const updated = [...prev];
+      updated.splice(index, 1);
+      return updated;
+    });
+  };
+
+  if (files.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-1.5 py-2">
+      {files.map((file, idx) => (
+        <div
+          key={idx}
+          className="flex items-center gap-2 rounded-md border bg-gray-50 px-2 py-1.5 text-sm"
+        >
+          <AttachmentIcon kind={file.kind} />
+          <span className="truncate flex-1 max-w-[180px]">{file.name}</span>
+          <span className="text-xs text-muted-foreground shrink-0">
+            {formatBytes(file.size)}
+          </span>
+          {file.uploading && (
+            <span className="text-xs text-blue-600 shrink-0">
+              {file.progress}%
+            </span>
+          )}
+          {file.error && (
+            <span className="text-xs text-red-500 shrink-0">Failed</span>
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-5 w-5 p-0 shrink-0"
+            onClick={() => removeFile(idx)}
+          >
+            <X className="w-3 h-3" />
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+type ExistingAttachmentsProps = {
+  existingAttachments: string[];
+  onRemoveExisting: (attachmentId: string) => void;
+};
+
+export function ExistingAttachments({
+  existingAttachments,
+  onRemoveExisting,
+}: ExistingAttachmentsProps) {
+  if (existingAttachments.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-1.5 py-2">
+      {existingAttachments.map((attachmentId) => (
+        <div
+          key={attachmentId}
+          className="flex items-center gap-2 rounded-md border bg-gray-50 px-2 py-1.5 text-sm"
+        >
+          <FileText className="w-5 h-5 text-red-500 shrink-0" />
+          <span className="truncate flex-1 max-w-[180px] text-muted-foreground">
+            {attachmentId.slice(0, 12)}…
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-5 w-5 p-0 shrink-0 hover:bg-red-50"
+            onClick={() => onRemoveExisting(attachmentId)}
+          >
+            <X className="w-3 h-3" />
+          </Button>
+        </div>
+      ))}
+    </div>
   );
 }
 

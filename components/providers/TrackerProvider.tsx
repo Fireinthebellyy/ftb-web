@@ -371,13 +371,13 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
             const fetched = opportunitiesMap.get(item.oppId as string);
             if (fetched) {
               apiData = {
+                ...fetched,
                 title: fetched.title,
                 company: fetched.organiserInfo || "Organizer", // Opportunities use organiserInfo
                 location: fetched.location,
                 type: fetched.type,
-                deadline: fetched.endDate || fetched.startDate, // Use endDate as deadline
+                deadline: fetched.startDate || fetched.endDate, // Prefer startDate as deadline
                 logo: getImageUrl(fetched.images?.[0]), // Use first image if available, resolving to URL
-                ...fetched,
               };
             }
           }
@@ -387,8 +387,8 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
           }
 
           return {
-            ...apiData,
             ...item, // Keep local status, notes, etc.
+            ...apiData, // API data overrides stale local data
             title: apiData.title || item.title, // Prefer API title
             company: apiData.company || item.company,
             logo: apiData.logo || item.logo, // Prefer API logo

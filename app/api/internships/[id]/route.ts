@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+
 const internshipUpdateSchema = z.object({
   title: z.string().min(1, "Title is required").optional(),
   description: z.string().optional().nullable(),
@@ -42,6 +43,8 @@ export async function GET(
     if (!id) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
+
+
 
     const internship = await db
       .select({
@@ -83,6 +86,7 @@ export async function GET(
       );
     }
 
+
     return NextResponse.json({
       success: true,
       internship: internship[0],
@@ -112,6 +116,8 @@ export async function PUT(
     if (!id) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
+
+
 
     const currentUser = await getCurrentUser();
     if (!currentUser || !currentUser.currentUser?.id) {
@@ -244,6 +250,8 @@ export async function DELETE(
     if (!id) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
+
+
 
     const currentUser = await getCurrentUser();
     if (!currentUser || !currentUser.currentUser?.id) {

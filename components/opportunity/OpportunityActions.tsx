@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import {
   Heart,
   MessageSquare,
@@ -43,7 +42,8 @@ export function OpportunityActions({
   const { id, user, userHasUpvoted } = opportunity;
   const { data: session } = useSession();
   const toggleUpvote = useToggleUpvote(id);
-  const [showMessage, setShowMessage] = useState(false);
+  const actionIconClass =
+    "h-4 w-4 transition-transform duration-150 ease-out motion-reduce:transform-none sm:h-5 sm:w-5 group-hover:scale-110 group-focus-visible:scale-110";
 
   const publicBaseUrl =
     (process.env.NEXT_PUBLIC_SITE_URL as string | undefined) ||
@@ -73,16 +73,6 @@ export function OpportunityActions({
     }
   };
 
-  useEffect(() => {
-    if (showMessage) {
-      toast.success(
-        isBookmarked ? "Added to bookmarks" : "Removed from bookmarks"
-      );
-      const timer = setTimeout(() => setShowMessage(false), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showMessage, isBookmarked]);
-
   return (
     <>
       <footer className="flex items-center justify-between border-t border-gray-100 pt-1">
@@ -93,14 +83,14 @@ export function OpportunityActions({
               title="Upvote"
               aria-label="Upvote"
               disabled={toggleUpvote.isPending}
-              className={`flex cursor-pointer place-items-center text-xs transition-colors sm:text-sm ${
+              className={`group flex cursor-pointer place-items-center text-xs transition-colors sm:text-sm ${
                 userHasUpvoted
                   ? "fill-orange-500 text-orange-600"
                   : "hover:text-orange-600"
               } ${toggleUpvote.isPending ? "cursor-not-allowed opacity-60" : ""}`}
             >
               <Heart
-                className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                className={`${actionIconClass} ${
                   userHasUpvoted ? "fill-current" : ""
                 }`}
               />
@@ -110,26 +100,26 @@ export function OpportunityActions({
               title="Comments"
               onClick={() => setShowComments(!showComments)}
               aria-label="Comments"
-              className="flex cursor-pointer items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
+              className="group flex cursor-pointer items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
             >
-              <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
+              <MessageSquare className={actionIconClass} />
             </button>
             <button
               type="button"
-              title="Bookmark"
+              title="Track"
               onClick={() => {
                 if (!session?.user?.id) {
-                  toast.error("Please log in to bookmark opportunities");
+                  toast.error("Please log in to track opportunities");
                   return;
                 }
+
                 onBookmarkChange(id, !isBookmarked);
-                setShowMessage(true);
               }}
-              aria-label="Bookmark"
-              className="flex cursor-pointer items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
+              aria-label="Track"
+              className="group flex cursor-pointer items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
             >
               <Bookmark
-                className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                className={`${actionIconClass} ${
                   isBookmarked
                     ? "fill-yellow-400 text-yellow-500"
                     : "hover:text-orange-600"
@@ -142,9 +132,9 @@ export function OpportunityActions({
                   type="button"
                   title="Share"
                   aria-label="Share"
-                  className="flex cursor-pointer items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
+                  className="group flex cursor-pointer items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
                 >
-                  <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <Share2 className={actionIconClass} />
                 </button>
               </DialogTrigger>
               <ShareDialog

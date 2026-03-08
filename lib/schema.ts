@@ -6,12 +6,26 @@ import {
   boolean,
   integer,
   date,
+  jsonb,
   uuid,
+  index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const userRoleEnum = pgEnum("user_role", ["user", "member", "admin"]);
 export const personaEnum = pgEnum("persona_type", ["student", "society"]);
+export const onboardingTrafficSourceEnum = pgEnum("onboarding_traffic_source", [
+  "instagram",
+  "reddit",
+  "youtube",
+  "linkedin",
+  "chatgpt",
+  "google_search",
+  "whatsapp_group",
+  "friend_or_senior",
+  "campus_event",
+  "other",
+]);
 export const opportunityTypeEnum = pgEnum("opportunity_type", [
   "hackathon",
   "grant",
@@ -57,6 +71,7 @@ export const opportunities = pgTable("opportunities", {
   title: text("title").notNull(),
   description: text("description").notNull(),
   images: text("images").array().default([]),
+  attachments: text("attachments").array().default([]),
   tagIds: uuid("tag_ids").array().default([]),
   location: text("location"),
   organiserInfo: text("organiser_info"),
@@ -124,6 +139,36 @@ export const user = pgTable("user", {
   deletedAt: timestamp("deleted_at"),
   role: userRoleEnum("role").default("user").notNull(),
 });
+
+export const adminActivityLogs = pgTable(
+  "admin_activity_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    adminUserId: text("admin_user_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    action: text("action").notNull(),
+    entityType: text("entity_type"),
+    entityId: text("entity_id"),
+    method: text("method").notNull(),
+    path: text("path").notNull(),
+    statusCode: integer("status_code").notNull(),
+    success: boolean("success").default(false).notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    requestId: text("request_id"),
+    metadata: jsonb("metadata"),
+    beforeState: jsonb("before_state"),
+    afterState: jsonb("after_state"),
+    error: text("error"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("admin_activity_logs_admin_user_id_idx").on(table.adminUserId),
+    index("admin_activity_logs_action_idx").on(table.action),
+    index("admin_activity_logs_created_at_idx").on(table.createdAt),
+  ]
+);
 
 export const userOnboardingProfiles = pgTable(
   "user_onboarding_profiles",
@@ -244,6 +289,23 @@ export const feedback = pgTable("feedback", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const onboardingSurveyResponses = pgTable(
+  "onboarding_survey_responses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    source: onboardingTrafficSourceEnum("source").notNull(),
+    sourceOther: text("source_other"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("onboarding_survey_responses_user_id_unique").on(table.userId),
+  ]
+);
+
 // Tags for autosuggest
 export const tags = pgTable("tags", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -309,6 +371,19 @@ export const coupons = pgTable("coupons", {
   isActive: boolean("is_active").default(true),
   expiresAt: timestamp("expires_at"), // Optional expiration
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const banners = pgTable("banners", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  subtitle: text("subtitle"),
+  background: text("background"), // CSS background property (e.g., linear-gradient)
+  imageUrl: text("image_url"), // Optional background image
+  link: text("link"), // Optional link when clicked
+  priority: integer("priority").default(0), // For ordering posters
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const userToolkits = pgTable("user_toolkits", {
@@ -392,6 +467,58 @@ export const newsletterSubscribers = pgTable(
   ]
 );
 
+// Define tables first
+export const trackerItems = pgTable(
+  "tracker_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    oppId: text("opp_id").notNull(),
+    kind: text("kind").default("internship"), // 'internship' | 'opportunity'
+    status: text("status").notNull(),
+    notes: text("notes"),
+    addedAt: timestamp("added_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+    appliedAt: timestamp("applied_at"),
+    result: text("result"),
+    isManual: boolean("is_manual").default(false),
+    manualData: text("manual_data"), // storing JSON stringified manual data
+  },
+  (table) => [
+    uniqueIndex("tracker_items_user_kind_opp_unique").on(
+      table.userId,
+      table.kind,
+      table.oppId
+    ),
+  ]
+);
+
+export const trackerEvents = pgTable(
+  "tracker_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    date: timestamp("date").notNull(),
+    type: text("type").notNull(),
+    description: text("description"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("tracker_events_user_title_date_unique").on(
+      table.userId,
+      table.title,
+      table.date
+    ),
+  ]
+);
+
+// Export schema object last
 export const schema = {
   user,
   userOnboardingProfiles,
@@ -406,12 +533,17 @@ export const schema = {
   waitlist,
   tasks,
   feedback,
+  onboardingSurveyResponses,
   tags,
   toolkits,
   toolkitContentItems,
   coupons,
+  banners,
   userToolkits,
   userToolkitProgress,
   ungatekeepPosts,
   newsletterSubscribers,
+  trackerItems,
+  trackerEvents,
+  adminActivityLogs,
 };

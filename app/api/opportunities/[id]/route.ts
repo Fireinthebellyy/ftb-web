@@ -11,13 +11,23 @@ const updateOpportunitySchema = z.object({
   title: z.string().min(1, "Title is required").optional(),
   description: z.string().min(1, "Description is required").optional(),
   images: z.array(z.string()).optional(),
+  attachments: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
   location: z.string().optional(),
   organiserInfo: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   publishAt: z
-    .union([z.string().datetime(), z.literal(""), z.null()])
+    .union([
+      z
+        .string()
+        .min(1)
+        .refine((s) => !Number.isNaN(new Date(s).getTime()), {
+          message: "Invalid datetime",
+        }),
+      z.literal(""),
+      z.null(),
+    ])
     .optional(),
 });
 
@@ -97,6 +107,9 @@ export async function PUT(
     }
     if (validatedData.images !== undefined) {
       updateData.images = validatedData.images;
+    }
+    if (validatedData.attachments !== undefined) {
+      updateData.attachments = validatedData.attachments;
     }
     if (validatedData.tags !== undefined) {
       updateData.tagIds = await upsertTagsAndGetIds(validatedData.tags);

@@ -1,4 +1,4 @@
-import type React from "react";
+import React, { Suspense } from "react";
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
@@ -12,6 +12,8 @@ import ProgressProvider from "./providers";
 import Script from "next/script";
 import WhatsAppWidget from "@/components/WhatsAppWidget";
 import FeedbackWidget from "@/components/FeedbackWidget";
+import PostOnboardingSurveyWidget from "@/components/PostOnboardingSurveyWidget";
+import { TrackerProvider } from "@/components/providers/TrackerProvider";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   weight: ["400", "700"], // or ["400", "700"] if multiple
@@ -43,18 +45,23 @@ export default function RootLayout({
         className={`${plusJakartaSans.className} flex min-h-screen flex-col bg-neutral-50 font-sans antialiased`}
         suppressHydrationWarning
       >
-        <QueryProvider>
-          <ProgressProvider>
-            <Navbar />
-            <main className="grow pb-20 md:pb-0">{children}</main>
-            <BottomNav />
-            <Footer />
-            <WhatsAppWidget />
-            <FeedbackWidget />
-          </ProgressProvider>
-          <Toaster />
-          <Analytics />
-        </QueryProvider>
+        <Suspense fallback={<div>Loading ..</div>}>
+          <QueryProvider>
+            <ProgressProvider>
+              <TrackerProvider>
+                <Navbar />
+                <main className="grow pb-20 md:pb-0">{children}</main>
+                <BottomNav />
+                <Footer />
+                <WhatsAppWidget />
+                <FeedbackWidget />
+                <PostOnboardingSurveyWidget />
+              </TrackerProvider>
+            </ProgressProvider>
+            <Toaster />
+            <Analytics />
+          </QueryProvider>
+        </Suspense>
       </body>
     </html>
   );

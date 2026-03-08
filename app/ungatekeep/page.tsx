@@ -7,6 +7,7 @@ import { Lock, Bookmark, Loader2, Pin } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import { useInView } from "react-intersection-observer";
+import PageBannerCarousel from "@/components/banner/PageBannerCarousel";
 import UngatekeepCard from "@/components/ungatekeep/UngatekeepCard";
 import FeaturedToolkits from "@/components/toolkit/FeaturedToolkits";
 import { Button } from "@/components/ui/button";

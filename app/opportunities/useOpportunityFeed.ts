@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import { useDashboardBootstrap } from "@/lib/queries-dashboard";
 import {
-  useBookmarkStatuses,
   useInfiniteOpportunities,
 } from "@/lib/queries-opportunities";
 
@@ -67,11 +66,6 @@ export function useOpportunityFeed({
       [],
     [opportunitiesQuery.data]
   );
-  const opportunityIds = useMemo(
-    () => allOpportunities.map((opportunity) => opportunity.id),
-    [allOpportunities]
-  );
-  const bookmarkStatusesQuery = useBookmarkStatuses(opportunityIds);
 
   const isLoading =
     (shouldUseBootstrap && bootstrapQuery.isPending) ||
@@ -85,7 +79,6 @@ export function useOpportunityFeed({
     bootstrapMonth: bootstrapQuery.data?.month,
     bootstrapBookmarkDates: bootstrapQuery.data?.bookmarkDates ?? [],
     allOpportunities,
-    bookmarkStatuses: bookmarkStatusesQuery.data ?? {},
     isLoading,
     error: opportunitiesQuery.error,
     fetchNextPage: opportunitiesQuery.fetchNextPage,

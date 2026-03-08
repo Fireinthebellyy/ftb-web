@@ -25,6 +25,8 @@ export default async function OpportunityDetailPage({ params }: any) {
       organiserInfo: opportunities.organiserInfo,
       startDate: opportunities.startDate,
       endDate: opportunities.endDate,
+      publishAt: opportunities.publishAt,
+      userId: opportunities.userId,
       createdAt: opportunities.createdAt,
       upvoteCount: opportunities.upvoteCount,
       upvoterIds: opportunities.upvoterIds,
@@ -45,18 +47,31 @@ export default async function OpportunityDetailPage({ params }: any) {
     notFound();
   }
 
-  // Calculate userHasUpvoted (non-redirecting check for public access)
-  let userHasUpvoted = false;
+  let currentUserId: string | undefined;
+  let currentUserRole: string | undefined;
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
     });
-    const currentUserId = session?.user?.id as string | undefined;
-    if (currentUserId && Array.isArray(opportunity.upvoterIds)) {
-      userHasUpvoted = opportunity.upvoterIds.includes(currentUserId);
-    }
-  } catch {
-    // User not authenticated - allow public viewing with userHasUpvoted = false
+    currentUserId = session?.user?.id as string | undefined;
+    currentUserRole = session?.user?.role as string | undefined;
+  } catch {}
+
+  const isOwner =
+    currentUserId !== undefined && opportunity.userId === currentUserId;
+  const isAdmin = currentUserRole === "admin";
+  const publishAt = opportunity.publishAt
+    ? new Date(opportunity.publishAt)
+    : null;
+  const isScheduledFuture =
+    publishAt !== null && publishAt.getTime() > Date.now();
+  if (isScheduledFuture && !isOwner && !isAdmin) {
+    notFound();
+  }
+
+  let userHasUpvoted = false;
+  if (currentUserId && Array.isArray(opportunity.upvoterIds)) {
+    userHasUpvoted = opportunity.upvoterIds.includes(currentUserId);
   }
 
   const opportunityWithUpvote = {
@@ -66,7 +81,10 @@ export default async function OpportunityDetailPage({ params }: any) {
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-6">
-      <OpportunityCard opportunity={opportunityWithUpvote as any} isCardExpanded={true} />
+      <OpportunityCard
+        opportunity={opportunityWithUpvote as any}
+        isCardExpanded={true}
+      />
     </div>
   );
 }

@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { createOpportunityStorage } from "@/lib/appwrite";
 import { OpportunityPostProps } from "@/types/interfaces";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTracker } from "@/components/providers/TrackerProvider";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import {
   Carousel,
   CarouselContent,
@@ -17,6 +18,7 @@ import {
 import Image from "next/image";
 import { OpportunityHeader } from "./opportunity/OpportunityHeader";
 import { OpportunityImageGallery } from "./opportunity/OpportunityImageGallery";
+import { OpportunityAttachments } from "./opportunity/OpportunityAttachments";
 import { OpportunityActions } from "./opportunity/OpportunityActions";
 import NewOpportunityForm from "./opportunity/NewOpportunityForm";
 
@@ -26,38 +28,36 @@ const isValidUUID = (uuid: string): boolean => {
   return uuidRegex.test(uuid);
 };
 
+const getTypeBadgeColor = (type?: string): string => {
+  const colors: Record<string, string> = {
+    hackathon: "bg-blue-100 text-blue-800",
+    grant: "bg-green-100 text-green-800",
+    competition: "bg-purple-100 text-purple-800",
+    ideathon: "bg-orange-100 text-orange-800",
+    others: "bg-gray-100 text-gray-800",
+  };
+  return colors[type?.toLowerCase() || "others"] || colors.others;
+};
+
 const OpportunityPost: React.FC<OpportunityPostProps> = ({
   opportunity,
   onBookmarkChange,
-  initialIsBookmarked,
 }) => {
-  const { id, images, title } = opportunity;
+  const { id, images, title, type } = opportunity;
+  const primaryType = Array.isArray(type) ? type[0] : type;
 
-  const [isBookmarked, setIsBookmarked] = useState<boolean>(
-    Boolean(initialIsBookmarked)
+  const { items, addToTracker, removeFromTracker } = useTracker();
+  const trackedItem = items.find(
+    (i) => i.kind === "opportunity" && String(i.oppId) === String(id)
   );
+  const isBookmarked = Boolean(trackedItem);
+
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [showComments, setShowComments] = useState<boolean>(false);
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [modalIndex, setModalIndex] = useState<number>(0);
-  const [showMessage, setShowMessage] = useState<boolean>(false);
-
   const { data: session } = useSession();
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    setIsBookmarked(Boolean(initialIsBookmarked));
-  }, [initialIsBookmarked]);
-
-  useEffect(() => {
-    if (showMessage) {
-      toast.success(
-        isBookmarked ? "Added to bookmarks" : "Removed from bookmarks"
-      );
-      const timer = setTimeout(() => setShowMessage(false), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showMessage, isBookmarked]);
 
   const handleEditSuccess = () => {
     setIsEditing(false);
@@ -75,35 +75,46 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
       return;
     }
 
-    const currentUserId = session.user.id as string;
-
     try {
       if (newState) {
-        const response = await axios.post("/api/bookmarks", {
-          userId: currentUserId,
-          opportunityId: id,
-        });
-        if (response.data?.message === "Already bookmarked") {
-          toast.info("Already bookmarked");
-        }
-      } else {
-        await axios.delete("/api/bookmarks", {
-          data: {
-            userId: currentUserId,
+        addToTracker(
+          {
+            id,
             opportunityId: id,
-          },
-        });
+            title: opportunity.title,
+            company:
+              (opportunity as any).hiringOrganization ||
+              opportunity.organiserInfo ||
+              "Unknown Organization",
+            logo: opportunity.images?.[0]
+              ? createOpportunityStorage()
+                .getFileView(
+                  process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID ||
+                  "",
+                  opportunity.images[0]
+                )
+                .toString()
+              : undefined,
+            type: opportunity.type,
+            location: opportunity.location,
+            deadline: opportunity.startDate || opportunity.endDate,
+            kind: "opportunity",
+          } as any,
+          "Not Applied",
+          "opportunity"
+        );
+      } else {
+        if (trackedItem) {
+          removeFromTracker(
+            trackedItem.oppId as string | number,
+            trackedItem.kind ?? "opportunity"
+          );
+        }
       }
-
-      setIsBookmarked(newState);
 
       if (onBookmarkChange) {
         onBookmarkChange(id, newState);
       }
-
-      queryClient.invalidateQueries({ queryKey: ["bookmarks", "status"] });
-
-      setShowMessage(true);
     } catch (err) {
       console.error("Bookmark request failed:", err);
       toast.error("Failed to update bookmark");
@@ -112,6 +123,18 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
   return (
     <article className="relative mb-3 w-full rounded-lg border bg-white shadow-sm sm:mb-4">
+      {primaryType && (
+        <div className="absolute -top-0.5 right-0 z-20">
+          <Badge
+            className={`${getTypeBadgeColor(
+              primaryType
+            )} rounded-tl-none rounded-br-none px-2 py-1 text-[10px] font-medium sm:text-xs`}
+          >
+            {primaryType.charAt(0).toUpperCase() + primaryType.slice(1)}
+          </Badge>
+        </div>
+      )}
+
       <OpportunityImageGallery
         images={images}
         title={title}
@@ -122,6 +145,8 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
       />
 
       <OpportunityHeader opportunity={opportunity} />
+
+      <OpportunityAttachments attachments={opportunity.attachments} />
 
       <Dialog open={modalOpen} onOpenChange={(open) => setModalOpen(open)}>
         <DialogContent
@@ -151,6 +176,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           <DialogContent
             className="mx-auto p-4 md:max-h-[600px] md:min-w-[600px]"
             overlayClassName="backdrop-blur-xs bg-black/30"
+            onOpenAutoFocus={(event) => event.preventDefault()}
           >
             <NewOpportunityForm
               opportunity={opportunity}

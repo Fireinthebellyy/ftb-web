@@ -2,7 +2,6 @@ import axios from "axios";
 import { InfiniteData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Task } from "@/types/interfaces";
 import {
-  bookmarkStatusesQueryKey,
   OpportunitiesResponse,
 } from "@/lib/queries-opportunities";
 
@@ -102,18 +101,6 @@ export function useDashboardBootstrap(
       queryClient.setQueryData<string[]>(
         ["bookmarks", "month", data.month],
         data.bookmarkDates
-      );
-
-      const existingStatuses =
-        queryClient.getQueryData<Record<string, boolean>>(
-          bookmarkStatusesQueryKey
-        ) ?? {};
-      queryClient.setQueryData<Record<string, boolean>>(
-        bookmarkStatusesQueryKey,
-        {
-          ...existingStatuses,
-          ...data.bookmarkStatuses,
-        }
       );
 
       return data;

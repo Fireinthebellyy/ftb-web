@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import FeaturedOpportunities from "./opportunity/FeaturedOpportunities";
+import ToolkitBanner from "./internship/ToolkitBanner";
 import {
   Select,
   SelectContent,
@@ -182,12 +183,12 @@ export default function InternshipList() {
   }, [searchPlaceholders.length]);
 
   // Flatten all internships from all pages
-  const allInternships = data?.pages?.flatMap((page) => page.internships) || [];
+  const allInternships = (
+    data?.pages?.flatMap((page) => page.internships) || []
+  ).filter(Boolean);
 
   // Intersection observer for infinite scroll
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  const desktopTriggerRef = useRef<HTMLDivElement>(null);
-  const mobileTriggerRef = useRef<HTMLDivElement>(null);
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -203,41 +204,29 @@ export default function InternshipList() {
         }
       },
       {
-        threshold: 0.1,
-        rootMargin: "300px", // Start loading when trigger is 300px away from viewport
+        threshold: 0,
+        rootMargin: "200px",
       }
     );
 
-    const currentDesktopTriggerRef = desktopTriggerRef.current;
-    const currentMobileTriggerRef = mobileTriggerRef.current;
+    const currentLoadMoreRef = loadMoreRef.current;
 
-    if (currentDesktopTriggerRef) {
-      observer.observe(currentDesktopTriggerRef);
-    }
-    if (currentMobileTriggerRef) {
-      observer.observe(currentMobileTriggerRef);
+    if (currentLoadMoreRef && hasNextPage) {
+      observer.observe(currentLoadMoreRef);
     }
 
     return () => {
-      if (currentDesktopTriggerRef) {
-        observer.unobserve(currentDesktopTriggerRef);
-      }
-      if (currentMobileTriggerRef) {
-        observer.unobserve(currentMobileTriggerRef);
+      if (currentLoadMoreRef) {
+        observer.unobserve(currentLoadMoreRef);
       }
     };
-  }, [handleLoadMore, allInternships.length]);
+  }, [handleLoadMore, hasNextPage]);
 
   const handleBookmarkChange = (
-    internshipId: string,
-    isBookmarked: boolean
+    _internshipId: string,
+    _isBookmarked: boolean
   ) => {
     // TODO: handle bookmark
-    console.log(
-      `Internship ${internshipId} ${
-        isBookmarked ? "bookmarked" : "unbookmarked"
-      }`
-    );
   };
 
   const clearFilters = () => {
@@ -468,13 +457,6 @@ export default function InternshipList() {
                     Opportunities
                   </Link>
                   <Link
-                    href="/deadlines"
-                    prefetch={false}
-                    className="block text-sm text-gray-600 hover:text-gray-800"
-                  >
-                    My Deadlines
-                  </Link>
-                  <Link
                     href="/profile"
                     prefetch={false}
                     className="block text-sm text-gray-600 hover:text-gray-800"
@@ -490,7 +472,9 @@ export default function InternshipList() {
           </aside>
 
           {/* Main Content - 6 columns */}
-          <main className="col-span-6 max-h-[90vh] overflow-y-scroll pr-2">
+          <main className="hide-scrollbar col-span-6 max-h-[90vh] overflow-y-scroll pr-2">
+            <ToolkitBanner />
+
             {/* Tags in Horizontal Box with Filter Icon */}
             {isLoading && (
               <div className="space-y-4">
@@ -518,21 +502,17 @@ export default function InternshipList() {
                 {allInternships.length > 0 ? (
                   <>
                     <div className="space-y-4">
-                      {allInternships.map((internship, index) => (
+                      {allInternships.map((internship) => (
                         <div key={internship.id}>
                           <InternshipPost
                             internship={internship}
                             onBookmarkChange={handleBookmarkChange}
                           />
-                          {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
-                          {index === Math.max(0, allInternships.length - 3) && (
-                            <div ref={desktopTriggerRef} className="h-1" />
-                          )}
                         </div>
                       ))}
                     </div>
 
-                    {/* Load more indicator - also acts as fallback trigger */}
+                    {/* Load more trigger and indicator */}
                     <div ref={loadMoreRef} className="flex justify-center py-8">
                       {isFetchingNextPage && (
                         <div className="flex items-center space-x-2 text-gray-600">
@@ -549,9 +529,6 @@ export default function InternshipList() {
                   </>
                 ) : (
                   <>
-                    {hasNextPage && !isFetchingNextPage && (
-                      <div ref={desktopTriggerRef} className="h-1" />
-                    )}
                     <div className="rounded-lg border bg-white py-12 text-center">
                       <div className="mb-4 text-gray-400">
                         <Search className="mx-auto h-12 w-12" />
@@ -608,6 +585,8 @@ export default function InternshipList() {
             </DialogContent>
           </Dialog>
 
+          <ToolkitBanner />
+
           {isLoading && (
             <div className="space-y-4">
               {[...Array(3)].map((_, index) => (
@@ -629,22 +608,18 @@ export default function InternshipList() {
               {allInternships.length > 0 ? (
                 <>
                   <div className="space-y-3 sm:space-y-4">
-                    {allInternships.map((internship, index) => (
+                    {allInternships.map((internship) => (
                       <div key={internship.id}>
                         <InternshipPost
                           internship={internship}
                           onBookmarkChange={handleBookmarkChange}
                         />
-                        {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
-                        {index === Math.max(0, allInternships.length - 3) && (
-                          <div ref={mobileTriggerRef} className="h-1" />
-                        )}
                       </div>
                     ))}
                   </div>
 
-                  {/* Load more indicator for mobile - also acts as fallback trigger */}
-                  <div className="flex justify-center py-8">
+                  {/* Load more trigger and indicator for mobile */}
+                  <div ref={loadMoreRef} className="flex justify-center py-8">
                     {isFetchingNextPage && (
                       <div className="flex items-center space-x-2 text-gray-600">
                         <Loader2 className="h-5 w-5 animate-spin" />
@@ -660,9 +635,6 @@ export default function InternshipList() {
                 </>
               ) : (
                 <>
-                  {hasNextPage && !isFetchingNextPage && (
-                    <div ref={mobileTriggerRef} className="h-1" />
-                  )}
                   <div className="rounded-lg border bg-white py-12 text-center">
                     <div className="mb-4 text-gray-400">
                       <Search className="mx-auto h-12 w-12" />

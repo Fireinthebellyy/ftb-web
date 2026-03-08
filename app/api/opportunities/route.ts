@@ -8,9 +8,9 @@ import {
   ilike,
   inArray,
   isNull,
-  lte,
   or,
   sql,
+  lte,
 } from "drizzle-orm";
 import { opportunities, tags, user } from "@/lib/schema";
 import { createApiTimer } from "@/lib/api-timing";
@@ -25,13 +25,23 @@ const opportunitySchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   images: z.array(z.string()).optional(),
+  attachments: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
   location: z.string().optional(),
   organiserInfo: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   publishAt: z
-    .union([z.string().datetime(), z.literal(""), z.null()])
+    .union([
+      z
+        .string()
+        .min(1)
+        .refine((s) => !Number.isNaN(new Date(s).getTime()), {
+          message: "Invalid datetime",
+        }),
+      z.literal(""),
+      z.null(),
+    ])
     .optional(),
 });
 
@@ -77,17 +87,20 @@ function parsePublishAt(
 function isMissingPublishAtColumnError(error: unknown) {
   const err = error as {
     message?: string;
+    code?: string;
     cause?: { code?: string; column?: string; message?: string };
   };
 
-  if (err?.cause?.code !== "42703") {
+  const code = err?.code || err?.cause?.code;
+  if (code !== "42703") {
     return false;
   }
 
   return (
     err?.cause?.column === "publish_at" ||
     err?.cause?.message?.includes("publish_at") ||
-    err?.message?.includes("publish_at")
+    err?.message?.includes("publish_at") ||
+    err?.message?.includes('"publish_at"')
   );
 }
 
@@ -157,6 +170,14 @@ export async function POST(req: NextRequest) {
       validatedData.images.length > 0
     ) {
       insertData.images = validatedData.images;
+    }
+
+    if (
+      validatedData.attachments &&
+      Array.isArray(validatedData.attachments) &&
+      validatedData.attachments.length > 0
+    ) {
+      insertData.attachments = validatedData.attachments;
     }
 
     // Optional string fields
@@ -266,22 +287,29 @@ export async function GET(req: NextRequest) {
     const searchTerm = searchParam ? searchParam.trim() : "";
     const rawTypes = typesParam
       ? typesParam
-        .split(",")
-        .map((value) => value.trim())
-        .filter(Boolean)
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean)
       : [];
     const allowedTypes = (opportunities.type.enumValues ?? []) as string[];
     const validTypes = rawTypes.filter((type) => allowedTypes.includes(type));
     const rawTags = tagsParam
       ? tagsParam
-        .split(",")
-        .map((value) => value.trim().toLowerCase())
-        .filter(Boolean)
+          .split(",")
+          .map((value) => value.trim().toLowerCase())
+          .filter(Boolean)
       : [];
 
     // Validate pagination parameters
     const validLimit = Math.min(Math.max(limit, 1), 50); // Between 1 and 50
     const validOffset = Math.max(offset, 0); // Non-negative
+    const idsParam = searchParams.get("ids");
+    const ids = idsParam
+      ? idsParam
+          .split(",")
+          .map((id) => id.trim())
+          .filter(Boolean)
+      : [];
 
     timer.mark("query_prep_done", {
       includeTotal,
@@ -295,7 +323,10 @@ export async function GET(req: NextRequest) {
     const buildFilters = (usePublishAt: boolean) => {
       const conditions: SQL<unknown>[] = [isNull(opportunities.deletedAt)];
 
-      conditions.push(eq(opportunities.isActive, true));
+      if (ids.length > 0) {
+        conditions.push(inArray(opportunities.id, ids));
+      }
+
       if (usePublishAt) {
         conditions.push(
           or(
@@ -303,6 +334,10 @@ export async function GET(req: NextRequest) {
             lte(opportunities.publishAt, new Date())
           )
         );
+      }
+
+      if (sessionRole !== "admin") {
+        conditions.push(eq(opportunities.isActive, true));
       }
 
       if (searchTerm) {
@@ -350,6 +385,7 @@ export async function GET(req: NextRequest) {
           title: opportunities.title,
           description: opportunities.description,
           images: opportunities.images,
+          attachments: opportunities.attachments,
           tags: sql<string[]>`(
             SELECT coalesce(array_agg(t.name ORDER BY t.name), '{}')
             FROM ${tags} t
@@ -462,7 +498,7 @@ export async function GET(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching opportunities:", error);
     timer.end({ status: 500, reason: "exception" });
     return NextResponse.json(

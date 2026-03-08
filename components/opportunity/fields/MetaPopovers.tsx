@@ -32,12 +32,18 @@ type Props = {
   watchedOrganiser?: string | null;
   watchedDateRange?: { from?: Date; to?: Date } | undefined;
   watchedPublishAt?: string;
+  showSchedule?: boolean;
+  showLabels?: boolean;
+  compactLabels?: boolean;
 };
 
 type SchedulePublishPopoverProps = {
   control: Control<FormData>;
   watchedPublishAt?: string;
   onConfirmMessageChange?: (message: string | null) => void;
+  showLabel?: boolean;
+  label?: string;
+  compactLabel?: string;
 };
 
 export function MetaPopovers({
@@ -46,9 +52,21 @@ export function MetaPopovers({
   watchedOrganiser,
   watchedDateRange,
   watchedPublishAt,
+  showSchedule = true,
+  showLabels = false,
+  compactLabels = false,
 }: Props) {
+  const triggerClassName = showLabels
+    ? cn(
+      "h-auto flex-col gap-1 p-1.5 text-gray-600",
+      compactLabels
+        ? "w-11 text-[10px] leading-none md:w-14 md:text-[11px]"
+        : "w-14 text-[11px]"
+    )
+    : "h-8 w-8 p-2";
+
   return (
-    <div className="flex items-center gap-2 md:gap-4">
+    <div className="flex items-center gap-1.5 md:gap-2.5">
       {/* Location */}
       <Popover>
         <PopoverTrigger asChild>
@@ -57,11 +75,23 @@ export function MetaPopovers({
             variant="ghost"
             size="sm"
             className={cn(
-              "h-8 w-8 p-2",
+              triggerClassName,
               watchedLocation && "bg-blue-50 text-blue-600"
             )}
           >
             <MapPin className="h-4 w-4" />
+            {showLabels && (
+              <>
+                {compactLabels ? (
+                  <>
+                    <span className="md:hidden">LOC</span>
+                    <span className="hidden md:inline">Location</span>
+                  </>
+                ) : (
+                  <span>Location</span>
+                )}
+              </>
+            )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-64" align="start">
@@ -95,11 +125,23 @@ export function MetaPopovers({
             variant="ghost"
             size="sm"
             className={cn(
-              "h-8 w-8 p-2",
+              triggerClassName,
               watchedOrganiser && "bg-blue-50 text-blue-600"
             )}
           >
             <Building2 className="h-4 w-4" />
+            {showLabels && (
+              <>
+                {compactLabels ? (
+                  <>
+                    <span className="md:hidden">ORGZ</span>
+                    <span className="hidden md:inline">Organizer</span>
+                  </>
+                ) : (
+                  <span>Organizer</span>
+                )}
+              </>
+            )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-64" align="start">
@@ -133,11 +175,23 @@ export function MetaPopovers({
             variant="ghost"
             size="sm"
             className={cn(
-              "h-8 w-8 p-2",
+              triggerClassName,
               watchedDateRange && "bg-blue-50 text-blue-600"
             )}
           >
             <CalendarIcon className="h-4 w-4" />
+            {showLabels && (
+              <>
+                {compactLabels ? (
+                  <>
+                    <span className="md:hidden">DATE</span>
+                    <span className="hidden md:inline">Dates</span>
+                  </>
+                ) : (
+                  <span>Dates</span>
+                )}
+              </>
+            )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
@@ -214,46 +268,59 @@ export function MetaPopovers({
         </PopoverContent>
       </Popover>
 
-      {/* Scheduled Publish Time */}
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "h-8 w-8 p-2",
-              watchedPublishAt && "bg-blue-50 text-blue-600"
-            )}
-          >
-            <Clock3 className="h-4 w-4" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-72" align="start">
-          <FormField
-            control={control}
-            name="publishAt"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">
-                      Schedule Publish (optional)
-                    </label>
-                    <Input
-                      {...field}
-                      value={field.value ?? ""}
-                      type="datetime-local"
-                      className="text-sm"
-                    />
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </PopoverContent>
-      </Popover>
+      {showSchedule && (
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className={cn(
+                triggerClassName,
+                watchedPublishAt && "bg-blue-50 text-blue-600"
+              )}
+            >
+              <Clock3 className="h-4 w-4" />
+              {showLabels && (
+                <>
+                  {compactLabels ? (
+                    <>
+                      <span className="md:hidden">SCHD</span>
+                      <span className="hidden md:inline">Schedule</span>
+                    </>
+                  ) : (
+                    <span>Schedule</span>
+                  )}
+                </>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-72" align="start">
+            <FormField
+              control={control}
+              name="publishAt"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        Schedule Publish (optional)
+                      </label>
+                      <Input
+                        {...field}
+                        value={field.value ?? ""}
+                        type="datetime-local"
+                        className="text-sm"
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </PopoverContent>
+        </Popover>
+      )}
     </div>
   );
 }
@@ -296,6 +363,9 @@ export function SchedulePublishPopover({
   control,
   watchedPublishAt,
   onConfirmMessageChange,
+  showLabel = false,
+  label = "Schedule",
+  compactLabel,
 }: SchedulePublishPopoverProps) {
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const { setValue } = useFormContext<FormData>();
@@ -328,11 +398,25 @@ export function SchedulePublishPopover({
             variant="ghost"
             size="sm"
             className={cn(
-              "h-8 w-8 p-2",
+              showLabel
+                ? "h-auto w-11 flex-col gap-1 p-1.5 text-[10px] leading-none text-gray-600 md:w-16 md:text-[11px]"
+                : "h-8 w-8 p-2",
               watchedPublishAt && "bg-blue-50 text-blue-600"
             )}
           >
             <Clock3 className="h-4 w-4" />
+            {showLabel && (
+              <>
+                {compactLabel ? (
+                  <>
+                    <span className="md:hidden">{compactLabel}</span>
+                    <span className="hidden md:inline">{label}</span>
+                  </>
+                ) : (
+                  <span>{label}</span>
+                )}
+              </>
+            )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-80 pt-3" align="end">
@@ -394,6 +478,12 @@ export function SchedulePublishPopover({
                               ? format(selectedPublishDate, "HH:mm")
                               : getCurrentTimeValue()
                           }
+                          onFocus={(e) => {
+                            e.currentTarget.showPicker?.();
+                          }}
+                          onClick={(e) => {
+                            e.currentTarget.showPicker?.();
+                          }}
                           onChange={(event) => {
                             const [hours, minutes] = event.target.value
                               .split(":")

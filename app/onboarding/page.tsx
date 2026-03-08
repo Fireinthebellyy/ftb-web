@@ -203,7 +203,10 @@ export default function OnboardingPage() {
     },
     onSuccess: () => {
       toast.success("Saved. Welcome in.");
-      router.push("/opportunities");
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("ftb:post-onboarding-survey:trigger", "1");
+      }
+      router.push("/opportunities?onboardingSurvey=1");
     },
     onMutate: () => {
       setIsSubmitting(true);

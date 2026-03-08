@@ -20,8 +20,12 @@ export async function fetchInternshipsPaginated(
   tags: string[] = [],
   location?: string,
   minStipend?: number,
-  maxStipend?: number
+  maxStipend?: number,
+  ids?: string[]
 ): Promise<InternshipsResponse> {
+  if (typeof window === "undefined") {
+    return { internships: [] };
+  }
   const { data } = await axios.get<InternshipsResponse>("/api/internships", {
     params: {
       limit,
@@ -32,6 +36,7 @@ export async function fetchInternshipsPaginated(
       location: location && location.length > 0 ? location : undefined,
       minStipend: minStipend !== undefined ? minStipend : undefined,
       maxStipend: maxStipend !== undefined ? maxStipend : undefined,
+      ids: ids && ids.length > 0 ? ids.join(",") : undefined,
     },
   });
   return data;

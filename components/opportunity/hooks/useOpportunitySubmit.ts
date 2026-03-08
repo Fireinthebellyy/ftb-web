@@ -35,27 +35,16 @@ async function uploadFilesToBucket(
   const uploadedIds: string[] = [];
   let hasError = false;
 
+  setItems((prev) => prev.map((f) => ({ ...f, uploading: true, progress: 0 })));
+
   const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
   if (!bucketId) {
     console.error("Missing Appwrite Opportunities Bucket ID");
-    setItems((prev) =>
-      prev.map((f) => ({ ...f, uploading: false, progress: 0 }))
-    );
     return { ids: [], success: false };
   }
 
-  const itemsToUpload = items.filter((f) => !f.fileId);
-  const alreadyUploadedIds = items
-    .filter((f) => f.fileId)
-    .map((f) => f.fileId as string);
-
-  setItems((prev) =>
-    prev.map((f) => (f.fileId ? f : { ...f, uploading: true, progress: 0 }))
-  );
-
-  for (let i = 0; i < itemsToUpload.length; i++) {
-    const file = itemsToUpload[i];
-    const originalIndex = items.findIndex((item) => item === file);
+  for (let i = 0; i < items.length; i++) {
+    const file = items[i];
     try {
       const storage = createOpportunityStorage();
 
@@ -67,9 +56,7 @@ async function uploadFilesToBucket(
         (progress: UploadProgress) => {
           const percent = Math.round(progress.progress || 0);
           setItems((prev) =>
-            prev.map((f, idx) =>
-              idx === originalIndex ? { ...f, progress: percent } : f
-            )
+            prev.map((f, idx) => (idx === i ? { ...f, progress: percent } : f))
           );
         }
       );
@@ -77,31 +64,23 @@ async function uploadFilesToBucket(
       uploadedIds.push(res.$id);
       setItems((prev) =>
         prev.map((f, idx) =>
-          idx === originalIndex
-            ? { ...f, uploading: false, fileId: res.$id }
-            : f
+          idx === i ? { ...f, uploading: false, fileId: res.$id } : f
         )
       );
     } catch (err) {
       console.error(`Upload failed for ${file.name}:`, err);
       hasError = true;
       const errorMessage = getAppwriteErrorMessage(err);
-
-      await deleteFileIds(uploadedIds);
-
       setItems((prev) =>
         prev.map((f, idx) =>
-          idx === originalIndex
-            ? { ...f, uploading: false, error: true, errorMessage }
-            : f
+          idx === i ? { ...f, uploading: false, error: true, errorMessage } : f
         )
       );
       toast.error(`Failed to upload "${file.name}": ${errorMessage}`);
-      return { ids: [], success: false };
     }
   }
 
-  return { ids: [...alreadyUploadedIds, ...uploadedIds], success: !hasError };
+  return { ids: uploadedIds, success: !hasError };
 }
 
 async function deleteFileIds(ids: string[]): Promise<void> {

@@ -56,6 +56,7 @@ export default function EditOpportunityForm({
     []
   );
   const queryClient = useQueryClient();
+  const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
 
   const handleRemoveExistingImage = (imageId: string) => {
     setExistingImages((prev) => prev.filter((id) => id !== imageId));
@@ -63,7 +64,9 @@ export default function EditOpportunityForm({
   };
 
   const handleRemoveExistingAttachment = (attachmentId: string) => {
-    setExistingAttachments((prev) => prev.filter((id) => id !== attachmentId));
+    setExistingAttachments((prev) =>
+      prev.filter((id) => id !== attachmentId)
+    );
     setRemovedAttachmentIds((prev) => [...prev, attachmentId]);
   };
 
@@ -71,7 +74,6 @@ export default function EditOpportunityForm({
     const toDelete = [...removedImageIds, ...removedAttachmentIds];
     if (toDelete.length === 0) return;
 
-    const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
     if (!bucketId) return;
 
     const opportunityStorage = createOpportunityStorage();
@@ -129,29 +131,14 @@ export default function EditOpportunityForm({
   ): Promise<{ ids: string[]; success: boolean }> {
     if (items.length === 0) return { ids: [], success: true };
 
-    const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
-    if (!bucketId) {
-      console.error("Missing Appwrite Opportunities Bucket ID");
-      setItems((prev) =>
-        prev.map((file) => ({ ...file, uploading: false, progress: 0 }))
-      );
-      return { ids: [], success: false };
-    }
-
     const uploadedFileIds: string[] = [];
 
-    const itemsToUpload = items.filter((f) => !f.fileId);
-    const alreadyUploadedIds = items
-      .filter((f) => f.fileId)
-      .map((f) => f.fileId as string);
-
     setItems((prev) =>
-      prev.map((f) => (f.fileId ? f : { ...f, uploading: true, progress: 0 }))
+      prev.map((file) => ({ ...file, uploading: true, progress: 0 }))
     );
 
-    for (let i = 0; i < itemsToUpload.length; i++) {
-      const file = itemsToUpload[i];
-      const originalIndex = items.findIndex((item) => item === file);
+    for (let i = 0; i < items.length; i++) {
+      const file = items[i];
       try {
         const opportunityStorage = createOpportunityStorage();
 
@@ -164,7 +151,7 @@ export default function EditOpportunityForm({
             const percent = Math.round(progress.progress || 0);
             setItems((prev) =>
               prev.map((f, idx) =>
-                idx === originalIndex ? { ...f, progress: percent } : f
+                idx === i ? { ...f, progress: percent } : f
               )
             );
           }
@@ -173,7 +160,7 @@ export default function EditOpportunityForm({
         uploadedFileIds.push(res.$id);
         setItems((prev) =>
           prev.map((f, idx) =>
-            idx === originalIndex
+            idx === i
               ? { ...f, uploading: false, fileId: res.$id }
               : f
           )
@@ -181,20 +168,9 @@ export default function EditOpportunityForm({
       } catch (err) {
         console.error(`Upload failed for ${file.name}:`, err);
         const errorMessage = getAppwriteErrorMessage(err);
-
-        // Rollback: delete successfully uploaded files
-        for (const fileId of uploadedFileIds) {
-          try {
-            const storage = createOpportunityStorage();
-            await storage.deleteFile(bucketId, fileId);
-          } catch (deleteErr) {
-            console.error(`Failed to rollback file ${fileId}:`, deleteErr);
-          }
-        }
-
         setItems((prev) =>
           prev.map((f, idx) =>
-            idx === originalIndex
+            idx === i
               ? { ...f, uploading: false, error: true, errorMessage }
               : f
           )
@@ -204,7 +180,7 @@ export default function EditOpportunityForm({
       }
     }
 
-    return { ids: [...alreadyUploadedIds, ...uploadedFileIds], success: true };
+    return { ids: uploadedFileIds, success: true };
   }
 
   async function onSubmit(data: FormData) {

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { InternshipPostProps } from "@/types/interfaces";
@@ -21,6 +22,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
     createdAt,
     hiringOrganization,
     experience,
+    deadline,
   } = internship;
 
   const handleCardClick = () => {
@@ -108,6 +110,30 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
+              <a
+                href={`https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Apply to: ${title}`)}&dates=${(() => {
+                  const date = deadline
+                    ? new Date(deadline)
+                    : new Date(Date.now() + 24 * 60 * 60 * 1000);
+                  const formatted = date
+                    .toISOString()
+                    .replace(/[-:]|\.\d{3}/g, "");
+                  return `${formatted}/${formatted}`;
+                })()}&details=${encodeURIComponent(`Company: ${hiringOrganization || "N/A"}\n\nInternship Link: ${shareUrl}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                title="Add to calendar"
+                className="flex cursor-pointer items-center rounded-md p-1 text-xs transition-colors hover:bg-blue-50 hover:text-blue-600 sm:text-sm"
+              >
+                <Image
+                  src="/images/google-calendar.webp"
+                  alt="Google Calendar"
+                  width={16}
+                  height={16}
+                  className="h-3 w-3 object-contain sm:h-4 sm:w-4"
+                />
+              </a>
               <button
                 type="button"
                 title="Share"

@@ -39,20 +39,6 @@ const getTypeBadgeColor = (type?: string): string => {
   return colors[type?.toLowerCase() || "others"] || colors.others;
 };
 
-function resolveImageUrl(imageId: string | undefined): string | undefined {
-  if (!imageId) return undefined;
-  if (imageId.startsWith("http") || imageId.startsWith("/")) return imageId;
-
-  const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
-  if (!bucketId) return imageId;
-
-  try {
-    return createOpportunityStorage().getFileView(bucketId, imageId).toString();
-  } catch {
-    return imageId;
-  }
-}
-
 const OpportunityPost: React.FC<OpportunityPostProps> = ({
   opportunity,
   onBookmarkChange,
@@ -100,7 +86,15 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               (opportunity as any).hiringOrganization ||
               opportunity.organiserInfo ||
               "Unknown Organization",
-            logo: resolveImageUrl(opportunity.images?.[0]),
+            logo: opportunity.images?.[0]
+              ? createOpportunityStorage()
+                .getFileView(
+                  process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID ||
+                  "",
+                  opportunity.images[0]
+                )
+                .toString()
+              : undefined,
             type: opportunity.type,
             location: opportunity.location,
             deadline: opportunity.startDate || opportunity.endDate,

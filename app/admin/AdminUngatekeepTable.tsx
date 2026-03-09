@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import NewUngatekeepForm from "@/components/ungatekeep/NewUngatekeepForm";
+import { stripHtml } from "@/lib/utils";
 
 interface UngatekeepPost {
   id: string;
@@ -97,10 +98,7 @@ export default function AdminUngatekeepTable() {
         header: "Content",
         cell: ({ row }) => (
           <p className="text-muted-foreground max-w-xs truncate text-sm">
-            {row.original.content
-              .replace(/<[^>]*>/g, " ")
-              .replace(/\s+/g, " ")
-              .trim()}
+            {stripHtml(row.original.content)}
           </p>
         ),
       },

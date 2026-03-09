@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Pin } from "lucide-react";
 import { createUngatekeepStorage } from "@/lib/appwrite";
 import { formatDistanceToNow } from "date-fns";
+import { stripHtml } from "@/lib/utils";
 
 type UngatekeepPost = {
   id: string;
@@ -112,15 +113,9 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
             </div>
 
             {/* Description - Strip HTML for preview */}
-            <p
-              className="text-muted-foreground line-clamp-2 text-xs leading-snug md:text-sm"
-              dangerouslySetInnerHTML={{
-                __html: post.content
-                  .replace(/<[^>]*>/g, " ")
-                  .replace(/\s+/g, " ")
-                  .trim(),
-              }}
-            />
+            <p className="text-muted-foreground line-clamp-2 text-xs leading-snug md:text-sm">
+              {stripHtml(post.content)}
+            </p>
           </div>
 
           {/* Bottom: User + Time + Badge */}

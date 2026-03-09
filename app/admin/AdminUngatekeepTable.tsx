@@ -97,7 +97,10 @@ export default function AdminUngatekeepTable() {
         header: "Content",
         cell: ({ row }) => (
           <p className="text-muted-foreground max-w-xs truncate text-sm">
-            {row.original.content}
+            {row.original.content
+              .replace(/<[^>]*>/g, " ")
+              .replace(/\s+/g, " ")
+              .trim()}
           </p>
         ),
       },
@@ -272,6 +275,7 @@ export default function AdminUngatekeepTable() {
           emptyMessage="No posts found"
           filterColumnId="title"
           filterPlaceholder="Search posts"
+          stickyColumnIds={["actions"]}
         />
       </AdminTableState>
     </AdminTabLayout>

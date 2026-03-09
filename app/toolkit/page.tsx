@@ -11,18 +11,14 @@ import { Toolkit } from "@/types/interfaces";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const CATEGORIES = [
-  "All",
-  "Career",
-  "Skills",
   "Interview Prep",
-  "Resume",
-  "Salary Negotiation",
-  "LinkedIn",
-  "Networking",
+  "Career",
 ];
 
 export default function ToolkitPage() {
-  const [selectedCategory, setSelectedCategory] = React.useState("All");
+  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(
+    null
+  );
 
   const { data: toolkits = [], isLoading } = useQuery<Toolkit[]>({
     queryKey: ["toolkits"],
@@ -40,7 +36,7 @@ export default function ToolkitPage() {
   });
 
   const filteredToolkits = React.useMemo(() => {
-    if (selectedCategory === "All") {
+    if (!selectedCategory) {
       return toolkits;
     }
     return toolkits.filter((toolkit) => toolkit.category === selectedCategory);
@@ -67,7 +63,7 @@ export default function ToolkitPage() {
                 key={index}
                 className="overflow-hidden rounded-lg border bg-white"
               >
-                <div className="relative aspect-[16/10]">
+                <div className="relative aspect-16/10">
                   <Skeleton className="h-full w-full rounded-none" />
                   <Skeleton className="absolute top-3 left-3 h-5 w-16 rounded-full" />
                   <Skeleton className="absolute top-3 right-3 h-5 w-12 rounded-full" />
@@ -129,9 +125,9 @@ export default function ToolkitPage() {
               No toolkits found
             </h3>
             <p className="text-gray-500">
-              {selectedCategory === "All"
-                ? "Check back soon for new content!"
-                : `No toolkits in ${selectedCategory} category yet.`}
+              {selectedCategory
+                ? `No toolkits in ${selectedCategory} category yet.`
+                : "Check back soon for new content!"}
             </p>
           </div>
         ) : (

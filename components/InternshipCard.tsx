@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Share2 } from "lucide-react";
 import { toast } from "sonner";
+import posthog from "posthog-js";
 import { InternshipPostProps } from "@/types/interfaces";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { formatDate } from "@/lib/utils";
@@ -26,6 +27,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
   } = internship;
 
   const handleCardClick = () => {
+    posthog.capture("internship_card_clicked", { internship_id: id, title, type });
     router.push(`/intern/${id}`);
   };
 
@@ -64,6 +66,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
   const handleShareClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    posthog.capture("internship_shared", { internship_id: id, title });
     setShareDialogOpen(true);
   };
 

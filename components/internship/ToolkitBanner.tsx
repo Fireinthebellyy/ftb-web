@@ -57,16 +57,13 @@ export default function ToolkitBanner() {
                 )}
 
                 {/* Gradient Overlay for text readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
 
                 {/* Content */}
                 <div className="absolute right-0 bottom-0 left-0 flex items-end justify-between p-2 text-white sm:p-2.5">
                   <div className="flex flex-col">
                     <span className="mb-0.5 line-clamp-2 text-[11px] leading-tight font-semibold sm:text-xs">
                       {toolkit.title}
-                    </span>
-                    <span className="text-[9px] text-gray-200 sm:text-[10px]">
-                      ₹{toolkit.price.toLocaleString("en-IN")}
                     </span>
                   </div>
                   <ArrowRight className="ml-1 h-3 w-3 shrink-0 text-white sm:h-3.5 sm:w-3.5" />

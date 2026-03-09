@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
-
 import TrackerDetailModal from './TrackerDetailModal';
 import ApplyModal, { ApplyModalOpportunity } from './ApplyModal';
 
@@ -136,18 +135,18 @@ export default function Tracker() {
             {!showInsights && (
                 <button
                     onClick={() => setShowInsights(true)}
-                    className="w-full bg-white hover:bg-slate-50 text-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between group transition-all"
+                    className="w-full bg-white hover:bg-slate-50 text-slate-900 px-4 py-2.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between group transition-all"
                 >
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-slate-100 rounded-lg group-hover:scale-110 transition-transform">
-                            <TrendingUp size={20} className="text-slate-600" />
+                    <div className="flex items-center gap-2.5">
+                        <div className="p-1.5 bg-slate-100 rounded-lg group-hover:scale-110 transition-transform">
+                            <TrendingUp size={16} className="text-slate-600" />
                         </div>
                         <div className="text-left">
-                            <span className="font-bold text-lg">Check Insights</span>
-                            <p className="text-slate-500 text-sm">View your success rate and tracking progress</p>
+                            <span className="font-bold text-sm">Check Insights</span>
+                            <p className="text-slate-500 text-xs">View your success rate and tracking progress</p>
                         </div>
                     </div>
-                    <ChevronRight size={24} className="text-slate-400 group-hover:translate-x-1 transition-transform" />
+                    <ChevronRight size={20} className="text-slate-400 group-hover:translate-x-1 transition-transform" />
                 </button>
             )}
 
@@ -215,13 +214,15 @@ export default function Tracker() {
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
                     <div className="p-4 md:p-5 border-b border-slate-100 flex justify-between items-center sticky top-0 z-20 bg-white/95 backdrop-blur-md rounded-t-2xl">
                         <h3 className="font-bold text-slate-900 text-sm md:text-lg shrink-0">Saved {activeTab === 'internship' ? 'Internships' : 'Opportunities'}</h3>
-                        <Link
-                            href="/toolkit"
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-[10px] md:text-sm font-bold transition-all shadow-sm hover:shadow-orange-200"
-                        >
-                            <Zap size={14} className="fill-white" />
-                            <span>10x Chances</span>
-                        </Link>
+                        {activeTab === 'internship' && (
+                            <Link
+                                href="/toolkit"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-[10px] md:text-sm font-bold transition-all shadow-sm hover:shadow-orange-200"
+                            >
+                                <Zap size={14} className="fill-white" />
+                                <span>10x Chances</span>
+                            </Link>
+                        )}
                     </div>
                     <div className="divide-y divide-slate-100">
                         {trackedOpps

@@ -8,9 +8,15 @@ export function getBunnyExpirySeconds(): number {
 }
 
 export function generateBunnyEmbedUrl(videoId: string): string {
-  const libraryId = process.env.BUNNY_STREAM_LIBRARY_ID!;
-  const tokenSecret = process.env.BUNNY_TOKEN_SECRET!;
+  const libraryId = process.env.BUNNY_STREAM_LIBRARY_ID;
+  const tokenSecret = process.env.BUNNY_TOKEN_SECRET;
   const expirySeconds = Number(process.env.BUNNY_TOKEN_EXPIRY_SECONDS ?? 900);
+
+  if (!libraryId || !tokenSecret) {
+    throw new Error(
+      "Missing Bunny credentials: BUNNY_STREAM_LIBRARY_ID and/or BUNNY_TOKEN_SECRET are required"
+    );
+  }
 
   const expires = Math.floor(Date.now() / 1000) + expirySeconds;
 
@@ -19,10 +25,7 @@ export function generateBunnyEmbedUrl(videoId: string): string {
   const stringToHash = `${tokenSecret}${videoId}${expires}`;
 
   // Generate SHA256 hash and convert to HEX (not base64, not HMAC)
-  const token = crypto
-    .createHash("sha256")
-    .update(stringToHash)
-    .digest("hex");
+  const token = crypto.createHash("sha256").update(stringToHash).digest("hex");
 
   // URL format: ?token={HEX_TOKEN}&expires={EXPIRES} (separate parameters)
   const embedUrl = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?token=${token}&expires=${expires}`;

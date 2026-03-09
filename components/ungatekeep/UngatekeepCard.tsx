@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Pin } from "lucide-react";
 import { createUngatekeepStorage } from "@/lib/appwrite";
 import { formatDistanceToNow } from "date-fns";
+import { stripHtml } from "@/lib/utils";
 
 type UngatekeepPost = {
   id: string;
@@ -77,13 +78,10 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
   const primaryImage = hasImage ? getImageUrl(post.images[0]) : null;
 
   return (
-    <Link
-      href={`/ungatekeep/${post.id}`}
-      className="block group"
-    >
-      <article className="flex gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
+    <Link href={`/ungatekeep/${post.id}`} className="group block">
+      <article className="bg-card hover:bg-muted/50 flex gap-3 rounded-lg border p-3 transition-colors">
         {/* Left: Square Image */}
-        <div className="relative shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-md overflow-hidden bg-muted">
+        <div className="bg-muted relative h-20 w-20 shrink-0 overflow-hidden rounded-md md:h-24 md:w-24">
           {primaryImage ? (
             <Image
               src={primaryImage}
@@ -92,33 +90,36 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
               className="object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+            <div className="text-muted-foreground flex h-full w-full items-center justify-center text-xs">
               No img
             </div>
           )}
         </div>
 
         {/* Right: Content */}
-        <div className="flex-1 min-w-0 flex flex-col justify-between">
+        <div className="flex min-w-0 flex-1 flex-col justify-between">
           {/* Top: Title + Badge */}
           <div>
-            <div className="flex items-start gap-1.5 mb-0.5">
+            <div className="mb-0.5 flex items-start gap-1.5">
               {post.isPinned && (
-                <Pin className="h-3 w-3 text-primary shrink-0 mt-0.5" fill="currentColor" />
+                <Pin
+                  className="text-primary mt-0.5 h-3 w-3 shrink-0"
+                  fill="currentColor"
+                />
               )}
-              <h3 className="text-sm md:text-base font-semibold leading-tight text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+              <h3 className="text-foreground group-hover:text-primary line-clamp-1 text-sm leading-tight font-semibold transition-colors md:text-base">
                 {post.title}
               </h3>
             </div>
 
-            {/* Description */}
-            <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 leading-snug">
-              {post.content}
+            {/* Description - Strip HTML for preview */}
+            <p className="text-muted-foreground line-clamp-2 text-xs leading-snug md:text-sm">
+              {stripHtml(post.content)}
             </p>
           </div>
 
           {/* Bottom: User + Time + Badge */}
-          <div className="flex items-center gap-1.5 mt-1">
+          <div className="mt-1 flex items-center gap-1.5">
             {/* Small profile photo */}
             {post.creatorName && (
               <div className="flex items-center gap-1">
@@ -131,23 +132,23 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
                     className="rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-3.5 h-3.5 rounded-full bg-muted-foreground/20 flex items-center justify-center text-[8px] text-muted-foreground font-medium">
+                  <div className="bg-muted-foreground/20 text-muted-foreground flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-medium">
                     {getInitials(post.creatorName)}
                   </div>
                 )}
-                <span className="text-[10px] text-muted-foreground truncate max-w-[80px]">
+                <span className="text-muted-foreground max-w-[80px] truncate text-[10px]">
                   {post.creatorName}
                 </span>
               </div>
             )}
-            <span className="text-[10px] text-muted-foreground">•</span>
-            <span className="text-[10px] text-muted-foreground shrink-0">
+            <span className="text-muted-foreground text-[10px]">•</span>
+            <span className="text-muted-foreground shrink-0 text-[10px]">
               {formatDate(post.publishedAt || post.createdAt)}
             </span>
             {post.tag && (
               <Badge
                 variant={getTagBadgeVariant(post.tag)}
-                className="shrink-0 text-[10px] px-1 py-0 h-4 ml-auto"
+                className="ml-auto h-4 shrink-0 px-1 py-0 text-[10px]"
               >
                 {post.tag.replace("_", " ")}
               </Badge>

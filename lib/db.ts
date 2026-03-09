@@ -2,12 +2,10 @@ import { drizzle as drizzleHttp } from "drizzle-orm/neon-http";
 import { drizzle as drizzleWs } from "drizzle-orm/neon-serverless";
 import { Pool } from "@neondatabase/serverless";
 import { schema } from "./schema";
+import * as dotenv from "dotenv";
 
-import { loadEnvConfig } from "@next/env";
-
-// Load Next.js environment variables
-const projectDir = process.cwd();
-loadEnvConfig(projectDir);
+// Load environment variables from .env files
+dotenv.config();
 
 const connectionString = process.env.DATABASE_URL;
 

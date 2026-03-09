@@ -9,8 +9,6 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "@/components/ui/carousel";
 import {
   Dialog,
@@ -225,7 +223,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
         {post.images && post.images.length > 0 && (
           <div className="mt-3">
             {post.images.length === 1 ? (
-              <div className="relative aspect-[16/10] max-h-[300px] w-full overflow-hidden rounded-lg bg-muted">
+              <div className="relative aspect-[9/16] max-h-[260px] w-full overflow-hidden rounded-lg bg-muted">
                 <Image
                   src={getImageUrl(post.images[0])}
                   alt={post.title}
@@ -236,29 +234,20 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
             ) : (
               <div className="px-1">
                 <Carousel className="w-full">
-                  <CarouselContent>
+                  <CarouselContent className="-ml-2">
                     {post.images.map((imageId, idx) => (
-                      <CarouselItem key={idx}>
-                        <div className="relative aspect-[16/10] max-h-[300px] w-full overflow-hidden rounded-lg bg-muted">
+                      <CarouselItem key={idx} className="basis-[75%] pl-2 sm:basis-[65%]">
+                        <div className="relative aspect-[9/16] max-h-[260px] w-full overflow-hidden rounded-lg bg-muted">
                           <Image
                             src={getImageUrl(imageId)}
                             alt={`${post.title} - Image ${idx + 1}`}
                             fill
                             className="object-cover"
                           />
-                          <div className="absolute bottom-2 right-2 rounded-full bg-black/50 px-2 py-0.5 text-[10px] text-white backdrop-blur-sm">
-                            {idx + 1} / {post.images.length}
-                          </div>
                         </div>
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  {post.images.length > 1 && (
-                    <>
-                      <CarouselPrevious className="left-2 h-7 w-7 border-none bg-black text-white hover:bg-black hover:text-white sm:h-8 sm:w-8" />
-                      <CarouselNext className="right-2 h-7 w-7 border-none bg-black text-white hover:bg-black hover:text-white sm:h-8 sm:w-8" />
-                    </>
-                  )}
                 </Carousel>
               </div>
             )}

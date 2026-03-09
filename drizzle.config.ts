@@ -1,8 +1,9 @@
 import { defineConfig } from "drizzle-kit";
-import * as dotenv from "dotenv";
+import { loadEnvConfig } from "@next/env";
 
-// Load environment variables from .env files
-dotenv.config();
+// Load Next.js environment variables
+const projectDir = process.cwd();
+loadEnvConfig(projectDir);
 
 export default defineConfig({
   schema: "./lib/schema.ts",

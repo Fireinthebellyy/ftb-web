@@ -14,6 +14,7 @@ import { ArrowLeft, Pin, ExternalLink } from "lucide-react";
 import { createUngatekeepStorage } from "@/lib/appwrite";
 import { format } from "date-fns";
 import FeaturedToolkits from "@/components/toolkit/FeaturedToolkits";
+import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
 
 type UngatekeepPost = {
   id: string;
@@ -269,11 +270,7 @@ export default function UngatekeepPostPage() {
               )}
 
               {/* Content */}
-              <div className="prose prose-gray max-w-none">
-                <p className="text-sm leading-relaxed whitespace-pre-wrap text-gray-700 md:text-base">
-                  {post.content}
-                </p>
-              </div>
+              <HtmlRenderer content={post.content} />
 
               {/* Link Preview */}
               {post.linkUrl && (

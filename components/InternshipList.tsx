@@ -554,7 +554,7 @@ export default function InternshipList() {
             <div className="sticky top-6 space-y-6">
               {showSecondaryWidgets ? (
                 <>
-                  <CalendarWidget />
+                  <CalendarWidget kind="internship" />
                   <TaskWidget />
                 </>
               ) : (

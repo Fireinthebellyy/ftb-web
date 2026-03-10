@@ -14,6 +14,7 @@ import WhatsAppWidget from "@/components/WhatsAppWidget";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import PostOnboardingSurveyWidget from "@/components/PostOnboardingSurveyWidget";
 import { TrackerProvider } from "@/components/providers/TrackerProvider";
+import { CSPostHogProvider } from "./providers/posthog-provider";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   weight: ["400", "700"], // or ["400", "700"] if multiple
@@ -48,15 +49,17 @@ export default function RootLayout({
         <Suspense fallback={<div>Loading ..</div>}>
           <QueryProvider>
             <ProgressProvider>
-              <TrackerProvider>
-                <Navbar />
-                <main className="grow pb-20 md:pb-0">{children}</main>
-                <BottomNav />
-                <Footer />
-                <WhatsAppWidget />
-                <FeedbackWidget />
-                <PostOnboardingSurveyWidget />
-              </TrackerProvider>
+              <CSPostHogProvider>
+                <TrackerProvider>
+                  <Navbar />
+                  <main className="grow pb-20 md:pb-0">{children}</main>
+                  <BottomNav />
+                  <Footer />
+                  <WhatsAppWidget />
+                  <FeedbackWidget />
+                  <PostOnboardingSurveyWidget />
+                </TrackerProvider>
+              </CSPostHogProvider>
             </ProgressProvider>
             <Toaster />
             <Analytics />

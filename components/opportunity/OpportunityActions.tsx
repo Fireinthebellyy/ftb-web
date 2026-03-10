@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { ShareDialog } from "./ShareDialog";
 import CommentSection from "./CommentSection";
 import { OpportunityPostProps } from "@/types/interfaces";
+import posthog from "posthog-js";
 
 interface OpportunityActionsProps {
   opportunity: OpportunityPostProps["opportunity"];
@@ -132,6 +133,12 @@ export function OpportunityActions({
                   type="button"
                   title="Share"
                   aria-label="Share"
+                  onClick={() => {
+                    posthog.capture("opportunity_shared", {
+                      opportunity_id: id,
+                      title: opportunity.title,
+                    });
+                  }}
                   className="group flex cursor-pointer items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
                 >
                   <Share2 className={actionIconClass} />

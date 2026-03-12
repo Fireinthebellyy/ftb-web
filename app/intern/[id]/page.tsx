@@ -17,6 +17,20 @@ import {
   MapPin,
   Share2,
   Sparkles,
+  Rocket,
+  Briefcase,
+  Clock,
+  Info,
+  CheckCircle,
+  GraduationCap,
+  Network,
+  Navigation,
+  Bookmark,
+  Tags,
+  Map,
+  ArrowLeft,
+  Calendar,
+  Users
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -111,14 +125,6 @@ export default function InternshipDetailPage() {
     notFound();
   }
 
-  const getTypeColor = (_type?: string): string => {
-    return "bg-white border border-gray-300 text-black";
-  };
-
-  const getTimingColor = (_timing?: string): string => {
-    return "bg-white border border-gray-300 text-black";
-  };
-
   const publicBaseUrl =
     (process.env.NEXT_PUBLIC_SITE_URL as string | undefined) ||
     (typeof window !== "undefined" ? window.location.origin : "");
@@ -154,9 +160,10 @@ export default function InternshipDetailPage() {
 
   if (loading || !internship) {
     return (
-      <div className="container mx-auto max-w-3xl px-4 py-6">
+      <div className="container mx-auto max-w-5xl px-4 py-6">
         <div className="rounded-lg border bg-white p-6 shadow-sm">
           <div className="animate-pulse space-y-4">
+            <div className="h-48 w-full rounded bg-gray-200"></div>
             <div className="h-8 w-3/4 rounded bg-gray-200"></div>
             <div className="h-4 w-1/2 rounded bg-gray-200"></div>
             <div className="h-32 rounded bg-gray-200"></div>
@@ -165,349 +172,420 @@ export default function InternshipDetailPage() {
       </div>
     );
   }
-
   return (
-    <div className="container mx-auto max-w-3xl px-4 py-6">
-      {/* Header Section */}
-      <div className="relative mb-6 rounded-lg border bg-white p-6 shadow-sm">
-        {/* Title, Organization */}
-        <div className="mb-4 flex gap-4">
-          {/* Logo in top left corner */}
-          {internship.poster && (
-            <div className="flex-shrink-0">
-              <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full sm:h-16 sm:w-16">
-                <Image
-                  src={internship.poster}
-                  alt={`${internship.hiringOrganization} logo`}
-                  width={80}
-                  height={80}
-                  className="object-fit h-full w-full"
-                />
-              </div>
-            </div>
-          )}
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-[#f8f6f6] dark:bg-[#221610] pb-24 md:pb-0 text-slate-900 dark:text-slate-100">
+      {/* Mobile Sticky Header */}
+      <header className="sticky top-0 z-50 flex items-center justify-between bg-[#f8f6f6]/95 dark:bg-[#221610]/95 px-4 py-4 md:hidden shadow-sm backdrop-blur-md">
+        <button onClick={() => window.history.back()} className="text-[#ec5b13]">
+          <ArrowLeft className="h-6 w-6" />
+        </button>
+        <h1 className="text-lg font-bold text-slate-900 dark:text-white leading-none">
+          Internship Details
+        </h1>
+        <button onClick={() => setShareDialogOpen(true)} className="text-[#ec5b13]">
+          <Share2 className="h-6 w-6" />
+        </button>
+      </header>
 
-          {/* Title, Organization and Apply Button */}
-          <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <h1 className="mb-1 text-lg font-bold text-gray-900 sm:text-xl">
-                {internship.title}
-              </h1>
-              <div className="flex items-center gap-2 text-sm text-gray-700 sm:text-lg">
-                <Building2 className="hidden h-4 w-4 sm:block" />
-                <span>{internship.hiringOrganization}</span>
-              </div>
-            </div>
-
-            {/* Buttons Group */}
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              {/* Apply Button */}
-              {internship.link && (
-                <Link
-                  href={`${internship.link}${internship.link.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=internship_detail&utm_campaign=internship_apply`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full sm:w-auto"
-                >
-                  <Button
-                    variant="outline"
-                    className="w-full border-orange-500 px-6 py-2 font-medium text-orange-600 hover:bg-orange-50 sm:w-auto"
-                  >
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Apply
-                  </Button>
-                </Link>
-              )}
-
-              {/* Smart Apply Button */}
-              {session?.user && (
-                <Button
-                  onClick={() => setSmartApplyOpen(true)}
-                  className="flex w-full items-center gap-2 bg-orange-500 px-6 py-2 font-bold text-white hover:bg-orange-600 sm:w-auto"
-                >
-                  Smart Apply <Sparkles className="ml-1 h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Location */}
-        {internship.location && (
-          <div className="mb-4 flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-black" />
-            <span className="line-clamp-1 text-sm font-medium">
-              {internship.location}
-            </span>
-          </div>
+      {/* Mobile Hero (Overlay format) */}
+      <div className="relative w-full h-56 md:hidden">
+        {internship.poster ? (
+          <Image
+            src={internship.poster}
+            alt="Hero Background"
+            fill
+            className="object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-slate-200 dark:bg-slate-800" />
         )}
-
-        {/* Type and Timing Badges */}
-        <div className="flex gap-2">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+        <div className="absolute bottom-5 left-4 right-4 flex flex-col items-start gap-2">
           {internship.type && (
-            <Badge
-              className={`${getTypeColor(internship.type)} text-xs sm:text-sm`}
-            >
-              {internship.type?.charAt(0).toUpperCase() +
-                internship.type?.slice(1).replace(/[_-]/g, " ")}
-            </Badge>
+            <span className="bg-[#ec5b13] text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded">
+              {internship.type.replace(/-/g, " ")}
+            </span>
           )}
-          {internship.timing && (
-            <Badge
-              className={`${getTimingColor(internship.timing)} text-xs sm:text-sm`}
-            >
-              {internship.timing?.charAt(0).toUpperCase() +
-                internship.timing?.slice(1).replace(/[_-]/g, " ")}
-            </Badge>
-          )}
+          <h2 className="text-white text-xl font-bold leading-tight drop-shadow-md">
+            {internship.title}
+          </h2>
         </div>
-
-        {/* Share Dialog */}
-        <Dialog
-          open={shareDialogOpen}
-          onOpenChange={handleShareDialogOpenChange}
-        >
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setShareDialogOpen(true);
-            }}
-            className="absolute right-6 bottom-5 cursor-pointer rounded-full p-1.5 transition-colors sm:p-2"
-            aria-label="Share"
-          >
-            <Share2 className="h-4 w-4 text-black hover:text-orange-500 sm:h-5 sm:w-5" />
-          </button>
-          <DialogContent className="max-w-[90vw] sm:max-w-md">
-            <DialogTitle className="sr-only">
-              Share {internship.title}
-            </DialogTitle>
-            <DialogDescription className="sr-only">
-              Share this internship via social media or copy the link
-            </DialogDescription>
-            <ShareDialog
-              shareUrl={shareUrl}
-              title={internship.title}
-              onCopy={handleCopy}
-              onShare={handleShare}
-            />
-          </DialogContent>
-        </Dialog>
-
-        {/* Smart Apply Modal */}
-        <ApplyModal
-          isOpen={smartApplyOpen}
-          onClose={() => setSmartApplyOpen(false)}
-          opportunity={
-            internship ? mapInternshipToApplyOpportunity(internship) : null
-          }
-        />
       </div>
 
-      {/* Description */}
-      {internship.description && (
-        <div className="mb-6 rounded-lg border bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold sm:text-xl">Description</h2>
-          <div className="prose max-w-none text-sm text-black sm:text-base">
-            {typeof internship.description === "string" ? (
-              <p className="whitespace-pre-wrap">{internship.description}</p>
-            ) : (
-              internship.description
-            )}
+      {/* Mobile Company Card */}
+      <div className="md:hidden mx-4 mt-4 relative bg-white dark:bg-slate-800/50 rounded-xl p-4 flex items-center gap-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+        <div className="absolute top-3 right-3 inline-flex items-center gap-0.5 rounded bg-blue-50 dark:bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-bold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 uppercase tracking-wide">
+          <CheckCircle className="h-2 w-2" />
+          <span>FTB Verified</span>
+        </div>
+        <div className="h-14 w-14 bg-slate-900 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
+          {internship.poster ? (
+            <Image
+              src={internship.poster}
+              alt={`${internship.hiringOrganization} logo`}
+              width={56}
+              height={56}
+              className="object-cover h-full w-full"
+            />
+          ) : (
+            <span className="text-2xl font-black text-white">
+              {internship.hiringOrganization?.charAt(0) || "?"}
+            </span>
+          )}
+        </div>
+        <div className="flex flex-col flex-1">
+          <h3 className="font-bold text-slate-900 dark:text-white text-base mr-16">
+            {internship.hiringOrganization}
+          </h3>
+          <div className="flex items-center gap-1 text-[#ec5b13] text-sm font-medium mt-0.5">
+            <MapPin className="h-3 w-3" />
+            <span>{internship.location || "On-site"}</span>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Eligibility, Experience & Internship Details */}
-      {(internship.eligibility && internship.eligibility.length > 0) ||
-      internship.experience ||
-      internship.type ||
-      internship.timing ||
-      typeof internship.stipend === "number" ? (
-        <div className="mb-6 rounded-lg border bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold sm:text-xl">
-            More Information
-          </h2>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {/* Internship Type */}
-            {internship.type && (
-              <div>
-                <h2 className="mb-2 text-sm font-semibold sm:text-lg">
-                  Internship Type
-                </h2>
-                <p className="text-sm text-black sm:text-base">
-                  {internship.type?.charAt(0).toUpperCase() +
-                    internship.type?.slice(1).replace(/-/g, " ")}
-                </p>
-              </div>
-            )}
-
-            {/* Internship Timing */}
-            {internship.timing && (
-              <div>
-                <h2 className="mb-2 text-sm font-semibold sm:text-lg">
-                  Internship Timing
-                </h2>
-                <p className="text-sm text-black sm:text-base">
-                  {internship.timing?.charAt(0).toUpperCase() +
-                    internship.timing?.slice(1).replace(/-/g, " ")}
-                </p>
-              </div>
-            )}
-
-            {/* Stipend */}
-            {typeof internship.stipend === "number" && (
-              <div>
-                <h2 className="mb-2 text-sm font-semibold sm:text-lg">
-                  Stipend
-                </h2>
-                <p className="flex items-center gap-1 text-sm text-black sm:text-base">
-                  <IndianRupee className="h-4 w-4" />
-                  {internship.stipend.toLocaleString()}
-                </p>
-              </div>
-            )}
-
-            {/* Experience */}
-            {internship.experience && (
-              <div>
-                <h2 className="mb-2 text-sm font-semibold sm:text-lg">
-                  Experience Required
-                </h2>
-                <p className="text-sm text-black sm:text-base">
-                  {internship.experience}
-                </p>
-              </div>
-            )}
-
-            {/* Duration */}
-            {internship.duration && (
-              <div>
-                <h2 className="mb-2 text-sm font-semibold sm:text-lg">
-                  Internship Duration
-                </h2>
-                <p className="text-sm text-black sm:text-base">
-                  {internship.duration}
-                </p>
-              </div>
-            )}
-
-            {/* Deadline */}
-            {internship.deadline && (
-              <div>
-                <h2 className="mb-2 text-sm font-semibold sm:text-lg">
-                  Deadline
-                </h2>
-                <p className="text-sm text-black sm:text-base">
-                  {new Date(internship.deadline).toLocaleDateString("en-IN", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
-            )}
-
-            {/* Tags */}
-            {internship.tags && internship.tags.length > 0 && (
-              <div className="sm:col-span-2">
-                <h2 className="mb-2 text-sm font-semibold sm:text-lg">Tags</h2>
-                <div className="flex flex-wrap gap-2">
-                  {internship.tags.map((tag, index) => (
-                    <Badge
-                      key={index}
-                      className="border border-gray-300 bg-white text-xs text-black sm:text-sm"
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Eligibility */}
-            {internship.eligibility && internship.eligibility.length > 0 && (
-              <div className="sm:col-span-2">
-                <h2 className="mb-2 text-sm font-semibold sm:text-lg">
-                  Eligibility
-                </h2>
-                <div className="flex flex-wrap gap-2">
-                  {internship.eligibility.map((item, index) => (
-                    <Badge
-                      key={index}
-                      className="border border-gray-300 bg-white text-xs text-black sm:text-sm"
-                    >
-                      {item}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
+      {/* Mobile Quick Overview Section */}
+      <div className="md:hidden px-4 mt-6">
+        <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-3">
+          Quick Overview
+        </h4>
+        <div className="flex flex-col gap-2">
+          <div className="bg-white dark:bg-slate-800/50 rounded-xl p-3 flex items-center gap-3 shadow-sm border border-slate-100 dark:border-slate-800">
+            <div className="h-9 w-9 bg-orange-500/10 rounded-lg flex items-center justify-center text-[#ec5b13] shrink-0">
+              <Calendar className="h-5 w-5" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] text-slate-500 font-semibold uppercase">Duration</span>
+              <span className="text-sm font-bold text-slate-900 dark:text-white">
+                {internship.duration || "N/A"}
+              </span>
+            </div>
           </div>
-        </div>
-      ) : null}
-
-      {/* Contact Information */}
-      {(internship.hiringManager || internship.user) && (
-        <div className="mb-6 rounded-lg border bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold sm:text-xl">
-            Contact Information
-          </h2>
-          <div className="space-y-3">
-            {internship.hiringManager && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold sm:text-lg">
-                  Hiring Manager:
-                </span>{" "}
-                <span className="text-sm sm:text-base">
-                  {internship.hiringManager}
+          <div className="bg-white dark:bg-slate-800/50 rounded-xl p-3 flex items-center gap-3 shadow-sm border border-slate-100 dark:border-slate-800">
+            <div className="h-9 w-9 bg-orange-500/10 rounded-lg flex items-center justify-center text-[#ec5b13] shrink-0">
+              <IndianRupee className="h-5 w-5" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] text-slate-500 font-semibold uppercase">Stipend</span>
+              <span className="text-sm font-bold text-slate-900 dark:text-white">
+                {typeof internship.stipend === "number" ? `₹${internship.stipend.toLocaleString()}/mo` : "Not disclosed"}
+              </span>
+            </div>
+          </div>
+          {internship.deadline && (
+            <div className="bg-white dark:bg-slate-800/50 rounded-xl p-3 flex items-center gap-3 shadow-sm border border-slate-100 dark:border-slate-800">
+              <div className="h-9 w-9 bg-orange-500/10 rounded-lg flex items-center justify-center text-[#ec5b13] shrink-0">
+                <Calendar className="h-5 w-5" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] text-slate-500 font-semibold uppercase">Apply By</span>
+                <span className="text-sm font-bold text-slate-900 dark:text-white">
+                  {new Date(internship.deadline).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' })}
                 </span>
               </div>
-            )}
-            {internship.user && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold sm:text-lg">
-                  Posted by:
-                </span>{" "}
-                <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-amber-500 bg-gray-300">
-                  {internship.user.image ? (
-                    <Image
-                      src={internship.user.image}
-                      alt={internship.user.name}
-                      width={32}
-                      height={32}
-                      className="rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-sm text-black">
-                      {internship.user.name
-                        ?.split(" ")
-                        .filter(Boolean)
-                        .map((n) => n[0])
-                        .join("")
-                        .slice(0, 2) || "?"}
-                    </span>
+            </div>
+          )}
+          <div className="bg-white dark:bg-slate-800/50 rounded-xl p-3 flex items-center gap-3 shadow-sm border border-slate-100 dark:border-slate-800">
+            <div className="h-9 w-9 bg-orange-500/10 rounded-lg flex items-center justify-center text-[#ec5b13] shrink-0">
+              <Users className="h-5 w-5" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] text-slate-500 font-semibold uppercase">Openings</span>
+              <span className="text-sm font-bold text-slate-900 dark:text-white">
+                Multiple positions
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content Area */}
+          <div className="lg:col-span-2 space-y-6 md:space-y-6">
+
+            {/* Desktop Hero Section */}
+            <div className="hidden md:block bg-white dark:bg-slate-800/50 rounded-xl overflow-hidden border border-orange-500/5 shadow-sm">
+              <div className="h-48 w-full bg-gradient-to-br from-orange-500/20 to-orange-500/5 relative">
+                <div className="absolute -bottom-8 left-8">
+                  <div className="h-20 w-20 bg-white dark:bg-slate-900 rounded-xl shadow-lg border-4 border-white dark:border-slate-900 flex items-center justify-center overflow-hidden">
+                    {internship.poster ? (
+                      <Image
+                        src={internship.poster}
+                        alt={`${internship.hiringOrganization} logo`}
+                        width={80}
+                        height={80}
+                        className="object-fit h-full w-full"
+                      />
+                    ) : (
+                      <span className="text-4xl font-black text-orange-600">
+                        {internship.hiringOrganization?.charAt(0) || "?"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-12 pb-8 px-8 flex flex-col gap-6">
+                {/* Title & Apply Button Row */}
+                <div className="flex flex-col md:flex-row md:justify-between gap-4 md:items-start">
+                  <div className="space-y-1">
+                    <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+                      {internship.title}
+                    </h2>
+                    <div className="flex flex-wrap items-center gap-2 text-slate-600 dark:text-slate-400 font-medium pt-1">
+                      <span>{internship.hiringOrganization}</span>
+                      <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+                      <span>{internship.location || "Remote"}</span>
+                    </div>
+                  </div>
+
+                  {internship.link && (
+                    <Link
+                      href={`${internship.link}${internship.link.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=internship_detail&utm_campaign=internship_apply`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button className="bg-[#ec5b13] text-white px-8 py-6 rounded-lg font-bold hover:brightness-110 transition-all shadow-lg shadow-orange-500/25">
+                        Apply Now
+                      </Button>
+                    </Link>
                   )}
                 </div>
-                <span className="text-sm sm:text-base">
-                  {internship.user.name}
-                </span>
+
+                {/* Smart Apply Button standalone left-aligned */}
+                {session?.user && (
+                  <div>
+                    <Button
+                      onClick={() => setSmartApplyOpen(true)}
+                      variant="outline"
+                      className="flex items-center gap-2 border-2 border-[#ec5b13] text-[#ec5b13] px-6 py-5 rounded-lg font-bold hover:bg-orange-500/5 transition-all shadow-sm bg-transparent"
+                    >
+                      <Sparkles className="h-5 w-5" />
+                      Smart Apply
+                    </Button>
+                  </div>
+                )}
+
+                {/* Flexible Metadata Tags */}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {internship.type && (
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500/5 text-[#ec5b13] rounded-full text-sm font-semibold border border-orange-500/10">
+                      <Clock className="h-4 w-4" />
+                      {internship.type.charAt(0).toUpperCase() + internship.type.slice(1).replace(/[_-]/g, " ")}
+                    </div>
+                  )}
+                  {internship.timing && (
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500/5 text-[#ec5b13] rounded-full text-sm font-semibold border border-orange-500/10">
+                      <Clock className="h-4 w-4" />
+                      {internship.timing.charAt(0).toUpperCase() + internship.timing.slice(1).replace(/[_-]/g, " ")}
+                    </div>
+                  )}
+                  {typeof internship.stipend === "number" && (
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500/5 text-[#ec5b13] rounded-full text-sm font-semibold border border-orange-500/10">
+                      <IndianRupee className="h-4 w-4" />
+                      {internship.stipend.toLocaleString()}/mo
+                    </div>
+                  )}
+                  {internship.duration && (
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500/5 text-[#ec5b13] rounded-full text-sm font-semibold border border-orange-500/10">
+                      <Clock className="h-4 w-4" />
+                      {internship.duration}
+                    </div>
+                  )}
+                </div>
               </div>
+            </div>
+
+            {/* Description Sections */}
+            {internship.description && (
+              <section className="bg-white dark:bg-slate-800/50 rounded-xl p-8 border border-orange-500/5 shadow-sm space-y-4">
+                <div className="flex items-center gap-2 text-[#ec5b13]">
+                  <Info className="h-5 w-5 fill-current text-white dark:text-slate-900 border-2 border-[#ec5b13] bg-[#ec5b13] rounded-full" />
+                  <h3 className="font-bold text-lg uppercase tracking-wider">About the Role</h3>
+                </div>
+                <div className="text-slate-700 dark:text-slate-300 leading-relaxed space-y-4 text-sm sm:text-base">
+                  {typeof internship.description === "string" ? (
+                    <p className="whitespace-pre-wrap">{internship.description}</p>
+                  ) : (
+                    internship.description
+                  )}
+                </div>
+              </section>
             )}
-            {internship.hiringManagerEmail && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold sm:text-lg">
-                  Email Id:
-                </span>{" "}
-                <span className="text-sm sm:text-base">
-                  {internship.hiringManagerEmail}
-                </span>
-              </div>
+
+            {/* Responsibilities / Eligibility */}
+            {((internship.eligibility && internship.eligibility.length > 0) || (internship.tags && internship.tags.length > 0)) && (
+              <section className="bg-white dark:bg-slate-800/50 rounded-xl p-8 border border-orange-500/5 shadow-sm space-y-4">
+                <div className="flex items-center gap-2 text-[#ec5b13]">
+                  <CheckCircle className="h-5 w-5" />
+                  <h3 className="font-bold text-lg uppercase tracking-wider">Responsibilities & Tags</h3>
+                </div>
+                <ul className="space-y-3 pt-2">
+                  {internship.eligibility?.map((item, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <CheckCircle className="h-5 w-5 text-[#ec5b13] mt-0.5 shrink-0" />
+                      <span className="text-slate-700 dark:text-slate-300">{item}</span>
+                    </li>
+                  ))}
+                  {internship.tags?.map((tag, i) => (
+                    <li key={`tag-${i}`} className="flex items-start gap-3">
+                      <Tags className="h-5 w-5 text-[#ec5b13] mt-0.5 shrink-0" />
+                      <span className="text-slate-700 dark:text-slate-300">Tagged skill: <strong>{tag}</strong></span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             )}
           </div>
+
+          {/* Sidebar Area */}
+          <div className="hidden md:block space-y-6">
+            {/* Company Card */}
+            <div className="relative bg-white dark:bg-slate-800/50 rounded-xl p-6 border border-orange-500/5 shadow-sm text-center">
+              <div className="absolute top-3 right-3 inline-flex items-center gap-0.5 rounded bg-blue-50 dark:bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-bold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 uppercase tracking-wide">
+                <CheckCircle className="h-2 w-2" />
+                <span>FTB Verified</span>
+              </div>
+              <div className="h-16 w-16 bg-orange-500/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                {internship.poster ? (
+                  <Image
+                    src={internship.poster}
+                    alt={`${internship.hiringOrganization} logo`}
+                    width={48}
+                    height={48}
+                    className="object-contain h-12 w-12"
+                  />
+                ) : (
+                  <span className="text-2xl font-bold text-[#ec5b13]">
+                    {internship.hiringOrganization?.charAt(0) || "?"}
+                  </span>
+                )}
+              </div>
+              <h4 className="font-bold text-slate-900 dark:text-white pt-1">{internship.hiringOrganization}</h4>
+              <p className="text-sm text-slate-500 mb-6 mt-1">Company Profile</p>
+
+              <div className="grid grid-cols-2 gap-4 text-left">
+                {internship.hiringManager && (
+                  <div className="p-3 bg-[#f8f6f6] dark:bg-slate-900 rounded-lg col-span-2">
+                    <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Hiring Manager</p>
+                    <p className="text-sm font-semibold truncate">{internship.hiringManager}</p>
+                  </div>
+                )}
+                {internship.user && (
+                  <div className="p-3 bg-[#f8f6f6] dark:bg-slate-900 rounded-lg col-span-2">
+                    <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Posted By</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full border border-orange-500 bg-gray-300 overflow-hidden shrink-0">
+                        {internship.user.image ? (
+                          <Image src={internship.user.image} alt={internship.user.name} width={24} height={24} className="rounded-full object-cover" />
+                        ) : (
+                          <span className="text-xs text-black">
+                            {internship.user.name?.charAt(0)}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm font-semibold truncate">{internship.user.name}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button className="w-full mt-6 py-2 border border-[#ec5b13]/20 text-[#ec5b13] font-bold rounded-lg hover:bg-orange-500/5 transition-colors">
+                View Profile
+              </button>
+            </div>
+
+            {/* Key Stats */}
+            <div className="bg-white dark:bg-slate-800/50 rounded-xl p-6 border border-orange-500/5 shadow-sm space-y-6">
+              {internship.duration && (
+                <div className="flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center text-[#ec5b13]">
+                    <Clock className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-400 uppercase">Duration</p>
+                    <p className="font-bold text-sm">{internship.duration}</p>
+                  </div>
+                </div>
+              )}
+
+              {internship.experience && (
+                <div className="flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center text-[#ec5b13]">
+                    <Briefcase className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-400 uppercase">Experience</p>
+                    <p className="font-bold text-sm">{internship.experience}</p>
+                  </div>
+                </div>
+              )}
+
+              {internship.type && (
+                <div className="flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center text-[#ec5b13]">
+                    <GraduationCap className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-400 uppercase">Type</p>
+                    <p className="font-bold text-sm">{internship.type.charAt(0).toUpperCase() + internship.type.slice(1).replace(/-/g, " ")}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+
+          </div>
         </div>
-      )}
+      </main>
+
+      {/* Mobile Sticky Bottom Bar */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3 z-50 flex items-center gap-2 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
+        <Button variant="outline" className="flex-1 flex items-center justify-center gap-1.5 border-slate-200 dark:border-slate-700 h-12 rounded-xl font-bold text-slate-700 dark:text-slate-300">
+          <Bookmark className="h-4 w-4" /> Save
+        </Button>
+        {session?.user && (
+          <Button onClick={() => setSmartApplyOpen(true)} variant="outline" className="flex-1 flex items-center justify-center gap-1.5 border-orange-500 text-[#ec5b13] h-12 rounded-xl font-bold bg-orange-50 dark:bg-orange-500/10">
+            <Sparkles className="h-4 w-4" /> Smart Apply
+          </Button>
+        )}
+        {internship.link && (
+          <Link
+            href={`${internship.link}${internship.link.includes('?') ? '&' : '?'}utm_source=ftb_web`}
+            className="flex-1"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button className="w-full h-12 bg-[#ec5b13] hover:bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-500/20">
+              Apply Now
+            </Button>
+          </Link>
+        )}
+      </div>
+
+      {/* Share Dialog */}
+      <Dialog open={shareDialogOpen} onOpenChange={handleShareDialogOpenChange}>
+        <DialogContent className="max-w-[90vw] sm:max-w-md">
+          <DialogTitle className="sr-only">Share {internship.title}</DialogTitle>
+          <DialogDescription className="sr-only">
+            Share this internship via social media or copy the link
+          </DialogDescription>
+          <ShareDialog
+            shareUrl={shareUrl}
+            title={internship.title}
+            onCopy={handleCopy}
+            onShare={handleShare}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Smart Apply Modal */}
+      <ApplyModal
+        isOpen={smartApplyOpen}
+        onClose={() => setSmartApplyOpen(false)}
+        opportunity={internship ? mapInternshipToApplyOpportunity(internship) : null}
+      />
     </div>
   );
 }

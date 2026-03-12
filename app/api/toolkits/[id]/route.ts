@@ -73,6 +73,11 @@ export async function GET(
       getSessionCached(requestHeaders),
     ]);
 
+    const toolkitWithDerivedLessonCount = {
+      ...toolkit,
+      lessonCount: contentItemsResult.length,
+    };
+
     let hasPurchased = false;
     let completedItemIds: string[] = [];
 
@@ -108,7 +113,7 @@ export async function GET(
     }
 
     return NextResponse.json({
-      toolkit,
+      toolkit: toolkitWithDerivedLessonCount,
       contentItems: contentItemsResult,
       hasPurchased,
       completedItemIds,

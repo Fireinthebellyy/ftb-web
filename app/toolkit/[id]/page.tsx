@@ -1,17 +1,26 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, BookOpen, Clock, Cloud, Check } from "lucide-react";
+import { ArrowLeft, BookOpen, Check, Clock, Cloud, Star } from "lucide-react";
 import ToolkitSidebar from "@/components/toolkit/ToolkitSidebar";
 import ContentList from "@/components/toolkit/ContentList";
 import ToolkitDetailSkeleton from "@/components/toolkit/ToolkitDetailSkeleton";
+import {
+  Autoplay,
+  Carousel,
+  CarouselContent,
+  CarouselDots,
+  CarouselDotsOverlay,
+  CarouselItem,
+} from "@/components/ui/carousel";
 import { useToolkit, useToolkitPurchase } from "@/lib/queries-toolkits";
+import { CAROUSEL_AUTOPLAY_DELAY_MS } from "@/lib/carousel";
 import { toast } from "sonner";
 import axios from "axios";
 
@@ -42,6 +51,13 @@ export default function ToolkitDetailPage() {
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [appliedCoupon, setAppliedCoupon] =
     useState<CouponValidationResult | null>(null);
+  const testimonialsAutoplayRef = useRef(
+    Autoplay({
+      delay: CAROUSEL_AUTOPLAY_DELAY_MS,
+      stopOnMouseEnter: true,
+      stopOnFocusIn: true,
+    })
+  );
 
   const { data: toolkitData, isLoading } = useToolkit(params.id as string);
   const purchaseMutation = useToolkitPurchase(params.id as string);
@@ -49,6 +65,30 @@ export default function ToolkitDetailPage() {
   const toolkit = toolkitData?.toolkit ?? null;
   const contentItems = toolkitData?.contentItems ?? [];
   const hasPurchased = toolkitData?.hasPurchased ?? false;
+  const lessonCount = contentItems.length || toolkit?.lessonCount || 0;
+  const testimonials = [
+    {
+      initials: "AS",
+      name: "Aditi Sharma",
+      role: "Final Year Student",
+      message:
+        "This toolkit was super practical and easy to follow. I used the templates directly and felt more confident while applying.",
+    },
+    {
+      initials: "RK",
+      name: "Rohan Kapoor",
+      role: "Software Intern",
+      message:
+        "I liked how actionable every section was. The examples and structure saved me a lot of time while preparing.",
+    },
+    {
+      initials: "NP",
+      name: "Nisha Patel",
+      role: "MBA Aspirant",
+      message:
+        "The checklist format kept me focused and consistent. It feels beginner-friendly but still detailed enough for real outcomes.",
+    },
+  ];
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim() || !toolkit) {
@@ -186,10 +226,10 @@ export default function ToolkitDetailPage() {
                 )}
 
                 <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                  {toolkit.lessonCount && (
+                  {lessonCount > 0 && (
                     <div className="flex items-center gap-1">
                       <BookOpen className="h-4 w-4" />
-                      {toolkit.lessonCount} lessons
+                      {lessonCount} lessons
                     </div>
                   )}
 
@@ -257,6 +297,68 @@ export default function ToolkitDetailPage() {
                 </div>
               </div>
             )}
+
+            <div className="mt-6 rounded-lg border bg-white p-6">
+              <h3 className="mb-4 text-lg font-semibold text-gray-900">
+                Testimonials
+              </h3>
+              <div className="relative">
+                <Carousel
+                  opts={{ align: "start", loop: testimonials.length > 1 }}
+                  plugins={
+                    testimonials.length > 1
+                      ? [testimonialsAutoplayRef.current]
+                      : undefined
+                  }
+                  className="w-full"
+                >
+                  <CarouselContent>
+                    {testimonials.map((testimonial) => (
+                      <CarouselItem
+                        key={testimonial.name}
+                        className="basis-full md:basis-1/2"
+                      >
+                        <div className="h-full rounded-lg border border-gray-100 bg-gray-50 p-4">
+                          <div className="mb-2 flex items-center gap-2">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-xs font-semibold text-orange-700">
+                              {testimonial.initials}
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {testimonial.name}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {testimonial.role}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="mb-2 flex items-center gap-1 text-orange-500">
+                            {Array.from({ length: 5 }).map((_, index) => (
+                              <Star
+                                key={index}
+                                className="h-4 w-4 fill-current"
+                              />
+                            ))}
+                          </div>
+                          <p className="text-sm text-gray-700">
+                            {testimonial.message}
+                          </p>
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  {testimonials.length > 1 ? (
+                    <CarouselDotsOverlay>
+                      <CarouselDots
+                        className="gap-1.5 py-0"
+                        dotClassName="bg-white/45 hover:bg-white/70"
+                        activeDotClassName="h-1.5 w-3 rounded-full bg-white"
+                      />
+                    </CarouselDotsOverlay>
+                  ) : null}
+                </Carousel>
+              </div>
+            </div>
           </div>
 
           <div className="hidden xl:col-span-1 xl:block">
@@ -293,23 +395,22 @@ export default function ToolkitDetailPage() {
                   }
                 }}
                 disabled={isValidatingCoupon || !!appliedCoupon?.valid}
-                className="flex-1"
+                className="h-10 flex-1"
               />
               {appliedCoupon?.valid ? (
                 <Button
                   variant="outline"
+                  className="h-10 px-4"
                   onClick={handleRemoveCoupon}
                   disabled={isValidatingCoupon}
-                  size="sm"
                 >
                   Remove
                 </Button>
               ) : (
                 <Button
-                  variant="outline"
+                  className="h-10 bg-orange-500 px-4 text-white hover:bg-orange-600"
                   onClick={handleApplyCoupon}
                   disabled={isValidatingCoupon || !couponCode.trim()}
-                  size="sm"
                 >
                   {isValidatingCoupon ? "..." : "Apply"}
                 </Button>

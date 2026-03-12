@@ -8,9 +8,15 @@ interface ShareDialogProps {
   shareUrl: string;
   title: string;
   onCopy: () => void;
+  onShare?: (channel: string) => void;
 }
 
-export function ShareDialog({ shareUrl, title, onCopy }: ShareDialogProps) {
+export function ShareDialog({
+  shareUrl,
+  title,
+  onCopy,
+  onShare,
+}: ShareDialogProps) {
   const utmParams = `${shareUrl}${shareUrl.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=opportunity_card&utm_campaign=opportunity_share`;
 
   return (
@@ -31,6 +37,7 @@ export function ShareDialog({ shareUrl, title, onCopy }: ShareDialogProps) {
         </button>
         <Link
           href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(utmParams)}&text=${encodeURIComponent(title)}`}
+          onClick={() => onShare?.("twitter")}
           target="_blank"
           rel="noopener noreferrer"
           title="Share to Twitter/X"
@@ -41,6 +48,7 @@ export function ShareDialog({ shareUrl, title, onCopy }: ShareDialogProps) {
         </Link>
         <Link
           href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(utmParams)}`}
+          onClick={() => onShare?.("facebook")}
           target="_blank"
           rel="noopener noreferrer"
           title="Share to Facebook"
@@ -51,6 +59,7 @@ export function ShareDialog({ shareUrl, title, onCopy }: ShareDialogProps) {
         </Link>
         <Link
           href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(utmParams)}`}
+          onClick={() => onShare?.("linkedin")}
           target="_blank"
           rel="noopener noreferrer"
           title="Share to LinkedIn"
@@ -61,6 +70,7 @@ export function ShareDialog({ shareUrl, title, onCopy }: ShareDialogProps) {
         </Link>
         <Link
           href={`https://api.whatsapp.com/send?text=${encodeURIComponent(title + " " + utmParams)}`}
+          onClick={() => onShare?.("whatsapp")}
           target="_blank"
           rel="noopener noreferrer"
           title="Share to WhatsApp"
@@ -86,6 +96,7 @@ export function ShareDialog({ shareUrl, title, onCopy }: ShareDialogProps) {
         </Link>
         <Link
           href={`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(shareUrl)}`}
+          onClick={() => onShare?.("email")}
           title="Share via Email"
           aria-label="Share via Email"
           className="inline-flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-3 text-neutral-600 transition-colors hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-900"

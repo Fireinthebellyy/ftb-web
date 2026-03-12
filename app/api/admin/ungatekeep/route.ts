@@ -7,13 +7,21 @@ import { eq, desc } from "drizzle-orm";
 import { z } from "zod";
 
 const createPostSchema = z.object({
-  title: z.string().min(1, "Title is required"),
   content: z.string().min(1, "Content is required"),
-  images: z.array(z.string()).optional(),
+  attachments: z.array(z.string()).optional(),
   linkUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
   linkTitle: z.string().optional(),
   linkImage: z.string().url("Invalid image URL").optional().or(z.literal("")),
-  tag: z.enum(["announcement", "company_experience", "resources"]).optional(),
+  tag: z.enum([
+    "announcement",
+    "company_experience",
+    "resources",
+    "playbooks",
+    "college_hacks",
+    "interview",
+    "ama_drops",
+    "ftb_recommends",
+  ]).optional(),
   isPinned: z.boolean().optional(),
   isPublished: z.boolean().optional(),
 });
@@ -39,9 +47,8 @@ export async function GET(request: Request) {
     const allPosts = await db
       .select({
         id: ungatekeepPosts.id,
-        title: ungatekeepPosts.title,
         content: ungatekeepPosts.content,
-        images: ungatekeepPosts.images,
+        attachments: ungatekeepPosts.attachments,
         linkUrl: ungatekeepPosts.linkUrl,
         linkTitle: ungatekeepPosts.linkTitle,
         linkImage: ungatekeepPosts.linkImage,
@@ -117,9 +124,8 @@ export async function POST(request: Request) {
     const newPost = await db
       .insert(ungatekeepPosts)
       .values({
-        title: validatedData.title,
         content: validatedData.content,
-        images: validatedData.images || [],
+        attachments: validatedData.attachments || [],
         linkUrl: validatedData.linkUrl || undefined,
         linkTitle: validatedData.linkTitle || undefined,
         linkImage: validatedData.linkImage || undefined,

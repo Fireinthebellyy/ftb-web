@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Lock, Bookmark, Loader2, Pin } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
@@ -15,14 +15,14 @@ import { motion, useAnimation } from "framer-motion";
 
 type UngatekeepPost = {
   id: string;
-  title: string;
   content: string;
-  images: string[];
+  attachments: string[];
   linkUrl?: string | null;
   linkTitle?: string | null;
   linkImage?: string | null;
-  tag?: "announcement" | "company_experience" | "resources" | null;
+  tag?: "announcement" | "company_experience" | "resources" | "playbooks" | "college_hacks" | "interview" | "ama_drops" | "ftb_recommends" | null;
   isPinned: boolean;
+  isSaved?: boolean;
   publishedAt?: string | null;
   createdAt: string;
   creatorName?: string | null;
@@ -38,28 +38,15 @@ type UngatekeepResponse = {
 export default function UngatekeepPage() {
   const { ref, inView } = useInView();
   const savedButtonControls = useAnimation();
-  const [savedCount, setSavedCount] = useState(0);
-
-  useEffect(() => {
-    // Initial count
-    const saved = JSON.parse(localStorage.getItem("ungatekeep_saved") || "[]");
-    setSavedCount(saved.length);
-
-    const handlePostSaved = () => {
-      // Update count
-      const updatedSaved = JSON.parse(localStorage.getItem("ungatekeep_saved") || "[]");
-      setSavedCount(updatedSaved.length);
-      
-      // Trigger animation
-      savedButtonControls.start({
-        scale: [1, 1.2, 1],
-        transition: { duration: 0.3 }
-      });
-    };
-
-    window.addEventListener("ungatekeep-post-saved", handlePostSaved);
-    return () => window.removeEventListener("ungatekeep-post-saved", handlePostSaved);
-  }, [savedButtonControls]);
+  const { data: savedCountData } = useQuery({
+    queryKey: ["ungatekeep-saved-count"],
+    queryFn: async () => {
+      const response = await axios.get("/api/ungatekeep/bookmarks/count");
+      return response.data.count as number;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+  const savedCount = savedCountData ?? 0;
 
   const {
     data,
@@ -205,7 +192,7 @@ export default function UngatekeepPage() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="w-full space-y-3">
                 {posts.map((post) => (
                   <UngatekeepCard key={post.id} post={post} />
                 ))}

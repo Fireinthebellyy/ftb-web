@@ -1,28 +1,35 @@
 "use client";
-
-import React, { useState, useEffect } from "react";
+ 
+import React from "react";
 import Link from "next/link";
 import { ArrowLeft, Bookmark } from "lucide-react";
 import UngatekeepCard from "@/components/ungatekeep/UngatekeepCard";
 import FeaturedToolkits from "@/components/toolkit/FeaturedToolkits";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { toast } from "sonner";
 
 export default function SavedUngatekeepPage() {
-  const [savedPosts, setSavedPosts] = useState<any[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const { data: savedPosts = [], isLoading, error } = useQuery({
+    queryKey: ["ungatekeep-saved"],
+    queryFn: async () => {
+      try {
+        const response = await axios.get("/api/ungatekeep/bookmark");
+        // Add isSaved: true to all returned posts since they are bookmarks
+        return response.data.map((post: any) => ({ ...post, isSaved: true }));
+      } catch (err) {
+        if (axios.isAxiosError(err) && err.response?.status === 401) {
+          return []; // Handle unauthorized as empty
+        }
+        throw err;
+      }
+    }
+  });
 
-  useEffect(() => {
-    const loadPosts = () => {
-      const posts = JSON.parse(localStorage.getItem("ungatekeep_saved") || "[]");
-      setSavedPosts(posts);
-      setIsLoaded(true);
-    };
-
-    loadPosts();
-
-    window.addEventListener("ungatekeep-post-saved", loadPosts);
-    return () => window.removeEventListener("ungatekeep-post-saved", loadPosts);
-  }, []);
+  if (error) {
+    toast.error("Failed to load saved posts");
+  }
 
   return (
     <div className="bg-gray-50">
@@ -49,7 +56,7 @@ export default function SavedUngatekeepPage() {
               </p>
             </div>
 
-            {!isLoaded ? (
+            {isLoading ? (
               <div className="space-y-3">
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="h-48 w-full animate-pulse rounded-lg bg-gray-200" />
@@ -70,7 +77,7 @@ export default function SavedUngatekeepPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {savedPosts.map((post) => (
+                {savedPosts.map((post: any) => (
                   <UngatekeepCard key={post.id} post={post} />
                 ))}
               </div>

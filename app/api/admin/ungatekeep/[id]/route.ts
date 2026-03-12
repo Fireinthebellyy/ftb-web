@@ -7,13 +7,21 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 const updatePostSchema = z.object({
-  title: z.string().min(1, "Title is required").optional(),
   content: z.string().min(1, "Content is required").optional(),
-  images: z.array(z.string()).optional(),
+  attachments: z.array(z.string()).optional(),
   linkUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
   linkTitle: z.string().optional(),
   linkImage: z.string().url("Invalid image URL").optional().or(z.literal("")),
-  tag: z.enum(["announcement", "company_experience", "resources"]).optional(),
+  tag: z.enum([
+    "announcement",
+    "company_experience",
+    "resources",
+    "playbooks",
+    "college_hacks",
+    "interview",
+    "ama_drops",
+    "ftb_recommends",
+  ]).optional(),
   isPinned: z.boolean().optional(),
   isPublished: z.boolean().optional(),
 });
@@ -134,12 +142,10 @@ export async function PUT(
     const updates: Record<string, unknown> = {
       updatedAt: new Date(),
     };
-
-    if (validatedData.title !== undefined) updates.title = validatedData.title;
     if (validatedData.content !== undefined)
       updates.content = validatedData.content;
-    if (validatedData.images !== undefined)
-      updates.images = validatedData.images;
+    if (validatedData.attachments !== undefined)
+      updates.attachments = validatedData.attachments;
     if (validatedData.linkUrl !== undefined)
       updates.linkUrl = validatedData.linkUrl || undefined;
     if (validatedData.linkTitle !== undefined)

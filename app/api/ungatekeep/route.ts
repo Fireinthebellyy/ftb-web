@@ -16,11 +16,13 @@ export async function GET(request: Request) {
 
     // Check if user is authenticated
     let isAuthenticated = false;
+    let userId: string | null = null;
     try {
       const session = await auth.api.getSession({
         headers: await headers(),
       });
       isAuthenticated = !!session?.user;
+      userId = session?.user?.id ?? null;
     } catch {
       // Not authenticated
     }
@@ -34,13 +36,11 @@ export async function GET(request: Request) {
     const totalCount = Number(totalCountResult[0]?.count ?? 0);
 
     // Fetch posts with pagination
-    // Note: For non-authenticated users, we still respect the FREE_POST_LIMIT globally
     const publishedPosts = await db
       .select({
         id: ungatekeepPosts.id,
-        title: ungatekeepPosts.title,
         content: ungatekeepPosts.content,
-        images: ungatekeepPosts.images,
+        attachments: ungatekeepPosts.attachments,
         linkUrl: ungatekeepPosts.linkUrl,
         linkTitle: ungatekeepPosts.linkTitle,
         linkImage: ungatekeepPosts.linkImage,
@@ -49,6 +49,10 @@ export async function GET(request: Request) {
         publishedAt: ungatekeepPosts.publishedAt,
         createdAt: ungatekeepPosts.createdAt,
         creatorName: userTable.name,
+        // Add isSaved field if authenticated
+        isSaved: userId 
+          ? sql<boolean>`EXISTS(SELECT 1 FROM "ungatekeep_bookmarks" WHERE "post_id" = ${ungatekeepPosts.id} AND "user_id" = ${userId})`
+          : sql<boolean>`false`,
       })
       .from(ungatekeepPosts)
       .leftJoin(userTable, eq(ungatekeepPosts.userId, userTable.id))

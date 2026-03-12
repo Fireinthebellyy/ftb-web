@@ -15,16 +15,19 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import {
+  FileText,
   Bookmark,
   ExternalLink,
   MessageCircleQuestion,
   Share2,
   Pin,
 } from "lucide-react";
+import axios from "axios";
 import { toast } from "sonner";
 import { ShareDialog } from "./ShareDialog";
-import { createUngatekeepStorage } from "@/lib/appwrite";
-import { cn } from "@/lib/utils";
+import { createUngatekeepStorage, getUngatekeepBucketId } from "@/lib/appwrite";
+import { cn, stripHtml } from "@/lib/utils";
+import DOMPurify from "dompurify";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { motion, AnimatePresence } from "framer-motion";
@@ -33,14 +36,14 @@ dayjs.extend(relativeTime);
 
 type UngatekeepPost = {
   id: string;
-  title: string;
   content: string;
-  images: string[];
+  attachments: string[];
   linkUrl?: string | null;
   linkTitle?: string | null;
   linkImage?: string | null;
-  tag?: "announcement" | "company_experience" | "resources" | null;
+  tag?: "announcement" | "company_experience" | "resources" | "playbooks" | "college_hacks" | "interview" | "ama_drops" | "ftb_recommends" | null;
   isPinned: boolean;
+  isSaved?: boolean;
   publishedAt?: string | null;
   createdAt: string;
   creatorName?: string | null;
@@ -55,52 +58,185 @@ const CONTENT_PREVIEW_LENGTH = 150;
 
 const WHATSAPP_NUMBER = "917014885565";
 
+function AttachmentSlide({
+  imageId,
+  postTitle,
+  idx,
+  ungatekeepStorage,
+}: {
+  imageId: string;
+  postTitle: string;
+  idx?: number;
+  ungatekeepStorage: any;
+}) {
+  const [error, setError] = useState(false);
+  const [fileInfo, setFileInfo] = useState<any>(null);
+  const bucketId = getUngatekeepBucketId();
+  
+  useEffect(() => {
+    if (bucketId && imageId) {
+      ungatekeepStorage.getFile(bucketId, imageId)
+        .then((info: any) => {
+          setFileInfo(info);
+          // We don't necessarily want to set error to true for PDFs anymore
+          // because we'll try to show a preview
+        })
+        .catch(() => {
+          setError(true);
+        });
+    }
+  }, [bucketId, imageId, ungatekeepStorage]);
+
+  if (!bucketId) return null;
+
+  const isPdf = fileInfo?.mimeType === "application/pdf";
+  const fileName = fileInfo?.name || `Document ${idx !== undefined ? idx + 1 : ""}`;
+  
+  // Use getFilePreview for PDFs to show the first page as a thumbnail
+  const displayUrl = isPdf 
+    ? ungatekeepStorage.getFilePreview(bucketId, imageId, 600, 800).toString()
+    : ungatekeepStorage.getFileView(bucketId, imageId).toString();
+
+  const fullUrl = ungatekeepStorage.getFileView(bucketId, imageId).toString();
+
+  if (error) {
+    return (
+      <div className="group relative flex h-full w-full flex-col items-center justify-center gap-3 bg-muted/50 p-4 transition-colors hover:bg-muted/80">
+        <div className="relative flex h-16 w-16 items-center justify-center rounded-xl bg-background shadow-sm">
+          <FileText className="h-10 w-10 text-blue-500" />
+        </div>
+        
+        <div className="flex flex-col items-center gap-1 text-center">
+          <span className="text-xs font-semibold text-foreground line-clamp-2 px-2">
+            {fileName}
+          </span>
+        </div>
+
+        <a
+          href={fullUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-[11px] font-medium text-primary-foreground shadow-sm transition-transform active:scale-95 hover:bg-primary/90"
+        >
+          <ExternalLink className="h-3 w-3" />
+          View Document
+        </a>
+      </div>
+    );
+  }
+
+  if (isPdf) {
+    return (
+      <div className="relative h-full w-full group overflow-hidden">
+        {/* Try to show PDF content using an iframe for a real "inside" look */}
+        <iframe
+          src={`${fullUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+          className="h-full w-full border-none pointer-events-none scale-[1.01]"
+          title={fileName}
+        />
+        
+        <div className="absolute inset-0 flex flex-col items-end justify-start p-2 opacity-0 transition-opacity group-hover:opacity-100 bg-black/5">
+          <div className="flex items-center gap-1 rounded bg-red-500 px-2 py-1 text-[10px] font-bold text-white uppercase shadow-sm">
+            <FileText className="h-3 w-3" />
+            PDF
+          </div>
+        </div>
+
+        {/* Overlay to make it clickable and prevent iframe interaction */}
+        <a
+          href={fullUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute inset-0 z-10 cursor-pointer"
+          title="Open full document"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative h-full w-full group">
+      <Image
+        src={displayUrl}
+        alt={idx !== undefined ? `${postTitle} - Item ${idx + 1}` : postTitle}
+        fill
+        className="object-cover"
+        unoptimized={true}
+        onError={() => setError(true)}
+      />
+    </div>
+  );
+}
+
+import { useQueryClient } from "@tanstack/react-query";
+
 export default function UngatekeepCard({ post }: UngatekeepCardProps) {
+  const queryClient = useQueryClient();
   const [isExpanded, setIsExpanded] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
+  const [isSaved, setIsSaved] = useState(post.isSaved || false);
   const [isFlying, setIsFlying] = useState(false);
   const [flyPos, setFlyPos] = useState({ x: 0, y: 0 });
   const ungatekeepStorage = createUngatekeepStorage();
   const cardRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    // Check if post is saved in localStorage
-    const savedPosts = JSON.parse(localStorage.getItem("ungatekeep_saved") || "[]");
-    setIsSaved(savedPosts.some((p: any) => p.id === post.id));
-  }, [post.id]);
+    setIsSaved(post.isSaved || false);
+  }, [post.isSaved]);
 
-  const toggleSave = (e: React.MouseEvent) => {
+  const toggleSave = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const savedPosts = JSON.parse(localStorage.getItem("ungatekeep_saved") || "[]");
     
-    if (isSaved) {
-      // Remove from saved
-      const updatedPosts = savedPosts.filter((p: any) => p.id !== post.id);
-      localStorage.setItem("ungatekeep_saved", JSON.stringify(updatedPosts));
-      setIsSaved(false);
-      toast.success("Post removed from saved");
-      
-      // Trigger update event
-      window.dispatchEvent(new CustomEvent("ungatekeep-post-saved", { detail: { postId: post.id, action: "unsave" } }));
-    } else {
-      // Add to saved
-      const updatedPosts = [...savedPosts, post];
-      localStorage.setItem("ungatekeep_saved", JSON.stringify(updatedPosts));
-      setIsSaved(true);
-      
-      // Get click position for animation
-      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      setFlyPos({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
-      setIsFlying(true);
-      
-      toast.success("Post saved successfully");
-      
-      // Trigger animation event
-      window.dispatchEvent(new CustomEvent("ungatekeep-post-saved", { detail: { postId: post.id } }));
-      
-      // Reset flying state after animation
-      setTimeout(() => setIsFlying(false), 800);
+    const buttonElement = e.currentTarget as HTMLElement;
+
+    // Optimistic UI update
+    const previousSaved = isSaved;
+    setIsSaved(!previousSaved);
+
+    try {
+      const response = await axios.post("/api/ungatekeep/bookmark", {
+        postId: post.id,
+      });
+
+      // Nested try-catch to isolate potential errors after successful API call
+      try {
+        if (response.data && typeof response.data.bookmarked === 'boolean') {
+          const newSavedStatus = response.data.bookmarked;
+          // The optimistic update is reverted/confirmed, so we set the state from the server response.
+          setIsSaved(newSavedStatus);
+
+          if (newSavedStatus) {
+            const rect = buttonElement.getBoundingClientRect();
+            setFlyPos({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+            setIsFlying(true);
+            toast.success("Post saved successfully");
+            setTimeout(() => setIsFlying(false), 800);
+          } else {
+            toast.success("Post removed from saved");
+          }
+
+          // Invalidate queries to refetch data, which replaces the old localStorage logic.
+          queryClient.invalidateQueries({ queryKey: ["ungatekeep"] });
+          queryClient.invalidateQueries({ queryKey: ["ungatekeep-saved-count"] });
+        } else {
+          // If response is not what we expect, throw an error
+          throw new Error("Invalid response structure from server");
+        }
+      } catch (innerError) {
+        console.error("Error processing bookmark response:", innerError);
+        // Throw the inner error to be caught by the outer catch block
+        throw innerError;
+      }
+    } catch (error) {
+      // Revert on error
+      setIsSaved(previousSaved);
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        toast.error("Please login to save posts");
+      } else {
+        // Log the actual error for debugging
+        console.error("Failed to update saved status:", error);
+        toast.error("Failed to update saved status");
+      }
     }
   };
 
@@ -121,8 +257,10 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
     }
   };
 
+  const plainTextContent = stripHtml(post.content);
+
   const askQueryWhatsAppUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    `Type: Ungatekeep post query\nSource: ${shareUrl}\n\nPost: ${post.title || post.content.slice(0, 100)}...\n\nMy question:`
+    `Type: Ungatekeep post query\nSource: ${shareUrl}\n\nPost: ${plainTextContent.slice(0, 100)}...\n\nMy question:`
   )}`;
 
   const getTagBadgeVariant = (tag: string | null | undefined) => {
@@ -133,19 +271,18 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
         return "bg-orange-200 text-orange-600";
       case "resources":
         return "bg-green-200 text-green-600";
+      case "playbooks":
+        return "bg-purple-200 text-purple-600";
+      case "college_hacks":
+        return "bg-pink-200 text-pink-600";
+      case "interview":
+        return "bg-red-200 text-red-600";
+      case "ama_drops":
+        return "bg-indigo-200 text-indigo-600";
+      case "ftb_recommends":
+        return "bg-teal-200 text-teal-600";
       default:
         return "bg-yellow-200 text-yellow-600";
-    }
-  };
-
-  const getImageUrl = (imageId: string) => {
-    const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
-    if (!bucketId) return "";
-    try {
-      return ungatekeepStorage.getFileView(bucketId, imageId);
-    } catch (error) {
-      console.error("Error getting image URL:", error);
-      return "";
     }
   };
 
@@ -157,14 +294,23 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
     }
   };
 
-  const hasLongContent = post.content.length > CONTENT_PREVIEW_LENGTH;
+  const hasLongContent = plainTextContent.length > CONTENT_PREVIEW_LENGTH;
   const hasExtraMedia =
-    (post.images && post.images.length > 1) || !!post.linkUrl;
+    (post.attachments && post.attachments.length > 0) || !!post.linkUrl;
   const canExpand = hasLongContent || hasExtraMedia;
+
   const previewContent =
     hasLongContent && !isExpanded
-      ? `${post.content.slice(0, CONTENT_PREVIEW_LENGTH).trim()}...`
+      ? `${plainTextContent.slice(0, CONTENT_PREVIEW_LENGTH).trim()}...`
       : post.content;
+
+  const [safeHtml, setSafeHtml] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setSafeHtml(DOMPurify.sanitize(post.content));
+    }
+  }, [post.content]);
 
   return (
     <article
@@ -183,15 +329,25 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
       )}
 
       {/* Content - no title */}
-      <div className="px-3 pt-5 sm:pt-6 pb-3">
-        <p
-          className={cn(
-            "text-xs md:text-sm text-muted-foreground leading-tight whitespace-pre-wrap",
-            !isExpanded && hasLongContent && "inline"
-          )}
-        >
-          {previewContent}
-        </p>
+      <div className="w-full px-3 pt-5 sm:pt-6 pb-3 overflow-hidden text-left">
+        {isExpanded || !hasLongContent ? (
+          <div
+            className={cn(
+              "w-full text-xs md:text-sm text-muted-foreground leading-tight break-words",
+              "[&_p]:mb-2 last:[&_p]:mb-0 [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4",
+              "[&_*]:break-words [&_*]:whitespace-normal"
+            )}
+            dangerouslySetInnerHTML={{ __html: safeHtml || post.content }}
+          />
+        ) : (
+          <p
+            className={cn(
+              "w-full text-xs md:text-sm text-muted-foreground leading-tight inline break-words"
+            )}
+          >
+            {previewContent}
+          </p>
+        )}
         {canExpand && !isExpanded && (
           <Button
             variant="ghost"
@@ -220,29 +376,34 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
         )}
 
         {/* Image / Link preview - below text (LinkedIn style) */}
-        {post.images && post.images.length > 0 && (
+        {post.attachments && post.attachments.length > 0 && (
           <div className="mt-3">
-            {post.images.length === 1 ? (
-              <div className="relative aspect-[9/16] max-h-[260px] w-full overflow-hidden rounded-lg bg-muted">
-                <Image
-                  src={getImageUrl(post.images[0])}
-                  alt={post.title}
-                  fill
-                  className="object-cover"
+            {post.attachments.length === 1 ? (
+              <div className="relative aspect-[9/16] max-h-[320px] w-full overflow-hidden rounded-lg bg-muted border">
+                <AttachmentSlide
+                  imageId={post.attachments[0]}
+                  postTitle={plainTextContent.slice(0, 50)}
+                  ungatekeepStorage={ungatekeepStorage}
                 />
               </div>
             ) : (
               <div className="px-1">
-                <Carousel className="w-full">
+                <Carousel
+                  className="w-full"
+                  opts={{ align: "start", loop: false }}
+                >
                   <CarouselContent className="-ml-2">
-                    {post.images.map((imageId, idx) => (
-                      <CarouselItem key={idx} className="basis-[75%] pl-2 sm:basis-[65%]">
-                        <div className="relative aspect-[9/16] max-h-[260px] w-full overflow-hidden rounded-lg bg-muted">
-                          <Image
-                            src={getImageUrl(imageId)}
-                            alt={`${post.title} - Image ${idx + 1}`}
-                            fill
-                            className="object-cover"
+                    {post.attachments.map((fileId, idx) => (
+                      <CarouselItem
+                        key={idx}
+                        className="basis-[85%] pl-2 sm:basis-[75%]"
+                      >
+                        <div className="relative aspect-[9/16] max-h-[320px] w-full overflow-hidden rounded-lg bg-muted border">
+                          <AttachmentSlide
+                            imageId={fileId}
+                            postTitle={plainTextContent.slice(0, 50)}
+                            idx={idx}
+                            ungatekeepStorage={ungatekeepStorage}
                           />
                         </div>
                       </CarouselItem>
@@ -253,7 +414,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
             )}
           </div>
         )}
-        {!post.images?.length && post.linkUrl && post.linkImage && (
+        {!post.attachments?.length && post.linkUrl && post.linkImage && (
           <div className="mt-3 overflow-hidden rounded-lg border hover:bg-muted/50 transition-colors">
             <Link
               href={post.linkUrl}
@@ -287,10 +448,10 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
         )}
       </div>
 
-      {/* Expanded content - link preview (only when post has images; link preview already shown above when no images) */}
+      {/* Expanded content - link preview (already shown above when no attachments) */}
       {isExpanded &&
-        post.images &&
-        post.images.length > 0 &&
+        post.attachments &&
+        post.attachments.length > 0 &&
         post.linkUrl && (
           <div className="border-t px-3 pb-3 pt-2 space-y-3">
             <div className="overflow-hidden rounded-lg border hover:bg-muted/50 transition-colors">
@@ -368,7 +529,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
               <DialogContent>
                 <ShareDialog
                   shareUrl={shareUrl}
-                  title={post.title || post.content.slice(0, 80)}
+                  title={plainTextContent.slice(0, 80)}
                   onCopy={handleCopy}
                 />
               </DialogContent>

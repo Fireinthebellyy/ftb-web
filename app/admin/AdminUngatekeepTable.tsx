@@ -17,13 +17,12 @@ import { stripHtml } from "@/lib/utils";
 
 interface UngatekeepPost {
   id: string;
-  title: string;
   content: string;
-  images: string[];
+  attachments: string[];
   linkUrl?: string | null;
   linkTitle?: string | null;
   linkImage?: string | null;
-  tag?: "announcement" | "company_experience" | "resources" | null;
+  tag?: "announcement" | "company_experience" | "resources" | "playbooks" | "college_hacks" | "interview" | "ama_drops" | "ftb_recommends" | null;
   isPinned: boolean;
   isPublished: boolean;
   publishedAt?: string | null;
@@ -87,20 +86,16 @@ export default function AdminUngatekeepTable() {
   const columns = useMemo<ColumnDef<UngatekeepPost>[]>(() => {
     return [
       {
-        accessorKey: "title",
-        header: "Title",
-        cell: ({ row }) => (
-          <span className="font-medium">{row.original.title}</span>
-        ),
-      },
-      {
         accessorKey: "content",
         header: "Content",
-        cell: ({ row }) => (
-          <p className="text-muted-foreground max-w-xs truncate text-sm">
-            {stripHtml(row.original.content)}
-          </p>
-        ),
+        cell: ({ row }) => {
+          const content = stripHtml(row.original.content);
+          return (
+            <div className="max-w-[300px] truncate" title={content}>
+              {content}
+            </div>
+          );
+        },
       },
       {
         accessorKey: "tag",
@@ -116,7 +111,15 @@ export default function AdminUngatekeepTable() {
               ? "default"
               : tag === "company_experience"
                 ? "secondary"
-                : "outline";
+                : tag === "resources"
+                  ? "outline"
+                  : tag === "playbooks"
+                    ? "default"
+                    : tag === "college_hacks"
+                      ? "secondary"
+                      : tag === "interview"
+                        ? "destructive"
+                        : "outline";
           return <Badge variant={variant}>{tag.replace("_", " ")}</Badge>;
         },
       },
@@ -184,9 +187,8 @@ export default function AdminUngatekeepTable() {
               <NewUngatekeepForm
                 post={{
                   id: post.id,
-                  title: post.title,
                   content: post.content,
-                  images: post.images,
+                  attachments: post.attachments,
                   linkUrl: post.linkUrl,
                   linkTitle: post.linkTitle,
                   linkImage: post.linkImage,
@@ -211,7 +213,7 @@ export default function AdminUngatekeepTable() {
                 size="sm"
                 onClick={() => {
                   if (
-                    !confirm(`Are you sure you want to delete "${post.title}"?`)
+                    !confirm(`Are you sure you want to delete this post?`)
                   ) {
                     return;
                   }
@@ -271,7 +273,7 @@ export default function AdminUngatekeepTable() {
           columns={columns}
           data={posts}
           emptyMessage="No posts found"
-          filterColumnId="title"
+          filterColumnId="content"
           filterPlaceholder="Search posts"
           stickyColumnIds={["actions"]}
         />

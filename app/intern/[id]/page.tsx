@@ -129,10 +129,23 @@ export default function InternshipDetailPage() {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
+      posthog.capture("internship_shared", {
+        internship_id: id,
+        title: internship?.title,
+        method: "copy",
+      });
       toast.success("Link copied to clipboard");
     } catch {
       toast.error("Failed to copy link");
     }
+  };
+
+  const handleShare = (method: string) => {
+    posthog.capture("internship_shared", {
+      internship_id: id,
+      title: internship?.title,
+      method,
+    });
   };
 
   const handleShareDialogOpenChange = (open: boolean) => {
@@ -258,10 +271,6 @@ export default function InternshipDetailPage() {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              posthog.capture("internship_shared", {
-                internship_id: id,
-                title: internship?.title,
-              });
               setShareDialogOpen(true);
             }}
             className="absolute right-6 bottom-5 cursor-pointer rounded-full p-1.5 transition-colors sm:p-2"
@@ -280,6 +289,7 @@ export default function InternshipDetailPage() {
               shareUrl={shareUrl}
               title={internship.title}
               onCopy={handleCopy}
+              onShare={handleShare}
             />
           </DialogContent>
         </Dialog>

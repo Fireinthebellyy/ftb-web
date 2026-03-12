@@ -33,19 +33,20 @@ const getFilteredTags = unstable_cache(
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const q = (searchParams.get("q") || "").trim();
+    const rawQ = searchParams.get("q") || "";
+    const normalizedQ = rawQ.trim().toLowerCase();
     const limitParam = searchParams.get("limit");
 
     const limit = limitParam
       ? Math.min(Math.max(parseInt(limitParam, 10) || 0, 1), 1000)
       : undefined;
 
-    if (!q) {
+    if (!normalizedQ) {
       const tagsList = await getAllTags(limit);
       return NextResponse.json({ success: true, tags: tagsList });
     }
 
-    const tagsList = await getFilteredTags(q, limit);
+    const tagsList = await getFilteredTags(normalizedQ, limit);
     return NextResponse.json({ success: true, tags: tagsList });
   } catch (e) {
     console.error("GET /api/tags error", e);

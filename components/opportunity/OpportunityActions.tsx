@@ -56,10 +56,23 @@ export function OpportunityActions({
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
+      posthog.capture("opportunity_shared", {
+        opportunity_id: id,
+        title: opportunity.title,
+        method: "copy",
+      });
       toast.success("Link copied to clipboard");
     } catch {
       toast.error("Failed to copy link");
     }
+  };
+
+  const handleShare = (method: string) => {
+    posthog.capture("opportunity_shared", {
+      opportunity_id: id,
+      title: opportunity.title,
+      method,
+    });
   };
 
   const handleDeletePost = async () => {
@@ -133,12 +146,6 @@ export function OpportunityActions({
                   type="button"
                   title="Share"
                   aria-label="Share"
-                  onClick={() => {
-                    posthog.capture("opportunity_shared", {
-                      opportunity_id: id,
-                      title: opportunity.title,
-                    });
-                  }}
                   className="group flex cursor-pointer items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
                 >
                   <Share2 className={actionIconClass} />
@@ -148,6 +155,7 @@ export function OpportunityActions({
                 shareUrl={shareUrl}
                 title={opportunity.title}
                 onCopy={handleCopy}
+                onShare={handleShare}
               />
             </Dialog>
           </div>

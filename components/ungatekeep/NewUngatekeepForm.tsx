@@ -15,6 +15,8 @@ import {
   SelectedAttachments,
   ExistingAttachments,
 } from "@/components/opportunity/images/ImageDropzone";
+import { SchedulePublishPopover } from "@/components/opportunity/fields/MetaPopovers";
+import { toDateTimeLocalValue } from "@/lib/date-utils";
 
 import {
   Dialog,
@@ -75,6 +77,17 @@ const ungatekeepFormSchema = z.object({
   ]).optional(),
   isPinned: z.boolean().optional(),
   isPublished: z.boolean().optional(),
+  publishAt: z
+    .string()
+    .optional()
+    .refine(
+      (value) =>
+        !value ||
+        (value.length > 0 && !Number.isNaN(new Date(value).getTime())),
+      {
+        message: "Please provide a valid publish date and time.",
+      }
+    ),
   attachments: z.array(z.string()).optional(),
 });
 
@@ -93,6 +106,7 @@ interface NewUngatekeepFormProps {
     tag?: string | null;
     isPinned?: boolean;
     isPublished?: boolean;
+    publishedAt?: string | null;
   };
   onSuccess?: () => void;
   onCancel?: () => void;
@@ -114,6 +128,7 @@ export default function NewUngatekeepForm({
     [...(post?.images || []), ...(post?.attachments || [])]
   );
   const [removedFileIds, setRemovedFileIds] = useState<string[]>([]);
+  const [scheduleMessage, setScheduleMessage] = useState<string | null>(null);
 
   const maxFiles = 4;
   const maxAttachments = 2;
@@ -137,9 +152,12 @@ export default function NewUngatekeepForm({
           | "ftb_recommends") || undefined,
       isPinned: post?.isPinned || false,
       isPublished: post?.isPublished || false,
+      publishAt: post?.publishedAt ? toDateTimeLocalValue(new Date(post.publishedAt)) : "",
       attachments: post?.attachments || [],
     },
   });
+
+  const watchedPublishAt = form.watch("publishAt");
 
   // Handle removing an existing file
   const handleRemoveExistingFile = (fileId: string) => {
@@ -304,6 +322,7 @@ export default function NewUngatekeepForm({
 
       const cleanedData = {
         ...data,
+        isPublished: data.publishAt ? true : data.isPublished,
         attachments:
           isEdit && post
             ? finalAttachments
@@ -314,6 +333,7 @@ export default function NewUngatekeepForm({
         linkTitle: data.linkTitle || undefined,
         linkImage: data.linkImage || undefined,
         tag: data.tag || undefined,
+        publishAt: data.publishAt || undefined,
       };
 
       if (isEdit && post) {
@@ -557,8 +577,16 @@ export default function NewUngatekeepForm({
           </div>
         </div>
 
-        <div className="mt-4 flex items-center justify-end border-t pt-4">
-          <div className="flex justify-end space-x-2">
+        <div className="mt-4 flex flex-col border-t pt-4">
+          <div className="flex items-center justify-end space-x-2">
+            <SchedulePublishPopover
+              control={form.control}
+              watchedPublishAt={watchedPublishAt}
+              onConfirmMessageChange={setScheduleMessage}
+              showLabel
+              label="Schedule"
+              compactLabel="SCHD"
+            />
             {onCancel && (
               <Button
                 type="button"
@@ -573,7 +601,12 @@ export default function NewUngatekeepForm({
                 Cancel
               </Button>
             )}
-            <Button type="submit" disabled={isSubmitting} size="sm" className="px-6">
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              size="sm"
+              className="px-6"
+            >
               {isSubmitting
                 ? isEdit
                   ? "Updating..."
@@ -583,6 +616,11 @@ export default function NewUngatekeepForm({
                   : "Create Post"}
             </Button>
           </div>
+          {scheduleMessage && (
+            <p className="text-muted-foreground pt-2 text-right text-xs">
+              This will go live on {scheduleMessage}.
+            </p>
+          )}
         </div>
       </form>
     </Form>

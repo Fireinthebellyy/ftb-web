@@ -24,6 +24,7 @@ const updatePostSchema = z.object({
   ]).optional(),
   isPinned: z.boolean().optional(),
   isPublished: z.boolean().optional(),
+  publishAt: z.string().optional().nullable(),
 });
 
 export async function GET(
@@ -155,14 +156,15 @@ export async function PUT(
     if (validatedData.tag !== undefined) updates.tag = validatedData.tag;
     if (validatedData.isPinned !== undefined)
       updates.isPinned = validatedData.isPinned;
+    if (validatedData.publishAt !== undefined) {
+      updates.publishedAt = validatedData.publishAt
+        ? new Date(validatedData.publishAt)
+        : null;
+    }
     if (validatedData.isPublished !== undefined) {
       updates.isPublished = validatedData.isPublished;
-      // Set publishedAt when publishing for the first time
-      if (validatedData.isPublished) {
-        const existingPost = await db.query.ungatekeepPosts.findFirst({
-          where: eq(ungatekeepPosts.id, postId),
-          columns: { publishedAt: true },
-        });
+      // Set publishedAt when publishing for the first time if not already set
+      if (validatedData.isPublished && !validatedData.publishAt) {
         if (!existingPost?.publishedAt) {
           updates.publishedAt = new Date();
         }

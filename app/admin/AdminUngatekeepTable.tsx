@@ -126,17 +126,32 @@ export default function AdminUngatekeepTable() {
       {
         accessorKey: "isPublished",
         header: "Status",
-        cell: ({ row }) => (
-          <Badge
-            className={
-              row.original.isPublished
-                ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50"
-                : "border border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-50"
-            }
-          >
-            {row.original.isPublished ? "Published" : "Draft"}
-          </Badge>
-        ),
+        cell: ({ row }) => {
+          const isPublished = row.original.isPublished;
+          const publishedAt = row.original.publishedAt;
+          const isScheduled =
+            isPublished && publishedAt && new Date(publishedAt) > new Date();
+
+          if (isScheduled) {
+            return (
+              <Badge className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-50">
+                Scheduled
+              </Badge>
+            );
+          }
+
+          return (
+            <Badge
+              className={
+                isPublished
+                  ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50"
+                  : "border border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-50"
+              }
+            >
+              {isPublished ? "Published" : "Draft"}
+            </Badge>
+          );
+        },
       },
       {
         id: "pinned",
@@ -195,6 +210,7 @@ export default function AdminUngatekeepTable() {
                   tag: post.tag,
                   isPinned: post.isPinned,
                   isPublished: post.isPublished,
+                  publishedAt: post.publishedAt,
                 }}
                 isEdit
                 onSuccess={() =>

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { ungatekeepPosts, user as userTable } from "@/lib/schema";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, and, or, isNull, lte } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
 const FREE_POST_LIMIT = 5;
@@ -44,8 +44,16 @@ export async function GET(request: Request) {
     const totalCountResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(ungatekeepPosts)
-      .where(eq(ungatekeepPosts.isPublished, true));
-    
+      .where(
+        and(
+          eq(ungatekeepPosts.isPublished, true),
+          or(
+            isNull(ungatekeepPosts.publishedAt),
+            lte(ungatekeepPosts.publishedAt, new Date())
+          )
+        )
+      );
+
     const totalCount = Number(totalCountResult[0]?.count ?? 0);
 
     // Fetch posts with pagination
@@ -63,13 +71,21 @@ export async function GET(request: Request) {
         createdAt: ungatekeepPosts.createdAt,
         creatorName: userTable.name,
         // Add isSaved field if authenticated
-        isSaved: userId 
+        isSaved: userId
           ? sql<boolean>`EXISTS(SELECT 1 FROM "ungatekeep_bookmarks" WHERE "post_id" = ${ungatekeepPosts.id} AND "user_id" = ${userId})`
           : sql<boolean>`false`,
       })
       .from(ungatekeepPosts)
       .leftJoin(userTable, eq(ungatekeepPosts.userId, userTable.id))
-      .where(eq(ungatekeepPosts.isPublished, true))
+      .where(
+        and(
+          eq(ungatekeepPosts.isPublished, true),
+          or(
+            isNull(ungatekeepPosts.publishedAt),
+            lte(ungatekeepPosts.publishedAt, new Date())
+          )
+        )
+      )
       .orderBy(desc(ungatekeepPosts.publishedAt), desc(ungatekeepPosts.id))
       .limit(isAuthenticated ? limit : FREE_POST_LIMIT)
       .offset(isAuthenticated ? offset : 0);

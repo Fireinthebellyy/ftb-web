@@ -24,6 +24,7 @@ const createPostSchema = z.object({
   ]).optional(),
   isPinned: z.boolean().optional(),
   isPublished: z.boolean().optional(),
+  publishAt: z.string().optional().nullable(),
 });
 
 export async function GET(request: Request) {
@@ -132,7 +133,11 @@ export async function POST(request: Request) {
         tag: validatedData.tag || undefined,
         isPinned: validatedData.isPinned || false,
         isPublished: validatedData.isPublished || false,
-        publishedAt: validatedData.isPublished ? new Date() : undefined,
+        publishedAt: validatedData.publishAt
+          ? new Date(validatedData.publishAt)
+          : validatedData.isPublished
+            ? new Date()
+            : undefined,
         userId: currentUser.currentUser.id,
       })
       .returning();

@@ -31,7 +31,6 @@ type Props = {
   watchedLocation?: string | null;
   watchedOrganiser?: string | null;
   watchedDateRange?: { from?: Date; to?: Date } | undefined;
-  watchedPublishAt?: string;
   showSchedule?: boolean;
   showLabels?: boolean;
   compactLabels?: boolean;
@@ -51,7 +50,6 @@ export function MetaPopovers({
   watchedLocation,
   watchedOrganiser,
   watchedDateRange,
-  watchedPublishAt,
   showSchedule = true,
   showLabels = false,
   compactLabels = false,
@@ -275,10 +273,7 @@ export function MetaPopovers({
               type="button"
               variant="ghost"
               size="sm"
-              className={cn(
-                triggerClassName,
-                watchedPublishAt && "bg-blue-50 text-blue-600"
-              )}
+              className={triggerClassName}
             >
               <Clock3 className="h-4 w-4" />
               {showLabels && (
@@ -397,12 +392,11 @@ export function SchedulePublishPopover({
             type="button"
             variant="ghost"
             size="sm"
-            className={cn(
+            className={
               showLabel
                 ? "h-auto w-11 flex-col gap-1 p-1.5 text-[10px] leading-none text-gray-600 md:w-16 md:text-[11px]"
-                : "h-8 w-8 p-2",
-              watchedPublishAt && "bg-blue-50 text-blue-600"
-            )}
+                : "h-8 w-8 p-2"
+            }
           >
             <Clock3 className="h-4 w-4" />
             {showLabel && (

@@ -3,34 +3,34 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Share2 } from "lucide-react";
+import { Share2, Bookmark } from "lucide-react";
 import { toast } from "sonner";
 import posthog from "posthog-js";
 import { InternshipPostProps } from "@/types/interfaces";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { formatDate } from "@/lib/utils";
+import { toTitleCase, cn } from "@/lib/utils";
 import { ShareDialog } from "./internship/ShareDialog";
+import { useTracker } from "@/components/providers/TrackerProvider";
 
 const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
   const router = useRouter();
+  const { addToTracker, getStatus, removeFromTracker } = useTracker();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   const {
     id,
     title,
-    type,
-    location,
-    createdAt,
     hiringOrganization,
-    experience,
     deadline,
   } = internship;
+
+  const currentStatus = getStatus(id, "internship");
+  const isBookmarked = !!currentStatus;
 
   const handleCardClick = () => {
     posthog.capture("internship_card_clicked", {
       internship_id: id,
       title,
-      type,
     });
     router.push(`/intern/${id}`);
   };
@@ -42,13 +42,15 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
     }
   };
 
-  const formatType = (type: string) => {
-    const typeMap: Record<string, string> = {
-      remote: "Remote",
-      hybrid: "Hybrid",
-      onsite: "Onsite",
-    };
-    return typeMap[type.toLowerCase()] || type;
+  const handleSaveClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isBookmarked) {
+      removeFromTracker(id, "internship");
+    } else {
+      addToTracker(id, "Not Applied", "internship");
+    }
   };
 
   const publicBaseUrl =
@@ -91,84 +93,76 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
       <div
         role="button"
         tabIndex={0}
-        className="cursor-pointer rounded-lg border bg-white px-3 py-2.5 transition-all hover:border-gray-300 hover:shadow-md sm:px-4 sm:py-3"
+        className="group cursor-pointer rounded-xl border border-slate-200 bg-white px-4 py-3 transition-all hover:border-[#ec5b13]/30 hover:shadow-md hover:bg-orange-50/10"
         onClick={handleCardClick}
         onKeyDown={handleCardKeyDown}
       >
-        {/* Main Content */}
-        <div className="min-w-0">
-          {/* Title, Company and days ago */}
-          <div className="mb-1.5 flex items-start justify-between gap-2">
-            <h3 className="min-w-0 flex-1 text-sm leading-snug font-semibold text-slate-900 sm:text-base">
-              {title}{" "}
-              {hiringOrganization && (
-                <span className="font-normal text-slate-700">
-                  at {hiringOrganization}
-                </span>
-              )}
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate text-sm font-bold text-slate-900 sm:text-base">
+              {toTitleCase(title)}
             </h3>
-            {createdAt && (
-              <span className="shrink-0 pt-0.5 text-[11px] text-gray-500 sm:text-xs">
-                {formatDate(createdAt)}
-              </span>
-            )}
+            <p className="truncate text-xs text-slate-500 sm:text-sm">
+              {toTitleCase(hiringOrganization)}
+            </p>
           </div>
 
-          {/* Bottom Section: Type, Location, Experience and Actions */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3 text-xs text-gray-600 sm:text-sm">
-              <span className="truncate text-xs text-gray-600 sm:text-sm">
-                {type ? formatType(type) : "Internship"}
-                {location && (
-                  <span className="text-gray-600"> ({location})</span>
-                )}
-                {experience && (
-                  <span className="ml-1 text-gray-600"> • {experience}</span>
-                )}
-              </span>
-            </div>
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <a
+              href={`https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Apply to: ${title}`)}&dates=${(() => {
+                const date = deadline
+                  ? new Date(deadline)
+                  : new Date(Date.now() + 24 * 60 * 60 * 1000);
+                const formatted = date
+                  .toISOString()
+                  .replace(/[-:]|\.\d{3}/g, "");
+                return `${formatted}/${formatted}`;
+              })()}&details=${encodeURIComponent(`Company: ${hiringOrganization || "N/A"}\n\nInternship Link: ${shareUrl}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              title="Add to calendar"
+              className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-blue-50"
+            >
+              <Image
+                src="/images/google-calendar.webp"
+                alt="Google Calendar"
+                width={16}
+                height={16}
+                className="h-4 w-4 object-contain"
+              />
+            </a>
+            
+            <button
+              type="button"
+              title="Share"
+              aria-label="Share"
+              onClick={handleShareClick}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-orange-50 hover:text-[#ec5b13]"
+            >
+              <Share2 className="h-4 w-4" />
+            </button>
 
-            <div className="flex shrink-0 items-center gap-2">
-              <a
-                href={`https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Apply to: ${title}`)}&dates=${(() => {
-                  const date = deadline
-                    ? new Date(deadline)
-                    : new Date(Date.now() + 24 * 60 * 60 * 1000);
-                  const formatted = date
-                    .toISOString()
-                    .replace(/[-:]|\.\d{3}/g, "");
-                  return `${formatted}/${formatted}`;
-                })()}&details=${encodeURIComponent(`Company: ${hiringOrganization || "N/A"}\n\nInternship Link: ${shareUrl}`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                title="Add to calendar"
-                className="flex cursor-pointer items-center rounded-md p-1 text-xs transition-colors hover:bg-blue-50 hover:text-blue-600 sm:text-sm"
-              >
-                <Image
-                  src="/images/google-calendar.webp"
-                  alt="Google Calendar"
-                  width={16}
-                  height={16}
-                  className="h-3 w-3 object-contain sm:h-4 sm:w-4"
-                />
-              </a>
-              <button
-                type="button"
-                title="Share"
-                aria-label="Share"
-                onClick={handleShareClick}
-                className="flex cursor-pointer items-center rounded-md p-1 text-xs transition-colors hover:bg-orange-50 hover:text-orange-600 sm:text-sm"
-              >
-                <Share2 className="h-3 w-3 sm:h-4 sm:w-4" />
-              </button>
-            </div>
+            <button
+              type="button"
+              title={isBookmarked ? "Remove from Tracker" : "Save to Tracker"}
+              aria-label={isBookmarked ? "Remove from Tracker" : "Save to Tracker"}
+              onClick={handleSaveClick}
+              className={cn(
+                "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
+                isBookmarked 
+                  ? "bg-orange-100 text-[#ec5b13]" 
+                  : "text-slate-400 hover:bg-orange-50 hover:text-[#ec5b13]"
+              )}
+            >
+              <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-current")} />
+            </button>
           </div>
         </div>
       </div>
 
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-[calc(100vw-2rem)] rounded-2xl sm:max-w-md">
           <ShareDialog
             shareUrl={shareUrl}
             title={title}

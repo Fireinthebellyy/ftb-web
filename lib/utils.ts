@@ -44,3 +44,32 @@ export function stripHtml(input: string | null | undefined): string {
     .replace(/\s+/g, " ") // Collapse whitespace
     .trim();
 }
+
+/**
+ * Converts a string to title case while preserving capitalization for common industry acronyms.
+ */
+export function toTitleCase(str: string | null | undefined): string {
+  if (!str) return "";
+
+  // Words that should always be fully capitalized
+  const acronyms = new Set([
+    "HR", "CEO", "CTO", "CFO", "COO", "CMO", "VP", "PR",
+    "IT", "UI", "UX", "AI", "ML", "API", "PM", "QA", "SDE",
+    "CA", "CPA", "CS", "BBA", "MBA", "BCA", "MCA", "BTECH", "MTECH",
+    "SEO", "SMM", "GST"
+  ]);
+
+  return str.replace(
+    /\w\S*/g,
+    (text) => {
+      // Extract pure alphabetic part for comparison
+      const cleanText = text.replace(/[^a-zA-Z]/g, '').toUpperCase();
+
+      if (acronyms.has(cleanText)) {
+        return text.toUpperCase();
+      }
+
+      return text.charAt(0).toUpperCase() + text.substring(1).toLowerCase();
+    }
+  );
+}

@@ -349,7 +349,7 @@ export default function InternshipList() {
         <div className="hidden gap-6 lg:grid lg:grid-cols-12">
           {/* Left Sidebar - 3 columns */}
           <aside className="col-span-3">
-            <div className="sticky top-6 space-y-6">
+            <div className="sticky top-16 space-y-6">
               {/* Search Bar - Above Quick Links */}
               <div className="relative flex items-center gap-2">
                 <div className="relative flex-1">
@@ -443,28 +443,6 @@ export default function InternshipList() {
                 </div>
               )}
 
-              {/* Quick Links */}
-              <div className="rounded-lg border bg-white px-4 py-3">
-                <h3 className="mb-3 font-semibold text-gray-900">
-                  Quick Links
-                </h3>
-                <div className="space-y-2">
-                  <Link
-                    href="/opportunities"
-                    prefetch={false}
-                    className="block text-sm text-gray-600 hover:text-gray-800"
-                  >
-                    Opportunities
-                  </Link>
-                  <Link
-                    href="/profile"
-                    prefetch={false}
-                    className="block text-sm text-gray-600 hover:text-gray-800"
-                  >
-                    My Profile
-                  </Link>
-                </div>
-              </div>
 
               {/* featured */}
               <FeaturedOpportunities />
@@ -472,7 +450,7 @@ export default function InternshipList() {
           </aside>
 
           {/* Main Content - 6 columns */}
-          <main className="hide-scrollbar col-span-6 max-h-[90vh] overflow-y-scroll pr-2">
+          <main className="col-span-6 pr-2">
             <ToolkitBanner />
 
             {/* Tags in Horizontal Box with Filter Icon */}
@@ -551,7 +529,7 @@ export default function InternshipList() {
 
           <aside className="col-span-3">
             {/* deadline calendar */}
-            <div className="sticky top-6 space-y-6">
+            <div className="sticky top-16 space-y-6">
               {showSecondaryWidgets ? (
                 <>
                   <CalendarWidget kind="internship" />

@@ -23,12 +23,14 @@ export default function ToolkitBanner() {
   }
 
   return (
-    <div className="mb-1 flex w-full flex-col space-y-2">
-      <PageBannerCarousel placement="internship" className="w-full" />
+    <>
+      <div className="mb-4">
+        <PageBannerCarousel placement="internship" className="w-full" />
+      </div>
 
-      {/* Premium Toolkits Section */}
+      {/* Premium Toolkits Section - Sticky */}
       {toolkits.length > 0 && (
-        <div className="pt-1">
+        <div className="sticky top-16 z-20 bg-gray-50 pt-1 pb-2">
           {/* Horizontal Scrolling List */}
           <div
             className="hide-scrollbar flex snap-x gap-3 overflow-x-auto pb-3"
@@ -73,6 +75,6 @@ export default function ToolkitBanner() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

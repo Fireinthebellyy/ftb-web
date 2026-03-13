@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { LayoutGrid, Calendar, Wrench, ArrowRight } from "lucide-react";
+import { LayoutGrid, Calendar, Wrench, ArrowRight, Check } from "lucide-react";
 import { useTracker } from "../providers/TrackerProvider";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,21 @@ export default function ApplyModal({
 }: ApplyModalProps) {
   const { addToTracker } = useTracker();
   const router = useRouter();
+  const [activeStep, setActiveStep] = useState(0);
+
+  useEffect(() => {
+    if (isOpen) {
+      setActiveStep(0);
+      const t1 = setTimeout(() => setActiveStep(1), 600);
+      const t2 = setTimeout(() => setActiveStep(2), 1100);
+      const t3 = setTimeout(() => setActiveStep(3), 1600);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+      };
+    }
+  }, [isOpen]);
 
   if (!opportunity) return null;
 
@@ -51,14 +67,74 @@ export default function ApplyModal({
     router.push("/tracker");
   };
 
+  const StepItem = ({
+    index,
+    title,
+    description,
+    icon: Icon,
+    isFill = false,
+  }: {
+    index: number;
+    title: string;
+    description: string;
+    icon: any;
+    isFill?: boolean;
+  }) => {
+    const isDone = activeStep >= index;
+    return (
+      <div
+        className={cn(
+          "flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm transition-all duration-500",
+          isDone ? "border-orange-100 bg-orange-50/40" : "border-transparent"
+        )}
+      >
+        <div
+          className={cn(
+            "flex shrink-0 items-center justify-center rounded-xl p-3 transition-all duration-500",
+            isDone ? "bg-[#ec5b13] text-white" : "bg-orange-50 text-orange-500"
+          )}
+        >
+          {isDone ? (
+            <Check size={24} className="animate-in zoom-in duration-300" />
+          ) : (
+            <Icon
+              size={24}
+              className={cn(
+                isFill ? "fill-orange-400 stroke-orange-500" : "stroke-orange-500"
+              )}
+            />
+          )}
+        </div>
+        <div>
+          <h4
+            className={cn(
+              "font-bold transition-colors duration-500",
+              isDone ? "text-slate-900" : "text-slate-800"
+            )}
+          >
+            {title}
+          </h4>
+          <p
+            className={cn(
+              "text-xs font-medium transition-colors duration-500",
+              isDone ? "text-slate-500" : "text-slate-400"
+            )}
+          >
+            {description}
+          </p>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         showCloseButton={false}
-        className="data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:sm:slide-in-from-bottom-0 data-[state=open]:sm:zoom-in-95 data-[state=closed]:sm:slide-out-to-bottom-0 data-[state=closed]:sm:zoom-out-95 fixed top-auto right-0 bottom-0 left-0 w-full max-w-none translate-x-0 translate-y-0 gap-0 rounded-t-[32px] rounded-b-none border-none bg-[#FAFAF9] p-6 text-black shadow-2xl focus:ring-0 focus:outline-none sm:top-[50%] sm:right-auto sm:bottom-auto sm:left-[50%] sm:w-full sm:max-w-sm sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-[32px]"
+        className="data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom fixed top-auto right-0 bottom-0 left-0 w-full max-w-none translate-x-0 translate-y-0 gap-0 rounded-t-[32px] rounded-b-none border-none bg-[#FAFAF9] p-6 text-black shadow-2xl focus:ring-0 focus:outline-none sm:top-[50%] sm:right-auto sm:bottom-auto sm:left-[50%] sm:w-full sm:max-w-sm sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-[32px]"
       >
         <div className="flex flex-col items-center pt-2">
-          {/* Top handle bar if needed for mobile, otherwise standard styling */}
+          {/* Top handle bar */}
           <div className="mb-6 h-1 w-10 rounded-full bg-orange-200/50" />
 
           {/* Heading */}
@@ -71,50 +147,26 @@ export default function ApplyModal({
 
           {/* Value Props */}
           <div className="w-full space-y-3">
-            {/* Add to Tracker */}
-            <div className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm">
-              <div className="flex shrink-0 items-center justify-center rounded-xl bg-orange-50 p-3 text-orange-500">
-                <LayoutGrid
-                  size={24}
-                  className="fill-orange-400 stroke-orange-500"
-                />
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-800">Add to Tracker</h4>
-                <p className="text-xs font-medium text-slate-400">
-                  Every application. One Dashboard. Zero Chaos.
-                </p>
-              </div>
-            </div>
-
-            {/* Add to Calendar */}
-            <div className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm">
-              <div className="flex shrink-0 items-center justify-center rounded-xl bg-orange-50 p-3 text-orange-500">
-                <Calendar size={24} className="stroke-orange-500" />
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-800">Add to Calendar</h4>
-                <p className="text-xs font-medium text-slate-400">
-                  Deadlines synced. Mind freed. No slips, no stress.
-                </p>
-              </div>
-            </div>
-
-            {/* Access Toolkits */}
-            <div className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm">
-              <div className="flex shrink-0 items-center justify-center rounded-xl bg-orange-50 p-3 text-orange-500">
-                <Wrench
-                  size={24}
-                  className="fill-orange-400 stroke-orange-500"
-                />
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-800">Access Toolkits</h4>
-                <p className="text-xs font-medium text-slate-400">
-                  Become a hard-to-reject candidate - unfairly prepared.
-                </p>
-              </div>
-            </div>
+            <StepItem
+              index={1}
+              title="Add to Tracker"
+              description="Every application. One Dashboard. Zero Chaos."
+              icon={LayoutGrid}
+              isFill
+            />
+            <StepItem
+              index={2}
+              title="Add to Calendar"
+              description="Deadlines synced. Mind freed. No slips, no stress."
+              icon={Calendar}
+            />
+            <StepItem
+              index={3}
+              title="Access Toolkits"
+              description="Become a hard-to-reject candidate - unfairly prepared."
+              icon={Wrench}
+              isFill
+            />
           </div>
 
           {/* Footer CTA */}
@@ -128,7 +180,13 @@ export default function ApplyModal({
             </div>
             <button
               onClick={handleSubmit}
-              className="group flex items-center justify-center gap-2 rounded-full bg-[#f97316] px-6 py-3 font-bold text-white shadow-lg shadow-orange-500/30 transition-all hover:scale-105 hover:bg-orange-600"
+              className={cn(
+                "group flex items-center justify-center gap-2 rounded-full px-6 py-3 font-bold text-white shadow-lg transition-all active:scale-95",
+                activeStep >= 3
+                  ? "bg-[#ec5b13] shadow-orange-500/30 hover:bg-[#d44d0c]"
+                  : "bg-slate-300 shadow-none cursor-not-allowed"
+              )}
+              disabled={activeStep < 3}
             >
               Proceed
               <ArrowRight

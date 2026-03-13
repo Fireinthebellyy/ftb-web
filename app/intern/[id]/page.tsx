@@ -11,31 +11,31 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Building2,
-  ExternalLink,
-  IndianRupee,
+  ArrowLeft,
+  Briefcase,
+  Building,
+  GraduationCap,
   MapPin,
+  IndianRupee,
   Share2,
   Sparkles,
-  Rocket,
-  Briefcase,
-  Clock,
-  Info,
-  CheckCircle,
-  GraduationCap,
-  Network,
-  Navigation,
   Bookmark,
-  Tags,
-  Map,
-  ArrowLeft,
   Calendar,
-  Users
+  Info,
+  CalendarPlus,
+  CalendarDays,
+  AlertCircle,
+  Lightbulb,
+  Flag,
+  ChevronRight,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import posthog from "posthog-js";
+import { cn, toTitleCase } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
 import { ShareDialog } from "@/components/internship/ShareDialog";
 import ApplyModal, {
   ApplyModalOpportunity,
@@ -61,6 +61,9 @@ interface InternshipData {
   poster?: string | null;
   eligibility?: string[];
   hiringManagerEmail?: string | null;
+  contactEmail?: string | null;
+  postUrl?: string | null;
+  applyLink?: string | null;
   user: {
     id: string;
     name: string;
@@ -73,7 +76,7 @@ const mapInternshipToApplyOpportunity = (
   period: InternshipData
 ): ApplyModalOpportunity => {
   return {
-    ...period, // spread other properties
+    ...period,
     id: period.id,
     title: period.title,
     hiringOrganization: period.hiringOrganization,
@@ -87,12 +90,14 @@ const mapInternshipToApplyOpportunity = (
 };
 
 export default function InternshipDetailPage() {
+  const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const [internship, setInternship] = useState<InternshipData | null>(null);
   const [loading, setLoading] = useState(true);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [smartApplyOpen, setSmartApplyOpen] = useState(false);
   const [notFoundError, setNotFoundError] = useState(false);
+  const [activeTab, setActiveTab] = useState("description");
   const { data: session } = useSession();
 
   useEffect(() => {
@@ -124,6 +129,21 @@ export default function InternshipDetailPage() {
   if (notFoundError) {
     notFound();
   }
+
+  // Formatting helpers
+  const formatSalary = (stipend: number | null | undefined) => {
+    if (!stipend) return "Unpaid / Not disclosed";
+    return `${stipend.toLocaleString()} / mo`;
+  };
+
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
 
   const publicBaseUrl =
     (process.env.NEXT_PUBLIC_SITE_URL as string | undefined) ||
@@ -158,425 +178,572 @@ export default function InternshipDetailPage() {
     setShareDialogOpen(open);
   };
 
+  const onSmartApplyClick = () => {
+    setSmartApplyOpen(true);
+  };
+
   if (loading || !internship) {
     return (
-      <div className="container mx-auto max-w-5xl px-4 py-6">
-        <div className="rounded-lg border bg-white p-6 shadow-sm">
-          <div className="animate-pulse space-y-4">
-            <div className="h-48 w-full rounded bg-gray-200"></div>
-            <div className="h-8 w-3/4 rounded bg-gray-200"></div>
-            <div className="h-4 w-1/2 rounded bg-gray-200"></div>
-            <div className="h-32 rounded bg-gray-200"></div>
-          </div>
-        </div>
+      <div className="flex min-h-[80vh] w-full flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#ec5b13]"></div>
       </div>
     );
   }
+
+  // Formatting helpers (comment kept for readability)
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-[#f8f6f6] dark:bg-[#221610] pb-24 md:pb-0 text-slate-900 dark:text-slate-100">
-      {/* Mobile Sticky Header */}
-      <header className="sticky top-0 z-50 flex items-center justify-between bg-[#f8f6f6]/95 dark:bg-[#221610]/95 px-4 py-4 md:hidden shadow-sm backdrop-blur-md">
-        <button onClick={() => window.history.back()} className="text-[#ec5b13]">
-          <ArrowLeft className="h-6 w-6" />
-        </button>
-        <h1 className="text-lg font-bold text-slate-900 dark:text-white leading-none">
-          Internship Details
-        </h1>
-        <button onClick={() => setShareDialogOpen(true)} className="text-[#ec5b13]">
-          <Share2 className="h-6 w-6" />
-        </button>
-      </header>
+    <div className="min-h-screen w-full bg-white text-slate-900 font-sans md:bg-[#f8f9fa]">
 
-      {/* Mobile Hero (Overlay format) */}
-      <div className="relative w-full h-56 md:hidden">
-        {internship.poster ? (
-          <Image
-            src={internship.poster}
-            alt="Hero Background"
-            fill
-            className="object-cover"
-          />
-        ) : (
-          <div className="w-full h-full bg-slate-200 dark:bg-slate-800" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-        <div className="absolute bottom-5 left-4 right-4 flex flex-col items-start gap-2">
-          {internship.type && (
-            <span className="bg-[#ec5b13] text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded">
-              {internship.type.replace(/-/g, " ")}
-            </span>
-          )}
-          <h2 className="text-white text-xl font-bold leading-tight drop-shadow-md">
-            {internship.title}
-          </h2>
-        </div>
-      </div>
+      {/* ============================================================
+          MOBILE LAYOUT (hidden on md+)
+      ============================================================ */}
+      <div className="md:hidden pb-32">
+        {/* Mobile Sticky Header */}
+        <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.back()}
+              className="p-1 hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-slate-700" />
+            </button>
+            <span className="font-bold text-[16px] text-slate-900">Internship Detail</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
+              <Calendar className="w-5 h-5 text-slate-700" />
+            </button>
+            <button
+              onClick={() => setShareDialogOpen(true)}
+              className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              <Share2 className="w-5 h-5 text-slate-700" />
+            </button>
+            <button className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
+              <Bookmark className="w-5 h-5 text-slate-700" />
+            </button>
+          </div>
+        </header>
 
-      {/* Mobile Company Card */}
-      <div className="md:hidden mx-4 mt-4 relative bg-white dark:bg-slate-800/50 rounded-xl p-4 flex items-center gap-4 border border-slate-100 dark:border-slate-800 shadow-sm">
-        <div className="absolute top-3 right-3 inline-flex items-center gap-0.5 rounded bg-blue-50 dark:bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-bold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 uppercase tracking-wide">
-          <CheckCircle className="h-2 w-2" />
-          <span>FTB Verified</span>
-        </div>
-        <div className="h-14 w-14 bg-slate-900 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
-          {internship.poster ? (
-            <Image
-              src={internship.poster}
-              alt={`${internship.hiringOrganization} logo`}
-              width={56}
-              height={56}
-              className="object-cover h-full w-full"
-            />
-          ) : (
-            <span className="text-2xl font-black text-white">
-              {internship.hiringOrganization?.charAt(0) || "?"}
-            </span>
-          )}
-        </div>
-        <div className="flex flex-col flex-1">
-          <h3 className="font-bold text-slate-900 dark:text-white text-base mr-16">
-            {internship.hiringOrganization}
-          </h3>
-          <div className="flex items-center gap-1 text-[#ec5b13] text-sm font-medium mt-0.5">
-            <MapPin className="h-3 w-3" />
-            <span>{internship.location || "On-site"}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Quick Overview Section */}
-      <div className="md:hidden px-4 mt-6">
-        <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-3">
-          Quick Overview
-        </h4>
-        <div className="flex flex-col gap-2">
-          <div className="bg-white dark:bg-slate-800/50 rounded-xl p-3 flex items-center gap-3 shadow-sm border border-slate-100 dark:border-slate-800">
-            <div className="h-9 w-9 bg-orange-500/10 rounded-lg flex items-center justify-center text-[#ec5b13] shrink-0">
-              <Calendar className="h-5 w-5" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] text-slate-500 font-semibold uppercase">Duration</span>
-              <span className="text-sm font-bold text-slate-900 dark:text-white">
-                {internship.duration || "N/A"}
-              </span>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-slate-800/50 rounded-xl p-3 flex items-center gap-3 shadow-sm border border-slate-100 dark:border-slate-800">
-            <div className="h-9 w-9 bg-orange-500/10 rounded-lg flex items-center justify-center text-[#ec5b13] shrink-0">
-              <IndianRupee className="h-5 w-5" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] text-slate-500 font-semibold uppercase">Stipend</span>
-              <span className="text-sm font-bold text-slate-900 dark:text-white">
-                {typeof internship.stipend === "number" ? `₹${internship.stipend.toLocaleString()}/mo` : "Not disclosed"}
-              </span>
-            </div>
-          </div>
-          {internship.deadline && (
-            <div className="bg-white dark:bg-slate-800/50 rounded-xl p-3 flex items-center gap-3 shadow-sm border border-slate-100 dark:border-slate-800">
-              <div className="h-9 w-9 bg-orange-500/10 rounded-lg flex items-center justify-center text-[#ec5b13] shrink-0">
-                <Calendar className="h-5 w-5" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] text-slate-500 font-semibold uppercase">Apply By</span>
-                <span className="text-sm font-bold text-slate-900 dark:text-white">
-                  {new Date(internship.deadline).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' })}
+        {/* Mobile Hero Section */}
+        <div className="bg-white px-6 pt-10 pb-0">
+          <div className="flex flex-col items-center text-center gap-4">
+            {/* Logo */}
+            <div className="w-20 h-20 bg-orange-50 rounded-[24px] flex items-center justify-center border border-orange-100 shadow-sm overflow-hidden">
+              {internship.poster ? (
+                <Image src={internship.poster} alt={internship.hiringOrganization} width={80} height={80} className="w-full h-full object-contain p-2" />
+              ) : (
+                <span className="text-2xl font-bold text-[#ec5b13]">
+                  {internship.hiringOrganization.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
                 </span>
+              )}
+            </div>
+
+            <div className="w-full">
+              <h1 className="text-[24px] font-extrabold text-[#1a1a1a] mb-1 leading-tight tracking-tight">
+                {toTitleCase(internship.title)}
+              </h1>
+              <h2 className="text-[16px] font-bold text-[#ec5b13] mb-4">
+                {toTitleCase(internship.hiringOrganization)}
+              </h2>
+
+              <div className="flex flex-wrap items-center justify-center gap-x-2 text-[13px] text-slate-500 font-medium mb-5">
+                {internship.location && (
+                  <>
+                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{toTitleCase(internship.location)}</span>
+                    <span className="mx-1">•</span>
+                  </>
+                )}
+                <CalendarDays className="w-3.5 h-3.5 text-slate-400" />
+                <span>Posted {internship.createdAt ? formatDistanceToNow(new Date(internship.createdAt), { addSuffix: true }) : "recently"}</span>
               </div>
-            </div>
-          )}
-          <div className="bg-white dark:bg-slate-800/50 rounded-xl p-3 flex items-center gap-3 shadow-sm border border-slate-100 dark:border-slate-800">
-            <div className="h-9 w-9 bg-orange-500/10 rounded-lg flex items-center justify-center text-[#ec5b13] shrink-0">
-              <Users className="h-5 w-5" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] text-slate-500 font-semibold uppercase">Openings</span>
-              <span className="text-sm font-bold text-slate-900 dark:text-white">
-                Multiple positions
-              </span>
+
+              <div className="flex flex-wrap justify-center gap-2.5">
+                {internship.type && (
+                  <Badge className="bg-orange-50 text-[#ec5b13] hover:bg-orange-100 border-none rounded-2xl px-4 py-2 font-bold text-[12px] flex items-center gap-1.5 shadow-sm">
+                    <Briefcase className="w-3.5 h-3.5" />
+                    {internship.type.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                  </Badge>
+                )}
+                {internship.timing && (
+                  <Badge className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border-none rounded-2xl px-4 py-2 font-bold text-[12px] flex items-center gap-1.5 shadow-sm">
+                    <Building className="w-3.5 h-3.5" />
+                    {internship.timing.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                  </Badge>
+                )}
+                {internship.stipend !== null && internship.stipend !== undefined && (
+                  <Badge className="bg-orange-50 text-orange-600 hover:bg-orange-100 border-none rounded-2xl px-4 py-2 font-bold text-[12px] flex items-center gap-1.5 shadow-sm">
+                    <IndianRupee className="w-3.5 h-3.5" />
+                    {formatSalary(internship.stipend)}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
+
+          {/* Mobile Tabs */}
+          <div className="flex items-center justify-between mt-8 overflow-x-auto border-b border-slate-100 -mx-6 px-6">
+            {["Description", "Company", "Benefits", "Requirements"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab.toLowerCase())}
+                className={cn(
+                  "pb-4 text-[13px] font-bold transition-all relative whitespace-nowrap",
+                  activeTab === tab.toLowerCase() ? "text-[#ec5b13]" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                {tab}
+                {activeTab === tab.toLowerCase() && (
+                  <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#ec5b13] rounded-t-full" />
+                )}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content Area */}
-          <div className="lg:col-span-2 space-y-6 md:space-y-6">
-
-            {/* Desktop Hero Section */}
-            <div className="hidden md:block bg-white dark:bg-slate-800/50 rounded-xl overflow-hidden border border-orange-500/5 shadow-sm">
-              <div className="h-48 w-full bg-gradient-to-br from-orange-500/20 to-orange-500/5 relative">
-                <div className="absolute -bottom-8 left-8">
-                  <div className="h-20 w-20 bg-white dark:bg-slate-900 rounded-xl shadow-lg border-4 border-white dark:border-slate-900 flex items-center justify-center overflow-hidden">
-                    {internship.poster ? (
-                      <Image
-                        src={internship.poster}
-                        alt={`${internship.hiringOrganization} logo`}
-                        width={80}
-                        height={80}
-                        className="object-fit h-full w-full"
-                      />
-                    ) : (
-                      <span className="text-4xl font-black text-orange-600">
-                        {internship.hiringOrganization?.charAt(0) || "?"}
-                      </span>
-                    )}
-                  </div>
-                </div>
+        {/* Mobile Tab Content */}
+        <div className="px-6 pt-8 pb-12">
+          {activeTab === "description" && (
+            <div className="animate-in fade-in duration-300">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#ec5b13]" />
+                <h3 className="text-[17px] font-bold text-slate-900">Job Description</h3>
               </div>
-
-              <div className="pt-12 pb-8 px-8 flex flex-col gap-6">
-                {/* Title & Apply Button Row */}
-                <div className="flex flex-col md:flex-row md:justify-between gap-4 md:items-start">
-                  <div className="space-y-1">
-                    <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-                      {internship.title}
-                    </h2>
-                    <div className="flex flex-wrap items-center gap-2 text-slate-600 dark:text-slate-400 font-medium pt-1">
-                      <span>{internship.hiringOrganization}</span>
-                      <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
-                      <span>{internship.location || "Remote"}</span>
+              <div className="text-slate-600 leading-relaxed text-[15px] space-y-5">
+                {typeof internship.description === "string" ? (
+                  <p className="whitespace-pre-wrap">{internship.description}</p>
+                ) : (
+                  internship.description || <p>No description provided.</p>
+                )}
+                {internship.location && (
+                  <div className="mt-8 overflow-hidden rounded-3xl border border-slate-100 shadow-sm">
+                    <div className="relative h-52 w-full">
+                      <Image src="/images/map-placeholder.png" alt="Company Location" fill className="object-cover" />
+                      <div className="absolute inset-0 bg-blue-400/10" />
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                        <div className="w-8 h-8 rounded-full bg-orange-500/30 animate-ping absolute scale-150" />
+                        <div className="w-5 h-5 rounded-full bg-orange-500 border-2 border-white shadow-lg relative z-10" />
+                      </div>
                     </div>
-                  </div>
-
-                  {internship.link && (
-                    <Link
-                      href={`${internship.link}${internship.link.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=internship_detail&utm_campaign=internship_apply`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Button className="bg-[#ec5b13] text-white px-8 py-6 rounded-lg font-bold hover:brightness-110 transition-all shadow-lg shadow-orange-500/25">
-                        Apply Now
-                      </Button>
-                    </Link>
-                  )}
-                </div>
-
-                {/* Smart Apply Button standalone left-aligned */}
-                {session?.user && (
-                  <div>
-                    <Button
-                      onClick={() => setSmartApplyOpen(true)}
-                      variant="outline"
-                      className="flex items-center gap-2 border-2 border-[#ec5b13] text-[#ec5b13] px-6 py-5 rounded-lg font-bold hover:bg-orange-500/5 transition-all shadow-sm bg-transparent"
-                    >
-                      <Sparkles className="h-5 w-5" />
-                      Smart Apply
-                    </Button>
+                    <div className="bg-[#fcfdfd] p-4 flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">LOCATION</h4>
+                        <p className="text-[14px] text-slate-900 font-bold">{toTitleCase(internship.location)}</p>
+                      </div>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(internship.location)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#ec5b13] font-bold text-[13px] flex items-center gap-1 hover:underline"
+                      >
+                        Get Directions <ChevronRight className="w-4 h-4" />
+                      </a>
+                    </div>
                   </div>
                 )}
-
-                {/* Flexible Metadata Tags */}
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {internship.type && (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500/5 text-[#ec5b13] rounded-full text-sm font-semibold border border-orange-500/10">
-                      <Clock className="h-4 w-4" />
-                      {internship.type.charAt(0).toUpperCase() + internship.type.slice(1).replace(/[_-]/g, " ")}
-                    </div>
-                  )}
-                  {internship.timing && (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500/5 text-[#ec5b13] rounded-full text-sm font-semibold border border-orange-500/10">
-                      <Clock className="h-4 w-4" />
-                      {internship.timing.charAt(0).toUpperCase() + internship.timing.slice(1).replace(/[_-]/g, " ")}
-                    </div>
-                  )}
-                  {typeof internship.stipend === "number" && (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500/5 text-[#ec5b13] rounded-full text-sm font-semibold border border-orange-500/10">
-                      <IndianRupee className="h-4 w-4" />
-                      {internship.stipend.toLocaleString()}/mo
-                    </div>
-                  )}
-                  {internship.duration && (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500/5 text-[#ec5b13] rounded-full text-sm font-semibold border border-orange-500/10">
-                      <Clock className="h-4 w-4" />
-                      {internship.duration}
-                    </div>
-                  )}
-                </div>
               </div>
+              {internship.tags && internship.tags.length > 0 && (
+                <div className="mt-10 pt-6 border-t border-slate-100">
+                  <h4 className="font-bold text-slate-900 mb-4 text-[15px]">Skills & Tags</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {internship.tags
+                      .filter((tag) => !["remote", "onsite", "hybrid"].includes(tag.toLowerCase()))
+                      .map((tag, i) => (
+                        <span key={i} className="bg-slate-50 text-slate-600 border border-slate-100 px-3.5 py-1.5 rounded-full text-[13px] font-bold">
+                          {toTitleCase(tag)}
+                        </span>
+                      ))}
+                  </div>
+                </div>
+              )}
             </div>
-
-            {/* Description Sections */}
-            {internship.description && (
-              <section className="bg-white dark:bg-slate-800/50 rounded-xl p-8 border border-orange-500/5 shadow-sm space-y-4">
-                <div className="flex items-center gap-2 text-[#ec5b13]">
-                  <Info className="h-5 w-5 fill-current text-white dark:text-slate-900 border-2 border-[#ec5b13] bg-[#ec5b13] rounded-full" />
-                  <h3 className="font-bold text-lg uppercase tracking-wider">About the Role</h3>
-                </div>
-                <div className="text-slate-700 dark:text-slate-300 leading-relaxed space-y-4 text-sm sm:text-base">
-                  {typeof internship.description === "string" ? (
-                    <p className="whitespace-pre-wrap">{internship.description}</p>
-                  ) : (
-                    internship.description
-                  )}
-                </div>
-              </section>
-            )}
-
-            {/* Responsibilities / Eligibility */}
-            {((internship.eligibility && internship.eligibility.length > 0) || (internship.tags && internship.tags.length > 0)) && (
-              <section className="bg-white dark:bg-slate-800/50 rounded-xl p-8 border border-orange-500/5 shadow-sm space-y-4">
-                <div className="flex items-center gap-2 text-[#ec5b13]">
-                  <CheckCircle className="h-5 w-5" />
-                  <h3 className="font-bold text-lg uppercase tracking-wider">Responsibilities & Tags</h3>
-                </div>
-                <ul className="space-y-3 pt-2">
-                  {internship.eligibility?.map((item, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-[#ec5b13] mt-0.5 shrink-0" />
-                      <span className="text-slate-700 dark:text-slate-300">{item}</span>
-                    </li>
-                  ))}
-                  {internship.tags?.map((tag, i) => (
-                    <li key={`tag-${i}`} className="flex items-start gap-3">
-                      <Tags className="h-5 w-5 text-[#ec5b13] mt-0.5 shrink-0" />
-                      <span className="text-slate-700 dark:text-slate-300">Tagged skill: <strong>{tag}</strong></span>
+          )}
+          {activeTab === "requirements" && (
+            <div className="animate-in fade-in duration-300">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#ec5b13]" />
+                <h3 className="text-[17px] font-bold text-slate-900">Requirements</h3>
+              </div>
+              {internship.eligibility && internship.eligibility.length > 0 ? (
+                <ul className="space-y-3">
+                  {internship.eligibility.map((item, i) => (
+                    <li key={i} className="flex items-start gap-3 text-slate-600 bg-slate-50/70 p-4 rounded-2xl border border-slate-50">
+                      <div className="mt-0.5 p-1 bg-white rounded-lg border border-slate-100 shrink-0">
+                        <GraduationCap className="w-4 h-4 text-[#ec5b13]" />
+                      </div>
+                      <span className="text-[14px] font-medium">{item}</span>
                     </li>
                   ))}
                 </ul>
-              </section>
-            )}
+              ) : (
+                <p className="text-slate-500 italic">No specific eligibility criteria mentioned.</p>
+              )}
+            </div>
+          )}
+          {activeTab === "company" && (
+            <div className="animate-in fade-in duration-300">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#ec5b13]" />
+                <h3 className="text-[17px] font-bold text-slate-900">About the Company</h3>
+              </div>
+              <div className="bg-white rounded-[20px] border border-slate-100 p-5 shadow-sm">
+                <div className="flex items-center gap-4 mb-5">
+                  <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center border border-orange-100">
+                    <Building className="w-7 h-7 text-[#ec5b13]" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-slate-900">{toTitleCase(internship.hiringOrganization)}</h4>
+                    <p className="text-slate-500 text-sm">{internship.location ? toTitleCase(internship.location) : "Global"}</p>
+                  </div>
+                </div>
+                <p className="text-slate-600 text-[14px] leading-relaxed mb-5">
+                  {toTitleCase(internship.hiringOrganization)} is a leading organization in the industry, focused on delivering innovation and excellence.
+                </p>
+                <Button variant="outline" className="w-full rounded-xl h-11 border-slate-200 text-slate-700 font-bold hover:bg-slate-50">
+                  View Website
+                </Button>
+              </div>
+            </div>
+          )}
+          {activeTab === "benefits" && (
+            <div className="animate-in fade-in duration-300">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#ec5b13]" />
+                <h3 className="text-[17px] font-bold text-slate-900">Benefits & Perks</h3>
+              </div>
+              <div className="grid grid-cols-1 gap-3">
+                {[
+                  { label: "Competitive Stipend", value: formatSalary(internship.stipend) },
+                  { label: "Mentorship", value: "Guided by senior experts" },
+                  { label: "Experience Certificate", value: "Verified on completion" },
+                  { label: "Pre-placement Offer", value: "Performance based" },
+                ].map((benefit, i) => (
+                  <div key={i} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-0.5">
+                    <span className="text-[10px] font-bold text-[#ec5b13] uppercase tracking-wider">{benefit.label}</span>
+                    <span className="text-[14px] font-bold text-slate-900">{benefit.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+
+          {/* Disclaimer */}
+          <div className="mt-12 pt-6 border-t border-slate-100">
+            <div className="flex items-start gap-3 bg-slate-50/60 p-4 rounded-2xl mb-4">
+              <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+              <p className="text-[13px] text-slate-500 leading-relaxed">
+                Data on this page updates every 15 minutes. Listed by <b>{toTitleCase(internship.hiringOrganization)}</b>.
+              </p>
+            </div>
+            <div className="flex items-center gap-5 pl-2">
+              <button className="flex items-center gap-1.5 text-[#0066cc] font-bold text-[13px] hover:underline">
+                <Lightbulb className="w-3.5 h-3.5" /> Complaint
+              </button>
+              <button className="flex items-center gap-1.5 text-[#ec5b13] font-bold text-[13px] hover:underline">
+                <Flag className="w-3.5 h-3.5" /> Report Issue
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Sticky Footer */}
+        <footer className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-100 px-5 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button className="w-11 h-11 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center text-slate-500 hover:text-[#ec5b13] transition-all active:scale-95">
+              <Bookmark className="w-5 h-5" />
+            </button>
+            <button
+              className="w-11 h-11 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center text-slate-500 hover:text-[#ec5b13] transition-all active:scale-95"
+              onClick={() => window.open(`https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(internship.title)}`, "_blank")}
+            >
+              <CalendarPlus className="w-5 h-5" />
+            </button>
+          </div>
+          {(internship.applyLink || internship.link) && (
+            <Link
+              href={`${internship.applyLink || internship.link}${(internship.applyLink || internship.link).includes("?") ? "&" : "?"}utm_source=ftb_mobile`}
+              target="_blank"
+              className="flex-1 ml-4"
+            >
+              <Button variant="outline" className="w-full h-13 rounded-[18px] border-orange-500 text-orange-600 hover:bg-orange-50 font-extrabold focus:ring-0 active:scale-95 transition-all">
+                Apply Now
+              </Button>
+            </Link>
+          )}
+          <Button
+            onClick={onSmartApplyClick}
+            className="h-13 flex-1 ml-4 rounded-[18px] bg-[#ec5b13] hover:bg-[#d44d0c] text-white text-[15px] font-extrabold shadow-xl shadow-orange-500/20 flex items-center justify-center gap-2 active:scale-95 transition-all"
+          >
+            <Sparkles className="w-4 h-4" />
+            Smart Apply
+          </Button>
+        </footer>
+      </div>
+
+      {/* ============================================================
+          DESKTOP LAYOUT (hidden on mobile, visible on md+)
+      ============================================================ */}
+      <div className="hidden md:block">
+        <div className="mx-auto max-w-[1000px] px-4 pt-10">
+
+          {/* Desktop Top Card */}
+          <div className="bg-white rounded-[24px] px-8 py-5 shadow-sm border border-slate-100 relative mb-8">
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+              <div>
+                {/* Badges */}
+                <div className="flex flex-wrap gap-2.5 mb-5">
+                  {internship.type && (
+                    <Badge className="bg-orange-50 text-[#ec5b13] hover:bg-orange-100 border-none rounded-full px-3 py-1 font-bold text-[11px] uppercase shadow-none tracking-wide">
+                      {internship.type.replace(/-/g, " ")}
+                    </Badge>
+                  )}
+                  {internship.timing && (
+                    <Badge className="bg-orange-50 text-orange-600 hover:bg-orange-100 border-none rounded-full px-3 py-1 font-bold text-[11px] uppercase shadow-none tracking-wide">
+                      {internship.timing.replace(/-/g, " ")}
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Title & Company */}
+                <h1 className="text-3xl md:text-4xl font-extrabold text-[#1a1a1a] mb-2 tracking-tight">
+                  {toTitleCase(internship.title)}
+                </h1>
+                <h2 className="text-xl font-bold text-[#ec5b13] mb-6">
+                  {toTitleCase(internship.hiringOrganization)}
+                </h2>
+
+                {/* Location, Salary, Duration */}
+                <div className="flex flex-wrap items-center gap-6 text-[14px] text-slate-500 font-medium">
+                  {internship.location && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-slate-400" />
+                      <span>{toTitleCase(internship.location)}</span>
+                    </div>
+                  )}
+                  {internship.stipend !== null && internship.stipend !== undefined && (
+                    <div className="flex items-center gap-2">
+                      <IndianRupee className="w-4 h-4 text-slate-400" />
+                      <span>{formatSalary(internship.stipend)}</span>
+                    </div>
+                  )}
+                  {internship.duration && (
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-slate-400" />
+                      <span>{toTitleCase(internship.duration)}</span>
+                    </div>
+                  )}
+                  {internship.deadline && (
+                    <div className="flex items-center gap-2">
+                      <CalendarPlus className="w-4 h-4 text-slate-400" />
+                      <span>Apply By: {formatDate(internship.deadline)}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Desktop Action Buttons */}
+              <div className="flex items-center gap-3 shrink-0">
+                <Button
+                  variant="outline"
+                  className="w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50 transition-all focus:ring-0"
+                >
+                  <Bookmark className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50 transition-all focus:ring-0"
+                >
+                  <Image
+                    src="/images/google-calendar.webp"
+                    alt="Add to Google Calendar"
+                    width={20}
+                    height={20}
+                    className="w-5 h-5 object-contain"
+                  />
+                </Button>
+                {(internship.applyLink || internship.link) && (
+                  <Link
+                    href={`${internship.applyLink || internship.link}${(internship.applyLink || internship.link).includes("?") ? "&" : "?"}utm_source=ftb_web`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button className="h-12 px-8 rounded-xl bg-orange-50 hover:bg-orange-100 text-[#ec5b13] font-bold border-none shadow-none transition-all">
+                      Apply Now
+                    </Button>
+                  </Link>
+                )}
+                {session?.user && (
+                  <Button
+                    onClick={onSmartApplyClick}
+                    className="h-12 px-6 rounded-xl bg-[#ec5b13] hover:bg-[#d44d0c] text-white font-bold border-none shadow-lg shadow-orange-500/20 flex items-center gap-2 transition-all"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Smart Apply
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Desktop Single Tab (Description) */}
+            <div className="flex items-center gap-8 mt-6 border-b border-slate-100">
+              <div className="pb-3 text-[15px] font-bold text-[#ec5b13] relative">
+                Description
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#ec5b13] rounded-t-full" />
+              </div>
+            </div>
           </div>
 
-          {/* Sidebar Area */}
-          <div className="hidden md:block space-y-6">
-            {/* Company Card */}
-            <div className="relative bg-white dark:bg-slate-800/50 rounded-xl p-6 border border-orange-500/5 shadow-sm text-center">
-              <div className="absolute top-3 right-3 inline-flex items-center gap-0.5 rounded bg-blue-50 dark:bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-bold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 uppercase tracking-wide">
-                <CheckCircle className="h-2 w-2" />
-                <span>FTB Verified</span>
-              </div>
-              <div className="h-16 w-16 bg-orange-500/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                {internship.poster ? (
-                  <Image
-                    src={internship.poster}
-                    alt={`${internship.hiringOrganization} logo`}
-                    width={48}
-                    height={48}
-                    className="object-contain h-12 w-12"
-                  />
+          {/* Desktop Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            {/* Left: Description */}
+            <div className="lg:col-span-2">
+              <div className="text-slate-600 leading-relaxed text-[15px] max-w-[650px] space-y-4">
+                {typeof internship.description === "string" ? (
+                  <p className="whitespace-pre-wrap">{internship.description}</p>
                 ) : (
-                  <span className="text-2xl font-bold text-[#ec5b13]">
-                    {internship.hiringOrganization?.charAt(0) || "?"}
-                  </span>
+                  internship.description || <p>No description provided.</p>
                 )}
-              </div>
-              <h4 className="font-bold text-slate-900 dark:text-white pt-1">{internship.hiringOrganization}</h4>
-              <p className="text-sm text-slate-500 mb-6 mt-1">Company Profile</p>
-
-              <div className="grid grid-cols-2 gap-4 text-left">
-                {internship.hiringManager && (
-                  <div className="p-3 bg-[#f8f6f6] dark:bg-slate-900 rounded-lg col-span-2">
-                    <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Hiring Manager</p>
-                    <p className="text-sm font-semibold truncate">{internship.hiringManager}</p>
+                {internship.eligibility && internship.eligibility.length > 0 && (
+                  <div className="mt-8">
+                    <h4 className="font-bold text-slate-800 mb-3 block">Requirements:</h4>
+                    <ul className="list-disc pl-5 space-y-2 mb-6 text-slate-600">
+                      {internship.eligibility.map((item, i) => (
+                        <li key={i}>{item}</li>
+                      ))}
+                    </ul>
                   </div>
                 )}
-                {internship.user && (
-                  <div className="p-3 bg-[#f8f6f6] dark:bg-slate-900 rounded-lg col-span-2">
-                    <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Posted By</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full border border-orange-500 bg-gray-300 overflow-hidden shrink-0">
-                        {internship.user.image ? (
-                          <Image src={internship.user.image} alt={internship.user.name} width={24} height={24} className="rounded-full object-cover" />
-                        ) : (
-                          <span className="text-xs text-black">
-                            {internship.user.name?.charAt(0)}
+                {internship.tags && internship.tags.length > 0 && (
+                  <div className="mt-8">
+                    <h4 className="font-bold text-slate-800 mb-4 block">Tags:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {internship.tags
+                        .filter((tag) => !["remote", "onsite", "hybrid"].includes(tag.toLowerCase()))
+                        .map((tag, i) => (
+                          <span key={i} className="bg-slate-100 text-slate-600 px-3 py-1.5 rounded-full text-[13px] font-semibold">
+                            {toTitleCase(tag)}
                           </span>
-                        )}
-                      </div>
-                      <p className="text-sm font-semibold truncate">{internship.user.name}</p>
+                        ))}
                     </div>
                   </div>
                 )}
               </div>
 
-              <button className="w-full mt-6 py-2 border border-[#ec5b13]/20 text-[#ec5b13] font-bold rounded-lg hover:bg-orange-500/5 transition-colors">
-                View Profile
-              </button>
+              {/* Desktop Disclaimer */}
+              <div className="mt-12 pt-8 border-t border-slate-200">
+                <div className="space-y-4 text-[14px] text-slate-700">
+                  <div className="flex items-start gap-3">
+                    <Info className="w-4 h-4 text-slate-600 shrink-0 mt-0.5" />
+                    <p>The data on this page gets updated in every 15 minutes.</p>
+                  </div>
+                  <div className="flex items-start gap-3 flex-wrap">
+                    <Info className="w-4 h-4 text-slate-600 shrink-0 mt-0.5" />
+                    <p className="flex-1">
+                      This opportunity has been listed by {toTitleCase(internship.hiringOrganization)}. FTB is not liable for any content mentioned in this opportunity or the process followed by the organizers for this opportunity. However, please raise a complaint if you want FTB to look into the matter.
+                    </p>
+                  </div>
+                  <div className="pt-2 flex flex-col gap-3">
+                    <button className="flex items-center gap-2 text-[#0066cc] font-medium hover:underline w-fit">
+                      <Lightbulb className="w-4 h-4" /> Raise a Complaint
+                    </button>
+                    <button className="flex items-center gap-2 text-[#ec5b13] font-medium hover:underline w-fit">
+                      <Flag className="w-4 h-4" /> Report An Issue
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Key Stats */}
-            <div className="bg-white dark:bg-slate-800/50 rounded-xl p-6 border border-orange-500/5 shadow-sm space-y-6">
-              {internship.duration && (
-                <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center text-[#ec5b13]">
-                    <Clock className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase">Duration</p>
-                    <p className="font-bold text-sm">{internship.duration}</p>
-                  </div>
+            {/* Right Sidebar */}
+            <div className="lg:col-span-1 space-y-6">
+              <div className="bg-white rounded-[24px] p-7 shadow-sm border border-slate-100">
+                <h4 className="text-[12px] font-bold text-slate-900 tracking-wider uppercase mb-5">JOB OVERVIEW</h4>
+                <div className="space-y-4 text-[14px]">
+                  {internship.createdAt && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500">Posted On</span>
+                      <span className="font-semibold text-slate-900">{formatDate(internship.createdAt)}</span>
+                    </div>
+                  )}
+                  {internship.hiringOrganization && (
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-slate-500 shrink-0">Company</span>
+                      <span className="font-semibold text-slate-900 text-right line-clamp-1">{toTitleCase(internship.hiringOrganization)}</span>
+                    </div>
+                  )}
+                  {internship.hiringManager && (
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-slate-500 shrink-0">Hiring Manager</span>
+                      <span className="font-semibold text-slate-900 text-right line-clamp-1">{toTitleCase(internship.hiringManager)}</span>
+                    </div>
+                  )}
+                  {(internship.contactEmail || internship.hiringManagerEmail) && (
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-slate-500 shrink-0">Contact</span>
+                      <a href={`mailto:${internship.contactEmail || internship.hiringManagerEmail}`} className="text-[#ec5b13] hover:underline font-semibold">
+                        Email
+                      </a>
+                    </div>
+                  )}
+                  {internship.postUrl && (
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-slate-500 shrink-0">Original Post</span>
+                      <a href={internship.postUrl} target="_blank" rel="noopener noreferrer" className="text-[#ec5b13] hover:underline font-semibold">
+                        View
+                      </a>
+                    </div>
+                  )}
+                  {internship.tags && internship.tags.length > 0 && (
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-slate-500 shrink-0">Industry</span>
+                      <span className="font-semibold text-slate-900 text-right line-clamp-1">{toTitleCase(internship.tags[0])}</span>
+                    </div>
+                  )}
+                  {internship.experience && (
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-slate-500 shrink-0">Experience</span>
+                      <span className="font-semibold text-slate-900 text-right line-clamp-1">{toTitleCase(internship.experience)}</span>
+                    </div>
+                  )}
+                  {internship.deadline && (
+                    <div className="flex items-center justify-between pb-5 border-b border-slate-100">
+                      <span className="text-slate-500">Apply By</span>
+                      <span className="font-bold text-[#ec5b13]">{formatDate(internship.deadline)}</span>
+                    </div>
+                  )}
                 </div>
-              )}
+                {internship.location && (
+                  <div className="mt-5 bg-slate-50/80 rounded-xl p-5">
+                    <h5 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">LOCATION</h5>
+                    <p className="text-[14px] text-slate-700 font-medium">{toTitleCase(internship.location)}</p>
+                  </div>
+                )}
+              </div>
 
-              {internship.experience && (
-                <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center text-[#ec5b13]">
-                    <Briefcase className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase">Experience</p>
-                    <p className="font-bold text-sm">{internship.experience}</p>
-                  </div>
-                </div>
-              )}
-
-              {internship.type && (
-                <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center text-[#ec5b13]">
-                    <GraduationCap className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase">Type</p>
-                    <p className="font-bold text-sm">{internship.type.charAt(0).toUpperCase() + internship.type.slice(1).replace(/-/g, " ")}</p>
-                  </div>
-                </div>
-              )}
+              {/* Need Help Card */}
+              <div className="bg-[#fff6f0] border border-[#ffeadb] rounded-[24px] p-7">
+                <h4 className="text-[16px] font-bold text-[#ec5b13] mb-2">Need Help?</h4>
+                <p className="text-[14px] text-slate-600 mb-6 leading-relaxed">
+                  Have questions about the application process? Chat with our recruitment bot.
+                </p>
+                <Button variant="outline" className="w-full bg-transparent border-[#ec5b13] text-[#ec5b13] hover:bg-[#ec5b13] hover:text-white font-semibold h-11 rounded-xl transition-all text-[14px]">
+                  Open Chat
+                </Button>
+              </div>
             </div>
-
-
           </div>
-        </div>
-      </main>
 
-      {/* Mobile Sticky Bottom Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-3 z-50 flex items-center gap-2 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
-        <Button variant="outline" className="flex-1 flex items-center justify-center gap-1.5 border-slate-200 dark:border-slate-700 h-12 rounded-xl font-bold text-slate-700 dark:text-slate-300">
-          <Bookmark className="h-4 w-4" /> Save
-        </Button>
-        {session?.user && (
-          <Button onClick={() => setSmartApplyOpen(true)} variant="outline" className="flex-1 flex items-center justify-center gap-1.5 border-orange-500 text-[#ec5b13] h-12 rounded-xl font-bold bg-orange-50 dark:bg-orange-500/10">
-            <Sparkles className="h-4 w-4" /> Smart Apply
-          </Button>
-        )}
-        {internship.link && (
-          <Link
-            href={`${internship.link}${internship.link.includes('?') ? '&' : '?'}utm_source=ftb_web`}
-            className="flex-1"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Button className="w-full h-12 bg-[#ec5b13] hover:bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-500/20">
-              Apply Now
-            </Button>
-          </Link>
-        )}
+        </div>
       </div>
 
       {/* Share Dialog */}
       <Dialog open={shareDialogOpen} onOpenChange={handleShareDialogOpenChange}>
         <DialogContent className="max-w-[90vw] sm:max-w-md">
           <DialogTitle className="sr-only">Share {internship.title}</DialogTitle>
-          <DialogDescription className="sr-only">
-            Share this internship via social media or copy the link
-          </DialogDescription>
-          <ShareDialog
-            shareUrl={shareUrl}
-            title={internship.title}
-            onCopy={handleCopy}
-            onShare={handleShare}
-          />
+          <DialogDescription className="sr-only">Share this internship via social media or copy the link</DialogDescription>
+          <ShareDialog shareUrl={shareUrl} title={internship.title} onCopy={handleCopy} onShare={handleShare} />
         </DialogContent>
       </Dialog>
 

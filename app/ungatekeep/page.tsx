@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import UngatekeepCard from "@/components/ungatekeep/UngatekeepCard";
 import { stripHtml } from "@/lib/utils";
+import { useSession } from "@/hooks/use-session";
 import { motion, useAnimation } from "framer-motion";
 
 type UngatekeepPost = {
@@ -38,14 +39,16 @@ type UngatekeepResponse = {
 };
 
 export default function UngatekeepPage() {
+  const { data: session } = useSession();
   const { ref, inView } = useInView();
   const savedButtonControls = useAnimation();
   const { data: savedCountData } = useQuery({
-    queryKey: ["ungatekeep-saved-count"],
+    queryKey: ["ungatekeep-saved-count", session?.user?.id],
     queryFn: async () => {
       const response = await axios.get("/api/ungatekeep/bookmarks/count");
       return response.data.count as number;
     },
+    enabled: !!session?.user, // Only run if authenticated
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
   const savedCount = savedCountData ?? 0;
@@ -60,7 +63,7 @@ export default function UngatekeepPage() {
     isFetchingNextPage,
     refetch,
   } = useInfiniteQuery<UngatekeepResponse>({
-    queryKey: ["ungatekeep"],
+    queryKey: ["ungatekeep", session?.user?.id],
     queryFn: async ({ pageParam = 1 }) => {
       try {
         const response = await axios.get(`/api/ungatekeep?page=${pageParam}&limit=10`);
@@ -86,6 +89,11 @@ export default function UngatekeepPage() {
       fetchNextPage();
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Refetch when session changes (login/logout) to ensure correct permissions/isSaved status
+  useEffect(() => {
+    refetch();
+  }, [session?.user?.id, refetch]);
 
   const posts = data?.pages.flatMap((page) => page.posts) ?? [];
   const pinnedPosts = posts.filter(post => post.isPinned);
@@ -172,7 +180,7 @@ export default function UngatekeepPage() {
 
             {/* Pinned Posts Quick Access */}
             {pinnedPosts.length > 0 && (
-              <div className="sticky top-[72px] z-30 mb-3 space-y-2 lg:mb-4">
+              <div className="z-30 mb-2 space-y-2 lg:mb-4">
                 {pinnedPosts.map((post) => (
                   <motion.button
                     key={`pin-${post.id}`}

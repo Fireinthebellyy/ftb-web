@@ -333,11 +333,11 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
       )}
 
       {/* Content - no title */}
-      <div className="w-full px-3 pt-5 sm:pt-6 pb-3 overflow-hidden text-left">
+      <div className="w-full px-3 pt-5 sm:pt-6 pb-3 overflow-hidden text-left leading-[0.9]">
         {isExpanded || !hasLongContent ? (
           <div
             className={cn(
-              "w-full text-xs md:text-sm text-muted-foreground leading-tight break-words",
+              "w-full text-xs md:text-sm text-muted-foreground break-words",
               "[&_p]:mb-2 last:[&_p]:mb-0 [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4",
               "[&_*]:break-words [&_*]:whitespace-normal"
             )}
@@ -346,7 +346,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
         ) : (
           <p
             className={cn(
-              "w-full text-xs md:text-sm text-muted-foreground leading-tight inline break-words"
+              "w-full text-xs md:text-sm text-muted-foreground inline break-words"
             )}
           >
             {previewContent}
@@ -383,7 +383,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
         {post.attachments && post.attachments.length > 0 && (
           <div className="mt-3">
             {post.attachments.length === 1 ? (
-              <div className="relative aspect-[9/16] max-h-[320px] w-full overflow-hidden rounded-lg bg-muted border">
+              <div className="relative aspect-[9/16] max-h-[300px] w-full overflow-hidden rounded-lg bg-muted border">
                 <AttachmentSlide
                   imageId={post.attachments[0]}
                   postTitle={plainTextContent.slice(0, 50)}
@@ -402,7 +402,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
                         key={idx}
                         className="basis-[85%] pl-2 sm:basis-[75%]"
                       >
-                        <div className="relative aspect-[9/16] max-h-[320px] w-full overflow-hidden rounded-lg bg-muted border">
+                        <div className="relative aspect-[9/16] max-h-[300px] w-full overflow-hidden rounded-lg bg-muted border">
                           <AttachmentSlide
                             imageId={fileId}
                             postTitle={plainTextContent.slice(0, 50)}

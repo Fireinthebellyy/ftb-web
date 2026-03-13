@@ -18,14 +18,14 @@ import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
 
 type UngatekeepPost = {
   id: string;
-  title: string;
   content: string;
-  images: string[];
+  attachments: string[];
   linkUrl?: string | null;
   linkTitle?: string | null;
   linkImage?: string | null;
-  tag?: "announcement" | "company_experience" | "resources" | null;
+  tag?: "announcement" | "company_experience" | "resources" | "playbooks" | "college_hacks" | "interview" | "ama_drops" | "ftb_recommends" | null;
   isPinned: boolean;
+  isSaved?: boolean;
   publishedAt?: string | null;
   createdAt: string;
   creatorName?: string | null;
@@ -80,7 +80,7 @@ export default function UngatekeepPostPage() {
   };
 
   const getImageUrl = (imageId: string) => {
-    const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
+    const bucketId = "67cb29260026e6f6424d"; // getUngatekeepBucketId() value or similar
     if (!bucketId) return "";
     try {
       return ungatekeepStorage.getFileView(bucketId, imageId);
@@ -191,9 +191,6 @@ export default function UngatekeepPostPage() {
                       fill="currentColor"
                     />
                   )}
-                  <h1 className="text-lg leading-tight font-bold text-gray-900 sm:text-xl md:text-2xl">
-                    {post.title}
-                  </h1>
                 </div>
 
                 {/* Meta info */}
@@ -237,28 +234,28 @@ export default function UngatekeepPostPage() {
                 </div>
               </header>
 
-              {/* Images */}
-              {post.images && post.images.length > 0 && (
+              {/* Attachments */}
+              {post.attachments && post.attachments.length > 0 && (
                 <div className="mb-4">
-                  {post.images.length === 1 ? (
+                  {post.attachments.length === 1 ? (
                     <div className="bg-muted relative aspect-video w-full overflow-hidden rounded-lg">
                       <Image
-                        src={getImageUrl(post.images[0])}
-                        alt={post.title}
+                        src={getImageUrl(post.attachments[0])}
+                        alt="Post attachment"
                         fill
                         className="object-cover"
                       />
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-2">
-                      {post.images.map((imageId, idx) => (
+                      {post.attachments.map((fileId, idx) => (
                         <div
                           key={idx}
                           className="bg-muted relative aspect-square overflow-hidden rounded-lg"
                         >
                           <Image
-                            src={getImageUrl(imageId)}
-                            alt={`${post.title} - Image ${idx + 1}`}
+                            src={getImageUrl(fileId)}
+                            alt={`Post attachment ${idx + 1}`}
                             fill
                             className="object-cover"
                           />

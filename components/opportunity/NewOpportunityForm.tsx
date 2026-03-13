@@ -239,7 +239,6 @@ export default function NewOpportunityForm({
                   watchedLocation={watchedLocation}
                   watchedOrganiser={watchedOrganiser}
                   watchedDateRange={watchedDateRange}
-                  watchedPublishAt={watchedPublishAt}
                   showSchedule={false}
                   showLabels
                   compactLabels

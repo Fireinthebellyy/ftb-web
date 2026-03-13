@@ -7,11 +7,12 @@ import { Lock, Bookmark, Loader2, Pin } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import { useInView } from "react-intersection-observer";
-import { stripHtml } from "@/lib/utils";
-import UngatekeepCard from "@/components/ungatekeep/UngatekeepCard";
+import PageBannerCarousel from "@/components/banner/PageBannerCarousel";
 import FeaturedToolkits from "@/components/toolkit/FeaturedToolkits";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import UngatekeepCard from "@/components/ungatekeep/UngatekeepCard";
+import { stripHtml } from "@/lib/utils";
 import { motion, useAnimation } from "framer-motion";
 
 type UngatekeepPost = {
@@ -137,7 +138,7 @@ export default function UngatekeepPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
           {/* Main Content */}
           <div className="min-w-0 flex-1">
-            <div className="mb-6 flex items-start justify-between">
+            <div className="flex items-start justify-between">
               <div>
                 <h1 className="mb-1 text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
                   Ungatekeep
@@ -161,9 +162,14 @@ export default function UngatekeepPage() {
               </motion.div>
             </div>
 
+            <PageBannerCarousel
+              placement="ungatekeep"
+              className="w-full lg:mb-4 lg:mt-4"
+            />
+
             {/* Pinned Posts Quick Access */}
             {pinnedPosts.length > 0 && (
-              <div className="sticky top-[72px] z-30 mb-4 space-y-2">
+              <div className="sticky top-[72px] z-30 mb-2 space-y-2 lg:mb-4">
                 {pinnedPosts.map((post) => (
                   <motion.div
                     key={`pin-${post.id}`}
@@ -193,7 +199,7 @@ export default function UngatekeepPage() {
                 </p>
               </div>
             ) : (
-              <div className="w-full space-y-3">
+              <div className="w-full space-y-2 lg:space-y-4">
                 {posts.map((post) => (
                   <UngatekeepCard key={post.id} post={post} />
                 ))}

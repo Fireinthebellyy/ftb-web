@@ -7,6 +7,7 @@ import { Lock, Bookmark, Loader2, Pin } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import { useInView } from "react-intersection-observer";
+import { stripHtml } from "@/lib/utils";
 import UngatekeepCard from "@/components/ungatekeep/UngatekeepCard";
 import FeaturedToolkits from "@/components/toolkit/FeaturedToolkits";
 import { Button } from "@/components/ui/button";
@@ -174,7 +175,7 @@ export default function UngatekeepPage() {
                     <div className="flex items-center gap-2">
                       <Pin className="h-3 w-3 fill-yellow-500 text-yellow-500" />
                       <p className="line-clamp-2 flex-1 text-[11px] font-medium text-yellow-800 leading-tight">
-                        {post.content}
+                        {stripHtml(post.content)}
                       </p>
                     </div>
                   </motion.div>

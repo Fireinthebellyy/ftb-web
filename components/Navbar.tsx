@@ -8,7 +8,7 @@ import { useSession, useInvalidateSession } from "@/hooks/use-session";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { Righteous } from "next/font/google";
-import { Shield } from "lucide-react";
+import { EllipsisVertical, Shield } from "lucide-react";
 import posthog from "posthog-js";
 
 function useLogout() {
@@ -390,6 +390,9 @@ export default function Navbar() {
             </div>
           ) : (
             <div className="flex gap-2">
+              <Button asChild variant="outline" size="sm">
+                <Link href="/login">Log in</Link>
+              </Button>
               <Button
                 asChild
                 size="sm"

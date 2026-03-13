@@ -15,6 +15,12 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import { cn } from "@/lib/utils";
+
+const TOOLKIT_DETAIL_BOTTOM_MOBILE_CLASS = "bottom-[170px]";
+const DEFAULT_BOTTOM_MOBILE_CLASS = "bottom-[72px]";
+const TOOLKIT_DETAIL_BOTTOM_DESKTOP_CLASS = "bottom-[170px]";
+const DEFAULT_BOTTOM_DESKTOP_CLASS = "bottom-6";
 
 export default function WhatsAppWidget() {
   const [desktopOpen, setDesktopOpen] = useState(false);
@@ -24,11 +30,11 @@ export default function WhatsAppWidget() {
   const isToolkitDetailPage =
     pathname.startsWith("/toolkit/") && pathname !== "/toolkit";
   const mobileBottomClass = isToolkitDetailPage
-    ? "bottom-[170px]"
-    : "bottom-[72px]";
+    ? TOOLKIT_DETAIL_BOTTOM_MOBILE_CLASS
+    : DEFAULT_BOTTOM_MOBILE_CLASS;
   const desktopBottomClass = isToolkitDetailPage
-    ? "bottom-[170px]"
-    : "bottom-6";
+    ? TOOLKIT_DETAIL_BOTTOM_DESKTOP_CLASS
+    : DEFAULT_BOTTOM_DESKTOP_CLASS;
 
   const source = pathname;
 
@@ -44,7 +50,10 @@ export default function WhatsAppWidget() {
       <Drawer open={mobileOpen} onOpenChange={setMobileOpen}>
         <DrawerTrigger asChild>
           <button
-            className={`fixed right-6 ${mobileBottomClass} z-50 flex h-10 w-10 items-center justify-center rounded-full bg-neutral-200 text-neutral-600 shadow-lg hover:bg-neutral-100 md:hidden`}
+            className={cn(
+              "fixed right-6 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-neutral-200 text-neutral-600 shadow-lg hover:bg-neutral-100 md:hidden",
+              mobileBottomClass
+            )}
             aria-label="Chat on WhatsApp"
             type="button"
           >
@@ -87,7 +96,10 @@ export default function WhatsAppWidget() {
       <Dialog open={desktopOpen} onOpenChange={setDesktopOpen}>
         <DialogTrigger asChild>
           <button
-            className={`fixed right-6 ${desktopBottomClass} z-50 hidden h-12 w-12 items-center justify-center rounded-full bg-neutral-200 text-neutral-600 shadow-lg hover:bg-neutral-100 md:flex`}
+            className={cn(
+              "fixed right-6 z-50 hidden h-12 w-12 items-center justify-center rounded-full bg-neutral-200 text-neutral-600 shadow-lg hover:bg-neutral-100 md:flex",
+              desktopBottomClass
+            )}
             aria-label="Chat on WhatsApp"
             type="button"
           >

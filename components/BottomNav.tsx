@@ -15,6 +15,8 @@ const navItems = [
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const normalizedPathname =
+    pathname === "/" ? "/" : pathname.replace(/\/+$/, "");
 
   if (pathname === "/onboarding") {
     return null;
@@ -29,14 +31,16 @@ export default function BottomNav() {
     >
       <div className="flex h-[56px] items-center justify-around px-1">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive =
+            normalizedPathname === item.href ||
+            normalizedPathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
 
           return (
             <Link
               key={item.href}
               href={item.href}
-              className="relative flex h-full w-16 flex-col items-center justify-center gap-0.5"
+              className="group relative flex h-full w-16 flex-col items-center justify-center gap-0.5"
               aria-label={item.label}
             >
               <motion.div

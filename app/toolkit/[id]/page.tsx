@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -51,13 +51,22 @@ export default function ToolkitDetailPage() {
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [appliedCoupon, setAppliedCoupon] =
     useState<CouponValidationResult | null>(null);
-  const testimonialsAutoplayRef = useRef(
-    Autoplay({
-      delay: CAROUSEL_AUTOPLAY_DELAY_MS,
-      stopOnMouseEnter: true,
-      stopOnFocusIn: true,
-    })
+  const testimonialsAutoplay = useMemo(
+    () =>
+      Autoplay({
+        delay: CAROUSEL_AUTOPLAY_DELAY_MS,
+        stopOnMouseEnter: true,
+        stopOnFocusIn: true,
+      }),
+    []
   );
+  const testimonialsAutoplayRef = useRef<ReturnType<typeof Autoplay> | null>(
+    null
+  );
+
+  if (!testimonialsAutoplayRef.current) {
+    testimonialsAutoplayRef.current = testimonialsAutoplay;
+  }
 
   const { data: toolkitData, isLoading } = useToolkit(params.id as string);
   const purchaseMutation = useToolkitPurchase(params.id as string);

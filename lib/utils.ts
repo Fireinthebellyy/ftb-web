@@ -62,10 +62,18 @@ export function toTitleCase(str: string | null | undefined): string {
   return str.replace(
     /\w\S*/g,
     (text) => {
-      // Extract pure alphabetic part for comparison
-      const cleanText = text.replace(/[^a-zA-Z]/g, '').toUpperCase();
+      // Extract pure alphabetic part for mixed-case detection
+      const cleanText = text.replace(/[^a-zA-Z]/g, "");
+      const hasUpper = /[A-Z]/.test(cleanText);
+      const hasLower = /[a-z]/.test(cleanText);
 
-      if (acronyms.has(cleanText)) {
+      // Preserve mixed-case tokens (e.g., iPhone, FedEx)
+      if (hasUpper && hasLower) {
+        return text;
+      }
+
+      // Check against acronyms using the uppercase version
+      if (acronyms.has(cleanText.toUpperCase())) {
         return text.toUpperCase();
       }
 

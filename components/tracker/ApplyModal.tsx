@@ -11,21 +11,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { type ApplyModalOpportunity } from "@/types/interfaces";
 
-// Flexible interface to handle TrackerItem, Internship, or Opportunity
-export interface ApplyModalOpportunity {
-  id: number | string;
-  title: string;
-  company?: string;
-  hiringOrganization?: string;
-  organiserInfo?: string;
-  logo?: string;
-  poster?: string;
-  images?: string[];
-  skills?: string[];
-  tags?: string[];
-  [key: string]: unknown;
-}
 
 interface ApplyModalProps {
   isOpen: boolean;
@@ -58,13 +45,19 @@ export default function ApplyModal({
 
   if (!opportunity) return null;
 
-  const handleSubmit = () => {
-    // Proceed to tracker (Toolkit access)
-    const oppId: number | string = opportunity.id;
-
-    addToTracker({ ...opportunity, id: oppId }, "Not Applied");
-    onClose();
-    router.push("/tracker");
+  const handleSubmit = async () => {
+    try {
+      const oppId: number | string = opportunity.id;
+      // Ensure persistence is awaited before closing or navigating
+      await addToTracker({ ...opportunity, id: oppId }, "Not Applied");
+      onClose();
+      router.push("/tracker");
+    } catch (error) {
+      console.error("Failed to add to tracker:", error);
+      // Fallback: still close and navigate if needed, but log error
+      onClose();
+      router.push("/tracker");
+    }
   };
 
   const StepItem = ({
@@ -77,7 +70,7 @@ export default function ApplyModal({
     index: number;
     title: string;
     description: string;
-    icon: any;
+    icon: React.ElementType;
     isFill?: boolean;
   }) => {
     const isDone = activeStep >= index;

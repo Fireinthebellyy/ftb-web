@@ -42,14 +42,19 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
     }
   };
 
-  const handleSaveClick = (e: React.MouseEvent) => {
+  const handleSaveClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (isBookmarked) {
-      removeFromTracker(id, "internship");
-    } else {
-      addToTracker(id, "Not Applied", "internship");
+    try {
+      if (isBookmarked) {
+        await removeFromTracker(id, "internship");
+      } else {
+        await addToTracker(id, "Not Applied", "internship");
+      }
+    } catch (error) {
+      console.error("Failed to update tracker:", error);
+      toast.error("Failed to update tracker");
     }
   };
 

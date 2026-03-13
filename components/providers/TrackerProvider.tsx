@@ -68,17 +68,17 @@ interface TrackerContextType {
     oppOrId: number | string | ManualTrackerInput,
     initialStatus?: string,
     kind?: "internship" | "opportunity"
-  ) => void;
+  ) => Promise<void>;
   removeFromTracker: (
     oppId: number | string,
     kind?: "internship" | "opportunity"
-  ) => void;
+  ) => Promise<void>;
   updateStatus: (
     oppId: number | string,
     status: string,
     extraData?: Record<string, unknown>,
     kind?: "internship" | "opportunity"
-  ) => void;
+  ) => Promise<void>;
   getStatus: (
     oppId: number | string,
     kind?: "internship" | "opportunity"
@@ -439,11 +439,11 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     deleteFromBackend(id, "event");
   };
 
-  const addToTracker = (
+  const addToTracker = async (
     oppOrId: number | string | ManualTrackerInput,
     initialStatus = "Not Applied",
     kind: "internship" | "opportunity" = "internship"
-  ) => {
+  ): Promise<void> => {
     const isManual = typeof oppOrId === "object";
     const idToCheck = isManual
       ? ((oppOrId as ManualTrackerInput).id ?? Date.now())
@@ -474,46 +474,38 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
       toast.success("Draft Saved");
     }
 
-    let newItem: TrackerItem;
+    const inputData = isManual ? (oppOrId as ManualTrackerInput) : {};
+    const newItem = {
+      oppId: idToCheck,
+      status: initialStatus,
+      kind: effectiveKind,
+      addedAt: new Date().toISOString(),
+      appliedAt: initialStatus === "Applied" ? new Date().toISOString() : null,
+      result: null,
+      notes: inputData.notes || "",
+      draftData:
+        isManual && (oppOrId as ManualTrackerInput).draftData
+          ? (oppOrId as ManualTrackerInput).draftData
+          : null,
+      ...inputData,
+    } as TrackerItem;
 
-    setTrackedItems((prevItems) => {
-      if (prevItems.some((i) => getTrackerKey(i.oppId, i.kind) === nextKey)) {
-        return prevItems;
-      }
+    // Await sync to backend
+    await syncItemToBackend(newItem);
 
-      const inputData = isManual ? (oppOrId as ManualTrackerInput) : {};
-
-      newItem = {
-        oppId: idToCheck,
-        status: initialStatus,
-        kind: effectiveKind,
-        addedAt: new Date().toISOString(),
-        appliedAt:
-          initialStatus === "Applied" ? new Date().toISOString() : null,
-        result: null,
-        notes: inputData.notes || "",
-        draftData:
-          isManual && (oppOrId as ManualTrackerInput).draftData
-            ? (oppOrId as ManualTrackerInput).draftData
-            : null,
-        ...inputData,
-      } as TrackerItem;
-
-      // Trigger sync (side effect inside setter is bad practice usually, but doing it after calculation)
-      setTimeout(() => syncItemToBackend(newItem), 0);
-
-      return [...prevItems, newItem];
-    });
+    // Update state
+    setTrackedItems((prevItems) => [...prevItems, newItem]);
   };
 
-  const updateStatus = (
+  const updateStatus = async (
     oppId: number | string,
     status: string,
     extraData: Record<string, unknown> = {},
     kind?: "internship" | "opportunity"
-  ) => {
+  ): Promise<void> => {
     const targetKey = getTrackerKey(oppId, kind);
 
+    // Optimistic update
     setTrackedItems((prevItems) =>
       prevItems.map((i) => {
         if (getTrackerKey(i.oppId, i.kind) === targetKey) {
@@ -529,20 +521,21 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
       })
     );
 
-    syncStatusToBackend(oppId, status, extraData, kind);
+    await syncStatusToBackend(oppId, status, extraData, kind);
   };
 
-  const removeFromTracker = (
+  const removeFromTracker = async (
     oppId: number | string,
     kind?: "internship" | "opportunity"
-  ) => {
+  ): Promise<void> => {
     const targetKey = getTrackerKey(oppId, kind);
 
+    // Optimistic remove
     setTrackedItems((prevItems) =>
       prevItems.filter((i) => getTrackerKey(i.oppId, i.kind) !== targetKey)
     );
     toast.success("Deleted from Tracker");
-    deleteFromBackend(oppId, "item", kind);
+    await deleteFromBackend(oppId, "item", kind);
   };
 
   const getStatus = (

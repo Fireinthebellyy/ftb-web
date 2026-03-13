@@ -40,6 +40,7 @@ import { useSession } from "@/hooks/use-session";
 import { type InternshipData } from "@/types/interfaces";
 import { mapInternshipToApplyOpportunity } from "@/lib/internship-utils";
 import ApplyModal from "@/components/tracker/ApplyModal";
+import { useTracker } from "@/components/providers/TrackerProvider";
 
 
 export default function InternshipDetailPage() {
@@ -52,6 +53,9 @@ export default function InternshipDetailPage() {
   const [notFoundError, setNotFoundError] = useState(false);
   const [activeTab, setActiveTab] = useState("description");
   const { data: session } = useSession();
+  const { addToTracker, getStatus, removeFromTracker } = useTracker();
+
+  const isBookmarked = !!getStatus(id || "", "internship");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -127,6 +131,37 @@ export default function InternshipDetailPage() {
     });
   };
 
+  const handleBookmarkClick = async () => {
+    if (!id || !internship) return;
+    try {
+      if (isBookmarked) {
+        await removeFromTracker(id, "internship");
+      } else {
+        await addToTracker(id, "Not Applied", "internship");
+      }
+    } catch (error) {
+      console.error("Failed to update bookmark:", error);
+      toast.error("Failed to update bookmark");
+    }
+  };
+
+  const handleCalendarClick = () => {
+    if (!internship) return;
+    const date = internship.deadline
+      ? new Date(internship.deadline)
+      : new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const formatted = date.toISOString().replace(/[-:]|\.\d{3}/g, "");
+    const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Apply to: ${internship.title}`)}&dates=${formatted}/${formatted}&details=${encodeURIComponent(`Company: ${internship.hiringOrganization || "N/A"}\n\nInternship Link: ${shareUrl}`)}`;
+    window.open(calendarUrl, "_blank");
+  };
+
+  const handleOpenChat = () => {
+    const link = `https://wa.me/917014885565?text=${encodeURIComponent(
+      `Type: Internship Help\nSource: /intern/${id}\n\nI need help with: ${internship?.title} at ${internship?.hiringOrganization}`
+    )}`;
+    window.open(link, "_blank");
+  };
+
   const handleShareDialogOpenChange = (open: boolean) => {
     setShareDialogOpen(open);
   };
@@ -163,7 +198,10 @@ export default function InternshipDetailPage() {
             <span className="font-bold text-[16px] text-slate-900">Internship Detail</span>
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
+            <button
+              onClick={handleCalendarClick}
+              className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+            >
               <Calendar className="w-5 h-5 text-slate-700" />
             </button>
             <button
@@ -172,8 +210,14 @@ export default function InternshipDetailPage() {
             >
               <Share2 className="w-5 h-5 text-slate-700" />
             </button>
-            <button className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
-              <Bookmark className="w-5 h-5 text-slate-700" />
+            <button
+              onClick={handleBookmarkClick}
+              className={cn(
+                "p-1.5 rounded-lg transition-colors",
+                isBookmarked ? "text-orange-500 bg-orange-50" : "text-slate-700 hover:bg-slate-100"
+              )}
+            >
+              <Bookmark className={cn("w-5 h-5", isBookmarked && "fill-current")} />
             </button>
           </div>
         </header>
@@ -350,12 +394,24 @@ export default function InternshipDetailPage() {
                     <p className="text-slate-500 text-sm">{internship.location ? toTitleCase(internship.location) : "Global"}</p>
                   </div>
                 </div>
-                <p className="text-slate-600 text-[14px] leading-relaxed mb-5">
-                  {toTitleCase(internship.hiringOrganization)} is a leading organization in the industry, focused on delivering innovation and excellence.
-                </p>
-                <Button variant="outline" className="w-full rounded-xl h-11 border-slate-200 text-slate-700 font-bold hover:bg-slate-50">
-                  View Website
-                </Button>
+                {internship.companyDescription ? (
+                  <p className="text-slate-600 text-[14px] leading-relaxed mb-5">
+                    {internship.companyDescription}
+                  </p>
+                ) : (
+                  <p className="text-slate-600 text-[14px] leading-relaxed mb-5">
+                    {toTitleCase(internship.hiringOrganization)} is a leading organization in the industry, focused on delivering innovation and excellence.
+                  </p>
+                )}
+                {internship.website && (
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-xl h-11 border-slate-200 text-slate-700 font-bold hover:bg-slate-50"
+                    onClick={() => window.open(internship.website!, "_blank")}
+                  >
+                    View Website
+                  </Button>
+                )}
               </div>
             </div>
           )}
@@ -404,12 +460,18 @@ export default function InternshipDetailPage() {
         {/* Mobile Sticky Footer */}
         <footer className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-100 px-5 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button className="w-11 h-11 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center text-slate-500 hover:text-[#ec5b13] transition-all active:scale-95">
-              <Bookmark className="w-5 h-5" />
+            <button
+              onClick={handleBookmarkClick}
+              className={cn(
+                "w-11 h-11 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center transition-all active:scale-95",
+                isBookmarked ? "text-orange-500 border-orange-500" : "text-slate-500 hover:text-[#ec5b13]"
+              )}
+            >
+              <Bookmark className={cn("w-5 h-5", isBookmarked && "fill-current")} />
             </button>
             <button
               className="w-11 h-11 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center text-slate-500 hover:text-[#ec5b13] transition-all active:scale-95"
-              onClick={() => window.open(`https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(internship.title)}`, "_blank")}
+              onClick={handleCalendarClick}
             >
               <CalendarPlus className="w-5 h-5" />
             </button>
@@ -425,13 +487,15 @@ export default function InternshipDetailPage() {
               </Button>
             </Link>
           )}
-          <Button
-            onClick={onSmartApplyClick}
-            className="h-13 flex-1 ml-4 rounded-[18px] bg-[#ec5b13] hover:bg-[#d44d0c] text-white text-[15px] font-extrabold shadow-xl shadow-orange-500/20 flex items-center justify-center gap-2 active:scale-95 transition-all"
-          >
-            <Sparkles className="w-4 h-4" />
-            Smart Apply
-          </Button>
+          {session?.user && (
+            <Button
+              onClick={onSmartApplyClick}
+              className="h-13 flex-1 ml-4 rounded-[18px] bg-[#ec5b13] hover:bg-[#d44d0c] text-white text-[15px] font-extrabold shadow-xl shadow-orange-500/20 flex items-center justify-center gap-2 active:scale-95 transition-all"
+            >
+              <Sparkles className="w-4 h-4" />
+              Smart Apply
+            </Button>
+          )}
         </footer>
       </div>
 
@@ -500,12 +564,17 @@ export default function InternshipDetailPage() {
               <div className="flex items-center gap-3 shrink-0">
                 <Button
                   variant="outline"
-                  className="w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50 transition-all focus:ring-0"
+                  onClick={handleBookmarkClick}
+                  className={cn(
+                    "w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 transition-all focus:ring-0",
+                    isBookmarked ? "text-orange-500 border-orange-500 bg-orange-50" : "text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50"
+                  )}
                 >
-                  <Bookmark className="w-5 h-5" />
+                  <Bookmark className={cn("w-5 h-5", isBookmarked && "fill-current")} />
                 </Button>
                 <Button
                   variant="outline"
+                  onClick={handleCalendarClick}
                   className="w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50 transition-all focus:ring-0"
                 >
                   <Image
@@ -681,7 +750,11 @@ export default function InternshipDetailPage() {
                 <p className="text-[14px] text-slate-600 mb-6 leading-relaxed">
                   Have questions about the application process? Chat with our recruitment bot.
                 </p>
-                <Button variant="outline" className="w-full bg-transparent border-[#ec5b13] text-[#ec5b13] hover:bg-[#ec5b13] hover:text-white font-semibold h-11 rounded-xl transition-all text-[14px]">
+                <Button
+                  variant="outline"
+                  onClick={handleOpenChat}
+                  className="w-full bg-transparent border-[#ec5b13] text-[#ec5b13] hover:bg-[#ec5b13] hover:text-white font-semibold h-11 rounded-xl transition-all text-[14px]"
+                >
                   Open Chat
                 </Button>
               </div>

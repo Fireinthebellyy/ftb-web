@@ -55,9 +55,9 @@ interface TrackerRowProps {
         status: string,
         extraData?: Record<string, unknown>,
         kind?: "internship" | "opportunity"
-    ) => void;
+    ) => Promise<void>;
     onClick: (opp: TrackerItem) => void;
-    onDelete: (id: number | string, kind?: "internship" | "opportunity") => void;
+    onDelete: (id: number | string, kind?: "internship" | "opportunity") => Promise<void>;
 }
 
 export default function TrackerRow({
@@ -75,13 +75,13 @@ export default function TrackerRow({
         onClick(opp);
     };
 
-    const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
         posthog.capture("tracker_status_changed", {
             tracker_id: opp.oppId,
             old_status: opp.status,
             new_status: e.target.value,
         });
-        updateStatus(opp.oppId, e.target.value, undefined, opp.kind);
+        await updateStatus(opp.oppId, e.target.value, undefined, opp.kind);
     };
 
     return (
@@ -190,9 +190,9 @@ export default function TrackerRow({
                     </a>
                 )}
                 <button
-                    onClick={(e) => {
+                    onClick={async (e) => {
                         e.stopPropagation();
-                        onDelete(opp.oppId, opp.kind);
+                        await onDelete(opp.oppId, opp.kind);
                     }}
                     className="rounded-lg p-2 text-rose-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
                     title="Remove from Tracker"

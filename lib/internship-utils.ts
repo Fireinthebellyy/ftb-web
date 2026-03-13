@@ -1,5 +1,4 @@
-import { InternshipData } from "@/types/interfaces";
-import { ApplyModalOpportunity } from "@/components/tracker/ApplyModal";
+import { InternshipData, ApplyModalOpportunity } from "@/types/interfaces";
 
 export const mapInternshipToApplyOpportunity = (
   period: InternshipData

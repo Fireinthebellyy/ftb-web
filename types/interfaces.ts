@@ -49,21 +49,9 @@ export type Internship = {
   };
 };
 
-export interface InternshipData {
-  id: string;
-  type?: string | null;
-  timing?: string | null;
-  title: string;
-  description?: string | null;
-  link: string;
+export interface InternshipData extends Omit<Internship, "tags" | "deadline" | "createdAt" | "user"> {
   tags: string[];
-  location?: string | null;
   deadline: string | null;
-  stipend?: number | null;
-  hiringOrganization: string;
-  hiringManager?: string | null;
-  experience?: string | null;
-  duration?: string | null;
   createdAt: string | null;
   poster?: string | null;
   eligibility?: string[];
@@ -71,12 +59,29 @@ export interface InternshipData {
   contactEmail?: string | null;
   postUrl?: string | null;
   applyLink?: string | null;
+  companyDescription?: string | null;
+  website?: string | null;
   user: {
     id: string;
     name: string;
     image: string;
     role: string;
   };
+}
+
+// Flexible interface for ApplyModal
+export interface ApplyModalOpportunity {
+  id: number | string;
+  title: string;
+  company?: string;
+  hiringOrganization?: string;
+  organiserInfo?: string;
+  logo?: string;
+  poster?: string;
+  images?: string[];
+  skills?: string[];
+  tags?: string[];
+  [key: string]: unknown;
 }
 
 export type Task = {

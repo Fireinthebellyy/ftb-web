@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, dbPool } from "@/lib/db";
 import { ungatekeepBookmarks, ungatekeepPosts, user as userTable } from "@/lib/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { auth } from "@/lib/auth";
@@ -35,7 +35,12 @@ export async function GET() {
       .from(ungatekeepBookmarks)
       .innerJoin(ungatekeepPosts, eq(ungatekeepBookmarks.postId, ungatekeepPosts.id))
       .leftJoin(userTable, eq(ungatekeepPosts.userId, userTable.id))
-      .where(eq(ungatekeepBookmarks.userId, userId))
+      .where(
+        and(
+          eq(ungatekeepBookmarks.userId, userId),
+          eq(ungatekeepPosts.isPublished, true)
+        )
+      )
       .orderBy(desc(ungatekeepBookmarks.createdAt));
 
     return NextResponse.json(savedPosts);
@@ -48,6 +53,13 @@ export async function GET() {
   }
 }
 
+import { z } from "zod";
+
+const bookmarkSchema = z.object({
+  postId: z.string().uuid(),
+  bookmarked: z.boolean(),
+});
+
 export async function POST(request: Request) {
   try {
     const session = await auth.api.getSession({
@@ -58,48 +70,48 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { postId } = await request.json();
-    if (!postId) {
-      return NextResponse.json({ error: "Post ID is required" }, { status: 400 });
-    }
-
     const userId = session.user.id;
+    const body = await request.json();
+    const { postId, bookmarked } = bookmarkSchema.parse(body);
 
-    // Check if already bookmarked
-    const existing = await db
-      .select()
-      .from(ungatekeepBookmarks)
-      .where(
-        and(
-          eq(ungatekeepBookmarks.userId, userId),
-          eq(ungatekeepBookmarks.postId, postId)
-        )
-      )
-      .limit(1);
+    // Validate that the post exists and is published
+    const post = await db.query.ungatekeepPosts.findFirst({
+      where: and(
+        eq(ungatekeepPosts.id, postId),
+        eq(ungatekeepPosts.isPublished, true)
+      ),
+    });
 
-    if (existing.length > 0) {
-      // Unbookmark
-      await db
-        .delete(ungatekeepBookmarks)
-        .where(
-          and(
-            eq(ungatekeepBookmarks.userId, userId),
-            eq(ungatekeepBookmarks.postId, postId)
-          )
-        );
-      return NextResponse.json({ bookmarked: false });
-    } else {
-      // Bookmark
-      await db.insert(ungatekeepBookmarks).values({
-        userId,
-        postId,
-      });
-      return NextResponse.json({ bookmarked: true });
+    if (!post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 400 });
     }
+
+    await dbPool.transaction(async (tx) => {
+      if (bookmarked) {
+        await tx
+          .insert(ungatekeepBookmarks)
+          .values({ userId, postId })
+          .onConflictDoNothing();
+      } else {
+        await tx
+          .delete(ungatekeepBookmarks)
+          .where(
+            and(
+              eq(ungatekeepBookmarks.userId, userId),
+              eq(ungatekeepBookmarks.postId, postId)
+            )
+          );
+      }
+    });
+
+    return NextResponse.json({ bookmarked });
   } catch (error) {
-    console.error("Error toggling ungatekeep bookmark:", error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: error.errors }, { status: 400 });
+    }
+    console.error("Error updating bookmark:", error);
     return NextResponse.json(
-      { error: "Failed to toggle bookmark" },
+      { error: "Failed to update bookmark" },
       { status: 500 }
     );
   }

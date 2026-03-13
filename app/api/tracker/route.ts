@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { db, dbPool } from "@/lib/db";
 import {
   trackerItems,
   trackerEvents,
@@ -296,7 +296,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (validItems.length > 0) {
-        await db.transaction(async (tx) => {
+        await dbPool.transaction(async (tx) => {
           await tx
             .insert(trackerItems)
             .values(validItems)
@@ -333,7 +333,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (validEvents.length > 0) {
-        await db.transaction(async (tx) => {
+        await dbPool.transaction(async (tx) => {
           await tx
             .insert(trackerEvents)
             .values(validEvents)

@@ -10,8 +10,21 @@ const FREE_POST_LIMIT = 5;
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
+    let page = parseInt(searchParams.get("page") || "1", 10);
+    let limit = parseInt(searchParams.get("limit") || "10", 10);
+
+    const MAX_LIMIT = 50;
+
+    if (isNaN(page) || page < 1) {
+      page = 1;
+    }
+
+    if (isNaN(limit) || limit < 1) {
+      limit = 10;
+    }
+
+    limit = Math.min(limit, MAX_LIMIT);
+
     const offset = (page - 1) * limit;
 
     // Check if user is authenticated
@@ -57,7 +70,7 @@ export async function GET(request: Request) {
       .from(ungatekeepPosts)
       .leftJoin(userTable, eq(ungatekeepPosts.userId, userTable.id))
       .where(eq(ungatekeepPosts.isPublished, true))
-      .orderBy(desc(ungatekeepPosts.publishedAt))
+      .orderBy(desc(ungatekeepPosts.publishedAt), desc(ungatekeepPosts.id))
       .limit(isAuthenticated ? limit : FREE_POST_LIMIT)
       .offset(isAuthenticated ? offset : 0);
 

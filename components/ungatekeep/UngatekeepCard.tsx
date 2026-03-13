@@ -196,6 +196,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
     try {
       const response = await axios.post("/api/ungatekeep/bookmark", {
         postId: post.id,
+        bookmarked: !isSaved,
       });
 
       // Nested try-catch to isolate potential errors after successful API call
@@ -218,6 +219,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
           // Invalidate queries to refetch data, which replaces the old localStorage logic.
           queryClient.invalidateQueries({ queryKey: ["ungatekeep"] });
           queryClient.invalidateQueries({ queryKey: ["ungatekeep-saved-count"] });
+          queryClient.invalidateQueries({ queryKey: ["ungatekeep-saved"] });
         } else {
           // If response is not what we expect, throw an error
           throw new Error("Invalid response structure from server");
@@ -296,7 +298,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
 
   const hasLongContent = plainTextContent.length > CONTENT_PREVIEW_LENGTH;
   const hasExtraMedia =
-    (post.attachments && post.attachments.length > 0) || !!post.linkUrl;
+    (post.attachments && post.attachments.length > 0) || (!!post.linkUrl && !!post.linkImage);
   const canExpand = hasLongContent || hasExtraMedia;
 
   const previewContent =
@@ -304,7 +306,9 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
       ? `${plainTextContent.slice(0, CONTENT_PREVIEW_LENGTH).trim()}...`
       : post.content;
 
-  const [safeHtml, setSafeHtml] = useState("");
+  const [safeHtml, setSafeHtml] = useState(() =>
+    typeof window !== "undefined" ? DOMPurify.sanitize(post.content) : ""
+  );
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -337,7 +341,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
               "[&_p]:mb-2 last:[&_p]:mb-0 [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4",
               "[&_*]:break-words [&_*]:whitespace-normal"
             )}
-            dangerouslySetInnerHTML={{ __html: safeHtml || post.content }}
+            dangerouslySetInnerHTML={{ __html: safeHtml }}
           />
         ) : (
           <p

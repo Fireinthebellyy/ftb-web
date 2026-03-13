@@ -11,7 +11,7 @@ import axios from "axios";
 import { toast } from "sonner";
 
 export default function SavedUngatekeepPage() {
-  const { data: savedPosts = [], isLoading, error } = useQuery({
+  const { data: savedPosts = [], isLoading, error, refetch } = useQuery({
     queryKey: ["ungatekeep-saved"],
     queryFn: async () => {
       try {
@@ -20,7 +20,8 @@ export default function SavedUngatekeepPage() {
         return response.data.map((post: any) => ({ ...post, isSaved: true }));
       } catch (err) {
         if (axios.isAxiosError(err) && err.response?.status === 401) {
-          return []; // Handle unauthorized as empty
+          // Re-throw unauthorized errors to be caught by useQuery
+          throw err;
         }
         throw err;
       }
@@ -61,6 +62,24 @@ export default function SavedUngatekeepPage() {
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="h-48 w-full animate-pulse rounded-lg bg-gray-200" />
                 ))}
+              </div>
+            ) : error ? (
+              <div className="rounded-lg border bg-white py-12 text-center">
+                <h3 className="mb-2 text-lg font-semibold text-red-600">
+                  Failed to load saved posts
+                </h3>
+                <p className="mb-6 text-gray-500">
+                  {axios.isAxiosError(error) && error.response?.status === 401
+                    ? "Please log in to see your saved posts."
+                    : error.message || "An unknown error occurred."}
+                </p>
+                {axios.isAxiosError(error) && error.response?.status === 401 ? (
+                  <Button asChild>
+                    <Link href="/login">Login</Link>
+                  </Button>
+                ) : (
+                  <Button onClick={() => refetch()}>Retry</Button>
+                )}
               </div>
             ) : savedPosts.length === 0 ? (
               <div className="rounded-lg border bg-white py-12 text-center">

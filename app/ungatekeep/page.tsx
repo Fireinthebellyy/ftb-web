@@ -53,9 +53,12 @@ export default function UngatekeepPage() {
   const {
     data,
     isLoading,
+    isError,
+    error,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    refetch,
   } = useInfiniteQuery<UngatekeepResponse>({
     queryKey: ["ungatekeep"],
     queryFn: async ({ pageParam = 1 }) => {
@@ -154,6 +157,7 @@ export default function UngatekeepPage() {
               <motion.div animate={savedButtonControls}>
                 <Link
                   href="/ungatekeep/saved"
+                  aria-label="View saved posts"
                   className="group relative flex items-center gap-1.5 rounded-full border bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm transition-all hover:bg-gray-50 hover:text-primary active:scale-95"
                 >
                   <Bookmark className="h-3 w-3 sm:h-4 sm:w-4 transition-colors group-hover:fill-primary group-hover:text-primary" />
@@ -170,12 +174,13 @@ export default function UngatekeepPage() {
             {pinnedPosts.length > 0 && (
               <div className="sticky top-[72px] z-30 mb-3 space-y-2 lg:mb-4">
                 {pinnedPosts.map((post) => (
-                  <motion.div
+                  <motion.button
                     key={`pin-${post.id}`}
+                    type="button"
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     onClick={() => scrollToPost(post.id)}
-                    className="cursor-pointer rounded-lg border border-yellow-200 bg-yellow-50/95 p-2 shadow-sm backdrop-blur-md transition-all hover:bg-yellow-100/95 active:scale-[0.98]"
+                    className="w-full cursor-pointer rounded-lg border border-yellow-200 bg-yellow-50/95 p-2 text-left shadow-sm backdrop-blur-md transition-all hover:bg-yellow-100/95 active:scale-[0.98]"
                   >
                     <div className="flex items-center gap-2">
                       <Pin className="h-3 w-3 fill-yellow-500 text-yellow-500" />
@@ -183,12 +188,24 @@ export default function UngatekeepPage() {
                         {stripHtml(post.content)}
                       </p>
                     </div>
-                  </motion.div>
+                  </motion.button>
                 ))}
               </div>
             )}
 
-            {posts.length === 0 ? (
+            {isError && (
+              <div className="rounded-lg border bg-white py-12 text-center">
+                <h3 className="mb-2 text-lg font-semibold text-red-600">
+                  Failed to load posts
+                </h3>
+                <p className="mb-6 text-gray-500">
+                  {error?.message || "An unknown error occurred."}
+                </p>
+                <Button onClick={() => refetch()}>Retry</Button>
+              </div>
+            )}
+
+            {!isLoading && !isError && posts.length === 0 ? (
               <div className="rounded-lg border bg-white py-12 text-center">
                 <h3 className="mb-2 text-lg font-semibold text-gray-600">
                   No posts yet

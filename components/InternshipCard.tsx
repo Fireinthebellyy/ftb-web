@@ -27,7 +27,11 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
   } = internship;
 
   const handleCardClick = () => {
-    posthog.capture("internship_card_clicked", { internship_id: id, title, type });
+    posthog.capture("internship_card_clicked", {
+      internship_id: id,
+      title,
+      type,
+    });
     router.push(`/intern/${id}`);
   };
 
@@ -57,16 +61,28 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
+      posthog.capture("internship_shared", {
+        internship_id: id,
+        title,
+        method: "copy",
+      });
       toast.success("Link copied to clipboard");
     } catch {
       toast.error("Failed to copy link");
     }
   };
 
+  const handleShare = (method: string) => {
+    posthog.capture("internship_shared", {
+      internship_id: id,
+      title,
+      method,
+    });
+  };
+
   const handleShareClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    posthog.capture("internship_shared", { internship_id: id, title });
     setShareDialogOpen(true);
   };
 
@@ -153,7 +169,12 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
 
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
         <DialogContent>
-          <ShareDialog shareUrl={shareUrl} title={title} onCopy={handleCopy} />
+          <ShareDialog
+            shareUrl={shareUrl}
+            title={title}
+            onCopy={handleCopy}
+            onShare={handleShare}
+          />
         </DialogContent>
       </Dialog>
     </>

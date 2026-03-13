@@ -9,6 +9,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { Righteous } from "next/font/google";
 import { EllipsisVertical, Shield } from "lucide-react";
+import posthog from "posthog-js";
 
 function useLogout() {
   const router = useRouter();
@@ -393,7 +394,14 @@ export default function Navbar() {
               <Button asChild variant="outline" size="sm">
                 <Link href="/login">Log in</Link>
               </Button>
-              <Button asChild size="sm" variant="default">
+              <Button
+                asChild
+                size="sm"
+                variant="default"
+                onClick={() => {
+                  posthog.capture("navbar_signup_clicked");
+                }}
+              >
                 <Link href="/login">Get Started</Link>
               </Button>
             </div>

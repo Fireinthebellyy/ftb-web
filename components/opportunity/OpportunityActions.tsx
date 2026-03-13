@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { ShareDialog } from "./ShareDialog";
 import CommentSection from "./CommentSection";
 import { OpportunityPostProps } from "@/types/interfaces";
+import posthog from "posthog-js";
 
 interface OpportunityActionsProps {
   opportunity: OpportunityPostProps["opportunity"];
@@ -55,10 +56,23 @@ export function OpportunityActions({
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
+      posthog.capture("opportunity_shared", {
+        opportunity_id: id,
+        title: opportunity.title,
+        method: "copy",
+      });
       toast.success("Link copied to clipboard");
     } catch {
       toast.error("Failed to copy link");
     }
+  };
+
+  const handleShare = (method: string) => {
+    posthog.capture("opportunity_shared", {
+      opportunity_id: id,
+      title: opportunity.title,
+      method,
+    });
   };
 
   const handleDeletePost = async () => {
@@ -141,6 +155,7 @@ export function OpportunityActions({
                 shareUrl={shareUrl}
                 title={opportunity.title}
                 onCopy={handleCopy}
+                onShare={handleShare}
               />
             </Dialog>
           </div>

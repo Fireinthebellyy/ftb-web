@@ -138,13 +138,17 @@ export default function UngatekeepPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
           {/* Main Content */}
           <div className="min-w-0 flex-1">
+            <PageBannerCarousel
+              placement="ungatekeep"
+              className="w-full mb-4 lg:mb-6"
+            />
             <div className="flex items-start justify-between">
               <div>
                 <h1 className="mb-1 text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
                   Ungatekeep
                 </h1>
-                <p className="text-sm text-gray-600 md:text-base">
-                  Posting everything students usually figure out too late. 
+                <p className="text-sm text-gray-600 md:text-base mb-3">
+                  Posting everything students usually figure out too late.
                 </p>
               </div>
               <motion.div animate={savedButtonControls}>
@@ -162,14 +166,9 @@ export default function UngatekeepPage() {
               </motion.div>
             </div>
 
-            <PageBannerCarousel
-              placement="ungatekeep"
-              className="w-full lg:mb-4 lg:mt-4"
-            />
-
             {/* Pinned Posts Quick Access */}
             {pinnedPosts.length > 0 && (
-              <div className="sticky top-[72px] z-30 mb-2 space-y-2 lg:mb-4">
+              <div className="sticky top-[72px] z-30 mb-3 space-y-2 lg:mb-4">
                 {pinnedPosts.map((post) => (
                   <motion.div
                     key={`pin-${post.id}`}

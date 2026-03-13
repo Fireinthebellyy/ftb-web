@@ -24,7 +24,6 @@ import {
   Info,
   CalendarPlus,
   CalendarDays,
-  AlertCircle,
   Lightbulb,
   Flag,
   ChevronRight,
@@ -37,57 +36,11 @@ import posthog from "posthog-js";
 import { cn, toTitleCase } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ShareDialog } from "@/components/internship/ShareDialog";
-import ApplyModal, {
-  ApplyModalOpportunity,
-} from "@/components/tracker/ApplyModal";
 import { useSession } from "@/hooks/use-session";
+import { type InternshipData } from "@/types/interfaces";
+import { mapInternshipToApplyOpportunity } from "@/lib/internship-utils";
+import ApplyModal from "@/components/tracker/ApplyModal";
 
-interface InternshipData {
-  id: string;
-  type?: string | null;
-  timing?: string | null;
-  title: string;
-  description?: string | null;
-  link: string;
-  tags: string[];
-  location?: string | null;
-  deadline: string | null;
-  stipend?: number | null;
-  hiringOrganization: string;
-  hiringManager?: string | null;
-  experience?: string | null;
-  duration?: string | null;
-  createdAt: string | null;
-  poster?: string | null;
-  eligibility?: string[];
-  hiringManagerEmail?: string | null;
-  contactEmail?: string | null;
-  postUrl?: string | null;
-  applyLink?: string | null;
-  user: {
-    id: string;
-    name: string;
-    image: string;
-    role: string;
-  };
-}
-
-const mapInternshipToApplyOpportunity = (
-  period: InternshipData
-): ApplyModalOpportunity => {
-  return {
-    ...period,
-    id: period.id,
-    title: period.title,
-    hiringOrganization: period.hiringOrganization,
-    company: period.hiringOrganization,
-    poster: period.poster || undefined,
-    logo: period.poster || undefined,
-    skills: period.tags,
-    tags: period.tags,
-    returnUrl: `/intern/${period.id}`,
-  };
-};
 
 export default function InternshipDetailPage() {
   const router = useRouter();

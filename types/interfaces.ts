@@ -49,6 +49,36 @@ export type Internship = {
   };
 };
 
+export interface InternshipData {
+  id: string;
+  type?: string | null;
+  timing?: string | null;
+  title: string;
+  description?: string | null;
+  link: string;
+  tags: string[];
+  location?: string | null;
+  deadline: string | null;
+  stipend?: number | null;
+  hiringOrganization: string;
+  hiringManager?: string | null;
+  experience?: string | null;
+  duration?: string | null;
+  createdAt: string | null;
+  poster?: string | null;
+  eligibility?: string[];
+  hiringManagerEmail?: string | null;
+  contactEmail?: string | null;
+  postUrl?: string | null;
+  applyLink?: string | null;
+  user: {
+    id: string;
+    name: string;
+    image: string;
+    role: string;
+  };
+}
+
 export type Task = {
   id: string;
   title: string;

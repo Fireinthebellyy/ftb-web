@@ -30,10 +30,10 @@ export default function ToolkitBanner() {
 
       {/* Premium Toolkits Section */}
       {toolkits.length > 0 && (
-        <div className="z-20 pt-1 pb-2">
+        <div className="sticky top-14 z-30 bg-gray-50 pt-2 pb-2 -mx-4 px-4 lg:static lg:mx-0 lg:px-0 lg:top-auto sm:top-16">
           {/* Horizontal Scrolling List */}
           <div
-            className="hide-scrollbar flex snap-x gap-3 overflow-x-auto pb-3"
+            className="hide-scrollbar flex snap-x gap-3 overflow-x-auto pb-2"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {toolkits.map((toolkit) => (

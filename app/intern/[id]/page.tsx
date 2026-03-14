@@ -29,7 +29,6 @@ import { InternshipTabs } from "@/components/internship/InternshipTabs";
 import { InternshipTabContent } from "@/components/internship/InternshipTabContent";
 import { InternshipDesktopHeader } from "@/components/internship/InternshipDesktopHeader";
 import { InternshipDesktopSidebar } from "@/components/internship/InternshipDesktopSidebar";
-import { InternshipStickyHeader } from "@/components/internship/InternshipStickyHeader";
 import { InternshipStickyFooter } from "@/components/internship/InternshipStickyFooter";
 
 
@@ -155,13 +154,6 @@ export default function InternshipDetailPage() {
           MOBILE LAYOUT (hidden on md+)
       ============================================================ */}
       <div className="md:hidden pb-32">
-        <InternshipStickyHeader
-          onBack={() => router.back()}
-          onCalendar={handleCalendarClick}
-          onShare={() => setShareDialogOpen(true)}
-          onBookmark={handleBookmarkClick}
-          isBookmarked={isBookmarked}
-        />
         <InternshipHero internship={internship} />
         <InternshipTabs activeTab={activeTab} setActiveTab={setActiveTab} />
         <InternshipTabContent activeTab={activeTab} internship={internship} />

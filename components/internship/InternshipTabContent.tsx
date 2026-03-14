@@ -24,7 +24,7 @@ export const InternshipTabContent: React.FC<InternshipTabContentProps> = ({
   internship,
 }) => {
   return (
-    <div className="px-6 pt-8 pb-12">
+    <div className="px-6 pt-8">
       {activeTab === "description" && (
         <div className="animate-in fade-in duration-300">
           <div className="flex items-center gap-2 mb-5">

@@ -77,7 +77,7 @@ export default function ApplyModal({
     return (
       <div
         className={cn(
-          "flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm transition-all duration-500 min-h-[5.5rem]",
+          "flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm transition-all duration-500",
           isDone ? "border-orange-100 bg-orange-50/40" : "border-transparent"
         )}
       >
@@ -98,10 +98,10 @@ export default function ApplyModal({
             />
           )}
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <h4
             className={cn(
-              "font-bold transition-colors duration-500",
+              "font-bold transition-colors duration-500 truncate",
               isDone ? "text-slate-900" : "text-slate-800"
             )}
           >
@@ -109,7 +109,7 @@ export default function ApplyModal({
           </h4>
           <p
             className={cn(
-              "text-xs font-medium transition-colors duration-500",
+              "text-xs font-medium transition-colors duration-500 truncate",
               isDone ? "text-slate-500" : "text-slate-400"
             )}
           >

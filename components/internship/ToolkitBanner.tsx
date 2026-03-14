@@ -30,7 +30,7 @@ export default function ToolkitBanner() {
 
       {/* Premium Toolkits Section */}
       {toolkits.length > 0 && (
-        <div className="sticky top-14 z-30 bg-gray-50 pt-2 pb-2 -mx-4 px-4 lg:static lg:mx-0 lg:px-0 lg:top-auto sm:top-16">
+        <div className="sticky top-16 z-30 bg-white shadow-sm border-b border-gray-200 pt-3 pb-3 -mx-4 px-4 lg:static lg:mx-0 lg:px-0 lg:top-auto lg:bg-transparent lg:shadow-none lg:border-none lg:pt-1 lg:pb-2">
           {/* Horizontal Scrolling List */}
           <div
             className="hide-scrollbar flex snap-x gap-3 overflow-x-auto pb-2"

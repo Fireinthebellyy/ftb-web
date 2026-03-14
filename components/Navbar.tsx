@@ -8,7 +8,7 @@ import { useSession, useInvalidateSession } from "@/hooks/use-session";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { Righteous } from "next/font/google";
-import { EllipsisVertical, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
 import posthog from "posthog-js";
 
 function useLogout() {
@@ -304,28 +304,14 @@ export default function Navbar() {
                 </Link>
               )}
               <div className="relative flex items-center">
-                {user.user?.image ? (
-                  <div className="rounded-full border-2 border-white shadow-lg">
-                    <Image
-                      src={user.user.image}
-                      alt={user.user.name || "User avatar"}
-                      className="size-6 rounded-full object-cover"
-                      width={28}
-                      height={28}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex size-6 items-center justify-center rounded-full border-2 border-neutral-300 bg-neutral-200 text-xs font-semibold text-neutral-600 uppercase">
-                    {avatarFallback}
-                  </div>
-                )}
                 <button
                   ref={triggerRef}
                   type="button"
+                  aria-label="Open account menu"
                   aria-haspopup="menu"
                   aria-expanded={menuOpen}
                   aria-controls={menuId}
-                  className="hidden cursor-pointer rounded-full focus:ring-2 focus:ring-neutral-500 focus:outline-none md:block"
+                  className="cursor-pointer rounded-full focus:ring-2 focus:ring-neutral-500 focus:outline-none"
                   onClick={() => setMenuOpen((v) => !v)}
                   onKeyDown={(e) => {
                     if (
@@ -339,7 +325,21 @@ export default function Navbar() {
                     }
                   }}
                 >
-                  <EllipsisVertical className="ml-1 size-4 text-neutral-600" />
+                  {user.user?.image ? (
+                    <div className="rounded-full border-2 border-white shadow-lg">
+                      <Image
+                        src={user.user.image}
+                        alt={user.user.name || "User avatar"}
+                        className="size-6 rounded-full object-cover"
+                        width={28}
+                        height={28}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex size-6 items-center justify-center rounded-full border-2 border-neutral-300 bg-neutral-200 text-xs font-semibold text-neutral-600 uppercase">
+                      {avatarFallback}
+                    </div>
+                  )}
                 </button>
 
                 {menuOpen && (
@@ -391,9 +391,6 @@ export default function Navbar() {
             </div>
           ) : (
             <div className="flex gap-2">
-              <Button asChild variant="outline" size="sm">
-                <Link href="/login">Log in</Link>
-              </Button>
               <Button
                 asChild
                 size="sm"

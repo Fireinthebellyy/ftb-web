@@ -59,6 +59,43 @@ export default function ToolkitDetailSkeleton() {
               <Skeleton className="mb-4 h-7 w-24" />
               <Skeleton className="aspect-video w-full" />
             </div>
+
+            <div className="mt-6 rounded-lg border bg-white p-6">
+              <Skeleton className="mb-4 h-7 w-32" />
+              <div className="grid gap-4 md:grid-cols-2">
+                {Array.from({ length: 2 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="rounded-lg border border-gray-100 bg-gray-50 p-4"
+                  >
+                    <div className="mb-3 flex items-center gap-2">
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <div className="space-y-1">
+                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-3 w-20" />
+                      </div>
+                    </div>
+                    <div className="mb-3 flex gap-1">
+                      {Array.from({ length: 5 }).map((__, starIndex) => (
+                        <Skeleton
+                          key={starIndex}
+                          className="h-4 w-4 rounded-full"
+                        />
+                      ))}
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-10/12" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 flex justify-center gap-2">
+                <Skeleton className="h-1.5 w-3 rounded-full" />
+                <Skeleton className="h-1.5 w-1.5 rounded-full" />
+                <Skeleton className="h-1.5 w-1.5 rounded-full" />
+              </div>
+            </div>
           </div>
 
           <div className="hidden xl:col-span-1 xl:block">

@@ -28,9 +28,9 @@ export default function ToolkitBanner() {
         <PageBannerCarousel placement="internship" className="w-full" />
       </div>
 
-      {/* Premium Toolkits Section - Sticky */}
+      {/* Premium Toolkits Section */}
       {toolkits.length > 0 && (
-        <div className="sticky top-16 z-20 bg-gray-50 pt-1 pb-2">
+        <div className="z-20 pt-1 pb-2">
           {/* Horizontal Scrolling List */}
           <div
             className="hide-scrollbar flex snap-x gap-3 overflow-x-auto pb-3"

@@ -39,43 +39,7 @@ export const InternshipTabContent: React.FC<InternshipTabContentProps> = ({
             ) : (
               internship.description || <p>No description provided.</p>
             )}
-            {internship.location && (
-              <div className="mt-8 overflow-hidden rounded-3xl border border-slate-100 shadow-sm">
-                <div className="relative h-52 w-full">
-                  <Image
-                    src="/images/map-placeholder.png"
-                    alt="Company Location"
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 bg-blue-400/10" />
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                    <div className="w-8 h-8 rounded-full bg-orange-500/30 animate-ping absolute scale-150" />
-                    <div className="w-5 h-5 rounded-full bg-orange-500 border-2 border-white shadow-lg relative z-10" />
-                  </div>
-                </div>
-                <div className="bg-[#fcfdfd] p-4 flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">
-                      LOCATION
-                    </h4>
-                    <p className="text-[14px] text-slate-900 font-bold">
-                      {toTitleCase(internship.location)}
-                    </p>
-                  </div>
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                      internship.location
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#ec5b13] font-bold text-[13px] flex items-center gap-1 hover:underline"
-                  >
-                    Get Directions <ChevronRight className="w-4 h-4" />
-                  </a>
-                </div>
-              </div>
-            )}
+
           </div>
           {internship.tags && internship.tags.length > 0 && (
             <div className="mt-10 pt-6 border-t border-slate-100">

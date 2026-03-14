@@ -77,7 +77,7 @@ export default function ApplyModal({
     return (
       <div
         className={cn(
-          "flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm transition-all duration-500",
+          "flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm transition-all duration-500 min-h-[5.5rem]",
           isDone ? "border-orange-100 bg-orange-50/40" : "border-transparent"
         )}
       >

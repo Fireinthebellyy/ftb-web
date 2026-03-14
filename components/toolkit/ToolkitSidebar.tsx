@@ -30,7 +30,7 @@ interface CouponValidationResult {
 
 export default function PurchaseSidebar({
   toolkit,
-  contentItems: _contentItems,
+  contentItems,
   hasPurchased,
   isPurchaseLoading,
   onPurchase,
@@ -46,9 +46,9 @@ export default function PurchaseSidebar({
     toolkit.originalPrice && toolkit.originalPrice > toolkit.price;
   const discountPercentage = hasOriginalPrice
     ? Math.round(
-      ((toolkit.originalPrice! - toolkit.price) / toolkit.originalPrice!) *
-      100
-    )
+        ((toolkit.originalPrice! - toolkit.price) / toolkit.originalPrice!) *
+          100
+      )
     : 0;
 
   const handleApplyCoupon = async () => {
@@ -67,7 +67,11 @@ export default function PurchaseSidebar({
         }
       );
 
-      if (data.valid && data.discountAmount !== undefined && data.finalPrice !== undefined) {
+      if (
+        data.valid &&
+        data.discountAmount !== undefined &&
+        data.finalPrice !== undefined
+      ) {
         setAppliedCoupon(data);
         toast.success(`Coupon applied! ₹${data.discountAmount} off`);
       } else {
@@ -92,11 +96,16 @@ export default function PurchaseSidebar({
   };
 
   const displayPrice = appliedCoupon?.finalPrice ?? toolkit.price;
-  const showCouponDiscount = appliedCoupon?.valid && appliedCoupon.discountAmount;
+  const showCouponDiscount =
+    appliedCoupon?.valid && appliedCoupon.discountAmount;
+  const lessonCount = contentItems.length || toolkit.lessonCount || 0;
 
   return (
     <Card
-      className={cn("sticky top-8 overflow-hidden border bg-white py-0", className)}
+      className={cn(
+        "sticky top-8 overflow-hidden border bg-white py-0",
+        className
+      )}
     >
       <CardContent className="p-6">
         <div className="mb-4 flex items-baseline gap-2">
@@ -183,24 +192,22 @@ export default function PurchaseSidebar({
                 )}
               </div>
               {appliedCoupon?.valid && (
-                <p className="text-xs text-green-600 font-medium">
+                <p className="text-xs font-medium text-green-600">
                   Coupon applied! Save ₹{appliedCoupon.discountAmount}
                 </p>
               )}
             </div>
 
             <Button
-              onClick={() => onPurchase(appliedCoupon?.valid ? couponCode.trim() : undefined)}
+              onClick={() =>
+                onPurchase(appliedCoupon?.valid ? couponCode.trim() : undefined)
+              }
               disabled={isPurchaseLoading}
               className="w-full"
               size="lg"
             >
               {isPurchaseLoading ? "Processing..." : "Buy Now"}
             </Button>
-
-            <p className="text-center text-xs text-gray-500">
-              Secure payment via Razorpay
-            </p>
           </div>
         )}
 
@@ -230,7 +237,7 @@ export default function PurchaseSidebar({
               </li>
             ))}
 
-            {toolkit.lessonCount && (
+            {lessonCount > 0 && (
               <li className="flex items-start gap-2">
                 <svg
                   className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600"
@@ -245,7 +252,7 @@ export default function PurchaseSidebar({
                     d="M5 13l4 4L19 7"
                   />
                 </svg>
-                {toolkit.lessonCount} lessons
+                {lessonCount} lessons
               </li>
             )}
 
@@ -309,8 +316,6 @@ export default function PurchaseSidebar({
         <div className="rounded-lg bg-gray-50 p-3 text-center">
           <p className="text-xs text-gray-600">
             <strong>100% satisfaction guaranteed</strong>
-            <br />
-            30-day money-back policy
           </p>
         </div>
       </CardContent>

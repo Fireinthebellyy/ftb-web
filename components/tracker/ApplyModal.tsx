@@ -163,18 +163,14 @@ export default function ApplyModal({
           </div>
 
           {/* Footer CTA */}
-          <div className="mt-8 flex w-full items-center justify-between">
-            <div className="text-[10px] font-bold tracking-wider text-slate-400">
-              2 EXTRA MINUTES NOW
-              <br />
-              {">"} GETTING GHOSTED
-              <br />
-              LATER
+          <div className="mt-8 flex w-full flex-col items-center gap-4">
+            <div className="text-[13px] font-medium text-slate-500">
+              2 extra minutes now {">"} getting ghosted later
             </div>
             <button
               onClick={handleSubmit}
               className={cn(
-                "group flex items-center justify-center gap-2 rounded-full px-6 py-3 font-bold text-white shadow-lg transition-all active:scale-95",
+                "group flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 font-bold text-white shadow-lg transition-all active:scale-95",
                 activeStep >= 3
                   ? "bg-[#ec5b13] shadow-orange-500/30 hover:bg-[#d44d0c]"
                   : "bg-slate-300 shadow-none cursor-not-allowed"

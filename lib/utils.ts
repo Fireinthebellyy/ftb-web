@@ -81,3 +81,23 @@ export function toTitleCase(str: string | null | undefined): string {
     }
   );
 }
+
+/**
+ * Format stipend amount with currency and period
+ */
+export function formatSalary(stipend: number | null | undefined): string {
+  if (stipend === null || stipend === undefined) return "Unpaid / Not disclosed";
+  return `${stipend.toLocaleString()} / mo`;
+}
+
+/**
+ * Format date to a readable long format
+ */
+export function formatDateLong(dateString: string | null | undefined): string {
+  if (!dateString) return "N/A";
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}

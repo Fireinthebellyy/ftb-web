@@ -9,7 +9,8 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
 import TrackerDetailModal from './TrackerDetailModal';
-import ApplyModal, { ApplyModalOpportunity } from './ApplyModal';
+import ApplyModal from './ApplyModal';
+import { ApplyModalOpportunity } from '@/types/interfaces';
 
 import TrackerRow from './TrackerRow';
 import MobileTrackerCard from './MobileTrackerCard';

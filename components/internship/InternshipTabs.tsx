@@ -14,7 +14,7 @@ export const InternshipTabs: React.FC<InternshipTabsProps> = ({
 }) => {
   return (
     <div className="flex items-center justify-between mt-8 overflow-x-auto border-b border-slate-100 -mx-6 px-6">
-      {["Description", "Company", "Benefits", "Requirements"].map((tab) => (
+      {["Description"].map((tab) => (
         <button
           key={tab}
           onClick={() => setActiveTab(tab.toLowerCase())}

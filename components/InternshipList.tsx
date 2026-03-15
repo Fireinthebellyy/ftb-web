@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
+import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Search, Filter, Loader2, X } from "lucide-react";
@@ -19,13 +20,6 @@ import {
 } from "@/components/ui/dialog";
 import FeaturedOpportunities from "./opportunity/FeaturedOpportunities";
 import ToolkitBanner from "./internship/ToolkitBanner";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 const CalendarWidget = dynamic(() => import("./opportunity/CalendarWidget"));
 const TaskWidget = dynamic(() => import("./opportunity/TaskWidget"));
@@ -39,6 +33,7 @@ export default function InternshipList() {
   const getInitialSearch = () => searchParams.get("search") || "";
   const getInitialLocation = () => searchParams.get("location") || "";
   const getInitialType = () => searchParams.get("type") || "";
+  const getInitialPaidOnly = () => searchParams.get("paid") === "true";
 
   const [isNewInternshipOpen, setIsNewInternshipOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>(getInitialSearch);
@@ -46,94 +41,55 @@ export default function InternshipList() {
     useState<string>(getInitialSearch);
   const [location, setLocation] = useState<string>(getInitialLocation);
   const [type, setType] = useState<string>(getInitialType);
+  const [paidOnly, setPaidOnly] = useState<boolean>(getInitialPaidOnly);
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const [showSecondaryWidgets, setShowSecondaryWidgets] = useState(false);
 
-  // Derive state from URL query parameters whenever searchParams changes (for browser navigation)
+  // 1. We ONLY update the URL when the debounced search term, location, or type changes.
+  // We do NOT listen to `searchParams` to update the local state after mount, 
+  // as this causes bidirectional recursive updates (glitchy behavior).
   useEffect(() => {
-    const searchParam = searchParams.get("search") || "";
-    const locationParam = searchParams.get("location") || "";
-    const typeParam = searchParams.get("type") || "";
+    const params = new URLSearchParams(searchParams.toString());
+    let hasChanges = false;
 
-    const newSearchTerm = searchParam;
-    const newLocation = locationParam;
-    const newType = typeParam;
+    if (debouncedSearchTerm !== (params.get("search") || "")) {
+      if (debouncedSearchTerm) params.set("search", debouncedSearchTerm);
+      else params.delete("search");
+      hasChanges = true;
+    }
 
-    // Update state from URL - use functional updates to compare and only update if changed
-    setSearchTerm((prev) => (prev !== newSearchTerm ? newSearchTerm : prev));
-    setDebouncedSearchTerm((prev) =>
-      prev !== newSearchTerm ? newSearchTerm : prev
-    );
-    setLocation((prev) => (prev !== newLocation ? newLocation : prev));
-    setType((prev) => (prev !== newType ? newType : prev));
-  }, [searchParams]);
+    if (location !== (params.get("location") || "")) {
+      if (location) params.set("location", location);
+      else params.delete("location");
+      hasChanges = true;
+    }
 
-  // Debounce search term updates (400ms delay) - only for user input, not URL loading
+    if (type !== (params.get("type") || "")) {
+      if (type) params.set("type", type);
+      else params.delete("type");
+      hasChanges = true;
+    }
+
+    if (paidOnly !== (params.get("paid") === "true")) {
+      if (paidOnly) params.set("paid", "true");
+      else params.delete("paid");
+      hasChanges = true;
+    }
+
+    if (hasChanges) {
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+  }, [debouncedSearchTerm, location, type, paidOnly, pathname, router, searchParams]);
+
+  // Debounce search term updates (400ms delay) - only for user input
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
     }, 400);
 
-    // Cleanup timer on unmount or when searchTerm changes
-    return () => {
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, [searchTerm]);
-
-  // Update URL query parameters when filters change
-  useEffect(() => {
-    // Get current values from URL
-    const currentSearch = searchParams.get("search") || "";
-    const currentLocation = searchParams.get("location") || "";
-    const currentType = searchParams.get("type") || "";
-
-    // Get state values - use debouncedSearchTerm for search, immediate updates for others
-    const stateSearch = debouncedSearchTerm.trim();
-    const stateLocation = location.trim();
-    const stateType = type.trim();
-
-    // Compare values to see if URL needs updating
-    const searchChanged = currentSearch !== stateSearch;
-    const locationChanged = currentLocation !== stateLocation;
-    const typeChanged = currentType !== stateType;
-
-    // Only update URL if values actually differ
-    if (!searchChanged && !locationChanged && !typeChanged) {
-      return;
-    }
-
-    // Build new params
-    const params = new URLSearchParams();
-
-    // Update search
-    if (stateSearch) {
-      params.set("search", stateSearch);
-    }
-
-    // Update location
-    if (stateLocation) {
-      params.set("location", stateLocation);
-    }
-
-    // Update type
-    if (stateType) {
-      params.set("type", stateType);
-    }
-
-    // Build new URL
-    const newUrl = params.toString()
-      ? `${pathname}?${params.toString()}`
-      : pathname;
-    const currentUrl = searchParams.toString()
-      ? `${pathname}?${searchParams.toString()}`
-      : pathname;
-
-    // Only update if URL actually changed
-    if (newUrl !== currentUrl) {
-      router.replace(newUrl, { scroll: false });
-    }
-  }, [debouncedSearchTerm, location, type, pathname, router, searchParams]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -160,7 +116,7 @@ export default function InternshipList() {
     type.trim() ? [type.trim()] : [],
     [],
     location.trim(),
-    undefined,
+    paidOnly ? 1 : undefined,
     undefined
   );
 
@@ -233,6 +189,7 @@ export default function InternshipList() {
     setDebouncedSearchTerm("");
     setLocation("");
     setType("");
+    setPaidOnly(false);
   };
 
   if (error) {
@@ -249,97 +206,124 @@ export default function InternshipList() {
 
   return (
     <div className="h-full grow bg-gray-50">
-      <div className="container mx-auto max-w-7xl px-4 pt-2">
+      <div className="container mx-auto max-w-7xl px-4 pt-0 lg:pt-2">
         {/* Mobile: Search */}
 
-        <div className="mb-5 lg:hidden">
-          {/* Search Bar with Filter Icon */}
-          <div className="relative mb-3 flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
+        <div className="mb-0 lg:hidden">
+          <div className="relative mb-2 flex items-center gap-3">
+            <div className="relative flex-1 group">
+              <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 transform text-slate-400 group-focus-within:text-[#ec5b13] transition-colors duration-200" />
               <Input
                 placeholder={searchPlaceholders[currentPlaceholderIndex]}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-8 pr-10 pl-10 text-sm sm:h-10 sm:text-base"
+                className="h-12 w-full pl-11 pr-10 rounded-[16px] border-slate-200 bg-white text-sm shadow-sm focus-visible:ring-1 focus-visible:ring-orange-500/50 focus-visible:border-[#ec5b13] transition-all"
               />
               {searchTerm && (
                 <button
                   type="button"
                   onClick={() => setSearchTerm("")}
-                  className="absolute top-1/2 right-3 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600"
+                  className="absolute top-1/2 right-3 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
             <Button
-              variant="ghost"
-              size="sm"
+              variant="outline"
               onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
-              className={`h-8 shrink-0 cursor-pointer px-2 hover:bg-orange-600 hover:text-white sm:h-10 ${isFilterBoxOpen ? "bg-orange-500 text-white hover:bg-orange-600" : ""}`}
+              className={cn(
+                "h-12 w-12 shrink-0 rounded-[14px] border-none shadow-sm transition-all focus:ring-0 active:scale-95",
+                isFilterBoxOpen || location || type || paidOnly
+                  ? "bg-[#d44d0c] text-white hover:bg-[#b03d0a]"
+                  : "bg-[#ec5b13] text-white hover:bg-[#d44d0c]"
+              )}
             >
-              <Filter className={`size-4`} />
+              <Filter className="h-5 w-5" />
             </Button>
           </div>
 
           {/* Filter Box */}
           {isFilterBoxOpen && (
-            <div className="mt-2 rounded-lg border bg-white p-3 sm:p-4">
+            <div className="mt-4 rounded-[20px] border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/40 animate-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="font-semibold text-slate-900 text-lg">Filters</h3>
+                {(location || type || paidOnly) && (
+                  <button
+                    onClick={clearFilters}
+                    className="text-sm font-medium text-[#ec5b13] hover:text-[#d44d0c] transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+
               {/* Internship Type Filter */}
-              <div className="mb-3 sm:mb-4">
-                <label className="mb-1.5 block text-xs font-medium text-gray-700 sm:mb-2 sm:text-sm">
-                  Internship Type
+              <div className="mb-6">
+                <label className="mb-3 block text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  Type
                 </label>
-                <Select
-                  value={type}
-                  onValueChange={(value) =>
-                    setType(value === type ? "" : value)
-                  }
-                >
-                  <SelectTrigger className="h-7 w-full cursor-pointer text-xs sm:h-8 sm:text-sm">
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="onsite">Onsite</SelectItem>
-                    <SelectItem value="remote">Remote</SelectItem>
-                    <SelectItem value="hybrid">Hybrid</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex flex-wrap gap-2.5">
+                  {["onsite", "remote", "hybrid"].map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setType(type === t ? "" : t)}
+                      className={cn(
+                        "px-4 py-2 rounded-full text-sm font-medium transition-all border",
+                        type === t
+                          ? "bg-slate-50 border-slate-300 text-slate-800"
+                          : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                      )}
+                    >
+                      {t.charAt(0).toUpperCase() + t.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Stipend Filter */}
+              <div className="mb-6">
+                <label className="mb-3 block text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  Stipend
+                </label>
+                <div className="flex flex-wrap gap-2.5">
+                  <button
+                    onClick={() => setPaidOnly(!paidOnly)}
+                    className={cn(
+                      "px-4 py-2 rounded-full text-sm font-medium transition-all border",
+                      paidOnly
+                        ? "bg-slate-50 border-slate-300 text-slate-800"
+                        : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                    )}
+                  >
+                    Paid Only
+                  </button>
+                </div>
               </div>
 
               {/* Location Filter */}
-              <div className="mb-3 sm:mb-4">
-                <label className="mb-1.5 block text-xs font-medium text-gray-700 sm:mb-2 sm:text-sm">
+              <div className="mb-2">
+                <label className="mb-3 block text-xs font-bold text-slate-500 uppercase tracking-widest">
                   Location
                 </label>
-                <div className="relative">
+                <div className="relative group">
                   <Input
-                    placeholder="Location (e.g., Delhi, Mumbai)"
+                    placeholder="E.g. Delhi, Mumbai"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    className="h-8 pr-8 text-xs sm:h-9 sm:pr-10 sm:text-sm"
+                    className="h-11 w-full pl-4 pr-10 rounded-[12px] border-slate-200 bg-white text-sm focus-visible:ring-1 focus-visible:ring-orange-500/50 focus-visible:border-[#ec5b13] transition-all shadow-sm"
                   />
                   {location && (
                     <button
                       type="button"
                       onClick={() => setLocation("")}
-                      className="absolute top-1/2 right-2.5 flex h-3.5 w-3.5 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600 sm:right-3 sm:h-4 sm:w-4"
+                      className="absolute top-1/2 right-3 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200"
                     >
-                      <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </div>
               </div>
-
-              {/* Clear Filters Button */}
-              <Button
-                onClick={clearFilters}
-                variant="outline"
-                className="h-7 w-full text-xs sm:h-8 sm:text-sm"
-              >
-                Clear All Filters
-              </Button>
             </div>
           )}
         </div>
@@ -348,96 +332,123 @@ export default function InternshipList() {
         <div className="hidden gap-6 lg:grid lg:grid-cols-12">
           {/* Left Sidebar - 3 columns */}
           <aside className="col-span-3">
-            <div className="sticky top-16 space-y-6">
-              {/* Search Bar - Above Quick Links */}
-              <div className="relative flex items-center gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
+            <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-2 scrollbar-hide space-y-6 pb-12">
+              {/* Search Bar */}
+              <div className="relative flex items-center gap-3">
+                <div className="relative flex-1 group">
+                  <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 transform text-slate-400 group-focus-within:text-[#ec5b13] transition-colors duration-200" />
                   <Input
                     placeholder={searchPlaceholders[currentPlaceholderIndex]}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="h-8 pr-10 pl-10 text-sm sm:h-10 sm:text-base"
+                    className="h-12 w-full pl-11 pr-10 rounded-[16px] border-slate-200 bg-white text-sm shadow-sm focus-visible:ring-1 focus-visible:ring-orange-500/50 focus-visible:border-[#ec5b13] transition-all"
                   />
                   {searchTerm && (
                     <button
                       type="button"
                       onClick={() => setSearchTerm("")}
-                      className="absolute top-1/2 right-3 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600"
+                      className="absolute top-1/2 right-3 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </div>
                 <Button
-                  variant="ghost"
-                  size="sm"
+                  variant="outline"
                   onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
-                  className={`h-8 shrink-0 cursor-pointer px-2 hover:bg-orange-600 hover:text-white sm:h-10 ${isFilterBoxOpen ? "bg-orange-500 text-white hover:bg-orange-600" : ""}`}
+                  className={cn(
+                    "h-12 w-12 shrink-0 rounded-[14px] border-none shadow-sm transition-all focus:ring-0 active:scale-95",
+                    isFilterBoxOpen || location || type || paidOnly
+                      ? "bg-[#d44d0c] text-white hover:bg-[#b03d0a]"
+                      : "bg-[#ec5b13] text-white hover:bg-[#d44d0c]"
+                  )}
                 >
-                  <Filter className={`size-4`} />
+                  <Filter className="h-5 w-5" />
                 </Button>
               </div>
 
               {/* Filters */}
               {isFilterBoxOpen && (
-                <div className="rounded-lg border bg-white px-4 py-3">
-                  <h3 className="mb-3 font-semibold text-gray-900">Filters</h3>
-                  <div className="space-y-4">
+                <div className="rounded-[20px] border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/40 animate-in slide-in-from-top-2 duration-200">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="font-semibold text-slate-900 text-lg">Filters</h3>
+                    {(location || type || paidOnly) && (
+                      <button
+                        onClick={clearFilters}
+                        className="text-sm font-medium text-[#ec5b13] hover:text-[#d44d0c] transition-colors"
+                      >
+                        Clear All
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-6">
                     {/* Internship Type Filter */}
                     <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Internship Type
+                      <label className="mb-3 block text-xs font-bold text-slate-500 uppercase tracking-widest">
+                        Type
                       </label>
-                      <Select
-                        value={type}
-                        onValueChange={(value) =>
-                          setType(value === type ? "" : value)
-                        }
-                      >
-                        <SelectTrigger className="h-8 w-full cursor-pointer text-sm">
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="onsite">Onsite</SelectItem>
-                          <SelectItem value="remote">Remote</SelectItem>
-                          <SelectItem value="hybrid">Hybrid</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="flex flex-wrap gap-2.5">
+                        {["onsite", "remote", "hybrid"].map((t) => (
+                          <button
+                            key={t}
+                            onClick={() => setType(type === t ? "" : t)}
+                            className={cn(
+                              "px-4 py-2 rounded-full text-sm font-medium transition-all border",
+                              type === t
+                                ? "bg-slate-50 border-slate-300 text-slate-800"
+                                : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                            )}
+                          >
+                            {t.charAt(0).toUpperCase() + t.slice(1)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Stipend Filter */}
+                    <div>
+                      <label className="mb-3 block text-xs font-bold text-slate-500 uppercase tracking-widest">
+                        Stipend
+                      </label>
+                      <div className="flex flex-wrap gap-2.5">
+                        <button
+                          onClick={() => setPaidOnly(!paidOnly)}
+                          className={cn(
+                            "px-4 py-2 rounded-full text-sm font-medium transition-all border",
+                            paidOnly
+                              ? "bg-slate-50 border-slate-300 text-slate-800"
+                              : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                          )}
+                        >
+                          Paid Only
+                        </button>
+                      </div>
                     </div>
 
                     {/* Location Filter */}
                     <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                      <label className="mb-3 block text-xs font-bold text-slate-500 uppercase tracking-widest">
                         Location
                       </label>
-                      <div className="relative">
+                      <div className="relative group">
                         <Input
-                          placeholder="Location (e.g., Delhi, Mumbai)"
+                          placeholder="E.g. Delhi, Mumbai"
                           value={location}
                           onChange={(e) => setLocation(e.target.value)}
-                          className="h-9 pr-10 text-sm"
+                          className="h-11 w-full pl-4 pr-10 rounded-[12px] border-slate-200 bg-white text-sm focus-visible:ring-1 focus-visible:ring-orange-500/50 focus-visible:border-[#ec5b13] transition-all shadow-sm"
                         />
                         {location && (
                           <button
                             type="button"
                             onClick={() => setLocation("")}
-                            className="absolute top-1/2 right-3 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600"
+                            className="absolute top-1/2 right-3 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200"
                           >
-                            <X className="h-4 w-4" />
+                            <X className="h-3.5 w-3.5" />
                           </button>
                         )}
                       </div>
                     </div>
-
-                    {/* Clear Filters Button */}
-                    <Button
-                      onClick={clearFilters}
-                      variant="outline"
-                      className="h-8 w-full"
-                    >
-                      Clear Filters
-                    </Button>
                   </div>
                 </div>
               )}
@@ -528,7 +539,7 @@ export default function InternshipList() {
 
           <aside className="col-span-3">
             {/* deadline calendar */}
-            <div className="sticky top-16 space-y-6">
+            <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-2 scrollbar-hide space-y-6 pb-12">
               {showSecondaryWidgets ? (
                 <>
                   <CalendarWidget kind="internship" />
@@ -561,7 +572,6 @@ export default function InternshipList() {
               <div>Internship form coming soon</div>
             </DialogContent>
           </Dialog>
-
           <ToolkitBanner />
 
           {isLoading && (
@@ -632,7 +642,9 @@ export default function InternshipList() {
           )}
         </div>
       </div>
-      <FeedbackWidget />
+      <div className="hidden lg:block">
+        <FeedbackWidget />
+      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Share2, Bookmark } from "lucide-react";
+import { Share2, Bookmark, Code, Paintbrush, Megaphone, Calculator, Briefcase, Database, Layout, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import posthog from "posthog-js";
 import { InternshipPostProps } from "@/types/interfaces";
@@ -11,6 +11,31 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toTitleCase, cn } from "@/lib/utils";
 import { ShareDialog } from "./internship/ShareDialog";
 import { useTracker } from "@/components/providers/TrackerProvider";
+
+const getDomainIcon = (title: string, className: string = "w-5 h-5 text-white") => {
+  const t = title.toLowerCase();
+  if (t.includes("develop") || t.includes("software") || t.includes("engineer") || t.includes("tech")) return <Code className={className} />;
+  if (t.includes("design") || t.includes("ui") || t.includes("visual") || t.includes("creative")) return <Paintbrush className={className} />;
+  if (t.includes("market") || t.includes("seo") || t.includes("social") || t.includes("content")) return <Megaphone className={className} />;
+  if (t.includes("data") || t.includes("analy") || t.includes("machine") || t.includes("ai")) return <Database className={className} />;
+  if (t.includes("finance") || t.includes("account") || t.includes("business") || t.includes("sales")) return <Calculator className={className} />;
+  if (t.includes("product") || t.includes("manage") || t.includes("admin")) return <Layout className={className} />;
+  if (t.includes("intern") || t.includes("trainee")) return <Lightbulb className={className} />;
+  return <Briefcase className={className} />;
+};
+
+const getGradient = (id: string | number) => {
+  const gradients = [
+    "bg-linear-to-br from-purple-500 to-indigo-500",
+    "bg-linear-to-br from-pink-500 to-rose-500",
+    "bg-linear-to-br from-emerald-400 to-teal-500",
+    "bg-linear-to-br from-orange-400 to-red-500",
+    "bg-linear-to-br from-blue-400 to-cyan-500",
+    "bg-linear-to-br from-amber-400 to-orange-500",
+  ];
+  const hash = String(id).split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return gradients[hash % gradients.length];
+};
 
 const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
   const router = useRouter();
@@ -103,13 +128,22 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
         onKeyDown={handleCardKeyDown}
       >
         <div className="flex items-center justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <h3 className="truncate text-sm font-bold text-slate-900 sm:text-base">
-              {toTitleCase(title)}
-            </h3>
-            <p className="truncate text-xs text-slate-500 sm:text-sm">
-              {toTitleCase(hiringOrganization)}
-            </p>
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            {/* Desktop domain icon */}
+            <div className="hidden sm:flex shrink-0 w-11 h-11 rounded-full shadow-sm overflow-hidden border border-white/50">
+              <div className={cn("w-full h-full flex items-center justify-center", getGradient(id))}>
+                {getDomainIcon(title)}
+              </div>
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate text-sm font-bold text-slate-900 sm:text-base">
+                {toTitleCase(title)}
+              </h3>
+              <p className="truncate text-xs text-slate-500 sm:text-sm">
+                {toTitleCase(hiringOrganization)}
+              </p>
+            </div>
           </div>
 
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">

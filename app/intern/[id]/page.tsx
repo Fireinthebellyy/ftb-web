@@ -10,8 +10,8 @@ import {
 } from "@/components/ui/dialog";
 import {
   Info,
-  Lightbulb,
-  Flag,
+  ArrowLeft,
+  Share2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -25,7 +25,6 @@ import ApplyModal from "@/components/tracker/ApplyModal";
 import { useTracker } from "@/components/providers/TrackerProvider";
 
 import { InternshipHero } from "@/components/internship/InternshipHero";
-import { InternshipTabs } from "@/components/internship/InternshipTabs";
 import { InternshipTabContent } from "@/components/internship/InternshipTabContent";
 import { InternshipDesktopHeader } from "@/components/internship/InternshipDesktopHeader";
 import { InternshipDesktopSidebar } from "@/components/internship/InternshipDesktopSidebar";
@@ -40,7 +39,6 @@ export default function InternshipDetailPage() {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [smartApplyOpen, setSmartApplyOpen] = useState(false);
   const [notFoundError, setNotFoundError] = useState(false);
-  const [activeTab, setActiveTab] = useState("description");
   const { data: session } = useSession();
   const { addToTracker, getStatus, removeFromTracker } = useTracker();
 
@@ -153,10 +151,23 @@ export default function InternshipDetailPage() {
       {/* ============================================================
           MOBILE LAYOUT (hidden on md+)
       ============================================================ */}
-      <div className="md:hidden pb-32">
+      <div className="md:hidden pb-20 bg-[#f8f9fa]">
+        <div className="flex items-center justify-between px-5 py-4 bg-[#f8f9fa] sticky top-0 z-10">
+          <button onClick={() => router.back()} className="p-1 -ml-1 text-slate-800 active:scale-95 transition-all w-8 flex justify-start">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-[16px] font-extrabold text-slate-900 tracking-tight">Internship Detail</h1>
+          <button onClick={() => setShareDialogOpen(true)} className="p-1 -mr-1 text-slate-800 active:scale-95 transition-all w-8 flex justify-end">
+            <Share2 className="w-5 h-5" />
+          </button>
+        </div>
+
         <InternshipHero internship={internship} />
-        <InternshipTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-        <InternshipTabContent activeTab={activeTab} internship={internship} />
+        
+        <div className="px-5 pb-2 -mt-2">
+          <InternshipTabContent activeTab="description" internship={internship} />
+        </div>
+        
         <InternshipStickyFooter
           internship={internship}
           isBookmarked={isBookmarked}
@@ -188,7 +199,11 @@ export default function InternshipDetailPage() {
             <div className="lg:col-span-2">
               <div className="text-slate-600 leading-relaxed text-[15px] max-w-[650px] space-y-4">
                 {typeof internship.description === "string" ? (
-                  <p className="whitespace-pre-wrap">{internship.description}</p>
+                  <p className="whitespace-pre-wrap">
+                    {internship.description.length > 500
+                      ? `${internship.description.substring(0, 500)}...`
+                      : internship.description}
+                  </p>
                 ) : (
                   internship.description || <p>No description provided.</p>
                 )}
@@ -228,16 +243,8 @@ export default function InternshipDetailPage() {
                   <div className="flex items-start gap-3 flex-wrap">
                     <Info className="w-4 h-4 text-slate-600 shrink-0 mt-0.5" />
                     <p className="flex-1">
-                      This opportunity has been listed by {toTitleCase(internship.hiringOrganization)}. FTB is not liable for any content mentioned in this opportunity or the process followed by the organizers for this opportunity. However, please raise a complaint if you want FTB to look into the matter.
+                      This opportunity has been listed by {toTitleCase(internship.hiringOrganization)}. FTB is not liable for any content mentioned in this opportunity or the process followed by the organizers for this opportunity.
                     </p>
-                  </div>
-                  <div className="pt-2 flex flex-col gap-3">
-                    <button className="flex items-center gap-2 text-[#0066cc] font-medium hover:underline w-fit">
-                      <Lightbulb className="w-4 h-4" /> Raise a Complaint
-                    </button>
-                    <button className="flex items-center gap-2 text-[#ec5b13] font-medium hover:underline w-fit">
-                      <Flag className="w-4 h-4" /> Report An Issue
-                    </button>
                   </div>
                 </div>
               </div>

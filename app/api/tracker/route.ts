@@ -13,7 +13,7 @@ import { eq, and, desc, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 const trackerItemSchema = z.object({
-  oppId: z.string().or(z.number().transform(String)),
+  oppId: z.string().min(1, "oppId is required").or(z.number().transform(String)),
   status: z.string(),
   kind: z.enum(["internship", "opportunity"]).default("internship"),
   notes: z.string().optional().nullable(),
@@ -456,7 +456,7 @@ export async function DELETE(req: NextRequest) {
     const kind =
       searchParams.get("kind") === "opportunity" ? "opportunity" : "internship";
 
-    if (!id || !type)
+    if (id === null || !type)
       return NextResponse.json(
         { error: "Missing parameters" },
         { status: 400 }

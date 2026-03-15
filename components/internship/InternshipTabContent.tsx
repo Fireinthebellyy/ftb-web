@@ -1,14 +1,11 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import {
   GraduationCap,
   Building,
   Info,
-  Lightbulb,
-  Flag,
-  ChevronRight,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toTitleCase, formatSalary } from "@/lib/utils";
@@ -24,45 +21,63 @@ export const InternshipTabContent: React.FC<InternshipTabContentProps> = ({
   internship,
 }) => {
   return (
-    <div className="px-6 pt-8">
+    <div className="pt-2">
       {activeTab === "description" && (
         <div className="animate-in fade-in duration-300">
-          <div className="flex items-center gap-2 mb-5">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#ec5b13]" />
-            <h3 className="text-[17px] font-bold text-slate-900">
-              Job Description
+          <div className="flex items-center gap-2 mb-3 px-1">
+            <FileText className="w-5 h-5 text-[#ea580c]" />
+            <h3 className="text-[18px] font-extrabold text-[#111827]">
+              Description
             </h3>
           </div>
-          <div className="text-slate-600 leading-relaxed text-[15px] space-y-5">
-            {typeof internship.description === "string" ? (
-              <p className="whitespace-pre-wrap">{internship.description}</p>
-            ) : (
-              internship.description || <p>No description provided.</p>
+          
+          <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+            <div className="text-slate-600 leading-relaxed text-[15px] space-y-5">
+              {typeof internship.description === "string" ? (
+                <div className="whitespace-pre-wrap">
+                  {internship.description.length > 500
+                    ? `${internship.description.substring(0, 500)}...`
+                    : internship.description}
+                </div>
+              ) : (
+                internship.description || <p>No description provided.</p>
+              )}
+            </div>
+            
+            {internship.eligibility && internship.eligibility.length > 0 && (
+              <div className="mt-8 pt-5 border-t border-slate-100">
+                <h4 className="font-bold text-slate-800 mb-3 text-[15px]">Requirements:</h4>
+                <ul className="list-disc pl-5 space-y-2 text-slate-600 text-[15px]">
+                  {internship.eligibility.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
+                </ul>
+              </div>
             )}
 
-          </div>
-          {internship.tags && internship.tags.length > 0 && (
-            <div className="mt-10 pt-6 border-t border-slate-100">
-              <h4 className="font-bold text-slate-900 mb-4 text-[15px]">
-                Skills & Tags
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {internship.tags
-                  .filter(
-                    (tag) =>
-                      !["remote", "onsite", "hybrid"].includes(tag.toLowerCase())
-                  )
-                  .map((tag, i) => (
-                    <span
-                      key={i}
-                      className="bg-slate-50 text-slate-600 border border-slate-100 px-3.5 py-1.5 rounded-full text-[13px] font-bold"
-                    >
-                      {toTitleCase(tag)}
-                    </span>
-                  ))}
+            {internship.tags && internship.tags.length > 0 && (
+              <div className="mt-8 pt-5 border-t border-slate-100">
+                <h4 className="font-bold text-slate-900 mb-3 text-[15px]">
+                  Skills & Tags
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {internship.tags
+                    .filter(
+                      (tag) =>
+                        !["remote", "onsite", "hybrid"].includes(tag.toLowerCase())
+                    )
+                    .map((tag, i) => (
+                      <span
+                        key={i}
+                        className="bg-slate-50 text-slate-600 border border-slate-100 px-3.5 py-1.5 rounded-full text-[13px] font-bold"
+                      >
+                        {toTitleCase(tag)}
+                      </span>
+                    ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 
@@ -79,7 +94,7 @@ export const InternshipTabContent: React.FC<InternshipTabContentProps> = ({
               {internship.eligibility.map((item, i) => (
                 <li
                   key={i}
-                  className="flex items-start gap-3 text-slate-600 bg-slate-50/70 p-4 rounded-2xl border border-slate-50"
+                  className="flex items-start gap-3 text-slate-600 bg-slate-50/70 p-4 rounded-xl border border-slate-50"
                 >
                   <div className="mt-0.5 p-1 bg-white rounded-lg border border-slate-100 shrink-0">
                     <GraduationCap className="w-4 h-4 text-[#ec5b13]" />
@@ -134,11 +149,39 @@ export const InternshipTabContent: React.FC<InternshipTabContentProps> = ({
             {internship.website && (
               <Button
                 variant="outline"
-                className="w-full rounded-xl h-11 border-slate-200 text-slate-700 font-bold hover:bg-slate-50"
+                className="w-full rounded-xl h-11 border-slate-200 text-slate-700 font-bold hover:bg-slate-50 mb-3"
                 onClick={() => window.open(internship.website!, "_blank")}
               >
                 View Website
               </Button>
+            )}
+
+            {(internship.hiringManager || internship.contactEmail || internship.hiringManagerEmail) && (
+              <div className="mt-4 pt-4 border-t border-slate-100 space-y-3">
+                {internship.hiringManager && (
+                  <div>
+                    <span className="text-[12px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                      Hiring Manager
+                    </span>
+                    <span className="text-[14px] font-medium text-slate-900">
+                      {toTitleCase(internship.hiringManager)}
+                    </span>
+                  </div>
+                )}
+                {(internship.contactEmail || internship.hiringManagerEmail) && (
+                  <div>
+                    <span className="text-[12px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                      Contact Email
+                    </span>
+                    <a
+                      href={`mailto:${internship.contactEmail || internship.hiringManagerEmail}`}
+                      className="text-[14px] font-medium text-[#ec5b13] hover:underline"
+                    >
+                      {internship.contactEmail || internship.hiringManagerEmail}
+                    </a>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -167,7 +210,7 @@ export const InternshipTabContent: React.FC<InternshipTabContentProps> = ({
             ].map((benefit, i) => (
               <div
                 key={i}
-                className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-0.5"
+                className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col gap-0.5"
               >
                 <span className="text-[10px] font-bold text-[#ec5b13] uppercase tracking-wider">
                   {benefit.label}
@@ -182,21 +225,12 @@ export const InternshipTabContent: React.FC<InternshipTabContentProps> = ({
       )}
 
       {/* Disclaimer */}
-      <div className="mt-12 pt-6 border-t border-slate-100">
-        <div className="flex items-start gap-3 bg-slate-50/60 p-4 rounded-2xl mb-4">
-          <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+      <div className="mt-8 pt-6 border-t border-slate-100 mb-4 px-1">
+        <div className="flex items-start gap-3">
+          <Info className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
           <p className="text-[13px] text-slate-500 leading-relaxed">
-            Data on this page updates every 15 minutes. Listed by{" "}
-            <b>{toTitleCase(internship.hiringOrganization)}</b>.
+            This opportunity has been listed by <b>{toTitleCase(internship.hiringOrganization)}</b>. Data on this page updates every 15 minutes. FTB is not liable for any content mentioned in this opportunity or the process followed by the organizers.
           </p>
-        </div>
-        <div className="flex items-center gap-5 pl-2">
-          <button className="flex items-center gap-1.5 text-[#0066cc] font-bold text-[13px] hover:underline">
-            <Lightbulb className="w-3.5 h-3.5" /> Complaint
-          </button>
-          <button className="flex items-center gap-1.5 text-[#ec5b13] font-bold text-[13px] hover:underline">
-            <Flag className="w-3.5 h-3.5" /> Report Issue
-          </button>
         </div>
       </div>
     </div>

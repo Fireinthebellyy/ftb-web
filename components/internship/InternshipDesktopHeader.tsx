@@ -9,7 +9,6 @@ import {
   Calendar,
   CalendarPlus,
   Bookmark,
-  Sparkles,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -117,6 +116,14 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
               className="w-5 h-5 object-contain"
             />
           </Button>
+          {session?.user && (
+            <Button
+              onClick={onSmartApplyClick}
+              className="h-12 px-6 rounded-xl bg-[#ec5b13] hover:bg-[#d44d0c] text-white font-bold border-none shadow-lg shadow-orange-500/20 flex items-center gap-2 transition-all"
+            >
+              Smart Apply
+            </Button>
+          )}
           {(internship.applyLink || internship.link) && (
             <Link
               href={`${internship.applyLink || internship.link}${
@@ -131,15 +138,6 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
                 Apply Now
               </Button>
             </Link>
-          )}
-          {session?.user && (
-            <Button
-              onClick={onSmartApplyClick}
-              className="h-12 px-6 rounded-xl bg-[#ec5b13] hover:bg-[#d44d0c] text-white font-bold border-none shadow-lg shadow-orange-500/20 flex items-center gap-2 transition-all"
-            >
-              <Sparkles className="w-4 h-4" />
-              Smart Apply
-            </Button>
           )}
         </div>
       </div>

@@ -24,16 +24,16 @@ export default function ToolkitBanner() {
 
   return (
     <>
-      <div className="mb-4">
+      <div className="mb-0">
         <PageBannerCarousel placement="internship" className="w-full" />
       </div>
 
-      {/* Premium Toolkits Section */}
+      {/* Premium Toolkits Section - Sticky on all views, pointer-events pass-through */}
       {toolkits.length > 0 && (
-        <div className="sticky top-16 z-30 bg-white shadow-sm border-b border-gray-200 pt-3 pb-3 -mx-4 px-4 lg:static lg:mx-0 lg:px-0 lg:top-auto lg:bg-transparent lg:shadow-none lg:border-none lg:pt-1 lg:pb-2">
+        <div className="sticky top-16 z-30 bg-gray-50 pt-3 pb-1 -mx-4 px-4 lg:-mx-2 lg:px-2 mb-3 lg:mb-0 pointer-events-none">
           {/* Horizontal Scrolling List */}
           <div
-            className="hide-scrollbar flex snap-x gap-3 overflow-x-auto pb-2"
+            className="hide-scrollbar flex snap-x gap-3 overflow-x-auto pb-2 pointer-events-auto"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {toolkits.map((toolkit) => (

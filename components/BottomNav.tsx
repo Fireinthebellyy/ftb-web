@@ -18,7 +18,7 @@ export default function BottomNav() {
   const normalizedPathname =
     pathname === "/" ? "/" : pathname.replace(/\/+$/, "");
 
-  if (pathname === "/onboarding") {
+  if (pathname === "/onboarding" || pathname.startsWith("/intern/")) {
     return null;
   }
 

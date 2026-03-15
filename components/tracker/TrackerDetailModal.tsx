@@ -14,7 +14,6 @@ interface TrackerDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
     opportunity: TrackerItem;
-    updateStatus: (id: number | string, status: string) => Promise<void>;
     onSmartApply: () => void;
 }
 

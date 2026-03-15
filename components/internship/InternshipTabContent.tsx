@@ -2,13 +2,11 @@
 
 import React from "react";
 import {
-  GraduationCap,
   Building,
   Info,
   FileText,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { toTitleCase, formatSalary } from "@/lib/utils";
+import { formatSalary, toTitleCase } from "@/lib/utils";
 import { InternshipData } from "@/types/interfaces";
 
 interface InternshipTabContentProps {
@@ -39,21 +37,16 @@ export const InternshipTabContent: React.FC<InternshipTabContentProps> = ({
                     ? `${internship.description.substring(0, 500)}...`
                     : internship.description}
                 </div>
+              ) : React.isValidElement(internship.description) || Array.isArray(internship.description) ? (
+                <div>{internship.description as React.ReactNode}</div>
+              ) : typeof internship.description === "object" && internship.description !== null ? (
+                <div className="whitespace-pre-wrap text-[12px] font-mono bg-slate-50 p-3 rounded-lg border border-slate-100">
+                  {JSON.stringify(internship.description, null, 2)}
+                </div>
               ) : (
                 internship.description || <p>No description provided.</p>
               )}
             </div>
-            
-            {internship.eligibility && internship.eligibility.length > 0 && (
-              <div className="mt-8 pt-5 border-t border-slate-100">
-                <h4 className="font-bold text-slate-800 mb-3 text-[15px]">Requirements:</h4>
-                <ul className="list-disc pl-5 space-y-2 text-slate-600 text-[15px]">
-                  {internship.eligibility.map((item, i) => (
-                    <li key={i}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
 
             {internship.tags && internship.tags.length > 0 && (
               <div className="mt-8 pt-5 border-t border-slate-100">
@@ -81,36 +74,6 @@ export const InternshipTabContent: React.FC<InternshipTabContentProps> = ({
         </div>
       )}
 
-      {activeTab === "requirements" && (
-        <div className="animate-in fade-in duration-300">
-          <div className="flex items-center gap-2 mb-5">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#ec5b13]" />
-            <h3 className="text-[17px] font-bold text-slate-900">
-              Requirements
-            </h3>
-          </div>
-          {internship.eligibility && internship.eligibility.length > 0 ? (
-            <ul className="space-y-3">
-              {internship.eligibility.map((item, i) => (
-                <li
-                  key={i}
-                  className="flex items-start gap-3 text-slate-600 bg-slate-50/70 p-4 rounded-xl border border-slate-50"
-                >
-                  <div className="mt-0.5 p-1 bg-white rounded-lg border border-slate-100 shrink-0">
-                    <GraduationCap className="w-4 h-4 text-[#ec5b13]" />
-                  </div>
-                  <span className="text-[14px] font-medium">{item}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-slate-500 italic">
-              No specific eligibility criteria mentioned.
-            </p>
-          )}
-        </div>
-      )}
-
       {activeTab === "company" && (
         <div className="animate-in fade-in duration-300">
           <div className="flex items-center gap-2 mb-5">
@@ -135,52 +98,22 @@ export const InternshipTabContent: React.FC<InternshipTabContentProps> = ({
                 </p>
               </div>
             </div>
-            {internship.companyDescription ? (
-              <p className="text-slate-600 text-[14px] leading-relaxed mb-5">
-                {internship.companyDescription}
-              </p>
-            ) : (
-              <p className="text-slate-600 text-[14px] leading-relaxed mb-5">
-                {toTitleCase(internship.hiringOrganization)} is a leading
-                organization in the industry, focused on delivering innovation
-                and excellence.
-              </p>
-            )}
-            {internship.website && (
-              <Button
-                variant="outline"
-                className="w-full rounded-xl h-11 border-slate-200 text-slate-700 font-bold hover:bg-slate-50 mb-3"
-                onClick={() => window.open(internship.website!, "_blank")}
-              >
-                View Website
-              </Button>
-            )}
+            <p className="text-slate-600 text-[14px] leading-relaxed mb-5">
+              {toTitleCase(internship.hiringOrganization)} is a leading
+              organization in the industry, focused on delivering innovation
+              and excellence.
+            </p>
 
-            {(internship.hiringManager || internship.contactEmail || internship.hiringManagerEmail) && (
+            {internship.hiringManager && (
               <div className="mt-4 pt-4 border-t border-slate-100 space-y-3">
-                {internship.hiringManager && (
-                  <div>
-                    <span className="text-[12px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                      Hiring Manager
-                    </span>
-                    <span className="text-[14px] font-medium text-slate-900">
-                      {toTitleCase(internship.hiringManager)}
-                    </span>
-                  </div>
-                )}
-                {(internship.contactEmail || internship.hiringManagerEmail) && (
-                  <div>
-                    <span className="text-[12px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                      Contact Email
-                    </span>
-                    <a
-                      href={`mailto:${internship.contactEmail || internship.hiringManagerEmail}`}
-                      className="text-[14px] font-medium text-[#ec5b13] hover:underline"
-                    >
-                      {internship.contactEmail || internship.hiringManagerEmail}
-                    </a>
-                  </div>
-                )}
+                <div>
+                  <span className="text-[12px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                    Hiring Manager
+                  </span>
+                  <span className="text-[14px] font-medium text-slate-900">
+                    {toTitleCase(internship.hiringManager)}
+                  </span>
+                </div>
               </div>
             )}
           </div>
@@ -201,12 +134,18 @@ export const InternshipTabContent: React.FC<InternshipTabContentProps> = ({
                 label: "Competitive Stipend",
                 value: formatSalary(internship.stipend),
               },
-              { label: "Mentorship", value: "Guided by senior experts" },
+              { 
+                label: "Mentorship", 
+                value: (internship as any).mentorship || "Guided by senior experts" 
+              },
               {
                 label: "Experience Certificate",
-                value: "Verified on completion",
+                value: (internship as any).experienceCertificate || "Verified on completion",
               },
-              { label: "Pre-placement Offer", value: "Performance based" },
+              { 
+                label: "Pre-placement Offer", 
+                value: (internship as any).prePlacementOffer || "Performance based" 
+              },
             ].map((benefit, i) => (
               <div
                 key={i}

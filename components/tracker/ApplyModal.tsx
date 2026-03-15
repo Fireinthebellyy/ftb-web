@@ -11,8 +11,16 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { type ApplyModalOpportunity } from "@/types/interfaces";
 
+interface StepItemProps {
+  index: number;
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  isFill?: boolean;
+}
 
 interface ApplyModalProps {
   isOpen: boolean;
@@ -28,10 +36,12 @@ export default function ApplyModal({
   const { addToTracker } = useTracker();
   const router = useRouter();
   const [activeStep, setActiveStep] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setActiveStep(0);
+      setIsSubmitting(false);
       const t1 = setTimeout(() => setActiveStep(1), 600);
       const t2 = setTimeout(() => setActiveStep(2), 1100);
       const t3 = setTimeout(() => setActiveStep(3), 1600);
@@ -47,16 +57,20 @@ export default function ApplyModal({
 
   const handleSubmit = async () => {
     try {
+      setIsSubmitting(true);
       const oppId: number | string = opportunity.id;
       // Ensure persistence is awaited before closing or navigating
-      await addToTracker({ ...opportunity, id: oppId }, "Not Applied");
+      await addToTracker({ 
+        ...opportunity, 
+        id: oppId,
+        kind: opportunity.kind || "internship"
+      }, "Not Applied");
       onClose();
       router.push("/tracker");
     } catch (error) {
       console.error("Failed to add to tracker:", error);
-      // Fallback: still close and navigate if needed, but log error
-      onClose();
-      router.push("/tracker");
+      toast.error("Failed to add to tracker. Please try again.");
+      setIsSubmitting(false);
     }
   };
 
@@ -66,13 +80,7 @@ export default function ApplyModal({
     description,
     icon: Icon,
     isFill = false,
-  }: {
-    index: number;
-    title: string;
-    description: string;
-    icon: React.ElementType;
-    isFill?: boolean;
-  }) => {
+  }: StepItemProps) => {
     const isDone = activeStep >= index;
     return (
       <div
@@ -171,17 +179,19 @@ export default function ApplyModal({
               onClick={handleSubmit}
               className={cn(
                 "group flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 font-bold text-white shadow-lg transition-all active:scale-95",
-                activeStep >= 3
+                activeStep >= 3 && !isSubmitting
                   ? "bg-[#ec5b13] shadow-orange-500/30 hover:bg-[#d44d0c]"
                   : "bg-slate-300 shadow-none cursor-not-allowed"
               )}
-              disabled={activeStep < 3}
+              disabled={activeStep < 3 || isSubmitting}
             >
-              Proceed
-              <ArrowRight
-                size={18}
-                className="transition-transform group-hover:translate-x-1"
-              />
+              {isSubmitting ? "Submitting..." : "Proceed"}
+              {!isSubmitting && (
+                <ArrowRight
+                  size={18}
+                  className="transition-transform group-hover:translate-x-1"
+                />
+              )}
             </button>
           </div>
 

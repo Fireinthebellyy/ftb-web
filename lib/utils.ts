@@ -60,7 +60,7 @@ export function toTitleCase(str: string | null | undefined): string {
   ]);
 
   return str.replace(
-    /\w\S*/g,
+    /[a-zA-Z0-9]+/g,
     (text) => {
       // Extract pure alphabetic part for mixed-case detection
       const cleanText = text.replace(/[^a-zA-Z]/g, "");
@@ -73,7 +73,7 @@ export function toTitleCase(str: string | null | undefined): string {
       }
 
       // Check against acronyms using the uppercase version
-      if (acronyms.has(cleanText.toUpperCase())) {
+      if (acronyms.has(text.toUpperCase())) {
         return text.toUpperCase();
       }
 
@@ -100,4 +100,10 @@ export function formatDateLong(dateString: string | null | undefined): string {
     month: "short",
     day: "numeric",
   });
+}
+
+export function addUtmParams(url: string, source: string): string {
+  if (!url) return "";
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}utm_source=${source}`;
 }

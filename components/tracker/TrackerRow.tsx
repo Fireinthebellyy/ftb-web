@@ -10,6 +10,7 @@ import clsx from "clsx";
 import { TrackerItem } from "@/components/providers/TrackerProvider";
 import { differenceInCalendarDays } from "date-fns";
 import posthog from "posthog-js";
+import { toast } from "sonner";
 
 function DeadlineBadge({ deadline }: { deadline: string }) {
     const daysDiff = differenceInCalendarDays(new Date(deadline), new Date());
@@ -76,12 +77,19 @@ export default function TrackerRow({
     };
 
     const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-        posthog.capture("tracker_status_changed", {
-            tracker_id: opp.oppId,
-            old_status: opp.status,
-            new_status: e.target.value,
-        });
-        await updateStatus(opp.oppId, e.target.value, undefined, opp.kind);
+        const newStatus = e.target.value;
+        try {
+            posthog.capture("tracker_status_changed", {
+                tracker_id: opp.oppId,
+                old_status: opp.status,
+                new_status: newStatus,
+            });
+            await updateStatus(opp.oppId, newStatus, undefined, opp.kind);
+            toast.success(`Status updated to ${newStatus}`);
+        } catch (error) {
+            console.error("Failed to update status:", error);
+            toast.error("Failed to update status");
+        }
     };
 
     return (
@@ -192,7 +200,15 @@ export default function TrackerRow({
                 <button
                     onClick={async (e) => {
                         e.stopPropagation();
-                        await onDelete(opp.oppId, opp.kind);
+                        if (confirm("Are you sure you want to remove this from your tracker?")) {
+                            try {
+                                await onDelete(opp.oppId, opp.kind);
+                                toast.success("Removed from tracker");
+                            } catch (error) {
+                                console.error("Failed to delete item:", error);
+                                toast.error("Failed to remove item");
+                            }
+                        }
                     }}
                     className="rounded-lg p-2 text-rose-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
                     title="Remove from Tracker"

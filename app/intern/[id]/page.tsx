@@ -72,8 +72,7 @@ export default function InternshipDetailPage() {
 
   if (notFoundError) notFound();
 
-  const publicBaseUrl = (process.env.NEXT_PUBLIC_SITE_URL as string | undefined) || 
-    (process.env.NEXT_PUBLIC_SITE_URL as string | undefined) ||
+  const publicBaseUrl = (process.env.NEXT_PUBLIC_SITE_URL as string | undefined) ||
     (typeof window !== "undefined" ? window.location.origin : "");
   const shareUrl = publicBaseUrl
     ? `${publicBaseUrl}/intern/${id}`
@@ -121,7 +120,9 @@ export default function InternshipDetailPage() {
       ? new Date(internship.deadline)
       : new Date(Date.now() + 24 * 60 * 60 * 1000);
     const formatted = date.toISOString().replace(/[-:]|\.\d{3}/g, "");
-    const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Apply to: ${internship.title}`)}&dates=${formatted}/${formatted}&details=${encodeURIComponent(`Company: ${internship.hiringOrganization || "N/A"}\n\nInternship Link: ${shareUrl}`)}`;
+    const dateEnd = new Date(date.getTime() + 30 * 60 * 1000);
+    const formattedEnd = dateEnd.toISOString().replace(/[-:]|\.\d{3}/g, "");
+    const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Apply to: ${internship.title}`)}&dates=${formatted}/${formattedEnd}&details=${encodeURIComponent(`Company: ${internship.hiringOrganization || "N/A"}\n\nInternship Link: ${shareUrl}`)}`;
     window.open(calendarUrl, "_blank");
   };
 
@@ -207,16 +208,7 @@ export default function InternshipDetailPage() {
                 ) : (
                   internship.description || <p>No description provided.</p>
                 )}
-                {internship.eligibility && internship.eligibility.length > 0 && (
-                  <div className="mt-8">
-                    <h4 className="font-bold text-slate-800 mb-3 block">Requirements:</h4>
-                    <ul className="list-disc pl-5 space-y-2 mb-6 text-slate-600">
-                      {internship.eligibility.map((item, i) => (
-                        <li key={i}>{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+
                 {internship.tags && internship.tags.length > 0 && (
                   <div className="mt-8">
                     <h4 className="font-bold text-slate-800 mb-4 block">Tags:</h4>

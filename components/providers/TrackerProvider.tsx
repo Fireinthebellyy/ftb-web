@@ -490,11 +490,19 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
       ...inputData,
     } as TrackerItem;
 
-    // Await sync to backend
-    await syncItemToBackend(newItem);
-
-    // Update state
+    // Optimistically Update state
     setTrackedItems((prevItems) => [...prevItems, newItem]);
+
+    // Backend Sync
+    try {
+      await syncItemToBackend(newItem);
+    } catch (error) {
+           console.error("Optimistic add failed, reverting:", error);
+      setTrackedItems((prevItems) => 
+        prevItems.filter((i) => getTrackerKey(i.oppId, i.kind) !== nextKey)
+      );
+      // toast is already in syncItemToBackend
+    }
   };
 
   const updateStatus = async (

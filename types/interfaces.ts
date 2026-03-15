@@ -72,6 +72,7 @@ export interface InternshipData extends Omit<Internship, "tags" | "deadline" | "
 // Flexible interface for ApplyModal
 export interface ApplyModalOpportunity {
   id: number | string;
+  kind?: "internship" | "opportunity";
   title: string;
   company?: string;
   hiringOrganization?: string;

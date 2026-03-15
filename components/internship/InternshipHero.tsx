@@ -34,7 +34,7 @@ export const InternshipHero: React.FC<InternshipHeroProps> = ({ internship }) =>
               Salary
             </span>
             <span className="text-[15px] font-extrabold text-[#111827] leading-tight">
-              {internship.stipend ? formatSalary(internship.stipend).replace("₹", "$").replace(" / month", "k") : "$4k - $6k"}
+              {internship.stipend ? formatSalary(internship.stipend) : "$4k - $6k"}
             </span>
           </div>
           

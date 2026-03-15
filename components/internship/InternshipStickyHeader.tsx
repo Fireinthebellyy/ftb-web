@@ -25,6 +25,7 @@ export const InternshipStickyHeader: React.FC<InternshipStickyHeaderProps> = ({
         <button
           onClick={onBack}
           className="p-1 hover:bg-slate-100 rounded-lg transition-colors"
+          aria-label="Go back"
         >
           <ArrowLeft className="w-5 h-5 text-slate-700" />
         </button>
@@ -36,12 +37,14 @@ export const InternshipStickyHeader: React.FC<InternshipStickyHeaderProps> = ({
         <button
           onClick={onCalendar}
           className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+          aria-label="Add to calendar"
         >
           <Calendar className="w-5 h-5 text-slate-700" />
         </button>
         <button
           onClick={onShare}
           className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+          aria-label="Share"
         >
           <Share2 className="w-5 h-5 text-slate-700" />
         </button>
@@ -53,6 +56,8 @@ export const InternshipStickyHeader: React.FC<InternshipStickyHeaderProps> = ({
               ? "text-orange-500 bg-orange-50"
               : "text-slate-700 hover:bg-slate-100"
           )}
+          aria-label="Bookmark"
+          aria-pressed={isBookmarked}
         >
           <Bookmark className={cn("w-5 h-5", isBookmarked && "fill-current")} />
         </button>

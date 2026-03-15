@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { toTitleCase, formatDateLong } from "@/lib/utils";
@@ -43,32 +44,7 @@ export const InternshipDesktopSidebar: React.FC<InternshipDesktopSidebarProps> =
               </span>
             </div>
           )}
-          {(internship.contactEmail || internship.hiringManagerEmail) && (
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-slate-500 shrink-0">Contact</span>
-              <a
-                href={`mailto:${
-                  internship.contactEmail || internship.hiringManagerEmail
-                }`}
-                className="text-[#ec5b13] hover:underline font-semibold"
-              >
-                Email
-              </a>
-            </div>
-          )}
-          {internship.postUrl && (
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-slate-500 shrink-0">Original Post</span>
-              <a
-                href={internship.postUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#ec5b13] hover:underline font-semibold"
-              >
-                View
-              </a>
-            </div>
-          )}
+
           {internship.tags && internship.tags.length > 0 && (
             <div className="flex items-center justify-between gap-4">
               <span className="text-slate-500 shrink-0">Industry</span>

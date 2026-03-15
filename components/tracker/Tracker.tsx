@@ -277,7 +277,6 @@ export default function Tracker() {
                 isOpen={!!detailOpp}
                 onClose={() => setDetailOpp(null)}
                 opportunity={detailOpp}
-                updateStatus={updateStatus}
                 onSmartApply={() => {
                     setSmartApplyOpp(detailOpp);
                     setDetailOpp(null);

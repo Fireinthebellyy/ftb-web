@@ -65,22 +65,28 @@ export default function MobileTrackerCard({
 
   const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value;
-    if (newStatus === "Rejected") {
-      const reason = prompt(
-        "What do you think was the reason? (Resume, Interview, Ghosted?)"
-      );
-      if (reason) {
-        await updateStatus(opp.oppId, newStatus, { failureReason: reason }, opp.kind);
-        toast.message("💡 Suggestion", {
-          description: reason.toLowerCase().includes("resume")
-            ? "Check out the Resume Toolkit."
-            : "Try the Mock Interview tool.",
-        });
+    try {
+      if (newStatus === "Rejected") {
+        const reason = prompt(
+          "What do you think was the reason? (Resume, Interview, Ghosted?)"
+        );
+        if (reason) {
+          await updateStatus(opp.oppId, newStatus, { failureReason: reason }, opp.kind);
+          toast.message("💡 Suggestion", {
+            description: reason.toLowerCase().includes("resume")
+              ? "Check out the Resume Toolkit."
+              : "Try the Mock Interview tool.",
+          });
+        } else {
+          await updateStatus(opp.oppId, newStatus, undefined, opp.kind);
+        }
       } else {
         await updateStatus(opp.oppId, newStatus, undefined, opp.kind);
       }
-    } else {
-      await updateStatus(opp.oppId, newStatus, undefined, opp.kind);
+      toast.success(`Status updated to ${newStatus}`);
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      toast.error("Failed to update status");
     }
   };
 
@@ -117,7 +123,15 @@ export default function MobileTrackerCard({
         <button
           onClick={async (e) => {
             e.stopPropagation();
-            await onDelete(opp.oppId, opp.kind);
+            if (confirm("Are you sure you want to remove this from your tracker?")) {
+              try {
+                await onDelete(opp.oppId, opp.kind);
+                toast.success("Removed from tracker");
+              } catch (error) {
+                console.error("Failed to delete item:", error);
+                toast.error("Failed to remove item");
+              }
+            }
           }}
           className="shrink-0 rounded-lg p-2 text-rose-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
           title="Delete"

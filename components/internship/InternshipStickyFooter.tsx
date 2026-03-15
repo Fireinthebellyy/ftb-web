@@ -5,13 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, addUtmParams } from "@/lib/utils";
 import { InternshipData } from "@/types/interfaces";
 
 interface InternshipStickyFooterProps {
   internship: InternshipData;
   isBookmarked: boolean;
-  session: any;
+  session: { user: any } | null;
   handleBookmarkClick: () => void;
   handleCalendarClick: () => void;
   onSmartApplyClick: () => void;
@@ -55,9 +55,7 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
       
       {(internship.applyLink || internship.link) && (
         <Link
-          href={`${internship.applyLink || internship.link}${
-            (internship.applyLink || internship.link).includes("?") ? "&" : "?"
-          }utm_source=ftb_mobile`}
+          href={addUtmParams(internship.applyLink || internship.link || "", "ftb_mobile")}
           target="_blank"
           className="flex-1"
         >

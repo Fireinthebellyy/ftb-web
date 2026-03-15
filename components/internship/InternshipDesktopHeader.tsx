@@ -12,12 +12,12 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn, toTitleCase, formatSalary, formatDateLong } from "@/lib/utils";
+import { cn, toTitleCase, formatSalary, formatDateLong, addUtmParams } from "@/lib/utils";
 import { InternshipData } from "@/types/interfaces";
 
 interface InternshipDesktopHeaderProps {
   internship: InternshipData;
-  session: any;
+  session: { user: any } | null;
   isBookmarked: boolean;
   handleBookmarkClick: () => void;
   handleCalendarClick: () => void;
@@ -126,11 +126,7 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
           )}
           {(internship.applyLink || internship.link) && (
             <Link
-              href={`${internship.applyLink || internship.link}${
-                (internship.applyLink || internship.link).includes("?")
-                  ? "&"
-                  : "?"
-              }utm_source=ftb_web`}
+              href={addUtmParams(internship.applyLink || internship.link || "", "ftb_web")}
               target="_blank"
               rel="noopener noreferrer"
             >

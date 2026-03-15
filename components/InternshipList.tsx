@@ -120,11 +120,11 @@ export default function InternshipList() {
     undefined
   );
 
-  const searchPlaceholders = [
+  const searchPlaceholders = useMemo(() => [
     "Software Engineer Intern",
     "Data Science Intern",
     "Marketing Intern",
-  ];
+  ], []);
 
   // Rotate placeholders every 3 seconds
   useEffect(() => {
@@ -143,7 +143,8 @@ export default function InternshipList() {
   ).filter(Boolean);
 
   // Intersection observer for infinite scroll
-  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const loadMoreDesktopRef = useRef<HTMLDivElement>(null);
+  const loadMoreMobileRef = useRef<HTMLDivElement>(null);
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -164,16 +165,17 @@ export default function InternshipList() {
       }
     );
 
-    const currentLoadMoreRef = loadMoreRef.current;
+    const desktopRef = loadMoreDesktopRef.current;
+    const mobileRef = loadMoreMobileRef.current;
 
-    if (currentLoadMoreRef && hasNextPage) {
-      observer.observe(currentLoadMoreRef);
+    if (hasNextPage) {
+      if (desktopRef) observer.observe(desktopRef);
+      if (mobileRef) observer.observe(mobileRef);
     }
 
     return () => {
-      if (currentLoadMoreRef) {
-        observer.unobserve(currentLoadMoreRef);
-      }
+      if (desktopRef) observer.unobserve(desktopRef);
+      if (mobileRef) observer.unobserve(mobileRef);
     };
   }, [handleLoadMore, hasNextPage]);
 
@@ -501,7 +503,7 @@ export default function InternshipList() {
                     </div>
 
                     {/* Load more trigger and indicator */}
-                    <div ref={loadMoreRef} className="flex justify-center py-8">
+                    <div ref={loadMoreDesktopRef} className="flex justify-center py-8">
                       {isFetchingNextPage && (
                         <div className="flex items-center space-x-2 text-gray-600">
                           <Loader2 className="h-5 w-5 animate-spin" />
@@ -606,7 +608,7 @@ export default function InternshipList() {
                   </div>
 
                   {/* Load more trigger and indicator for mobile */}
-                  <div ref={loadMoreRef} className="flex justify-center py-8">
+                  <div ref={loadMoreMobileRef} className="flex justify-center py-8">
                     {isFetchingNextPage && (
                       <div className="flex items-center space-x-2 text-gray-600">
                         <Loader2 className="h-5 w-5 animate-spin" />

@@ -15,6 +15,7 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { formatDate } from "@/lib/utils";
 import { Loader2, Send, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
 interface CommentSectionProps {
   opportunityId: string;
@@ -36,7 +37,7 @@ const CommentItem: React.FC<{
         !comment.user.image.includes("https://media.licdn.com") ? (
           <Avatar className="h-8 w-8">
             <AvatarImage
-              src={comment.user.image}
+              src={tryGetStoragePublicUrl("avatar-images", comment.user.image)}
               alt={comment.user.name}
               className="object-cover"
             />
@@ -139,7 +140,10 @@ const CommentInput: React.FC<{
           !session.user.image.includes("https://media.licdn.com") ? (
             <Avatar className="h-6 w-6">
               <AvatarImage
-                src={session.user.image}
+                src={tryGetStoragePublicUrl(
+                  "avatar-images",
+                  session.user.image
+                )}
                 alt={session.user.name || "User"}
                 className="object-cover"
               />

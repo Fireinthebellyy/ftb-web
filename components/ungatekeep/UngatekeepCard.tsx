@@ -10,10 +10,7 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   FileText,
   Bookmark,
@@ -25,8 +22,8 @@ import {
 import axios from "axios";
 import { toast } from "sonner";
 import { ShareDialog } from "./ShareDialog";
-import { createUngatekeepStorage, getUngatekeepBucketId } from "@/lib/appwrite";
 import { cn, stripHtml } from "@/lib/utils";
+import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 import DOMPurify from "dompurify";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -41,7 +38,16 @@ type UngatekeepPost = {
   linkUrl?: string | null;
   linkTitle?: string | null;
   linkImage?: string | null;
-  tag?: "announcement" | "company_experience" | "resources" | "playbooks" | "college_hacks" | "interview" | "ama_drops" | "ftb_recommends" | null;
+  tag?:
+    | "announcement"
+    | "company_experience"
+    | "resources"
+    | "playbooks"
+    | "college_hacks"
+    | "interview"
+    | "ama_drops"
+    | "ftb_recommends"
+    | null;
   isPinned: boolean;
   isSaved?: boolean;
   publishedAt?: string | null;
@@ -62,52 +68,27 @@ function AttachmentSlide({
   imageId,
   postTitle,
   idx,
-  ungatekeepStorage,
 }: {
   imageId: string;
   postTitle: string;
   idx?: number;
-  ungatekeepStorage: any;
 }) {
   const [error, setError] = useState(false);
-  const [fileInfo, setFileInfo] = useState<any>(null);
-  const bucketId = getUngatekeepBucketId();
-  
-  useEffect(() => {
-    if (bucketId && imageId) {
-      ungatekeepStorage.getFile(bucketId, imageId)
-        .then((info: any) => {
-          setFileInfo(info);
-          // We don't necessarily want to set error to true for PDFs anymore
-          // because we'll try to show a preview
-        })
-        .catch(() => {
-          setError(true);
-        });
-    }
-  }, [bucketId, imageId, ungatekeepStorage]);
-
-  if (!bucketId) return null;
-
-  const isPdf = fileInfo?.mimeType === "application/pdf";
-  const fileName = fileInfo?.name || `Document ${idx !== undefined ? idx + 1 : ""}`;
-  
-  // Use getFilePreview for PDFs to show the first page as a thumbnail
-  const displayUrl = isPdf 
-    ? ungatekeepStorage.getFilePreview(bucketId, imageId, 600, 800).toString()
-    : ungatekeepStorage.getFileView(bucketId, imageId).toString();
-
-  const fullUrl = ungatekeepStorage.getFileView(bucketId, imageId).toString();
+  const lower = imageId.toLowerCase();
+  const isPdf = lower.endsWith(".pdf");
+  const fileName = `Document ${idx !== undefined ? idx + 1 : ""}`;
+  const displayUrl = tryGetStoragePublicUrl("ungatekeep-images", imageId);
+  const fullUrl = displayUrl;
 
   if (error) {
     return (
-      <div className="group relative flex h-full w-full flex-col items-center justify-center gap-3 bg-muted/50 p-4 transition-colors hover:bg-muted/80">
-        <div className="relative flex h-16 w-16 items-center justify-center rounded-xl bg-background shadow-sm">
+      <div className="group bg-muted/50 hover:bg-muted/80 relative flex h-full w-full flex-col items-center justify-center gap-3 p-4 transition-colors">
+        <div className="bg-background relative flex h-16 w-16 items-center justify-center rounded-xl shadow-sm">
           <FileText className="h-10 w-10 text-blue-500" />
         </div>
-        
+
         <div className="flex flex-col items-center gap-1 text-center">
-          <span className="text-xs font-semibold text-foreground line-clamp-2 px-2">
+          <span className="text-foreground line-clamp-2 px-2 text-xs font-semibold">
             {fileName}
           </span>
         </div>
@@ -116,7 +97,7 @@ function AttachmentSlide({
           href={fullUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-2 flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-[11px] font-medium text-primary-foreground shadow-sm transition-transform active:scale-95 hover:bg-primary/90"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 mt-2 flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[11px] font-medium shadow-sm transition-transform active:scale-95"
         >
           <ExternalLink className="h-3 w-3" />
           View Document
@@ -127,15 +108,15 @@ function AttachmentSlide({
 
   if (isPdf) {
     return (
-      <div className="relative h-full w-full group overflow-hidden">
+      <div className="group relative h-full w-full overflow-hidden">
         {/* Try to show PDF content using an iframe for a real "inside" look */}
         <iframe
           src={`${fullUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-          className="h-full w-full border-none pointer-events-none scale-[1.01]"
+          className="pointer-events-none h-full w-full scale-[1.01] border-none"
           title={fileName}
         />
-        
-        <div className="absolute inset-0 flex flex-col items-end justify-start p-2 opacity-0 transition-opacity group-hover:opacity-100 bg-black/5">
+
+        <div className="absolute inset-0 flex flex-col items-end justify-start bg-black/5 p-2 opacity-0 transition-opacity group-hover:opacity-100">
           <div className="flex items-center gap-1 rounded bg-red-500 px-2 py-1 text-[10px] font-bold text-white uppercase shadow-sm">
             <FileText className="h-3 w-3" />
             PDF
@@ -155,7 +136,7 @@ function AttachmentSlide({
   }
 
   return (
-    <div className="relative h-full w-full group">
+    <div className="group relative h-full w-full">
       <Image
         src={displayUrl}
         alt={idx !== undefined ? `${postTitle} - Item ${idx + 1}` : postTitle}
@@ -177,7 +158,6 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
   const [isSaved, setIsSaved] = useState(post.isSaved || false);
   const [isFlying, setIsFlying] = useState(false);
   const [flyPos, setFlyPos] = useState({ x: 0, y: 0 });
-  const ungatekeepStorage = createUngatekeepStorage();
   const cardRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -186,7 +166,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
 
   const toggleSave = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     const buttonElement = e.currentTarget as HTMLElement;
 
     // Optimistic UI update
@@ -201,14 +181,17 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
 
       // Nested try-catch to isolate potential errors after successful API call
       try {
-        if (response.data && typeof response.data.bookmarked === 'boolean') {
+        if (response.data && typeof response.data.bookmarked === "boolean") {
           const newSavedStatus = response.data.bookmarked;
           // The optimistic update is reverted/confirmed, so we set the state from the server response.
           setIsSaved(newSavedStatus);
 
           if (newSavedStatus) {
             const rect = buttonElement.getBoundingClientRect();
-            setFlyPos({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+            setFlyPos({
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height / 2,
+            });
             setIsFlying(true);
             toast.success("Post saved successfully");
             setTimeout(() => setIsFlying(false), 800);
@@ -218,7 +201,9 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
 
           // Invalidate queries to refetch data, which replaces the old localStorage logic.
           queryClient.invalidateQueries({ queryKey: ["ungatekeep"] });
-          queryClient.invalidateQueries({ queryKey: ["ungatekeep-saved-count"] });
+          queryClient.invalidateQueries({
+            queryKey: ["ungatekeep-saved-count"],
+          });
           queryClient.invalidateQueries({ queryKey: ["ungatekeep-saved"] });
         } else {
           // If response is not what we expect, throw an error
@@ -298,7 +283,8 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
 
   const hasLongContent = plainTextContent.length > CONTENT_PREVIEW_LENGTH;
   const hasExtraMedia =
-    (post.attachments && post.attachments.length > 0) || (!!post.linkUrl && !!post.linkImage);
+    (post.attachments && post.attachments.length > 0) ||
+    (!!post.linkUrl && !!post.linkImage);
   const canExpand = hasLongContent || hasExtraMedia;
 
   const previewContent =
@@ -320,12 +306,12 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
     <article
       ref={cardRef}
       id={`post-${post.id}`}
-      className="relative rounded-lg border bg-card transition-colors"
+      className="bg-card relative rounded-lg border transition-colors"
     >
       {post.tag && (
-        <div className="absolute sm:-top-1 -top-1.5 right-0 z-10">
+        <div className="absolute -top-1.5 right-0 z-10 sm:-top-1">
           <Badge
-            className={`${getTagBadgeVariant(post.tag)} rounded-tl-none rounded-br-none sm:px-2 px-1.5 sm:py-1 py-0.5 sm:text-[10px] text-[9px] font-medium`}
+            className={`${getTagBadgeVariant(post.tag)} rounded-tl-none rounded-br-none px-1.5 py-0.5 text-[9px] font-medium sm:px-2 sm:py-1 sm:text-[10px]`}
           >
             {post.tag.replace("_", " ")}
           </Badge>
@@ -333,12 +319,12 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
       )}
 
       {/* Content - no title */}
-      <div className="w-full px-3 pt-5 sm:pt-6 pb-3 overflow-hidden text-left leading-[0.9]">
+      <div className="w-full overflow-hidden px-3 pt-5 pb-3 text-left leading-[0.9] sm:pt-6">
         {isExpanded || !hasLongContent ? (
           <div
             className={cn(
-              "w-full text-xs md:text-sm text-muted-foreground break-words",
-              "[&_p]:mb-2 last:[&_p]:mb-0 [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4",
+              "text-muted-foreground w-full text-xs break-words md:text-sm",
+              "[&_ol]:ml-4 [&_ol]:list-decimal [&_p]:mb-2 last:[&_p]:mb-0 [&_ul]:ml-4 [&_ul]:list-disc",
               "[&_*]:break-words [&_*]:whitespace-normal"
             )}
             dangerouslySetInnerHTML={{ __html: safeHtml }}
@@ -346,7 +332,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
         ) : (
           <p
             className={cn(
-              "w-full text-xs md:text-sm text-muted-foreground inline break-words"
+              "text-muted-foreground inline w-full text-xs break-words md:text-sm"
             )}
           >
             {previewContent}
@@ -356,7 +342,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-auto p-0 mt-0.5 text-xs text-primary hover:text-primary hover:bg-transparent ml-1 inline"
+            className="text-primary hover:text-primary mt-0.5 ml-1 inline h-auto p-0 text-xs hover:bg-transparent"
             onClick={(e) => {
               e.stopPropagation();
               setIsExpanded(true);
@@ -369,7 +355,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-auto p-0 mt-0.5 text-xs text-primary hover:text-primary hover:bg-transparent -ml-1"
+            className="text-primary hover:text-primary mt-0.5 -ml-1 h-auto p-0 text-xs hover:bg-transparent"
             onClick={(e) => {
               e.stopPropagation();
               setIsExpanded(false);
@@ -383,11 +369,10 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
         {post.attachments && post.attachments.length > 0 && (
           <div className="mt-3">
             {post.attachments.length === 1 ? (
-              <div className="relative aspect-[9/16] max-h-[300px] w-full overflow-hidden rounded-lg bg-muted border">
+              <div className="bg-muted relative aspect-[9/16] max-h-[300px] w-full overflow-hidden rounded-lg border">
                 <AttachmentSlide
                   imageId={post.attachments[0]}
                   postTitle={plainTextContent.slice(0, 50)}
-                  ungatekeepStorage={ungatekeepStorage}
                 />
               </div>
             ) : (
@@ -402,12 +387,11 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
                         key={idx}
                         className="basis-[85%] pl-2 sm:basis-[75%]"
                       >
-                        <div className="relative aspect-[9/16] max-h-[300px] w-full overflow-hidden rounded-lg bg-muted border">
+                        <div className="bg-muted relative aspect-[9/16] max-h-[300px] w-full overflow-hidden rounded-lg border">
                           <AttachmentSlide
                             imageId={fileId}
                             postTitle={plainTextContent.slice(0, 50)}
                             idx={idx}
-                            ungatekeepStorage={ungatekeepStorage}
                           />
                         </div>
                       </CarouselItem>
@@ -419,14 +403,14 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
           </div>
         )}
         {!post.attachments?.length && post.linkUrl && post.linkImage && (
-          <div className="mt-3 overflow-hidden rounded-lg border hover:bg-muted/50 transition-colors">
+          <div className="hover:bg-muted/50 mt-3 overflow-hidden rounded-lg border transition-colors">
             <Link
               href={post.linkUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="block"
             >
-              <div className="relative aspect-video w-full overflow-hidden bg-muted">
+              <div className="bg-muted relative aspect-video w-full overflow-hidden">
                 <Image
                   src={post.linkImage}
                   alt={post.linkTitle || "Link preview"}
@@ -445,7 +429,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
                     {getHostname(post.linkUrl)}
                   </p>
                 </div>
-                <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <ExternalLink className="text-muted-foreground h-4 w-4 shrink-0" />
               </div>
             </Link>
           </div>
@@ -457,8 +441,8 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
         post.attachments &&
         post.attachments.length > 0 &&
         post.linkUrl && (
-          <div className="border-t px-3 pb-3 pt-2 space-y-3">
-            <div className="overflow-hidden rounded-lg border hover:bg-muted/50 transition-colors">
+          <div className="space-y-3 border-t px-3 pt-2 pb-3">
+            <div className="hover:bg-muted/50 overflow-hidden rounded-lg border transition-colors">
               <Link
                 href={post.linkUrl}
                 target="_blank"
@@ -466,7 +450,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
                 className="block"
               >
                 {post.linkImage && (
-                  <div className="relative aspect-video w-full overflow-hidden bg-muted">
+                  <div className="bg-muted relative aspect-video w-full overflow-hidden">
                     <Image
                       src={post.linkImage}
                       alt={post.linkTitle || "Link preview"}
@@ -486,7 +470,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
                       {getHostname(post.linkUrl)}
                     </p>
                   </div>
-                  <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <ExternalLink className="text-muted-foreground h-4 w-4 shrink-0" />
                 </div>
               </Link>
             </div>
@@ -495,9 +479,9 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
 
       {/* Action bar - Share, Ask query, Save (LinkedIn style) */}
       <footer className="flex items-center border-t px-3 py-2">
-        <div className="flex w-full items-center justify-between text-muted-foreground">
+        <div className="text-muted-foreground flex w-full items-center justify-between">
           {/* Left side - Date and Time */}
-          <div className="flex items-center gap-1.5 sm:text-[12px] text-[10px] text-muted-foreground/80">
+          <div className="text-muted-foreground/80 flex items-center gap-1.5 text-[10px] sm:text-[12px]">
             <span>
               {post.publishedAt
                 ? dayjs(post.publishedAt).format("DD MMM YYYY • hh:mm A")
@@ -525,7 +509,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
                 title="Share"
                 aria-label="Share"
                 onClick={() => setShareDialogOpen(true)}
-                className="flex items-center gap-1 py-1 text-xs transition-colors hover:text-primary"
+                className="hover:text-primary flex items-center gap-1 py-1 text-xs transition-colors"
               >
                 <Share2 className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Share</span>
@@ -545,7 +529,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
               rel="noopener noreferrer"
               title="Ask query on WhatsApp"
               aria-label="Ask query"
-              className="flex items-center gap-1 py-1 text-xs transition-colors hover:text-primary"
+              className="hover:text-primary flex items-center gap-1 py-1 text-xs transition-colors"
             >
               <MessageCircleQuestion className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Ask query</span>
@@ -557,39 +541,39 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
               aria-label={isSaved ? "Remove from saved" : "Save"}
               onClick={toggleSave}
               className={cn(
-              "relative flex items-center gap-1 py-1 text-xs transition-colors hover:text-primary",
-              isSaved && "text-primary"
-            )}
-          >
-            <Bookmark
-              className={cn("h-3.5 w-3.5", isSaved && "fill-primary")}
-            />
-            <AnimatePresence>
-              {isFlying && (
-                <motion.div
-                  initial={{ opacity: 1, x: flyPos.x, y: flyPos.y, scale: 1 }}
-                  animate={{ 
-                    opacity: 0, 
-                    x: window.innerWidth - 100, 
-                    y: 50, 
-                    scale: 0.2,
-                    rotate: 45
-                  }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.8, ease: "easeIn" }}
-                  className="pointer-events-none fixed left-0 top-0 z-[9999] flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white shadow-lg"
-                  style={{
-                    transform: "translate(-50%, -50%)"
-                  }}
-                >
-                  <Bookmark className="h-4 w-4 fill-white" />
-                </motion.div>
+                "hover:text-primary relative flex items-center gap-1 py-1 text-xs transition-colors",
+                isSaved && "text-primary"
               )}
-            </AnimatePresence>
-            <span className="hidden sm:inline">
-              {isSaved ? "Saved" : "Save"}
-            </span>
-          </button>
+            >
+              <Bookmark
+                className={cn("h-3.5 w-3.5", isSaved && "fill-primary")}
+              />
+              <AnimatePresence>
+                {isFlying && (
+                  <motion.div
+                    initial={{ opacity: 1, x: flyPos.x, y: flyPos.y, scale: 1 }}
+                    animate={{
+                      opacity: 0,
+                      x: window.innerWidth - 100,
+                      y: 50,
+                      scale: 0.2,
+                      rotate: 45,
+                    }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.8, ease: "easeIn" }}
+                    className="bg-primary pointer-events-none fixed top-0 left-0 z-[9999] flex h-6 w-6 items-center justify-center rounded-full text-white shadow-lg"
+                    style={{
+                      transform: "translate(-50%, -50%)",
+                    }}
+                  >
+                    <Bookmark className="h-4 w-4 fill-white" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <span className="hidden sm:inline">
+                {isSaved ? "Saved" : "Save"}
+              </span>
+            </button>
           </div>
         </div>
       </footer>

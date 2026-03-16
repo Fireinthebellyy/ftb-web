@@ -3,6 +3,7 @@ import { Trash2, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { TrackerItem } from "@/components/providers/TrackerProvider";
 import { differenceInCalendarDays } from "date-fns";
+import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
 function DeadlineBadge({ deadline }: { deadline: string }) {
   const daysDiff = differenceInCalendarDays(new Date(deadline), new Date());
@@ -101,7 +102,10 @@ export default function MobileTrackerCard({
           {opp.logo || opp.poster || opp.images?.[0] ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={opp.logo || opp.poster || opp.images?.[0]}
+              src={tryGetStoragePublicUrl(
+                "opportunity-images",
+                opp.logo || opp.poster || opp.images?.[0] || ""
+              )}
               alt={opp.company}
               className="h-10 w-10 shrink-0 rounded-lg border border-slate-100 bg-white object-contain p-0.5"
             />

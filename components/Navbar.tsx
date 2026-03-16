@@ -10,6 +10,10 @@ import { Button } from "./ui/button";
 import { Righteous } from "next/font/google";
 import { Shield } from "lucide-react";
 import posthog from "posthog-js";
+import {
+  isAbsoluteOrLocalUrl,
+  tryGetStoragePublicUrl,
+} from "@/lib/storage/public-url";
 
 function useLogout() {
   const router = useRouter();
@@ -176,6 +180,10 @@ export default function Navbar() {
     return letters || "U";
   }, [user]);
 
+  const avatarImageSrc = user?.user?.image
+    ? tryGetStoragePublicUrl("avatar-images", user.user.image)
+    : null;
+
   if (pathname === "/onboarding") {
     return null;
   }
@@ -185,7 +193,7 @@ export default function Navbar() {
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="fixed top-0 left-0 right-0 z-50 flex-none bg-neutral-50/80 backdrop-blur-md border-b border-gray-200/50"
+      className="fixed top-0 right-0 left-0 z-50 flex-none border-b border-gray-200/50 bg-neutral-50/80 backdrop-blur-md"
     >
       <div className="relative container mx-auto grid h-16 max-w-7xl grid-cols-[1fr_auto] items-center px-4 md:grid-cols-3 lg:px-4 xl:px-6">
         <div className="flex items-center justify-start pl-2 md:pl-4">
@@ -325,10 +333,10 @@ export default function Navbar() {
                     }
                   }}
                 >
-                  {user.user?.image ? (
+                  {avatarImageSrc && isAbsoluteOrLocalUrl(avatarImageSrc) ? (
                     <div className="rounded-full border-2 border-white shadow-lg">
                       <Image
-                        src={user.user.image}
+                        src={avatarImageSrc}
                         alt={user.user.name || "User avatar"}
                         className="size-6 rounded-full object-cover"
                         width={28}

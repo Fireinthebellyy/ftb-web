@@ -11,10 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Pin, ExternalLink } from "lucide-react";
-import { createUngatekeepStorage } from "@/lib/appwrite";
 import { format } from "date-fns";
 import FeaturedToolkits from "@/components/toolkit/FeaturedToolkits";
 import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
+import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
 type UngatekeepPost = {
   id: string;
@@ -23,7 +23,16 @@ type UngatekeepPost = {
   linkUrl?: string | null;
   linkTitle?: string | null;
   linkImage?: string | null;
-  tag?: "announcement" | "company_experience" | "resources" | "playbooks" | "college_hacks" | "interview" | "ama_drops" | "ftb_recommends" | null;
+  tag?:
+    | "announcement"
+    | "company_experience"
+    | "resources"
+    | "playbooks"
+    | "college_hacks"
+    | "interview"
+    | "ama_drops"
+    | "ftb_recommends"
+    | null;
   isPinned: boolean;
   isSaved?: boolean;
   publishedAt?: string | null;
@@ -36,7 +45,6 @@ export default function UngatekeepPostPage() {
   const params = useParams();
   const router = useRouter();
   const postId = params.id as string;
-  const ungatekeepStorage = createUngatekeepStorage();
 
   const {
     data: post,
@@ -80,14 +88,7 @@ export default function UngatekeepPostPage() {
   };
 
   const getImageUrl = (imageId: string) => {
-    const bucketId = "67cb29260026e6f6424d"; // getUngatekeepBucketId() value or similar
-    if (!bucketId) return "";
-    try {
-      return ungatekeepStorage.getFileView(bucketId, imageId);
-    } catch (error) {
-      console.error("Error getting image URL:", error);
-      return "";
-    }
+    return tryGetStoragePublicUrl("ungatekeep-images", imageId);
   };
 
   const getInitials = (name: string | null | undefined) => {
@@ -200,7 +201,10 @@ export default function UngatekeepPostPage() {
                     <div className="flex items-center gap-1.5">
                       {post.creatorImage ? (
                         <Image
-                          src={post.creatorImage}
+                          src={tryGetStoragePublicUrl(
+                            "avatar-images",
+                            post.creatorImage
+                          )}
                           alt={post.creatorName}
                           width={20}
                           height={20}

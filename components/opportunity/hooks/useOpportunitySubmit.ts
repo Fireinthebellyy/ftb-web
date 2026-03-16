@@ -5,10 +5,10 @@ import axios from "axios";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  createOpportunityStorage,
-  getAppwriteErrorMessage,
-} from "@/lib/appwrite";
-import { FileItem, Opportunity, UploadProgress } from "@/types/interfaces";
+  deleteStorageObjectClient,
+  uploadFileViaSignedUrl,
+} from "@/lib/storage/client";
+import { FileItem, Opportunity } from "@/types/interfaces";
 import { FormData } from "../schema";
 
 interface UseOpportunitySubmitProps {
@@ -28,7 +28,8 @@ interface UseOpportunitySubmitProps {
 
 async function uploadFilesToBucket(
   items: FileItem[],
-  setItems: React.Dispatch<React.SetStateAction<FileItem[]>>
+  setItems: React.Dispatch<React.SetStateAction<FileItem[]>>,
+  domain: "opportunity-images" | "opportunity-attachments"
 ): Promise<{ ids: string[]; success: boolean }> {
   if (items.length === 0) return { ids: [], success: true };
 
@@ -37,40 +38,33 @@ async function uploadFilesToBucket(
 
   setItems((prev) => prev.map((f) => ({ ...f, uploading: true, progress: 0 })));
 
-  const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
-  if (!bucketId) {
-    console.error("Missing Appwrite Opportunities Bucket ID");
-    return { ids: [], success: false };
-  }
-
   for (let i = 0; i < items.length; i++) {
     const file = items[i];
     try {
-      const storage = createOpportunityStorage();
-
-      const res = await storage.createFile(
-        bucketId,
-        "unique()",
-        file.file,
-        [],
-        (progress: UploadProgress) => {
-          const percent = Math.round(progress.progress || 0);
+      const result = await uploadFileViaSignedUrl({
+        domain,
+        file: file.file,
+        onProgress: (progress: number) => {
+          const uploadProgress = Math.round(progress || 0);
           setItems((prev) =>
-            prev.map((f, idx) => (idx === i ? { ...f, progress: percent } : f))
+            prev.map((f, idx) =>
+              idx === i ? { ...f, progress: uploadProgress } : f
+            )
           );
-        }
-      );
+        },
+      });
 
-      uploadedIds.push(res.$id);
+      uploadedIds.push(result.key);
       setItems((prev) =>
         prev.map((f, idx) =>
-          idx === i ? { ...f, uploading: false, fileId: res.$id } : f
+          idx === i ? { ...f, uploading: false, fileId: result.key } : f
         )
       );
     } catch (err) {
       console.error(`Upload failed for ${file.name}:`, err);
       hasError = true;
-      const errorMessage = getAppwriteErrorMessage(err);
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown upload error";
       setItems((prev) =>
         prev.map((f, idx) =>
           idx === i ? { ...f, uploading: false, error: true, errorMessage } : f
@@ -83,17 +77,15 @@ async function uploadFilesToBucket(
   return { ids: uploadedIds, success: !hasError };
 }
 
-async function deleteFileIds(ids: string[]): Promise<void> {
+async function deleteFileIds(
+  ids: string[],
+  domain: "opportunity-images" | "opportunity-attachments"
+): Promise<void> {
   if (ids.length === 0) return;
-
-  const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
-  if (!bucketId) return;
-
-  const storage = createOpportunityStorage();
 
   for (const fileId of ids) {
     try {
-      await storage.deleteFile(bucketId, fileId);
+      await deleteStorageObjectClient(domain, fileId);
     } catch (err) {
       console.error(`Failed to delete file ${fileId}:`, err);
     }
@@ -122,8 +114,12 @@ export function useOpportunitySubmit({
 
     try {
       const [imageResult, attachmentResult] = await Promise.all([
-        uploadFilesToBucket(files, setFiles),
-        uploadFilesToBucket(attachmentFiles, setAttachmentFiles),
+        uploadFilesToBucket(files, setFiles, "opportunity-images"),
+        uploadFilesToBucket(
+          attachmentFiles,
+          setAttachmentFiles,
+          "opportunity-attachments"
+        ),
       ]);
 
       if (!imageResult.success || !attachmentResult.success) {
@@ -175,8 +171,8 @@ export function useOpportunitySubmit({
         res = await axios.put(`/api/opportunities/${opportunity.id}`, payload);
 
         await Promise.all([
-          deleteFileIds(removedImageIds),
-          deleteFileIds(removedAttachmentIds),
+          deleteFileIds(removedImageIds, "opportunity-images"),
+          deleteFileIds(removedAttachmentIds, "opportunity-attachments"),
         ]);
       } else {
         res = await axios.post("/api/opportunities", payload);

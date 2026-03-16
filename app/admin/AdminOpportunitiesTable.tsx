@@ -13,6 +13,7 @@ import { AdminTableState } from "@/components/admin/AdminTableState";
 import { AdminTabLayout } from "@/components/admin/AdminTabLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
 interface Opportunity {
   id: string;
@@ -188,7 +189,7 @@ export default function AdminOpportunitiesTable() {
               {user?.image ? (
                 <div className="h-6 w-6 shrink-0 rounded-full">
                   <Image
-                    src={user.image}
+                    src={tryGetStoragePublicUrl("avatar-images", user.image)}
                     alt={user.name || "User avatar"}
                     className="h-6 w-6 rounded-full object-cover"
                     width={24}

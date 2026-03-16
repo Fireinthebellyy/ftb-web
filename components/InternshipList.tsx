@@ -224,6 +224,7 @@ export default function InternshipList() {
               {searchTerm && (
                 <button
                   type="button"
+                  aria-label="Clear search"
                   onClick={() => setSearchTerm("")}
                   className="absolute top-1/2 right-3 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700"
                 >
@@ -233,6 +234,9 @@ export default function InternshipList() {
             </div>
             <Button
               variant="outline"
+              aria-label="Toggle filters"
+              aria-expanded={isFilterBoxOpen}
+              aria-controls="mobile-filter-panel"
               onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
               className={cn(
                 "h-12 w-12 shrink-0 rounded-[14px] border-none shadow-sm transition-all focus:ring-0 active:scale-95",
@@ -247,7 +251,7 @@ export default function InternshipList() {
 
           {/* Filter Box */}
           {isFilterBoxOpen && (
-            <div className="mt-4 rounded-[20px] border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/40 animate-in slide-in-from-top-2 duration-200">
+            <div id="mobile-filter-panel" className="mt-4 rounded-[20px] border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/40 animate-in slide-in-from-top-2 duration-200">
               <div className="flex items-center justify-between mb-5">
                 <h3 className="font-semibold text-slate-900 text-lg">Filters</h3>
                 {(location || type || paidOnly) && (
@@ -318,6 +322,7 @@ export default function InternshipList() {
                   {location && (
                     <button
                       type="button"
+                      aria-label="Clear location"
                       onClick={() => setLocation("")}
                       className="absolute top-1/2 right-3 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200"
                     >
@@ -348,6 +353,7 @@ export default function InternshipList() {
                   {searchTerm && (
                     <button
                       type="button"
+                      aria-label="Clear search"
                       onClick={() => setSearchTerm("")}
                       className="absolute top-1/2 right-3 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700"
                     >
@@ -357,6 +363,9 @@ export default function InternshipList() {
                 </div>
                 <Button
                   variant="outline"
+                  aria-label="Toggle filters"
+                  aria-expanded={isFilterBoxOpen}
+                  aria-controls="desktop-filter-panel"
                   onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
                   className={cn(
                     "h-12 w-12 shrink-0 rounded-[14px] border-none shadow-sm transition-all focus:ring-0 active:scale-95",
@@ -371,7 +380,7 @@ export default function InternshipList() {
 
               {/* Filters */}
               {isFilterBoxOpen && (
-                <div className="rounded-[20px] border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/40 animate-in slide-in-from-top-2 duration-200">
+                <div id="desktop-filter-panel" className="rounded-[20px] border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/40 animate-in slide-in-from-top-2 duration-200">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="font-semibold text-slate-900 text-lg">Filters</h3>
                     {(location || type || paidOnly) && (
@@ -443,6 +452,7 @@ export default function InternshipList() {
                         {location && (
                           <button
                             type="button"
+                            aria-label="Clear location"
                             onClick={() => setLocation("")}
                             className="absolute top-1/2 right-3 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200"
                           >

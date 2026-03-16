@@ -10,6 +10,7 @@ import clsx from "clsx";
 import { TrackerItem } from "@/components/providers/TrackerProvider";
 import { differenceInCalendarDays } from "date-fns";
 import posthog from "posthog-js";
+import { toast } from "sonner";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
 function DeadlineBadge({ deadline }: { deadline: string }) {
@@ -56,9 +57,12 @@ interface TrackerRowProps {
     status: string,
     extraData?: Record<string, unknown>,
     kind?: "internship" | "opportunity"
-  ) => void;
+  ) => Promise<void>;
   onClick: (opp: TrackerItem) => void;
-  onDelete: (id: number | string, kind?: "internship" | "opportunity") => void;
+  onDelete: (
+    id: number | string,
+    kind?: "internship" | "opportunity"
+  ) => Promise<void>;
 }
 
 export default function TrackerRow({
@@ -76,13 +80,22 @@ export default function TrackerRow({
     onClick(opp);
   };
 
-  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    posthog.capture("tracker_status_changed", {
-      tracker_id: opp.oppId,
-      old_status: opp.status,
-      new_status: e.target.value,
-    });
-    updateStatus(opp.oppId, e.target.value, undefined, opp.kind);
+  const handleStatusChange = async (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const newStatus = e.target.value;
+    try {
+      posthog.capture("tracker_status_changed", {
+        tracker_id: opp.oppId,
+        old_status: opp.status,
+        new_status: newStatus,
+      });
+      await updateStatus(opp.oppId, newStatus, undefined, opp.kind);
+      toast.success(`Status updated to ${newStatus}`);
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      toast.error("Failed to update status");
+    }
   };
 
   return (
@@ -195,9 +208,19 @@ export default function TrackerRow({
           </a>
         )}
         <button
-          onClick={(e) => {
+          onClick={async (e) => {
             e.stopPropagation();
-            onDelete(opp.oppId, opp.kind);
+            if (
+              confirm("Are you sure you want to remove this from your tracker?")
+            ) {
+              try {
+                await onDelete(opp.oppId, opp.kind);
+                toast.success("Removed from tracker");
+              } catch (error) {
+                console.error("Failed to delete item:", error);
+                toast.error("Failed to remove item");
+              }
+            }
           }}
           className="rounded-lg p-2 text-rose-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
           title="Remove from Tracker"

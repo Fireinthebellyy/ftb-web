@@ -345,6 +345,11 @@ export const ungatekeepTagEnum = pgEnum("ungatekeep_tag", [
   "announcement",
   "company_experience",
   "resources",
+  "playbooks",
+  "college_hacks",
+  "interview",
+  "ama_drops",
+  "ftb_recommends",
 ]);
 
 export const toolkitContentItems = pgTable("toolkit_content_items", {
@@ -434,9 +439,8 @@ export const userToolkitProgress = pgTable(
 // Ungatekeep broadcast posts
 export const ungatekeepPosts = pgTable("ungatekeep_posts", {
   id: uuid("id").primaryKey().defaultRandom(),
-  title: text("title").notNull(),
   content: text("content").notNull(),
-  images: text("images").array().default([]), // Appwrite file IDs
+  attachments: text("attachments").array().default([]), // Appwrite file IDs
   linkUrl: text("link_url"),
   linkTitle: text("link_title"),
   linkImage: text("link_image"),
@@ -450,6 +454,26 @@ export const ungatekeepPosts = pgTable("ungatekeep_posts", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
 });
+
+export const ungatekeepBookmarks = pgTable(
+  "ungatekeep_bookmarks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    postId: uuid("post_id")
+      .notNull()
+      .references(() => ungatekeepPosts.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("ungatekeep_bookmarks_user_post_unique").on(
+      table.userId,
+      table.postId
+    ),
+  ]
+);
 
 // Newsletter subscribers for future Resend integration
 export const newsletterSubscribers = pgTable(
@@ -542,6 +566,7 @@ export const schema = {
   userToolkits,
   userToolkitProgress,
   ungatekeepPosts,
+  ungatekeepBookmarks,
   newsletterSubscribers,
   trackerItems,
   trackerEvents,

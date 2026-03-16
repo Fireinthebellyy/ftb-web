@@ -13,10 +13,13 @@ import {
   uploadFileViaSignedUrl,
 } from "@/lib/storage/client";
 import {
-  ImagePicker,
+  UnifiedFilePicker,
   SelectedImages,
+  SelectedAttachments,
+  ExistingAttachments,
 } from "@/components/opportunity/images/ImageDropzone";
-import { ExistingImages as UngatekeepExistingImages } from "./ExistingImages";
+import { SchedulePublishPopover } from "@/components/opportunity/fields/MetaPopovers";
+import { toDateTimeLocalValue } from "@/lib/date-utils";
 
 import {
   Dialog,
@@ -59,18 +62,38 @@ const quillModules = {
 };
 
 const ungatekeepFormSchema = z.object({
-  title: z.string().min(3, {
-    message: "Title must be at least 3 characters.",
-  }),
   content: z.string().min(10, {
     message: "Content must be at least 10 characters.",
   }),
   linkUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
   linkTitle: z.string().optional(),
   linkImage: z.string().url("Invalid image URL").optional().or(z.literal("")),
-  tag: z.enum(["announcement", "company_experience", "resources"]).optional(),
+  tag: z
+    .enum([
+      "announcement",
+      "company_experience",
+      "resources",
+      "playbooks",
+      "college_hacks",
+      "interview",
+      "ama_drops",
+      "ftb_recommends",
+    ])
+    .optional(),
   isPinned: z.boolean().optional(),
   isPublished: z.boolean().optional(),
+  publishAt: z
+    .string()
+    .optional()
+    .refine(
+      (value) =>
+        !value ||
+        (value.length > 0 && !Number.isNaN(new Date(value).getTime())),
+      {
+        message: "Please provide a valid publish date and time.",
+      }
+    ),
+  attachments: z.array(z.string()).optional(),
 });
 
 type UngatekeepFormValues = z.infer<typeof ungatekeepFormSchema>;
@@ -79,15 +102,16 @@ interface NewUngatekeepFormProps {
   children?: React.ReactNode;
   post?: {
     id: string;
-    title: string;
     content: string;
     images?: string[];
+    attachments?: string[];
     linkUrl?: string | null;
     linkTitle?: string | null;
     linkImage?: string | null;
     tag?: string | null;
     isPinned?: boolean;
     isPublished?: boolean;
+    publishedAt?: string | null;
   };
   onSuccess?: () => void;
   onCancel?: () => void;
@@ -104,51 +128,71 @@ export default function NewUngatekeepForm({
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [files, setFiles] = useState<FileItem[]>([]);
-  const [existingImages, setExistingImages] = useState<string[]>(
-    post?.images || []
-  );
-  const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
+  const [attachmentFiles, setAttachmentFiles] = useState<FileItem[]>([]);
+  const [existingFiles, setExistingFiles] = useState<string[]>([
+    ...(post?.images || []),
+    ...(post?.attachments || []),
+  ]);
+  const [removedFileIds, setRemovedFileIds] = useState<string[]>([]);
+  const [scheduleMessage, setScheduleMessage] = useState<string | null>(null);
 
   const maxFiles = 4;
+  const maxAttachments = 2;
 
   const form = useForm<UngatekeepFormValues>({
     resolver: zodResolver(ungatekeepFormSchema),
     defaultValues: {
-      title: post?.title || "",
       content: post?.content || "",
       linkUrl: post?.linkUrl || "",
       linkTitle: post?.linkTitle || "",
       linkImage: post?.linkImage || "",
       tag:
-        (post?.tag as "announcement" | "company_experience" | "resources") ||
-        undefined,
+        (post?.tag as
+          | "announcement"
+          | "company_experience"
+          | "resources"
+          | "playbooks"
+          | "college_hacks"
+          | "interview"
+          | "ama_drops"
+          | "ftb_recommends") || undefined,
       isPinned: post?.isPinned || false,
       isPublished: post?.isPublished || false,
+      publishAt: post?.publishedAt
+        ? toDateTimeLocalValue(new Date(post.publishedAt))
+        : "",
+      attachments: post?.attachments || [],
     },
   });
 
-  // Handle removing an existing image
-  const handleRemoveExistingImage = (imageId: string) => {
-    setExistingImages((prev) => prev.filter((id) => id !== imageId));
-    setRemovedImageIds((prev) => [...prev, imageId]);
+  const watchedPublishAt = form.watch("publishAt");
+
+  // Handle removing an existing file
+  const handleRemoveExistingFile = (fileId: string) => {
+    setExistingFiles((prev) => prev.filter((id) => id !== fileId));
+    setRemovedFileIds((prev) => [...prev, fileId]);
   };
 
-  // Delete removed images from storage
-  async function deleteRemovedImages(): Promise<void> {
-    if (removedImageIds.length === 0) return;
+  // Delete removed files from storage
+  async function deleteRemovedFiles(): Promise<void> {
+    if (removedFileIds.length === 0) return;
 
-    for (const imageId of removedImageIds) {
+    for (const fileId of removedFileIds) {
       try {
-        await deleteStorageObjectClient("ungatekeep-images", imageId);
+        await deleteStorageObjectClient("ungatekeep-images", fileId);
       } catch (err) {
-        console.error(`Failed to delete image ${imageId}:`, err);
-        // Continue deleting other images even if one fails
+        console.error(`Failed to delete file ${fileId}:`, err);
+        // Continue deleting other files even if one fails
       }
     }
   }
 
-  async function uploadImages(): Promise<{ ids: string[]; success: boolean }> {
-    if (files.length === 0) return { ids: [], success: true };
+  async function uploadFiles(): Promise<{
+    attachmentIds: string[];
+    success: boolean;
+  }> {
+    if (files.length === 0 && attachmentFiles.length === 0)
+      return { attachmentIds: [], success: true };
 
     const uploadedFileIds: string[] = [];
     let hasError = false;
@@ -156,7 +200,11 @@ export default function NewUngatekeepForm({
     setFiles((prev) =>
       prev.map((file) => ({ ...file, uploading: true, progress: 0 }))
     );
+    setAttachmentFiles((prev) =>
+      prev.map((file) => ({ ...file, uploading: true, progress: 0 }))
+    );
 
+    // Upload images (will be merged into attachments)
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       try {
@@ -201,39 +249,86 @@ export default function NewUngatekeepForm({
       }
     }
 
-    return { ids: uploadedFileIds, success: !hasError };
+    // Upload attachments
+    for (let i = 0; i < attachmentFiles.length; i++) {
+      const file = attachmentFiles[i];
+      try {
+        const uploaded = await uploadFileViaSignedUrl({
+          domain: "ungatekeep-images",
+          file: file.file,
+          onProgress: (progress) => {
+            const percent = Math.round(progress || 0);
+            setAttachmentFiles((prev) =>
+              prev.map((f, idx) =>
+                idx === i ? { ...f, progress: percent } : f
+              )
+            );
+          },
+        });
+
+        uploadedFileIds.push(uploaded.key);
+        setAttachmentFiles((prev) =>
+          prev.map((f, idx) =>
+            idx === i ? { ...f, uploading: false, fileId: uploaded.key } : f
+          )
+        );
+      } catch (err) {
+        console.error(`Upload failed for ${file.name}:`, err);
+        hasError = true;
+        setAttachmentFiles((prev) =>
+          prev.map((f, idx) =>
+            idx === i
+              ? {
+                  ...f,
+                  uploading: false,
+                  error: true,
+                  errorMessage:
+                    err instanceof Error ? err.message : "Unknown upload error",
+                }
+              : f
+          )
+        );
+        const message =
+          err instanceof Error ? err.message : "Unknown upload error";
+        toast.error(`Failed to upload "${file.name}": ${message}`);
+      }
+    }
+
+    return { attachmentIds: uploadedFileIds, success: !hasError };
   }
 
   async function onSubmit(data: UngatekeepFormValues) {
     try {
       setIsSubmitting(true);
 
-      const { ids: imageIds, success: imagesOk } = await uploadImages();
+      const { attachmentIds, success: filesOk } = await uploadFiles();
 
-      if (!imagesOk) {
+      if (!filesOk) {
         toast.error(
-          `One or more images failed to upload. Fix the failed uploads and try again. ${post ? "Post was not updated." : "Post was not created."}`
+          `One or more files failed to upload. Fix the failed uploads and try again. ${post ? "Post was not updated." : "Post was not created."}`
         );
         throw new Error(
-          "One or more images failed to upload. Post was not updated/created."
+          "One or more files failed to upload. Post was not updated/created."
         );
       }
 
-      // Combine existing images with newly uploaded images
-      const finalImages = [...existingImages, ...imageIds];
+      // Combine existing and new files into one attachments array
+      const finalAttachments = [...existingFiles, ...attachmentIds];
 
       const cleanedData = {
         ...data,
-        images:
+        isPublished: data.publishAt ? true : data.isPublished,
+        attachments:
           isEdit && post
-            ? finalImages
-            : imageIds.length > 0
-              ? imageIds
+            ? finalAttachments
+            : finalAttachments.length > 0
+              ? finalAttachments
               : undefined,
         linkUrl: data.linkUrl || undefined,
         linkTitle: data.linkTitle || undefined,
         linkImage: data.linkImage || undefined,
         tag: data.tag || undefined,
+        publishAt: data.publishAt || undefined,
       };
 
       if (isEdit && post) {
@@ -242,14 +337,15 @@ export default function NewUngatekeepForm({
           cleanedData
         );
         if (response.status === 200) {
-          // Delete removed images from Appwrite storage after successful update
-          await deleteRemovedImages();
+          // Delete removed files from Appwrite storage after successful update
+          await deleteRemovedFiles();
           toast.success("Post updated successfully!");
           setOpen(false);
           form.reset();
           files.forEach((file) => URL.revokeObjectURL(file.preview));
           setFiles([]);
-          setRemovedImageIds([]);
+          setAttachmentFiles([]);
+          setRemovedFileIds([]);
           onSuccess?.();
         }
       } else {
@@ -260,6 +356,7 @@ export default function NewUngatekeepForm({
           form.reset();
           files.forEach((file) => URL.revokeObjectURL(file.preview));
           setFiles([]);
+          setAttachmentFiles([]);
           onSuccess?.();
         }
       }
@@ -286,20 +383,6 @@ export default function NewUngatekeepForm({
         <div className="space-y-4 overflow-y-auto pr-1 pb-4">
           <FormField
             control={form.control}
-            name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Title *</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter post title" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
             name="content"
             render={({ field }) => (
               <FormItem>
@@ -319,40 +402,6 @@ export default function NewUngatekeepForm({
               </FormItem>
             )}
           />
-
-          {/* Image Upload Section */}
-          <div className="space-y-2 border-t pt-4">
-            <div className="flex items-center justify-between">
-              <FormLabel>Images (Optional)</FormLabel>
-              <span className="text-muted-foreground text-xs">
-                {files.length + existingImages.length} / {maxFiles}
-              </span>
-            </div>
-
-            {/* Existing images (from post) displayed with remove option */}
-            {isEdit && post && (
-              <UngatekeepExistingImages
-                existingImages={existingImages}
-                onRemoveExisting={handleRemoveExistingImage}
-              />
-            )}
-
-            {/* Selected new images displayed */}
-            <SelectedImages files={files} setFiles={setFiles} />
-
-            {/* Image picker */}
-            <div className="flex items-center gap-2">
-              <ImagePicker
-                files={files}
-                setFiles={setFiles}
-                maxFiles={maxFiles}
-                existingImagesCount={existingImages.length}
-              />
-              <span className="text-muted-foreground text-xs">
-                Click to upload images (max {maxFiles})
-              </span>
-            </div>
-          </div>
 
           <FormField
             control={form.control}
@@ -375,12 +424,61 @@ export default function NewUngatekeepForm({
                       Company Experience
                     </SelectItem>
                     <SelectItem value="resources">Resources</SelectItem>
+                    <SelectItem value="playbooks">Playbooks</SelectItem>
+                    <SelectItem value="college_hacks">College Hacks</SelectItem>
+                    <SelectItem value="interview">Interview</SelectItem>
+                    <SelectItem value="ama_drops">AMA Drops</SelectItem>
+                    <SelectItem value="ftb_recommends">
+                      FTB Recommends
+                    </SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          {/* Upload Section (LinkedIn style below tags) */}
+          <div className="flex flex-col gap-3 border-t pt-4">
+            <div className="flex items-center justify-between">
+              <FormLabel>Uploads (Optional)</FormLabel>
+              <span className="text-muted-foreground text-xs">
+                {files.length + attachmentFiles.length + existingFiles.length} /{" "}
+                {maxFiles + maxAttachments}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <UnifiedFilePicker
+                imageFiles={files}
+                setImageFiles={setFiles}
+                maxImageFiles={maxFiles}
+                existingImagesCount={0} // merged into attachments
+                attachmentFiles={attachmentFiles}
+                setAttachmentFiles={setAttachmentFiles}
+                maxAttachmentFiles={maxAttachments}
+                existingAttachmentsCount={existingFiles.length}
+                showLabel
+                label="Upload files"
+                compactLabel="Upload files"
+                className="w-full"
+                buttonClassName="w-full flex-row justify-center gap-2 h-12 px-4 bg-muted/30 hover:bg-muted/50 border-dashed border-2 text-sm md:text-sm md:w-full"
+              />
+            </div>
+
+            {/* Previews */}
+            {isEdit && post && (
+              <ExistingAttachments
+                existingAttachments={existingFiles}
+                onRemoveExisting={handleRemoveExistingFile}
+              />
+            )}
+            <SelectedImages files={files} setFiles={setFiles} />
+            <SelectedAttachments
+              files={attachmentFiles}
+              setFiles={setAttachmentFiles}
+            />
+          </div>
 
           <div className="space-y-4 border-t pt-4">
             <h3 className="text-sm font-medium">Link Preview (Optional)</h3>
@@ -475,29 +573,50 @@ export default function NewUngatekeepForm({
           </div>
         </div>
 
-        <div className="mt-4 flex justify-end space-x-2 border-t pt-4">
-          {onCancel && (
+        <div className="mt-4 flex flex-col border-t pt-4">
+          <div className="flex items-center justify-end space-x-2">
+            <SchedulePublishPopover
+              control={form.control}
+              watchedPublishAt={watchedPublishAt}
+              onConfirmMessageChange={setScheduleMessage}
+              showLabel
+              label="Schedule"
+              compactLabel="SCHD"
+            />
+            {onCancel && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setOpen(false);
+                  onCancel();
+                }}
+                disabled={isSubmitting}
+                size="sm"
+              >
+                Cancel
+              </Button>
+            )}
             <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setOpen(false);
-                onCancel();
-              }}
+              type="submit"
               disabled={isSubmitting}
+              size="sm"
+              className="px-6"
             >
-              Cancel
+              {isSubmitting
+                ? isEdit
+                  ? "Updating..."
+                  : "Creating..."
+                : isEdit
+                  ? "Update Post"
+                  : "Create Post"}
             </Button>
+          </div>
+          {scheduleMessage && (
+            <p className="text-muted-foreground pt-2 text-right text-xs">
+              This will go live on {scheduleMessage}.
+            </p>
           )}
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting
-              ? isEdit
-                ? "Updating..."
-                : "Creating..."
-              : isEdit
-                ? "Update Post"
-                : "Create Post"}
-          </Button>
         </div>
       </form>
     </Form>

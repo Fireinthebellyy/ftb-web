@@ -77,7 +77,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
     try {
       if (newState) {
-        addToTracker(
+        await addToTracker(
           {
             id,
             opportunityId: id,
@@ -102,7 +102,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         );
       } else {
         if (trackedItem) {
-          removeFromTracker(
+          await removeFromTracker(
             trackedItem.oppId as string | number,
             trackedItem.kind ?? "opportunity"
           );

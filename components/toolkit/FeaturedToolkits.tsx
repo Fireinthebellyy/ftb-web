@@ -29,7 +29,7 @@ export default function FeaturedToolkits() {
   }
 
   return (
-    <div className="rounded-lg border bg-white p-4">
+    <div className="hidden lg:block rounded-lg border bg-white p-4">
       <h3 className="font-semibold text-gray-900 mb-3">Featured Toolkits</h3>
       <div className="space-y-2">
         {featuredToolkits.map((toolkit) => (

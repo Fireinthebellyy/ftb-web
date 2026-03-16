@@ -52,7 +52,7 @@ export default function RootLayout({
               <CSPostHogProvider>
                 <TrackerProvider>
                   <Navbar />
-                  <main className="grow pb-20 md:pb-0">{children}</main>
+                  <main className="grow pt-16 pb-20 md:pb-0">{children}</main>
                   <BottomNav />
                   <Footer />
                   <WhatsAppWidget />

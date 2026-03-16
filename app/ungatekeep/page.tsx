@@ -23,6 +23,7 @@ type UngatekeepPost = {
   linkUrl?: string | null;
   linkTitle?: string | null;
   linkImage?: string | null;
+  videoUrl?: string | null;
   tag?: "announcement" | "company_experience" | "resources" | "playbooks" | "college_hacks" | "interview" | "ama_drops" | "ftb_recommends" | null;
   isPinned: boolean;
   isSaved?: boolean;

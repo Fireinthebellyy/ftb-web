@@ -65,6 +65,7 @@ const ungatekeepFormSchema = z.object({
   linkUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
   linkTitle: z.string().optional(),
   linkImage: z.string().url("Invalid image URL").optional().or(z.literal("")),
+  videoUrl: z.string().url("Invalid video URL").optional().or(z.literal("")),
   tag: z.enum([
     "announcement",
     "company_experience",
@@ -103,6 +104,7 @@ interface NewUngatekeepFormProps {
     linkUrl?: string | null;
     linkTitle?: string | null;
     linkImage?: string | null;
+    videoUrl?: string | null;
     tag?: string | null;
     isPinned?: boolean;
     isPublished?: boolean;
@@ -140,6 +142,7 @@ export default function NewUngatekeepForm({
       linkUrl: post?.linkUrl || "",
       linkTitle: post?.linkTitle || "",
       linkImage: post?.linkImage || "",
+      videoUrl: post?.videoUrl || "",
       tag:
         (post?.tag as
           | "announcement"
@@ -332,6 +335,7 @@ export default function NewUngatekeepForm({
         linkUrl: data.linkUrl || undefined,
         linkTitle: data.linkTitle || undefined,
         linkImage: data.linkImage || undefined,
+        videoUrl: data.videoUrl || undefined,
         tag: data.tag || undefined,
         publishAt: data.publishAt || undefined,
       };
@@ -485,7 +489,27 @@ export default function NewUngatekeepForm({
           </div>
 
           <div className="space-y-4 border-t pt-4">
-            <h3 className="text-sm font-medium">Link Preview (Optional)</h3>
+            <h3 className="text-sm font-medium">Link & Video (Optional)</h3>
+            <FormField
+              control={form.control}
+              name="videoUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>YouTube Video URL</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      {...field}
+                    />
+                  </FormControl>
+                  <div className="text-muted-foreground text-[10px]">
+                    Enter a YouTube URL to embed a video in the post
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="linkUrl"

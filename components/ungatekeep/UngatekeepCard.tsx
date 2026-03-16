@@ -9,6 +9,8 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
 } from "@/components/ui/carousel";
 import {
   Dialog,
@@ -41,6 +43,7 @@ type UngatekeepPost = {
   linkUrl?: string | null;
   linkTitle?: string | null;
   linkImage?: string | null;
+  videoUrl?: string | null;
   tag?: "announcement" | "company_experience" | "resources" | "playbooks" | "college_hacks" | "interview" | "ama_drops" | "ftb_recommends" | null;
   isPinned: boolean;
   isSaved?: boolean;
@@ -127,29 +130,24 @@ function AttachmentSlide({
 
   if (isPdf) {
     return (
-      <div className="relative h-full w-full group overflow-hidden">
-        {/* Try to show PDF content using an iframe for a real "inside" look */}
+      <div className="relative h-full w-full group overflow-hidden bg-white">
+        {/* PDF content with interaction enabled for scrolling */}
         <iframe
-          src={`${fullUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-          className="h-full w-full border-none pointer-events-none scale-[1.01]"
+          src={`${fullUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
+          className="h-full w-full border-none"
           title={fileName}
         />
-        
-        <div className="absolute inset-0 flex flex-col items-end justify-start p-2 opacity-0 transition-opacity group-hover:opacity-100 bg-black/5">
-          <div className="flex items-center gap-1 rounded bg-red-500 px-2 py-1 text-[10px] font-bold text-white uppercase shadow-sm">
-            <FileText className="h-3 w-3" />
-            PDF
-          </div>
-        </div>
 
-        {/* Overlay to make it clickable and prevent iframe interaction */}
+        {/* Small "Open Full" button that doesn't block scrolling */}
         <a
           href={fullUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="absolute inset-0 z-10 cursor-pointer"
+          className="absolute bottom-2 right-2 z-10 flex sm:h-8 sm:w-8 h-7 w-7 items-center justify-center rounded-full bg-white/90 text-primary shadow-md hover:bg-white transition-colors border"
           title="Open full document"
-        />
+        >
+          <ExternalLink className="sm:h-4 sm:w-4 h-3.5 w-3.5 " />
+        </a>
       </div>
     );
   }
@@ -296,10 +294,18 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
     }
   };
 
+  const getYouTubeEmbedUrl = (url: string | null | undefined) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    const videoId = match && match[2].length === 11 ? match[2] : null;
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+    return null;
+  };
+
   const hasLongContent = plainTextContent.length > CONTENT_PREVIEW_LENGTH;
-  const hasExtraMedia =
-    (post.attachments && post.attachments.length > 0) || (!!post.linkUrl && !!post.linkImage);
-  const canExpand = hasLongContent || hasExtraMedia;
 
   const previewContent =
     hasLongContent && !isExpanded
@@ -315,6 +321,13 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
       setSafeHtml(DOMPurify.sanitize(post.content));
     }
   }, [post.content]);
+
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(post.videoUrl);
+
+  const mediaItems: ({ type: "attachment"; id: string } | { type: "video"; url: string })[] = [
+    ...(post.attachments || []).map((id) => ({ type: "attachment" as const, id })),
+    ...(youtubeEmbedUrl ? [{ type: "video" as const, url: youtubeEmbedUrl }] : []),
+  ];
 
   return (
     <article
@@ -352,7 +365,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
             {previewContent}
           </p>
         )}
-        {canExpand && !isExpanded && (
+        {hasLongContent && !isExpanded && (
           <Button
             variant="ghost"
             size="sm"
@@ -365,7 +378,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
             Read more
           </Button>
         )}
-        {canExpand && isExpanded && (
+        {hasLongContent && isExpanded && (
           <Button
             variant="ghost"
             size="sm"
@@ -379,16 +392,28 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
           </Button>
         )}
 
-        {/* Image / Link preview - below text (LinkedIn style) */}
-        {post.attachments && post.attachments.length > 0 && (
+        {/* Media (Images, PDFs, Video) - LinkedIn style below text */}
+        {mediaItems.length > 0 && (
           <div className="mt-3">
-            {post.attachments.length === 1 ? (
+            {mediaItems.length === 1 ? (
               <div className="relative aspect-[9/16] max-h-[300px] w-full overflow-hidden rounded-lg bg-muted border">
-                <AttachmentSlide
-                  imageId={post.attachments[0]}
-                  postTitle={plainTextContent.slice(0, 50)}
-                  ungatekeepStorage={ungatekeepStorage}
-                />
+                {mediaItems[0].type === "attachment" ? (
+                  <AttachmentSlide
+                    imageId={mediaItems[0].id}
+                    postTitle={plainTextContent.slice(0, 50)}
+                    ungatekeepStorage={ungatekeepStorage}
+                  />
+                ) : (
+                  <div className="h-full w-full bg-black">
+                    <iframe
+                      src={mediaItems[0].url}
+                      title="YouTube video player"
+                      className="absolute inset-0 h-full w-full border-none"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                )}
               </div>
             ) : (
               <div className="px-1">
@@ -397,28 +422,48 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
                   opts={{ align: "start", loop: false }}
                 >
                   <CarouselContent className="-ml-2">
-                    {post.attachments.map((fileId, idx) => (
+                    {mediaItems.map((item, idx) => (
                       <CarouselItem
                         key={idx}
                         className="basis-[85%] pl-2 sm:basis-[75%]"
                       >
                         <div className="relative aspect-[9/16] max-h-[300px] w-full overflow-hidden rounded-lg bg-muted border">
-                          <AttachmentSlide
-                            imageId={fileId}
-                            postTitle={plainTextContent.slice(0, 50)}
-                            idx={idx}
-                            ungatekeepStorage={ungatekeepStorage}
-                          />
+                          {item.type === "attachment" ? (
+                            <AttachmentSlide
+                              imageId={item.id}
+                              postTitle={plainTextContent.slice(0, 50)}
+                              idx={idx}
+                              ungatekeepStorage={ungatekeepStorage}
+                            />
+                          ) : (
+                            <div className="h-full w-full bg-black">
+                              <iframe
+                                src={item.url}
+                                title="YouTube video player"
+                                className="absolute inset-0 h-full w-full border-none"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                              />
+                            </div>
+                          )}
                         </div>
                       </CarouselItem>
                     ))}
                   </CarouselContent>
+                  {/* Show navigation buttons only when more than 1 item is present */}
+                  {mediaItems.length > 1 && (
+                    <>
+                      <CarouselPrevious className="left-2 h-7 w-7 sm:h-8 sm:w-8 bg-orange-500 text-white hover:bg-orange-600 hover:text-white border-none shadow-md z-20 [&_svg]:size-4" />
+                      <CarouselNext className="right-2 h-7 w-7 sm:h-8 sm:w-8 bg-orange-500 text-white hover:bg-orange-600 hover:text-white border-none shadow-md z-20 [&_svg]:size-4" />
+                    </>
+                  )}
                 </Carousel>
               </div>
             )}
           </div>
         )}
-        {!post.attachments?.length && post.linkUrl && post.linkImage && (
+
+        {mediaItems.length === 0 && post.linkUrl && post.linkImage && (
           <div className="mt-3 overflow-hidden rounded-lg border hover:bg-muted/50 transition-colors">
             <Link
               href={post.linkUrl}
@@ -452,10 +497,9 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
         )}
       </div>
 
-      {/* Expanded content - link preview (already shown above when no attachments) */}
+      {/* Expanded content - link preview (already shown above when no attachments/video) */}
       {isExpanded &&
-        post.attachments &&
-        post.attachments.length > 0 &&
+        mediaItems.length > 0 &&
         post.linkUrl && (
           <div className="border-t px-3 pb-3 pt-2 space-y-3">
             <div className="overflow-hidden rounded-lg border hover:bg-muted/50 transition-colors">
@@ -525,7 +569,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
                 title="Share"
                 aria-label="Share"
                 onClick={() => setShareDialogOpen(true)}
-                className="flex items-center gap-1 py-1 text-xs transition-colors hover:text-primary"
+                className="flex cursor-pointer items-center gap-1 py-1 text-xs transition-colors hover:text-primary"
               >
                 <Share2 className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Share</span>
@@ -557,7 +601,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
               aria-label={isSaved ? "Remove from saved" : "Save"}
               onClick={toggleSave}
               className={cn(
-              "relative flex items-center gap-1 py-1 text-xs transition-colors hover:text-primary",
+              "relative flex cursor-pointer items-center gap-1 py-1 text-xs transition-colors hover:text-primary",
               isSaved && "text-primary"
             )}
           >

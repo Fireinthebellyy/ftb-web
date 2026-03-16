@@ -377,7 +377,6 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
                   <AttachmentSlide
                     imageId={mediaItems[0].id}
                     postTitle={plainTextContent.slice(0, 50)}
-                    ungatekeepStorage={ungatekeepStorage}
                   />
                 ) : (
                   <div className="h-full w-full bg-black">
@@ -409,7 +408,6 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
                               imageId={item.id}
                               postTitle={plainTextContent.slice(0, 50)}
                               idx={idx}
-                              ungatekeepStorage={ungatekeepStorage}
                             />
                           ) : (
                             <div className="h-full w-full bg-black">
@@ -577,33 +575,8 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
               aria-label={isSaved ? "Remove from saved" : "Save"}
               onClick={toggleSave}
               className={cn(
-              "relative flex cursor-pointer items-center gap-1 py-1 text-xs transition-colors hover:text-primary",
-              isSaved && "text-primary"
-            )}
-          >
-            <Bookmark
-              className={cn("h-3.5 w-3.5", isSaved && "fill-primary")}
-            />
-            <AnimatePresence>
-              {isFlying && (
-                <motion.div
-                  initial={{ opacity: 1, x: flyPos.x, y: flyPos.y, scale: 1 }}
-                  animate={{ 
-                    opacity: 0, 
-                    x: window.innerWidth - 100, 
-                    y: 50, 
-                    scale: 0.2,
-                    rotate: 45
-                  }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.8, ease: "easeIn" }}
-                  className="pointer-events-none fixed left-0 top-0 z-[9999] flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white shadow-lg"
-                  style={{
-                    transform: "translate(-50%, -50%)"
-                  }}
-                >
-                  <Bookmark className="h-4 w-4 fill-white" />
-                </motion.div>
+                "relative flex cursor-pointer items-center gap-1 py-1 text-xs transition-colors hover:text-primary",
+                isSaved && "text-primary"
               )}
             >
               <Bookmark
@@ -622,7 +595,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
                     }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.8, ease: "easeIn" }}
-                    className="bg-primary pointer-events-none fixed top-0 left-0 z-[9999] flex h-6 w-6 items-center justify-center rounded-full text-white shadow-lg"
+                    className="bg-primary pointer-events-none fixed left-0 top-0 z-[9999] flex h-6 w-6 items-center justify-center rounded-full text-white shadow-lg"
                     style={{
                       transform: "translate(-50%, -50%)",
                     }}

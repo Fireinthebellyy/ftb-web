@@ -7,8 +7,11 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import axios from "axios";
 import { toast } from "sonner";
-import { FileItem, UploadProgress } from "@/types/interfaces";
-import { createUngatekeepStorage, getUngatekeepBucketId } from "@/lib/appwrite";
+import { FileItem } from "@/types/interfaces";
+import {
+  deleteStorageObjectClient,
+  uploadFileViaSignedUrl,
+} from "@/lib/storage/client";
 import {
   UnifiedFilePicker,
   SelectedImages,
@@ -126,9 +129,10 @@ export default function NewUngatekeepForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [files, setFiles] = useState<FileItem[]>([]);
   const [attachmentFiles, setAttachmentFiles] = useState<FileItem[]>([]);
-  const [existingFiles, setExistingFiles] = useState<string[]>(
-    [...(post?.images || []), ...(post?.attachments || [])]
-  );
+  const [existingFiles, setExistingFiles] = useState<string[]>([
+    ...(post?.images || []),
+    ...(post?.attachments || []),
+  ]);
   const [removedFileIds, setRemovedFileIds] = useState<string[]>([]);
   const [scheduleMessage, setScheduleMessage] = useState<string | null>(null);
 
@@ -155,7 +159,9 @@ export default function NewUngatekeepForm({
           | "ftb_recommends") || undefined,
       isPinned: post?.isPinned || false,
       isPublished: post?.isPublished || false,
-      publishAt: post?.publishedAt ? toDateTimeLocalValue(new Date(post.publishedAt)) : "",
+      publishAt: post?.publishedAt
+        ? toDateTimeLocalValue(new Date(post.publishedAt))
+        : "",
       attachments: post?.attachments || [],
     },
   });
@@ -168,18 +174,13 @@ export default function NewUngatekeepForm({
     setRemovedFileIds((prev) => [...prev, fileId]);
   };
 
-  // Delete removed files from Appwrite storage
+  // Delete removed files from storage
   async function deleteRemovedFiles(): Promise<void> {
     if (removedFileIds.length === 0) return;
 
-    const bucketId = getUngatekeepBucketId();
-    if (!bucketId) return;
-
-    const ungatekeepStorage = createUngatekeepStorage();
-
     for (const fileId of removedFileIds) {
       try {
-        await ungatekeepStorage.deleteFile(bucketId, fileId);
+        await deleteStorageObjectClient("ungatekeep-images", fileId);
       } catch (err) {
         console.error(`Failed to delete file ${fileId}:`, err);
         // Continue deleting other files even if one fails
@@ -187,8 +188,12 @@ export default function NewUngatekeepForm({
     }
   }
 
-  async function uploadFiles(): Promise<{ attachmentIds: string[]; success: boolean }> {
-    if (files.length === 0 && attachmentFiles.length === 0) return { attachmentIds: [], success: true };
+  async function uploadFiles(): Promise<{
+    attachmentIds: string[];
+    success: boolean;
+  }> {
+    if (files.length === 0 && attachmentFiles.length === 0)
+      return { attachmentIds: [], success: true };
 
     const uploadedFileIds: string[] = [];
     let hasError = false;
@@ -200,37 +205,27 @@ export default function NewUngatekeepForm({
       prev.map((file) => ({ ...file, uploading: true, progress: 0 }))
     );
 
-    const bucketId = getUngatekeepBucketId();
-    if (!bucketId) {
-      toast.error("Upload bucket not configured");
-      return { attachmentIds: [], success: false };
-    }
-
-    const ungatekeepStorage = createUngatekeepStorage();
-
     // Upload images (will be merged into attachments)
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       try {
-        const res = await ungatekeepStorage.createFile(
-          bucketId,
-          "unique()",
-          file.file,
-          [],
-          (progress: UploadProgress) => {
-            const percent = Math.round(progress.progress || 0);
+        const uploaded = await uploadFileViaSignedUrl({
+          domain: "ungatekeep-images",
+          file: file.file,
+          onProgress: (progress) => {
+            const percent = Math.round(progress || 0);
             setFiles((prev) =>
               prev.map((f, idx) =>
                 idx === i ? { ...f, progress: percent } : f
               )
             );
-          }
-        );
+          },
+        });
 
-        uploadedFileIds.push(res.$id);
+        uploadedFileIds.push(uploaded.key);
         setFiles((prev) =>
           prev.map((f, idx) =>
-            idx === i ? { ...f, uploading: false, fileId: res.$id } : f
+            idx === i ? { ...f, uploading: false, fileId: uploaded.key } : f
           )
         );
       } catch (err) {
@@ -240,12 +235,12 @@ export default function NewUngatekeepForm({
           prev.map((f, idx) =>
             idx === i
               ? {
-                ...f,
-                uploading: false,
-                error: true,
-                errorMessage:
-                  err instanceof Error ? err.message : "Unknown upload error",
-              }
+                  ...f,
+                  uploading: false,
+                  error: true,
+                  errorMessage:
+                    err instanceof Error ? err.message : "Unknown upload error",
+                }
               : f
           )
         );
@@ -259,25 +254,23 @@ export default function NewUngatekeepForm({
     for (let i = 0; i < attachmentFiles.length; i++) {
       const file = attachmentFiles[i];
       try {
-        const res = await ungatekeepStorage.createFile(
-          bucketId,
-          "unique()",
-          file.file,
-          [],
-          (progress: UploadProgress) => {
-            const percent = Math.round(progress.progress || 0);
+        const uploaded = await uploadFileViaSignedUrl({
+          domain: "ungatekeep-images",
+          file: file.file,
+          onProgress: (progress) => {
+            const percent = Math.round(progress || 0);
             setAttachmentFiles((prev) =>
               prev.map((f, idx) =>
                 idx === i ? { ...f, progress: percent } : f
               )
             );
-          }
-        );
+          },
+        });
 
-        uploadedFileIds.push(res.$id);
+        uploadedFileIds.push(uploaded.key);
         setAttachmentFiles((prev) =>
           prev.map((f, idx) =>
-            idx === i ? { ...f, uploading: false, fileId: res.$id } : f
+            idx === i ? { ...f, uploading: false, fileId: uploaded.key } : f
           )
         );
       } catch (err) {
@@ -287,12 +280,12 @@ export default function NewUngatekeepForm({
           prev.map((f, idx) =>
             idx === i
               ? {
-                ...f,
-                uploading: false,
-                error: true,
-                errorMessage:
-                  err instanceof Error ? err.message : "Unknown upload error",
-              }
+                  ...f,
+                  uploading: false,
+                  error: true,
+                  errorMessage:
+                    err instanceof Error ? err.message : "Unknown upload error",
+                }
               : f
           )
         );
@@ -452,7 +445,8 @@ export default function NewUngatekeepForm({
             <div className="flex items-center justify-between">
               <FormLabel>Uploads (Optional)</FormLabel>
               <span className="text-muted-foreground text-xs">
-                {files.length + attachmentFiles.length + existingFiles.length} / {maxFiles + maxAttachments}
+                {files.length + attachmentFiles.length + existingFiles.length} /{" "}
+                {maxFiles + maxAttachments}
               </span>
             </div>
 

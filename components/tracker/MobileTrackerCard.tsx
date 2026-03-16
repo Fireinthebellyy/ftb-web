@@ -3,6 +3,7 @@ import { Trash2, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { TrackerItem } from "@/components/providers/TrackerProvider";
 import { differenceInCalendarDays } from "date-fns";
+import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
 function DeadlineBadge({ deadline }: { deadline: string }) {
   const daysDiff = differenceInCalendarDays(new Date(deadline), new Date());
@@ -44,8 +45,8 @@ interface MobileTrackerCardProps {
     status: string,
     extraData?: Record<string, unknown>,
     kind?: "internship" | "opportunity"
-  ) => void;
-  onDelete: (id: number | string, kind?: "internship" | "opportunity") => void;
+  ) => Promise<void>;
+  onDelete: (id: number | string, kind?: "internship" | "opportunity") => Promise<void>;
   onClick: (opp: TrackerItem) => void;
 }
 
@@ -63,24 +64,30 @@ export default function MobileTrackerCard({
     "Rejected",
   ];
 
-  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value;
-    if (newStatus === "Rejected") {
-      const reason = prompt(
-        "What do you think was the reason? (Resume, Interview, Ghosted?)"
-      );
-      if (reason) {
-        updateStatus(opp.oppId, newStatus, { failureReason: reason }, opp.kind);
-        toast.message("💡 Suggestion", {
-          description: reason.toLowerCase().includes("resume")
-            ? "Check out the Resume Toolkit."
-            : "Try the Mock Interview tool.",
-        });
+    try {
+      if (newStatus === "Rejected") {
+        const reason = prompt(
+          "What do you think was the reason? (Resume, Interview, Ghosted?)"
+        );
+        if (reason) {
+          await updateStatus(opp.oppId, newStatus, { failureReason: reason }, opp.kind);
+          toast.message("💡 Suggestion", {
+            description: reason.toLowerCase().includes("resume")
+              ? "Check out the Resume Toolkit."
+              : "Try the Mock Interview tool.",
+          });
+        } else {
+          await updateStatus(opp.oppId, newStatus, undefined, opp.kind);
+        }
       } else {
-        updateStatus(opp.oppId, newStatus, undefined, opp.kind);
+        await updateStatus(opp.oppId, newStatus, undefined, opp.kind);
       }
-    } else {
-      updateStatus(opp.oppId, newStatus, undefined, opp.kind);
+      toast.success(`Status updated to ${newStatus}`);
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      toast.error("Failed to update status");
     }
   };
 
@@ -95,7 +102,10 @@ export default function MobileTrackerCard({
           {opp.logo || opp.poster || opp.images?.[0] ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={opp.logo || opp.poster || opp.images?.[0]}
+              src={tryGetStoragePublicUrl(
+                "opportunity-images",
+                opp.logo || opp.poster || opp.images?.[0] || ""
+              )}
               alt={opp.company}
               className="h-10 w-10 shrink-0 rounded-lg border border-slate-100 bg-white object-contain p-0.5"
             />
@@ -115,9 +125,17 @@ export default function MobileTrackerCard({
         </div>
 
         <button
-          onClick={(e) => {
+          onClick={async (e) => {
             e.stopPropagation();
-            onDelete(opp.oppId, opp.kind);
+            if (confirm("Are you sure you want to remove this from your tracker?")) {
+              try {
+                await onDelete(opp.oppId, opp.kind);
+                toast.success("Removed from tracker");
+              } catch (error) {
+                console.error("Failed to delete item:", error);
+                toast.error("Failed to remove item");
+              }
+            }
           }}
           className="shrink-0 rounded-lg p-2 text-rose-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
           title="Delete"

@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { ExternalLink, Calculator, Target, Sparkles } from 'lucide-react';
+import { ExternalLink, Calculator, Target } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { TrackerItem } from '@/components/providers/TrackerProvider';
@@ -14,7 +14,6 @@ interface TrackerDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
     opportunity: TrackerItem;
-    updateStatus: (id: number | string, status: string) => void;
     onSmartApply: () => void;
 }
 
@@ -95,7 +94,7 @@ export default function TrackerDetailModal({ isOpen, onClose, opportunity, onSma
                                 onClick={onSmartApply}
                                 className="flex-1 md:flex-none px-6 py-2.5 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
                             >
-                                <span>Smart Apply</span> <Sparkles size={16} />
+                                <span>Smart Apply</span>
                             </button>
                             <a
                                 href="#"

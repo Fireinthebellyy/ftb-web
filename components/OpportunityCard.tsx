@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { createOpportunityStorage } from "@/lib/appwrite";
 import { OpportunityPostProps } from "@/types/interfaces";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
@@ -21,6 +20,7 @@ import { OpportunityImageGallery } from "./opportunity/OpportunityImageGallery";
 import { OpportunityAttachments } from "./opportunity/OpportunityAttachments";
 import { OpportunityActions } from "./opportunity/OpportunityActions";
 import NewOpportunityForm from "./opportunity/NewOpportunityForm";
+import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
 const isValidUUID = (uuid: string): boolean => {
   const uuidRegex =
@@ -77,7 +77,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
     try {
       if (newState) {
-        addToTracker(
+        await addToTracker(
           {
             id,
             opportunityId: id,
@@ -87,13 +87,10 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               opportunity.organiserInfo ||
               "Unknown Organization",
             logo: opportunity.images?.[0]
-              ? createOpportunityStorage()
-                .getFileView(
-                  process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID ||
-                  "",
+              ? tryGetStoragePublicUrl(
+                  "opportunity-images",
                   opportunity.images[0]
                 )
-                .toString()
               : undefined,
             type: opportunity.type,
             location: opportunity.location,
@@ -105,7 +102,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
         );
       } else {
         if (trackedItem) {
-          removeFromTracker(
+          await removeFromTracker(
             trackedItem.oppId as string | number,
             trackedItem.kind ?? "opportunity"
           );
@@ -204,7 +201,6 @@ function ImageModal({
   modalFileId,
 }: ImageModalProps) {
   const [carouselApi, setCarouselApi] = useState<any>(null);
-  const opportunityStorage = createOpportunityStorage();
 
   useEffect(() => {
     if (carouselApi) {
@@ -216,11 +212,7 @@ function ImageModal({
     return (
       <div className="flex items-center justify-center">
         {modalFileId ? (
-          <ImageModalContent
-            opportunityStorage={opportunityStorage}
-            fileId={modalFileId}
-            title={title}
-          />
+          <ImageModalContent fileId={modalFileId} title={title} />
         ) : (
           <div className="w-full text-center text-sm text-gray-400">
             Image not available
@@ -238,7 +230,6 @@ function ImageModal({
             <div className="flex h-full items-center justify-center bg-transparent">
               {image ? (
                 <ImageModalContent
-                  opportunityStorage={opportunityStorage}
                   fileId={image}
                   title={`${title} - Image ${idx + 1}`}
                 />
@@ -257,22 +248,14 @@ function ImageModal({
 }
 
 interface ImageModalContentProps {
-  opportunityStorage: ReturnType<typeof createOpportunityStorage>;
   fileId: string;
   title: string;
 }
 
-function ImageModalContent({
-  opportunityStorage,
-  fileId,
-  title,
-}: ImageModalContentProps) {
+function ImageModalContent({ fileId, title }: ImageModalContentProps) {
   return (
     <Image
-      src={opportunityStorage.getFileView(
-        process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
-        fileId
-      )}
+      src={tryGetStoragePublicUrl("opportunity-images", fileId)}
       alt={title}
       className="max-h-[80vh] w-full object-contain"
       height={600}

@@ -44,9 +44,9 @@ const Footer = () => {
   if (pathname === "/opportunities" || pathname === "/onboarding" || pathname === "/intern") return null;
 
   return (
-    <footer className="border-t border-neutral-200 bg-white py-8">
+    <footer className="border-t border-neutral-200 bg-white py-4">
       <div className="container mx-auto px-4">
-        <div className="flex flex-col items-center justify-center space-y-6 md:flex-row md:justify-between md:space-y-0">
+        <div className="flex flex-col items-center justify-center space-y-4 md:flex-row md:justify-between md:space-y-0">
           <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
             <Link
               href="/"
@@ -106,7 +106,7 @@ const Footer = () => {
             </Link>
           </div>
         </div>
-        <div className="mt-6 flex items-center justify-between text-xs text-neutral-500">
+        <div className="mt-4 flex items-center justify-between text-xs text-neutral-500">
           {versionInfo?.commitSha ? (
             <a
               href={`https://github.com/Fireinthebellyy/ftb-web/commit/${versionInfo.commitSha}`}

@@ -273,19 +273,24 @@ export default function UngatekeepPostPage() {
                 </div>
               )}
 
-              {post.videoUrl && (
-                <div className="mb-4 overflow-hidden rounded-lg border bg-black">
-                  <div className="relative aspect-video w-full">
-                    <iframe
-                      src={getYouTubeEmbedUrl(post.videoUrl) || ""}
-                      title="YouTube video player"
-                      className="absolute inset-0 h-full w-full border-none"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  </div>
-                </div>
-              )}
+              {(() => {
+                const embedUrl = getYouTubeEmbedUrl(post.videoUrl);
+                return (
+                  embedUrl && (
+                    <div className="mb-4 overflow-hidden rounded-lg border bg-black">
+                      <div className="relative aspect-video w-full">
+                        <iframe
+                          src={embedUrl}
+                          title="YouTube video player"
+                          className="absolute inset-0 h-full w-full border-none"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
+                    </div>
+                  )
+                );
+              })()}
 
               {/* Content */}
               <HtmlRenderer content={post.content} />

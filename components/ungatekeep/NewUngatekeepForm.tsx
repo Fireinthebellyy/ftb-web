@@ -68,7 +68,14 @@ const ungatekeepFormSchema = z.object({
   linkUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
   linkTitle: z.string().optional(),
   linkImage: z.string().url("Invalid image URL").optional().or(z.literal("")),
-  videoUrl: z.string().url("Invalid video URL").optional().or(z.literal("")),
+  videoUrl: z
+    .string()
+    .regex(
+      /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/,
+      "Invalid YouTube URL"
+    )
+    .optional()
+    .or(z.literal("")),
   tag: z.enum([
     "announcement",
     "company_experience",

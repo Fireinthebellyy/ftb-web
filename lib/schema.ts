@@ -444,6 +444,7 @@ export const ungatekeepPosts = pgTable("ungatekeep_posts", {
   linkUrl: text("link_url"),
   linkTitle: text("link_title"),
   linkImage: text("link_image"),
+  videoUrl: text("video_url"),
   tag: ungatekeepTagEnum("tag"),
   isPinned: boolean("is_pinned").default(false),
   isPublished: boolean("is_published").default(false),

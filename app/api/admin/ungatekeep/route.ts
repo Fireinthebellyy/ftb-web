@@ -12,6 +12,14 @@ const createPostSchema = z.object({
   linkUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
   linkTitle: z.string().optional(),
   linkImage: z.string().url("Invalid image URL").optional().or(z.literal("")),
+  videoUrl: z
+    .string()
+    .regex(
+      /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/,
+      "Invalid YouTube URL"
+    )
+    .optional()
+    .or(z.literal("")),
   tag: z.enum([
     "announcement",
     "company_experience",
@@ -53,6 +61,7 @@ export async function GET(request: Request) {
         linkUrl: ungatekeepPosts.linkUrl,
         linkTitle: ungatekeepPosts.linkTitle,
         linkImage: ungatekeepPosts.linkImage,
+        videoUrl: ungatekeepPosts.videoUrl,
         tag: ungatekeepPosts.tag,
         isPinned: ungatekeepPosts.isPinned,
         isPublished: ungatekeepPosts.isPublished,
@@ -130,6 +139,7 @@ export async function POST(request: Request) {
         linkUrl: validatedData.linkUrl || undefined,
         linkTitle: validatedData.linkTitle || undefined,
         linkImage: validatedData.linkImage || undefined,
+        videoUrl: validatedData.videoUrl || undefined,
         tag: validatedData.tag || undefined,
         isPinned: validatedData.isPinned || false,
         isPublished: validatedData.isPublished || false,

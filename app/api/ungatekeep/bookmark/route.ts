@@ -25,6 +25,7 @@ export async function GET() {
         linkUrl: ungatekeepPosts.linkUrl,
         linkTitle: ungatekeepPosts.linkTitle,
         linkImage: ungatekeepPosts.linkImage,
+        videoUrl: ungatekeepPosts.videoUrl,
         tag: ungatekeepPosts.tag,
         isPinned: ungatekeepPosts.isPinned,
         publishedAt: ungatekeepPosts.publishedAt,

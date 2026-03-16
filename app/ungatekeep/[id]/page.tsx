@@ -23,16 +23,8 @@ type UngatekeepPost = {
   linkUrl?: string | null;
   linkTitle?: string | null;
   linkImage?: string | null;
-  tag?:
-    | "announcement"
-    | "company_experience"
-    | "resources"
-    | "playbooks"
-    | "college_hacks"
-    | "interview"
-    | "ama_drops"
-    | "ftb_recommends"
-    | null;
+  videoUrl?: string | null;
+  tag?: "announcement" | "company_experience" | "resources" | "playbooks" | "college_hacks" | "interview" | "ama_drops" | "ftb_recommends" | null;
   isPinned: boolean;
   isSaved?: boolean;
   publishedAt?: string | null;
@@ -107,6 +99,17 @@ export default function UngatekeepPostPage() {
     } catch {
       return "";
     }
+  };
+
+  const getYouTubeEmbedUrl = (url: string | null | undefined) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    const videoId = match && match[2].length === 11 ? match[2] : null;
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+    return null;
   };
 
   if (isLoading) {
@@ -269,6 +272,25 @@ export default function UngatekeepPostPage() {
                   )}
                 </div>
               )}
+
+              {(() => {
+                const embedUrl = getYouTubeEmbedUrl(post.videoUrl);
+                return (
+                  embedUrl && (
+                    <div className="mb-4 overflow-hidden rounded-lg border bg-black">
+                      <div className="relative aspect-video w-full">
+                        <iframe
+                          src={embedUrl}
+                          title="YouTube video player"
+                          className="absolute inset-0 h-full w-full border-none"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
+                    </div>
+                  )
+                );
+              })()}
 
               {/* Content */}
               <HtmlRenderer content={post.content} />

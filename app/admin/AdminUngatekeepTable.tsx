@@ -22,6 +22,7 @@ interface UngatekeepPost {
   linkUrl?: string | null;
   linkTitle?: string | null;
   linkImage?: string | null;
+  videoUrl?: string | null;
   tag?: "announcement" | "company_experience" | "resources" | "playbooks" | "college_hacks" | "interview" | "ama_drops" | "ftb_recommends" | null;
   isPinned: boolean;
   isPublished: boolean;
@@ -207,6 +208,7 @@ export default function AdminUngatekeepTable() {
                   linkUrl: post.linkUrl,
                   linkTitle: post.linkTitle,
                   linkImage: post.linkImage,
+                  videoUrl: post.videoUrl,
                   tag: post.tag,
                   isPinned: post.isPinned,
                   isPublished: post.isPublished,

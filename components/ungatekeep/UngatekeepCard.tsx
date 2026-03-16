@@ -4,9 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Pin } from "lucide-react";
-import { createUngatekeepStorage } from "@/lib/appwrite";
 import { formatDistanceToNow } from "date-fns";
 import { stripHtml } from "@/lib/utils";
+import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
 type UngatekeepPost = {
   id: string;
@@ -29,8 +29,6 @@ interface UngatekeepCardProps {
 }
 
 export default function UngatekeepCard({ post }: UngatekeepCardProps) {
-  const ungatekeepStorage = createUngatekeepStorage();
-
   const getTagBadgeVariant = (tag: string | null | undefined) => {
     switch (tag) {
       case "announcement":
@@ -54,14 +52,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
   };
 
   const getImageUrl = (imageId: string) => {
-    const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
-    if (!bucketId) return "";
-    try {
-      return ungatekeepStorage.getFileView(bucketId, imageId);
-    } catch (error) {
-      console.error("Error getting image URL:", error);
-      return "";
-    }
+    return tryGetStoragePublicUrl("ungatekeep-images", imageId);
   };
 
   const getInitials = (name: string | null | undefined) => {
@@ -125,7 +116,10 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
               <div className="flex items-center gap-1">
                 {post.creatorImage ? (
                   <Image
-                    src={post.creatorImage}
+                    src={tryGetStoragePublicUrl(
+                      "avatar-images",
+                      post.creatorImage
+                    )}
                     alt={post.creatorName}
                     width={14}
                     height={14}

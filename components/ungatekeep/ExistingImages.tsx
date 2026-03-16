@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { createUngatekeepStorage, getUngatekeepBucketId } from "@/lib/appwrite";
+import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
 type ExistingImagesProps = {
   existingImages: string[];
@@ -22,22 +22,19 @@ export function ExistingImages({
   onRemoveExisting,
 }: ExistingImagesProps) {
   const [previewImageId, setPreviewImageId] = useState<string | null>(null);
-  const ungatekeepStorage = createUngatekeepStorage();
-  const bucketId = getUngatekeepBucketId();
 
   if (existingImages.length === 0) return null;
-  if (!bucketId) return null; // Gracefully handle missing bucket ID
 
   const getImageUrl = (imageId: string) =>
-    ungatekeepStorage.getFileView(bucketId, imageId);
+    tryGetStoragePublicUrl("ungatekeep-images", imageId);
 
   return (
     <>
       <div className="flex flex-wrap gap-2 py-2">
         {existingImages.map((imageId) => (
-          <div key={imageId} className="relative group">
+          <div key={imageId} className="group relative">
             <div
-              className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 border cursor-pointer hover:opacity-90 transition-opacity"
+              className="h-16 w-16 cursor-pointer overflow-hidden rounded-lg border bg-gray-100 transition-opacity hover:opacity-90"
               onClick={() => setPreviewImageId(imageId)}
               role="button"
               tabIndex={0}
@@ -50,7 +47,7 @@ export function ExistingImages({
               <Image
                 src={getImageUrl(imageId)}
                 alt="Existing image"
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
                 width={64}
                 height={64}
               />
@@ -59,13 +56,13 @@ export function ExistingImages({
               type="button"
               variant="outline"
               size="sm"
-              className="absolute -top-1 -right-1 h-4 w-4 p-0 rounded-full bg-white hover:bg-red-50"
+              className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-white p-0 hover:bg-red-50"
               onClick={(e) => {
                 e.stopPropagation();
                 onRemoveExisting(imageId);
               }}
             >
-              <X className="w-2 h-2" />
+              <X className="h-2 w-2" />
             </Button>
           </div>
         ))}
@@ -77,7 +74,7 @@ export function ExistingImages({
         onOpenChange={(open) => !open && setPreviewImageId(null)}
       >
         <DialogContent
-          className="max-w-3xl p-0 overflow-hidden"
+          className="max-w-3xl overflow-hidden p-0"
           overlayClassName="bg-black/70"
         >
           <DialogHeader className="sr-only">
@@ -88,7 +85,7 @@ export function ExistingImages({
               <Image
                 src={getImageUrl(previewImageId)}
                 alt="Full preview"
-                className="w-full h-auto max-h-[80vh] object-contain"
+                className="h-auto max-h-[80vh] w-full object-contain"
                 width={800}
                 height={600}
               />

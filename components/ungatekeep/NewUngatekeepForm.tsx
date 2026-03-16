@@ -7,8 +7,11 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import axios from "axios";
 import { toast } from "sonner";
-import { FileItem, UploadProgress } from "@/types/interfaces";
-import { createUngatekeepStorage, getUngatekeepBucketId } from "@/lib/appwrite";
+import { FileItem } from "@/types/interfaces";
+import {
+  deleteStorageObjectClient,
+  uploadFileViaSignedUrl,
+} from "@/lib/storage/client";
 import {
   ImagePicker,
   SelectedImages,
@@ -130,18 +133,13 @@ export default function NewUngatekeepForm({
     setRemovedImageIds((prev) => [...prev, imageId]);
   };
 
-  // Delete removed images from Appwrite storage
+  // Delete removed images from storage
   async function deleteRemovedImages(): Promise<void> {
     if (removedImageIds.length === 0) return;
 
-    const bucketId = getUngatekeepBucketId();
-    if (!bucketId) return;
-
-    const ungatekeepStorage = createUngatekeepStorage();
-
     for (const imageId of removedImageIds) {
       try {
-        await ungatekeepStorage.deleteFile(bucketId, imageId);
+        await deleteStorageObjectClient("ungatekeep-images", imageId);
       } catch (err) {
         console.error(`Failed to delete image ${imageId}:`, err);
         // Continue deleting other images even if one fails
@@ -159,36 +157,26 @@ export default function NewUngatekeepForm({
       prev.map((file) => ({ ...file, uploading: true, progress: 0 }))
     );
 
-    const bucketId = getUngatekeepBucketId();
-    if (!bucketId) {
-      toast.error("Image upload bucket not configured");
-      return { ids: [], success: false };
-    }
-
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       try {
-        const ungatekeepStorage = createUngatekeepStorage();
-
-        const res = await ungatekeepStorage.createFile(
-          bucketId,
-          "unique()",
-          file.file,
-          [],
-          (progress: UploadProgress) => {
-            const percent = Math.round(progress.progress || 0);
+        const uploaded = await uploadFileViaSignedUrl({
+          domain: "ungatekeep-images",
+          file: file.file,
+          onProgress: (progress) => {
+            const percent = Math.round(progress || 0);
             setFiles((prev) =>
               prev.map((f, idx) =>
                 idx === i ? { ...f, progress: percent } : f
               )
             );
-          }
-        );
+          },
+        });
 
-        uploadedFileIds.push(res.$id);
+        uploadedFileIds.push(uploaded.key);
         setFiles((prev) =>
           prev.map((f, idx) =>
-            idx === i ? { ...f, uploading: false, fileId: res.$id } : f
+            idx === i ? { ...f, uploading: false, fileId: uploaded.key } : f
           )
         );
       } catch (err) {
@@ -198,12 +186,12 @@ export default function NewUngatekeepForm({
           prev.map((f, idx) =>
             idx === i
               ? {
-                ...f,
-                uploading: false,
-                error: true,
-                errorMessage:
-                  err instanceof Error ? err.message : "Unknown upload error",
-              }
+                  ...f,
+                  uploading: false,
+                  error: true,
+                  errorMessage:
+                    err instanceof Error ? err.message : "Unknown upload error",
+                }
               : f
           )
         );

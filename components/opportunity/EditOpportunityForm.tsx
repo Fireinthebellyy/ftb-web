@@ -8,9 +8,9 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
-  createOpportunityStorage,
-  getAppwriteErrorMessage,
-} from "@/lib/appwrite";
+  deleteStorageObjectClient,
+  uploadFileViaSignedUrl,
+} from "@/lib/storage/client";
 import { TitleField } from "./fields/TitleField";
 import { DescriptionField } from "./fields/DescriptionField";
 import { TagsField } from "./fields/TagsField";
@@ -24,7 +24,7 @@ import {
   ExistingAttachments,
 } from "./images/ImageDropzone";
 import { formSchema, FormData } from "./schema";
-import { FileItem, UploadProgress } from "@/types/interfaces";
+import { FileItem } from "@/types/interfaces";
 import { useQueryClient } from "@tanstack/react-query";
 import { opportunities } from "@/lib/schema";
 import { InferSelectModel } from "drizzle-orm";
@@ -56,7 +56,6 @@ export default function EditOpportunityForm({
     []
   );
   const queryClient = useQueryClient();
-  const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
 
   const handleRemoveExistingImage = (imageId: string) => {
     setExistingImages((prev) => prev.filter((id) => id !== imageId));
@@ -64,27 +63,27 @@ export default function EditOpportunityForm({
   };
 
   const handleRemoveExistingAttachment = (attachmentId: string) => {
-    setExistingAttachments((prev) =>
-      prev.filter((id) => id !== attachmentId)
-    );
+    setExistingAttachments((prev) => prev.filter((id) => id !== attachmentId));
     setRemovedAttachmentIds((prev) => [...prev, attachmentId]);
   };
 
   async function deleteRemovedFiles(): Promise<void> {
-    const toDelete = [...removedImageIds, ...removedAttachmentIds];
-    if (toDelete.length === 0) return;
-
-    if (!bucketId) return;
-
-    const opportunityStorage = createOpportunityStorage();
-
-    for (const fileId of toDelete) {
-      try {
-        await opportunityStorage.deleteFile(bucketId, fileId);
-      } catch (err) {
-        console.error(`Failed to delete file ${fileId}:`, err);
-      }
-    }
+    await Promise.all([
+      ...removedImageIds.map(async (fileId) => {
+        try {
+          await deleteStorageObjectClient("opportunity-images", fileId);
+        } catch (err) {
+          console.error(`Failed to delete image ${fileId}:`, err);
+        }
+      }),
+      ...removedAttachmentIds.map(async (fileId) => {
+        try {
+          await deleteStorageObjectClient("opportunity-attachments", fileId);
+        } catch (err) {
+          console.error(`Failed to delete attachment ${fileId}:`, err);
+        }
+      }),
+    ]);
   }
 
   const maxFiles = 4;
@@ -127,7 +126,8 @@ export default function EditOpportunityForm({
 
   async function uploadFiles(
     items: FileItem[],
-    setItems: React.Dispatch<React.SetStateAction<FileItem[]>>
+    setItems: React.Dispatch<React.SetStateAction<FileItem[]>>,
+    domain: "opportunity-images" | "opportunity-attachments"
   ): Promise<{ ids: string[]; success: boolean }> {
     if (items.length === 0) return { ids: [], success: true };
 
@@ -140,34 +140,29 @@ export default function EditOpportunityForm({
     for (let i = 0; i < items.length; i++) {
       const file = items[i];
       try {
-        const opportunityStorage = createOpportunityStorage();
-
-        const res = await opportunityStorage.createFile(
-          bucketId,
-          "unique()",
-          file.file,
-          [],
-          (progress: UploadProgress) => {
-            const percent = Math.round(progress.progress || 0);
+        const uploaded = await uploadFileViaSignedUrl({
+          domain,
+          file: file.file,
+          onProgress: (progress) => {
+            const percent = Math.round(progress || 0);
             setItems((prev) =>
               prev.map((f, idx) =>
                 idx === i ? { ...f, progress: percent } : f
               )
             );
-          }
-        );
+          },
+        });
 
-        uploadedFileIds.push(res.$id);
+        uploadedFileIds.push(uploaded.key);
         setItems((prev) =>
           prev.map((f, idx) =>
-            idx === i
-              ? { ...f, uploading: false, fileId: res.$id }
-              : f
+            idx === i ? { ...f, uploading: false, fileId: uploaded.key } : f
           )
         );
       } catch (err) {
         console.error(`Upload failed for ${file.name}:`, err);
-        const errorMessage = getAppwriteErrorMessage(err);
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown upload error";
         setItems((prev) =>
           prev.map((f, idx) =>
             idx === i
@@ -188,8 +183,12 @@ export default function EditOpportunityForm({
 
     try {
       const [imageResult, attachmentResult] = await Promise.all([
-        uploadFiles(files, setFiles),
-        uploadFiles(attachmentFiles, setAttachmentFiles),
+        uploadFiles(files, setFiles, "opportunity-images"),
+        uploadFiles(
+          attachmentFiles,
+          setAttachmentFiles,
+          "opportunity-attachments"
+        ),
       ]);
 
       if (!imageResult.success || !attachmentResult.success) {

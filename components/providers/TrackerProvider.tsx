@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { fetchInternshipsPaginated } from "@/lib/queries-internships";
 import { fetchOpportunitiesPaginated } from "@/lib/queries-opportunities";
 import { Internship, Opportunity } from "@/types/interfaces";
-import { createOpportunityStorage } from "@/lib/appwrite";
+import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
 export interface TrackerItem {
   oppId: number | string;
@@ -319,35 +319,13 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
           ])
         );
 
-        let opportunityStorage: ReturnType<
-          typeof createOpportunityStorage
-        > | null = null;
-        const bucketId =
-          process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
-        if (bucketId) {
-          try {
-            opportunityStorage = createOpportunityStorage();
-          } catch (e) {
-            console.error("Failed to init storage", e);
-          }
-        }
-
         const getImageUrl = (
           imageId: string | undefined
         ): string | undefined => {
           if (!imageId) return undefined;
           if (imageId.startsWith("http") || imageId.startsWith("/"))
             return imageId;
-          if (opportunityStorage && bucketId) {
-            try {
-              return opportunityStorage
-                .getFileView(bucketId, imageId)
-                .toString();
-            } catch {
-              return imageId;
-            }
-          }
-          return imageId;
+          return tryGetStoragePublicUrl("opportunity-images", imageId);
         };
 
         // Merge Data

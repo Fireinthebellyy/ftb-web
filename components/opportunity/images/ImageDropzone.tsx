@@ -2,12 +2,18 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ImagePlus, Paperclip, FileText, FileSpreadsheet, X } from "lucide-react";
+import {
+  ImagePlus,
+  Paperclip,
+  FileText,
+  FileSpreadsheet,
+  X,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useDropzone } from "react-dropzone";
 import { FileItem, FileKind } from "@/types/interfaces";
-import { createOpportunityStorage } from "@/lib/appwrite";
+import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +43,7 @@ export function ImagePicker({
   existingImagesCount = 0,
 }: BaseProps & { existingImagesCount?: number }) {
   const totalImages = files.length + existingImagesCount;
-  
+
   const onDrop = (acceptedFiles: File[]) => {
     const remainingSlots = maxFiles - totalImages;
     if (remainingSlots <= 0) return;
@@ -74,14 +80,14 @@ export function ImagePicker({
         variant="ghost"
         size="sm"
         className={cn(
-          "p-2 h-8 w-8",
-          totalImages > 0 && "text-blue-600 bg-blue-50",
-          totalImages >= maxFiles && "opacity-50 cursor-not-allowed",
+          "h-8 w-8 p-2",
+          totalImages > 0 && "bg-blue-50 text-blue-600",
+          totalImages >= maxFiles && "cursor-not-allowed opacity-50",
           buttonClassName
         )}
         disabled={totalImages >= maxFiles}
       >
-        <ImagePlus className="w-4 h-4" />
+        <ImagePlus className="h-4 w-4" />
       </Button>
     </div>
   );
@@ -109,23 +115,23 @@ export function SelectedImages({
   return (
     <div className="flex flex-wrap gap-2 py-2">
       {files.map((file, idx) => (
-        <div key={idx} className="relative group">
-          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 border">
+        <div key={idx} className="group relative">
+          <div className="h-16 w-16 overflow-hidden rounded-lg border bg-gray-100">
             <Image
               src={file.preview}
               alt={file.name}
-              className="w-full h-full object-cover"
+              className="h-full w-full object-cover"
               width={64}
               height={64}
             />
             {file.uploading && (
-              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                <div className="text-white text-xs">{file.progress}%</div>
+              <div className="bg-opacity-50 absolute inset-0 flex items-center justify-center bg-black">
+                <div className="text-xs text-white">{file.progress}%</div>
               </div>
             )}
             {file.error && (
-              <div className="absolute inset-0 bg-red-500 bg-opacity-50 flex items-center justify-center">
-                <div className="text-white text-xs">!</div>
+              <div className="bg-opacity-50 absolute inset-0 flex items-center justify-center bg-red-500">
+                <div className="text-xs text-white">!</div>
               </div>
             )}
           </div>
@@ -133,10 +139,10 @@ export function SelectedImages({
             type="button"
             variant="outline"
             size="sm"
-            className="absolute -top-1 -right-1 h-4 w-4 p-0 rounded-full "
+            className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0"
             onClick={() => removeFile(idx)}
           >
-            <X className="w-2 h-2" />
+            <X className="h-2 w-2" />
           </Button>
         </div>
       ))}
@@ -144,43 +150,28 @@ export function SelectedImages({
   );
 }
 
-// Get bucket ID with validation
-const getBucketId = (): string | null => {
-  const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
-  if (!bucketId) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID is not configured");
-    }
-    return null;
-  }
-  return bucketId;
-};
-
 /**
  * ExistingImages:
- * Renders existing image thumbnails (from Appwrite storage) with remove buttons.
+ * Renders existing image thumbnails with remove buttons.
  */
 export function ExistingImages({
   existingImages,
   onRemoveExisting,
 }: ExistingImagesProps) {
   const [previewImageId, setPreviewImageId] = useState<string | null>(null);
-  const opportunityStorage = createOpportunityStorage();
-  const bucketId = getBucketId();
 
   if (existingImages.length === 0) return null;
-  if (!bucketId) return null; // Gracefully handle missing bucket ID
 
   const getImageUrl = (imageId: string) =>
-    opportunityStorage.getFileView(bucketId, imageId);
+    tryGetStoragePublicUrl("opportunity-images", imageId);
 
   return (
     <>
       <div className="flex flex-wrap gap-2 py-2">
         {existingImages.map((imageId) => (
-          <div key={imageId} className="relative group">
+          <div key={imageId} className="group relative">
             <div
-              className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 border cursor-pointer hover:opacity-90 transition-opacity"
+              className="h-16 w-16 cursor-pointer overflow-hidden rounded-lg border bg-gray-100 transition-opacity hover:opacity-90"
               onClick={() => setPreviewImageId(imageId)}
               role="button"
               tabIndex={0}
@@ -193,7 +184,7 @@ export function ExistingImages({
               <Image
                 src={getImageUrl(imageId)}
                 alt="Existing image"
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
                 width={64}
                 height={64}
               />
@@ -202,13 +193,13 @@ export function ExistingImages({
               type="button"
               variant="outline"
               size="sm"
-              className="absolute -top-1 -right-1 h-4 w-4 p-0 rounded-full bg-white hover:bg-red-50"
+              className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-white p-0 hover:bg-red-50"
               onClick={(e) => {
                 e.stopPropagation();
                 onRemoveExisting(imageId);
               }}
             >
-              <X className="w-2 h-2" />
+              <X className="h-2 w-2" />
             </Button>
           </div>
         ))}
@@ -220,7 +211,7 @@ export function ExistingImages({
         onOpenChange={(open) => !open && setPreviewImageId(null)}
       >
         <DialogContent
-          className="max-w-3xl p-0 overflow-hidden"
+          className="max-w-3xl overflow-hidden p-0"
           overlayClassName="bg-black/70"
         >
           <DialogHeader className="sr-only">
@@ -231,7 +222,7 @@ export function ExistingImages({
               <Image
                 src={getImageUrl(previewImageId)}
                 alt="Full preview"
-                className="w-full h-auto max-h-[80vh] object-contain"
+                className="h-auto max-h-[80vh] w-full object-contain"
                 width={800}
                 height={600}
               />
@@ -256,8 +247,8 @@ function resolveFileKind(file: File): FileKind {
 
 function AttachmentIcon({ kind }: { kind: FileKind }) {
   if (kind === "pdf")
-    return <FileText className="w-5 h-5 text-red-500 shrink-0" />;
-  return <FileSpreadsheet className="w-5 h-5 text-orange-500 shrink-0" />;
+    return <FileText className="h-5 w-5 shrink-0 text-red-500" />;
+  return <FileSpreadsheet className="h-5 w-5 shrink-0 text-orange-500" />;
 }
 
 function formatBytes(bytes: number): string {
@@ -325,14 +316,14 @@ export function AttachmentPicker({
         variant="ghost"
         size="sm"
         className={cn(
-          "p-2 h-8 w-8",
-          totalAttachments > 0 && "text-blue-600 bg-blue-50",
-          totalAttachments >= maxFiles && "opacity-50 cursor-not-allowed",
+          "h-8 w-8 p-2",
+          totalAttachments > 0 && "bg-blue-50 text-blue-600",
+          totalAttachments >= maxFiles && "cursor-not-allowed opacity-50",
           buttonClassName
         )}
         disabled={totalAttachments >= maxFiles}
       >
-        <Paperclip className="w-4 h-4" />
+        <Paperclip className="h-4 w-4" />
       </Button>
     </div>
   );
@@ -382,7 +373,8 @@ export function UnifiedFilePicker({
 }: UnifiedFilePickerProps) {
   const totalImages = imageFiles.length + existingImagesCount;
   const totalAttachments = attachmentFiles.length + existingAttachmentsCount;
-  const allFull = totalImages >= maxImageFiles && totalAttachments >= maxAttachmentFiles;
+  const allFull =
+    totalImages >= maxImageFiles && totalAttachments >= maxAttachmentFiles;
   const hasAnyFiles = totalImages > 0 || totalAttachments > 0;
 
   const onDrop = (acceptedFiles: File[]) => {
@@ -414,7 +406,8 @@ export function UnifiedFilePicker({
     }
 
     if (newImages.length > 0) setImageFiles((prev) => [...prev, ...newImages]);
-    if (newAttachments.length > 0) setAttachmentFiles((prev) => [...prev, ...newAttachments]);
+    if (newAttachments.length > 0)
+      setAttachmentFiles((prev) => [...prev, ...newAttachments]);
   };
 
   const { getRootProps, getInputProps } = useDropzone({
@@ -442,13 +435,13 @@ export function UnifiedFilePicker({
           showLabel
             ? "h-auto w-11 flex-col gap-1 p-1.5 text-[10px] leading-none text-gray-600 md:w-14 md:text-[11px]"
             : "h-8 w-8 p-2",
-          hasAnyFiles && "text-blue-600 bg-blue-50",
-          allFull && "opacity-50 cursor-not-allowed",
+          hasAnyFiles && "bg-blue-50 text-blue-600",
+          allFull && "cursor-not-allowed opacity-50",
           buttonClassName
         )}
         disabled={allFull}
       >
-        <Paperclip className="w-4 h-4" />
+        <Paperclip className="h-4 w-4" />
         {showLabel && (
           <>
             {compactLabel ? (
@@ -488,26 +481,26 @@ export function SelectedAttachments({
           className="flex items-center gap-2 rounded-md border bg-gray-50 px-2 py-1.5 text-sm"
         >
           <AttachmentIcon kind={file.kind} />
-          <span className="truncate flex-1 max-w-[180px]">{file.name}</span>
-          <span className="text-xs text-muted-foreground shrink-0">
+          <span className="max-w-[180px] flex-1 truncate">{file.name}</span>
+          <span className="text-muted-foreground shrink-0 text-xs">
             {formatBytes(file.size)}
           </span>
           {file.uploading && (
-            <span className="text-xs text-blue-600 shrink-0">
+            <span className="shrink-0 text-xs text-blue-600">
               {file.progress}%
             </span>
           )}
           {file.error && (
-            <span className="text-xs text-red-500 shrink-0">Failed</span>
+            <span className="shrink-0 text-xs text-red-500">Failed</span>
           )}
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-5 w-5 p-0 shrink-0"
+            className="h-5 w-5 shrink-0 p-0"
             onClick={() => removeFile(idx)}
           >
-            <X className="w-3 h-3" />
+            <X className="h-3 w-3" />
           </Button>
         </div>
       ))}
@@ -533,18 +526,18 @@ export function ExistingAttachments({
           key={attachmentId}
           className="flex items-center gap-2 rounded-md border bg-gray-50 px-2 py-1.5 text-sm"
         >
-          <FileText className="w-5 h-5 text-red-500 shrink-0" />
-          <span className="truncate flex-1 max-w-[180px] text-muted-foreground">
+          <FileText className="h-5 w-5 shrink-0 text-red-500" />
+          <span className="text-muted-foreground max-w-[180px] flex-1 truncate">
             {attachmentId.slice(0, 12)}…
           </span>
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-5 w-5 p-0 shrink-0 hover:bg-red-50"
+            className="h-5 w-5 shrink-0 p-0 hover:bg-red-50"
             onClick={() => onRemoveExisting(attachmentId)}
           >
-            <X className="w-3 h-3" />
+            <X className="h-3 w-3" />
           </Button>
         </div>
       ))}

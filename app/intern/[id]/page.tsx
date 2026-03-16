@@ -27,6 +27,7 @@ import ApplyModal, {
   ApplyModalOpportunity,
 } from "@/components/tracker/ApplyModal";
 import { useSession } from "@/hooks/use-session";
+import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
 interface InternshipData {
   id: string;
@@ -473,7 +474,10 @@ export default function InternshipDetailPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-amber-500 bg-gray-300">
                   {internship.user.image ? (
                     <Image
-                      src={internship.user.image}
+                      src={tryGetStoragePublicUrl(
+                        "avatar-images",
+                        internship.user.image
+                      )}
                       alt={internship.user.name}
                       width={32}
                       height={32}

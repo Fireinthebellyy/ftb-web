@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
 type UserRole = "user" | "member" | "admin";
 
@@ -126,7 +127,7 @@ export default function AdminUsersTable({
               {user.image ? (
                 <div className="h-6 w-6 shrink-0 rounded-full border-2 border-white shadow-sm">
                   <Image
-                    src={user.image}
+                    src={tryGetStoragePublicUrl("avatar-images", user.image)}
                     alt={user.name || "User avatar"}
                     className="h-6 w-6 rounded-full object-cover"
                     width={24}

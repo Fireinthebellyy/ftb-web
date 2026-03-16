@@ -10,6 +10,10 @@ import { Button } from "./ui/button";
 import { Righteous } from "next/font/google";
 import { Shield } from "lucide-react";
 import posthog from "posthog-js";
+import {
+  isAbsoluteOrLocalUrl,
+  tryGetStoragePublicUrl,
+} from "@/lib/storage/public-url";
 
 function useLogout() {
   const router = useRouter();
@@ -176,6 +180,10 @@ export default function Navbar() {
     return letters || "U";
   }, [user]);
 
+  const avatarImageSrc = user?.user?.image
+    ? tryGetStoragePublicUrl("avatar-images", user.user.image)
+    : null;
+
   if (pathname === "/onboarding") {
     return null;
   }
@@ -325,10 +333,10 @@ export default function Navbar() {
                     }
                   }}
                 >
-                  {user.user?.image ? (
+                  {avatarImageSrc && isAbsoluteOrLocalUrl(avatarImageSrc) ? (
                     <div className="rounded-full border-2 border-white shadow-lg">
                       <Image
-                        src={user.user.image}
+                        src={avatarImageSrc}
                         alt={user.user.name || "User avatar"}
                         className="size-6 rounded-full object-cover"
                         width={28}

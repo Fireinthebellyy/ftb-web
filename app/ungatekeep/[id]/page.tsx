@@ -11,10 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Pin, ExternalLink } from "lucide-react";
-import { createUngatekeepStorage } from "@/lib/appwrite";
 import { format } from "date-fns";
 import FeaturedToolkits from "@/components/toolkit/FeaturedToolkits";
 import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
+import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
 type UngatekeepPost = {
   id: string;
@@ -36,7 +36,6 @@ export default function UngatekeepPostPage() {
   const params = useParams();
   const router = useRouter();
   const postId = params.id as string;
-  const ungatekeepStorage = createUngatekeepStorage();
 
   const {
     data: post,
@@ -80,14 +79,7 @@ export default function UngatekeepPostPage() {
   };
 
   const getImageUrl = (imageId: string) => {
-    const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
-    if (!bucketId) return "";
-    try {
-      return ungatekeepStorage.getFileView(bucketId, imageId);
-    } catch (error) {
-      console.error("Error getting image URL:", error);
-      return "";
-    }
+    return tryGetStoragePublicUrl("ungatekeep-images", imageId);
   };
 
   const getInitials = (name: string | null | undefined) => {
@@ -203,7 +195,10 @@ export default function UngatekeepPostPage() {
                     <div className="flex items-center gap-1.5">
                       {post.creatorImage ? (
                         <Image
-                          src={post.creatorImage}
+                          src={tryGetStoragePublicUrl(
+                            "avatar-images",
+                            post.creatorImage
+                          )}
                           alt={post.creatorName}
                           width={20}
                           height={20}

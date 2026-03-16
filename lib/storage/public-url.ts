@@ -18,7 +18,7 @@ export function isAbsoluteOrLocalUrl(value: string): boolean {
   return (
     value.startsWith("http://") ||
     value.startsWith("https://") ||
-    value.startsWith("/")
+    (value.startsWith("/") && !value.startsWith("//"))
   );
 }
 

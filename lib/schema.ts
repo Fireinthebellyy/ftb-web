@@ -313,6 +313,12 @@ export const tags = pgTable("tags", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export interface ToolkitTestimonial {
+  name: string;
+  role: string;
+  message: string;
+}
+
 // Toolkit tables for monetization
 export const toolkits = pgTable("toolkits", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -321,10 +327,12 @@ export const toolkits = pgTable("toolkits", {
   price: integer("price").notNull(), // in rupees (converted to paisa when sent to Razorpay)
   originalPrice: integer("original_price"), // for displaying strikethrough discount price
   coverImageUrl: text("cover_image_url"),
+  bannerImageUrl: text("banner_image_url"),
   videoUrl: text("video_url"), // YouTube promo video URL
   contentUrl: text("content_url"), // URL to toolkit content page (legacy)
   category: text("category"), // Category for filtering (e.g., "Career", "Skills")
   highlights: text("highlights").array(), // Bullet points like "10 lessons", "Lifetime access"
+  testimonials: jsonb("testimonials").$type<ToolkitTestimonial[]>(),
   totalDuration: text("total_duration"), // e.g., "2h 30m"
   lessonCount: integer("lesson_count").default(0),
   isActive: boolean("is_active").default(false),

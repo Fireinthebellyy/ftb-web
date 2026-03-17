@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, BookOpen, Check, Clock, Cloud, Star } from "lucide-react";
+import { ArrowLeft, BookOpen, Check, Clock, Cloud } from "lucide-react";
 import ToolkitSidebar from "@/components/toolkit/ToolkitSidebar";
 import ContentList from "@/components/toolkit/ContentList";
 import ToolkitDetailSkeleton from "@/components/toolkit/ToolkitDetailSkeleton";
@@ -34,6 +34,13 @@ function getYouTubeVideoId(url: string): string | null {
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
   const match = url.match(regExp);
   return match && match[2].length === 11 ? match[2] : null;
+}
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "NA";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
 }
 
 interface CouponValidationResult {
@@ -75,29 +82,7 @@ export default function ToolkitDetailPage() {
   const contentItems = toolkitData?.contentItems ?? [];
   const hasPurchased = toolkitData?.hasPurchased ?? false;
   const lessonCount = contentItems.length || toolkit?.lessonCount || 0;
-  const testimonials = [
-    {
-      initials: "AS",
-      name: "Aditi Sharma",
-      role: "Final Year Student",
-      message:
-        "This toolkit was super practical and easy to follow. I used the templates directly and felt more confident while applying.",
-    },
-    {
-      initials: "RK",
-      name: "Rohan Kapoor",
-      role: "Software Intern",
-      message:
-        "I liked how actionable every section was. The examples and structure saved me a lot of time while preparing.",
-    },
-    {
-      initials: "NP",
-      name: "Nisha Patel",
-      role: "MBA Aspirant",
-      message:
-        "The checklist format kept me focused and consistent. It feels beginner-friendly but still detailed enough for real outcomes.",
-    },
-  ];
+  const testimonials = toolkit?.testimonials ?? [];
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim() || !toolkit) {
@@ -159,6 +144,7 @@ export default function ToolkitDetailPage() {
   const videoId = toolkit?.videoUrl
     ? getYouTubeVideoId(toolkit.videoUrl)
     : null;
+  const heroImageUrl = toolkit?.bannerImageUrl || toolkit?.coverImageUrl;
 
   if (isLoading) {
     return <ToolkitDetailSkeleton />;
@@ -195,9 +181,9 @@ export default function ToolkitDetailPage() {
           <div className="xl:col-span-2">
             <div className="mb-6 overflow-hidden rounded-lg border bg-white">
               <div className="relative aspect-video bg-gray-100">
-                {toolkit.coverImageUrl ? (
+                {heroImageUrl ? (
                   <Image
-                    src={toolkit.coverImageUrl}
+                    src={heroImageUrl}
                     alt={toolkit.title}
                     fill
                     className="object-cover"
@@ -307,67 +293,61 @@ export default function ToolkitDetailPage() {
               </div>
             )}
 
-            <div className="mt-6 rounded-lg border bg-white p-6">
-              <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                Testimonials
-              </h3>
-              <div className="relative">
-                <Carousel
-                  opts={{ align: "start", loop: testimonials.length > 1 }}
-                  plugins={
-                    testimonials.length > 1
-                      ? [testimonialsAutoplayRef.current]
-                      : undefined
-                  }
-                  className="w-full"
-                >
-                  <CarouselContent>
-                    {testimonials.map((testimonial) => (
-                      <CarouselItem
-                        key={testimonial.name}
-                        className="basis-full md:basis-1/2"
-                      >
-                        <div className="h-full rounded-lg border border-gray-100 bg-gray-50 p-4">
-                          <div className="mb-2 flex items-center gap-2">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-xs font-semibold text-orange-700">
-                              {testimonial.initials}
+            {testimonials.length > 0 ? (
+              <div className="mt-6 rounded-lg border bg-white p-6">
+                <h3 className="mb-4 text-lg font-semibold text-gray-900">
+                  Testimonials
+                </h3>
+                <div className="relative">
+                  <Carousel
+                    opts={{ align: "start", loop: testimonials.length > 1 }}
+                    plugins={
+                      testimonials.length > 1
+                        ? [testimonialsAutoplayRef.current]
+                        : undefined
+                    }
+                    className="w-full"
+                  >
+                    <CarouselContent>
+                      {testimonials.map((testimonial, index) => (
+                        <CarouselItem
+                          key={`${testimonial.name}-${index}`}
+                          className="basis-full md:basis-1/2"
+                        >
+                          <div className="h-full rounded-lg border border-gray-100 bg-gray-50 p-4">
+                            <div className="mb-3 flex items-center gap-2">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-xs font-semibold text-orange-700">
+                                {getInitials(testimonial.name)}
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-gray-900">
+                                  {testimonial.name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {testimonial.role}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-sm font-semibold text-gray-900">
-                                {testimonial.name}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {testimonial.role}
-                              </p>
-                            </div>
+                            <p className="text-sm leading-relaxed text-gray-700">
+                              {testimonial.message}
+                            </p>
                           </div>
-                          <div className="mb-2 flex items-center gap-1 text-orange-500">
-                            {Array.from({ length: 5 }).map((_, index) => (
-                              <Star
-                                key={index}
-                                className="h-4 w-4 fill-current"
-                              />
-                            ))}
-                          </div>
-                          <p className="text-sm text-gray-700">
-                            {testimonial.message}
-                          </p>
-                        </div>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  {testimonials.length > 1 ? (
-                    <CarouselDotsOverlay>
-                      <CarouselDots
-                        className="gap-1.5 py-0"
-                        dotClassName="bg-white/45 hover:bg-white/70"
-                        activeDotClassName="h-1.5 w-3 rounded-full bg-white"
-                      />
-                    </CarouselDotsOverlay>
-                  ) : null}
-                </Carousel>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    {testimonials.length > 1 ? (
+                      <CarouselDotsOverlay>
+                        <CarouselDots
+                          className="gap-1.5 py-0"
+                          dotClassName="bg-white/45 hover:bg-white/70"
+                          activeDotClassName="h-1.5 w-3 rounded-full bg-white"
+                        />
+                      </CarouselDotsOverlay>
+                    ) : null}
+                  </Carousel>
+                </div>
               </div>
-            </div>
+            ) : null}
           </div>
 
           <div className="hidden xl:col-span-1 xl:block">

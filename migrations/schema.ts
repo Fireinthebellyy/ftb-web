@@ -10,6 +10,7 @@ import {
   integer,
   uniqueIndex,
   index,
+  jsonb,
   pgEnum,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
@@ -426,6 +427,7 @@ export const toolkits = pgTable(
     description: text().notNull(),
     price: integer().notNull(),
     coverImageUrl: text("cover_image_url"),
+    bannerImageUrl: text("banner_image_url"),
     videoUrl: text("video_url"),
     contentUrl: text("content_url"),
     isActive: boolean("is_active").default(true),
@@ -435,6 +437,7 @@ export const toolkits = pgTable(
     originalPrice: integer("original_price"),
     category: text(),
     highlights: text().array(),
+    testimonials: jsonb(),
     totalDuration: text("total_duration"),
     lessonCount: integer("lesson_count").default(0),
     showSaleBadge: boolean("show_sale_badge").default(false),

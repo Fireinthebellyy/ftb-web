@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, dbPool } from "@/lib/db";
 import {
   toolkits,
   toolkitContentItems,
@@ -8,8 +8,9 @@ import {
   userToolkitProgress,
   coupons,
 } from "@/lib/schema";
-import { getCurrentUser } from "@/server/users";
+import { getSessionCached } from "@/lib/auth-session-cache";
 import { eq, and, asc, sql, or, lt, isNull } from "drizzle-orm";
+import { headers } from "next/headers";
 
 // GET specific toolkit by ID
 export async function GET(
@@ -51,33 +52,37 @@ export async function GET(
 
     const toolkit = toolkitResult[0];
 
-    const contentItemsResult = await db
-      .select({
-        id: toolkitContentItems.id,
-        toolkitId: toolkitContentItems.toolkitId,
-        title: toolkitContentItems.title,
-        type: toolkitContentItems.type,
-        content: toolkitContentItems.content,
-        bunnyVideoUrl: toolkitContentItems.bunnyVideoUrl,
-        orderIndex: toolkitContentItems.orderIndex,
-        createdAt: toolkitContentItems.createdAt,
-        updatedAt: toolkitContentItems.updatedAt,
-      })
-      .from(toolkitContentItems)
-      .where(eq(toolkitContentItems.toolkitId, toolkitId))
-      .orderBy(asc(toolkitContentItems.orderIndex));
+    const requestHeaders = await headers();
 
-    const userSession = await getCurrentUser();
+    const [contentItemsResult, session] = await Promise.all([
+      db
+        .select({
+          id: toolkitContentItems.id,
+          toolkitId: toolkitContentItems.toolkitId,
+          title: toolkitContentItems.title,
+          type: toolkitContentItems.type,
+          content: toolkitContentItems.content,
+          bunnyVideoUrl: toolkitContentItems.bunnyVideoUrl,
+          orderIndex: toolkitContentItems.orderIndex,
+          createdAt: toolkitContentItems.createdAt,
+          updatedAt: toolkitContentItems.updatedAt,
+        })
+        .from(toolkitContentItems)
+        .where(eq(toolkitContentItems.toolkitId, toolkitId))
+        .orderBy(asc(toolkitContentItems.orderIndex)),
+      getSessionCached(requestHeaders),
+    ]);
+
     let hasPurchased = false;
     let completedItemIds: string[] = [];
 
-    if (userSession && userSession.currentUser?.id) {
+    if (session?.user?.id) {
       const purchase = await db
         .select()
         .from(userToolkits)
         .where(
           and(
-            eq(userToolkits.userId, userSession.currentUser.id),
+            eq(userToolkits.userId, session.user.id),
             eq(userToolkits.toolkitId, toolkitId),
             eq(userToolkits.paymentStatus, "completed")
           )
@@ -93,7 +98,7 @@ export async function GET(
           .from(userToolkitProgress)
           .where(
             and(
-              eq(userToolkitProgress.userId, userSession.currentUser.id),
+              eq(userToolkitProgress.userId, session.user.id),
               eq(userToolkitProgress.toolkitId, toolkitId)
             )
           );
@@ -125,11 +130,13 @@ export async function POST(
   try {
     const paramsResolved = await params;
     const toolkitId = paramsResolved.id;
-    const userSession = await getCurrentUser();
+    const session = await getSessionCached(await headers());
 
-    if (!userSession || !userSession.currentUser?.id) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const userId = session.user.id;
 
     const body = await request.json();
     const couponCode = body.couponCode as string | undefined;
@@ -151,7 +158,7 @@ export async function POST(
       .from(userToolkits)
       .where(
         and(
-          eq(userToolkits.userId, userSession.currentUser.id),
+          eq(userToolkits.userId, userId),
           eq(userToolkits.toolkitId, toolkitId),
           eq(userToolkits.paymentStatus, "completed")
         )
@@ -173,7 +180,7 @@ export async function POST(
     if (couponCode) {
       // Perform all coupon operations atomically within a transaction
       try {
-        const couponResult = await db.transaction(async (tx) => {
+        const couponResult = await dbPool.transaction(async (tx) => {
           // Read coupon within transaction
           const couponData = await tx
             .select()
@@ -202,7 +209,7 @@ export async function POST(
             .from(userToolkits)
             .where(
               and(
-                eq(userToolkits.userId, userSession.currentUser.id),
+                eq(userToolkits.userId, userId),
                 eq(userToolkits.couponId, coupon.id),
                 eq(userToolkits.paymentStatus, "completed")
               )
@@ -300,6 +307,30 @@ export async function POST(
       }
     }
 
+    // If final price is 0 (fully covered by coupon), skip payment and grant access directly
+    if (finalPrice <= 0) {
+      const newPurchase = await db
+        .insert(userToolkits)
+        .values({
+          userId,
+          toolkitId: toolkitId,
+          razorpayOrderId: null,
+          paymentStatus: "completed",
+          amountPaid: 0,
+          couponId: couponId,
+        })
+        .returning();
+
+      return NextResponse.json({
+        success: true,
+        free: true,
+        purchase: newPurchase[0],
+        toolkit,
+        discountAmount,
+        finalPrice: 0,
+      });
+    }
+
     const { createOrder } = await import("@/lib/razorpay");
     const order = await createOrder({
       amount: finalPrice * 100, // Convert to paisa
@@ -310,7 +341,7 @@ export async function POST(
     const newPurchase = await db
       .insert(userToolkits)
       .values({
-        userId: userSession.currentUser.id,
+        userId,
         toolkitId: toolkitId,
         razorpayOrderId: order.id,
         paymentStatus: "pending",
@@ -321,6 +352,7 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
+      free: false,
       order: {
         id: order.id,
         amount: order.amount,

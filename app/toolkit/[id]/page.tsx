@@ -3,14 +3,15 @@
 import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { BookOpen, Clock, Cloud, Check } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock, Cloud, Check } from "lucide-react";
 import ToolkitSidebar from "@/components/toolkit/ToolkitSidebar";
 import ContentList from "@/components/toolkit/ContentList";
-import { useToolkit, useToolkitPurchase } from "@/lib/queries";
-import { Skeleton } from "@/components/ui/skeleton";
+import ToolkitDetailSkeleton from "@/components/toolkit/ToolkitDetailSkeleton";
+import { useToolkit, useToolkitPurchase } from "@/lib/queries-toolkits";
 import { toast } from "sonner";
 import axios from "axios";
 
@@ -65,7 +66,11 @@ export default function ToolkitDetailPage() {
         }
       );
 
-      if (data.valid && data.discountAmount !== undefined && data.finalPrice !== undefined) {
+      if (
+        data.valid &&
+        data.discountAmount !== undefined &&
+        data.finalPrice !== undefined
+      ) {
         setAppliedCoupon(data);
         toast.success(`Coupon applied! ₹${data.discountAmount} off`);
       } else {
@@ -107,31 +112,7 @@ export default function ToolkitDetailPage() {
     : null;
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-6">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Skeleton className="h-10 w-64" />
-              <Skeleton className="h-10 w-32" />
-            </div>
-            <Skeleton className="h-[400px] w-full rounded-lg" />
-            <div className="space-y-4">
-              <div className="flex gap-4">
-                <Skeleton className="h-40 w-full" />
-                <div className="w-72 space-y-4">
-                  <Skeleton className="h-10 w-48" />
-                  <div className="space-y-4">
-                    <Skeleton className="h-16 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <ToolkitDetailSkeleton />;
   }
 
   if (!toolkit) {
@@ -153,13 +134,13 @@ export default function ToolkitDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto max-w-7xl px-4 py-6">
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/toolkit")}
-          className="mb-6 text-gray-600 hover:text-gray-900"
+        <Link
+          href="/toolkit"
+          className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900"
         >
-          ← Back to Toolkits
-        </Button>
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Link>
 
         <div className="grid gap-8 xl:grid-cols-3">
           <div className="xl:col-span-2">
@@ -335,20 +316,24 @@ export default function ToolkitDetailPage() {
               )}
             </div>
             {appliedCoupon?.valid && (
-              <p className="text-xs text-green-600 font-medium">
+              <p className="text-xs font-medium text-green-600">
                 Coupon applied! Save ₹{appliedCoupon.discountAmount}
               </p>
             )}
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-bold text-gray-900">
-                  ₹{(appliedCoupon?.finalPrice ?? toolkit.price).toLocaleString("en-IN")}
+                  ₹
+                  {(appliedCoupon?.finalPrice ?? toolkit.price).toLocaleString(
+                    "en-IN"
+                  )}
                 </span>
-                {toolkit.originalPrice && toolkit.originalPrice > toolkit.price && (
-                  <span className="text-sm text-gray-400 line-through">
-                    ₹{toolkit.originalPrice.toLocaleString("en-IN")}
-                  </span>
-                )}
+                {toolkit.originalPrice &&
+                  toolkit.originalPrice > toolkit.price && (
+                    <span className="text-sm text-gray-400 line-through">
+                      ₹{toolkit.originalPrice.toLocaleString("en-IN")}
+                    </span>
+                  )}
                 {appliedCoupon?.valid && !toolkit.originalPrice && (
                   <span className="text-sm text-gray-400 line-through">
                     ₹{toolkit.price.toLocaleString("en-IN")}
@@ -356,7 +341,11 @@ export default function ToolkitDetailPage() {
                 )}
               </div>
               <Button
-                onClick={() => handlePurchase(appliedCoupon?.valid ? couponCode.trim() : undefined)}
+                onClick={() =>
+                  handlePurchase(
+                    appliedCoupon?.valid ? couponCode.trim() : undefined
+                  )
+                }
                 disabled={isPurchaseLoading}
                 size="lg"
                 className="flex-1"

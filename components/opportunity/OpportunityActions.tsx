@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import {
   Heart,
   MessageSquare,
@@ -16,7 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useToggleUpvote } from "@/lib/queries";
+import { useToggleUpvote } from "@/lib/queries-opportunities";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
 import { ShareDialog } from "./ShareDialog";
@@ -43,7 +42,6 @@ export function OpportunityActions({
   const { id, user, userHasUpvoted } = opportunity;
   const { data: session } = useSession();
   const toggleUpvote = useToggleUpvote(id);
-  const [showMessage, setShowMessage] = useState(false);
 
   const publicBaseUrl =
     (process.env.NEXT_PUBLIC_SITE_URL as string | undefined) ||
@@ -72,16 +70,6 @@ export function OpportunityActions({
       toast.error("Failed to delete post");
     }
   };
-
-  useEffect(() => {
-    if (showMessage) {
-      toast.success(
-        isBookmarked ? "Added to bookmarks" : "Removed from bookmarks"
-      );
-      const timer = setTimeout(() => setShowMessage(false), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showMessage, isBookmarked]);
 
   return (
     <>
@@ -116,16 +104,16 @@ export function OpportunityActions({
             </button>
             <button
               type="button"
-              title="Bookmark"
+              title="Track"
               onClick={() => {
                 if (!session?.user?.id) {
-                  toast.error("Please log in to bookmark opportunities");
+                  toast.error("Please log in to track opportunities");
                   return;
                 }
+
                 onBookmarkChange(id, !isBookmarked);
-                setShowMessage(true);
               }}
-              aria-label="Bookmark"
+              aria-label="Track"
               className="flex cursor-pointer items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
             >
               <Bookmark

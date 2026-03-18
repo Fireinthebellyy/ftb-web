@@ -1,25 +1,25 @@
 "use client";
 
-import axios from "axios";
 import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, FormProvider } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import {
-  createOpportunityStorage,
-  getAppwriteErrorMessage,
-} from "@/lib/appwrite";
+import { toDateTimeLocalValue } from "@/lib/date-utils";
+import { useOpportunitySubmit } from "./hooks/useOpportunitySubmit";
 import { TitleField } from "./fields/TitleField";
 import { DescriptionField } from "./fields/DescriptionField";
 import { TagsField } from "./fields/TagsField";
 import { TypeSelector } from "./fields/TypeSelector";
-import { MetaPopovers } from "./fields/MetaPopovers";
-import { ImagePicker, SelectedImages, ExistingImages } from "./images/ImageDropzone";
+import { MetaPopovers, SchedulePublishPopover } from "./fields/MetaPopovers";
+import {
+  ImagePicker,
+  SelectedImages,
+  ExistingImages,
+} from "./images/ImageDropzone";
 import { formSchema, FormData } from "./schema";
-import { FileItem, Opportunity, UploadProgress } from "@/types/interfaces";
-import { useQueryClient } from "@tanstack/react-query";
+import { FileItem, Opportunity } from "@/types/interfaces";
+
 export default function NewOpportunityForm({
   opportunity,
   onOpportunityCreated,
@@ -29,14 +29,24 @@ export default function NewOpportunityForm({
   onOpportunityCreated: () => void;
   onCancel?: () => void;
 }) {
-  const [loading, setLoading] = useState(false);
+  const [scheduleMessage, setScheduleMessage] = useState<string | null>(null);
   const [files, setFiles] = useState<FileItem[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [existingImages, setExistingImages] = useState<string[]>(
     opportunity?.images || []
   );
   const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
-  const queryClient = useQueryClient();
+
+  const { onSubmit, loading } = useOpportunitySubmit({
+    opportunity,
+    files,
+    setFiles,
+    existingImages,
+    onOpportunityCreated,
+    setRemovedImageIds,
+    removedImageIds
+  });
+
 
   const maxFiles = 4;
 
@@ -52,6 +62,7 @@ export default function NewOpportunityForm({
       location: opportunity?.location || "",
       organiserInfo: opportunity?.organiserInfo || "",
       dateRange: undefined,
+      publishAt: toDateTimeLocalValue(opportunity?.publishAt),
     },
   });
 
@@ -62,6 +73,7 @@ export default function NewOpportunityForm({
   const watchedTitle = form.watch("title");
   const watchedDescription = form.watch("description");
   const watchedTags = form.watch("tags");
+  const watchedPublishAt = form.watch("publishAt");
 
   useEffect(() => {
     // Set initial date range if available
@@ -73,6 +85,8 @@ export default function NewOpportunityForm({
         to: opportunity.endDate ? new Date(opportunity.endDate) : undefined,
       });
     }
+
+    form.setValue("publishAt", toDateTimeLocalValue(opportunity?.publishAt));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opportunity]);
 
@@ -97,6 +111,7 @@ export default function NewOpportunityForm({
           : null,
         to: watchedDateRange?.to ? watchedDateRange.to.toISOString() : null,
       },
+      publishAt: watchedPublishAt || "",
     });
 
     const originalSnapshot = JSON.stringify({
@@ -114,15 +129,16 @@ export default function NewOpportunityForm({
           ? new Date(opportunity.endDate).toISOString()
           : null,
       },
+      publishAt: toDateTimeLocalValue(opportunity.publishAt),
     });
 
     // Check if images have changed (either new files added or existing images removed)
     const originalImages = opportunity.images || [];
-    const imagesChanged = 
-      files.length > 0 || 
+    const imagesChanged =
+      files.length > 0 ||
       existingImages.length !== originalImages.length ||
       !existingImages.every((img) => originalImages.includes(img));
-    
+
     setHasChanges(currentSnapshot !== originalSnapshot || imagesChanged);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -131,6 +147,7 @@ export default function NewOpportunityForm({
     watchedTitle,
     watchedDescription,
     watchedTags,
+    watchedPublishAt,
     watchedLocation,
     watchedOrganiser,
     watchedDateRange,
@@ -144,162 +161,10 @@ export default function NewOpportunityForm({
     setRemovedImageIds((prev) => [...prev, imageId]);
   };
 
-  // Delete removed images from Appwrite storage
-  async function deleteRemovedImages(): Promise<void> {
-    if (removedImageIds.length === 0) return;
-
-    const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
-    if (!bucketId) return;
-
-    const opportunityStorage = createOpportunityStorage();
-    
-    for (const imageId of removedImageIds) {
-      try {
-        await opportunityStorage.deleteFile(bucketId, imageId);
-      } catch (err) {
-        console.error(`Failed to delete image ${imageId}:`, err);
-        // Continue deleting other images even if one fails
-      }
-    }
-  }
-
   function handleTypeChange(type: string) {
     form.setValue("type", type, { shouldValidate: true, shouldTouch: true });
   }
 
-  async function uploadImages(): Promise<{ ids: string[]; success: boolean }> {
-    if (files.length === 0) return { ids: [], success: true };
-
-    const uploadedFileIds: string[] = [];
-    let hasError = false;
-
-    setFiles((prev) =>
-      prev.map((file) => ({ ...file, uploading: true, progress: 0 }))
-    );
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      try {
-        const opportunityStorage = createOpportunityStorage();
-
-        const res = await opportunityStorage.createFile(
-          process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
-          "unique()",
-          file.file,
-          [],
-          (progress: UploadProgress) => {
-            const percent = Math.round((progress.progress || 0) * 100);
-            setFiles((prev) =>
-              prev.map((f, idx) =>
-                idx === i ? { ...f, progress: percent } : f
-              )
-            );
-          }
-        );
-
-        uploadedFileIds.push(res.$id);
-        setFiles((prev) =>
-          prev.map((f, idx) =>
-            idx === i ? { ...f, uploading: false, fileId: res.$id } : f
-          )
-        );
-      } catch (err) {
-        console.error(`Upload failed for ${file.name}:`, err);
-        hasError = true;
-        const errorMessage = getAppwriteErrorMessage(err);
-        setFiles((prev) =>
-          prev.map((f, idx) =>
-            idx === i
-              ? {
-                ...f,
-                uploading: false,
-                error: true,
-                errorMessage,
-              }
-              : f
-          )
-        );
-        toast.error(`Failed to upload "${file.name}": ${errorMessage}`);
-      }
-    }
-
-    return { ids: uploadedFileIds, success: !hasError };
-  }
-
-  async function onSubmit(data: FormData) {
-    setLoading(true);
-
-    try {
-      const { ids: imageIds, success: imagesOk } = await uploadImages();
-
-      if (!imagesOk) {
-        toast.error(
-          `One or more images failed to upload. Fix the failed uploads and try again. ${opportunity ? "Post was not updated." : "Post was not created."}`
-        );
-        throw new Error(
-          "One or more images failed to upload. Post was not updated/created."
-        );
-      }
-
-      // Combine existing images with newly uploaded images
-      const finalImages = [...existingImages, ...imageIds];
-      
-      const payload = {
-        ...data,
-        startDate: data.dateRange?.from?.toISOString(),
-        endDate: data.dateRange?.to?.toISOString(),
-        tags:
-          data.tags
-            ?.split(",")
-            .map((t) => t.trim())
-            .filter(Boolean) || [],
-        // For edit mode: always send the final images array (existing + new)
-        // For create mode: only send if there are images
-        images: opportunity?.id 
-          ? finalImages 
-          : (imageIds.length > 0 ? imageIds : undefined),
-      };
-
-      let res;
-      if (opportunity?.id) {
-        res = await axios.put(`/api/opportunities/${opportunity.id}`, payload);
-        if (res.status !== 200) throw new Error("Failed to update opportunity");
-        
-        // Delete removed images from Appwrite storage after successful update
-        await deleteRemovedImages();
-      } else {
-        res = await axios.post("/api/opportunities", payload);
-        if (res.status !== 200 && res.status !== 201)
-          throw new Error("Failed to create opportunity");
-      }
-
-      files.forEach((file) => URL.revokeObjectURL(file.preview));
-      setFiles([]);
-      setRemovedImageIds([]);
-
-      // Check user role to show appropriate message
-      const userRole = res.data?.userRole || "user"; // The API should return user role
-      const needsReview = userRole === "user";
-
-      toast.success(
-        opportunity?.id
-          ? "Opportunity updated successfully!"
-          : needsReview
-            ? "Opportunity submitted for review! It will be visible once approved by an admin."
-            : "Opportunity submitted successfully!"
-      );
-      queryClient.invalidateQueries({ queryKey: ["opportunities"] });
-      onOpportunityCreated();
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        toast.error(err.message);
-      } else {
-        toast.error("Unknown error occurred");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
 
   return (
     <FormProvider {...form}>
@@ -336,6 +201,7 @@ export default function NewOpportunityForm({
                 watchedLocation={watchedLocation}
                 watchedOrganiser={watchedOrganiser}
                 watchedDateRange={watchedDateRange}
+                watchedPublishAt={watchedPublishAt}
               />
               {/* Image picker trigger (no previews here) */}
               <ImagePicker
@@ -347,6 +213,11 @@ export default function NewOpportunityForm({
             </div>
 
             <div className="flex items-center gap-2">
+              <SchedulePublishPopover
+                control={form.control}
+                watchedPublishAt={watchedPublishAt}
+                onConfirmMessageChange={setScheduleMessage}
+              />
               {onCancel && (
                 <Button
                   type="button"
@@ -360,6 +231,7 @@ export default function NewOpportunityForm({
               )}
               <Button
                 type="submit"
+                variant="default"
                 disabled={loading || (opportunity ? !hasChanges : false)}
                 size="sm"
                 className="px-6"
@@ -373,6 +245,12 @@ export default function NewOpportunityForm({
                     : "Post"}
               </Button>
             </div>
+
+            {scheduleMessage && (
+              <p className="text-muted-foreground w-full pt-1 text-right text-xs">
+                This will go live on {scheduleMessage}.
+              </p>
+            )}
           </div>
         </form>
       </Form>

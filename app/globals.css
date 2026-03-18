@@ -132,6 +132,7 @@ body,
 /* width */
 ::-webkit-scrollbar {
   width: 4px;
+  height: 4px;
 }
 /* Track */
 ::-webkit-scrollbar-track {
@@ -177,25 +178,6 @@ body,
   pointer-events: none;
 }
 
-/* Prose styles for markdown content */
-.prose pre::-webkit-scrollbar {
-  height: 8px;
-}
-
-.prose pre::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 4px;
-}
-
-.prose pre::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-}
-
-.prose pre::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
 /* Animations */
 @keyframes fade-in-up {
   from {
@@ -227,4 +209,11 @@ body,
 .animate-gradient {
   background-size: 200% 200%;
   animation: gradient-shift 3s ease infinite;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

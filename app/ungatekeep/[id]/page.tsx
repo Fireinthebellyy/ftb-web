@@ -13,7 +13,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Pin, ExternalLink } from "lucide-react";
 import { createUngatekeepStorage } from "@/lib/appwrite";
 import { format } from "date-fns";
-import CalendarWidget from "@/components/opportunity/CalendarWidget";
 import FeaturedToolkits from "@/components/toolkit/FeaturedToolkits";
 
 type UngatekeepPost = {
@@ -38,7 +37,11 @@ export default function UngatekeepPostPage() {
   const postId = params.id as string;
   const ungatekeepStorage = createUngatekeepStorage();
 
-  const { data: post, isLoading, error } = useQuery<UngatekeepPost>({
+  const {
+    data: post,
+    isLoading,
+    error,
+  } = useQuery<UngatekeepPost>({
     queryKey: ["ungatekeep", postId],
     queryFn: async () => {
       try {
@@ -107,16 +110,16 @@ export default function UngatekeepPostPage() {
   if (isLoading) {
     return (
       <div className="bg-gray-50">
-        <div className="container mx-auto max-w-7xl py-8 px-0">
-          <div className="flex flex-col lg:flex-row gap-8">
+        <div className="container mx-auto max-w-7xl px-4 pt-2 pb-4 md:py-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
             <div className="flex-1">
-              <Skeleton className="h-8 w-24 mb-6" />
-              <Skeleton className="h-10 w-3/4 mb-4" />
-              <Skeleton className="h-6 w-48 mb-8" />
-              <Skeleton className="h-64 w-full rounded-lg mb-6" />
+              <Skeleton className="mb-6 h-8 w-24" />
+              <Skeleton className="mb-4 h-10 w-3/4" />
+              <Skeleton className="mb-8 h-6 w-48" />
+              <Skeleton className="mb-6 h-64 w-full rounded-lg" />
               <Skeleton className="h-32 w-full" />
             </div>
-            <div className="w-full lg:w-80 space-y-4">
+            <div className="w-full space-y-4 lg:w-80">
               <Skeleton className="h-80 w-full rounded-lg" />
               <Skeleton className="h-48 w-full rounded-lg" />
             </div>
@@ -129,15 +132,15 @@ export default function UngatekeepPostPage() {
   if (error || !post) {
     return (
       <div className="bg-gray-50">
-        <div className="container mx-auto max-w-7xl py-8 px-0">
-          <div className="flex flex-col lg:flex-row gap-8">
+        <div className="container mx-auto max-w-7xl px-4 pt-2 pb-4 md:py-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
             <div className="flex-1">
               <Button
                 variant="ghost"
                 onClick={() => router.push("/ungatekeep")}
                 className="mb-6"
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
+                <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Ungatekeep
               </Button>
               <div className="rounded-lg border bg-white py-12 text-center">
@@ -149,9 +152,8 @@ export default function UngatekeepPostPage() {
                 </p>
               </div>
             </div>
-            <aside className="w-full lg:w-80 shrink-0">
-              <div className="lg:sticky lg:top-20 space-y-4">
-                <CalendarWidget />
+            <aside className="w-full shrink-0 lg:w-80">
+              <div className="space-y-4 lg:sticky lg:top-20">
                 <FeaturedToolkits />
               </div>
             </aside>
@@ -163,17 +165,17 @@ export default function UngatekeepPostPage() {
 
   return (
     <div className="bg-gray-50">
-      <div className="container mx-auto max-w-7xl py-8 px-0">
-        <div className="flex flex-col lg:flex-row gap-8">
+      <div className="container mx-auto max-w-7xl px-4 pt-2 pb-4 md:py-8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
           {/* Main Content */}
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0 flex-1">
             {/* Back button */}
             <Button
               variant="ghost"
               onClick={() => router.push("/ungatekeep")}
               className="mb-4 -ml-2"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Ungatekeep
             </Button>
 
@@ -181,17 +183,20 @@ export default function UngatekeepPostPage() {
             <article className="rounded-lg border bg-white p-4 md:p-6">
               {/* Header */}
               <header className="mb-4">
-                <div className="flex items-start gap-2 mb-2">
+                <div className="mb-2 flex items-start gap-2">
                   {post.isPinned && (
-                    <Pin className="h-5 w-5 text-primary shrink-0 mt-0.5" fill="currentColor" />
+                    <Pin
+                      className="text-primary mt-0.5 h-5 w-5 shrink-0"
+                      fill="currentColor"
+                    />
                   )}
-                  <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">
+                  <h1 className="text-lg leading-tight font-bold text-gray-900 sm:text-xl md:text-2xl">
                     {post.title}
                   </h1>
                 </div>
 
                 {/* Meta info */}
-                <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm text-muted-foreground">
+                <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs md:text-sm">
                   {/* Author */}
                   {post.creatorName && (
                     <div className="flex items-center gap-1.5">
@@ -204,21 +209,26 @@ export default function UngatekeepPostPage() {
                           className="rounded-full object-cover"
                         />
                       ) : (
-                        <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-medium">
+                        <div className="bg-muted flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-medium">
                           {getInitials(post.creatorName)}
                         </div>
                       )}
-                      <span className="font-medium text-foreground">{post.creatorName}</span>
+                      <span className="text-foreground font-medium">
+                        {post.creatorName}
+                      </span>
                     </div>
                   )}
-                  
+
                   <span>•</span>
                   <span>{formatDate(post.publishedAt || post.createdAt)}</span>
-                  
+
                   {post.tag && (
                     <>
                       <span>•</span>
-                      <Badge variant={getTagBadgeVariant(post.tag)} className="text-xs">
+                      <Badge
+                        variant={getTagBadgeVariant(post.tag)}
+                        className="text-xs"
+                      >
                         {post.tag.replace("_", " ")}
                       </Badge>
                     </>
@@ -230,7 +240,7 @@ export default function UngatekeepPostPage() {
               {post.images && post.images.length > 0 && (
                 <div className="mb-4">
                   {post.images.length === 1 ? (
-                    <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-muted">
+                    <div className="bg-muted relative aspect-video w-full overflow-hidden rounded-lg">
                       <Image
                         src={getImageUrl(post.images[0])}
                         alt={post.title}
@@ -243,7 +253,7 @@ export default function UngatekeepPostPage() {
                       {post.images.map((imageId, idx) => (
                         <div
                           key={idx}
-                          className="relative aspect-square overflow-hidden rounded-lg bg-muted"
+                          className="bg-muted relative aspect-square overflow-hidden rounded-lg"
                         >
                           <Image
                             src={getImageUrl(imageId)}
@@ -260,14 +270,14 @@ export default function UngatekeepPostPage() {
 
               {/* Content */}
               <div className="prose prose-gray max-w-none">
-                <p className="whitespace-pre-wrap text-sm md:text-base leading-relaxed text-gray-700">
+                <p className="text-sm leading-relaxed whitespace-pre-wrap text-gray-700 md:text-base">
                   {post.content}
                 </p>
               </div>
 
               {/* Link Preview */}
               {post.linkUrl && (
-                <div className="mt-4 border rounded-lg overflow-hidden hover:bg-muted/50 transition-colors">
+                <div className="hover:bg-muted/50 mt-4 overflow-hidden rounded-lg border transition-colors">
                   <Link
                     href={post.linkUrl}
                     target="_blank"
@@ -275,7 +285,7 @@ export default function UngatekeepPostPage() {
                     className="block"
                   >
                     {post.linkImage && (
-                      <div className="relative aspect-video w-full overflow-hidden bg-muted">
+                      <div className="bg-muted relative aspect-video w-full overflow-hidden">
                         <Image
                           src={post.linkImage}
                           alt={post.linkTitle || "Link preview"}
@@ -284,18 +294,18 @@ export default function UngatekeepPostPage() {
                         />
                       </div>
                     )}
-                    <div className="p-3 flex items-center justify-between">
+                    <div className="flex items-center justify-between p-3">
                       <div>
                         {post.linkTitle && (
-                          <h4 className="font-semibold text-sm mb-0.5">
+                          <h4 className="mb-0.5 text-sm font-semibold">
                             {post.linkTitle}
                           </h4>
                         )}
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-muted-foreground text-xs">
                           {getHostname(post.linkUrl)}
                         </p>
                       </div>
-                      <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <ExternalLink className="text-muted-foreground h-4 w-4 shrink-0" />
                     </div>
                   </Link>
                 </div>
@@ -304,9 +314,8 @@ export default function UngatekeepPostPage() {
           </div>
 
           {/* Right Sidebar */}
-          <aside className="w-full lg:w-80 shrink-0">
-            <div className="lg:sticky lg:top-20 space-y-4">
-              <CalendarWidget />
+          <aside className="w-full shrink-0 lg:w-80">
+            <div className="space-y-4 lg:sticky lg:top-20">
               <FeaturedToolkits />
             </div>
           </aside>

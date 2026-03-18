@@ -16,8 +16,38 @@ const updateOpportunitySchema = z.object({
   organiserInfo: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
+  publishAt: z
+    .union([
+      z
+        .string()
+        .min(1)
+        .refine((s) => !Number.isNaN(new Date(s).getTime()), {
+          message: "Invalid datetime",
+        }),
+      z.literal(""),
+      z.null(),
+    ])
+    .optional(),
 });
 
+function parsePublishAt(
+  publishAt: string | "" | null | undefined
+): Date | null | undefined {
+  if (publishAt === undefined) {
+    return undefined;
+  }
+
+  if (publishAt === "" || publishAt === null) {
+    return null;
+  }
+
+  const parsedPublishAt = new Date(publishAt);
+  if (Number.isNaN(parsedPublishAt.getTime())) {
+    return undefined;
+  }
+
+  return parsedPublishAt;
+}
 
 export async function PUT(
   req: NextRequest,
@@ -108,6 +138,11 @@ export async function PUT(
       } else {
         updateData.endDate = null;
       }
+    }
+
+    const parsedPublishAt = parsePublishAt(validatedData.publishAt);
+    if (parsedPublishAt !== undefined) {
+      updateData.publishAt = parsedPublishAt;
     }
 
     // Update the opportunity

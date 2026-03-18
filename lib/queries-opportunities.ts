@@ -167,7 +167,8 @@ export async function fetchOpportunitiesPaginated(
   offset: number = 0,
   search?: string,
   types: string[] = [],
-  tags: string[] = []
+  tags: string[] = [],
+  ids?: string[]
 ): Promise<OpportunitiesResponse> {
   const { data } = await axios.get<OpportunitiesResponse>(
     "/api/opportunities",
@@ -178,6 +179,7 @@ export async function fetchOpportunitiesPaginated(
         search: search && search.length > 0 ? search : undefined,
         types: types.length > 0 ? types.join(",") : undefined,
         tags: tags.length > 0 ? tags.join(",") : undefined,
+        ids: ids && ids.length > 0 ? ids.join(",") : undefined,
       },
     }
   );
@@ -199,7 +201,8 @@ export function useInfiniteOpportunities(
   limit: number = 10,
   search?: string,
   types: string[] = [],
-  tags: string[] = []
+  tags: string[] = [],
+  options?: { enabled?: boolean }
 ) {
   const serializedTypes = types.join(",");
   const serializedTags = tags.join(",");
@@ -231,41 +234,8 @@ export function useInfiniteOpportunities(
       }
       return undefined;
     },
+    enabled: options?.enabled ?? true,
     staleTime: 1000 * 30,
   });
 }
 
-export function useIsBookmarked(id: string) {
-  return useQuery<boolean>({
-    queryKey: ["bookmark", id],
-    queryFn: async () => {
-      const { data } = await axios.get(`/api/bookmarks/${id}`);
-      return Boolean(data?.isBookmarked);
-    },
-    staleTime: 1000 * 30,
-  });
-}
-
-export async function fetchBookmarkDatesForMonth(
-  month: string
-): Promise<string[]> {
-  try {
-    const { data } = await axios.get<{ dates?: string[] }>("/api/bookmarks", {
-      params: { month },
-    });
-
-    return Array.isArray(data?.dates) ? data.dates : [];
-  } catch (error) {
-    console.error("Error fetching bookmark dates for month:", error);
-    return [];
-  }
-}
-
-export function useBookmarkDatesForMonth(month?: string) {
-  return useQuery<string[]>({
-    queryKey: ["bookmarks", "month", month],
-    queryFn: () => fetchBookmarkDatesForMonth(month as string),
-    enabled: Boolean(month),
-    staleTime: 1000 * 60 * 5,
-  });
-}

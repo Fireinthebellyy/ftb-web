@@ -183,6 +183,48 @@
       "when": 1769698815815,
       "tag": "0025_wooden_black_cat",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1770720695184,
+      "tag": "0026_reduce_dashboard_query_latency",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1771100400000,
+      "tag": "0027_internships_ingestion_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1771100500000,
+      "tag": "0028_schedule_opportunity_publish",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1772255400000,
+      "tag": "0029_collect_onboarding_survey",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1772294465760,
+      "tag": "0030_add_tracker_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1772313600000,
+      "tag": "0031_tracker_kind_identity",
+      "breakpoints": true
     }
   ]
 }

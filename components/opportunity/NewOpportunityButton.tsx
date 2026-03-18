@@ -28,7 +28,7 @@ const NewOpportunityButton = memo(function NewOpportunityButton({
       <p className="font-medium">Have a new opportunity?</p>
       <Button
         className="w-full sm:w-auto"
-        variant="primary"
+        variant="default"
         onClick={() => onOpenChange(true)}
       >
         Post it here

@@ -1,17 +1,25 @@
 import { NextResponse } from "next/server";
+import { logAdminActivity } from "@/lib/admin-activity";
 import { db } from "@/lib/db";
-import { toolkits, user as userTable } from "@/lib/schema";
+import { toolkitContentItems, toolkits, user as userTable } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
-import { eq, desc } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 
-export async function GET() {
+export async function GET(request: Request) {
+  let activityStatus = 500;
+  let activityError: unknown = null;
+  let activityAdminUserId: string | null = null;
+
   try {
     const currentUser = await getCurrentUser();
+    activityAdminUserId = currentUser?.currentUser?.id ?? null;
     if (
       !currentUser ||
       !currentUser.currentUser?.id ||
       currentUser.currentUser.role !== "admin"
     ) {
+      activityStatus = 401;
+      activityError = "Unauthorized";
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -40,12 +48,42 @@ export async function GET() {
       .leftJoin(userTable, eq(toolkits.userId, userTable.id))
       .orderBy(desc(toolkits.createdAt));
 
-    return NextResponse.json(allToolkits);
+    const lessonCounts = await db
+      .select({
+        toolkitId: toolkitContentItems.toolkitId,
+        lessonCount: sql<number>`count(*)`,
+      })
+      .from(toolkitContentItems)
+      .groupBy(toolkitContentItems.toolkitId);
+
+    const lessonCountByToolkitId = new Map(
+      lessonCounts.map((item) => [item.toolkitId, Number(item.lessonCount)])
+    );
+
+    const toolkitsWithDynamicLessonCount = allToolkits.map((toolkit) => ({
+      ...toolkit,
+      lessonCount: lessonCountByToolkitId.get(toolkit.id) ?? 0,
+    }));
+
+    activityStatus = 200;
+    return NextResponse.json(toolkitsWithDynamicLessonCount);
   } catch (error) {
+    activityError = error;
     console.error("Error fetching toolkits:", error);
+    activityStatus = 500;
     return NextResponse.json(
       { error: "Failed to fetch toolkits" },
       { status: 500 }
     );
+  } finally {
+    void logAdminActivity({
+      request,
+      action: "admin.toolkits.list",
+      statusCode: activityStatus,
+      success: activityStatus >= 200 && activityStatus < 300,
+      adminUserId: activityAdminUserId,
+      entityType: "toolkit",
+      error: activityError,
+    });
   }
 }

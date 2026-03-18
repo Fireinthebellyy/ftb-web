@@ -31,6 +31,17 @@ export const formSchema = z.object({
       to: z.date().optional(),
     })
     .optional(),
+  publishAt: z
+    .string()
+    .optional()
+    .refine(
+      (value) =>
+        !value ||
+        (value.length > 0 && !Number.isNaN(new Date(value).getTime())),
+      {
+        message: "Please provide a valid publish date and time.",
+      }
+    ),
 });
 
 export type FormData = z.infer<typeof formSchema>;

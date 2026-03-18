@@ -13,7 +13,6 @@ export const toolkitFormSchema = z.object({
   coverImageUrl: z.string().url().optional().or(z.literal("")),
   videoUrl: z.string().url().optional().or(z.literal("")),
   totalDuration: z.string().optional(),
-  lessonCount: z.coerce.number().int().min(0).optional(),
   highlights: z.array(z.string()).optional(),
   isActive: z.boolean().optional(),
   showSaleBadge: z.boolean().optional(),

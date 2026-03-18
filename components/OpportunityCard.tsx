@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { createOpportunityStorage } from "@/lib/appwrite";
 import { OpportunityPostProps } from "@/types/interfaces";
-import { useIsBookmarked } from "@/lib/queries";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTracker } from "@/components/providers/TrackerProvider";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   Carousel,
@@ -33,32 +32,18 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 }) => {
   const { id, images, title } = opportunity;
 
-  const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
+  const { items, addToTracker, removeFromTracker } = useTracker();
+  const trackedItem = items.find(
+    (i) => i.kind === "opportunity" && String(i.oppId) === String(id)
+  );
+  const isBookmarked = Boolean(trackedItem);
+
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [showComments, setShowComments] = useState<boolean>(false);
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [modalIndex, setModalIndex] = useState<number>(0);
-  const [showMessage, setShowMessage] = useState<boolean>(false);
-
   const { data: session } = useSession();
   const queryClient = useQueryClient();
-  const { data: isBookmarkedServer } = useIsBookmarked(id);
-
-  useEffect(() => {
-    if (typeof isBookmarkedServer === "boolean") {
-      setIsBookmarked(isBookmarkedServer);
-    }
-  }, [isBookmarkedServer]);
-
-  useEffect(() => {
-    if (showMessage) {
-      toast.success(
-        isBookmarked ? "Added to bookmarks" : "Removed from bookmarks"
-      );
-      const timer = setTimeout(() => setShowMessage(false), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showMessage, isBookmarked]);
 
   const handleEditSuccess = () => {
     setIsEditing(false);
@@ -76,35 +61,46 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
       return;
     }
 
-    const currentUserId = session.user.id as string;
-
     try {
       if (newState) {
-        const response = await axios.post("/api/bookmarks", {
-          userId: currentUserId,
-          opportunityId: id,
-        });
-        if (response.data?.message === "Already bookmarked") {
-          toast.info("Already bookmarked");
-        }
-      } else {
-        await axios.delete("/api/bookmarks", {
-          data: {
-            userId: currentUserId,
+        addToTracker(
+          {
+            id,
             opportunityId: id,
-          },
-        });
+            title: opportunity.title,
+            company:
+              (opportunity as any).hiringOrganization ||
+              opportunity.organiserInfo ||
+              "Unknown Organization",
+            logo: opportunity.images?.[0]
+              ? createOpportunityStorage()
+                  .getFileView(
+                    process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID ||
+                      "",
+                    opportunity.images[0]
+                  )
+                  .toString()
+              : undefined,
+            type: opportunity.type,
+            location: opportunity.location,
+            deadline: opportunity.endDate,
+            kind: "opportunity",
+          } as any,
+          "Not Applied",
+          "opportunity"
+        );
+      } else {
+        if (trackedItem) {
+          removeFromTracker(
+            trackedItem.oppId as string | number,
+            trackedItem.kind ?? "opportunity"
+          );
+        }
       }
-
-      setIsBookmarked(newState);
 
       if (onBookmarkChange) {
         onBookmarkChange(id, newState);
       }
-
-      queryClient.invalidateQueries({ queryKey: ["bookmark", id] });
-
-      setShowMessage(true);
     } catch (err) {
       console.error("Bookmark request failed:", err);
       toast.error("Failed to update bookmark");

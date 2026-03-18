@@ -23,21 +23,12 @@ function handleAddToCalendar(title: string, endDate: string, description?: strin
   const month = String(date.getUTCMonth() + 1).padStart(2, "0");
   const day = String(date.getUTCDate()).padStart(2, "0");
 
+  
   const allDayDate = `${year}${month}${day}`;
-
-  // Add description to the URL if it exists
-  const descriptionParam = description 
-    ? `&details=${encodeURIComponent(description)}`
-    : '';
-
-  // Add reminders:
-  // - Email: 1 day before (1440 minutes)
-  // - Popup: 1 day before (1440 minutes), 6 hours before (360 minutes), 1 hour before (60 minutes)
-  const reminders = '&remind=email:1440&remind=popup:1440&remind=popup:360&remind=popup:60';
 
   const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
     title
-  )}&dates=${allDayDate}/${allDayDate}${descriptionParam}${reminders}`;
+  )}&dates=${allDayDate}/${allDayDate}`;
 
   window.open(url, "_blank", "noopener,noreferrer");
 }

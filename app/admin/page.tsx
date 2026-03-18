@@ -1,21 +1,33 @@
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { user as userTable } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import AdminUsersTable from "./AdminUsersTable";
-import AdminOpportunitiesTable from "./AdminOpportunitiesTable";
+import { Suspense } from "react";
 import NewInternshipButton from "@/components/internship/NewInternshipButton";
-import AdminToolkitsTable from "./AdminToolkitsTable";
-import AdminUngatekeepTable from "./AdminUngatekeepTable";
-import AdminCouponsTable from "./AdminCouponsTable";
-import NewToolkitModal from "@/components/toolkit/NewToolkitModal";
-import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { AdminTabs } from "./AdminTabs";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { user as userTable } from "@/lib/schema";
 
-export default async function AdminPage() {
+const adminTabValues = [
+  "opportunities",
+  "OpportunityManagement",
+  "users",
+  "toolkits",
+  "coupons",
+  "ungatekeep",
+] as const;
+
+type AdminPageProps = {
+  searchParams: Promise<{ tab?: string | string[] }>;
+};
+
+export default async function AdminPage({ searchParams }: AdminPageProps) {
+  const params = await searchParams;
+  const tabParam = Array.isArray(params.tab) ? params.tab[0] : params.tab;
+  const isInsideAdminPage =
+    typeof tabParam === "string" &&
+    adminTabValues.includes(tabParam as (typeof adminTabValues)[number]);
+
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -24,7 +36,6 @@ export default async function AdminPage() {
     redirect("/login");
   }
 
-  // Check if user is admin
   const currentUser = await db.query.user.findFirst({
     where: eq(userTable.id, session.user.id),
     columns: {
@@ -38,50 +49,25 @@ export default async function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-            <NewInternshipButton />
+      <div className="container mx-auto max-w-7xl px-4 py-8 lg:px-4 xl:px-6">
+        {!isInsideAdminPage ? (
+          <div className="mb-8">
+            <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+              <NewInternshipButton />
+            </div>
+            <p className="text-muted-foreground">
+              Manage users, opportunities, and platform content
+            </p>
           </div>
-          <p className="text-muted-foreground">
-            Manage users and review opportunities
-          </p>
-        </div>
+        ) : null}
 
-        <Tabs defaultValue="opportunities" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="opportunities">
-              Pending Opportunities
-            </TabsTrigger>
-            <TabsTrigger value="users">User Management</TabsTrigger>
-            <TabsTrigger value="toolkits">Toolkit Management</TabsTrigger>
-            <TabsTrigger value="coupons">Coupons</TabsTrigger>
-            <TabsTrigger value="ungatekeep">Ungatekeep</TabsTrigger>
-          </TabsList>
-          <TabsContent value="opportunities">
-            <AdminOpportunitiesTable />
-          </TabsContent>
-          <TabsContent value="users">
-            <AdminUsersTable currentUserId={session.user.id} />
-          </TabsContent>
-          <TabsContent value="toolkits">
-            <AdminToolkitsTable />
-          </TabsContent>
-          <TabsContent value="coupons">
-            <AdminCouponsTable />
-          </TabsContent>
-          <TabsContent value="ungatekeep">
-            <AdminUngatekeepTable />
-          </TabsContent>
-        </Tabs>
+        <Suspense
+          fallback={<div className="bg-muted h-64 animate-pulse rounded-lg" />}
+        >
+          <AdminTabs currentUserId={session.user.id} />
+        </Suspense>
       </div>
-      <NewToolkitModal>
-        <Button className="gap-2">
-          <PlusCircle className="h-4 w-4" />
-          Create Toolkit
-        </Button>
-      </NewToolkitModal>
     </div>
   );
 }

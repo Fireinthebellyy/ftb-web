@@ -15,8 +15,8 @@ import { internshipTypes } from "../constants";
 
 type Props = {
   control: Control<InternshipFormData>;
-  value: "in-office" | "work-from-home" | "hybrid" | undefined;
-  onChange: (v: "in-office" | "work-from-home" | "hybrid") => void;
+  value: "onsite" | "remote" | "hybrid" | undefined;
+  onChange: (v: "onsite" | "remote" | "hybrid") => void;
 };
 
 export function TypeSelector({ control, value, onChange }: Props) {
@@ -44,13 +44,13 @@ export function TypeSelector({ control, value, onChange }: Props) {
                         : "bg-gray-50 text-gray-500 hover:bg-gray-100 border-gray-200"
                     )}
                     onClick={() => {
-                      onChange(type.id as "in-office" | "work-from-home" | "hybrid");
+                      onChange(type.id as "onsite" | "remote" | "hybrid");
                       field.onChange(type.id);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        onChange(type.id as "in-office" | "work-from-home" | "hybrid");
+                        onChange(type.id as "onsite" | "remote" | "hybrid");
                         field.onChange(type.id);
                       }
                     }}

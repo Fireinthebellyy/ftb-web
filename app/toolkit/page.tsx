@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios from "axios";
@@ -23,7 +22,6 @@ const CATEGORIES = [
 ];
 
 export default function ToolkitPage() {
-  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = React.useState("All");
 
   const { data: toolkits = [], isLoading } = useQuery<Toolkit[]>({
@@ -38,6 +36,7 @@ export default function ToolkitPage() {
         throw error;
       }
     },
+    staleTime: 1000 * 60 * 10,
   });
 
   const filteredToolkits = React.useMemo(() => {
@@ -47,15 +46,14 @@ export default function ToolkitPage() {
     return toolkits.filter((toolkit) => toolkit.category === selectedCategory);
   }, [toolkits, selectedCategory]);
 
-  const handleCardClick = (toolkit: Toolkit) => {
-    router.push(`/toolkit/${toolkit.id}`);
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-6">
-          <h1 className="mb-6 text-2xl font-bold text-gray-900">Toolkits</h1>
+          <div className="mb-6 space-y-2">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-4 w-full max-w-md" />
+          </div>
 
           <div className="mb-6 flex flex-wrap items-center gap-2">
             {CATEGORIES.map((category, index) => (
@@ -65,12 +63,29 @@ export default function ToolkitPage() {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {[...Array(6)].map((_, index) => (
-              <div key={index} className="space-y-3">
-                <Skeleton className="h-40 w-full" />
-                <div className="space-y-2 pt-3">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-6 w-full" />
-                  <Skeleton className="h-12 w-3/4" />
+              <div
+                key={index}
+                className="overflow-hidden rounded-lg border bg-white"
+              >
+                <div className="relative aspect-[16/10]">
+                  <Skeleton className="h-full w-full rounded-none" />
+                  <Skeleton className="absolute top-3 left-3 h-5 w-16 rounded-full" />
+                  <Skeleton className="absolute top-3 right-3 h-5 w-12 rounded-full" />
+                </div>
+
+                <div className="space-y-2 p-3">
+                  <Skeleton className="h-3 w-2/3" />
+                  <Skeleton className="h-6 w-11/12" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6" />
+
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-6 w-20" />
+                      <Skeleton className="h-4 w-12" />
+                    </div>
+                    <Skeleton className="h-4 w-20" />
+                  </div>
                 </div>
               </div>
             ))}
@@ -125,7 +140,7 @@ export default function ToolkitPage() {
               <ToolkitCardNew
                 key={toolkit.id}
                 toolkit={toolkit}
-                onClick={() => handleCardClick(toolkit)}
+                href={`/toolkit/${toolkit.id}`}
               />
             ))}
           </div>

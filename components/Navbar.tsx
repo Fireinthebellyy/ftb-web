@@ -43,6 +43,40 @@ const FEATURE_ENABLE_BOTTOM_NAV = true;
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const mobileRouteLabel = useMemo(() => {
+    const normalizedPath =
+      pathname === "/" ? "/" : pathname.replace(/\/+$/, "");
+
+    if (normalizedPath === "/") {
+      return "Home";
+    }
+
+    const routeLabels: Array<[string, string]> = [
+      ["/opportunities", "Opportunities"],
+      ["/deadlines", "Deadlines"],
+      ["/toolkit", "Toolkit"],
+      ["/ungatekeep", "Ungatekeep"],
+      ["/intern", "Internships"],
+      ["/profile", "Profile"],
+      ["/admin", "Admin"],
+      ["/login", "Log in"],
+      ["/signup", "Sign up"],
+    ];
+
+    const matchedRoute = routeLabels.find(
+      ([route]) =>
+        normalizedPath === route || normalizedPath.startsWith(`${route}/`)
+    );
+
+    if (matchedRoute) {
+      return matchedRoute[1];
+    }
+
+    const firstSegment = normalizedPath.split("/").filter(Boolean)[0];
+    return firstSegment
+      ? `${firstSegment.charAt(0).toUpperCase()}${firstSegment.slice(1)}`
+      : "Home";
+  }, [pathname]);
 
   const { data: user, isPending } = useSession();
 
@@ -94,7 +128,7 @@ export default function Navbar() {
       (document.activeElement === lastItemRef.current
         ? firstItemRef.current
         : ((document.activeElement
-            ?.nextElementSibling as HTMLButtonElement | null) ??
+          ?.nextElementSibling as HTMLButtonElement | null) ??
           firstItemRef.current)
       )?.focus();
       return;
@@ -104,7 +138,7 @@ export default function Navbar() {
       (document.activeElement === firstItemRef.current
         ? lastItemRef.current
         : ((document.activeElement
-            ?.previousElementSibling as HTMLButtonElement | null) ??
+          ?.previousElementSibling as HTMLButtonElement | null) ??
           lastItemRef.current)
       )?.focus();
       return;
@@ -153,7 +187,7 @@ export default function Navbar() {
       transition={{ duration: 0.5 }}
       className="sticky top-0 z-50 flex-none bg-gray-50 backdrop-blur-sm"
     >
-      <div className="container mx-auto grid h-16 max-w-7xl grid-cols-[1fr_auto] items-center px-4 md:grid-cols-3 lg:px-4 xl:px-6">
+      <div className="relative container mx-auto grid h-16 max-w-7xl grid-cols-[1fr_auto] items-center px-4 md:grid-cols-3 lg:px-4 xl:px-6">
         <div className="flex items-center justify-start pl-2 md:pl-4">
           <Link href="/" className="flex items-center space-x-3">
             <Image
@@ -171,53 +205,55 @@ export default function Navbar() {
           </Link>
         </div>
 
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center md:hidden">
+          <span className="max-w-[45vw] truncate text-sm font-semibold tracking-wide text-neutral-700">
+            {mobileRouteLabel}
+          </span>
+        </div>
+
         <nav className="hidden justify-center gap-4 sm:gap-6 md:flex">
           <Link
             href="/opportunities"
-            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
-              pathname === "/opportunities"
-                ? "text-primary after:w-full"
-                : "text-neutral-800 after:w-0"
-            }`}
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/opportunities"
+              ? "text-primary after:w-full"
+              : "text-neutral-800 after:w-0"
+              }`}
           >
             Opportunities
           </Link>
 
           <Link
-            href="/deadlines"
-            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
-              pathname === "/deadlines"
-                ? "text-primary after:w-full"
-                : "text-neutral-800 after:w-0"
-            }`}
+            href="/tracker"
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/tracker"
+              ? "text-primary after:w-full"
+              : "text-neutral-800 after:w-0"
+              }`}
           >
-            Deadlines
+            Tracker
           </Link>
           <Link
             href="/toolkit"
-            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
-              pathname === "/toolkit"
-                ? "text-primary after:w-full"
-                : "text-neutral-800 after:w-0"
-            }`}
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/toolkit"
+              ? "text-primary after:w-full"
+              : "text-neutral-800 after:w-0"
+              }`}
           >
             Toolkit
           </Link>
           <Link
             href="/ungatekeep"
-            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
-              pathname === "/ungatekeep"
-                ? "text-primary after:w-full"
-                : "text-neutral-800 after:w-0"
-            }`}
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/ungatekeep"
+              ? "text-primary after:w-full"
+              : "text-neutral-800 after:w-0"
+              }`}
           >
             Ungatekeep
           </Link>
           <Link
             href="/intern"
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/intern"
-              ? "text-primary after:w-full"
-              : "text-neutral-800 after:w-0"
+                ? "text-primary after:w-full"
+                : "text-neutral-800 after:w-0"
               }`}
           >
             Internships
@@ -324,6 +360,16 @@ export default function Navbar() {
                       Profile
                     </button>
                     <button
+                      role="menuitem"
+                      className="hover:bg-accent focus:bg-accent w-full rounded px-3 py-2 text-left text-sm focus:outline-none"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        window.location.href = "/tracker";
+                      }}
+                    >
+                      Tracker
+                    </button>
+                    <button
                       ref={lastItemRef}
                       role="menuitem"
                       className="hover:bg-accent focus:bg-accent w-full rounded px-3 py-2 text-left text-sm text-red-600 focus:outline-none"
@@ -343,7 +389,7 @@ export default function Navbar() {
               <Button asChild variant="outline" size="sm">
                 <Link href="/login">Log in</Link>
               </Button>
-              <Button asChild size="sm" variant="primary">
+              <Button asChild size="sm" variant="default">
                 <Link href="/signup">Get Started</Link>
               </Button>
             </div>
@@ -407,11 +453,10 @@ export default function Navbar() {
               <Link
                 href="/"
                 onClick={() => setIsOpen(false)}
-                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
-                  pathname === "/"
-                    ? "text-primary font-bold after:w-full"
-                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                }`}
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/"
+                  ? "text-primary font-bold after:w-full"
+                  : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                  }`}
               >
                 Home
               </Link>
@@ -420,37 +465,34 @@ export default function Navbar() {
               <Link
                 href="/opportunities"
                 onClick={() => setIsOpen(false)}
-                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
-                  pathname === "/opportunities"
-                    ? "text-primary font-bold after:w-full"
-                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                }`}
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/opportunities"
+                  ? "text-primary font-bold after:w-full"
+                  : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                  }`}
               >
                 Opportunities
               </Link>
             </li>
             <li>
               <Link
-                href="/deadlines"
+                href="/tracker"
                 onClick={() => setIsOpen(false)}
-                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
-                  pathname === "/deadlines"
-                    ? "text-primary font-bold after:w-full"
-                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                }`}
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/tracker"
+                  ? "text-primary font-bold after:w-full"
+                  : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                  }`}
               >
-                Deadlines
+                Tracker
               </Link>
             </li>
             <li>
               <Link
                 href="/ungatekeep"
                 onClick={() => setIsOpen(false)}
-                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
-                  pathname === "/ungatekeep"
-                    ? "text-primary font-bold after:w-full"
-                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                }`}
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/ungatekeep"
+                  ? "text-primary font-bold after:w-full"
+                  : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                  }`}
               >
                 Ungatekeep
               </Link>
@@ -460,8 +502,8 @@ export default function Navbar() {
                 href="/intern"
                 onClick={() => setIsOpen(false)}
                 className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/intern"
-                  ? "text-primary font-bold after:w-full"
-                  : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                    ? "text-primary font-bold after:w-full"
+                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
                   }`}
               >
                 Internships
@@ -473,11 +515,10 @@ export default function Navbar() {
                 <Link
                   href="/profile"
                   onClick={() => setIsOpen(false)}
-                  className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
-                    pathname === "/profile"
-                      ? "text-primary font-bold after:w-full"
-                      : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                  }`}
+                  className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/profile"
+                    ? "text-primary font-bold after:w-full"
+                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                    }`}
                 >
                   Profile
                 </Link>

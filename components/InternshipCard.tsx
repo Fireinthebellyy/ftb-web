@@ -1,18 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { differenceInCalendarDays } from "date-fns";
 import { Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { InternshipPostProps } from "@/types/interfaces";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { formatDate } from "@/lib/utils";
 import { ShareDialog } from "./internship/ShareDialog";
 
-const InternshipPost: React.FC<InternshipPostProps> = ({
-  internship,
-}) => {
+const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
   const router = useRouter();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
@@ -21,7 +18,6 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
     title,
     type,
     location,
-    poster,
     createdAt,
     hiringOrganization,
     experience,
@@ -40,9 +36,9 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
 
   const formatType = (type: string) => {
     const typeMap: Record<string, string> = {
-      "work-from-home": "Remote",
-      "hybrid": "Hybrid",
-      "in-office": "In-Office",
+      remote: "Remote",
+      hybrid: "Hybrid",
+      onsite: "Onsite",
     };
     return typeMap[type.toLowerCase()] || type;
   };
@@ -74,65 +70,53 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
       <div
         role="button"
         tabIndex={0}
-        className="bg-white rounded-lg border hover:border-gray-300 hover:shadow-md transition-all p-2 cursor-pointer"
+        className="cursor-pointer rounded-lg border bg-white px-3 py-2.5 transition-all hover:border-gray-300 hover:shadow-md sm:px-4 sm:py-3"
         onClick={handleCardClick}
         onKeyDown={handleCardKeyDown}
       >
-        <div className="flex gap-2">
-          {/* Left: Circular Logo */}
-          <div className="flex-shrink-0">
-            {poster ? (
-              <Image
-                src={poster}
-                alt={hiringOrganization || title}
-                width={64}
-                height={64}
-                className="rounded-full object-cover w-11 h-11 sm:w-13 sm:h-13"
-              />
-            ) : (
-              <div className="w-11 h-11 sm:w-13 sm:h-13 bg-gray-200 rounded-full flex items-center justify-center">
-                <span className="text-base sm:text-lg font-semibold text-gray-500">
-                  {hiringOrganization?.charAt(0).toUpperCase() || "I"}
+        {/* Main Content */}
+        <div className="min-w-0">
+          {/* Title, Company and days ago */}
+          <div className="mb-1.5 flex items-start justify-between gap-2">
+            <h3 className="min-w-0 flex-1 text-sm leading-snug font-semibold text-slate-900 sm:text-base">
+              {title}{" "}
+              {hiringOrganization && (
+                <span className="font-normal text-slate-700">
+                  at {hiringOrganization}
                 </span>
-              </div>
+              )}
+            </h3>
+            {createdAt && (
+              <span className="shrink-0 pt-0.5 text-[11px] text-gray-500 sm:text-xs">
+                {formatDate(createdAt)}
+              </span>
             )}
           </div>
 
-          {/* Main Content */}
-          <div className="flex-1 min-w-0">
-            {/* Title, Company and days ago */}
-            <div className="flex mb-1">
-              <h3 className="text-xs sm:text-sm font-bold text-black flex-1">
-                {title} {hiringOrganization && <span className="font-normal">at {hiringOrganization}</span>}
-                {createdAt && (
-                  <span className="font-normal text-[11px] sm:text-xs text-gray-500 ml-3">
-                    {differenceInCalendarDays(new Date(), new Date(createdAt))}d ago
-                  </span>
+          {/* Bottom Section: Type, Location, Experience and Actions */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3 text-xs text-gray-600 sm:text-sm">
+              <span className="truncate text-xs text-gray-600 sm:text-sm">
+                {type ? formatType(type) : "Internship"}
+                {location && (
+                  <span className="text-gray-600"> ({location})</span>
                 )}
-              </h3>
+                {experience && (
+                  <span className="ml-1 text-gray-600"> • {experience}</span>
+                )}
+              </span>
             </div>
 
-            {/* Bottom Section: Type, Location, Experience and Actions */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 sm:gap-4 text-[11px] sm:text-sm">
-                <span className="text-gray-600 text-[11px] sm:text-sm">
-                  {formatType(type)}
-                  {location && <span className="text-gray-600"> ({location})</span>}
-                  {experience && <span className="text-gray-600 ml-1"> • {experience}</span>}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  title="Share"
-                  aria-label="Share"
-                  onClick={handleShareClick}
-                  className="flex cursor-pointer items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
-                >
-                  <Share2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                </button>
-              </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                title="Share"
+                aria-label="Share"
+                onClick={handleShareClick}
+                className="flex cursor-pointer items-center rounded-md p-1 text-xs transition-colors hover:bg-orange-50 hover:text-orange-600 sm:text-sm"
+              >
+                <Share2 className="h-3 w-3 sm:h-4 sm:w-4" />
+              </button>
             </div>
           </div>
         </div>
@@ -140,11 +124,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
 
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
         <DialogContent>
-          <ShareDialog
-            shareUrl={shareUrl}
-            title={title}
-            onCopy={handleCopy}
-          />
+          <ShareDialog shareUrl={shareUrl} title={title} onCopy={handleCopy} />
         </DialogContent>
       </Dialog>
     </>

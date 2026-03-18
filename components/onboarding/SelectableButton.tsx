@@ -23,7 +23,7 @@ export function SelectableButton({
   return (
     <Button
       type="button"
-      variant={selected ? "primary" : "outline"}
+      variant={selected ? "default" : "outline"}
       className={cn(
         "justify-between text-left transition-all",
         selected && "border-orange-200 shadow-sm"

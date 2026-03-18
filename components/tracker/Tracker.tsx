@@ -1,0 +1,315 @@
+"use client";
+
+import React, { useState, useMemo } from 'react';
+import { useTracker, TrackerItem } from '@/components/providers/TrackerProvider';
+import { FileText, TrendingUp, LucideIcon, Loader2, Activity, ChevronRight, X, Zap } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import Link from 'next/link';
+
+
+import TrackerDetailModal from './TrackerDetailModal';
+import ApplyModal, { ApplyModalOpportunity } from './ApplyModal';
+
+import TrackerRow from './TrackerRow';
+import MobileTrackerCard from './MobileTrackerCard';
+
+
+
+interface EnrichedTrackerItem extends TrackerItem {
+    isHighPriority: boolean;
+}
+
+interface MetricCardProps {
+    icon: LucideIcon;
+    label: string;
+    value: string | number;
+    color: string;
+    highlight?: boolean;
+}
+
+export default function Tracker() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+
+    // Helper for Priority
+    const isHighPriority = (deadline?: string) => {
+        if (!deadline) return false;
+        const diff = Math.ceil((new Date(deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+        return diff >= 0 && diff <= 7;
+    };
+
+    const { items, updateStatus, removeFromTracker, isLoading } = useTracker();
+
+    const tabParam = searchParams.get('tab');
+    const initialTab = (tabParam === 'opportunity' || tabParam === 'internship') ? tabParam : 'internship';
+    const [activeTab, setActiveTab] = useState<'internship' | 'opportunity'>(initialTab);
+
+    // Sync tab to URL when changed
+    const handleTabChange = (tab: 'internship' | 'opportunity') => {
+        setActiveTab(tab);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('tab', tab);
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    };
+
+
+    const [detailOpp, setDetailOpp] = useState<TrackerItem | null>(null);
+    const [smartApplyOpp, setSmartApplyOpp] = useState<TrackerItem | null>(null);
+    const [showInsights, setShowInsights] = useState(false);
+
+
+    // Hydrate & Enhance Logic
+    const filteredItems = items.filter(i => (i.kind || 'internship') === activeTab);
+
+    const trackedOpps = useMemo(() => {
+        return filteredItems.map(item => {
+            // Data is already hydrated in Provider, just calculate priority
+            // For manual items that might miss some fields, we handle gracefully
+
+            return {
+                ...item,
+                isHighPriority: isHighPriority(item.deadline)
+            } as EnrichedTrackerItem;
+        });
+    }, [filteredItems]);
+
+    // Metrics Calculation
+    const total = trackedOpps.length;
+
+    // Total Applied: Everything where status is NOT 'Not Applied' and NOT 'Draft'
+    const totalApplications = trackedOpps.filter(i => i.status !== 'Not Applied' && i.status !== 'Draft').length;
+    const totalSelected = trackedOpps.filter(i => i.status === 'Selected').length;
+
+    const successRate = totalApplications > 0 ? Math.round((totalSelected / totalApplications) * 100) : 0;
+    const actionRate = total > 0 ? Math.round((totalApplications / total) * 100) : 0;
+
+
+    if (isLoading) {
+        return (
+            <div className="flex h-[50vh] w-full items-center justify-center">
+                <Loader2 className="animate-spin text-slate-400" size={32} />
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-8 animate-in fade-in duration-500 pb-20 p-4 md:p-8 max-w-7xl mx-auto">
+            {/* Header & Metrics */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <h2 className="text-3xl font-bold text-slate-900">Personal Tracker</h2>
+                    <p className="text-slate-500">Track, Manage, and Optimize your {activeTab} search.</p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                    {/* Tab Switcher */}
+                    <div className="bg-slate-100 p-1 rounded-lg flex items-center justify-center">
+                        <button
+                            onClick={() => handleTabChange('internship')}
+                            className={cn(
+                                "px-3 py-1.5 rounded-md text-sm font-bold transition-all flex justify-center items-center gap-2",
+                                activeTab === 'internship' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                            )}
+                        >
+                            Internships
+                        </button>
+                        <button
+                            onClick={() => handleTabChange('opportunity')}
+                            className={cn(
+                                "px-3 py-1.5 rounded-md text-sm font-bold transition-all flex justify-center items-center gap-2",
+                                activeTab === 'opportunity' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                            )}
+                        >
+                            Opportunities
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+
+
+            {/* Insights Toggle Bar */}
+            {!showInsights && (
+                <button
+                    onClick={() => setShowInsights(true)}
+                    className="w-full bg-white hover:bg-slate-50 text-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between group transition-all"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-slate-100 rounded-lg group-hover:scale-110 transition-transform">
+                            <TrendingUp size={20} className="text-slate-600" />
+                        </div>
+                        <div className="text-left">
+                            <span className="font-bold text-lg">Check Insights</span>
+                            <p className="text-slate-500 text-sm">View your success rate and tracking progress</p>
+                        </div>
+                    </div>
+                    <ChevronRight size={24} className="text-slate-400 group-hover:translate-x-1 transition-transform" />
+                </button>
+            )}
+
+            <AnimatePresence>
+                {showInsights && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        className="overflow-hidden space-y-6"
+                    >
+                        <div className="flex items-center justify-between mb-2 px-2">
+                            <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
+                                <TrendingUp className="text-orange-500" size={20} />
+                                Tracking Insights
+                            </h3>
+                            <button
+                                onClick={() => setShowInsights(false)}
+                                className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
+                                title="Close Insights"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Mobile Metrics Card (Consolidated) */}
+                        <div className="md:hidden bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden">
+                            <div className="flex justify-between items-start mb-6 relative z-10">
+                                <div>
+                                    <h3 className="text-2xl font-bold text-slate-900">{total}</h3>
+                                    <p className="text-slate-500 text-sm">Total Tracked</p>
+                                </div>
+                                <div className="text-right">
+                                    <h3 className="text-2xl font-bold text-emerald-600">{successRate}%</h3>
+                                    <p className="text-slate-500 text-sm">Success Rate</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-4 bg-blue-50 p-3 rounded-xl relative z-10 border border-blue-200">
+                                <div className="p-2 bg-blue-100 text-blue-700 rounded-lg">
+                                    <Activity size={20} />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-lg text-slate-900">{actionRate}%</h4>
+                                    <p className="text-xs text-slate-500">Action Rate</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Desktop Metrics Grid */}
+                        <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <MetricCard icon={FileText} label="Total Tracked" value={total} color="bg-slate-100 text-slate-700" />
+                            <MetricCard icon={TrendingUp} label="Success Rate" value={`${successRate}%`} color="bg-emerald-50 text-emerald-700" />
+                            <MetricCard icon={Activity} label="Action Rate" value={`${actionRate}%`} color="bg-blue-50 text-blue-700" />
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* View Content */}
+            <div className="space-y-8">
+
+                {/* Main List */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="p-4 md:p-5 border-b border-slate-100 flex justify-between items-center sticky top-0 z-20 bg-white/95 backdrop-blur-md rounded-t-2xl">
+                        <h3 className="font-bold text-slate-900 text-sm md:text-lg shrink-0">Saved {activeTab === 'internship' ? 'Internships' : 'Opportunities'}</h3>
+                        <Link
+                            href="/toolkit"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-[10px] md:text-sm font-bold transition-all shadow-sm hover:shadow-orange-200"
+                        >
+                            <Zap size={14} className="fill-white" />
+                            <span>10x Chances</span>
+                        </Link>
+                    </div>
+                    <div className="divide-y divide-slate-100">
+                        {trackedOpps
+                            .sort((a, b) => {
+                                const dateA = a.deadline ? new Date(a.deadline).getTime() : 9999999999999;
+                                const dateB = b.deadline ? new Date(b.deadline).getTime() : 9999999999999;
+                                return dateA - dateB;
+                            })
+                            .map(opp => (
+                                <div key={opp.oppId}>
+                                    <div className="md:hidden">
+                                        <MobileTrackerCard
+                                            opp={opp}
+                                            updateStatus={updateStatus}
+                                            onDelete={removeFromTracker}
+                                            onClick={(o) => {
+                                                const path = (o.kind || 'internship') === 'internship'
+                                                    ? `/intern/${o.oppId}`
+                                                    : `/opportunities/${o.oppId}`;
+                                                router.push(path);
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="hidden md:block">
+                                        <TrackerRow
+                                            opp={opp}
+                                            updateStatus={updateStatus}
+                                            onDelete={removeFromTracker}
+                                            onClick={(o) => {
+                                                const path = (o.kind || 'internship') === 'internship'
+                                                    ? `/intern/${o.oppId}`
+                                                    : `/opportunities/${o.oppId}`;
+                                                router.push(path);
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        {trackedOpps.length === 0 && (
+                            <div className="p-8 text-center text-slate-500">
+                                No applications tracked yet. Start by adding one!
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+
+
+            <TrackerDetailModal
+                isOpen={!!detailOpp}
+                onClose={() => setDetailOpp(null)}
+                opportunity={detailOpp}
+                updateStatus={updateStatus}
+                onSmartApply={() => {
+                    setSmartApplyOpp(detailOpp);
+                    setDetailOpp(null);
+                }}
+            />
+
+
+
+            <ApplyModal
+                isOpen={!!smartApplyOpp}
+                onClose={() => setSmartApplyOpp(null)}
+                opportunity={smartApplyOpp ? {
+                    ...smartApplyOpp,
+                    id: smartApplyOpp.oppId,
+                    title: smartApplyOpp.title || "Untitled Opportunity"
+                } as unknown as ApplyModalOpportunity : null}
+            />
+        </div>
+    );
+}
+
+function MetricCard({ icon: Icon, label, value, color, highlight }: MetricCardProps) {
+    return (
+        <div className={cn(
+            "p-5 rounded-2xl border transition-all",
+            highlight ? "bg-white border-amber-300 shadow-md ring-2 ring-amber-100" : "bg-white border-slate-200"
+        )}>
+            <div className="flex items-center gap-3 mb-2">
+                <div className={cn("p-2 rounded-lg", color)}>
+                    <Icon size={18} />
+                </div>
+                <span className="text-sm font-medium text-slate-500">{label}</span>
+            </div>
+            <p className="text-3xl font-bold text-slate-900 ml-1">{value}</p>
+        </div>
+    );
+}

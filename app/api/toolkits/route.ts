@@ -88,6 +88,7 @@ export async function POST(request: Request) {
         highlights,
         totalDuration,
         lessonCount,
+        isActive: false,
         showSaleBadge,
         userId: user.currentUser.id,
       })

@@ -1,6 +1,8 @@
 "use client";
-
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Search, Filter, Loader2, ChevronDown, X } from "lucide-react";
@@ -13,39 +15,23 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import Link from "next/link";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import OpportunityPost from "@/components/OpportunityCard";
 import { NewOpportunityButton } from "@/components/opportunity/NewOpportunityButton";
 import FeaturedOpportunities from "@/components/opportunity/FeaturedOpportunities";
 import { TagsDropdown } from "@/components/opportunity/TagsDropdown";
-import { useInfiniteOpportunities } from "@/lib/queries";
-import CalendarWidget from "@/components/opportunity/CalendarWidget";
-import TaskWidget from "@/components/opportunity/TaskWidget";
-
-const FEATURE_FLAGS = {
-  showTrendingTags: false,
-};
-
-const AVAILABLE_TAGS = [
-  "ai",
-  "biology",
-  "mba",
-  "startup",
-  "psychology",
-  "web3",
-];
-const AVAILABLE_TYPES = ["hackathon", "grant", "competition", "ideathon"];
-
-const formatTypeName = (type: string): string => {
-  return type.charAt(0).toUpperCase() + type.slice(1);
-};
-
-const getTypeDropdownLabel = (selected: string[], compact = false) => {
-  if (selected.length === 0) return compact ? "Types" : "Opportunity types";
-  if (selected.length === 1) return formatTypeName(selected[0]);
-  return `${selected.length} types`;
-};
+import {
+  AVAILABLE_TAGS,
+  AVAILABLE_TYPES,
+  FEATURE_FLAGS,
+  getTypeDropdownLabel,
+  SEARCH_PLACEHOLDERS,
+  formatTypeName,
+} from "./constants";
+import { useOpportunityFeed } from "./useOpportunityFeed";
+const CalendarWidget = dynamic(
+  () => import("@/components/opportunity/CalendarWidget")
+);
+const TaskWidget = dynamic(() => import("@/components/opportunity/TaskWidget"));
 
 export default function OpportunityCardsPage() {
   const searchParams = useSearchParams();
@@ -71,6 +57,7 @@ export default function OpportunityCardsPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>(getInitialTags);
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
+  const [showSecondaryWidgets, setShowSecondaryWidgets] = useState(false);
 
   // Derive state from URL query parameters whenever searchParams changes (for browser navigation)
   useEffect(() => {
@@ -114,6 +101,17 @@ export default function OpportunityCardsPage() {
       clearTimeout(timer);
     };
   }, [searchTerm]);
+
+  // Defer secondary widgets to prioritize primary opportunity feed.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setShowSecondaryWidgets(true);
+    }, 1000);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, []);
 
   // Update URL query parameters when filters change
   useEffect(() => {
@@ -184,47 +182,36 @@ export default function OpportunityCardsPage() {
     searchParams,
   ]);
 
-  const normalizedSearchTerm = debouncedSearchTerm.trim();
-
-  const normalizedTypesForQuery = useMemo(
-    () => [...selectedTypes].sort(),
-    [selectedTypes]
-  );
-  const normalizedTagsForQuery = useMemo(
-    () => selectedTags.map((tag) => tag.toLowerCase()).sort(),
-    [selectedTags]
-  );
-
   const {
-    data,
+    shouldUseBootstrap,
+    isBootstrapPending,
+    bootstrapTasks,
+    bootstrapMonth,
+    bootstrapBookmarkDates,
+    allOpportunities,
     isLoading,
     error,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteOpportunities(
-    10,
-    normalizedSearchTerm,
-    normalizedTypesForQuery,
-    normalizedTagsForQuery
-  );
+  } = useOpportunityFeed({
+    debouncedSearchTerm,
+    selectedTypes,
+    selectedTags,
+  });
 
-  const searchPlaceholders = ["DU Hacks", "Tech meetup", "Fellowship"];
+  const shouldEnableWidgetQueries = !shouldUseBootstrap || !isBootstrapPending;
 
   // Rotate placeholders every 3 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentPlaceholderIndex(
-        (prev) => (prev + 1) % searchPlaceholders.length
+        (prev) => (prev + 1) % SEARCH_PLACEHOLDERS.length
       );
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [searchPlaceholders.length]);
-
-  // Flatten all opportunities from all pages
-  const allOpportunities =
-    data?.pages?.flatMap((page) => page.opportunities) || [];
+  }, []);
 
   // Intersection observer for infinite scroll
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -270,16 +257,7 @@ export default function OpportunityCardsPage() {
     };
   }, [handleLoadMore, allOpportunities.length]);
 
-  const handleBookmarkChange = (
-    opportunityId: string,
-    isBookmarked: boolean
-  ) => {
-    // TODO: handle bookmark
-    console.log(
-      `Opportunity ${opportunityId} ${isBookmarked ? "bookmarked" : "unbookmarked"
-      }`
-    );
-  };
+
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
@@ -315,14 +293,11 @@ export default function OpportunityCardsPage() {
   return (
     <div className="h-full grow bg-gray-50">
       <div className="container mx-auto max-w-7xl px-4 pt-2">
-        {/* Mobile: Search */}
-
         <div className="mb-5 lg:hidden">
-          {/* Search Bar */}
           <div className="relative mb-3 bg-white">
             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
             <Input
-              placeholder={searchPlaceholders[currentPlaceholderIndex]}
+              placeholder={SEARCH_PLACEHOLDERS[currentPlaceholderIndex]}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pr-10 pl-10"
@@ -338,7 +313,6 @@ export default function OpportunityCardsPage() {
             )}
           </div>
 
-          {/* Tag Badges - Above Search Bar */}
           <div className="mb-2 flex items-start justify-between">
             <div className="flex flex-wrap items-center gap-2">
               {AVAILABLE_TAGS.map((tag) => {
@@ -370,10 +344,8 @@ export default function OpportunityCardsPage() {
             </Button>
           </div>
 
-          {/* Types and Tags Dropdowns (mobile) */}
           {isFilterBoxOpen && (
             <div className="grid grid-cols-2 gap-2">
-              {/* Types Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="w-full justify-between">
@@ -395,7 +367,6 @@ export default function OpportunityCardsPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Tags Dropdown */}
               <TagsDropdown
                 selectedTags={selectedTags}
                 onTagsChange={setSelectedTags}
@@ -406,16 +377,13 @@ export default function OpportunityCardsPage() {
           )}
         </div>
 
-        {/* Desktop: 3-Column Layout */}
         <div className="hidden gap-6 lg:grid lg:grid-cols-12">
-          {/* Left Sidebar - 3 columns */}
           <aside className="col-span-3">
             <div className="sticky top-6 space-y-6">
-              {/* Search Bar - Above Quick Links */}
               <div className="relative bg-white">
                 <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
                 <Input
-                  placeholder={searchPlaceholders[currentPlaceholderIndex]}
+                  placeholder={SEARCH_PLACEHOLDERS[currentPlaceholderIndex]}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pr-10 pl-10"
@@ -431,7 +399,6 @@ export default function OpportunityCardsPage() {
                 )}
               </div>
 
-              {/* Quick Links */}
               <div className="rounded-lg border bg-white px-4 py-3">
                 <h3 className="mb-3 font-semibold text-gray-900">
                   Quick Links
@@ -444,13 +411,8 @@ export default function OpportunityCardsPage() {
                     Post Opportunity
                   </p>
                   <Link
-                    href="/deadlines"
-                    className="block text-sm text-gray-600 hover:text-gray-800"
-                  >
-                    My Deadlines
-                  </Link>
-                  <Link
                     href="/profile"
+                    prefetch={false}
                     className="block text-sm text-gray-600 hover:text-gray-800"
                   >
                     My Profile
@@ -458,14 +420,11 @@ export default function OpportunityCardsPage() {
                 </div>
               </div>
 
-              {/* Featured Posts */}
               <FeaturedOpportunities />
             </div>
           </aside>
 
-          {/* Main Content - 6 columns */}
           <main className="col-span-6 max-h-[90vh] overflow-y-scroll pr-2">
-            {/* Tags in Horizontal Box with Filter Icon */}
             <div className="mb-4 flex items-center gap-2">
               <div className="flex flex-1 flex-wrap items-center gap-2">
                 {AVAILABLE_TAGS.map((tag) => {
@@ -499,11 +458,9 @@ export default function OpportunityCardsPage() {
               </Button>
             </div>
 
-            {/* Filter Box with Dropdowns */}
             {isFilterBoxOpen && (
               <div className="mb-4 rounded-lg border bg-white p-4">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {/* Types Dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -528,7 +485,6 @@ export default function OpportunityCardsPage() {
                     </DropdownMenuContent>
                   </DropdownMenu>
 
-                  {/* Tags Dropdown */}
                   <TagsDropdown
                     selectedTags={selectedTags}
                     onTagsChange={setSelectedTags}
@@ -574,9 +530,7 @@ export default function OpportunityCardsPage() {
                         <div key={opportunity.id}>
                           <OpportunityPost
                             opportunity={opportunity}
-                            onBookmarkChange={handleBookmarkChange}
                           />
-                          {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
                           {index ===
                             Math.max(0, allOpportunities.length - 3) && (
                               <div ref={desktopTriggerRef} className="h-1" />
@@ -585,7 +539,6 @@ export default function OpportunityCardsPage() {
                       ))}
                     </div>
 
-                    {/* Load more indicator - also acts as fallback trigger */}
                     <div ref={loadMoreRef} className="flex justify-center py-8">
                       {isFetchingNextPage && (
                         <div className="flex items-center space-x-2 text-gray-600">
@@ -625,14 +578,28 @@ export default function OpportunityCardsPage() {
             )}
           </main>
 
-          {/* Right Sidebar - Featured Posts - 3 columns */}
           <aside className="col-span-3">
             <div className="sticky top-6 space-y-6">
-              <CalendarWidget />
-              <TaskWidget />
+              {showSecondaryWidgets ? (
+                <>
+                  <CalendarWidget
+                    queryEnabled={shouldEnableWidgetQueries}
+                    initialMonthKey={bootstrapMonth}
+                    initialBookmarkedDates={bootstrapBookmarkDates}
+                  />
+                  <TaskWidget
+                    queryEnabled={shouldEnableWidgetQueries}
+                    initialTasks={bootstrapTasks}
+                  />
+                </>
+              ) : (
+                <>
+                  <div className="h-80 animate-pulse rounded-lg border bg-white" />
+                  <div className="h-52 animate-pulse rounded-lg border bg-white" />
+                </>
+              )}
               {FEATURE_FLAGS.showTrendingTags && (
                 <>
-                  {/* Trending Tags */}
                   <div className="rounded-lg border bg-white px-4 py-3">
                     <h3 className="mb-4 font-semibold text-gray-900">
                       Trending Tags
@@ -658,7 +625,6 @@ export default function OpportunityCardsPage() {
           </aside>
         </div>
 
-        {/* Mobile Content (single column) */}
         <div className="lg:hidden">
           <NewOpportunityButton
             isOpen={isNewOpportunityOpen}
@@ -692,9 +658,7 @@ export default function OpportunityCardsPage() {
                       <div key={opportunity.id}>
                         <OpportunityPost
                           opportunity={opportunity}
-                          onBookmarkChange={handleBookmarkChange}
                         />
-                        {/* Place trigger at 3rd card from the end, but watch the last card for 1+ items */}
                         {index === Math.max(0, allOpportunities.length - 3) && (
                           <div ref={mobileTriggerRef} className="h-1" />
                         )}
@@ -702,7 +666,6 @@ export default function OpportunityCardsPage() {
                     ))}
                   </div>
 
-                  {/* Load more indicator for mobile - also acts as fallback trigger */}
                   <div className="flex justify-center py-8">
                     {isFetchingNextPage && (
                       <div className="flex items-center space-x-2 text-gray-600">

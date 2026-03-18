@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 import { OpportunityPostProps } from "@/types/interfaces";
+import { ExpandableDescription } from "./ExpandableDescription";
 
 interface OpportunityHeaderProps {
   opportunity: OpportunityPostProps["opportunity"];
@@ -37,6 +38,7 @@ export function OpportunityHeader({
     user,
     type,
     createdAt,
+    publishAt,
   } = opportunity;
 
   const primaryType = Array.isArray(type) ? type[0] : type;
@@ -77,11 +79,7 @@ export function OpportunityHeader({
       )}
 
       {description && (
-        <div
-          className={`text-sm leading-relaxed text-gray-700 ${!isExpanded ? "mb-2 line-clamp-1 overflow-hidden" : "mb-3"}`}
-        >
-          <p className="line-clamp-4 text-ellipsis">{description}</p>
-        </div>
+        <ExpandableDescription text={description} isCardExpanded={isExpanded} />
       )}
 
       {(location || organiserInfo || startDate || endDate) && (
@@ -164,7 +162,7 @@ export function OpportunityHeader({
           </div>
         </div>
         <p className="text-xs text-gray-400">
-          {createdAt ? formatDate(createdAt) : ""}
+          {formatDate(publishAt || createdAt)}
         </p>
       </header>
     </div>

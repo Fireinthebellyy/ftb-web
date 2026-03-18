@@ -17,5 +17,5 @@ export function formatDate(input: string | Date) {
   if (diffDays < 3) {
     return target.fromNow();
   }
-  return target.format("D MMM, h:mm A");
+  return target.format("D MMM");
 }

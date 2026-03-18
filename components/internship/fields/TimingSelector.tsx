@@ -15,8 +15,8 @@ import { internshipTimings } from "../constants";
 
 type Props = {
   control: Control<InternshipFormData>;
-  value: "full-time" | "part-time" | "shift-based" | undefined;
-  onChange: (v: "full-time" | "part-time" | "shift-based") => void;
+  value: "full_time" | "part_time" | undefined;
+  onChange: (v: "full_time" | "part_time") => void;
 };
 
 export function TimingSelector({ control, value, onChange }: Props) {
@@ -44,13 +44,13 @@ export function TimingSelector({ control, value, onChange }: Props) {
                         : "bg-gray-50 text-gray-500 hover:bg-gray-100 border-gray-200"
                     )}
                     onClick={() => {
-                      onChange(timing.id as "full-time" | "part-time" | "shift-based");
+                      onChange(timing.id as "full_time" | "part_time");
                       field.onChange(timing.id);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        onChange(timing.id as "full-time" | "part-time" | "shift-based");
+                        onChange(timing.id as "full_time" | "part_time");
                         field.onChange(timing.id);
                       }
                     }}
@@ -69,4 +69,3 @@ export function TimingSelector({ control, value, onChange }: Props) {
     />
   );
 }
-

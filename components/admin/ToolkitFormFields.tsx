@@ -146,30 +146,6 @@ export function ToolkitFormFields({ control }: ToolkitFormFieldsProps) {
 
       <FormField
         control={control}
-        name="lessonCount"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Number of Lessons</FormLabel>
-            <FormControl>
-              <Input
-                type="number"
-                placeholder="10"
-                {...field}
-                value={field.value ?? ""}
-                onChange={(e) =>
-                  field.onChange(
-                    e.target.value ? parseInt(e.target.value, 10) : undefined
-                  )
-                }
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={control}
         name="coverImageUrl"
         render={({ field }) => (
           <FormItem>

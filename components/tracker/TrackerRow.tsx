@@ -1,3 +1,4 @@
+import Image from "next/image";
 import {
   Clock,
   AlertCircle,
@@ -8,6 +9,9 @@ import {
 import clsx from "clsx";
 import { TrackerItem } from "@/components/providers/TrackerProvider";
 import { differenceInCalendarDays } from "date-fns";
+import posthog from "posthog-js";
+import { toast } from "sonner";
+import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
 function DeadlineBadge({ deadline }: { deadline: string }) {
   const daysDiff = differenceInCalendarDays(new Date(deadline), new Date());
@@ -53,9 +57,12 @@ interface TrackerRowProps {
     status: string,
     extraData?: Record<string, unknown>,
     kind?: "internship" | "opportunity"
-  ) => void;
+  ) => Promise<void>;
   onClick: (opp: TrackerItem) => void;
-  onDelete: (id: number | string, kind?: "internship" | "opportunity") => void;
+  onDelete: (
+    id: number | string,
+    kind?: "internship" | "opportunity"
+  ) => Promise<void>;
 }
 
 export default function TrackerRow({
@@ -64,17 +71,48 @@ export default function TrackerRow({
   onClick,
   onDelete,
 }: TrackerRowProps) {
+  const handleRowClick = () => {
+    posthog.capture("tracker_row_clicked", {
+      tracker_id: opp.oppId,
+      company: opp.company,
+      title: opp.title,
+    });
+    onClick(opp);
+  };
+
+  const handleStatusChange = async (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const newStatus = e.target.value;
+    try {
+      posthog.capture("tracker_status_changed", {
+        tracker_id: opp.oppId,
+        old_status: opp.status,
+        new_status: newStatus,
+      });
+      await updateStatus(opp.oppId, newStatus, undefined, opp.kind);
+      toast.success(`Status updated to ${newStatus}`);
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      toast.error("Failed to update status");
+    }
+  };
+
   return (
     <div
-      onClick={() => onClick(opp)}
+      onClick={handleRowClick}
       className="group flex cursor-pointer flex-col gap-4 p-5 transition-colors hover:bg-slate-50 md:flex-row md:items-center"
     >
       <div className="flex min-w-0 flex-1 items-center gap-4">
         {opp.logo || opp.poster || opp.images?.[0] ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={opp.logo || opp.poster || opp.images?.[0]}
+          <Image
+            src={tryGetStoragePublicUrl(
+              "opportunity-images",
+              opp.logo || opp.poster || opp.images?.[0] || ""
+            )}
             alt={opp.company}
+            width={48}
+            height={48}
             className="h-12 w-12 rounded-xl border border-slate-100 bg-white object-contain p-1"
           />
         ) : (
@@ -128,9 +166,7 @@ export default function TrackerRow({
         <div className="relative" onClick={(e) => e.stopPropagation()}>
           <select
             value={opp.status}
-            onChange={(e) =>
-              updateStatus(opp.oppId, e.target.value, undefined, opp.kind)
-            }
+            onChange={handleStatusChange}
             className="cursor-pointer appearance-none rounded-lg border border-slate-200 bg-white py-2 pr-8 pl-3 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-slate-200 focus:outline-none"
           >
             {[
@@ -162,18 +198,29 @@ export default function TrackerRow({
             className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
             title="Add to Google Calendar"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src="/images/google-calendar.webp"
               alt="Google Calendar"
-              className="h-5 w-5 object-contain"
+              width={20}
+              height={20}
+              className="object-contain"
             />
           </a>
         )}
         <button
-          onClick={(e) => {
+          onClick={async (e) => {
             e.stopPropagation();
-            onDelete(opp.oppId, opp.kind);
+            if (
+              confirm("Are you sure you want to remove this from your tracker?")
+            ) {
+              try {
+                await onDelete(opp.oppId, opp.kind);
+                toast.success("Removed from tracker");
+              } catch (error) {
+                console.error("Failed to delete item:", error);
+                toast.error("Failed to remove item");
+              }
+            }
           }}
           className="rounded-lg p-2 text-rose-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
           title="Remove from Tracker"

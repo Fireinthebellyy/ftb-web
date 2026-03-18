@@ -37,6 +37,7 @@ const NewOpportunityButton = memo(function NewOpportunityButton({
         <DialogContent
           className="mx-auto [-ms-overflow-style:none] [scrollbar-width:none] md:max-h-[600px] md:min-w-[600px] [&::-webkit-scrollbar]:hidden"
           overlayClassName="backdrop-blur-xs bg-black/30"
+          onOpenAutoFocus={(event) => event.preventDefault()}
         >
           <NewOpportunityForm
             onOpportunityCreated={() => {

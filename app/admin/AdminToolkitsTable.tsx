@@ -36,6 +36,10 @@ import {
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import NewToolkitModal from "@/components/toolkit/NewToolkitModal";
+import {
+  deleteStorageObjectClient,
+  uploadFileViaSignedUrl,
+} from "@/lib/storage/client";
 
 async function fetchToolkits(): Promise<Toolkit[]> {
   const response = await axios.get<Toolkit[]>("/api/admin/toolkits");
@@ -47,6 +51,8 @@ export default function AdminToolkitsTable() {
   const [editingToolkit, setEditingToolkit] = useState<Toolkit | null>(null);
   const [contentManagerOpen, setContentManagerOpen] = useState(false);
   const [managingToolkit, setManagingToolkit] = useState<Toolkit | null>(null);
+  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
+  const [bannerImageFile, setBannerImageFile] = useState<File | null>(null);
   const [updatingActiveToolkitIds, setUpdatingActiveToolkitIds] = useState<
     Set<string>
   >(new Set());
@@ -73,9 +79,11 @@ export default function AdminToolkitsTable() {
       originalPrice: undefined,
       category: "",
       coverImageUrl: "",
+      bannerImageUrl: "",
       videoUrl: "",
       totalDuration: "",
       highlights: [],
+      testimonials: [],
       isActive: true,
       showSaleBadge: false,
     },
@@ -122,40 +130,107 @@ export default function AdminToolkitsTable() {
         originalPrice: toolkit.originalPrice ?? undefined,
         category: toolkit.category ?? "",
         coverImageUrl: toolkit.coverImageUrl ?? "",
+        bannerImageUrl: toolkit.bannerImageUrl ?? "",
         videoUrl: toolkit.videoUrl ?? "",
         totalDuration: toolkit.totalDuration ?? "",
         highlights: toolkit.highlights ?? [],
+        testimonials: toolkit.testimonials ?? [],
         isActive: toolkit.isActive,
         showSaleBadge: toolkit.showSaleBadge,
       });
+      setCoverImageFile(null);
+      setBannerImageFile(null);
       setEditDialogOpen(true);
     },
     [form]
   );
 
-  const handleUpdate = (data: ToolkitFormValues) => {
+  const handleUpdate = async (data: ToolkitFormValues) => {
     if (!editingToolkit) {
       return;
     }
 
-    const cleanedData = {
-      ...data,
-      coverImageUrl: data.coverImageUrl || undefined,
-      videoUrl: data.videoUrl || undefined,
-      category: data.category || undefined,
-      totalDuration: data.totalDuration || undefined,
-      highlights: data.highlights?.filter(Boolean) || undefined,
-    };
+    const currentCoverImageUrl = data.coverImageUrl?.trim() ?? "";
+    if (!currentCoverImageUrl && !coverImageFile) {
+      form.setError("coverImageUrl", {
+        type: "manual",
+        message: "Cover image is required",
+      });
+      return;
+    }
 
-    updateToolkitMutation.mutate(
-      { id: editingToolkit.id, payload: cleanedData },
-      {
-        onSuccess: () => {
-          toast.success("Toolkit updated successfully");
-          setEditDialogOpen(false);
-        },
+    const uploadedKeys: string[] = [];
+
+    try {
+      let coverImageUrl = currentCoverImageUrl || undefined;
+      let bannerImageUrl = data.bannerImageUrl?.trim() || undefined;
+
+      if (coverImageFile) {
+        const uploadedCover = await uploadFileViaSignedUrl({
+          domain: "ungatekeep-images",
+          file: coverImageFile,
+        });
+        coverImageUrl = uploadedCover.publicUrl;
+        uploadedKeys.push(uploadedCover.key);
       }
-    );
+
+      if (bannerImageFile) {
+        const uploadedBanner = await uploadFileViaSignedUrl({
+          domain: "ungatekeep-images",
+          file: bannerImageFile,
+        });
+        bannerImageUrl = uploadedBanner.publicUrl;
+        uploadedKeys.push(uploadedBanner.key);
+      }
+
+      const cleanedData = {
+        ...data,
+        coverImageUrl,
+        bannerImageUrl,
+        videoUrl: data.videoUrl || undefined,
+        category: data.category || undefined,
+        totalDuration: data.totalDuration || undefined,
+        highlights: data.highlights?.filter(Boolean) || undefined,
+        testimonials: data.testimonials?.length
+          ? data.testimonials.map((item) => ({
+              name: item.name.trim(),
+              role: item.role.trim(),
+              message: item.message.trim(),
+            }))
+          : undefined,
+      };
+
+      await updateToolkitMutation.mutateAsync({
+        id: editingToolkit.id,
+        payload: cleanedData,
+      });
+
+      toast.success("Toolkit updated successfully");
+      setCoverImageFile(null);
+      setBannerImageFile(null);
+      setEditDialogOpen(false);
+    } catch (error) {
+      await Promise.all(
+        uploadedKeys.map((key) =>
+          deleteStorageObjectClient("ungatekeep-images", key).catch(() => null)
+        )
+      );
+
+      if (error instanceof Error) {
+        toast.error(error.message);
+        return;
+      }
+
+      toast.error("Failed to update toolkit");
+    }
+  };
+
+  const handleEditDialogChange = (isOpen: boolean) => {
+    setEditDialogOpen(isOpen);
+    if (!isOpen) {
+      setCoverImageFile(null);
+      setBannerImageFile(null);
+    }
   };
 
   const columns = useMemo<ColumnDef<Toolkit>[]>(() => {
@@ -407,7 +482,7 @@ export default function AdminToolkitsTable() {
         />
       </AdminTableState>
 
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+      <Dialog open={editDialogOpen} onOpenChange={handleEditDialogChange}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Edit Toolkit</DialogTitle>
@@ -418,12 +493,27 @@ export default function AdminToolkitsTable() {
               onSubmit={form.handleSubmit(handleUpdate)}
               className="space-y-4"
             >
-              <ToolkitFormFields control={form.control} />
+              <ToolkitFormFields
+                control={form.control}
+                coverImageFile={coverImageFile}
+                bannerImageFile={bannerImageFile}
+                onCoverImageFileSelect={setCoverImageFile}
+                onBannerImageFileSelect={setBannerImageFile}
+                onCoverImageRemove={() => {
+                  setCoverImageFile(null);
+                  form.setValue("coverImageUrl", "");
+                }}
+                onBannerImageRemove={() => {
+                  setBannerImageFile(null);
+                  form.setValue("bannerImageUrl", "");
+                }}
+                isSubmitting={updateToolkitMutation.isPending}
+              />
               <div className="flex justify-end space-x-2 pt-4">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setEditDialogOpen(false)}
+                  onClick={() => handleEditDialogChange(false)}
                 >
                   Cancel
                 </Button>

@@ -71,6 +71,7 @@ export const opportunities = pgTable("opportunities", {
   title: text("title").notNull(),
   description: text("description").notNull(),
   images: text("images").array().default([]),
+  attachments: text("attachments").array().default([]),
   tagIds: uuid("tag_ids").array().default([]),
   location: text("location"),
   organiserInfo: text("organiser_info"),
@@ -312,6 +313,12 @@ export const tags = pgTable("tags", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export interface ToolkitTestimonial {
+  name: string;
+  role: string;
+  message: string;
+}
+
 // Toolkit tables for monetization
 export const toolkits = pgTable("toolkits", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -320,10 +327,12 @@ export const toolkits = pgTable("toolkits", {
   price: integer("price").notNull(), // in rupees (converted to paisa when sent to Razorpay)
   originalPrice: integer("original_price"), // for displaying strikethrough discount price
   coverImageUrl: text("cover_image_url"),
+  bannerImageUrl: text("banner_image_url"),
   videoUrl: text("video_url"), // YouTube promo video URL
   contentUrl: text("content_url"), // URL to toolkit content page (legacy)
   category: text("category"), // Category for filtering (e.g., "Career", "Skills")
   highlights: text("highlights").array(), // Bullet points like "10 lessons", "Lifetime access"
+  testimonials: jsonb("testimonials").$type<ToolkitTestimonial[]>(),
   totalDuration: text("total_duration"), // e.g., "2h 30m"
   lessonCount: integer("lesson_count").default(0),
   isActive: boolean("is_active").default(false),
@@ -344,6 +353,11 @@ export const ungatekeepTagEnum = pgEnum("ungatekeep_tag", [
   "announcement",
   "company_experience",
   "resources",
+  "playbooks",
+  "college_hacks",
+  "interview",
+  "ama_drops",
+  "ftb_recommends",
 ]);
 
 export const toolkitContentItems = pgTable("toolkit_content_items", {
@@ -433,12 +447,12 @@ export const userToolkitProgress = pgTable(
 // Ungatekeep broadcast posts
 export const ungatekeepPosts = pgTable("ungatekeep_posts", {
   id: uuid("id").primaryKey().defaultRandom(),
-  title: text("title").notNull(),
   content: text("content").notNull(),
-  images: text("images").array().default([]), // Appwrite file IDs
+  attachments: text("attachments").array().default([]), // Appwrite file IDs
   linkUrl: text("link_url"),
   linkTitle: text("link_title"),
   linkImage: text("link_image"),
+  videoUrl: text("video_url"),
   tag: ungatekeepTagEnum("tag"),
   isPinned: boolean("is_pinned").default(false),
   isPublished: boolean("is_published").default(false),
@@ -449,6 +463,26 @@ export const ungatekeepPosts = pgTable("ungatekeep_posts", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
 });
+
+export const ungatekeepBookmarks = pgTable(
+  "ungatekeep_bookmarks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    postId: uuid("post_id")
+      .notNull()
+      .references(() => ungatekeepPosts.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("ungatekeep_bookmarks_user_post_unique").on(
+      table.userId,
+      table.postId
+    ),
+  ]
+);
 
 // Newsletter subscribers for future Resend integration
 export const newsletterSubscribers = pgTable(
@@ -541,6 +575,7 @@ export const schema = {
   userToolkits,
   userToolkitProgress,
   ungatekeepPosts,
+  ungatekeepBookmarks,
   newsletterSubscribers,
   trackerItems,
   trackerEvents,

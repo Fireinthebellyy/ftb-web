@@ -19,11 +19,8 @@ import {
 } from "@/components/ui/form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ImageDropzone } from "@/components/opportunity/images/ImageDropzone";
-import {
-  createAvatarStorage,
-  getAppwriteErrorMessage,
-} from "@/lib/appwrite";
-import { FileItem, ProfileUser, UploadProgress } from "@/types/interfaces";
+import { uploadFileViaSignedUrl } from "@/lib/storage/client";
+import { FileItem, ProfileUser } from "@/types/interfaces";
 import FieldInterestSelector from "@/components/profile/FieldInterestSelector";
 import OpportunityInterestSelector from "@/components/profile/OpportunityInterestSelector";
 import CurrentRoleSelector from "@/components/profile/CurrentRoleSelector";
@@ -169,43 +166,28 @@ export default function ProfileForm({
       );
 
       // Create a storage instance bound to the avatar project
-      const avatarStorage = createAvatarStorage();
-
-      const res = await avatarStorage.createFile(
-        process.env.NEXT_PUBLIC_APPWRITE_AVATARS_BUCKET_ID as string,
-        "unique()",
-        file.file,
-        [],
-        (progress: UploadProgress) => {
-          const percent = Math.round(progress.progress || 0);
+      const uploaded = await uploadFileViaSignedUrl({
+        domain: "avatar-images",
+        file: file.file,
+        onProgress: (progress) => {
+          const percent = Math.round(progress || 0);
           setFiles((prev) =>
             prev.map((f, idx) => (idx === 0 ? { ...f, progress: percent } : f))
           );
-        }
-      );
-
-      const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT as
-        | string
-        | undefined;
-      const project = process.env.NEXT_PUBLIC_APPWRITE_USR_AVATAR_PROJECT_ID as
-        | string
-        | undefined;
-
-      const publicUrl =
-        endpoint && project
-          ? `${endpoint}/storage/buckets/${process.env.NEXT_PUBLIC_APPWRITE_AVATARS_BUCKET_ID}/files/${res.$id}/view?project=${project}`
-          : "";
+        },
+      });
 
       setFiles((prev) =>
         prev.map((f, idx) =>
-          idx === 0 ? { ...f, uploading: false, fileId: res.$id } : f
+          idx === 0 ? { ...f, uploading: false, fileId: uploaded.key } : f
         )
       );
 
-      return publicUrl || null;
+      return uploaded.publicUrl || null;
     } catch (err) {
       console.error("Avatar upload failed:", err);
-      const errorMessage = getAppwriteErrorMessage(err);
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown upload error";
       setFiles((prev) =>
         prev.map((f, idx) =>
           idx === 0 ? { ...f, uploading: false, error: true } : f
@@ -316,22 +298,27 @@ export default function ProfileForm({
   const hasChanges =
     watchedValues.name !== initialValuesRef.current.name ||
     files.length > 0 ||
-    JSON.stringify(watchedValues.fieldInterests) !== JSON.stringify(initialValuesRef.current.fieldInterests) ||
-    watchedValues.fieldInterestOther !== initialValuesRef.current.fieldInterestOther ||
-    JSON.stringify(watchedValues.opportunityInterests) !== JSON.stringify(initialValuesRef.current.opportunityInterests) ||
-    watchedValues.opportunityInterestOther !== initialValuesRef.current.opportunityInterestOther ||
+    JSON.stringify(watchedValues.fieldInterests) !==
+      JSON.stringify(initialValuesRef.current.fieldInterests) ||
+    watchedValues.fieldInterestOther !==
+      initialValuesRef.current.fieldInterestOther ||
+    JSON.stringify(watchedValues.opportunityInterests) !==
+      JSON.stringify(initialValuesRef.current.opportunityInterests) ||
+    watchedValues.opportunityInterestOther !==
+      initialValuesRef.current.opportunityInterestOther ||
     watchedValues.dateOfBirth !== initialValuesRef.current.dateOfBirth ||
-    watchedValues.collegeInstitute !== initialValuesRef.current.collegeInstitute ||
+    watchedValues.collegeInstitute !==
+      initialValuesRef.current.collegeInstitute ||
     watchedValues.contactNumber !== initialValuesRef.current.contactNumber ||
     watchedValues.currentRole !== initialValuesRef.current.currentRole ||
-    watchedValues.currentRoleOther !== initialValuesRef.current.currentRoleOther;
+    watchedValues.currentRoleOther !==
+      initialValuesRef.current.currentRoleOther;
 
   // Progress bar
   // Using JSON.stringify for deep comparison dependency to avoid unnecessary recreations
   const computeCompleteness = useCallback(() => {
     const nameFilled =
-      !!watchedValues.name &&
-      String(watchedValues.name).trim().length > 0;
+      !!watchedValues.name && String(watchedValues.name).trim().length > 0;
     const fieldInterestsFilled =
       Array.isArray(watchedValues.fieldInterests) &&
       watchedValues.fieldInterests.length > 0;
@@ -371,7 +358,7 @@ export default function ProfileForm({
       const percent = computeCompleteness();
       try {
         onProgressChange(percent);
-      } catch { }
+      } catch {}
     }
   }, [computeCompleteness, onProgressChange]);
 
@@ -503,8 +490,8 @@ export default function ProfileForm({
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {field.value
                           ? new Date(
-                            `${field.value}T00:00:00`
-                          ).toLocaleDateString()
+                              `${field.value}T00:00:00`
+                            ).toLocaleDateString()
                           : "Pick a date"}
                       </Button>
                     </PopoverTrigger>

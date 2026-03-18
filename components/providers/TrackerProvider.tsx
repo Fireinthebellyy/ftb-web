@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { fetchInternshipsPaginated } from "@/lib/queries-internships";
 import { fetchOpportunitiesPaginated } from "@/lib/queries-opportunities";
 import { Internship, Opportunity } from "@/types/interfaces";
-import { createOpportunityStorage } from "@/lib/appwrite";
+import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
 export interface TrackerItem {
   oppId: number | string;
@@ -68,17 +68,17 @@ interface TrackerContextType {
     oppOrId: number | string | ManualTrackerInput,
     initialStatus?: string,
     kind?: "internship" | "opportunity"
-  ) => void;
+  ) => Promise<void>;
   removeFromTracker: (
     oppId: number | string,
     kind?: "internship" | "opportunity"
-  ) => void;
+  ) => Promise<void>;
   updateStatus: (
     oppId: number | string,
     status: string,
     extraData?: Record<string, unknown>,
     kind?: "internship" | "opportunity"
-  ) => void;
+  ) => Promise<void>;
   getStatus: (
     oppId: number | string,
     kind?: "internship" | "opportunity"
@@ -319,35 +319,13 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
           ])
         );
 
-        let opportunityStorage: ReturnType<
-          typeof createOpportunityStorage
-        > | null = null;
-        const bucketId =
-          process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
-        if (bucketId) {
-          try {
-            opportunityStorage = createOpportunityStorage();
-          } catch (e) {
-            console.error("Failed to init storage", e);
-          }
-        }
-
         const getImageUrl = (
           imageId: string | undefined
         ): string | undefined => {
           if (!imageId) return undefined;
           if (imageId.startsWith("http") || imageId.startsWith("/"))
             return imageId;
-          if (opportunityStorage && bucketId) {
-            try {
-              return opportunityStorage
-                .getFileView(bucketId, imageId)
-                .toString();
-            } catch {
-              return imageId;
-            }
-          }
-          return imageId;
+          return tryGetStoragePublicUrl("opportunity-images", imageId);
         };
 
         // Merge Data
@@ -371,13 +349,13 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
             const fetched = opportunitiesMap.get(item.oppId as string);
             if (fetched) {
               apiData = {
+                ...fetched,
                 title: fetched.title,
                 company: fetched.organiserInfo || "Organizer", // Opportunities use organiserInfo
                 location: fetched.location,
                 type: fetched.type,
-                deadline: fetched.endDate || fetched.startDate, // Use endDate as deadline
+                deadline: fetched.startDate || fetched.endDate, // Prefer startDate as deadline
                 logo: getImageUrl(fetched.images?.[0]), // Use first image if available, resolving to URL
-                ...fetched,
               };
             }
           }
@@ -387,8 +365,8 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
           }
 
           return {
-            ...apiData,
             ...item, // Keep local status, notes, etc.
+            ...apiData, // API data overrides stale local data
             title: apiData.title || item.title, // Prefer API title
             company: apiData.company || item.company,
             logo: apiData.logo || item.logo, // Prefer API logo
@@ -439,11 +417,11 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     deleteFromBackend(id, "event");
   };
 
-  const addToTracker = (
+  const addToTracker = async (
     oppOrId: number | string | ManualTrackerInput,
     initialStatus = "Not Applied",
     kind: "internship" | "opportunity" = "internship"
-  ) => {
+  ): Promise<void> => {
     const isManual = typeof oppOrId === "object";
     const idToCheck = isManual
       ? ((oppOrId as ManualTrackerInput).id ?? Date.now())
@@ -474,46 +452,46 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
       toast.success("Draft Saved");
     }
 
-    let newItem: TrackerItem;
+    const inputData = isManual ? (oppOrId as ManualTrackerInput) : {};
+    const newItem = {
+      oppId: idToCheck,
+      status: initialStatus,
+      kind: effectiveKind,
+      addedAt: new Date().toISOString(),
+      appliedAt: initialStatus === "Applied" ? new Date().toISOString() : null,
+      result: null,
+      notes: inputData.notes || "",
+      draftData:
+        isManual && (oppOrId as ManualTrackerInput).draftData
+          ? (oppOrId as ManualTrackerInput).draftData
+          : null,
+      ...inputData,
+    } as TrackerItem;
 
-    setTrackedItems((prevItems) => {
-      if (prevItems.some((i) => getTrackerKey(i.oppId, i.kind) === nextKey)) {
-        return prevItems;
-      }
+    // Optimistically Update state
+    setTrackedItems((prevItems) => [...prevItems, newItem]);
 
-      const inputData = isManual ? (oppOrId as ManualTrackerInput) : {};
-
-      newItem = {
-        oppId: idToCheck,
-        status: initialStatus,
-        kind: effectiveKind,
-        addedAt: new Date().toISOString(),
-        appliedAt:
-          initialStatus === "Applied" ? new Date().toISOString() : null,
-        result: null,
-        notes: inputData.notes || "",
-        draftData:
-          isManual && (oppOrId as ManualTrackerInput).draftData
-            ? (oppOrId as ManualTrackerInput).draftData
-            : null,
-        ...inputData,
-      } as TrackerItem;
-
-      // Trigger sync (side effect inside setter is bad practice usually, but doing it after calculation)
-      setTimeout(() => syncItemToBackend(newItem), 0);
-
-      return [...prevItems, newItem];
-    });
+    // Backend Sync
+    try {
+      await syncItemToBackend(newItem);
+    } catch (error) {
+           console.error("Optimistic add failed, reverting:", error);
+      setTrackedItems((prevItems) => 
+        prevItems.filter((i) => getTrackerKey(i.oppId, i.kind) !== nextKey)
+      );
+      // toast is already in syncItemToBackend
+    }
   };
 
-  const updateStatus = (
+  const updateStatus = async (
     oppId: number | string,
     status: string,
     extraData: Record<string, unknown> = {},
     kind?: "internship" | "opportunity"
-  ) => {
+  ): Promise<void> => {
     const targetKey = getTrackerKey(oppId, kind);
 
+    // Optimistic update
     setTrackedItems((prevItems) =>
       prevItems.map((i) => {
         if (getTrackerKey(i.oppId, i.kind) === targetKey) {
@@ -529,20 +507,21 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
       })
     );
 
-    syncStatusToBackend(oppId, status, extraData, kind);
+    await syncStatusToBackend(oppId, status, extraData, kind);
   };
 
-  const removeFromTracker = (
+  const removeFromTracker = async (
     oppId: number | string,
     kind?: "internship" | "opportunity"
-  ) => {
+  ): Promise<void> => {
     const targetKey = getTrackerKey(oppId, kind);
 
+    // Optimistic remove
     setTrackedItems((prevItems) =>
       prevItems.filter((i) => getTrackerKey(i.oppId, i.kind) !== targetKey)
     );
     toast.success("Deleted from Tracker");
-    deleteFromBackend(oppId, "item", kind);
+    await deleteFromBackend(oppId, "item", kind);
   };
 
   const getStatus = (

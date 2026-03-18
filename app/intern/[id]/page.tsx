@@ -2,60 +2,37 @@
 
 import React, { useEffect, useState } from "react";
 import { notFound, useParams } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { Building2, ExternalLink, IndianRupee, MapPin, Share2, Sparkles } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Info,
+  ArrowLeft,
+  Share2,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import posthog from "posthog-js";
+import { toTitleCase } from "@/lib/utils";
 import { ShareDialog } from "@/components/internship/ShareDialog";
-import ApplyModal, { ApplyModalOpportunity } from "@/components/tracker/ApplyModal";
 import { useSession } from "@/hooks/use-session";
+import { type InternshipData } from "@/types/interfaces";
+import { mapInternshipToApplyOpportunity } from "@/lib/internship-utils";
+import ApplyModal from "@/components/tracker/ApplyModal";
+import { useTracker } from "@/components/providers/TrackerProvider";
 
-interface InternshipData {
-  id: string;
-  type?: string | null;
-  timing?: string | null;
-  title: string;
-  description?: string | null;
-  link: string;
-  tags: string[];
-  location?: string | null;
-  deadline: string | null;
-  stipend?: number | null;
-  hiringOrganization: string;
-  hiringManager?: string | null;
-  experience?: string | null;
-  duration?: string | null;
-  createdAt: string | null;
-  poster?: string | null;
-  eligibility?: string[];
-  hiringManagerEmail?: string | null;
-  user: {
-    id: string;
-    name: string;
-    image: string;
-    role: string;
-  };
-}
+import { InternshipHero } from "@/components/internship/InternshipHero";
+import { InternshipTabContent } from "@/components/internship/InternshipTabContent";
+import { InternshipDesktopHeader } from "@/components/internship/InternshipDesktopHeader";
+import { InternshipDesktopSidebar } from "@/components/internship/InternshipDesktopSidebar";
+import { InternshipStickyFooter } from "@/components/internship/InternshipStickyFooter";
 
-const mapInternshipToApplyOpportunity = (period: InternshipData): ApplyModalOpportunity => {
-  return {
-    ...period, // spread other properties
-    id: period.id,
-    title: period.title,
-    hiringOrganization: period.hiringOrganization,
-    company: period.hiringOrganization,
-    poster: period.poster || undefined,
-    logo: period.poster || undefined,
-    skills: period.tags,
-    tags: period.tags,
-    returnUrl: `/intern/${period.id}`,
-  };
-};
 
 export default function InternshipDetailPage() {
+  const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const [internship, setInternship] = useState<InternshipData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,6 +40,9 @@ export default function InternshipDetailPage() {
   const [smartApplyOpen, setSmartApplyOpen] = useState(false);
   const [notFoundError, setNotFoundError] = useState(false);
   const { data: session } = useSession();
+  const { addToTracker, getStatus, removeFromTracker } = useTracker();
+
+  const isBookmarked = !!getStatus(id || "", "internship");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -90,30 +70,67 @@ export default function InternshipDetailPage() {
     fetchData();
   }, [id]);
 
-  if (notFoundError) {
-    notFound();
-  }
+  if (notFoundError) notFound();
 
-  const getTypeColor = (_type?: string): string => {
-    return "bg-white border border-gray-300 text-black";
-  };
-
-  const getTimingColor = (_timing?: string): string => {
-    return "bg-white border border-gray-300 text-black";
-  };
-
-  const publicBaseUrl =
-    (process.env.NEXT_PUBLIC_SITE_URL as string | undefined) ||
+  const publicBaseUrl = (process.env.NEXT_PUBLIC_SITE_URL as string | undefined) ||
     (typeof window !== "undefined" ? window.location.origin : "");
-  const shareUrl = publicBaseUrl ? `${publicBaseUrl}/intern/${id}` : `/intern/${id}`;
+  const shareUrl = publicBaseUrl
+    ? `${publicBaseUrl}/intern/${id}`
+    : `/intern/${id}`;
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
+      posthog.capture("internship_shared", {
+        internship_id: id,
+        title: internship?.title,
+        method: "copy",
+      });
       toast.success("Link copied to clipboard");
     } catch {
       toast.error("Failed to copy link");
     }
+  };
+
+  const handleShare = (method: string) => {
+    posthog.capture("internship_shared", {
+      internship_id: id,
+      title: internship?.title,
+      method,
+    });
+  };
+
+  const handleBookmarkClick = async () => {
+    if (!id || !internship) return;
+    try {
+      if (isBookmarked) {
+        await removeFromTracker(id, "internship");
+      } else {
+        await addToTracker(id, "Not Applied", "internship");
+      }
+    } catch (error) {
+      console.error("Failed to update bookmark:", error);
+      toast.error("Failed to update bookmark");
+    }
+  };
+
+  const handleCalendarClick = () => {
+    if (!internship) return;
+    const date = internship.deadline
+      ? new Date(internship.deadline)
+      : new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const formatted = date.toISOString().replace(/[-:]|\.\d{3}/g, "");
+    const dateEnd = new Date(date.getTime() + 30 * 60 * 1000);
+    const formattedEnd = dateEnd.toISOString().replace(/[-:]|\.\d{3}/g, "");
+    const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Apply to: ${internship.title}`)}&dates=${formatted}/${formattedEnd}&details=${encodeURIComponent(`Company: ${internship.hiringOrganization || "N/A"}\n\nInternship Link: ${shareUrl}`)}`;
+    window.open(calendarUrl, "_blank");
+  };
+
+  const handleOpenChat = () => {
+    const link = `https://wa.me/917014885565?text=${encodeURIComponent(
+      `Type: Internship Help\nSource: /intern/${id}\n\nI need help with: ${internship?.title} at ${internship?.hiringOrganization}`
+    )}`;
+    window.open(link, "_blank");
   };
 
   const handleShareDialogOpenChange = (open: boolean) => {
@@ -122,298 +139,130 @@ export default function InternshipDetailPage() {
 
   if (loading || !internship) {
     return (
-      <div className="container mx-auto max-w-3xl px-4 py-6">
-        <div className="bg-white rounded-lg border shadow-sm p-6">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-            <div className="h-32 bg-gray-200 rounded"></div>
-          </div>
-        </div>
+      <div className="flex min-h-[80vh] w-full flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#ec5b13]"></div>
       </div>
     );
   }
 
+  // Formatting helpers (comment kept for readability)
   return (
-    <div className="container mx-auto max-w-3xl px-4 py-6">
-      {/* Header Section */}
-      <div className="bg-white rounded-lg border shadow-sm p-6 mb-6 relative">
-        {/* Title, Organization */}
-        <div className="flex gap-4 mb-4">
-          {/* Logo in top left corner */}
-          {internship.poster && (
-            <div className="flex-shrink-0">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center overflow-hidden">
-                <Image
-                  src={internship.poster}
-                  alt={`${internship.hiringOrganization} logo`}
-                  width={80}
-                  height={80}
-                  className="w-full h-full object-fit"
-                />
-              </div>
-            </div>
-          )}
+    <div className="min-h-screen w-full bg-white text-slate-900 font-sans md:bg-[#f8f9fa]">
 
-          {/* Title, Organization and Apply Button */}
-          <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div className="min-w-0">
-              <h1 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">{internship.title}</h1>
-              <div className="flex items-center gap-2 text-sm sm:text-lg text-gray-700">
-                <Building2 className="w-4 h-4 hidden sm:block" />
-                <span>{internship.hiringOrganization}</span>
-              </div>
-            </div>
-
-            {/* Buttons Group */}
-            <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-              {/* Apply Button */}
-              {internship.link && (
-                <Link href={`${internship.link}${internship.link.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=internship_detail&utm_campaign=internship_apply`} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
-                  <Button variant="outline" className="w-full sm:w-auto px-6 py-2 border-orange-500 text-orange-600 hover:bg-orange-50 font-medium">
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Apply
-                  </Button>
-                </Link>
-              )}
-
-              {/* Smart Apply Button */}
-              {session?.user && (
-                <Button
-                  onClick={() => setSmartApplyOpen(true)}
-                  className="bg-orange-500 text-white hover:bg-orange-600 font-bold w-full sm:w-auto px-6 py-2 flex items-center gap-2"
-                >
-                  Smart Apply <Sparkles className="w-4 h-4 ml-1" />
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Location */}
-        {internship.location && (
-          <div className="flex items-center gap-2 mb-4">
-            <MapPin className="w-4 h-4 text-black" />
-            <span className="text-sm font-medium line-clamp-1">{internship.location}</span>
-          </div>
-        )}
-
-        {/* Type and Timing Badges */}
-        <div className="flex gap-2">
-          {internship.type && (
-            <Badge
-              className={`${getTypeColor(internship.type)} text-xs sm:text-sm`}
-            >
-              {internship.type?.charAt(0).toUpperCase() + internship.type?.slice(1).replace(/[_-]/g, " ")}
-            </Badge>
-          )}
-          {internship.timing && (
-            <Badge
-              className={`${getTimingColor(internship.timing)} text-xs sm:text-sm`}
-            >
-              {internship.timing?.charAt(0).toUpperCase() + internship.timing?.slice(1).replace(/[_-]/g, " ")}
-            </Badge>
-          )}
-        </div>
-
-        {/* Share Dialog */}
-        <Dialog open={shareDialogOpen} onOpenChange={handleShareDialogOpenChange}>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setShareDialogOpen(true);
-            }}
-            className="absolute bottom-5 right-6 p-1.5 sm:p-2 rounded-full transition-colors cursor-pointer"
-            aria-label="Share"
-          >
-            <Share2 className="w-4 h-4 sm:w-5 sm:h-5 text-black hover:text-orange-500" />
+      {/* ============================================================
+          MOBILE LAYOUT (hidden on md+)
+      ============================================================ */}
+      <div className="md:hidden pb-20 bg-[#f8f9fa]">
+        <div className="flex items-center justify-between px-5 py-4 bg-[#f8f9fa] sticky top-0 z-10">
+          <button onClick={() => router.back()} className="p-1 -ml-1 text-slate-800 active:scale-95 transition-all w-8 flex justify-start">
+            <ArrowLeft className="w-5 h-5" />
           </button>
-          <DialogContent className="max-w-[90vw] sm:max-w-md">
-            <DialogTitle className="sr-only">Share {internship.title}</DialogTitle>
-            <DialogDescription className="sr-only">Share this internship via social media or copy the link</DialogDescription>
-            <ShareDialog
-              shareUrl={shareUrl}
-              title={internship.title}
-              onCopy={handleCopy}
-            />
-
-          </DialogContent>
-        </Dialog>
-
-        {/* Smart Apply Modal */}
-        <ApplyModal
-          isOpen={smartApplyOpen}
-          onClose={() => setSmartApplyOpen(false)}
-          opportunity={internship ? mapInternshipToApplyOpportunity(internship) : null}
-        />
-      </div >
-
-      {/* Description */}
-      {
-        internship.description && (
-          <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
-            <h2 className="font-semibold mb-4 text-lg sm:text-xl">Description</h2>
-            <div className="prose max-w-none text-black text-sm sm:text-base">
-              {typeof internship.description === "string" ? (
-                <p className="whitespace-pre-wrap">{internship.description}</p>
-              ) : (
-                internship.description
-              )}
-            </div>
-          </div>
-        )
-      }
-
-      {/* Eligibility, Experience & Internship Details */}
-      {
-        (internship.eligibility && internship.eligibility.length > 0) || internship.experience || internship.type || internship.timing || typeof internship.stipend === "number" ? (
-          <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
-            <h2 className="text-lg font-semibold mb-4 sm:text-xl">More Information</h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Internship Type */}
-              {internship.type && (
-                <div>
-                  <h2 className="text-sm font-semibold mb-2 sm:text-lg">Internship Type</h2>
-                  <p className="text-sm sm:text-base text-black">
-                    {internship.type?.charAt(0).toUpperCase() + internship.type?.slice(1).replace(/-/g, " ")}
-                  </p>
-                </div>
-              )}
-
-              {/* Internship Timing */}
-              {internship.timing && (
-                <div>
-                  <h2 className="font-semibold mb-2 text-sm sm:text-lg">Internship Timing</h2>
-                  <p className="text-sm sm:text-base text-black">
-                    {internship.timing?.charAt(0).toUpperCase() + internship.timing?.slice(1).replace(/-/g, " ")}
-                  </p>
-                </div>
-              )}
-
-              {/* Stipend */}
-              {typeof internship.stipend === "number" && (
-                <div>
-                  <h2 className="font-semibold mb-2 text-sm sm:text-lg">Stipend</h2>
-                  <p className="text-sm sm:text-base text-black flex items-center gap-1">
-                    <IndianRupee className="w-4 h-4" />
-                    {internship.stipend.toLocaleString()}
-                  </p>
-                </div>
-              )}
-
-              {/* Experience */}
-              {internship.experience && (
-                <div>
-                  <h2 className="font-semibold mb-2 text-sm sm:text-lg">Experience Required</h2>
-                  <p className="text-sm sm:text-base text-black">
-                    {internship.experience}
-                  </p>
-                </div>
-              )}
-
-              {/* Duration */}
-              {internship.duration && (
-                <div>
-                  <h2 className="text-sm font-semibold mb-2 sm:text-lg">Internship Duration</h2>
-                  <p className="text-sm sm:text-base text-black">
-                    {internship.duration}
-                  </p>
-                </div>
-              )}
-
-              {/* Deadline */}
-              {internship.deadline && (
-                <div>
-                  <h2 className="text-sm font-semibold mb-2 sm:text-lg">Deadline</h2>
-                  <p className="text-sm sm:text-base text-black">
-                    {new Date(internship.deadline).toLocaleDateString('en-IN', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric'
-                    })}
-                  </p>
-                </div>
-              )}
-
-              {/* Tags */}
-              {internship.tags && internship.tags.length > 0 && (
-                <div className="sm:col-span-2">
-                  <h2 className="font-semibold mb-2 text-sm sm:text-lg">Tags</h2>
-                  <div className="flex flex-wrap gap-2">
-                    {internship.tags.map((tag, index) => (
-                      <Badge
-                        key={index}
-                        className="border border-gray-300 bg-white text-black text-xs sm:text-sm"
-                      >
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Eligibility */}
-              {internship.eligibility && internship.eligibility.length > 0 && (
-                <div className="sm:col-span-2">
-                  <h2 className="font-semibold mb-2 text-sm sm:text-lg">Eligibility</h2>
-                  <div className="flex flex-wrap gap-2">
-                    {internship.eligibility.map((item, index) => (
-                      <Badge
-                        key={index}
-                        className="border border-gray-300 bg-white text-black text-xs sm:text-sm"
-                      >
-                        {item}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : null
-      }
-
-      {/* Contact Information */}
-      {(internship.hiringManager || internship.user) && (
-        <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4 sm:text-xl">Contact Information</h2>
-          <div className="space-y-3">
-            {internship.hiringManager && (
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm sm:text-lg">Hiring Manager:</span> <span className="text-sm sm:text-base">{internship.hiringManager}</span>
-              </div>
-            )}
-            {internship.user && (
-              <div className="flex items-center gap-2">
-
-                <span className="font-semibold text-sm sm:text-lg">Posted by:</span>   <div className="w-8 h-8 rounded-full border-2 border-amber-500 bg-gray-300 flex items-center justify-center">
-                  {internship.user.image ? (
-                    <Image
-                      src={internship.user.image}
-                      alt={internship.user.name}
-                      width={32}
-                      height={32}
-                      className="rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-sm text-black">
-                      {internship.user.name?.split(" ").filter(Boolean).map(n => n[0]).join("").slice(0, 2) || "?"}
-                    </span>
-                  )}
-                </div>
-                <span className="text-sm sm:text-base">{internship.user.name}</span>
-              </div>
-            )}
-            {internship.hiringManagerEmail && (
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm sm:text-lg">Email Id:</span> <span className="text-sm sm:text-base">{internship.hiringManagerEmail}</span>
-              </div>
-            )}
-          </div>
+          <h1 className="text-[16px] font-extrabold text-slate-900 tracking-tight">Internship Detail</h1>
+          <button onClick={() => setShareDialogOpen(true)} className="p-1 -mr-1 text-slate-800 active:scale-95 transition-all w-8 flex justify-end">
+            <Share2 className="w-5 h-5" />
+          </button>
         </div>
-      )}
-    </div >
+
+        <InternshipHero internship={internship} />
+        
+        <div className="px-5 pb-2 -mt-2">
+          <InternshipTabContent activeTab="description" internship={internship} />
+        </div>
+        
+        <InternshipStickyFooter
+          internship={internship}
+          isBookmarked={isBookmarked}
+          session={session}
+          handleBookmarkClick={handleBookmarkClick}
+          handleCalendarClick={handleCalendarClick}
+          onSmartApplyClick={() => setSmartApplyOpen(true)}
+        />
+      </div>
+
+      {/* ============================================================
+          DESKTOP LAYOUT (hidden on mobile, visible on md+)
+      ============================================================ */}
+      <div className="hidden md:block">
+        <div className="mx-auto max-w-[1000px] px-4 pt-10">
+
+          <InternshipDesktopHeader
+            internship={internship}
+            session={session}
+            isBookmarked={isBookmarked}
+            handleBookmarkClick={handleBookmarkClick}
+            handleCalendarClick={handleCalendarClick}
+            onSmartApplyClick={() => setSmartApplyOpen(true)}
+          />
+
+          {/* Desktop Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            {/* Left: Description */}
+            <div className="lg:col-span-2">
+              <div className="text-slate-600 leading-relaxed text-[15px] max-w-[650px] space-y-4">
+                {typeof internship.description === "string" ? (
+                  <p className="whitespace-pre-wrap">
+                    {internship.description.length > 500
+                      ? `${internship.description.substring(0, 500)}...`
+                      : internship.description}
+                  </p>
+                ) : (
+                  internship.description || <p>No description provided.</p>
+                )}
+
+                {internship.tags && internship.tags.length > 0 && (
+                  <div className="mt-8">
+                    <h4 className="font-bold text-slate-800 mb-4 block">Tags:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {internship.tags
+                        .filter((tag) => !["remote", "onsite", "hybrid"].includes(tag.toLowerCase()))
+                        .map((tag, i) => (
+                          <span key={i} className="bg-slate-100 text-slate-600 px-3 py-1.5 rounded-full text-[13px] font-semibold">
+                            {toTitleCase(tag)}
+                          </span>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Desktop Disclaimer */}
+              <div className="mt-12 pt-8 border-t border-slate-200">
+                <div className="space-y-4 text-[14px] text-slate-700">
+                  <div className="flex items-start gap-3">
+                    <Info className="w-4 h-4 text-slate-600 shrink-0 mt-0.5" />
+                    <p>The data on this page gets updated in every 15 minutes.</p>
+                  </div>
+                  <div className="flex items-start gap-3 flex-wrap">
+                    <Info className="w-4 h-4 text-slate-600 shrink-0 mt-0.5" />
+                    <p className="flex-1">
+                      This opportunity has been listed by {toTitleCase(internship.hiringOrganization)}. FTB is not liable for any content mentioned in this opportunity or the process followed by the organizers for this opportunity.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <InternshipDesktopSidebar internship={internship} handleOpenChat={handleOpenChat} />
+          </div>
+
+        </div>
+      </div>
+
+      {/* Share Dialog */}
+      <Dialog open={shareDialogOpen} onOpenChange={handleShareDialogOpenChange}>
+        <DialogContent className="max-w-[90vw] sm:max-w-md">
+          <DialogTitle className="sr-only">Share {internship.title}</DialogTitle>
+          <DialogDescription className="sr-only">Share this internship via social media or copy the link</DialogDescription>
+          <ShareDialog shareUrl={shareUrl} title={internship.title} onCopy={handleCopy} onShare={handleShare} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Smart Apply Modal */}
+      <ApplyModal
+        isOpen={smartApplyOpen}
+        onClose={() => setSmartApplyOpen(false)}
+        opportunity={internship ? mapInternshipToApplyOpportunity(internship) : null}
+      />
+    </div>
   );
 }

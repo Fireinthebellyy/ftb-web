@@ -8,7 +8,12 @@ import { useSession, useInvalidateSession } from "@/hooks/use-session";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { Righteous } from "next/font/google";
-import { EllipsisVertical, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
+import posthog from "posthog-js";
+import {
+  isAbsoluteOrLocalUrl,
+  tryGetStoragePublicUrl,
+} from "@/lib/storage/public-url";
 
 function useLogout() {
   const router = useRouter();
@@ -60,7 +65,6 @@ export default function Navbar() {
       ["/profile", "Profile"],
       ["/admin", "Admin"],
       ["/login", "Log in"],
-      ["/signup", "Sign up"],
     ];
 
     const matchedRoute = routeLabels.find(
@@ -128,7 +132,7 @@ export default function Navbar() {
       (document.activeElement === lastItemRef.current
         ? firstItemRef.current
         : ((document.activeElement
-          ?.nextElementSibling as HTMLButtonElement | null) ??
+            ?.nextElementSibling as HTMLButtonElement | null) ??
           firstItemRef.current)
       )?.focus();
       return;
@@ -138,7 +142,7 @@ export default function Navbar() {
       (document.activeElement === firstItemRef.current
         ? lastItemRef.current
         : ((document.activeElement
-          ?.previousElementSibling as HTMLButtonElement | null) ??
+            ?.previousElementSibling as HTMLButtonElement | null) ??
           lastItemRef.current)
       )?.focus();
       return;
@@ -176,6 +180,10 @@ export default function Navbar() {
     return letters || "U";
   }, [user]);
 
+  const avatarImageSrc = user?.user?.image
+    ? tryGetStoragePublicUrl("avatar-images", user.user.image)
+    : null;
+
   if (pathname === "/onboarding") {
     return null;
   }
@@ -185,7 +193,7 @@ export default function Navbar() {
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="sticky top-0 z-50 flex-none bg-gray-50 backdrop-blur-sm"
+      className="fixed top-0 right-0 left-0 z-50 flex-none border-b border-gray-200/50 bg-neutral-50/80 backdrop-blur-md"
     >
       <div className="relative container mx-auto grid h-16 max-w-7xl grid-cols-[1fr_auto] items-center px-4 md:grid-cols-3 lg:px-4 xl:px-6">
         <div className="flex items-center justify-start pl-2 md:pl-4">
@@ -214,47 +222,52 @@ export default function Navbar() {
         <nav className="hidden justify-center gap-4 sm:gap-6 md:flex">
           <Link
             href="/opportunities"
-            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/opportunities"
-              ? "text-primary after:w-full"
-              : "text-neutral-800 after:w-0"
-              }`}
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
+              pathname === "/opportunities"
+                ? "text-primary after:w-full"
+                : "text-neutral-800 after:w-0"
+            }`}
           >
             Opportunities
           </Link>
 
           <Link
             href="/tracker"
-            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/tracker"
-              ? "text-primary after:w-full"
-              : "text-neutral-800 after:w-0"
-              }`}
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
+              pathname === "/tracker"
+                ? "text-primary after:w-full"
+                : "text-neutral-800 after:w-0"
+            }`}
           >
             Tracker
           </Link>
           <Link
             href="/toolkit"
-            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/toolkit"
-              ? "text-primary after:w-full"
-              : "text-neutral-800 after:w-0"
-              }`}
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
+              pathname === "/toolkit"
+                ? "text-primary after:w-full"
+                : "text-neutral-800 after:w-0"
+            }`}
           >
             Toolkit
           </Link>
           <Link
             href="/ungatekeep"
-            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/ungatekeep"
-              ? "text-primary after:w-full"
-              : "text-neutral-800 after:w-0"
-              }`}
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
+              pathname === "/ungatekeep"
+                ? "text-primary after:w-full"
+                : "text-neutral-800 after:w-0"
+            }`}
           >
             Ungatekeep
           </Link>
           <Link
             href="/intern"
-            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${pathname === "/intern"
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
+              pathname === "/intern"
                 ? "text-primary after:w-full"
                 : "text-neutral-800 after:w-0"
-              }`}
+            }`}
           >
             Internships
           </Link>
@@ -299,28 +312,14 @@ export default function Navbar() {
                 </Link>
               )}
               <div className="relative flex items-center">
-                {user.user?.image ? (
-                  <div className="rounded-full border-2 border-white shadow-lg">
-                    <Image
-                      src={user.user.image}
-                      alt={user.user.name || "User avatar"}
-                      className="size-6 rounded-full object-cover"
-                      width={28}
-                      height={28}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex size-6 items-center justify-center rounded-full border-2 border-neutral-300 bg-neutral-200 text-xs font-semibold text-neutral-600 uppercase">
-                    {avatarFallback}
-                  </div>
-                )}
                 <button
                   ref={triggerRef}
                   type="button"
+                  aria-label="Open account menu"
                   aria-haspopup="menu"
                   aria-expanded={menuOpen}
                   aria-controls={menuId}
-                  className="hidden cursor-pointer rounded-full focus:ring-2 focus:ring-neutral-500 focus:outline-none md:block"
+                  className="cursor-pointer rounded-full focus:ring-2 focus:ring-neutral-500 focus:outline-none"
                   onClick={() => setMenuOpen((v) => !v)}
                   onKeyDown={(e) => {
                     if (
@@ -334,7 +333,21 @@ export default function Navbar() {
                     }
                   }}
                 >
-                  <EllipsisVertical className="ml-1 size-4 text-neutral-600" />
+                  {avatarImageSrc && isAbsoluteOrLocalUrl(avatarImageSrc) ? (
+                    <div className="rounded-full border-2 border-white shadow-lg">
+                      <Image
+                        src={avatarImageSrc}
+                        alt={user.user.name || "User avatar"}
+                        className="size-6 rounded-full object-cover"
+                        width={28}
+                        height={28}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex size-6 items-center justify-center rounded-full border-2 border-neutral-300 bg-neutral-200 text-xs font-semibold text-neutral-600 uppercase">
+                      {avatarFallback}
+                    </div>
+                  )}
                 </button>
 
                 {menuOpen && (
@@ -386,11 +399,15 @@ export default function Navbar() {
             </div>
           ) : (
             <div className="flex gap-2">
-              <Button asChild variant="outline" size="sm">
-                <Link href="/login">Log in</Link>
-              </Button>
-              <Button asChild size="sm" variant="default">
-                <Link href="/signup">Get Started</Link>
+              <Button
+                asChild
+                size="sm"
+                variant="default"
+                onClick={() => {
+                  posthog.capture("navbar_signup_clicked");
+                }}
+              >
+                <Link href="/login">Get Started</Link>
               </Button>
             </div>
           )}
@@ -453,10 +470,11 @@ export default function Navbar() {
               <Link
                 href="/"
                 onClick={() => setIsOpen(false)}
-                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/"
-                  ? "text-primary font-bold after:w-full"
-                  : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                  }`}
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
+                  pathname === "/"
+                    ? "text-primary font-bold after:w-full"
+                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                }`}
               >
                 Home
               </Link>
@@ -465,10 +483,11 @@ export default function Navbar() {
               <Link
                 href="/opportunities"
                 onClick={() => setIsOpen(false)}
-                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/opportunities"
-                  ? "text-primary font-bold after:w-full"
-                  : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                  }`}
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
+                  pathname === "/opportunities"
+                    ? "text-primary font-bold after:w-full"
+                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                }`}
               >
                 Opportunities
               </Link>
@@ -477,10 +496,11 @@ export default function Navbar() {
               <Link
                 href="/tracker"
                 onClick={() => setIsOpen(false)}
-                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/tracker"
-                  ? "text-primary font-bold after:w-full"
-                  : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                  }`}
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
+                  pathname === "/tracker"
+                    ? "text-primary font-bold after:w-full"
+                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                }`}
               >
                 Tracker
               </Link>
@@ -489,10 +509,11 @@ export default function Navbar() {
               <Link
                 href="/ungatekeep"
                 onClick={() => setIsOpen(false)}
-                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/ungatekeep"
-                  ? "text-primary font-bold after:w-full"
-                  : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                  }`}
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
+                  pathname === "/ungatekeep"
+                    ? "text-primary font-bold after:w-full"
+                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                }`}
               >
                 Ungatekeep
               </Link>
@@ -501,10 +522,11 @@ export default function Navbar() {
               <Link
                 href="/intern"
                 onClick={() => setIsOpen(false)}
-                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/intern"
+                className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
+                  pathname === "/intern"
                     ? "text-primary font-bold after:w-full"
                     : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                  }`}
+                }`}
               >
                 Internships
               </Link>
@@ -515,10 +537,11 @@ export default function Navbar() {
                 <Link
                   href="/profile"
                   onClick={() => setIsOpen(false)}
-                  className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${pathname === "/profile"
-                    ? "text-primary font-bold after:w-full"
-                    : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
-                    }`}
+                  className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
+                    pathname === "/profile"
+                      ? "text-primary font-bold after:w-full"
+                      : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                  }`}
                 >
                   Profile
                 </Link>

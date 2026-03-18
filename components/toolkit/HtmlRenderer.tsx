@@ -74,7 +74,7 @@ export default function HtmlRenderer({
     <div
       ref={contentRef}
       className={cn(
-        "max-w-none text-base text-gray-800",
+        "max-w-none min-w-0 overflow-hidden text-base break-words text-gray-800",
         "[&_*]:leading-relaxed",
         "[&_p]:mb-3",
         "[&_h1]:mb-4 [&_h1]:text-3xl [&_h1]:font-semibold [&_h1]:text-gray-900",
@@ -88,6 +88,8 @@ export default function HtmlRenderer({
         "[&_code]:rounded-md [&_code]:bg-orange-50 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-sm [&_code]:text-orange-600",
         "[&_pre]:mb-3 [&_pre]:rounded-lg [&_pre]:bg-gray-900 [&_pre]:p-4 [&_pre]:text-gray-100 [&_pre_code]:bg-transparent [&_pre_code]:p-0",
         "[&_img]:rounded-lg [&_img]:shadow-md",
+        "[&_div]:break-words [&_p]:break-words [&_span]:break-words",
+        "[&_*]:whitespace-normal",
         className
       )}
     >

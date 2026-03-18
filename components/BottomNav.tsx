@@ -3,20 +3,22 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, Flame, Megaphone, Target, User } from "lucide-react";
+import { Briefcase, Flame, ListVideo, Megaphone, Target } from "lucide-react";
 
 const navItems = [
   { href: "/opportunities", label: "Opportunities", icon: Briefcase },
   { href: "/intern", label: "Internships", icon: Flame },
+  { href: "/toolkit", label: "Toolkit", icon: ListVideo },
   { href: "/ungatekeep", label: "Ungatekeep", icon: Megaphone },
   { href: "/tracker", label: "Tracker", icon: Target },
-  { href: "/profile", label: "Profile", icon: User },
 ];
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const normalizedPathname =
+    pathname === "/" ? "/" : pathname.replace(/\/+$/, "");
 
-  if (pathname === "/onboarding") {
+  if (pathname === "/onboarding" || pathname.startsWith("/intern/")) {
     return null;
   }
 
@@ -29,14 +31,16 @@ export default function BottomNav() {
     >
       <div className="flex h-[56px] items-center justify-around px-1">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive =
+            normalizedPathname === item.href ||
+            normalizedPathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
 
           return (
             <Link
               key={item.href}
               href={item.href}
-              className="relative flex h-full w-16 flex-col items-center justify-center gap-0.5"
+              className="group relative flex h-full w-16 flex-col items-center justify-center gap-0.5"
               aria-label={item.label}
             >
               <motion.div
@@ -46,16 +50,18 @@ export default function BottomNav() {
                   y: isActive ? -1 : 0,
                 }}
                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                className={`flex h-6 w-6 items-center justify-center rounded-full transition-colors duration-200 ${isActive
-                  ? "bg-primary/10"
-                  : "text-neutral-700 group-hover:bg-neutral-100 group-hover:text-neutral-600"
-                  }`}
+                className={`flex h-6 w-6 items-center justify-center rounded-full transition-colors duration-200 ${
+                  isActive
+                    ? "bg-primary/10"
+                    : "text-neutral-700 group-hover:bg-neutral-100 group-hover:text-neutral-600"
+                }`}
               >
                 <Icon
                   size={16}
                   strokeWidth={2.5}
-                  className={`transition-colors duration-200 ${isActive ? "text-primary" : ""
-                    }`}
+                  className={`transition-colors duration-200 ${
+                    isActive ? "text-primary" : ""
+                  }`}
                 />
               </motion.div>
 
@@ -66,8 +72,9 @@ export default function BottomNav() {
                   y: isActive ? 0 : 1,
                 }}
                 transition={{ duration: 0.2 }}
-                className={`text-[9px] font-bold transition-colors duration-200 ${isActive ? "text-primary" : "text-neutral-400"
-                  }`}
+                className={`text-[9px] font-bold transition-colors duration-200 ${
+                  isActive ? "text-primary" : "text-neutral-400"
+                }`}
               >
                 {item.label}
               </motion.span>

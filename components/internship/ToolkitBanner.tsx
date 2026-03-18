@@ -23,15 +23,17 @@ export default function ToolkitBanner() {
   }
 
   return (
-    <div className="mb-1 flex w-full flex-col space-y-2">
-      <PageBannerCarousel placement="internship" className="w-full" />
+    <>
+      <div className="mb-0">
+        <PageBannerCarousel placement="internship" className="w-full" />
+      </div>
 
-      {/* Premium Toolkits Section */}
+      {/* Premium Toolkits Section - Sticky on all views, pointer-events pass-through */}
       {toolkits.length > 0 && (
-        <div className="pt-1">
+        <div className="sticky top-16 z-30 bg-gray-50 pt-3 pb-1 -mx-4 px-4 lg:-mx-2 lg:px-2 mb-3 lg:mb-0 pointer-events-none">
           {/* Horizontal Scrolling List */}
           <div
-            className="hide-scrollbar flex snap-x gap-3 overflow-x-auto pb-3"
+            className="hide-scrollbar flex snap-x gap-3 overflow-x-auto pb-2 pointer-events-auto"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {toolkits.map((toolkit) => (
@@ -57,16 +59,13 @@ export default function ToolkitBanner() {
                 )}
 
                 {/* Gradient Overlay for text readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
 
                 {/* Content */}
                 <div className="absolute right-0 bottom-0 left-0 flex items-end justify-between p-2 text-white sm:p-2.5">
                   <div className="flex flex-col">
                     <span className="mb-0.5 line-clamp-2 text-[11px] leading-tight font-semibold sm:text-xs">
                       {toolkit.title}
-                    </span>
-                    <span className="text-[9px] text-gray-200 sm:text-[10px]">
-                      ₹{toolkit.price.toLocaleString("en-IN")}
                     </span>
                   </div>
                   <ArrowRight className="ml-1 h-3 w-3 shrink-0 text-white sm:h-3.5 sm:w-3.5" />
@@ -76,6 +75,6 @@ export default function ToolkitBanner() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

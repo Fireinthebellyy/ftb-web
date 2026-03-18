@@ -12,6 +12,7 @@ import {
   and,
   desc,
   eq,
+  gt,
   gte,
   ilike,
   inArray,
@@ -108,18 +109,18 @@ export async function GET(req: NextRequest) {
     const searchTerm = searchParam ? searchParam.trim() : "";
     const rawTypes = typesParam
       ? typesParam
-        .split(",")
-        .map((value) => value.trim().toLowerCase())
-        .filter(Boolean)
+          .split(",")
+          .map((value) => value.trim().toLowerCase())
+          .filter(Boolean)
       : [];
     const validTypes = rawTypes.filter((type) =>
       canonicalTypes.includes(type as (typeof canonicalTypes)[number])
     );
     const rawTags = tagsParam
       ? tagsParam
-        .split(",")
-        .map((value) => value.trim().toLowerCase())
-        .filter(Boolean)
+          .split(",")
+          .map((value) => value.trim().toLowerCase())
+          .filter(Boolean)
       : [];
     const location = locationParam ? locationParam.trim() : "";
     const minStipend = Number.isNaN(minStipendParam)
@@ -177,6 +178,23 @@ export async function GET(req: NextRequest) {
     if (maxStipend !== undefined) {
       conditions.push(lte(internships.stipend, maxStipend));
     }
+
+    // Filter: Show internships created in last 5 days OR with future deadline
+    const fiveDaysAgo = new Date();
+    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+    fiveDaysAgo.setHours(0, 0, 0, 0);
+
+    conditions.push(
+      or(
+        // Created within last 5 days
+        gte(internships.createdAt, fiveDaysAgo),
+        // OR has a future deadline (deadline > today)
+        and(
+          isNull(internships.deletedAt),
+          gt(internships.deadline, sql`CURRENT_DATE`)
+        )
+      )
+    );
 
     const filters =
       conditions.length === 1 ? conditions[0] : and(...conditions);

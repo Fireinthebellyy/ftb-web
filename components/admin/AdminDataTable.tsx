@@ -37,6 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 interface AdminDataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -47,6 +48,7 @@ interface AdminDataTableProps<TData, TValue> {
   toolbarActions?: ReactNode;
   pageSize?: number;
   tableId?: string;
+  stickyColumnIds?: string[];
 }
 
 const DEFAULT_VISIBILITY_STATE: VisibilityState = {};
@@ -70,6 +72,7 @@ export function AdminDataTable<TData, TValue>({
   toolbarActions,
   pageSize = 10,
   tableId,
+  stickyColumnIds = [],
 }: AdminDataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -217,38 +220,45 @@ export function AdminDataTable<TData, TValue>({
                 key={headerGroup.id}
                 className="border-border/80 bg-muted/35 hover:bg-muted/35"
               >
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="text-foreground/90 h-11 px-4 first:pl-6"
-                  >
-                    {header.isPlaceholder ? null : header.column.getCanSort() ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="-ml-2 h-8 gap-1 px-2"
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        {flexRender(
+                {headerGroup.headers.map((header) => {
+                  const isSticky = stickyColumnIds.includes(header.column.id);
+                  return (
+                    <TableHead
+                      key={header.id}
+                      className={cn(
+                        "text-foreground/90 h-11 px-4 first:pl-6",
+                        isSticky &&
+                          "bg-muted sticky right-0 z-10 border-l shadow-sm"
+                      )}
+                    >
+                      {header.isPlaceholder ? null : header.column.getCanSort() ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="-ml-2 h-8 gap-1 px-2"
+                          onClick={header.column.getToggleSortingHandler()}
+                        >
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                          {header.column.getIsSorted() === "asc" ? (
+                            <ArrowUp className="h-3.5 w-3.5" />
+                          ) : header.column.getIsSorted() === "desc" ? (
+                            <ArrowDown className="h-3.5 w-3.5" />
+                          ) : (
+                            <ArrowUpDown className="h-3.5 w-3.5 opacity-60" />
+                          )}
+                        </Button>
+                      ) : (
+                        flexRender(
                           header.column.columnDef.header,
                           header.getContext()
-                        )}
-                        {header.column.getIsSorted() === "asc" ? (
-                          <ArrowUp className="h-3.5 w-3.5" />
-                        ) : header.column.getIsSorted() === "desc" ? (
-                          <ArrowDown className="h-3.5 w-3.5" />
-                        ) : (
-                          <ArrowUpDown className="h-3.5 w-3.5 opacity-60" />
-                        )}
-                      </Button>
-                    ) : (
-                      flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )
-                    )}
-                  </TableHead>
-                ))}
+                        )
+                      )}
+                    </TableHead>
+                  );
+                })}
               </TableRow>
             ))}
           </TableHeader>
@@ -264,14 +274,24 @@ export function AdminDataTable<TData, TValue>({
                       : "bg-muted/20 hover:bg-muted/40 data-[state=selected]:bg-muted/55"
                   }
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="px-4 py-3 first:pl-6">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
+                  {row.getVisibleCells().map((cell) => {
+                    const isSticky = stickyColumnIds.includes(cell.column.id);
+                    return (
+                      <TableCell
+                        key={cell.id}
+                        className={cn(
+                          "px-4 py-3 first:pl-6",
+                          isSticky &&
+                            "bg-background sticky right-0 z-10 border-l shadow-sm"
+                        )}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               ))
             ) : (

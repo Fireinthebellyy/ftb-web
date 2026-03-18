@@ -6,21 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 import { OpportunityPostProps } from "@/types/interfaces";
 import { ExpandableDescription } from "./ExpandableDescription";
+import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
 interface OpportunityHeaderProps {
   opportunity: OpportunityPostProps["opportunity"];
   isExpanded?: boolean;
-}
-
-function getTypeColor(type?: string): string {
-  const colors: Record<string, string> = {
-    hackathon: "bg-blue-100 text-blue-800",
-    grant: "bg-green-100 text-green-800",
-    competition: "bg-purple-100 text-purple-800",
-    ideathon: "bg-orange-100 text-orange-800",
-    others: "bg-gray-100 text-gray-800",
-  };
-  return colors[type?.toLowerCase() || "others"] || colors.others;
 }
 
 export function OpportunityHeader({
@@ -36,25 +26,12 @@ export function OpportunityHeader({
     startDate,
     endDate,
     user,
-    type,
     createdAt,
     publishAt,
   } = opportunity;
 
-  const primaryType = Array.isArray(type) ? type[0] : type;
-
   return (
     <div className="relative px-3 py-2 sm:px-4">
-      <div className="absolute -top-0.5 right-0 z-10">
-        <Badge
-          className={`${getTypeColor(
-            primaryType
-          )} rounded-tl-none rounded-br-none px-2 py-1 text-xs text-[10px] font-medium sm:text-xs`}
-        >
-          {primaryType?.charAt(0).toUpperCase() + primaryType?.slice(1)}
-        </Badge>
-      </div>
-
       <h2 className="mb-2 line-clamp-1 truncate text-base leading-tight font-bold text-gray-900 sm:text-lg">
         {title}
       </h2>
@@ -87,14 +64,14 @@ export function OpportunityHeader({
           <div className="flex gap-2 text-xs text-gray-600 sm:flex-row sm:flex-wrap sm:gap-4">
             {location && (
               <div className="flex items-center gap-1">
-                <MapPin className="h-3.5 w-3.5 flex-shrink-0 sm:h-4 sm:w-4" />
+                <MapPin className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
                 <span className="truncate text-xs">{location}</span>
               </div>
             )}
 
             {organiserInfo && (
               <div className="flex items-center gap-1">
-                <Building2 className="h-3.5 w-3.5 flex-shrink-0 sm:h-4 sm:w-4" />
+                <Building2 className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
                 <span className="truncate text-xs">{organiserInfo}</span>
               </div>
             )}
@@ -123,13 +100,13 @@ export function OpportunityHeader({
       )}
 
       <header className="flex items-end space-x-2 pb-2 sm:items-center sm:pb-3">
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           {user &&
           user.image &&
           !user.image.includes("https://media.licdn.com") ? (
             <div className="size-4 overflow-hidden rounded-full border border-gray-100 shadow sm:size-5">
               <Image
-                src={user.image}
+                src={tryGetStoragePublicUrl("avatar-images", user.image)}
                 alt={user.name}
                 className="h-full w-full rounded-full object-cover"
                 width={30}

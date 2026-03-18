@@ -29,10 +29,12 @@ export async function GET(
         price: toolkits.price,
         originalPrice: toolkits.originalPrice,
         coverImageUrl: toolkits.coverImageUrl,
+        bannerImageUrl: toolkits.bannerImageUrl,
         videoUrl: toolkits.videoUrl,
         contentUrl: toolkits.contentUrl,
         category: toolkits.category,
         highlights: toolkits.highlights,
+        testimonials: toolkits.testimonials,
         totalDuration: toolkits.totalDuration,
         lessonCount: toolkits.lessonCount,
         isActive: toolkits.isActive,
@@ -73,6 +75,11 @@ export async function GET(
       getSessionCached(requestHeaders),
     ]);
 
+    const toolkitWithDerivedLessonCount = {
+      ...toolkit,
+      lessonCount: contentItemsResult.length,
+    };
+
     let hasPurchased = false;
     let completedItemIds: string[] = [];
 
@@ -108,7 +115,7 @@ export async function GET(
     }
 
     return NextResponse.json({
-      toolkit,
+      toolkit: toolkitWithDerivedLessonCount,
       contentItems: contentItemsResult,
       hasPurchased,
       completedItemIds,

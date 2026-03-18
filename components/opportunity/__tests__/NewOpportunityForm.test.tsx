@@ -3,26 +3,27 @@ import { renderHook } from "@testing-library/react";
 import axios from "axios";
 import { toast } from "sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  createOpportunityStorage,
-} from "@/lib/appwrite";
+import { uploadFileViaSignedUrl } from "@/lib/storage/client";
 import { useOpportunitySubmit } from "../hooks/useOpportunitySubmit";
 import { FormData } from "../schema";
 
 // Mock dependencies
 vi.mock("axios");
 vi.mock("sonner");
-vi.mock("@/lib/appwrite");
+vi.mock("@/lib/storage/client");
+
+const defaultAttachmentProps = {
+  attachmentFiles: [],
+  setAttachmentFiles: vi.fn(),
+  existingAttachments: [],
+  setRemovedAttachmentIds: vi.fn(),
+  removedAttachmentIds: [],
+};
 
 describe("useOpportunitySubmit", () => {
   const mockToast = {
     error: vi.fn(),
     success: vi.fn(),
-  };
-
-  const mockStorage = {
-    createFile: vi.fn(),
-    deleteFile: vi.fn(),
   };
 
   const queryClient = new QueryClient({
@@ -45,11 +46,11 @@ describe("useOpportunitySubmit", () => {
     (toast.success as ReturnType<typeof vi.fn>).mockImplementation(
       mockToast.success
     );
-    (createOpportunityStorage as ReturnType<typeof vi.fn>).mockReturnValue(
-      mockStorage
-    );
+    (uploadFileViaSignedUrl as ReturnType<typeof vi.fn>).mockResolvedValue({
+      key: "image-123",
+      publicUrl: "https://cdn.example.com/image-123",
+    });
     global.URL.revokeObjectURL = vi.fn();
-    vi.stubEnv("NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID", "test-bucket");
   });
 
   it("should successfully create a new opportunity without images", async () => {
@@ -66,6 +67,7 @@ describe("useOpportunitySubmit", () => {
           onOpportunityCreated,
           setRemovedImageIds,
           removedImageIds: [],
+          ...defaultAttachmentProps,
         }),
       { wrapper }
     );
@@ -94,13 +96,14 @@ describe("useOpportunitySubmit", () => {
     expect(mockAxiosPost).toHaveBeenCalledWith("/api/opportunities", {
       tags: ["tech", "remote"],
       images: undefined,
+      attachments: undefined,
       description: "Test description",
       location: "Remote",
       organiserInfo: "Test Organiser",
       title: "Test Opportunity",
       type: "internship",
       startDate: "2025-02-01T00:00:00.000Z",
-      endDate: "2025-02-28T00:00:00.000Z"
+      endDate: "2025-02-28T00:00:00.000Z",
     });
     expect(mockToast.success).toHaveBeenCalledWith(
       "Opportunity submitted successfully!"
@@ -110,14 +113,17 @@ describe("useOpportunitySubmit", () => {
 
   it("should successfully create a new opportunity with images", async () => {
     const mockFile = new File(["test"], "test.png", { type: "image/png" });
-    const files = [{
-      file: mockFile,
-      progress: 0,
-      uploading: false,
-      name: "test.png",
-      size: 1024,
-      preview: "blob:url"
-    }];
+    const files = [
+      {
+        file: mockFile,
+        progress: 0,
+        uploading: false,
+        name: "test.png",
+        size: 1024,
+        preview: "blob:url",
+        kind: "image" as const,
+      },
+    ];
     const setFiles = vi.fn();
 
     const { result } = renderHook(
@@ -129,6 +135,7 @@ describe("useOpportunitySubmit", () => {
           onOpportunityCreated: vi.fn(),
           setRemovedImageIds: vi.fn(),
           removedImageIds: [],
+          ...defaultAttachmentProps,
         }),
       { wrapper }
     );
@@ -146,30 +153,32 @@ describe("useOpportunitySubmit", () => {
       data: { id: "123", userRole: "admin" },
     });
 
-    mockStorage.createFile.mockResolvedValue({ $id: "image-123" });
-
     await result.current.onSubmit(formData);
 
-    expect(mockStorage.createFile).toHaveBeenCalled();
+    expect(uploadFileViaSignedUrl).toHaveBeenCalled();
     expect(mockAxiosPost).toHaveBeenCalledWith("/api/opportunities", {
       ...formData,
       startDate: undefined,
       endDate: undefined,
       tags: ["tech"],
       images: ["image-123"],
+      attachments: undefined,
     });
   });
 
   it("should handle image upload failure", async () => {
     const mockFile = new File(["test"], "test.png", { type: "image/png" });
-    const files = [{
-      file: mockFile,
-      progress: 0,
-      uploading: false,
-      name: "test.png",
-      size: 1024,
-      preview: "blob:url"
-    }];
+    const files = [
+      {
+        file: mockFile,
+        progress: 0,
+        uploading: false,
+        name: "test.png",
+        size: 1024,
+        preview: "blob:url",
+        kind: "image" as const,
+      },
+    ];
 
     const { result } = renderHook(
       () =>
@@ -180,11 +189,14 @@ describe("useOpportunitySubmit", () => {
           onOpportunityCreated: vi.fn(),
           setRemovedImageIds: vi.fn(),
           removedImageIds: [],
+          ...defaultAttachmentProps,
         }),
       { wrapper }
     );
 
-    mockStorage.createFile.mockRejectedValue(new Error("Upload failed"));
+    (uploadFileViaSignedUrl as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error("Upload failed")
+    );
 
     await result.current.onSubmit({
       title: "Test",
@@ -215,6 +227,7 @@ describe("useOpportunitySubmit", () => {
           onOpportunityCreated: vi.fn(),
           setRemovedImageIds: vi.fn(),
           removedImageIds: [],
+          ...defaultAttachmentProps,
         }),
       { wrapper }
     );
@@ -240,6 +253,7 @@ describe("useOpportunitySubmit", () => {
       endDate: undefined,
       tags: ["tech", "updated"],
       images: ["existing-1"],
+      attachments: [],
     });
     expect(mockToast.success).toHaveBeenCalledWith(
       "Opportunity updated successfully!"
@@ -256,6 +270,7 @@ describe("useOpportunitySubmit", () => {
           onOpportunityCreated: vi.fn(),
           setRemovedImageIds: vi.fn(),
           removedImageIds: [],
+          ...defaultAttachmentProps,
         }),
       { wrapper }
     );

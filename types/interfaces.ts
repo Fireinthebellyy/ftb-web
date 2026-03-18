@@ -5,6 +5,7 @@ export type Opportunity = {
   type: string;
   tags?: string[];
   images?: string[];
+  attachments?: string[];
   createdAt?: string;
   location?: string;
   organiserInfo?: string;
@@ -47,6 +48,45 @@ export type Internship = {
     role?: "user" | "member" | "admin";
   };
 };
+
+export interface InternshipData extends Omit<
+  Internship,
+  "tags" | "deadline" | "createdAt" | "user"
+> {
+  tags: string[];
+  deadline: string | null;
+  createdAt: string | null;
+  poster?: string | null;
+  eligibility?: string[];
+  hiringManagerEmail?: string | null;
+  contactEmail?: string | null;
+  postUrl?: string | null;
+  applyLink?: string | null;
+  companyDescription?: string | null;
+  website?: string | null;
+  user: {
+    id: string;
+    name: string;
+    image: string;
+    role: string;
+  };
+}
+
+// Flexible interface for ApplyModal
+export interface ApplyModalOpportunity {
+  id: number | string;
+  kind?: "internship" | "opportunity";
+  title: string;
+  company?: string;
+  hiringOrganization?: string;
+  organiserInfo?: string;
+  logo?: string;
+  poster?: string;
+  images?: string[];
+  skills?: string[];
+  tags?: string[];
+  [key: string]: unknown;
+}
 
 export type Task = {
   id: string;
@@ -106,11 +146,14 @@ export type UploadProgress = {
   progress: number;
 };
 
+export type FileKind = "image" | "pdf" | "ppt";
+
 export interface FileItem {
   name: string;
   size: number;
   file: File;
   preview: string;
+  kind: FileKind;
   uploading?: boolean;
   progress?: number;
   fileId?: string;
@@ -130,6 +173,12 @@ export type TermsType = {
   lastUpdated: string;
 };
 
+export type ToolkitTestimonial = {
+  name: string;
+  role: string;
+  message: string;
+};
+
 export type Toolkit = {
   id: string;
   title: string;
@@ -137,6 +186,7 @@ export type Toolkit = {
   price: number;
   originalPrice?: number;
   coverImageUrl?: string;
+  bannerImageUrl?: string;
   videoUrl?: string;
   contentUrl?: string;
   category?: string;
@@ -150,6 +200,7 @@ export type Toolkit = {
   userId?: string;
   creatorName?: string;
   contentItems?: ToolkitContentItem[];
+  testimonials?: ToolkitTestimonial[];
 };
 
 export type ToolkitContentItem = {

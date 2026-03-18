@@ -11,20 +11,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Pin, ExternalLink } from "lucide-react";
-import { createUngatekeepStorage } from "@/lib/appwrite";
 import { format } from "date-fns";
 import FeaturedToolkits from "@/components/toolkit/FeaturedToolkits";
+import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
+import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
 type UngatekeepPost = {
   id: string;
-  title: string;
   content: string;
-  images: string[];
+  attachments: string[];
   linkUrl?: string | null;
   linkTitle?: string | null;
   linkImage?: string | null;
-  tag?: "announcement" | "company_experience" | "resources" | null;
+  videoUrl?: string | null;
+  tag?: "announcement" | "company_experience" | "resources" | "playbooks" | "college_hacks" | "interview" | "ama_drops" | "ftb_recommends" | null;
   isPinned: boolean;
+  isSaved?: boolean;
   publishedAt?: string | null;
   createdAt: string;
   creatorName?: string | null;
@@ -35,7 +37,6 @@ export default function UngatekeepPostPage() {
   const params = useParams();
   const router = useRouter();
   const postId = params.id as string;
-  const ungatekeepStorage = createUngatekeepStorage();
 
   const {
     data: post,
@@ -79,14 +80,7 @@ export default function UngatekeepPostPage() {
   };
 
   const getImageUrl = (imageId: string) => {
-    const bucketId = process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID;
-    if (!bucketId) return "";
-    try {
-      return ungatekeepStorage.getFileView(bucketId, imageId);
-    } catch (error) {
-      console.error("Error getting image URL:", error);
-      return "";
-    }
+    return tryGetStoragePublicUrl("ungatekeep-images", imageId);
   };
 
   const getInitials = (name: string | null | undefined) => {
@@ -105,6 +99,17 @@ export default function UngatekeepPostPage() {
     } catch {
       return "";
     }
+  };
+
+  const getYouTubeEmbedUrl = (url: string | null | undefined) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    const videoId = match && match[2].length === 11 ? match[2] : null;
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+    return null;
   };
 
   if (isLoading) {
@@ -190,9 +195,6 @@ export default function UngatekeepPostPage() {
                       fill="currentColor"
                     />
                   )}
-                  <h1 className="text-lg leading-tight font-bold text-gray-900 sm:text-xl md:text-2xl">
-                    {post.title}
-                  </h1>
                 </div>
 
                 {/* Meta info */}
@@ -202,7 +204,10 @@ export default function UngatekeepPostPage() {
                     <div className="flex items-center gap-1.5">
                       {post.creatorImage ? (
                         <Image
-                          src={post.creatorImage}
+                          src={tryGetStoragePublicUrl(
+                            "avatar-images",
+                            post.creatorImage
+                          )}
                           alt={post.creatorName}
                           width={20}
                           height={20}
@@ -236,28 +241,28 @@ export default function UngatekeepPostPage() {
                 </div>
               </header>
 
-              {/* Images */}
-              {post.images && post.images.length > 0 && (
+              {/* Attachments */}
+              {post.attachments && post.attachments.length > 0 && (
                 <div className="mb-4">
-                  {post.images.length === 1 ? (
+                  {post.attachments.length === 1 ? (
                     <div className="bg-muted relative aspect-video w-full overflow-hidden rounded-lg">
                       <Image
-                        src={getImageUrl(post.images[0])}
-                        alt={post.title}
+                        src={getImageUrl(post.attachments[0])}
+                        alt="Post attachment"
                         fill
                         className="object-cover"
                       />
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-2">
-                      {post.images.map((imageId, idx) => (
+                      {post.attachments.map((fileId, idx) => (
                         <div
                           key={idx}
                           className="bg-muted relative aspect-square overflow-hidden rounded-lg"
                         >
                           <Image
-                            src={getImageUrl(imageId)}
-                            alt={`${post.title} - Image ${idx + 1}`}
+                            src={getImageUrl(fileId)}
+                            alt={`Post attachment ${idx + 1}`}
                             fill
                             className="object-cover"
                           />
@@ -268,12 +273,27 @@ export default function UngatekeepPostPage() {
                 </div>
               )}
 
+              {(() => {
+                const embedUrl = getYouTubeEmbedUrl(post.videoUrl);
+                return (
+                  embedUrl && (
+                    <div className="mb-4 overflow-hidden rounded-lg border bg-black">
+                      <div className="relative aspect-video w-full">
+                        <iframe
+                          src={embedUrl}
+                          title="YouTube video player"
+                          className="absolute inset-0 h-full w-full border-none"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
+                    </div>
+                  )
+                );
+              })()}
+
               {/* Content */}
-              <div className="prose prose-gray max-w-none">
-                <p className="text-sm leading-relaxed whitespace-pre-wrap text-gray-700 md:text-base">
-                  {post.content}
-                </p>
-              </div>
+              <HtmlRenderer content={post.content} />
 
               {/* Link Preview */}
               {post.linkUrl && (

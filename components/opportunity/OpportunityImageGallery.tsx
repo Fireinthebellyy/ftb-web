@@ -6,7 +6,7 @@ import {
   CarouselDots,
   Autoplay,
 } from "@/components/ui/carousel";
-import { createOpportunityStorage } from "@/lib/appwrite";
+import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
 interface OpportunityImageGalleryProps {
   images: string[];
@@ -19,8 +19,6 @@ export function OpportunityImageGallery({
   title,
   onOpenModal,
 }: OpportunityImageGalleryProps) {
-  const opportunityStorage = createOpportunityStorage();
-
   if (!images || images.length === 0) return null;
 
   return (
@@ -40,10 +38,7 @@ export function OpportunityImageGallery({
           >
             {images[0] ? (
               <Image
-                src={opportunityStorage.getFileView(
-                  process.env.NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
-                  images[0]
-                )}
+                src={tryGetStoragePublicUrl("opportunity-images", images[0])}
                 alt={title}
                 className="max-h-48 w-full rounded-t-lg object-cover object-left-top sm:max-h-64"
                 loading="lazy"
@@ -83,9 +78,8 @@ export function OpportunityImageGallery({
                   >
                     {image ? (
                       <Image
-                        src={opportunityStorage.getFileView(
-                          process.env
-                            .NEXT_PUBLIC_APPWRITE_OPPORTUNITIES_BUCKET_ID,
+                        src={tryGetStoragePublicUrl(
+                          "opportunity-images",
                           image
                         )}
                         alt={`${title} - Image ${i + 1}`}

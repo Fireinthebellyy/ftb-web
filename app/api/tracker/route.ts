@@ -1,14 +1,19 @@
-import { db } from "@/lib/db";
-import { trackerItems, trackerEvents } from "@/lib/schema";
+import { db, dbPool } from "@/lib/db";
+import {
+  trackerItems,
+  trackerEvents,
+  internships,
+  opportunities,
+} from "@/lib/schema";
 import { getSessionCached } from "@/lib/auth-session-cache";
 import { createApiTimer } from "@/lib/api-timing";
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 const trackerItemSchema = z.object({
-  oppId: z.string().or(z.number().transform(String)),
+  oppId: z.string().min(1, "oppId is required").or(z.number().transform(String)),
   status: z.string(),
   kind: z.enum(["internship", "opportunity"]).default("internship"),
   notes: z.string().optional().nullable(),
@@ -29,7 +34,7 @@ const trackerEventSchema = z.object({
 // Patch Schema for validation
 const patchSchema = z.object({
   action: z.enum(["update_status"]),
-  id: z.string().or(z.number()),
+  id: z.string().min(1, "ID is required").or(z.number()),
   kind: z.enum(["internship", "opportunity"]).default("internship"),
   data: z.object({
     status: z.string(),
@@ -37,7 +42,12 @@ const patchSchema = z.object({
   }),
 });
 
-export async function GET() {
+const uuidRegex =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const isUuid = (value: string) => uuidRegex.test(value);
+
+export async function GET(req: NextRequest) {
   const timer = createApiTimer("GET /api/tracker");
 
   try {
@@ -55,14 +65,40 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const url = new URL(req.url);
+    const kindParam = url.searchParams.get("kind");
+    const kind =
+      kindParam === "internship" || kindParam === "opportunity"
+        ? kindParam
+        : null;
+
+    if (kindParam && !kind) {
+      timer.end({ status: 400, reason: "invalid_kind" });
+      return NextResponse.json(
+        { error: "Invalid kind. Use 'internship' or 'opportunity'." },
+        { status: 400 }
+      );
+    }
+
     timer.mark("fetch_start");
 
-    // Fetch items and events in parallel
+    const itemsPromise = kind
+      ? db
+          .select()
+          .from(trackerItems)
+          .where(
+            and(
+              eq(trackerItems.userId, session.user.id),
+              eq(trackerItems.kind, kind)
+            )
+          )
+      : db
+          .select()
+          .from(trackerItems)
+          .where(eq(trackerItems.userId, session.user.id));
+
     const [items, events] = await Promise.all([
-      db
-        .select()
-        .from(trackerItems)
-        .where(eq(trackerItems.userId, session.user.id)),
+      itemsPromise,
       db
         .select()
         .from(trackerEvents)
@@ -89,10 +125,67 @@ export async function GET() {
       };
     });
 
+    let deadlineCounts: Record<string, number> | undefined;
+    if (kind) {
+      deadlineCounts = {};
+      const trackerIds = [...new Set(items.map((item) => item.oppId))].filter(
+        isUuid
+      );
+
+      if (trackerIds.length > 0) {
+        if (kind === "internship") {
+          const dateRows = await db
+            .select({
+              id: internships.id,
+              deadline: internships.deadline,
+            })
+            .from(internships)
+            .where(inArray(internships.id, trackerIds));
+
+          const idToDate = new Map(
+            dateRows
+              .filter((row) => row.deadline)
+              .map((row) => [row.id, row.deadline as string])
+          );
+
+          for (const item of items) {
+            const dateKey = idToDate.get(item.oppId);
+            if (!dateKey) continue;
+            deadlineCounts[dateKey] = (deadlineCounts[dateKey] || 0) + 1;
+          }
+        } else {
+          const dateRows = await db
+            .select({
+              id: opportunities.id,
+              startDate: opportunities.startDate,
+              endDate: opportunities.endDate,
+            })
+            .from(opportunities)
+            .where(inArray(opportunities.id, trackerIds));
+
+          const idToDate = new Map(
+            dateRows
+              .map((row) => {
+                const date = row.startDate || row.endDate;
+                return date ? [row.id, date as string] : null;
+              })
+              .filter((row): row is [string, string] => row !== null)
+          );
+
+          for (const item of items) {
+            const dateKey = idToDate.get(item.oppId);
+            if (!dateKey) continue;
+            deadlineCounts[dateKey] = (deadlineCounts[dateKey] || 0) + 1;
+          }
+        }
+      }
+    }
+
     timer.end({ status: 200 });
     return NextResponse.json({
       items: processedItems,
       events: events,
+      ...(deadlineCounts ? { deadlineCounts } : {}),
     });
   } catch (error) {
     console.error("Error fetching tracker data:", error);
@@ -203,7 +296,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (validItems.length > 0) {
-        await db.transaction(async (tx) => {
+        await dbPool.transaction(async (tx) => {
           await tx
             .insert(trackerItems)
             .values(validItems)
@@ -240,7 +333,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (validEvents.length > 0) {
-        await db.transaction(async (tx) => {
+        await dbPool.transaction(async (tx) => {
           await tx
             .insert(trackerEvents)
             .values(validEvents)
@@ -363,11 +456,12 @@ export async function DELETE(req: NextRequest) {
     const kind =
       searchParams.get("kind") === "opportunity" ? "opportunity" : "internship";
 
-    if (!id || !type)
+    if (id === null || id === "" || id === "undefined" || !type) {
       return NextResponse.json(
-        { error: "Missing parameters" },
+        { error: "Missing or invalid parameters" },
         { status: 400 }
       );
+    }
 
     if (type === "item") {
       await db

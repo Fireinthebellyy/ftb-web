@@ -1,17 +1,26 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, BookOpen, Clock, Cloud, Check } from "lucide-react";
+import { ArrowLeft, BookOpen, Check, Clock, Cloud } from "lucide-react";
 import ToolkitSidebar from "@/components/toolkit/ToolkitSidebar";
 import ContentList from "@/components/toolkit/ContentList";
 import ToolkitDetailSkeleton from "@/components/toolkit/ToolkitDetailSkeleton";
+import {
+  Autoplay,
+  Carousel,
+  CarouselContent,
+  CarouselDots,
+  CarouselDotsOverlay,
+  CarouselItem,
+} from "@/components/ui/carousel";
 import { useToolkit, useToolkitPurchase } from "@/lib/queries-toolkits";
+import { CAROUSEL_AUTOPLAY_DELAY_MS } from "@/lib/carousel";
 import { toast } from "sonner";
 import axios from "axios";
 
@@ -25,6 +34,13 @@ function getYouTubeVideoId(url: string): string | null {
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
   const match = url.match(regExp);
   return match && match[2].length === 11 ? match[2] : null;
+}
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "NA";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
 }
 
 interface CouponValidationResult {
@@ -42,6 +58,22 @@ export default function ToolkitDetailPage() {
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [appliedCoupon, setAppliedCoupon] =
     useState<CouponValidationResult | null>(null);
+  const testimonialsAutoplay = useMemo(
+    () =>
+      Autoplay({
+        delay: CAROUSEL_AUTOPLAY_DELAY_MS,
+        stopOnMouseEnter: true,
+        stopOnFocusIn: true,
+      }),
+    []
+  );
+  const testimonialsAutoplayRef = useRef<ReturnType<typeof Autoplay> | null>(
+    null
+  );
+
+  if (!testimonialsAutoplayRef.current) {
+    testimonialsAutoplayRef.current = testimonialsAutoplay;
+  }
 
   const { data: toolkitData, isLoading } = useToolkit(params.id as string);
   const purchaseMutation = useToolkitPurchase(params.id as string);
@@ -49,6 +81,8 @@ export default function ToolkitDetailPage() {
   const toolkit = toolkitData?.toolkit ?? null;
   const contentItems = toolkitData?.contentItems ?? [];
   const hasPurchased = toolkitData?.hasPurchased ?? false;
+  const lessonCount = contentItems.length || toolkit?.lessonCount || 0;
+  const testimonials = toolkit?.testimonials ?? [];
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim() || !toolkit) {
@@ -110,6 +144,7 @@ export default function ToolkitDetailPage() {
   const videoId = toolkit?.videoUrl
     ? getYouTubeVideoId(toolkit.videoUrl)
     : null;
+  const heroImageUrl = toolkit?.bannerImageUrl || toolkit?.coverImageUrl;
 
   if (isLoading) {
     return <ToolkitDetailSkeleton />;
@@ -146,9 +181,9 @@ export default function ToolkitDetailPage() {
           <div className="xl:col-span-2">
             <div className="mb-6 overflow-hidden rounded-lg border bg-white">
               <div className="relative aspect-video bg-gray-100">
-                {toolkit.coverImageUrl ? (
+                {heroImageUrl ? (
                   <Image
-                    src={toolkit.coverImageUrl}
+                    src={heroImageUrl}
                     alt={toolkit.title}
                     fill
                     className="object-cover"
@@ -186,10 +221,10 @@ export default function ToolkitDetailPage() {
                 )}
 
                 <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                  {toolkit.lessonCount && (
+                  {lessonCount > 0 && (
                     <div className="flex items-center gap-1">
                       <BookOpen className="h-4 w-4" />
-                      {toolkit.lessonCount} lessons
+                      {lessonCount} lessons
                     </div>
                   )}
 
@@ -257,6 +292,62 @@ export default function ToolkitDetailPage() {
                 </div>
               </div>
             )}
+
+            {testimonials.length > 0 ? (
+              <div className="mt-6 rounded-lg border bg-white p-6">
+                <h3 className="mb-4 text-lg font-semibold text-gray-900">
+                  Testimonials
+                </h3>
+                <div className="relative">
+                  <Carousel
+                    opts={{ align: "start", loop: testimonials.length > 1 }}
+                    plugins={
+                      testimonials.length > 1
+                        ? [testimonialsAutoplayRef.current]
+                        : undefined
+                    }
+                    className="w-full"
+                  >
+                    <CarouselContent>
+                      {testimonials.map((testimonial, index) => (
+                        <CarouselItem
+                          key={`${testimonial.name}-${index}`}
+                          className="basis-full md:basis-1/2"
+                        >
+                          <div className="h-full rounded-lg border border-gray-100 bg-gray-50 p-4">
+                            <div className="mb-3 flex items-center gap-2">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-xs font-semibold text-orange-700">
+                                {getInitials(testimonial.name)}
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-gray-900">
+                                  {testimonial.name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {testimonial.role}
+                                </p>
+                              </div>
+                            </div>
+                            <p className="text-sm leading-relaxed text-gray-700">
+                              {testimonial.message}
+                            </p>
+                          </div>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    {testimonials.length > 1 ? (
+                      <CarouselDotsOverlay>
+                        <CarouselDots
+                          className="gap-1.5 py-0"
+                          dotClassName="bg-white/45 hover:bg-white/70"
+                          activeDotClassName="h-1.5 w-3 rounded-full bg-white"
+                        />
+                      </CarouselDotsOverlay>
+                    ) : null}
+                  </Carousel>
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <div className="hidden xl:col-span-1 xl:block">
@@ -293,23 +384,22 @@ export default function ToolkitDetailPage() {
                   }
                 }}
                 disabled={isValidatingCoupon || !!appliedCoupon?.valid}
-                className="flex-1"
+                className="h-10 flex-1"
               />
               {appliedCoupon?.valid ? (
                 <Button
                   variant="outline"
+                  className="h-10 px-4"
                   onClick={handleRemoveCoupon}
                   disabled={isValidatingCoupon}
-                  size="sm"
                 >
                   Remove
                 </Button>
               ) : (
                 <Button
-                  variant="outline"
+                  className="h-10 bg-orange-500 px-4 text-white hover:bg-orange-600"
                   onClick={handleApplyCoupon}
                   disabled={isValidatingCoupon || !couponCode.trim()}
-                  size="sm"
                 >
                   {isValidatingCoupon ? "..." : "Apply"}
                 </Button>

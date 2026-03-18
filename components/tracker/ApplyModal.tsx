@@ -1,120 +1,203 @@
 "use client";
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import NextImage from 'next/image';
-import { X, Play, Rocket } from 'lucide-react';
-import { useTracker } from '../providers/TrackerProvider';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { LayoutGrid, Calendar, Wrench, ArrowRight, Check } from "lucide-react";
+import { useTracker } from "../providers/TrackerProvider";
+import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { type ApplyModalOpportunity } from "@/types/interfaces";
 
-
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-
-// Flexible interface to handle TrackerItem, Internship, or Opportunity
-export interface ApplyModalOpportunity {
-    id: number | string;
-    title: string;
-    company?: string;
-    hiringOrganization?: string;
-    organiserInfo?: string;
-    logo?: string;
-    poster?: string;
-    images?: string[];
-    skills?: string[];
-    tags?: string[];
-    [key: string]: unknown;
+interface StepItemProps {
+  index: number;
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  isFill?: boolean;
 }
 
 interface ApplyModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    opportunity: ApplyModalOpportunity | null;
+  isOpen: boolean;
+  onClose: () => void;
+  opportunity: ApplyModalOpportunity | null;
 }
 
-export default function ApplyModal({ isOpen, onClose, opportunity }: ApplyModalProps) {
-    const { addToTracker } = useTracker();
-    const router = useRouter();
+export default function ApplyModal({
+  isOpen,
+  onClose,
+  opportunity,
+}: ApplyModalProps) {
+  const { addToTracker } = useTracker();
+  const router = useRouter();
+  const [activeStep, setActiveStep] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (isOpen) {
+      setActiveStep(0);
+      setIsSubmitting(false);
+      const t1 = setTimeout(() => setActiveStep(1), 600);
+      const t2 = setTimeout(() => setActiveStep(2), 1100);
+      const t3 = setTimeout(() => setActiveStep(3), 1600);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+      };
+    }
+  }, [isOpen]);
 
-    if (!opportunity) return null;
+  if (!opportunity) return null;
 
-    // Helper to normalize display data
-    const displayData = {
-        company: opportunity.company || opportunity.hiringOrganization || opportunity.organiserInfo || "Unknown Organization",
-        logo: opportunity.logo || opportunity.poster || (opportunity.images && opportunity.images[0]),
-        title: opportunity.title
-    };
+  const handleSubmit = async () => {
+    try {
+      setIsSubmitting(true);
+      const oppId: number | string = opportunity.id;
+      // Ensure persistence is awaited before closing or navigating
+      await addToTracker({ 
+        ...opportunity, 
+        id: oppId,
+        kind: opportunity.kind || "internship"
+      }, "Not Applied");
+      onClose();
+      router.push("/tracker");
+    } catch (error) {
+      console.error("Failed to add to tracker:", error);
+      toast.error("Failed to add to tracker. Please try again.");
+      setIsSubmitting(false);
+    }
+  };
 
-
-
-    const handleSubmit = () => {
-        // Proceed to tracker (Toolkit access)
-        const oppId: number | string = opportunity.id;
-
-        addToTracker({ ...opportunity, id: oppId }, 'Not Applied');
-        onClose();
-        router.push('/tracker');
-    };
-
+  const StepItem = ({
+    index,
+    title,
+    description,
+    icon: Icon,
+    isFill = false,
+  }: StepItemProps) => {
+    const isDone = activeStep >= index;
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent showCloseButton={false} aria-describedby={undefined} className="max-w-2xl w-[95vw] sm:w-full p-0 bg-transparent border-none shadow-none text-black focus:outline-none focus:ring-0">
-                <div className="relative bg-white rounded-2xl w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-                    {/* Header */}
-                    <div className="p-4 sm:p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="px-2 py-0.5 rounded-md bg-orange-100 text-orange-700 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
-                                    <Rocket size={10} /> Smart Apply
-                                </span>
-                            </div>
-                            <DialogTitle className="text-xl font-bold text-slate-900">
-                                {displayData.company}
-                            </DialogTitle>
-                        </div>
-                        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-full transition-colors">
-                            <X size={20} />
-                        </button>
-                    </div>
-
-                    {/* Body - Scrollable */}
-                    <div className="flex-1 overflow-y-auto p-4 sm:p-6 max-h-[60vh] space-y-6 sm:space-y-8">
-
-                        {/* 1. Video Teaser */}
-                        <div className="space-y-6">
-                            <div className="relative aspect-video bg-slate-900 rounded-xl overflow-hidden flex items-center justify-center group cursor-pointer shadow-md">
-                                <NextImage
-                                    src={(opportunity.images && opportunity.images.length > 0) ? opportunity.images[0] : (opportunity.poster || "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1000")}
-                                    className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500"
-                                    alt="Office Teaser"
-                                    width={1000}
-                                    height={562}
-                                />
-                                <div className="relative z-10 flex flex-col items-center">
-                                    <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50 group-hover:scale-110 transition-transform mb-3">
-                                        <Play size={24} className="fill-white text-white ml-1" />
-                                    </div>
-                                    <span className="text-white font-bold text-lg drop-shadow-md">{displayData.company}</span>
-                                </div>
-                            </div>
-
-
-                        </div>
-
-
-
-                    </div>
-
-                    {/* Footer Controls */}
-                    <div className="p-4 sm:p-6 border-t border-slate-100 bg-slate-50/50 flex justify-end">
-                        <button
-                            onClick={handleSubmit}
-                            className="px-8 py-2.5 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 shadow-lg shadow-orange-200 flex items-center gap-2 transition-all hover:scale-[1.02]"
-                        >
-                            Go
-                        </button>
-                    </div>
-                </div>
-            </DialogContent>
-        </Dialog>
+      <div
+        className={cn(
+          "flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm transition-all duration-500 min-h-[5.5rem]",
+          isDone ? "border-orange-100 bg-orange-50/40" : "border-transparent"
+        )}
+      >
+        <div
+          className={cn(
+            "flex shrink-0 items-center justify-center rounded-xl p-3 transition-all duration-500",
+            isDone ? "bg-[#ec5b13] text-white" : "bg-orange-50 text-orange-500"
+          )}
+        >
+          {isDone ? (
+            <Check size={24} className="animate-in zoom-in duration-300" />
+          ) : (
+            <Icon
+              size={24}
+              className={cn(
+                isFill ? "fill-orange-400 stroke-orange-500" : "stroke-orange-500"
+              )}
+            />
+          )}
+        </div>
+        <div>
+          <h4
+            className={cn(
+              "font-bold transition-colors duration-500",
+              isDone ? "text-slate-900" : "text-slate-800"
+            )}
+          >
+            {title}
+          </h4>
+          <p
+            className={cn(
+              "text-xs font-medium transition-colors duration-500",
+              isDone ? "text-slate-500" : "text-slate-400"
+            )}
+          >
+            {description}
+          </p>
+        </div>
+      </div>
     );
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent
+        showCloseButton={false}
+        className="data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom fixed top-auto right-0 bottom-0 left-0 w-full max-w-none translate-x-0 translate-y-0 gap-0 rounded-t-[32px] rounded-b-none border-none bg-[#FAFAF9] p-6 text-black shadow-2xl focus:ring-0 focus:outline-none sm:top-[50%] sm:right-auto sm:bottom-auto sm:left-[50%] sm:w-full sm:max-w-sm sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-[32px]"
+      >
+        <div className="flex flex-col items-center pt-2">
+          {/* Top handle bar */}
+          <div className="mb-6 h-1 w-10 rounded-full bg-orange-200/50" />
+
+          {/* Heading */}
+          <DialogTitle className="mb-2 text-center text-2xl font-bold text-slate-900">
+            Smart Apply
+          </DialogTitle>
+          <DialogDescription className="mb-8 text-center text-sm font-medium text-slate-500">
+            10x your chances by applying smartly
+          </DialogDescription>
+
+          {/* Value Props */}
+          <div className="w-full space-y-3">
+            <StepItem
+              index={1}
+              title="Add to Tracker"
+              description="Every application. One Dashboard. Zero Chaos."
+              icon={LayoutGrid}
+              isFill
+            />
+            <StepItem
+              index={2}
+              title="Add to Calendar"
+              description="Deadlines synced. Mind freed. No slips, no stress."
+              icon={Calendar}
+            />
+            <StepItem
+              index={3}
+              title="Access Toolkits"
+              description="Become a hard-to-reject candidate - unfairly prepared."
+              icon={Wrench}
+              isFill
+            />
+          </div>
+
+          {/* Footer CTA */}
+          <div className="mt-8 flex w-full flex-col items-center gap-4">
+            <div className="text-[13px] font-medium text-slate-500">
+              2 extra minutes now {">"} getting ghosted later
+            </div>
+            <button
+              onClick={handleSubmit}
+              className={cn(
+                "group flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 font-bold text-white shadow-lg transition-all active:scale-95",
+                activeStep >= 3 && !isSubmitting
+                  ? "bg-[#ec5b13] shadow-orange-500/30 hover:bg-[#d44d0c]"
+                  : "bg-slate-300 shadow-none cursor-not-allowed"
+              )}
+              disabled={activeStep < 3 || isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "Proceed"}
+              {!isSubmitting && (
+                <ArrowRight
+                  size={18}
+                  className="transition-transform group-hover:translate-x-1"
+                />
+              )}
+            </button>
+          </div>
+
+          <div className="mt-6 h-1 w-24 rounded-full bg-slate-200" />
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }

@@ -49,7 +49,10 @@ export type Internship = {
   };
 };
 
-export interface InternshipData extends Omit<Internship, "tags" | "deadline" | "createdAt" | "user"> {
+export interface InternshipData extends Omit<
+  Internship,
+  "tags" | "deadline" | "createdAt" | "user"
+> {
   tags: string[];
   deadline: string | null;
   createdAt: string | null;
@@ -170,6 +173,12 @@ export type TermsType = {
   lastUpdated: string;
 };
 
+export type ToolkitTestimonial = {
+  name: string;
+  role: string;
+  message: string;
+};
+
 export type Toolkit = {
   id: string;
   title: string;
@@ -177,6 +186,7 @@ export type Toolkit = {
   price: number;
   originalPrice?: number;
   coverImageUrl?: string;
+  bannerImageUrl?: string;
   videoUrl?: string;
   contentUrl?: string;
   category?: string;
@@ -190,6 +200,7 @@ export type Toolkit = {
   userId?: string;
   creatorName?: string;
   contentItems?: ToolkitContentItem[];
+  testimonials?: ToolkitTestimonial[];
 };
 
 export type ToolkitContentItem = {

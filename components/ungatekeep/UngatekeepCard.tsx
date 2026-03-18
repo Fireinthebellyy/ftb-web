@@ -437,7 +437,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
           </div>
         )}
 
-        {mediaItems.length === 0 && post.linkUrl && post.linkImage && (
+        {mediaItems.length === 0 && post.linkUrl && (
           <div className="mt-3 overflow-hidden rounded-lg border hover:bg-muted/50 transition-colors">
             <Link
               href={post.linkUrl}
@@ -445,14 +445,16 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
               rel="noopener noreferrer"
               className="block"
             >
-              <div className="bg-muted relative aspect-video w-full overflow-hidden">
-                <Image
-                  src={post.linkImage}
-                  alt={post.linkTitle || "Link preview"}
-                  fill
-                  className="object-cover"
-                />
-              </div>
+              {post.linkImage && (
+                <div className="bg-muted relative aspect-video w-full overflow-hidden">
+                  <Image
+                    src={post.linkImage}
+                    alt={post.linkTitle || "Link preview"}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              )}
               <div className="flex items-center justify-between p-3">
                 <div>
                   {post.linkTitle && (

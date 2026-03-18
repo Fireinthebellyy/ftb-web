@@ -18,6 +18,7 @@ const updateToolkitSchema = z.object({
     .min(0, "Original price must be greater than or equal to 0")
     .optional(),
   coverImageUrl: z.string().url("Invalid cover image URL").optional(),
+  bannerImageUrl: z.string().url("Invalid banner image URL").optional(),
   videoUrl: z.string().url("Invalid video URL").optional().or(z.literal("")),
   contentUrl: z
     .string()
@@ -26,6 +27,15 @@ const updateToolkitSchema = z.object({
     .or(z.literal("")),
   category: z.string().optional(),
   highlights: z.array(z.string()).optional(),
+  testimonials: z
+    .array(
+      z.object({
+        name: z.string().min(1, "Name is required"),
+        role: z.string().min(1, "Role is required"),
+        message: z.string().min(1, "Message is required"),
+      })
+    )
+    .optional(),
   totalDuration: z.string().optional(),
   lessonCount: z
     .number()
@@ -103,6 +113,8 @@ export async function PUT(
       updates.originalPrice = validatedData.originalPrice;
     if (validatedData.coverImageUrl !== undefined)
       updates.coverImageUrl = validatedData.coverImageUrl;
+    if (validatedData.bannerImageUrl !== undefined)
+      updates.bannerImageUrl = validatedData.bannerImageUrl;
     if (validatedData.videoUrl !== undefined)
       updates.videoUrl = validatedData.videoUrl;
     if (validatedData.contentUrl !== undefined)
@@ -111,6 +123,8 @@ export async function PUT(
       updates.category = validatedData.category;
     if (validatedData.highlights !== undefined)
       updates.highlights = validatedData.highlights;
+    if (validatedData.testimonials !== undefined)
+      updates.testimonials = validatedData.testimonials;
     if (validatedData.totalDuration !== undefined)
       updates.totalDuration = validatedData.totalDuration;
     if (validatedData.lessonCount !== undefined)

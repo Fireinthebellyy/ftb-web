@@ -2,9 +2,10 @@
 
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import * as z from "zod";
 import axios from "axios";
+import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -25,6 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ToolkitImageInput } from "@/components/admin/ToolkitImageInput";
 import {
   Select,
   SelectContent,
@@ -32,6 +34,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  deleteStorageObjectClient,
+  uploadFileViaSignedUrl,
+} from "@/lib/storage/client";
 
 const CATEGORIES = [
   "Career",
@@ -56,9 +62,19 @@ const toolkitFormSchema = z.object({
   originalPrice: z.coerce.number().min(0).optional(),
   category: z.string().optional(),
   coverImageUrl: z.string().url().optional().or(z.literal("")),
+  bannerImageUrl: z.string().url().optional().or(z.literal("")),
   videoUrl: z.string().url().optional().or(z.literal("")),
   totalDuration: z.string().optional(),
   highlights: z.array(z.string()).optional(),
+  testimonials: z
+    .array(
+      z.object({
+        name: z.string().min(1, "Name is required"),
+        role: z.string().min(1, "Role is required"),
+        message: z.string().min(1, "Message is required"),
+      })
+    )
+    .optional(),
 });
 
 type ToolkitFormValues = z.infer<typeof toolkitFormSchema>;
@@ -74,6 +90,8 @@ export default function NewToolkitModal({
 }: NewToolkitModalProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
+  const [bannerImageFile, setBannerImageFile] = useState<File | null>(null);
 
   const form = useForm<ToolkitFormValues>({
     resolver: zodResolver(toolkitFormSchema),
@@ -84,23 +102,69 @@ export default function NewToolkitModal({
       originalPrice: undefined,
       category: "",
       coverImageUrl: "",
+      bannerImageUrl: "",
       videoUrl: "",
       totalDuration: "",
       highlights: [],
+      testimonials: [],
     },
+  });
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "testimonials",
   });
 
   async function onSubmit(data: ToolkitFormValues) {
+    const existingCoverUrl = data.coverImageUrl?.trim() ?? "";
+    if (!existingCoverUrl && !coverImageFile) {
+      form.setError("coverImageUrl", {
+        type: "manual",
+        message: "Cover image is required",
+      });
+      return;
+    }
+
+    const uploadedKeys: string[] = [];
+
     try {
       setIsSubmitting(true);
 
+      let coverImageUrl = existingCoverUrl || undefined;
+      let bannerImageUrl = data.bannerImageUrl?.trim() || undefined;
+
+      if (coverImageFile) {
+        const uploadedCover = await uploadFileViaSignedUrl({
+          domain: "ungatekeep-images",
+          file: coverImageFile,
+        });
+        coverImageUrl = uploadedCover.publicUrl;
+        uploadedKeys.push(uploadedCover.key);
+      }
+
+      if (bannerImageFile) {
+        const uploadedBanner = await uploadFileViaSignedUrl({
+          domain: "ungatekeep-images",
+          file: bannerImageFile,
+        });
+        bannerImageUrl = uploadedBanner.publicUrl;
+        uploadedKeys.push(uploadedBanner.key);
+      }
+
       const cleanedData = {
         ...data,
-        coverImageUrl: data.coverImageUrl || undefined,
+        coverImageUrl,
+        bannerImageUrl,
         videoUrl: data.videoUrl || undefined,
         category: data.category || undefined,
         totalDuration: data.totalDuration || undefined,
         highlights: data.highlights?.filter(Boolean) || undefined,
+        testimonials: data.testimonials?.length
+          ? data.testimonials.map((item) => ({
+              name: item.name.trim(),
+              role: item.role.trim(),
+              message: item.message.trim(),
+            }))
+          : undefined,
       };
 
       const response = await axios.post("/api/toolkits", cleanedData);
@@ -109,9 +173,16 @@ export default function NewToolkitModal({
         toast.success("Toolkit created successfully!");
         setOpen(false);
         form.reset();
+        setCoverImageFile(null);
+        setBannerImageFile(null);
         onSuccess?.();
       }
     } catch (error) {
+      await Promise.all(
+        uploadedKeys.map((key) =>
+          deleteStorageObjectClient("ungatekeep-images", key).catch(() => null)
+        )
+      );
       console.error("Error creating toolkit:", error);
       toast.error("Failed to create toolkit. Please try again.");
     } finally {
@@ -119,8 +190,17 @@ export default function NewToolkitModal({
     }
   }
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (!nextOpen) {
+      form.reset();
+      setCoverImageFile(null);
+      setBannerImageFile(null);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
         <DialogHeader>
@@ -259,17 +339,133 @@ export default function NewToolkitModal({
               name="coverImageUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Cover Image URL</FormLabel>
+                  <FormLabel>Cover Image *</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="https://example.com/image.jpg"
-                      {...field}
+                    <ToolkitImageInput
+                      label="Cover image"
+                      imageUrl={field.value ?? ""}
+                      selectedFile={coverImageFile}
+                      onFileSelect={setCoverImageFile}
+                      onRemove={() => {
+                        setCoverImageFile(null);
+                        field.onChange("");
+                      }}
+                      disabled={isSubmitting}
+                      required
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="bannerImageUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Banner Image (HD, optional)</FormLabel>
+                  <FormControl>
+                    <ToolkitImageInput
+                      label="Banner image"
+                      imageUrl={field.value ?? ""}
+                      selectedFile={bannerImageFile}
+                      onFileSelect={setBannerImageFile}
+                      onRemove={() => {
+                        setBannerImageFile(null);
+                        field.onChange("");
+                      }}
+                      disabled={isSubmitting}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <FormLabel>Testimonials</FormLabel>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => append({ name: "", role: "", message: "" })}
+                  disabled={isSubmitting}
+                >
+                  <Plus className="mr-1 h-4 w-4" />
+                  Add testimonial
+                </Button>
+              </div>
+
+              {fields.map((item, index) => (
+                <div key={item.id} className="space-y-3 rounded-lg border p-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name={`testimonials.${index}.name`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Name *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Aditi Sharma" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`testimonials.${index}.role`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Role *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Final Year Student"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name={`testimonials.${index}.message`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Message *</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Share the learner outcome"
+                            className="min-h-[90px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => remove(index)}
+                      disabled={isSubmitting}
+                    >
+                      <Trash2 className="mr-1 h-4 w-4" />
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
 
             <FormField
               control={form.control}

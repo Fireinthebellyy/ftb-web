@@ -15,10 +15,12 @@ export async function GET() {
         price: toolkits.price,
         originalPrice: toolkits.originalPrice,
         coverImageUrl: toolkits.coverImageUrl,
+        bannerImageUrl: toolkits.bannerImageUrl,
         videoUrl: toolkits.videoUrl,
         contentUrl: toolkits.contentUrl,
         category: toolkits.category,
         highlights: toolkits.highlights,
+        testimonials: toolkits.testimonials,
         totalDuration: toolkits.totalDuration,
         lessonCount: toolkits.lessonCount,
         isActive: toolkits.isActive,
@@ -58,16 +60,18 @@ export async function POST(request: Request) {
       price,
       originalPrice,
       coverImageUrl,
+      bannerImageUrl,
       videoUrl,
       contentUrl,
       category,
       highlights,
+      testimonials,
       totalDuration,
       lessonCount,
       showSaleBadge,
     } = body;
 
-    if (!title || !description || !price) {
+    if (!title || !description || price === undefined || !coverImageUrl) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -82,10 +86,12 @@ export async function POST(request: Request) {
         price,
         originalPrice,
         coverImageUrl,
+        bannerImageUrl,
         videoUrl,
         contentUrl,
         category,
         highlights,
+        testimonials,
         totalDuration,
         lessonCount,
         isActive: false,

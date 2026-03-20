@@ -24,6 +24,28 @@ import ToolkitBanner from "./internship/ToolkitBanner";
 const CalendarWidget = dynamic(() => import("./opportunity/CalendarWidget"));
 const TaskWidget = dynamic(() => import("./opportunity/TaskWidget"));
 
+function InternshipCardSkeleton() {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <Skeleton className="hidden h-11 w-11 shrink-0 rounded-full sm:block" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-4 w-[70%]" />
+            <Skeleton className="h-3 w-[45%]" />
+          </div>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          <Skeleton className="h-8 w-8 rounded-lg" />
+          <Skeleton className="h-8 w-8 rounded-lg" />
+          <Skeleton className="h-8 w-8 rounded-lg" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function InternshipList() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -47,7 +69,7 @@ export default function InternshipList() {
   const [showSecondaryWidgets, setShowSecondaryWidgets] = useState(false);
 
   // 1. We ONLY update the URL when the debounced search term, location, or type changes.
-  // We do NOT listen to `searchParams` to update the local state after mount, 
+  // We do NOT listen to `searchParams` to update the local state after mount,
   // as this causes bidirectional recursive updates (glitchy behavior).
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -80,7 +102,15 @@ export default function InternshipList() {
     if (hasChanges) {
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     }
-  }, [debouncedSearchTerm, location, type, paidOnly, pathname, router, searchParams]);
+  }, [
+    debouncedSearchTerm,
+    location,
+    type,
+    paidOnly,
+    pathname,
+    router,
+    searchParams,
+  ]);
 
   // Debounce search term updates (400ms delay) - only for user input
   useEffect(() => {
@@ -120,11 +150,14 @@ export default function InternshipList() {
     undefined
   );
 
-  const searchPlaceholders = useMemo(() => [
-    "Software Engineer Intern",
-    "Data Science Intern",
-    "Marketing Intern",
-  ], []);
+  const searchPlaceholders = useMemo(
+    () => [
+      "Software Engineer Intern",
+      "Data Science Intern",
+      "Marketing Intern",
+    ],
+    []
+  );
 
   // Rotate placeholders every 3 seconds
   useEffect(() => {
@@ -141,6 +174,7 @@ export default function InternshipList() {
   const allInternships = (
     data?.pages?.flatMap((page) => page.internships) || []
   ).filter(Boolean);
+  const showInitialSkeleton = isLoading && !data;
 
   // Intersection observer for infinite scroll
   const loadMoreDesktopRef = useRef<HTMLDivElement>(null);
@@ -212,143 +246,21 @@ export default function InternshipList() {
         {/* Mobile: Search */}
 
         <div className="mb-0 lg:hidden">
-          <div className="relative mb-2 flex items-center gap-3">
-            <div className="relative flex-1 group">
-              <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 transform text-slate-400 group-focus-within:text-[#ec5b13] transition-colors duration-200" />
-              <Input
-                placeholder={searchPlaceholders[currentPlaceholderIndex]}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-12 w-full pl-11 pr-10 rounded-[16px] border-slate-200 bg-white text-sm shadow-sm focus-visible:ring-1 focus-visible:ring-orange-500/50 focus-visible:border-[#ec5b13] transition-all"
-              />
-              {searchTerm && (
-                <button
-                  type="button"
-                  aria-label="Clear search"
-                  onClick={() => setSearchTerm("")}
-                  className="absolute top-1/2 right-3 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
+          {showInitialSkeleton ? (
+            <div className="mb-2 flex items-center gap-3">
+              <Skeleton className="h-12 flex-1 rounded-[16px]" />
+              <Skeleton className="h-12 w-12 rounded-[14px]" />
             </div>
-            <Button
-              variant="outline"
-              aria-label="Toggle filters"
-              aria-expanded={isFilterBoxOpen}
-              aria-controls="mobile-filter-panel"
-              onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
-              className={cn(
-                "h-12 w-12 shrink-0 rounded-[14px] border-none shadow-sm transition-all focus:ring-0 active:scale-95",
-                isFilterBoxOpen || location || type || paidOnly
-                  ? "bg-[#d44d0c] text-white hover:bg-[#b03d0a]"
-                  : "bg-[#ec5b13] text-white hover:bg-[#d44d0c]"
-              )}
-            >
-              <Filter className="h-5 w-5" />
-            </Button>
-          </div>
-
-          {/* Filter Box */}
-          {isFilterBoxOpen && (
-            <div id="mobile-filter-panel" className="mt-4 rounded-[20px] border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/40 animate-in slide-in-from-top-2 duration-200">
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="font-semibold text-slate-900 text-lg">Filters</h3>
-                {(location || type || paidOnly) && (
-                  <button
-                    onClick={clearFilters}
-                    className="text-sm font-medium text-[#ec5b13] hover:text-[#d44d0c] transition-colors"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-
-              {/* Internship Type Filter */}
-              <div className="mb-6">
-                <label className="mb-3 block text-xs font-bold text-slate-500 uppercase tracking-widest">
-                  Type
-                </label>
-                <div className="flex flex-wrap gap-2.5">
-                  {["onsite", "remote", "hybrid"].map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setType(type === t ? "" : t)}
-                      className={cn(
-                        "px-4 py-2 rounded-full text-sm font-medium transition-all border",
-                        type === t
-                          ? "bg-slate-50 border-slate-300 text-slate-800"
-                          : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
-                      )}
-                    >
-                      {t.charAt(0).toUpperCase() + t.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Stipend Filter */}
-              <div className="mb-6">
-                <label className="mb-3 block text-xs font-bold text-slate-500 uppercase tracking-widest">
-                  Stipend
-                </label>
-                <div className="flex flex-wrap gap-2.5">
-                  <button
-                    onClick={() => setPaidOnly(!paidOnly)}
-                    className={cn(
-                      "px-4 py-2 rounded-full text-sm font-medium transition-all border",
-                      paidOnly
-                        ? "bg-slate-50 border-slate-300 text-slate-800"
-                        : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
-                    )}
-                  >
-                    Paid Only
-                  </button>
-                </div>
-              </div>
-
-              {/* Location Filter */}
-              <div className="mb-2">
-                <label className="mb-3 block text-xs font-bold text-slate-500 uppercase tracking-widest">
-                  Location
-                </label>
-                <div className="relative group">
-                  <Input
-                    placeholder="E.g. Delhi, Mumbai"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className="h-11 w-full pl-4 pr-10 rounded-[12px] border-slate-200 bg-white text-sm focus-visible:ring-1 focus-visible:ring-orange-500/50 focus-visible:border-[#ec5b13] transition-all shadow-sm"
-                  />
-                  {location && (
-                    <button
-                      type="button"
-                      aria-label="Clear location"
-                      onClick={() => setLocation("")}
-                      className="absolute top-1/2 right-3 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Desktop: 3-Column Layout */}
-        <div className="hidden gap-6 lg:grid lg:grid-cols-12">
-          {/* Left Sidebar - 3 columns */}
-          <aside className="col-span-3">
-            <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-2 scrollbar-hide space-y-6 pb-12">
-              {/* Search Bar */}
-              <div className="relative flex items-center gap-3">
-                <div className="relative flex-1 group">
-                  <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 transform text-slate-400 group-focus-within:text-[#ec5b13] transition-colors duration-200" />
+          ) : (
+            <>
+              <div className="relative mb-2 flex items-center gap-3">
+                <div className="group relative flex-1">
+                  <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 transform text-slate-400 transition-colors duration-200 group-focus-within:text-[#ec5b13]" />
                   <Input
                     placeholder={searchPlaceholders[currentPlaceholderIndex]}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="h-12 w-full pl-11 pr-10 rounded-[16px] border-slate-200 bg-white text-sm shadow-sm focus-visible:ring-1 focus-visible:ring-orange-500/50 focus-visible:border-[#ec5b13] transition-all"
+                    className="h-12 w-full rounded-[16px] border-slate-200 bg-white pr-10 pl-11 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50"
                   />
                   {searchTerm && (
                     <button
@@ -365,7 +277,7 @@ export default function InternshipList() {
                   variant="outline"
                   aria-label="Toggle filters"
                   aria-expanded={isFilterBoxOpen}
-                  aria-controls="desktop-filter-panel"
+                  aria-controls="mobile-filter-panel"
                   onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
                   className={cn(
                     "h-12 w-12 shrink-0 rounded-[14px] border-none shadow-sm transition-all focus:ring-0 active:scale-95",
@@ -378,25 +290,173 @@ export default function InternshipList() {
                 </Button>
               </div>
 
-              {/* Filters */}
+              {/* Filter Box */}
               {isFilterBoxOpen && (
-                <div id="desktop-filter-panel" className="rounded-[20px] border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/40 animate-in slide-in-from-top-2 duration-200">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="font-semibold text-slate-900 text-lg">Filters</h3>
+                <div
+                  id="mobile-filter-panel"
+                  className="animate-in slide-in-from-top-2 mt-4 rounded-[20px] border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/40 duration-200"
+                >
+                  <div className="mb-5 flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      Filters
+                    </h3>
                     {(location || type || paidOnly) && (
                       <button
                         onClick={clearFilters}
-                        className="text-sm font-medium text-[#ec5b13] hover:text-[#d44d0c] transition-colors"
+                        className="text-sm font-medium text-[#ec5b13] transition-colors hover:text-[#d44d0c]"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Internship Type Filter */}
+                  <div className="mb-6">
+                    <label className="mb-3 block text-xs font-bold tracking-widest text-slate-500 uppercase">
+                      Type
+                    </label>
+                    <div className="flex flex-wrap gap-2.5">
+                      {["onsite", "remote", "hybrid"].map((t) => (
+                        <button
+                          key={t}
+                          onClick={() => setType(type === t ? "" : t)}
+                          className={cn(
+                            "rounded-full border px-4 py-2 text-sm font-medium transition-all",
+                            type === t
+                              ? "border-slate-300 bg-slate-50 text-slate-800"
+                              : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                          )}
+                        >
+                          {t.charAt(0).toUpperCase() + t.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Stipend Filter */}
+                  <div className="mb-6">
+                    <label className="mb-3 block text-xs font-bold tracking-widest text-slate-500 uppercase">
+                      Stipend
+                    </label>
+                    <div className="flex flex-wrap gap-2.5">
+                      <button
+                        onClick={() => setPaidOnly(!paidOnly)}
+                        className={cn(
+                          "rounded-full border px-4 py-2 text-sm font-medium transition-all",
+                          paidOnly
+                            ? "border-slate-300 bg-slate-50 text-slate-800"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                        )}
+                      >
+                        Paid Only
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Location Filter */}
+                  <div className="mb-2">
+                    <label className="mb-3 block text-xs font-bold tracking-widest text-slate-500 uppercase">
+                      Location
+                    </label>
+                    <div className="group relative">
+                      <Input
+                        placeholder="E.g. Delhi, Mumbai"
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        className="h-11 w-full rounded-[12px] border-slate-200 bg-white pr-10 pl-4 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50"
+                      />
+                      {location && (
+                        <button
+                          type="button"
+                          aria-label="Clear location"
+                          onClick={() => setLocation("")}
+                          className="absolute top-1/2 right-3 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Desktop: 3-Column Layout */}
+        <div className="hidden gap-6 lg:grid lg:grid-cols-12">
+          {/* Left Sidebar - 3 columns */}
+          <aside className="col-span-3">
+            <div className="scrollbar-hide sticky top-20 max-h-[calc(100vh-6rem)] space-y-6 overflow-y-auto pr-2 pb-12">
+              {/* Search Bar */}
+              {showInitialSkeleton ? (
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-12 flex-1 rounded-[16px]" />
+                  <Skeleton className="h-12 w-12 rounded-[14px]" />
+                </div>
+              ) : (
+                <div className="relative flex items-center gap-3">
+                  <div className="group relative flex-1">
+                    <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 transform text-slate-400 transition-colors duration-200 group-focus-within:text-[#ec5b13]" />
+                    <Input
+                      placeholder={searchPlaceholders[currentPlaceholderIndex]}
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="h-12 w-full rounded-[16px] border-slate-200 bg-white pr-10 pl-11 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50"
+                    />
+                    {searchTerm && (
+                      <button
+                        type="button"
+                        aria-label="Clear search"
+                        onClick={() => setSearchTerm("")}
+                        className="absolute top-1/2 right-3 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  <Button
+                    variant="outline"
+                    aria-label="Toggle filters"
+                    aria-expanded={isFilterBoxOpen}
+                    aria-controls="desktop-filter-panel"
+                    onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
+                    className={cn(
+                      "h-12 w-12 shrink-0 rounded-[14px] border-none shadow-sm transition-all focus:ring-0 active:scale-95",
+                      isFilterBoxOpen || location || type || paidOnly
+                        ? "bg-[#d44d0c] text-white hover:bg-[#b03d0a]"
+                        : "bg-[#ec5b13] text-white hover:bg-[#d44d0c]"
+                    )}
+                  >
+                    <Filter className="h-5 w-5" />
+                  </Button>
+                </div>
+              )}
+
+              {/* Filters */}
+              {!showInitialSkeleton && isFilterBoxOpen && (
+                <div
+                  id="desktop-filter-panel"
+                  className="animate-in slide-in-from-top-2 rounded-[20px] border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/40 duration-200"
+                >
+                  <div className="mb-6 flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      Filters
+                    </h3>
+                    {(location || type || paidOnly) && (
+                      <button
+                        onClick={clearFilters}
+                        className="text-sm font-medium text-[#ec5b13] transition-colors hover:text-[#d44d0c]"
                       >
                         Clear All
                       </button>
                     )}
                   </div>
-                  
+
                   <div className="space-y-6">
                     {/* Internship Type Filter */}
                     <div>
-                      <label className="mb-3 block text-xs font-bold text-slate-500 uppercase tracking-widest">
+                      <label className="mb-3 block text-xs font-bold tracking-widest text-slate-500 uppercase">
                         Type
                       </label>
                       <div className="flex flex-wrap gap-2.5">
@@ -405,10 +465,10 @@ export default function InternshipList() {
                             key={t}
                             onClick={() => setType(type === t ? "" : t)}
                             className={cn(
-                              "px-4 py-2 rounded-full text-sm font-medium transition-all border",
+                              "rounded-full border px-4 py-2 text-sm font-medium transition-all",
                               type === t
-                                ? "bg-slate-50 border-slate-300 text-slate-800"
-                                : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                                ? "border-slate-300 bg-slate-50 text-slate-800"
+                                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                             )}
                           >
                             {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -419,17 +479,17 @@ export default function InternshipList() {
 
                     {/* Stipend Filter */}
                     <div>
-                      <label className="mb-3 block text-xs font-bold text-slate-500 uppercase tracking-widest">
+                      <label className="mb-3 block text-xs font-bold tracking-widest text-slate-500 uppercase">
                         Stipend
                       </label>
                       <div className="flex flex-wrap gap-2.5">
                         <button
                           onClick={() => setPaidOnly(!paidOnly)}
                           className={cn(
-                            "px-4 py-2 rounded-full text-sm font-medium transition-all border",
+                            "rounded-full border px-4 py-2 text-sm font-medium transition-all",
                             paidOnly
-                              ? "bg-slate-50 border-slate-300 text-slate-800"
-                              : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                              ? "border-slate-300 bg-slate-50 text-slate-800"
+                              : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                           )}
                         >
                           Paid Only
@@ -439,15 +499,15 @@ export default function InternshipList() {
 
                     {/* Location Filter */}
                     <div>
-                      <label className="mb-3 block text-xs font-bold text-slate-500 uppercase tracking-widest">
+                      <label className="mb-3 block text-xs font-bold tracking-widest text-slate-500 uppercase">
                         Location
                       </label>
-                      <div className="relative group">
+                      <div className="group relative">
                         <Input
                           placeholder="E.g. Delhi, Mumbai"
                           value={location}
                           onChange={(e) => setLocation(e.target.value)}
-                          className="h-11 w-full pl-4 pr-10 rounded-[12px] border-slate-200 bg-white text-sm focus-visible:ring-1 focus-visible:ring-orange-500/50 focus-visible:border-[#ec5b13] transition-all shadow-sm"
+                          className="h-11 w-full rounded-[12px] border-slate-200 bg-white pr-10 pl-4 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50"
                         />
                         {location && (
                           <button
@@ -465,7 +525,6 @@ export default function InternshipList() {
                 </div>
               )}
 
-
               {/* featured */}
               <FeaturedOpportunities />
             </div>
@@ -476,28 +535,15 @@ export default function InternshipList() {
             <ToolkitBanner />
 
             {/* Tags in Horizontal Box with Filter Icon */}
-            {isLoading && (
+            {showInitialSkeleton && (
               <div className="space-y-4">
                 {[...Array(3)].map((_, index) => (
-                  <div
-                    key={index}
-                    className="space-y-4 rounded-lg bg-white p-4"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Skeleton className="h-10 w-10 rounded-full" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-3 w-24" />
-                      </div>
-                    </div>
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-32 w-full" />
-                  </div>
+                  <InternshipCardSkeleton key={index} />
                 ))}
               </div>
             )}
 
-            {!isLoading && (
+            {!showInitialSkeleton && (
               <>
                 {allInternships.length > 0 ? (
                   <>
@@ -513,7 +559,10 @@ export default function InternshipList() {
                     </div>
 
                     {/* Load more trigger and indicator */}
-                    <div ref={loadMoreDesktopRef} className="flex justify-center py-8">
+                    <div
+                      ref={loadMoreDesktopRef}
+                      className="flex justify-center py-8"
+                    >
                       {isFetchingNextPage && (
                         <div className="flex items-center space-x-2 text-gray-600">
                           <Loader2 className="h-5 w-5 animate-spin" />
@@ -551,7 +600,7 @@ export default function InternshipList() {
 
           <aside className="col-span-3">
             {/* deadline calendar */}
-            <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-2 scrollbar-hide space-y-6 pb-12">
+            <div className="scrollbar-hide sticky top-20 max-h-[calc(100vh-6rem)] space-y-6 overflow-y-auto pr-2 pb-12">
               {showSecondaryWidgets ? (
                 <>
                   <CalendarWidget kind="internship" />
@@ -586,23 +635,15 @@ export default function InternshipList() {
           </Dialog>
           <ToolkitBanner />
 
-          {isLoading && (
+          {showInitialSkeleton && (
             <div className="space-y-4">
               {[...Array(3)].map((_, index) => (
-                <div key={index} className="space-y-4 rounded-lg bg-white p-4">
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-24" />
-                  </div>
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-32 w-full" />
-                </div>
+                <InternshipCardSkeleton key={index} />
               ))}
             </div>
           )}
 
-          {!isLoading && (
+          {!showInitialSkeleton && (
             <>
               {allInternships.length > 0 ? (
                 <>
@@ -618,7 +659,10 @@ export default function InternshipList() {
                   </div>
 
                   {/* Load more trigger and indicator for mobile */}
-                  <div ref={loadMoreMobileRef} className="flex justify-center py-8">
+                  <div
+                    ref={loadMoreMobileRef}
+                    className="flex justify-center py-8"
+                  >
                     {isFetchingNextPage && (
                       <div className="flex items-center space-x-2 text-gray-600">
                         <Loader2 className="h-5 w-5 animate-spin" />

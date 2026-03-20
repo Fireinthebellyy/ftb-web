@@ -2,46 +2,18 @@
 import { Instagram, Linkedin, Youtube } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
 import { useVersionInfo } from "@/lib/queries";
 
 const Footer = () => {
   const pathname = usePathname();
   const { data: versionInfo } = useVersionInfo();
-  const [clickCount, setClickCount] = useState(0);
-  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleCommitShaClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    const newCount = clickCount + 1;
-
-    // Clear existing timeout
-    if (clickTimeoutRef.current) {
-      clearTimeout(clickTimeoutRef.current);
-    }
-
-    if (newCount === 3) {
-      const url = `https://github.com/Fireinthebellyy/ftb-web/commit/${versionInfo?.commitSha}`;
-      navigator.clipboard.writeText(url);
-      setClickCount(0);
-    } else {
-      setClickCount(newCount);
-      // Reset count after 1 second if no more clicks
-      clickTimeoutRef.current = setTimeout(() => {
-        setClickCount(0);
-      }, 1000);
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      if (clickTimeoutRef.current) {
-        clearTimeout(clickTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  if (pathname === "/opportunities" || pathname === "/onboarding" || pathname === "/intern") return null;
+  if (
+    pathname === "/opportunities" ||
+    pathname === "/onboarding" ||
+    pathname === "/intern"
+  )
+    return null;
 
   return (
     <footer className="border-t border-neutral-200 bg-white py-4">
@@ -108,19 +80,14 @@ const Footer = () => {
         </div>
         <div className="mt-4 flex items-center justify-between text-xs text-neutral-500">
           {versionInfo?.commitSha ? (
-            <a
-              href={`https://github.com/Fireinthebellyy/ftb-web/commit/${versionInfo.commitSha}`}
-              onClick={handleCommitShaClick}
-              className="font-mono text-neutral-400 hover:text-neutral-600 cursor-pointer"
-            >
+            <span className="font-mono text-neutral-400">
               {versionInfo.commitSha}
-            </a>
+            </span>
           ) : (
             <span />
           )}
           <p>
-            © {new Date().getFullYear()} Fire in the Belly. All rights
-            reserved.
+            © {new Date().getFullYear()} Fire in the Belly. All rights reserved.
           </p>
         </div>
       </div>

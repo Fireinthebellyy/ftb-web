@@ -29,7 +29,7 @@ function InternshipCardSkeleton() {
     <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
       <div className="flex items-center justify-between gap-4">
         <div className="flex min-w-0 flex-1 items-center gap-3">
-          <Skeleton className="hidden h-11 w-11 shrink-0 rounded-full sm:block" />
+          <Skeleton className="h-9 w-9 shrink-0 rounded-full sm:h-11 sm:w-11" />
           <div className="min-w-0 flex-1 space-y-2">
             <Skeleton className="h-4 w-[70%]" />
             <Skeleton className="h-3 w-[45%]" />
@@ -189,7 +189,7 @@ export default function InternshipList() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
+        if (entries.some((entry) => entry.isIntersecting)) {
           handleLoadMore();
         }
       },

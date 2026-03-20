@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import PageBannerCarousel from "@/components/banner/PageBannerCarousel";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToolkits } from "@/lib/queries/toolkits";
 
 export default function ToolkitBanner() {
@@ -18,7 +19,19 @@ export default function ToolkitBanner() {
 
   if (!mounted || toolkitsLoading) {
     return (
-      <div className="mb-1 h-[96px] w-full animate-pulse rounded-lg bg-slate-100 sm:h-[84px]" />
+      <div>
+        <Skeleton className="mb-1 h-[96px] w-full rounded-xl sm:h-[84px]" />
+        <div className="-mx-4 mb-3 px-4 pt-3 pb-1 lg:-mx-2 lg:mb-0 lg:px-2">
+          <div className="flex gap-3 overflow-hidden pb-2">
+            {[...Array(4)].map((_, index) => (
+              <Skeleton
+                key={index}
+                className="h-[85px] min-w-[130px] rounded-lg sm:h-[95px] sm:min-w-[140px]"
+              />
+            ))}
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -30,10 +43,10 @@ export default function ToolkitBanner() {
 
       {/* Premium Toolkits Section - Sticky on all views, pointer-events pass-through */}
       {toolkits.length > 0 && (
-        <div className="sticky top-16 z-30 bg-gray-50 pt-3 pb-1 -mx-4 px-4 lg:-mx-2 lg:px-2 mb-3 lg:mb-0 pointer-events-none">
+        <div className="pointer-events-none sticky top-16 z-30 -mx-4 mb-3 bg-gray-50 px-4 pt-3 pb-1 lg:-mx-2 lg:mb-0 lg:px-2">
           {/* Horizontal Scrolling List */}
           <div
-            className="hide-scrollbar flex snap-x gap-3 overflow-x-auto pb-2 pointer-events-auto"
+            className="hide-scrollbar pointer-events-auto flex snap-x gap-3 overflow-x-auto pb-2"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {toolkits.map((toolkit) => (

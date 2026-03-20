@@ -26,6 +26,13 @@ import ToolkitBanner from "./internship/ToolkitBanner";
 const CalendarWidget = dynamic(() => import("./opportunity/CalendarWidget"));
 const TaskWidget = dynamic(() => import("./opportunity/TaskWidget"));
 
+const normalizeLocationValue = (value: string) =>
+  value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .join(",");
+
 function InternshipCardSkeleton() {
   return (
     <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
@@ -64,36 +71,66 @@ export default function InternshipList() {
 
   const [isNewInternshipOpen, setIsNewInternshipOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>(getInitialSearch);
-  const [debouncedSearchTerm, setDebouncedSearchTerm] =
+  const [appliedSearchTerm, setAppliedSearchTerm] =
     useState<string>(getInitialSearch);
   const [location, setLocation] = useState<string>(getInitialLocation);
+  const [appliedLocation, setAppliedLocation] = useState<string>(() =>
+    normalizeLocationValue(getInitialLocation())
+  );
   const [selectedTypes, setSelectedTypes] = useState<string[]>(getInitialTypes);
+  const [appliedTypes, setAppliedTypes] = useState<string[]>(getInitialTypes);
   const [paidOnly, setPaidOnly] = useState<boolean>(getInitialPaidOnly);
+  const [appliedPaidOnly, setAppliedPaidOnly] =
+    useState<boolean>(getInitialPaidOnly);
+  const [serverTrending, setServerTrending] = useState<string[]>([]);
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const [showSecondaryWidgets, setShowSecondaryWidgets] = useState(false);
 
-  const normalizedLocation = useMemo(() => {
-    return location
-      .split(",")
-      .map((value) => value.trim())
-      .filter(Boolean)
-      .join(",");
-  }, [location]);
+  const normalizedLocation = useMemo(
+    () => normalizeLocationValue(location),
+    [location]
+  );
 
-  const hasActiveFilters =
-    normalizedLocation.length > 0 || selectedTypes.length > 0 || paidOnly;
+  const serializedSelectedTypes = selectedTypes.join(",");
+  const serializedAppliedTypes = appliedTypes.join(",");
+  const normalizedSearchTerm = appliedSearchTerm.trim();
+
+  const hasAppliedFilters =
+    appliedSearchTerm.trim().length > 0 ||
+    appliedLocation.length > 0 ||
+    appliedTypes.length > 0 ||
+    appliedPaidOnly;
+  const hasDraftFilters =
+    searchTerm.trim().length > 0 ||
+    normalizedLocation.length > 0 ||
+    selectedTypes.length > 0 ||
+    paidOnly;
+  const hasActiveFilters = hasAppliedFilters || hasDraftFilters;
+  const hasPendingChanges =
+    normalizedLocation !== appliedLocation ||
+    serializedSelectedTypes !== serializedAppliedTypes ||
+    paidOnly !== appliedPaidOnly ||
+    searchTerm.trim() !== appliedSearchTerm;
 
   // URL sync removed to avoid full-page reloads when interacting with filters.
 
-  // Debounce search term updates (400ms delay) - only for user input
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 400);
+  const fetchTrendingSearches = useCallback(async () => {
+    try {
+      const response = await fetch("/api/internships/searches?limit=8");
+      if (!response.ok) return;
+      const payload = await response.json();
+      if (Array.isArray(payload?.terms)) {
+        setServerTrending(payload.terms.filter(Boolean));
+      }
+    } catch {
+      // ignore network errors
+    }
+  }, []);
 
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+  useEffect(() => {
+    void fetchTrendingSearches();
+  }, [fetchTrendingSearches]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -105,8 +142,6 @@ export default function InternshipList() {
     };
   }, []);
 
-  const normalizedSearchTerm = debouncedSearchTerm.trim();
-
   const {
     data,
     isLoading,
@@ -117,10 +152,10 @@ export default function InternshipList() {
   } = useInfiniteInternships(
     10,
     normalizedSearchTerm,
-    selectedTypes,
+    appliedTypes,
     [],
-    normalizedLocation,
-    paidOnly ? 1 : undefined,
+    appliedLocation,
+    appliedPaidOnly ? 1 : undefined,
     undefined
   );
 
@@ -136,8 +171,8 @@ export default function InternshipList() {
     []
   );
 
-  const trendingSearches = useMemo(
-    () => [
+  const trendingSearches = useMemo(() => {
+    const fallback = [
       "Remote Internships",
       "Python Intern",
       "UI/UX Intern",
@@ -146,19 +181,77 @@ export default function InternshipList() {
       "Product Intern",
       "Finance Intern",
       "Sales Intern",
-    ],
-    []
-  );
+    ];
+    const seen = new Set<string>();
+    const merged: string[] = [];
 
-  const applySearch = useCallback(
-    (value?: string) => {
-      const nextValue = (value ?? searchTerm).trim();
-      if (value !== undefined) {
-        setSearchTerm(value);
+    const add = (term: string) => {
+      const key = term.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      merged.push(term);
+    };
+
+    serverTrending.forEach(add);
+    fallback.forEach(add);
+
+    return merged.slice(0, 8);
+  }, [serverTrending]);
+
+  const bumpServerTrending = useCallback((term: string) => {
+    const normalized = term.trim();
+    if (!normalized) return;
+
+    setServerTrending((prev) => {
+      const next = [
+        normalized,
+        ...prev.filter(
+          (item) => item.toLowerCase() !== normalized.toLowerCase()
+        ),
+      ];
+      return next.slice(0, 8);
+    });
+  }, []);
+
+  const trackSearch = useCallback(async (term: string) => {
+    if (!term) return;
+    try {
+      await fetch("/api/internships/searches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ term }),
+      });
+    } catch {
+      // ignore tracking failures
+    }
+  }, []);
+
+  const applyFilters = useCallback(
+    (overrideSearch?: string) => {
+      const nextSearch = (overrideSearch ?? searchTerm).trim();
+
+      if (overrideSearch !== undefined) {
+        setSearchTerm(overrideSearch);
       }
-      setDebouncedSearchTerm(nextValue);
+
+      setAppliedSearchTerm(nextSearch);
+      setAppliedLocation(normalizedLocation);
+      setAppliedTypes(selectedTypes);
+      setAppliedPaidOnly(paidOnly);
+
+      if (nextSearch) {
+        bumpServerTrending(nextSearch);
+        void trackSearch(nextSearch);
+      }
     },
-    [searchTerm]
+    [
+      searchTerm,
+      normalizedLocation,
+      selectedTypes,
+      paidOnly,
+      bumpServerTrending,
+      trackSearch,
+    ]
   );
 
   const renderTrendingSearches = () => (
@@ -170,7 +263,7 @@ export default function InternshipList() {
         <button
           key={term}
           type="button"
-          onClick={() => applySearch(term)}
+          onClick={() => applyFilters(term)}
           style={{ animationDelay: `${index * 120}ms` }}
           className="animate-pulse rounded-full border border-orange-100 bg-orange-50 px-2.5 py-1 text-[11px] font-semibold text-[#ec5b13] transition hover:border-orange-200 hover:bg-orange-100"
         >
@@ -195,7 +288,8 @@ export default function InternshipList() {
   const allInternships = (
     data?.pages?.flatMap((page) => page.internships) || []
   ).filter(Boolean);
-  const showInitialSkeleton = isLoading && !data;
+  const showInitialSkeleton =
+    isLoading && (!data || data.pages.length === 0);
 
   // Intersection observer for infinite scroll
   const loadMoreDesktopRef = useRef<HTMLDivElement>(null);
@@ -251,10 +345,13 @@ export default function InternshipList() {
 
   const clearFilters = () => {
     setSearchTerm("");
-    setDebouncedSearchTerm("");
+    setAppliedSearchTerm("");
     setLocation("");
+    setAppliedLocation("");
     setSelectedTypes([]);
+    setAppliedTypes([]);
     setPaidOnly(false);
+    setAppliedPaidOnly(false);
   };
 
   if (error) {
@@ -291,7 +388,7 @@ export default function InternshipList() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
-                        applySearch();
+                        applyFilters();
                       }
                     }}
                     className="h-12 w-full rounded-[16px] border-slate-200 bg-white pr-10 pl-11 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50"
@@ -427,6 +524,14 @@ export default function InternshipList() {
                       )}
                     </div>
                   </div>
+
+                  <Button
+                    onClick={() => applyFilters()}
+                    disabled={!hasPendingChanges}
+                    className="mt-4 w-full"
+                  >
+                    Apply filters
+                  </Button>
                 </div>
               )}
             </>
@@ -455,7 +560,7 @@ export default function InternshipList() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
-                            applySearch();
+                            applyFilters();
                           }
                         }}
                         className="h-12 w-full rounded-[16px] border-slate-200 bg-white pr-10 pl-11 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50"
@@ -594,6 +699,14 @@ export default function InternshipList() {
                         )}
                       </div>
                     </div>
+
+                    <Button
+                      onClick={() => applyFilters()}
+                      disabled={!hasPendingChanges}
+                      className="w-full"
+                    >
+                      Apply filters
+                    </Button>
                   </div>
                 </div>
               )}

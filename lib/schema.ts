@@ -117,6 +117,26 @@ export const internships = pgTable("internships", {
     .references(() => user.id, { onDelete: "cascade" }),
 });
 
+export const internshipSearchTerms = pgTable(
+  "internship_search_terms",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    term: text("term").notNull(),
+    normalizedTerm: text("normalized_term").notNull(),
+    searchCount: integer("search_count").notNull().default(1),
+    lastSearchedAt: timestamp("last_searched_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("internship_search_terms_normalized_term_unique").on(
+      table.normalizedTerm
+    ),
+    index("internship_search_terms_count_idx").on(table.searchCount),
+    index("internship_search_terms_last_idx").on(table.lastSearchedAt),
+  ]
+);
+
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -559,6 +579,7 @@ export const schema = {
   mentors,
   opportunities,
   internships,
+  internshipSearchTerms,
   comments,
   session,
   account,

@@ -22,6 +22,10 @@ export default function BottomNav() {
     return null;
   }
 
+  if (normalizedPathname.startsWith("/intern/")) {
+    return null;
+  }
+
   return (
     <motion.nav
       initial={{ y: 100 }}

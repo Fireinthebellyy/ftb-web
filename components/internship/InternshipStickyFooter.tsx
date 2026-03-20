@@ -26,7 +26,7 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
   onSmartApplyClick,
 }) => {
   return (
-    <footer className="pb-safe fixed right-0 bottom-14 left-0 z-[60] flex items-center gap-2.5 border-t border-slate-100 bg-white px-4 py-3">
+    <footer className="pb-safe fixed right-0 bottom-0 left-0 z-[60] flex items-center gap-2.5 border-t border-slate-100 bg-white px-4 py-3">
       <div className="flex shrink-0 items-center gap-2.5">
         <button
           onClick={handleBookmarkClick}

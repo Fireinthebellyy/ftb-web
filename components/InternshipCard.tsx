@@ -25,7 +25,7 @@ import { useTracker } from "@/components/providers/TrackerProvider";
 
 const getDomainIcon = (
   title: string,
-  className: string = "w-5 h-5 text-white"
+  className: string = "w-5 h-5 text-slate-700"
 ) => {
   const t = title.toLowerCase();
   if (
@@ -68,21 +68,6 @@ const getDomainIcon = (
   if (t.includes("intern") || t.includes("trainee"))
     return <Lightbulb className={className} />;
   return <Briefcase className={className} />;
-};
-
-const getGradient = (id: string | number) => {
-  const gradients = [
-    "bg-linear-to-br from-purple-500 to-indigo-500",
-    "bg-linear-to-br from-pink-500 to-rose-500",
-    "bg-linear-to-br from-emerald-400 to-teal-500",
-    "bg-linear-to-br from-orange-400 to-red-500",
-    "bg-linear-to-br from-blue-400 to-cyan-500",
-    "bg-linear-to-br from-amber-400 to-orange-500",
-  ];
-  const hash = String(id)
-    .split("")
-    .reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return gradients[hash % gradients.length];
 };
 
 const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
@@ -172,13 +157,13 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
       >
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            {/* Desktop domain icon */}
-            <div className="hidden h-11 w-11 shrink-0 overflow-hidden rounded-full border border-white/50 shadow-sm sm:flex">
+            <div className="flex h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/50 shadow-sm sm:h-11 sm:w-11">
               <div
-                className={cn(
-                  "flex h-full w-full items-center justify-center",
-                  getGradient(id)
-                )}
+                className="flex h-full w-full items-center justify-center"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%)",
+                }}
               >
                 {getDomainIcon(title)}
               </div>

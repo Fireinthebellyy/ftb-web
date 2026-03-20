@@ -241,7 +241,7 @@ export default function InternshipDetailPage() {
           DESKTOP LAYOUT (hidden on mobile, visible on md+)
       ============================================================ */}
       <div className="hidden md:block">
-        <div className="mx-auto max-w-[1000px] px-4 pt-10">
+        <div className="mx-auto max-w-[1000px] px-4 pt-10 pb-16">
           <InternshipDesktopHeader
             internship={internship}
             session={session}

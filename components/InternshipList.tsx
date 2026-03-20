@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable max-lines */
+
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils";

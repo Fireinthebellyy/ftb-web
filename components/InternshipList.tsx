@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Filter, Loader2, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import InternshipPost from "@/components/InternshipCard";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import { useInfiniteInternships } from "@/lib/queries-internships";
@@ -50,9 +50,6 @@ function InternshipCardSkeleton() {
 
 export default function InternshipList() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
-
   // Initialize state from URL on mount
   const getInitialSearch = () => searchParams.get("search") || "";
   const getInitialLocation = () => searchParams.get("location") || "";
@@ -87,51 +84,7 @@ export default function InternshipList() {
   const hasActiveFilters =
     normalizedLocation.length > 0 || selectedTypes.length > 0 || paidOnly;
 
-  // 1. We ONLY update the URL when the debounced search term, location, or type changes.
-  // We do NOT listen to `searchParams` to update the local state after mount,
-  // as this causes bidirectional recursive updates (glitchy behavior).
-  useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    let hasChanges = false;
-
-    if (debouncedSearchTerm !== (params.get("search") || "")) {
-      if (debouncedSearchTerm) params.set("search", debouncedSearchTerm);
-      else params.delete("search");
-      hasChanges = true;
-    }
-
-    if (normalizedLocation !== (params.get("location") || "")) {
-      if (normalizedLocation) params.set("location", normalizedLocation);
-      else params.delete("location");
-      hasChanges = true;
-    }
-
-    const serializedTypes = selectedTypes.join(",");
-    if (serializedTypes !== (params.get("types") || "")) {
-      if (serializedTypes) params.set("types", serializedTypes);
-      else params.delete("types");
-      params.delete("type");
-      hasChanges = true;
-    }
-
-    if (paidOnly !== (params.get("paid") === "true")) {
-      if (paidOnly) params.set("paid", "true");
-      else params.delete("paid");
-      hasChanges = true;
-    }
-
-    if (hasChanges) {
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    }
-  }, [
-    debouncedSearchTerm,
-    normalizedLocation,
-    selectedTypes,
-    paidOnly,
-    pathname,
-    router,
-    searchParams,
-  ]);
+  // URL sync removed to avoid full-page reloads when interacting with filters.
 
   // Debounce search term updates (400ms delay) - only for user input
   useEffect(() => {

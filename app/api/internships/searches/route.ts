@@ -1,8 +1,8 @@
+import { NextRequest, NextResponse } from "next/server";
+import { desc, sql } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "@/lib/db";
 import { internshipSearchTerms } from "@/lib/schema";
-import { desc, sql } from "drizzle-orm";
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 
 const payloadSchema = z.object({
   term: z.string().min(1).max(120),

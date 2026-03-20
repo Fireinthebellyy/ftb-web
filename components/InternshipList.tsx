@@ -57,31 +57,40 @@ function InternshipCardSkeleton() {
 
 export default function InternshipList() {
   const searchParams = useSearchParams();
-  // Initialize state from URL on mount
-  const getInitialSearch = () => searchParams.get("search") || "";
-  const getInitialLocation = () => searchParams.get("location") || "";
-  const getInitialTypes = () => {
+
+  const [isNewInternshipOpen, setIsNewInternshipOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>(
+    () => searchParams.get("search") || ""
+  );
+  const [appliedSearchTerm, setAppliedSearchTerm] = useState<string>(
+    () => searchParams.get("search") || ""
+  );
+  const [location, setLocation] = useState<string>(
+    () => searchParams.get("location") || ""
+  );
+  const [appliedLocation, setAppliedLocation] = useState<string>(() =>
+    normalizeLocationValue(searchParams.get("location") || "")
+  );
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(() => {
     const raw = searchParams.get("types") || searchParams.get("type") || "";
     return raw
       .split(",")
       .map((value) => value.trim().toLowerCase())
       .filter(Boolean);
-  };
-  const getInitialPaidOnly = () => searchParams.get("paid") === "true";
-
-  const [isNewInternshipOpen, setIsNewInternshipOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState<string>(getInitialSearch);
-  const [appliedSearchTerm, setAppliedSearchTerm] =
-    useState<string>(getInitialSearch);
-  const [location, setLocation] = useState<string>(getInitialLocation);
-  const [appliedLocation, setAppliedLocation] = useState<string>(() =>
-    normalizeLocationValue(getInitialLocation())
+  });
+  const [appliedTypes, setAppliedTypes] = useState<string[]>(() => {
+    const raw = searchParams.get("types") || searchParams.get("type") || "";
+    return raw
+      .split(",")
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+  });
+  const [paidOnly, setPaidOnly] = useState<boolean>(
+    () => searchParams.get("paid") === "true"
   );
-  const [selectedTypes, setSelectedTypes] = useState<string[]>(getInitialTypes);
-  const [appliedTypes, setAppliedTypes] = useState<string[]>(getInitialTypes);
-  const [paidOnly, setPaidOnly] = useState<boolean>(getInitialPaidOnly);
-  const [appliedPaidOnly, setAppliedPaidOnly] =
-    useState<boolean>(getInitialPaidOnly);
+  const [appliedPaidOnly, setAppliedPaidOnly] = useState<boolean>(
+    () => searchParams.get("paid") === "true"
+  );
   const [serverTrending, setServerTrending] = useState<string[]>([]);
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);

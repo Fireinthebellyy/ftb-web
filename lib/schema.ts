@@ -132,8 +132,10 @@ export const internshipSearchTerms = pgTable(
     uniqueIndex("internship_search_terms_normalized_term_unique").on(
       table.normalizedTerm
     ),
-    index("internship_search_terms_count_idx").on(table.searchCount),
-    index("internship_search_terms_last_idx").on(table.lastSearchedAt),
+    index("internship_search_terms_search_count_last_idx").on(
+      table.searchCount,
+      table.lastSearchedAt
+    ),
   ]
 );
 

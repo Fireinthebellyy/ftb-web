@@ -16,8 +16,5 @@ CREATE TABLE IF NOT EXISTS "internship_search_terms" (
 CREATE UNIQUE INDEX IF NOT EXISTS "internship_search_terms_normalized_term_unique"
   ON "internship_search_terms" ("normalized_term");
 
-CREATE INDEX IF NOT EXISTS "internship_search_terms_count_idx"
-  ON "internship_search_terms" ("search_count");
-
-CREATE INDEX IF NOT EXISTS "internship_search_terms_last_idx"
-  ON "internship_search_terms" ("last_searched_at");
+CREATE INDEX IF NOT EXISTS "internship_search_terms_search_count_last_idx"
+  ON "internship_search_terms" ("search_count" DESC, "last_searched_at" DESC);

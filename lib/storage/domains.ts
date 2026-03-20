@@ -36,6 +36,9 @@ export const storageDomainConfig: Record<StorageDomain, StorageDomainConfig> = {
       "image/webp",
       "image/gif",
       "image/avif",
+      "application/pdf",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation"
     ],
     cacheControl: "public, max-age=31536000, immutable",
   },

@@ -33,9 +33,7 @@ export const InternshipTabContent: React.FC<InternshipTabContentProps> = ({
             <div className="text-slate-600 leading-relaxed text-[15px] space-y-5">
               {typeof internship.description === "string" ? (
                 <div className="whitespace-pre-wrap">
-                  {internship.description.length > 500
-                    ? `${internship.description.substring(0, 500)}...`
-                    : internship.description}
+                  {internship.description}
                 </div>
               ) : React.isValidElement(internship.description) || Array.isArray(internship.description) ? (
                 <div>{internship.description as React.ReactNode}</div>

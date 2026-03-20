@@ -107,6 +107,7 @@ export const internships = pgTable("internships", {
   hiringOrganization: text("hiring_organization").notNull(),
   hiringManager: text("hiring_manager"),
   isVerified: boolean("is_verified").default(false),
+  isFlagged: boolean("is_flagged").default(false),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

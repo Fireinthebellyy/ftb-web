@@ -40,6 +40,7 @@ export type Internship = {
   duration?: string | null;
   createdAt?: string;
   isVerified?: boolean;
+  isFlagged?: boolean;
   isActive?: boolean;
   user: {
     id: string;

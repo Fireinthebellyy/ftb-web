@@ -218,6 +218,7 @@ export async function GET(req: NextRequest) {
         createdAt: internships.createdAt,
         updatedAt: internships.updatedAt,
         isVerified: internships.isVerified,
+        isFlagged: internships.isFlagged,
         isActive: internships.isActive,
         userId: internships.userId,
         user: {

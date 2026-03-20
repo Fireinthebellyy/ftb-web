@@ -132,7 +132,8 @@ export default function ApplyModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         showCloseButton={false}
-        className="data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom fixed top-auto right-0 bottom-0 left-0 w-full max-w-none translate-x-0 translate-y-0 gap-0 rounded-t-[32px] rounded-b-none border-none bg-[#FAFAF9] p-6 text-black shadow-2xl focus:ring-0 focus:outline-none sm:top-[50%] sm:right-auto sm:bottom-auto sm:left-[50%] sm:w-full sm:max-w-sm sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-[32px]"
+        overlayClassName="z-[70]"
+        className="data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom fixed top-auto right-0 bottom-0 left-0 z-[80] w-full max-w-none translate-x-0 translate-y-0 gap-0 rounded-t-[32px] rounded-b-none border-none bg-[#FAFAF9] p-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] text-black shadow-2xl focus:ring-0 focus:outline-none max-h-[90dvh] overflow-y-auto sm:top-[50%] sm:right-auto sm:bottom-auto sm:left-[50%] sm:w-full sm:max-w-sm sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-[32px]"
       >
         <div className="flex flex-col items-center pt-2">
           {/* Top handle bar */}

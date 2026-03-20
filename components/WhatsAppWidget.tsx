@@ -27,7 +27,8 @@ export default function WhatsAppWidget() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
-  const isExcludedPage = pathname.startsWith("/intern") || pathname.startsWith("/opportunities");
+  const isInternDetailPage = pathname.startsWith("/intern/");
+  const isExcludedPage = isInternDetailPage || pathname.startsWith("/opportunities");
 
   if (isExcludedPage) {
     return null;

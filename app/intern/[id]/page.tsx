@@ -258,9 +258,7 @@ export default function InternshipDetailPage() {
               <div className="max-w-[650px] space-y-4 text-[15px] leading-relaxed text-slate-600">
                 {typeof internship.description === "string" ? (
                   <p className="whitespace-pre-wrap">
-                    {internship.description.length > 500
-                      ? `${internship.description.substring(0, 500)}...`
-                      : internship.description}
+                    {internship.description}
                   </p>
                 ) : (
                   internship.description || <p>No description provided.</p>
@@ -295,12 +293,6 @@ export default function InternshipDetailPage() {
               {/* Desktop Disclaimer */}
               <div className="mt-12 border-t border-slate-200 pt-8">
                 <div className="space-y-4 text-[14px] text-slate-700">
-                  <div className="flex items-start gap-3">
-                    <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-600" />
-                    <p>
-                      The data on this page gets updated in every 15 minutes.
-                    </p>
-                  </div>
                   <div className="flex flex-wrap items-start gap-3">
                     <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-600" />
                     <p className="flex-1">

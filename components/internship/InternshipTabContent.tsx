@@ -33,9 +33,7 @@ export const InternshipTabContent: React.FC<InternshipTabContentProps> = ({
             <div className="text-slate-600 leading-relaxed text-[15px] space-y-5">
               {typeof internship.description === "string" ? (
                 <div className="whitespace-pre-wrap">
-                  {internship.description.length > 500
-                    ? `${internship.description.substring(0, 500)}...`
-                    : internship.description}
+                  {internship.description}
                 </div>
               ) : React.isValidElement(internship.description) || Array.isArray(internship.description) ? (
                 <div>{internship.description as React.ReactNode}</div>
@@ -168,7 +166,7 @@ export const InternshipTabContent: React.FC<InternshipTabContentProps> = ({
         <div className="flex items-start gap-3">
           <Info className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
           <p className="text-[13px] text-slate-500 leading-relaxed">
-            This opportunity has been listed by <b>{toTitleCase(internship.hiringOrganization)}</b>. Data on this page updates every 15 minutes. FTB is not liable for any content mentioned in this opportunity or the process followed by the organizers.
+            This opportunity has been listed by <b>{toTitleCase(internship.hiringOrganization)}</b>. FTB is not liable for any content mentioned in this opportunity or the process followed by the organizers.
           </p>
         </div>
       </div>

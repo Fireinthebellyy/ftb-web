@@ -1,11 +1,13 @@
 "use client";
 
+/* eslint-disable max-lines */
+
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Search, Filter, Loader2, X } from "lucide-react";
+import { Filter, Loader2, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
@@ -54,7 +56,13 @@ export default function InternshipList() {
   // Initialize state from URL on mount
   const getInitialSearch = () => searchParams.get("search") || "";
   const getInitialLocation = () => searchParams.get("location") || "";
-  const getInitialType = () => searchParams.get("type") || "";
+  const getInitialTypes = () => {
+    const raw = searchParams.get("types") || searchParams.get("type") || "";
+    return raw
+      .split(",")
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+  };
   const getInitialPaidOnly = () => searchParams.get("paid") === "true";
 
   const [isNewInternshipOpen, setIsNewInternshipOpen] = useState(false);
@@ -62,11 +70,22 @@ export default function InternshipList() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] =
     useState<string>(getInitialSearch);
   const [location, setLocation] = useState<string>(getInitialLocation);
-  const [type, setType] = useState<string>(getInitialType);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(getInitialTypes);
   const [paidOnly, setPaidOnly] = useState<boolean>(getInitialPaidOnly);
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const [showSecondaryWidgets, setShowSecondaryWidgets] = useState(false);
+
+  const normalizedLocation = useMemo(() => {
+    return location
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .join(",");
+  }, [location]);
+
+  const hasActiveFilters =
+    normalizedLocation.length > 0 || selectedTypes.length > 0 || paidOnly;
 
   // 1. We ONLY update the URL when the debounced search term, location, or type changes.
   // We do NOT listen to `searchParams` to update the local state after mount,
@@ -81,15 +100,17 @@ export default function InternshipList() {
       hasChanges = true;
     }
 
-    if (location !== (params.get("location") || "")) {
-      if (location) params.set("location", location);
+    if (normalizedLocation !== (params.get("location") || "")) {
+      if (normalizedLocation) params.set("location", normalizedLocation);
       else params.delete("location");
       hasChanges = true;
     }
 
-    if (type !== (params.get("type") || "")) {
-      if (type) params.set("type", type);
-      else params.delete("type");
+    const serializedTypes = selectedTypes.join(",");
+    if (serializedTypes !== (params.get("types") || "")) {
+      if (serializedTypes) params.set("types", serializedTypes);
+      else params.delete("types");
+      params.delete("type");
       hasChanges = true;
     }
 
@@ -104,8 +125,8 @@ export default function InternshipList() {
     }
   }, [
     debouncedSearchTerm,
-    location,
-    type,
+    normalizedLocation,
+    selectedTypes,
     paidOnly,
     pathname,
     router,
@@ -143,9 +164,9 @@ export default function InternshipList() {
   } = useInfiniteInternships(
     10,
     normalizedSearchTerm,
-    type.trim() ? [type.trim()] : [],
+    selectedTypes,
     [],
-    location.trim(),
+    normalizedLocation,
     paidOnly ? 1 : undefined,
     undefined
   );
@@ -155,8 +176,55 @@ export default function InternshipList() {
       "Software Engineer Intern",
       "Data Science Intern",
       "Marketing Intern",
+      "Product Management Intern",
+      "Design Intern",
+      "Finance Intern",
     ],
     []
+  );
+
+  const trendingSearches = useMemo(
+    () => [
+      "Remote Internships",
+      "Python Intern",
+      "UI/UX Intern",
+      "Marketing Intern",
+      "Data Analyst Intern",
+      "Product Intern",
+      "Finance Intern",
+      "Sales Intern",
+    ],
+    []
+  );
+
+  const applySearch = useCallback(
+    (value?: string) => {
+      const nextValue = (value ?? searchTerm).trim();
+      if (value !== undefined) {
+        setSearchTerm(value);
+      }
+      setDebouncedSearchTerm(nextValue);
+    },
+    [searchTerm]
+  );
+
+  const renderTrendingSearches = () => (
+    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+      <span className="font-semibold uppercase tracking-wide text-slate-400">
+        Trending searches
+      </span>
+      {trendingSearches.map((term, index) => (
+        <button
+          key={term}
+          type="button"
+          onClick={() => applySearch(term)}
+          style={{ animationDelay: `${index * 120}ms` }}
+          className="animate-pulse rounded-full border border-orange-100 bg-orange-50 px-2.5 py-1 text-[11px] font-semibold text-[#ec5b13] transition hover:border-orange-200 hover:bg-orange-100"
+        >
+          {term}
+        </button>
+      ))}
+    </div>
   );
 
   // Rotate placeholders every 3 seconds
@@ -220,11 +288,19 @@ export default function InternshipList() {
     // TODO: handle bookmark
   };
 
+  const toggleType = (value: string) => {
+    setSelectedTypes((prev) =>
+      prev.includes(value)
+        ? prev.filter((item) => item !== value)
+        : [...prev, value]
+    );
+  };
+
   const clearFilters = () => {
     setSearchTerm("");
     setDebouncedSearchTerm("");
     setLocation("");
-    setType("");
+    setSelectedTypes([]);
     setPaidOnly(false);
   };
 
@@ -260,6 +336,11 @@ export default function InternshipList() {
                     placeholder={searchPlaceholders[currentPlaceholderIndex]}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        applySearch();
+                      }
+                    }}
                     className="h-12 w-full rounded-[16px] border-slate-200 bg-white pr-10 pl-11 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50"
                   />
                   {searchTerm && (
@@ -281,7 +362,7 @@ export default function InternshipList() {
                   onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
                   className={cn(
                     "h-12 w-12 shrink-0 rounded-[14px] border-none shadow-sm transition-all focus:ring-0 active:scale-95",
-                    isFilterBoxOpen || location || type || paidOnly
+                    isFilterBoxOpen || hasActiveFilters
                       ? "bg-[#d44d0c] text-white hover:bg-[#b03d0a]"
                       : "bg-[#ec5b13] text-white hover:bg-[#d44d0c]"
                   )}
@@ -289,6 +370,7 @@ export default function InternshipList() {
                   <Filter className="h-5 w-5" />
                 </Button>
               </div>
+              {renderTrendingSearches()}
 
               {/* Filter Box */}
               {isFilterBoxOpen && (
@@ -300,14 +382,18 @@ export default function InternshipList() {
                     <h3 className="text-lg font-semibold text-slate-900">
                       Filters
                     </h3>
-                    {(location || type || paidOnly) && (
-                      <button
-                        onClick={clearFilters}
-                        className="text-sm font-medium text-[#ec5b13] transition-colors hover:text-[#d44d0c]"
-                      >
-                        Clear
-                      </button>
-                    )}
+                    <button
+                      onClick={clearFilters}
+                      disabled={!hasActiveFilters}
+                      className={cn(
+                        "text-sm font-medium transition-colors",
+                        hasActiveFilters
+                          ? "text-[#ec5b13] hover:text-[#d44d0c]"
+                          : "text-slate-300 cursor-not-allowed"
+                      )}
+                    >
+                      Reset filters
+                    </button>
                   </div>
 
                   {/* Internship Type Filter */}
@@ -319,10 +405,10 @@ export default function InternshipList() {
                       {["onsite", "remote", "hybrid"].map((t) => (
                         <button
                           key={t}
-                          onClick={() => setType(type === t ? "" : t)}
+                          onClick={() => toggleType(t)}
                           className={cn(
                             "rounded-full border px-4 py-2 text-sm font-medium transition-all",
-                            type === t
+                            selectedTypes.includes(t)
                               ? "border-slate-300 bg-slate-50 text-slate-800"
                               : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                           )}
@@ -340,7 +426,7 @@ export default function InternshipList() {
                     </label>
                     <div className="flex flex-wrap gap-2.5">
                       <button
-                        onClick={() => setPaidOnly(!paidOnly)}
+                        onClick={() => setPaidOnly(true)}
                         className={cn(
                           "rounded-full border px-4 py-2 text-sm font-medium transition-all",
                           paidOnly
@@ -348,7 +434,18 @@ export default function InternshipList() {
                             : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                         )}
                       >
-                        Paid Only
+                        Paid
+                      </button>
+                      <button
+                        onClick={() => setPaidOnly(false)}
+                        className={cn(
+                          "rounded-full border px-4 py-2 text-sm font-medium transition-all",
+                          !paidOnly
+                            ? "border-slate-300 bg-slate-50 text-slate-800"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                        )}
+                      >
+                        Paid/Unpaid
                       </button>
                     </div>
                   </div>
@@ -360,7 +457,7 @@ export default function InternshipList() {
                     </label>
                     <div className="group relative">
                       <Input
-                        placeholder="E.g. Delhi, Mumbai"
+                        placeholder="E.g. Delhi, Mumbai (comma separated)"
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
                         className="h-11 w-full rounded-[12px] border-slate-200 bg-white pr-10 pl-4 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50"
@@ -395,42 +492,50 @@ export default function InternshipList() {
                   <Skeleton className="h-12 w-12 rounded-[14px]" />
                 </div>
               ) : (
-                <div className="relative flex items-center gap-3">
-                  <div className="group relative flex-1">
-                    <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 transform text-slate-400 transition-colors duration-200 group-focus-within:text-[#ec5b13]" />
-                    <Input
-                      placeholder={searchPlaceholders[currentPlaceholderIndex]}
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="h-12 w-full rounded-[16px] border-slate-200 bg-white pr-10 pl-11 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50"
-                    />
-                    {searchTerm && (
-                      <button
-                        type="button"
-                        aria-label="Clear search"
-                        onClick={() => setSearchTerm("")}
-                        className="absolute top-1/2 right-3 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    )}
+                <>
+                  <div className="relative flex items-center gap-3">
+                    <div className="group relative flex-1">
+                      <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 transform text-slate-400 transition-colors duration-200 group-focus-within:text-[#ec5b13]" />
+                      <Input
+                        placeholder={searchPlaceholders[currentPlaceholderIndex]}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            applySearch();
+                          }
+                        }}
+                        className="h-12 w-full rounded-[16px] border-slate-200 bg-white pr-10 pl-11 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50"
+                      />
+                      {searchTerm && (
+                        <button
+                          type="button"
+                          aria-label="Clear search"
+                          onClick={() => setSearchTerm("")}
+                          className="absolute top-1/2 right-3 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      aria-label="Toggle filters"
+                      aria-expanded={isFilterBoxOpen}
+                      aria-controls="desktop-filter-panel"
+                      onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
+                      className={cn(
+                        "h-12 w-12 shrink-0 rounded-[14px] border-none shadow-sm transition-all focus:ring-0 active:scale-95",
+                        isFilterBoxOpen || hasActiveFilters
+                          ? "bg-[#d44d0c] text-white hover:bg-[#b03d0a]"
+                          : "bg-[#ec5b13] text-white hover:bg-[#d44d0c]"
+                      )}
+                    >
+                      <Filter className="h-5 w-5" />
+                    </Button>
                   </div>
-                  <Button
-                    variant="outline"
-                    aria-label="Toggle filters"
-                    aria-expanded={isFilterBoxOpen}
-                    aria-controls="desktop-filter-panel"
-                    onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
-                    className={cn(
-                      "h-12 w-12 shrink-0 rounded-[14px] border-none shadow-sm transition-all focus:ring-0 active:scale-95",
-                      isFilterBoxOpen || location || type || paidOnly
-                        ? "bg-[#d44d0c] text-white hover:bg-[#b03d0a]"
-                        : "bg-[#ec5b13] text-white hover:bg-[#d44d0c]"
-                    )}
-                  >
-                    <Filter className="h-5 w-5" />
-                  </Button>
-                </div>
+                  {renderTrendingSearches()}
+                </>
               )}
 
               {/* Filters */}
@@ -443,14 +548,18 @@ export default function InternshipList() {
                     <h3 className="text-lg font-semibold text-slate-900">
                       Filters
                     </h3>
-                    {(location || type || paidOnly) && (
-                      <button
-                        onClick={clearFilters}
-                        className="text-sm font-medium text-[#ec5b13] transition-colors hover:text-[#d44d0c]"
-                      >
-                        Clear All
-                      </button>
-                    )}
+                    <button
+                      onClick={clearFilters}
+                      disabled={!hasActiveFilters}
+                      className={cn(
+                        "text-sm font-medium transition-colors",
+                        hasActiveFilters
+                          ? "text-[#ec5b13] hover:text-[#d44d0c]"
+                          : "text-slate-300 cursor-not-allowed"
+                      )}
+                    >
+                      Reset filters
+                    </button>
                   </div>
 
                   <div className="space-y-6">
@@ -463,10 +572,10 @@ export default function InternshipList() {
                         {["onsite", "remote", "hybrid"].map((t) => (
                           <button
                             key={t}
-                            onClick={() => setType(type === t ? "" : t)}
+                            onClick={() => toggleType(t)}
                             className={cn(
                               "rounded-full border px-4 py-2 text-sm font-medium transition-all",
-                              type === t
+                              selectedTypes.includes(t)
                                 ? "border-slate-300 bg-slate-50 text-slate-800"
                                 : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                             )}
@@ -484,7 +593,7 @@ export default function InternshipList() {
                       </label>
                       <div className="flex flex-wrap gap-2.5">
                         <button
-                          onClick={() => setPaidOnly(!paidOnly)}
+                          onClick={() => setPaidOnly(true)}
                           className={cn(
                             "rounded-full border px-4 py-2 text-sm font-medium transition-all",
                             paidOnly
@@ -492,7 +601,18 @@ export default function InternshipList() {
                               : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                           )}
                         >
-                          Paid Only
+                          Paid
+                        </button>
+                        <button
+                          onClick={() => setPaidOnly(false)}
+                          className={cn(
+                            "rounded-full border px-4 py-2 text-sm font-medium transition-all",
+                            !paidOnly
+                              ? "border-slate-300 bg-slate-50 text-slate-800"
+                              : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                          )}
+                        >
+                          Paid/Unpaid
                         </button>
                       </div>
                     </div>
@@ -504,7 +624,7 @@ export default function InternshipList() {
                       </label>
                       <div className="group relative">
                         <Input
-                          placeholder="E.g. Delhi, Mumbai"
+                          placeholder="E.g. Delhi, Mumbai (comma separated)"
                           value={location}
                           onChange={(e) => setLocation(e.target.value)}
                           className="h-11 w-full rounded-[12px] border-slate-200 bg-white pr-10 pl-4 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50"

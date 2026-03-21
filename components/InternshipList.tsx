@@ -26,6 +26,95 @@ import ToolkitBanner from "./internship/ToolkitBanner";
 const CalendarWidget = dynamic(() => import("./opportunity/CalendarWidget"));
 const TaskWidget = dynamic(() => import("./opportunity/TaskWidget"));
 
+interface SearchWidgetProps {
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  isSearchFocused: boolean;
+  setIsSearchFocused: (focused: boolean) => void;
+  filteredSuggestions: string[];
+  placeholder: string;
+  applyFilters: (term?: string) => void;
+}
+
+const SearchWidget = ({
+  searchTerm,
+  setSearchTerm,
+  isSearchFocused,
+  setIsSearchFocused,
+  filteredSuggestions,
+  placeholder,
+  applyFilters,
+}: SearchWidgetProps) => {
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        applyFilters();
+        setIsSearchFocused(false);
+      }}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+          setIsSearchFocused(false);
+        }
+      }}
+      className="group relative flex-1"
+    >
+      <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 transform text-slate-400 transition-colors duration-200 group-focus-within:text-[#ec5b13]" />
+      <Input
+        type="search"
+        placeholder={placeholder}
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        onFocus={() => setIsSearchFocused(true)}
+        className="h-12 w-full rounded-[16px] border-slate-200 bg-white pr-[4.5rem] pl-11 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50 [&::-webkit-search-cancel-button]:hidden"
+      />
+      <div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center gap-1">
+        {searchTerm && (
+          <button
+            type="button"
+            aria-label="Clear search"
+            onClick={() => {
+              setSearchTerm("");
+              applyFilters("");
+            }}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+        <button
+          type="submit"
+          className="flex h-8 items-center justify-center rounded-[10px] bg-[#ec5b13] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#d44d0c]"
+          aria-label="Submit search"
+        >
+          Go
+        </button>
+      </div>
+      {isSearchFocused && filteredSuggestions.length > 0 && (
+        <ul className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-[16px] border border-slate-200 bg-white shadow-lg">
+          {filteredSuggestions.map((suggestion) => (
+            <li key={suggestion}>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setSearchTerm(suggestion);
+                  applyFilters(suggestion);
+                  setIsSearchFocused(false);
+                }}
+                className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 focus:bg-slate-50"
+              >
+                <Search className="h-4 w-4 shrink-0 text-slate-400" />
+                <span>{suggestion}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </form>
+  );
+};
+
 const normalizeLocationValue = (value: string) =>
   value
     .split(",")
@@ -315,72 +404,15 @@ export default function InternshipList() {
           ) : (
             <>
               <div className="relative mb-2 flex items-center gap-3">
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    applyFilters();
-                  }}
-                  className="group relative flex-1"
-                >
-                  <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 transform text-slate-400 transition-colors duration-200 group-focus-within:text-[#ec5b13]" />
-                  <Input
-                    type="search"
-                    placeholder={searchPlaceholders[currentPlaceholderIndex]}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onFocus={() => setIsSearchFocused(true)}
-                    onBlur={() => setIsSearchFocused(false)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        setIsSearchFocused(false);
-                        applyFilters();
-                      }
-                    }}
-                    className="h-12 w-full rounded-[16px] border-slate-200 bg-white pr-[4.5rem] pl-11 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50 [&::-webkit-search-cancel-button]:hidden"
-                  />
-                  <div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center gap-1">
-                    {searchTerm && (
-                      <button
-                        type="button"
-                        aria-label="Clear search"
-                        onClick={() => applyFilters("")}
-                        className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                    <button
-                      type="submit"
-                      onClick={() => setIsSearchFocused(false)}
-                      className="flex h-8 items-center justify-center rounded-[10px] bg-[#ec5b13] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#d44d0c]"
-                      aria-label="Submit search"
-                    >
-                      Go
-                    </button>
-                  </div>
-                  {isSearchFocused && filteredSuggestions.length > 0 && (
-                    <ul className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-[16px] border border-slate-200 bg-white shadow-lg">
-                      {filteredSuggestions.map((suggestion) => (
-                        <li key={suggestion}>
-                          <button
-                            type="button"
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={() => {
-                              setSearchTerm(suggestion);
-                              applyFilters(suggestion);
-                              setIsSearchFocused(false);
-                            }}
-                            className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 focus:bg-slate-50"
-                          >
-                            <Search className="h-4 w-4 shrink-0 text-slate-400" />
-                            <span>{suggestion}</span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </form>
+                <SearchWidget
+                  searchTerm={searchTerm}
+                  setSearchTerm={setSearchTerm}
+                  isSearchFocused={isSearchFocused}
+                  setIsSearchFocused={setIsSearchFocused}
+                  filteredSuggestions={filteredSuggestions}
+                  placeholder={searchPlaceholders[currentPlaceholderIndex]}
+                  applyFilters={applyFilters}
+                />
                 <Button
                   variant="outline"
                   aria-label="Toggle filters"
@@ -528,74 +560,15 @@ export default function InternshipList() {
               ) : (
                 <>
                   <div className="relative flex items-center gap-3">
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        applyFilters();
-                      }}
-                      className="group relative flex-1"
-                    >
-                      <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 transform text-slate-400 transition-colors duration-200 group-focus-within:text-[#ec5b13]" />
-                      <Input
-                        type="search"
-                        placeholder={
-                          searchPlaceholders[currentPlaceholderIndex]
-                        }
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onFocus={() => setIsSearchFocused(true)}
-                        onBlur={() => setIsSearchFocused(false)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            setIsSearchFocused(false);
-                            applyFilters();
-                          }
-                        }}
-                        className="h-12 w-full rounded-[16px] border-slate-200 bg-white pr-[4.5rem] pl-11 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50 [&::-webkit-search-cancel-button]:hidden"
-                      />
-                      <div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center gap-1">
-                        {searchTerm && (
-                          <button
-                            type="button"
-                            aria-label="Clear search"
-                            onClick={() => applyFilters("")}
-                            className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                        <button
-                          type="submit"
-                          onClick={() => setIsSearchFocused(false)}
-                          className="flex h-8 items-center justify-center rounded-[10px] bg-[#ec5b13] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#d44d0c]"
-                          aria-label="Submit search"
-                        >
-                          Go
-                        </button>
-                      </div>
-                      {isSearchFocused && filteredSuggestions.length > 0 && (
-                        <ul className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-[16px] border border-slate-200 bg-white shadow-lg">
-                          {filteredSuggestions.map((suggestion) => (
-                            <li key={suggestion}>
-                              <button
-                                type="button"
-                                onMouseDown={(e) => e.preventDefault()}
-                                onClick={() => {
-                                  setSearchTerm(suggestion);
-                                  applyFilters(suggestion);
-                                  setIsSearchFocused(false);
-                                }}
-                                className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 focus:bg-slate-50"
-                              >
-                                <Search className="h-4 w-4 shrink-0 text-slate-400" />
-                                <span>{suggestion}</span>
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </form>
+                    <SearchWidget
+                      searchTerm={searchTerm}
+                      setSearchTerm={setSearchTerm}
+                      isSearchFocused={isSearchFocused}
+                      setIsSearchFocused={setIsSearchFocused}
+                      filteredSuggestions={filteredSuggestions}
+                      placeholder={searchPlaceholders[currentPlaceholderIndex]}
+                      applyFilters={applyFilters}
+                    />
                     <Button
                       variant="outline"
                       aria-label="Toggle filters"

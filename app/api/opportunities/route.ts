@@ -416,9 +416,8 @@ export async function GET(req: NextRequest) {
         .from(opportunities)
         .leftJoin(user, eq(opportunities.userId, user.id))
         .where(filters)
-        .orderBy(desc(opportunities.createdAt))
-        .limit(validLimit + 1)
-        .offset(validOffset);
+        .orderBy(desc(opportunities.createdAt));
+        
 
       let totalCount = 0;
       if (includeTotal) {
@@ -457,18 +456,9 @@ export async function GET(req: NextRequest) {
     // (Resolved merge conflict: nothing needed here, this block is redundant and should be removed.)
     timer.mark("query_page_done", { rows: paginated.length });
 
-    const hasMore = paginated.length > validLimit;
-    const pageItems = hasMore ? paginated.slice(0, validLimit) : paginated;
-
-    if (!includeTotal) {
-      totalCount = hasMore
-        ? validOffset + validLimit + 1
-        : validOffset + pageItems.length;
-    }
-
     // Calculate userHasUpvoted for each opportunity
     const currentUserId = session.user.id;
-    const opportunitiesWithUpvote = pageItems.map((opp) => {
+    const opportunitiesWithUpvote = paginated.map((opp) => {
       let userHasUpvoted = false;
       if (currentUserId && Array.isArray(opp.upvoterIds)) {
         userHasUpvoted = opp.upvoterIds.includes(currentUserId);
@@ -481,7 +471,6 @@ export async function GET(req: NextRequest) {
 
     timer.mark("transform_done", {
       rows: opportunitiesWithUpvote.length,
-      hasMore,
     });
 
     timer.end({ status: 200 });
@@ -489,12 +478,6 @@ export async function GET(req: NextRequest) {
       {
         success: true,
         opportunities: opportunitiesWithUpvote,
-        pagination: {
-          limit: validLimit,
-          offset: validOffset,
-          total: totalCount,
-          hasMore,
-        },
       },
       { status: 200 }
     );

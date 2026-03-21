@@ -8,7 +8,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 const updateOpportunitySchema = z.object({
-  action: z.enum(["approve", "reject"]),
+  action: z.enum(["approve", "reject", "toggle"]),
 });
 
 export async function PATCH(
@@ -83,6 +83,8 @@ export async function PATCH(
       updateData.isVerified = true;
     } else if (validatedData.action === "reject") {
       updateData.isActive = false;
+    } else if (validatedData.action === "toggle") {
+      updateData.isActive = !existingOpportunity[0].isActive;
     }
 
     const updatedOpportunity = await db

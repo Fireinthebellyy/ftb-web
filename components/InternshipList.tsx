@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Filter, Loader2, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import InternshipPost from "@/components/InternshipCard";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import { useInfiniteInternships } from "@/lib/queries-internships";
@@ -25,6 +25,13 @@ import ToolkitBanner from "./internship/ToolkitBanner";
 
 const CalendarWidget = dynamic(() => import("./opportunity/CalendarWidget"));
 const TaskWidget = dynamic(() => import("./opportunity/TaskWidget"));
+
+const normalizeLocationValue = (value: string) =>
+  value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .join(",");
 
 function InternshipCardSkeleton() {
   return (
@@ -50,97 +57,89 @@ function InternshipCardSkeleton() {
 
 export default function InternshipList() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
 
-  // Initialize state from URL on mount
-  const getInitialSearch = () => searchParams.get("search") || "";
-  const getInitialLocation = () => searchParams.get("location") || "";
-  const getInitialTypes = () => {
+  const [isNewInternshipOpen, setIsNewInternshipOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>(
+    () => searchParams.get("search") || ""
+  );
+  const [appliedSearchTerm, setAppliedSearchTerm] = useState<string>(
+    () => searchParams.get("search") || ""
+  );
+  const [location, setLocation] = useState<string>(
+    () => searchParams.get("location") || ""
+  );
+  const [appliedLocation, setAppliedLocation] = useState<string>(() =>
+    normalizeLocationValue(searchParams.get("location") || "")
+  );
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(() => {
     const raw = searchParams.get("types") || searchParams.get("type") || "";
     return raw
       .split(",")
       .map((value) => value.trim().toLowerCase())
       .filter(Boolean);
-  };
-  const getInitialPaidOnly = () => searchParams.get("paid") === "true";
-
-  const [isNewInternshipOpen, setIsNewInternshipOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState<string>(getInitialSearch);
-  const [debouncedSearchTerm, setDebouncedSearchTerm] =
-    useState<string>(getInitialSearch);
-  const [location, setLocation] = useState<string>(getInitialLocation);
-  const [selectedTypes, setSelectedTypes] = useState<string[]>(getInitialTypes);
-  const [paidOnly, setPaidOnly] = useState<boolean>(getInitialPaidOnly);
+  });
+  const [appliedTypes, setAppliedTypes] = useState<string[]>(() => {
+    const raw = searchParams.get("types") || searchParams.get("type") || "";
+    return raw
+      .split(",")
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+  });
+  const [paidOnly, setPaidOnly] = useState<boolean>(
+    () => searchParams.get("paid") === "true"
+  );
+  const [appliedPaidOnly, setAppliedPaidOnly] = useState<boolean>(
+    () => searchParams.get("paid") === "true"
+  );
+  const [serverTrending, setServerTrending] = useState<string[]>([]);
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const [showSecondaryWidgets, setShowSecondaryWidgets] = useState(false);
 
-  const normalizedLocation = useMemo(() => {
-    return location
-      .split(",")
-      .map((value) => value.trim())
-      .filter(Boolean)
-      .join(",");
-  }, [location]);
+  const normalizedLocation = useMemo(
+    () => normalizeLocationValue(location),
+    [location]
+  );
 
-  const hasActiveFilters =
-    normalizedLocation.length > 0 || selectedTypes.length > 0 || paidOnly;
+  const serializedSelectedTypes = selectedTypes.join(",");
+  const serializedAppliedTypes = appliedTypes.join(",");
+  const normalizedSearchTerm = appliedSearchTerm.trim();
 
-  // 1. We ONLY update the URL when the debounced search term, location, or type changes.
-  // We do NOT listen to `searchParams` to update the local state after mount,
-  // as this causes bidirectional recursive updates (glitchy behavior).
+  const hasAppliedFilters =
+    appliedSearchTerm.trim().length > 0 ||
+    appliedLocation.length > 0 ||
+    appliedTypes.length > 0 ||
+    appliedPaidOnly;
+  const hasDraftFilters =
+    searchTerm.trim().length > 0 ||
+    normalizedLocation.length > 0 ||
+    selectedTypes.length > 0 ||
+    paidOnly;
+  const hasActiveFilters = hasAppliedFilters || hasDraftFilters;
+  const hasPendingChanges =
+    normalizedLocation !== appliedLocation ||
+    serializedSelectedTypes !== serializedAppliedTypes ||
+    paidOnly !== appliedPaidOnly ||
+    searchTerm.trim() !== appliedSearchTerm;
+
+  // URL sync removed to avoid full-page reloads when interacting with filters.
+
+  const fetchTrendingSearches = useCallback(async () => {
+    try {
+      const response = await fetch("/api/internships/searches?limit=8");
+      if (!response.ok) return;
+      const payload = await response.json();
+      if (Array.isArray(payload?.terms)) {
+        setServerTrending(payload.terms.filter(Boolean));
+      }
+    } catch {
+      // ignore network errors
+    }
+  }, []);
+
   useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    let hasChanges = false;
-
-    if (debouncedSearchTerm !== (params.get("search") || "")) {
-      if (debouncedSearchTerm) params.set("search", debouncedSearchTerm);
-      else params.delete("search");
-      hasChanges = true;
-    }
-
-    if (normalizedLocation !== (params.get("location") || "")) {
-      if (normalizedLocation) params.set("location", normalizedLocation);
-      else params.delete("location");
-      hasChanges = true;
-    }
-
-    const serializedTypes = selectedTypes.join(",");
-    if (serializedTypes !== (params.get("types") || "")) {
-      if (serializedTypes) params.set("types", serializedTypes);
-      else params.delete("types");
-      params.delete("type");
-      hasChanges = true;
-    }
-
-    if (paidOnly !== (params.get("paid") === "true")) {
-      if (paidOnly) params.set("paid", "true");
-      else params.delete("paid");
-      hasChanges = true;
-    }
-
-    if (hasChanges) {
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    }
-  }, [
-    debouncedSearchTerm,
-    normalizedLocation,
-    selectedTypes,
-    paidOnly,
-    pathname,
-    router,
-    searchParams,
-  ]);
-
-  // Debounce search term updates (400ms delay) - only for user input
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+    void fetchTrendingSearches();
+  }, [fetchTrendingSearches]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -152,8 +151,6 @@ export default function InternshipList() {
     };
   }, []);
 
-  const normalizedSearchTerm = debouncedSearchTerm.trim();
-
   const {
     data,
     isLoading,
@@ -164,10 +161,10 @@ export default function InternshipList() {
   } = useInfiniteInternships(
     10,
     normalizedSearchTerm,
-    selectedTypes,
+    appliedTypes,
     [],
-    normalizedLocation,
-    paidOnly ? 1 : undefined,
+    appliedLocation,
+    appliedPaidOnly ? 1 : undefined,
     undefined
   );
 
@@ -183,8 +180,8 @@ export default function InternshipList() {
     []
   );
 
-  const trendingSearches = useMemo(
-    () => [
+  const trendingSearches = useMemo(() => {
+    const fallback = [
       "Remote Internships",
       "Python Intern",
       "UI/UX Intern",
@@ -193,31 +190,89 @@ export default function InternshipList() {
       "Product Intern",
       "Finance Intern",
       "Sales Intern",
-    ],
-    []
-  );
+    ];
+    const seen = new Set<string>();
+    const merged: string[] = [];
 
-  const applySearch = useCallback(
-    (value?: string) => {
-      const nextValue = (value ?? searchTerm).trim();
-      if (value !== undefined) {
-        setSearchTerm(value);
+    const add = (term: string) => {
+      const key = term.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      merged.push(term);
+    };
+
+    serverTrending.forEach(add);
+    fallback.forEach(add);
+
+    return merged.slice(0, 8);
+  }, [serverTrending]);
+
+  const bumpServerTrending = useCallback((term: string) => {
+    const normalized = term.trim();
+    if (!normalized) return;
+
+    setServerTrending((prev) => {
+      const next = [
+        normalized,
+        ...prev.filter(
+          (item) => item.toLowerCase() !== normalized.toLowerCase()
+        ),
+      ];
+      return next.slice(0, 8);
+    });
+  }, []);
+
+  const trackSearch = useCallback(async (term: string) => {
+    if (!term) return;
+    try {
+      await fetch("/api/internships/searches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ term }),
+      });
+    } catch {
+      // ignore tracking failures
+    }
+  }, []);
+
+  const applyFilters = useCallback(
+    (overrideSearch?: string) => {
+      const nextSearch = (overrideSearch ?? searchTerm).trim();
+
+      if (overrideSearch !== undefined) {
+        setSearchTerm(overrideSearch);
       }
-      setDebouncedSearchTerm(nextValue);
+
+      setAppliedSearchTerm(nextSearch);
+      setAppliedLocation(normalizedLocation);
+      setAppliedTypes(selectedTypes);
+      setAppliedPaidOnly(paidOnly);
+
+      if (nextSearch) {
+        bumpServerTrending(nextSearch);
+        void trackSearch(nextSearch);
+      }
     },
-    [searchTerm]
+    [
+      searchTerm,
+      normalizedLocation,
+      selectedTypes,
+      paidOnly,
+      bumpServerTrending,
+      trackSearch,
+    ]
   );
 
   const renderTrendingSearches = () => (
     <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-      <span className="font-semibold uppercase tracking-wide text-slate-400">
+      <span className="font-semibold tracking-wide text-slate-400 uppercase">
         Trending searches
       </span>
       {trendingSearches.map((term, index) => (
         <button
           key={term}
           type="button"
-          onClick={() => applySearch(term)}
+          onClick={() => applyFilters(term)}
           style={{ animationDelay: `${index * 120}ms` }}
           className="animate-pulse rounded-full border border-orange-100 bg-orange-50 px-2.5 py-1 text-[11px] font-semibold text-[#ec5b13] transition hover:border-orange-200 hover:bg-orange-100"
         >
@@ -242,7 +297,7 @@ export default function InternshipList() {
   const allInternships = (
     data?.pages?.flatMap((page) => page.internships) || []
   ).filter(Boolean);
-  const showInitialSkeleton = isLoading && !data;
+  const showInitialSkeleton = isLoading && allInternships.length === 0;
 
   // Intersection observer for infinite scroll
   const loadMoreDesktopRef = useRef<HTMLDivElement>(null);
@@ -298,10 +353,13 @@ export default function InternshipList() {
 
   const clearFilters = () => {
     setSearchTerm("");
-    setDebouncedSearchTerm("");
+    setAppliedSearchTerm("");
     setLocation("");
+    setAppliedLocation("");
     setSelectedTypes([]);
+    setAppliedTypes([]);
     setPaidOnly(false);
+    setAppliedPaidOnly(false);
   };
 
   if (error) {
@@ -338,7 +396,7 @@ export default function InternshipList() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
-                        applySearch();
+                        applyFilters();
                       }
                     }}
                     className="h-12 w-full rounded-[16px] border-slate-200 bg-white pr-10 pl-11 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50"
@@ -389,7 +447,7 @@ export default function InternshipList() {
                         "text-sm font-medium transition-colors",
                         hasActiveFilters
                           ? "text-[#ec5b13] hover:text-[#d44d0c]"
-                          : "text-slate-300 cursor-not-allowed"
+                          : "cursor-not-allowed text-slate-300"
                       )}
                     >
                       Reset filters
@@ -474,6 +532,14 @@ export default function InternshipList() {
                       )}
                     </div>
                   </div>
+
+                  <Button
+                    onClick={() => applyFilters()}
+                    disabled={!hasPendingChanges}
+                    className="mt-4 w-full"
+                  >
+                    Apply filters
+                  </Button>
                 </div>
               )}
             </>
@@ -497,12 +563,14 @@ export default function InternshipList() {
                     <div className="group relative flex-1">
                       <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 transform text-slate-400 transition-colors duration-200 group-focus-within:text-[#ec5b13]" />
                       <Input
-                        placeholder={searchPlaceholders[currentPlaceholderIndex]}
+                        placeholder={
+                          searchPlaceholders[currentPlaceholderIndex]
+                        }
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
-                            applySearch();
+                            applyFilters();
                           }
                         }}
                         className="h-12 w-full rounded-[16px] border-slate-200 bg-white pr-10 pl-11 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50"
@@ -555,7 +623,7 @@ export default function InternshipList() {
                         "text-sm font-medium transition-colors",
                         hasActiveFilters
                           ? "text-[#ec5b13] hover:text-[#d44d0c]"
-                          : "text-slate-300 cursor-not-allowed"
+                          : "cursor-not-allowed text-slate-300"
                       )}
                     >
                       Reset filters
@@ -641,6 +709,14 @@ export default function InternshipList() {
                         )}
                       </div>
                     </div>
+
+                    <Button
+                      onClick={() => applyFilters()}
+                      disabled={!hasPendingChanges}
+                      className="w-full"
+                    >
+                      Apply filters
+                    </Button>
                   </div>
                 </div>
               )}

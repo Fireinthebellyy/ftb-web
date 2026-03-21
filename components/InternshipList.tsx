@@ -265,7 +265,7 @@ export default function InternshipList() {
 
   const renderTrendingSearches = () => (
     <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-      <span className="font-semibold uppercase tracking-wide text-slate-400">
+      <span className="font-semibold tracking-wide text-slate-400 uppercase">
         Trending searches
       </span>
       {trendingSearches.map((term, index) => (
@@ -297,8 +297,7 @@ export default function InternshipList() {
   const allInternships = (
     data?.pages?.flatMap((page) => page.internships) || []
   ).filter(Boolean);
-  const showInitialSkeleton =
-    isLoading && (!data || data.pages.length === 0);
+  const showInitialSkeleton = isLoading && allInternships.length === 0;
 
   // Intersection observer for infinite scroll
   const loadMoreDesktopRef = useRef<HTMLDivElement>(null);
@@ -448,7 +447,7 @@ export default function InternshipList() {
                         "text-sm font-medium transition-colors",
                         hasActiveFilters
                           ? "text-[#ec5b13] hover:text-[#d44d0c]"
-                          : "text-slate-300 cursor-not-allowed"
+                          : "cursor-not-allowed text-slate-300"
                       )}
                     >
                       Reset filters
@@ -564,7 +563,9 @@ export default function InternshipList() {
                     <div className="group relative flex-1">
                       <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 transform text-slate-400 transition-colors duration-200 group-focus-within:text-[#ec5b13]" />
                       <Input
-                        placeholder={searchPlaceholders[currentPlaceholderIndex]}
+                        placeholder={
+                          searchPlaceholders[currentPlaceholderIndex]
+                        }
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         onKeyDown={(e) => {
@@ -622,7 +623,7 @@ export default function InternshipList() {
                         "text-sm font-medium transition-colors",
                         hasActiveFilters
                           ? "text-[#ec5b13] hover:text-[#d44d0c]"
-                          : "text-slate-300 cursor-not-allowed"
+                          : "cursor-not-allowed text-slate-300"
                       )}
                     >
                       Reset filters

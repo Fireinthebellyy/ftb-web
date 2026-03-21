@@ -119,17 +119,8 @@ export async function GET(req: NextRequest) {
           .map((value) => value.trim().toLowerCase())
           .filter(Boolean)
       : [];
-<<<<<<< Updated upstream
-    const rawLocations = locationParam
-      ? locationParam
-          .split(",")
-          .map((value) => value.trim())
-          .filter(Boolean)
-      : [];
-=======
 
     const location = locationParam ? locationParam.trim() : "";
->>>>>>> Stashed changes
     const minStipend = Number.isNaN(minStipendParam)
       ? undefined
       : minStipendParam;

@@ -12,7 +12,12 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-export const userRoleEnum = pgEnum("user_role", ["user", "member", "admin"]);
+export const userRoleEnum = pgEnum("user_role", [
+  "user",
+  "member",
+  "editor",
+  "admin",
+]);
 export const personaEnum = pgEnum("persona_type", ["student", "society"]);
 export const onboardingTrafficSourceEnum = pgEnum("onboarding_traffic_source", [
   "instagram",

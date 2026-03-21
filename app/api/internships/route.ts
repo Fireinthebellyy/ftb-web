@@ -122,7 +122,12 @@ export async function GET(req: NextRequest) {
           .map((value) => value.trim().toLowerCase())
           .filter(Boolean)
       : [];
-    const location = locationParam ? locationParam.trim() : "";
+    const rawLocations = locationParam
+      ? locationParam
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean)
+      : [];
     const minStipend = Number.isNaN(minStipendParam)
       ? undefined
       : minStipendParam;
@@ -167,8 +172,16 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    if (location) {
-      conditions.push(ilike(internships.location, `%${location}%`));
+    if (rawLocations.length > 0) {
+      const locationConditions = rawLocations.map((value) =>
+        ilike(internships.location, `%${value}%`)
+      );
+
+      if (locationConditions.length === 1) {
+        conditions.push(locationConditions[0]);
+      } else {
+        conditions.push(or(...locationConditions));
+      }
     }
 
     if (minStipend !== undefined) {
@@ -218,6 +231,7 @@ export async function GET(req: NextRequest) {
         createdAt: internships.createdAt,
         updatedAt: internships.updatedAt,
         isVerified: internships.isVerified,
+        isFlagged: internships.isFlagged,
         isActive: internships.isActive,
         userId: internships.userId,
         user: {

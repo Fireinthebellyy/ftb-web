@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { logAdminActivity } from "@/lib/admin-activity";
+import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { db } from "@/lib/db";
 import { ungatekeepPosts } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
@@ -20,16 +21,18 @@ const updatePostSchema = z.object({
     )
     .optional()
     .or(z.literal("")),
-  tag: z.enum([
-    "announcement",
-    "company_experience",
-    "resources",
-    "playbooks",
-    "college_hacks",
-    "interview",
-    "ama_drops",
-    "ftb_recommends",
-  ]).optional(),
+  tag: z
+    .enum([
+      "announcement",
+      "company_experience",
+      "resources",
+      "playbooks",
+      "college_hacks",
+      "interview",
+      "ama_drops",
+      "ftb_recommends",
+    ])
+    .optional(),
   isPinned: z.boolean().optional(),
   isPublished: z.boolean().optional(),
   publishAt: z.string().optional().nullable(),
@@ -50,7 +53,7 @@ export async function GET(
     if (
       !currentUser ||
       !currentUser.currentUser?.id ||
-      currentUser.currentUser.role !== "admin"
+      !canAccessAdminTab(currentUser.currentUser.role, "ungatekeep")
     ) {
       activityStatus = 401;
       activityError = "Unauthorized";
@@ -112,7 +115,7 @@ export async function PUT(
     if (
       !currentUser ||
       !currentUser.currentUser?.id ||
-      currentUser.currentUser.role !== "admin"
+      !canAccessAdminTab(currentUser.currentUser.role, "ungatekeep")
     ) {
       activityStatus = 401;
       activityError = "Unauthorized";
@@ -245,7 +248,7 @@ export async function DELETE(
     if (
       !currentUser ||
       !currentUser.currentUser?.id ||
-      currentUser.currentUser.role !== "admin"
+      !canAccessAdminTab(currentUser.currentUser.role, "ungatekeep")
     ) {
       activityStatus = 401;
       activityError = "Unauthorized";

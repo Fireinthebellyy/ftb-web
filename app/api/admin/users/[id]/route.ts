@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { userRoles, type UserRole } from "@/lib/admin-permissions";
 import { logAdminActivity } from "@/lib/admin-activity";
 import { db } from "@/lib/db";
 import { user as userTable } from "@/lib/schema";
@@ -64,13 +65,16 @@ export async function PATCH(
     activityBeforeState = targetUserBefore;
 
     const body = await request.json();
-    const { role } = body as { role?: "user" | "member" | "admin" };
+    const { role } = body as { role?: UserRole };
 
-    if (!role || !["user", "member", "admin"].includes(role)) {
+    if (!role || !userRoles.includes(role)) {
       activityStatus = 400;
-      activityError = "Invalid role. Must be 'user', 'member', or 'admin'";
+      activityError =
+        "Invalid role. Must be one of: user, member, editor, admin";
       return NextResponse.json(
-        { error: "Invalid role. Must be 'user', 'member', or 'admin'" },
+        {
+          error: "Invalid role. Must be one of: user, member, editor, admin",
+        },
         { status: 400 }
       );
     }

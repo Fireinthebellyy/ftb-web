@@ -6,8 +6,14 @@ import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
-export default async function OpportunityDetailPage({ params }: any) {
-  const id = params.id;
+type OpportunityDetailPageProps = {
+  params: Promise<{ id: string }>;
+};
+
+export default async function OpportunityDetailPage({
+  params,
+}: OpportunityDetailPageProps) {
+  const { id } = await params;
 
   const result = await db
     .select({

@@ -12,6 +12,12 @@ import {
   Ticket,
   Users,
 } from "lucide-react";
+import {
+  canAccessAdminTab,
+  getAllowedAdminTabs,
+  isAdminTab,
+  type AdminTabValue,
+} from "@/lib/admin-permissions";
 import { Button } from "@/components/ui/button";
 import AdminUsersTable from "./AdminUsersTable";
 import AdminOpportunitiesTable from "./AdminOpportunitiesTable";
@@ -33,7 +39,7 @@ const TAB_VALUES = [
 type TabValue = (typeof TAB_VALUES)[number];
 
 function isValidTab(value: string | null): value is TabValue {
-  return value !== null && TAB_VALUES.includes(value as TabValue);
+  return isAdminTab(value);
 }
 
 const adminCards: Array<{
@@ -66,7 +72,8 @@ const adminCards: Array<{
   {
     key: "users",
     title: "User Management",
-    description: "Manage user accounts and assign roles (user, member, admin)",
+    description:
+      "Manage user accounts and assign roles (user, member, editor, admin)",
     icon: Users,
   },
   {
@@ -90,15 +97,26 @@ const adminCards: Array<{
   },
 ];
 
-export function AdminTabs({ currentUserId }: { currentUserId: string }) {
+export function AdminTabs({
+  currentUserId,
+  currentUserRole,
+}: {
+  currentUserId: string;
+  currentUserRole: string;
+}) {
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab");
-  const activeTab = isValidTab(tab) ? tab : null;
+  const allowedTabs = getAllowedAdminTabs(currentUserRole);
+  const visibleCards = adminCards.filter((card) =>
+    canAccessAdminTab(currentUserRole, card.key)
+  );
+  const activeTab =
+    isValidTab(tab) && allowedTabs.includes(tab) ? (tab as TabValue) : null;
 
   if (!activeTab) {
     return (
       <div className="flex flex-wrap gap-4">
-        {adminCards.map((card) => {
+        {visibleCards.map((card) => {
           const Icon = card.icon;
 
           return (

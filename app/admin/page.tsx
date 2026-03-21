@@ -3,6 +3,11 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import NewInternshipButton from "@/components/internship/NewInternshipButton";
+import {
+  canAccessAdminPanel,
+  getAllowedAdminTabs,
+  isAdminTab,
+} from "@/lib/admin-permissions";
 import { AdminTabs } from "./AdminTabs";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -24,9 +29,6 @@ type AdminPageProps = {
 export default async function AdminPage({ searchParams }: AdminPageProps) {
   const params = await searchParams;
   const tabParam = Array.isArray(params.tab) ? params.tab[0] : params.tab;
-  const isInsideAdminPage =
-    typeof tabParam === "string" &&
-    adminTabValues.includes(tabParam as (typeof adminTabValues)[number]);
 
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -43,9 +45,15 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     },
   });
 
-  if (!currentUser || currentUser.role !== "admin") {
+  if (!currentUser || !canAccessAdminPanel(currentUser.role)) {
     redirect("/");
   }
+
+  const allowedTabs = getAllowedAdminTabs(currentUser.role);
+  const isInsideAdminPage =
+    typeof tabParam === "string" &&
+    isAdminTab(tabParam) &&
+    allowedTabs.includes(tabParam);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -54,7 +62,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <div className="mb-8">
             <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-              <NewInternshipButton />
+              {currentUser.role === "admin" ? <NewInternshipButton /> : null}
             </div>
             <p className="text-muted-foreground">
               Manage users, opportunities, and platform content
@@ -65,7 +73,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <Suspense
           fallback={<div className="bg-muted h-64 animate-pulse rounded-lg" />}
         >
-          <AdminTabs currentUserId={session.user.id} />
+          <AdminTabs
+            currentUserId={session.user.id}
+            currentUserRole={currentUser.role}
+          />
         </Suspense>
       </div>
     </div>

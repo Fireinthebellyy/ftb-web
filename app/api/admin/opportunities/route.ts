@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { logAdminActivity } from "@/lib/admin-activity";
+import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { opportunities, user, tags } from "@/lib/schema";
 import { getCurrentUserOptional } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
@@ -21,7 +22,10 @@ export async function GET(req: NextRequest) {
     // Check if user is admin - using optional to avoid redirect on API routes
     const currentUser = await getCurrentUserOptional();
     activityAdminUserId = currentUser?.currentUser?.id ?? null;
-    if (!currentUser || currentUser.currentUser?.role !== "admin") {
+    if (
+      !currentUser ||
+      !canAccessAdminTab(currentUser.currentUser?.role, "opportunities")
+    ) {
       activityStatus = 403;
       activityError = "Unauthorized";
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });

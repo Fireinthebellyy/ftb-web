@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { canAccessAdminPanel } from "@/lib/admin-permissions";
 import { useSession, useInvalidateSession } from "@/hooks/use-session";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
@@ -301,7 +302,7 @@ export default function Navbar() {
                 Hi, {user?.user?.name?.split(" ")[0] || "User"}!
               </span>
               {/* @ts-ignore - role is added via additionalFields in better-auth config */}
-              {user?.user?.role === "admin" && (
+              {canAccessAdminPanel(user?.user?.role) && (
                 <Link
                   href="/admin"
                   className="flex items-center gap-1 rounded-md bg-orange-100 px-2 py-1 text-xs font-medium text-orange-700 transition-colors hover:bg-orange-200"

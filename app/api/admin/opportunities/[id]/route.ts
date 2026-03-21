@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { logAdminActivity } from "@/lib/admin-activity";
+import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { opportunities } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
@@ -34,7 +35,7 @@ export async function PATCH(
     // Check if user is admin
     const currentUser = await getCurrentUser();
     activityAdminUserId = currentUser?.currentUser?.id ?? null;
-    if (currentUser?.currentUser?.role !== "admin") {
+    if (!canAccessAdminTab(currentUser?.currentUser?.role, "opportunities")) {
       activityStatus = 403;
       activityError = "Unauthorized";
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });

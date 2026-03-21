@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
-type UserRole = "user" | "member" | "admin";
+type UserRole = "user" | "member" | "editor" | "admin";
 
 interface User {
   id: string;
@@ -164,7 +164,9 @@ export default function AdminUsersTable({
               ? "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-50"
               : role === "member"
                 ? "border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-50"
-                : "border border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-50";
+                : role === "editor"
+                  ? "border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-50"
+                  : "border border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-50";
 
           return <Badge className={roleBadgeClassName}>{role}</Badge>;
         },
@@ -213,6 +215,7 @@ export default function AdminUsersTable({
               <SelectContent>
                 <SelectItem value="user">User</SelectItem>
                 <SelectItem value="member">Member</SelectItem>
+                <SelectItem value="editor">Editor</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
               </SelectContent>
             </Select>

@@ -19,7 +19,7 @@ export type Opportunity = {
     id: string;
     name: string;
     image: string;
-    role?: "user" | "member" | "admin";
+    role?: "user" | "member" | "editor" | "admin";
   };
 };
 
@@ -46,7 +46,7 @@ export type Internship = {
     id: string;
     name: string;
     image: string;
-    role?: "user" | "member" | "admin";
+    role?: "user" | "member" | "editor" | "admin";
   };
 };
 

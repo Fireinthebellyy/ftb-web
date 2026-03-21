@@ -227,6 +227,40 @@ export default function InternshipDetailPage() {
           />
         </div>
 
+        <div className="px-5 mt-2 pb-6">
+          <InternshipDesktopSidebar
+            internship={internship}
+            handleOpenChat={handleOpenChat}
+          />
+
+          {/* Mobile Disclaimer */}
+          <div className="mt-8 border-t border-slate-200 pt-8 pb-4">
+            <div className="space-y-4 text-[13px] text-slate-700">
+              <div className="flex flex-wrap items-start gap-3">
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+                <p className="flex-1 text-slate-500 leading-relaxed">
+                  This opportunity has been listed by <b>{toTitleCase(internship.hiringOrganization)}</b>. FTB is not liable for any content mentioned in this opportunity or the process followed by the organizers for this opportunity.
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <Flag className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+                <button
+                  type="button"
+                  onClick={handleFlagInternship}
+                  disabled={isFlagging || internship.isFlagged}
+                  className="text-left text-[13px] font-medium text-slate-700 hover:text-[#ec5b13] disabled:cursor-not-allowed disabled:text-slate-400"
+                >
+                  {isFlagging
+                    ? "Flagging internship..."
+                    : internship.isFlagged
+                      ? "Internship flagged for review"
+                      : "Flag this internship for review"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <InternshipStickyFooter
           internship={internship}
           isBookmarked={isBookmarked}

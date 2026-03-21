@@ -26,6 +26,95 @@ import ToolkitBanner from "./internship/ToolkitBanner";
 const CalendarWidget = dynamic(() => import("./opportunity/CalendarWidget"));
 const TaskWidget = dynamic(() => import("./opportunity/TaskWidget"));
 
+interface SearchWidgetProps {
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  isSearchFocused: boolean;
+  setIsSearchFocused: (focused: boolean) => void;
+  filteredSuggestions: string[];
+  placeholder: string;
+  applyFilters: (term?: string) => void;
+}
+
+const SearchWidget = ({
+  searchTerm,
+  setSearchTerm,
+  isSearchFocused,
+  setIsSearchFocused,
+  filteredSuggestions,
+  placeholder,
+  applyFilters,
+}: SearchWidgetProps) => {
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        applyFilters();
+        setIsSearchFocused(false);
+      }}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+          setIsSearchFocused(false);
+        }
+      }}
+      className="group relative flex-1"
+    >
+      <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 transform text-slate-400 transition-colors duration-200 group-focus-within:text-[#ec5b13]" />
+      <Input
+        type="search"
+        placeholder={placeholder}
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        onFocus={() => setIsSearchFocused(true)}
+        className="h-12 w-full rounded-[16px] border-slate-200 bg-white pr-[4.5rem] pl-11 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50 [&::-webkit-search-cancel-button]:hidden"
+      />
+      <div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center gap-1">
+        {searchTerm && (
+          <button
+            type="button"
+            aria-label="Clear search"
+            onClick={() => {
+              setSearchTerm("");
+              applyFilters("");
+            }}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+        <button
+          type="submit"
+          className="flex h-8 items-center justify-center rounded-[10px] bg-[#ec5b13] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#d44d0c]"
+          aria-label="Submit search"
+        >
+          Go
+        </button>
+      </div>
+      {isSearchFocused && filteredSuggestions.length > 0 && (
+        <ul className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-[16px] border border-slate-200 bg-white shadow-lg">
+          {filteredSuggestions.map((suggestion) => (
+            <li key={suggestion}>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setSearchTerm(suggestion);
+                  applyFilters(suggestion);
+                  setIsSearchFocused(false);
+                }}
+                className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 focus:bg-slate-50"
+              >
+                <Search className="h-4 w-4 shrink-0 text-slate-400" />
+                <span>{suggestion}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </form>
+  );
+};
+
 const normalizeLocationValue = (value: string) =>
   value
     .split(",")
@@ -91,8 +180,8 @@ export default function InternshipList() {
   const [appliedPaidOnly, setAppliedPaidOnly] = useState<boolean>(
     () => searchParams.get("paid") === "true"
   );
-  const [serverTrending, setServerTrending] = useState<string[]>([]);
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const [showSecondaryWidgets, setShowSecondaryWidgets] = useState(false);
 
@@ -123,23 +212,6 @@ export default function InternshipList() {
     searchTerm.trim() !== appliedSearchTerm;
 
   // URL sync removed to avoid full-page reloads when interacting with filters.
-
-  const fetchTrendingSearches = useCallback(async () => {
-    try {
-      const response = await fetch("/api/internships/searches?limit=8");
-      if (!response.ok) return;
-      const payload = await response.json();
-      if (Array.isArray(payload?.terms)) {
-        setServerTrending(payload.terms.filter(Boolean));
-      }
-    } catch {
-      // ignore network errors
-    }
-  }, []);
-
-  useEffect(() => {
-    void fetchTrendingSearches();
-  }, [fetchTrendingSearches]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -180,60 +252,30 @@ export default function InternshipList() {
     []
   );
 
-  const trendingSearches = useMemo(() => {
-    const fallback = [
-      "Remote Internships",
-      "Python Intern",
-      "UI/UX Intern",
-      "Marketing Intern",
-      "Data Analyst Intern",
-      "Product Intern",
-      "Finance Intern",
-      "Sales Intern",
-    ];
-    const seen = new Set<string>();
-    const merged: string[] = [];
+  const searchSuggestions = useMemo(() => [
+    "Software Engineer",
+    "Data Science",
+    "Product Management",
+    "Marketing",
+    "UI/UX Design",
+    "Finance",
+    "Data Analyst",
+    "Machine Learning",
+    "Business Analyst",
+    "Human Resources",
+    "Sales",
+    "Remote Internships"
+  ], []);
 
-    const add = (term: string) => {
-      const key = term.toLowerCase();
-      if (seen.has(key)) return;
-      seen.add(key);
-      merged.push(term);
-    };
-
-    serverTrending.forEach(add);
-    fallback.forEach(add);
-
-    return merged.slice(0, 8);
-  }, [serverTrending]);
-
-  const bumpServerTrending = useCallback((term: string) => {
-    const normalized = term.trim();
-    if (!normalized) return;
-
-    setServerTrending((prev) => {
-      const next = [
-        normalized,
-        ...prev.filter(
-          (item) => item.toLowerCase() !== normalized.toLowerCase()
-        ),
-      ];
-      return next.slice(0, 8);
-    });
-  }, []);
-
-  const trackSearch = useCallback(async (term: string) => {
-    if (!term) return;
-    try {
-      await fetch("/api/internships/searches", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ term }),
-      });
-    } catch {
-      // ignore tracking failures
+  const filteredSuggestions = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return searchSuggestions.slice(0, 5);
     }
-  }, []);
+    const term = searchTerm.toLowerCase();
+    return searchSuggestions
+      .filter(s => s.toLowerCase().includes(term))
+      .slice(0, 5);
+  }, [searchTerm, searchSuggestions]);
 
   const applyFilters = useCallback(
     (overrideSearch?: string) => {
@@ -247,39 +289,13 @@ export default function InternshipList() {
       setAppliedLocation(normalizedLocation);
       setAppliedTypes(selectedTypes);
       setAppliedPaidOnly(paidOnly);
-
-      if (nextSearch) {
-        bumpServerTrending(nextSearch);
-        void trackSearch(nextSearch);
-      }
     },
     [
       searchTerm,
       normalizedLocation,
       selectedTypes,
       paidOnly,
-      bumpServerTrending,
-      trackSearch,
     ]
-  );
-
-  const renderTrendingSearches = () => (
-    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-      <span className="font-semibold tracking-wide text-slate-400 uppercase">
-        Trending searches
-      </span>
-      {trendingSearches.map((term, index) => (
-        <button
-          key={term}
-          type="button"
-          onClick={() => applyFilters(term)}
-          style={{ animationDelay: `${index * 120}ms` }}
-          className="animate-pulse rounded-full border border-orange-100 bg-orange-50 px-2.5 py-1 text-[11px] font-semibold text-[#ec5b13] transition hover:border-orange-200 hover:bg-orange-100"
-        >
-          {term}
-        </button>
-      ))}
-    </div>
   );
 
   // Rotate placeholders every 3 seconds
@@ -388,30 +404,15 @@ export default function InternshipList() {
           ) : (
             <>
               <div className="relative mb-2 flex items-center gap-3">
-                <div className="group relative flex-1">
-                  <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 transform text-slate-400 transition-colors duration-200 group-focus-within:text-[#ec5b13]" />
-                  <Input
-                    placeholder={searchPlaceholders[currentPlaceholderIndex]}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        applyFilters();
-                      }
-                    }}
-                    className="h-12 w-full rounded-[16px] border-slate-200 bg-white pr-10 pl-11 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50"
-                  />
-                  {searchTerm && (
-                    <button
-                      type="button"
-                      aria-label="Clear search"
-                      onClick={() => setSearchTerm("")}
-                      className="absolute top-1/2 right-3 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
+                <SearchWidget
+                  searchTerm={searchTerm}
+                  setSearchTerm={setSearchTerm}
+                  isSearchFocused={isSearchFocused}
+                  setIsSearchFocused={setIsSearchFocused}
+                  filteredSuggestions={filteredSuggestions}
+                  placeholder={searchPlaceholders[currentPlaceholderIndex]}
+                  applyFilters={applyFilters}
+                />
                 <Button
                   variant="outline"
                   aria-label="Toggle filters"
@@ -428,7 +429,6 @@ export default function InternshipList() {
                   <Filter className="h-5 w-5" />
                 </Button>
               </div>
-              {renderTrendingSearches()}
 
               {/* Filter Box */}
               {isFilterBoxOpen && (
@@ -560,32 +560,15 @@ export default function InternshipList() {
               ) : (
                 <>
                   <div className="relative flex items-center gap-3">
-                    <div className="group relative flex-1">
-                      <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 transform text-slate-400 transition-colors duration-200 group-focus-within:text-[#ec5b13]" />
-                      <Input
-                        placeholder={
-                          searchPlaceholders[currentPlaceholderIndex]
-                        }
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            applyFilters();
-                          }
-                        }}
-                        className="h-12 w-full rounded-[16px] border-slate-200 bg-white pr-10 pl-11 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50"
-                      />
-                      {searchTerm && (
-                        <button
-                          type="button"
-                          aria-label="Clear search"
-                          onClick={() => setSearchTerm("")}
-                          className="absolute top-1/2 right-3 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </div>
+                    <SearchWidget
+                      searchTerm={searchTerm}
+                      setSearchTerm={setSearchTerm}
+                      isSearchFocused={isSearchFocused}
+                      setIsSearchFocused={setIsSearchFocused}
+                      filteredSuggestions={filteredSuggestions}
+                      placeholder={searchPlaceholders[currentPlaceholderIndex]}
+                      applyFilters={applyFilters}
+                    />
                     <Button
                       variant="outline"
                       aria-label="Toggle filters"
@@ -602,7 +585,6 @@ export default function InternshipList() {
                       <Filter className="h-5 w-5" />
                     </Button>
                   </div>
-                  {renderTrendingSearches()}
                 </>
               )}
 

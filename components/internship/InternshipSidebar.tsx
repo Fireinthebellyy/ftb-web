@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { toTitleCase, formatDateLong } from "@/lib/utils";
 import { InternshipData } from "@/types/interfaces";
 
-interface InternshipDesktopSidebarProps {
+interface InternshipSidebarProps {
   internship: InternshipData;
   handleOpenChat: () => void;
 }
 
-export const InternshipDesktopSidebar: React.FC<InternshipDesktopSidebarProps> = ({
+export const InternshipSidebar: React.FC<InternshipSidebarProps> = ({
   internship,
   handleOpenChat,
 }) => {

@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Info, ArrowLeft, Share2, Flag, Loader2 } from "lucide-react";
+import { ArrowLeft, Share2, Flag, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import posthog from "posthog-js";
@@ -23,7 +23,8 @@ import { useTracker } from "@/components/providers/TrackerProvider";
 import { InternshipHero } from "@/components/internship/InternshipHero";
 import { InternshipTabContent } from "@/components/internship/InternshipTabContent";
 import { InternshipDesktopHeader } from "@/components/internship/InternshipDesktopHeader";
-import { InternshipDesktopSidebar } from "@/components/internship/InternshipDesktopSidebar";
+import { InternshipSidebar } from "@/components/internship/InternshipSidebar";
+import { InternshipDisclaimer } from "@/components/internship/InternshipDisclaimer";
 import { InternshipStickyFooter } from "@/components/internship/InternshipStickyFooter";
 
 export default function InternshipDetailPage() {
@@ -227,6 +228,22 @@ export default function InternshipDetailPage() {
           />
         </div>
 
+        <div className="px-5 mt-2 pb-6">
+          <InternshipSidebar
+            internship={internship}
+            handleOpenChat={handleOpenChat}
+          />
+
+          {/* Mobile Disclaimer */}
+          <InternshipDisclaimer
+            variant="mobile"
+            organization={internship.hiringOrganization}
+            isFlagging={isFlagging}
+            isFlagged={internship.isFlagged || false}
+            onFlag={handleFlagInternship}
+          />
+        </div>
+
         <InternshipStickyFooter
           internship={internship}
           isBookmarked={isBookmarked}
@@ -291,38 +308,16 @@ export default function InternshipDetailPage() {
               </div>
 
               {/* Desktop Disclaimer */}
-              <div className="mt-12 border-t border-slate-200 pt-8">
-                <div className="space-y-4 text-[14px] text-slate-700">
-                  <div className="flex flex-wrap items-start gap-3">
-                    <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-600" />
-                    <p className="flex-1">
-                      This opportunity has been listed by{" "}
-                      {toTitleCase(internship.hiringOrganization)}. FTB is not
-                      liable for any content mentioned in this opportunity or
-                      the process followed by the organizers for this
-                      opportunity.
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Flag className="mt-0.5 h-4 w-4 shrink-0 text-slate-600" />
-                    <button
-                      type="button"
-                      onClick={handleFlagInternship}
-                      disabled={isFlagging || internship.isFlagged}
-                      className="text-left text-[14px] font-medium text-slate-700 hover:text-[#ec5b13] disabled:cursor-not-allowed disabled:text-slate-400"
-                    >
-                      {isFlagging
-                        ? "Flagging internship..."
-                        : internship.isFlagged
-                          ? "Internship flagged for review"
-                          : "Flag this internship for review"}
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <InternshipDisclaimer
+                variant="desktop"
+                organization={internship.hiringOrganization}
+                isFlagging={isFlagging}
+                isFlagged={internship.isFlagged || false}
+                onFlag={handleFlagInternship}
+              />
             </div>
 
-            <InternshipDesktopSidebar
+            <InternshipSidebar
               internship={internship}
               handleOpenChat={handleOpenChat}
             />

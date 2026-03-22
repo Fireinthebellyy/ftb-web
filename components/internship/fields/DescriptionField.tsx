@@ -14,15 +14,13 @@ type Props = {
   control: Control<InternshipFormData>;
 };
 
-type HorizontalCountProgressBarProps = {
+type CharacterCounterProps = {
   field: {
     value: string;
   };
 };
 
-function HorizontalCountProgressBar({
-  field,
-}: HorizontalCountProgressBarProps) {
+function CharacterCounter({ field }: CharacterCounterProps) {
   return (
     <div className="mt-2 flex items-center justify-end text-sm text-gray-500">
       <div className="text-right text-xs text-gray-500">
@@ -48,7 +46,7 @@ export function DescriptionField({ control }: Props) {
                 wrap="soft"
                 className="thin-scrollbar max-h-[300px] min-h-[100px] resize-none overflow-y-auto overflow-x-hidden break-words md:break-all border-none px-0 pr-2 shadow-none placeholder:text-gray-400 focus-visible:ring-0 md:max-h-[200px]"
               />
-              <HorizontalCountProgressBar field={field} />
+              <CharacterCounter field={field} />
             </div>
           </FormControl>
           <FormMessage />

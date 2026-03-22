@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Info, Flag } from "lucide-react";
-import { toTitleCase } from "@/lib/utils";
+import { toTitleCase, cn } from "@/lib/utils";
 
 interface InternshipDisclaimerProps {
   organization: string | undefined | null;
@@ -23,38 +23,44 @@ export const InternshipDisclaimer: React.FC<InternshipDisclaimerProps> = ({
 
   return (
     <div
-      className={
+      className={cn(
         isMobile
           ? "mt-8 border-t border-slate-200 pt-8 pb-4"
           : "mt-12 border-t border-slate-200 pt-8"
-      }
+      )}
     >
       <div
-        className={`space-y-4 text-slate-700 ${
+        className={cn(
+          "space-y-4 text-slate-700",
           isMobile ? "text-[13px]" : "text-[14px]"
-        }`}
+        )}
       >
-        <div className="flex flex-wrap items-start gap-3">
+        <div className={cn("flex flex-wrap items-start gap-3")}> 
           <Info
-            className={`mt-0.5 shrink-0 text-slate-500 ${
+            className={cn(
+              "mt-0.5 shrink-0 text-slate-500",
               isMobile ? "h-4 w-4" : "h-4 w-4 text-slate-600"
-            }`}
+            )}
           />
           <p
-            className={`flex-1 ${
-              isMobile ? "leading-relaxed text-slate-500" : ""
-            }`}
+            className={cn(
+              "flex-1",
+              isMobile && "leading-relaxed text-slate-500"
+            )}
           >
-            This opportunity has been listed by <b>{toTitleCase(organization)}</b>
-            . FTB is not liable for any content mentioned in this opportunity or
+            {organization
+              ? (<span>This opportunity has been listed by <b>{toTitleCase(organization)}</b>. </span>)
+              : (<span>This opportunity has been listed by the organizer. </span>)}
+            FTB is not liable for any content mentioned in this opportunity or
             the process followed by the organizers for this opportunity.
           </p>
         </div>
-        <div className="flex items-start gap-3">
+        <div className={cn("flex items-start gap-3")}> 
           <Flag
-            className={`mt-0.5 shrink-0 text-slate-500 ${
+            className={cn(
+              "mt-0.5 shrink-0 text-slate-500",
               isMobile ? "h-4 w-4" : "h-4 w-4 text-slate-600"
-            }`}
+            )}
           />
           <button
             type="button"

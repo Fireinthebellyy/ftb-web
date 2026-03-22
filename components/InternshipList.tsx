@@ -45,6 +45,38 @@ const SearchWidget = ({
   placeholder,
   applyFilters,
 }: SearchWidgetProps) => {
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+
+  // Reset focusedIndex when suggestions change or list closes
+  useEffect(() => {
+    if (!isSearchFocused || filteredSuggestions.length === 0) {
+      setFocusedIndex(-1);
+    } else if (focusedIndex >= filteredSuggestions.length) {
+      setFocusedIndex(filteredSuggestions.length - 1);
+    }
+  }, [isSearchFocused, filteredSuggestions, focusedIndex]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isSearchFocused || filteredSuggestions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setFocusedIndex((prev) => Math.min(prev + 1, filteredSuggestions.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setFocusedIndex((prev) => Math.max(prev - 1, -1));
+    } else if (e.key === "Enter") {
+      if (focusedIndex >= 0 && focusedIndex < filteredSuggestions.length) {
+        e.preventDefault();
+        setSearchTerm(filteredSuggestions[focusedIndex]);
+        applyFilters(filteredSuggestions[focusedIndex]);
+        setIsSearchFocused(false);
+      }
+    } else if (e.key === "Escape") {
+      setIsSearchFocused(false);
+      setFocusedIndex(-1);
+    }
+  };
+
   return (
     <form
       onSubmit={(e) => {
@@ -66,6 +98,7 @@ const SearchWidget = ({
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         onFocus={() => setIsSearchFocused(true)}
+        onKeyDown={handleKeyDown}
         className="h-12 w-full rounded-[16px] border-slate-200 bg-white pr-[4.5rem] pl-11 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50 [&::-webkit-search-cancel-button]:hidden"
       />
       <div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center gap-1">
@@ -92,7 +125,7 @@ const SearchWidget = ({
       </div>
       {isSearchFocused && filteredSuggestions.length > 0 && (
         <ul className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-[16px] border border-slate-200 bg-white shadow-lg">
-          {filteredSuggestions.map((suggestion) => (
+          {filteredSuggestions.map((suggestion, idx) => (
             <li key={suggestion}>
               <button
                 type="button"
@@ -102,7 +135,11 @@ const SearchWidget = ({
                   applyFilters(suggestion);
                   setIsSearchFocused(false);
                 }}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 focus:bg-slate-50"
+                className={cn(
+                  "flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 focus:bg-slate-50",
+                  idx === focusedIndex && "bg-orange-50 text-[#ec5b13] font-bold"
+                )}
+                tabIndex={-1}
               >
                 <Search className="h-4 w-4 shrink-0 text-slate-400" />
                 <span>{suggestion}</span>

@@ -22,7 +22,6 @@ export const internshipIngestRecordSchema = z.object({
     .max(2048, "Application link must be at most 2048 characters"),
   description: z
     .string()
-    .max(2000, "Description must be at most 2000 characters")
     .optional()
     .nullable(),
   type: z

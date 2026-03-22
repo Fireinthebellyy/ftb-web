@@ -19,9 +19,6 @@ export const internshipFormSchema = z.object({
     .string()
     .min(1, {
       message: "Description is required.",
-    })
-    .max(2000, {
-      message: "Description must not exceed 2000 characters.",
     }),
   hiringOrganization: z.string().min(1, {
     message: "Hiring organization is required.",

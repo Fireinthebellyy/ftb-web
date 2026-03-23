@@ -87,8 +87,6 @@ export function useInfiniteInternships(
       }
       return undefined;
     },
-    placeholderData: (previous) =>
-      previous ?? { pages: [], pageParams: [] },
     staleTime: 1000 * 30,
   });
 }

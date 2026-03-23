@@ -442,10 +442,13 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     }
 
     if (initialStatus === "Not Applied") {
+      const trackerTab =
+        effectiveKind === "opportunity" ? "opportunity" : "internship";
+
       toast.success("Saved to Tracker", {
         action: {
           label: "View",
-          onClick: () => router.push("/tracker?tab=opportunity"),
+          onClick: () => router.push(`/tracker?tab=${trackerTab}`),
         },
       });
     } else if (initialStatus === "Draft") {
@@ -475,8 +478,8 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     try {
       await syncItemToBackend(newItem);
     } catch (error) {
-           console.error("Optimistic add failed, reverting:", error);
-      setTrackedItems((prevItems) => 
+      console.error("Optimistic add failed, reverting:", error);
+      setTrackedItems((prevItems) =>
         prevItems.filter((i) => getTrackerKey(i.oppId, i.kind) !== nextKey)
       );
       // toast is already in syncItemToBackend

@@ -11,6 +11,7 @@ import {
 import {
   Drawer,
   DrawerContent,
+  DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
@@ -74,6 +75,7 @@ export default function WhatsAppWidget() {
         </DrawerTrigger>
 
         <DrawerContent className="md:hidden">
+          <DrawerTitle className="sr-only">How can we help?</DrawerTitle>
           <div className="px-4 py-5">
             <p className="text-lg font-semibold">How can we help?</p>
             <div className="mt-3 space-y-3">

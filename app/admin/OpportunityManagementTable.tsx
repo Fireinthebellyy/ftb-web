@@ -1,4 +1,4 @@
-"use client";
+""use client";
 
 import { useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
@@ -51,6 +51,9 @@ async function fetchAllOpportunities(): Promise<Opportunity[]> {
   return response.data.opportunities;
 }
 
+// Stable empty array to prevent unnecessary useMemo recomputation
+const EMPTY_OPPORTUNITIES: Opportunity[] = [];
+
 export default function OpportunityManagementTable() {
   const queryClient = useQueryClient();
 
@@ -73,7 +76,7 @@ export default function OpportunityManagementTable() {
     queryFn: fetchAllOpportunities,
   });
 
-  const opportunities = data ?? [];
+  const opportunities = data ?? EMPTY_OPPORTUNITIES;
 
   const columns = useMemo<ColumnDef<Opportunity>[]>(() => {
     const allSelected =
@@ -141,18 +144,24 @@ export default function OpportunityManagementTable() {
               <Button
                 size="sm"
                 variant="outline"
+                aria-label={opportunity.isActive ? "Hide opportunity" : "Show opportunity"}
                 onClick={async () => {
-                  await axios.patch(`/api/admin/opportunities/${opportunity.id}`, {
-                    action: "toggle",
-                  });
-                  toast.success(
-                    opportunity.isActive
-                      ? "Opportunity hidden"
-                      : "Opportunity is now visible"
-                  );
-                  queryClient.invalidateQueries({
-                    queryKey: ["admin-opportunity-management"],
-                  });
+                  try {
+                    await axios.patch(`/api/admin/opportunities/${opportunity.id}`, {
+                      action: "toggle",
+                    });
+                    toast.success(
+                      opportunity.isActive
+                        ? "Opportunity hidden"
+                        : "Opportunity is now visible"
+                    );
+                  } catch {
+                    toast.error("Failed to update visibility.");
+                  } finally {
+                    queryClient.invalidateQueries({
+                      queryKey: ["admin-opportunity-management"],
+                    });
+                  }
                 }}
               >
                 {opportunity.isActive ? (
@@ -194,16 +203,19 @@ export default function OpportunityManagementTable() {
           <AlertDialogAction
             className="bg-red-600 hover:bg-red-700 text-white"
             onClick={async () => {
-              await Promise.all(
-                selectedIds.map((id) =>
-                  axios.delete(`/api/opportunities/${id}`)
-                )
-              );
-              setSelectedIds([]);
-              toast.success("Deleted successfully");
-              queryClient.invalidateQueries({
-                queryKey: ["admin-opportunity-management"],
-              });
+              try {
+                const results = await Promise.allSettled(
+                  selectedIds.map((id) => axios.delete(`/api/opportunities/${id}`))
+                );
+                const failed = results.filter((r) => r.status === "rejected").length;
+                if (failed > 0) toast.error(`${failed} deletion(s) failed.`);
+                else toast.success("Deleted successfully");
+              } finally {
+                setSelectedIds([]);
+                queryClient.invalidateQueries({
+                  queryKey: ["admin-opportunity-management"],
+                });
+              }
             }}
           >
             Delete
@@ -223,6 +235,7 @@ export default function OpportunityManagementTable() {
           isLoading={isLoading}
           isError={isError}
           isEmpty={!opportunities.length}
+          emptyMessage="No opportunities found"
         >
           <AdminDataTable
             tableId="opportunity-management"

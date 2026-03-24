@@ -95,6 +95,7 @@ export default function NewInternshipForm({
         deadline: internship.deadline ?? "",
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [internship]);
 
   const watchedType = form.watch("type");

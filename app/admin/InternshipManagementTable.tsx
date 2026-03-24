@@ -72,6 +72,9 @@ async function fetchInternshipById(id: string): Promise<Internship> {
   return response.data.internship;
 }
 
+// Stable empty array to prevent unnecessary useMemo recomputation
+const EMPTY_INTERNSHIPS: Internship[] = [];
+
 export default function InternshipManagementTable() {
   const queryClient = useQueryClient();
 
@@ -102,7 +105,7 @@ export default function InternshipManagementTable() {
     queryFn: fetchAllInternships,
   });
 
-  const internships = data ?? [];
+  const internships = data ?? EMPTY_INTERNSHIPS;
 
   const columns = useMemo<ColumnDef<Internship>[]>(() => {
     const allSelected =
@@ -188,19 +191,25 @@ export default function InternshipManagementTable() {
               <Button
                 size="sm"
                 variant="outline"
+                aria-label={internship.isActive ? "Hide internship" : "Show internship"}
                 onClick={async () => {
-                  await axios.patch(`/api/internships/${internship.id}`);
-                  toast.success(
-                    internship.isActive
-                      ? "Internship hidden"
-                      : "Internship is now visible"
-                  );
-                  queryClient.invalidateQueries({
-                    queryKey: ["admin-internship-management"],
-                  });
-                  queryClient.invalidateQueries({
-                    queryKey: ["internships"],
-                  });
+                  try {
+                    await axios.patch(`/api/internships/${internship.id}`);
+                    toast.success(
+                      internship.isActive
+                        ? "Internship hidden"
+                        : "Internship is now visible"
+                    );
+                  } catch {
+                    toast.error("Failed to update visibility.");
+                  } finally {
+                    queryClient.invalidateQueries({
+                      queryKey: ["admin-internship-management"],
+                    });
+                    queryClient.invalidateQueries({
+                      queryKey: ["internships"],
+                    });
+                  }
                 }}
               >
                 {internship.isActive ? (
@@ -242,19 +251,22 @@ export default function InternshipManagementTable() {
           <AlertDialogAction
             className="bg-red-600 hover:bg-red-700 text-white"
             onClick={async () => {
-              await Promise.all(
-                selectedIds.map((id) =>
-                  axios.delete(`/api/internships/${id}`)
-                )
-              );
-              setSelectedIds([]);
-              toast.success("Deleted successfully");
-              queryClient.invalidateQueries({
-                queryKey: ["admin-internship-management"],
-              });
-              queryClient.invalidateQueries({
-                queryKey: ["internships"],
-              });
+              try {
+                const results = await Promise.allSettled(
+                  selectedIds.map((id) => axios.delete(`/api/internships/${id}`))
+                );
+                const failed = results.filter((r) => r.status === "rejected").length;
+                if (failed > 0) toast.error(`${failed} deletion(s) failed.`);
+                else toast.success("Deleted successfully");
+              } finally {
+                setSelectedIds([]);
+                queryClient.invalidateQueries({
+                  queryKey: ["admin-internship-management"],
+                });
+                queryClient.invalidateQueries({
+                  queryKey: ["internships"],
+                });
+              }
             }}
           >
             Delete

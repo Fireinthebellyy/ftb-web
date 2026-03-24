@@ -14,7 +14,7 @@ import { CAROUSEL_AUTOPLAY_DELAY_MS } from "@/lib/carousel";
 import { useFeatured } from "@/lib/queries-sanity";
 
 const FeaturedOpportunities: React.FC = memo(() => {
-  const { data: featured = [], isLoading, error } = useFeatured(4);
+  const { data: featured = [], isLoading, error } = useFeatured();
   const autoplayRef = useRef(Autoplay({ delay: CAROUSEL_AUTOPLAY_DELAY_MS }));
 
   if (error) {

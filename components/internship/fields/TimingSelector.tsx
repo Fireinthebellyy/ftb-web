@@ -17,50 +17,51 @@ type Props = {
   control: Control<InternshipFormData>;
   value: "full_time" | "part_time" | undefined;
   onChange: (v: "full_time" | "part_time") => void;
+  isRequired?: boolean;
 };
 
-export function TimingSelector({ control, value, onChange }: Props) {
+export function TimingSelector({ control, value, onChange, isRequired = true }: Props) {
   return (
     <FormField
       control={control}
       name="timing"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Internship Timing *</FormLabel>
+          <FormLabel>Internship Timing {isRequired && "*"}</FormLabel>
           <FormControl>
             <div
               className="flex items-center gap-1 flex-wrap"
               role="radiogroup"
               aria-label="Internship timing"
             >
-                {internshipTimings.map((timing) => (
-                  <Badge
-                    key={timing.id}
-                    variant={value === timing.id ? "default" : "outline"}
-                    className={cn(
-                      "text-xs cursor-pointer transition-all px-2 py-0.5 h-auto",
-                      value === timing.id
-                        ? "bg-blue-100 text-blue-800 hover:bg-blue-200 border-transparent"
-                        : "bg-gray-50 text-gray-500 hover:bg-gray-100 border-gray-200"
-                    )}
-                    onClick={() => {
+              {internshipTimings.map((timing) => (
+                <Badge
+                  key={timing.id}
+                  variant={value === timing.id ? "default" : "outline"}
+                  className={cn(
+                    "text-xs cursor-pointer transition-all px-2 py-0.5 h-auto",
+                    value === timing.id
+                      ? "bg-blue-100 text-blue-800 hover:bg-blue-200 border-transparent"
+                      : "bg-gray-50 text-gray-500 hover:bg-gray-100 border-gray-200"
+                  )}
+                  onClick={() => {
+                    onChange(timing.id as "full_time" | "part_time");
+                    field.onChange(timing.id);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
                       onChange(timing.id as "full_time" | "part_time");
                       field.onChange(timing.id);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        onChange(timing.id as "full_time" | "part_time");
-                        field.onChange(timing.id);
-                      }
-                    }}
-                    tabIndex={0}
-                    role="radio"
-                    aria-checked={value === timing.id}
-                  >
-                    {timing.label}
-                  </Badge>
-                ))}
+                    }
+                  }}
+                  tabIndex={0}
+                  role="radio"
+                  aria-checked={value === timing.id}
+                >
+                  {timing.label}
+                </Badge>
+              ))}
             </div>
           </FormControl>
           <FormMessage />

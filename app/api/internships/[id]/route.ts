@@ -38,6 +38,8 @@ export async function GET(
       );
     }
 
+
+
     const { id } = await params;
     if (!id) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
@@ -92,6 +94,66 @@ export async function GET(
     console.error("Error fetching internship:", error);
     return NextResponse.json(
       { error: "Failed to fetch internship" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    if (!db) {
+      return NextResponse.json(
+        { error: "Database connection not available" },
+        { status: 500 }
+      );
+    }
+
+    const { id } = await params;
+
+    if (!id) {
+      return NextResponse.json({ error: "ID is required" }, { status: 400 });
+    }
+
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.currentUser?.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const existingInternship = await db
+      .select()
+      .from(internships)
+      .where(and(eq(internships.id, id), isNull(internships.deletedAt)))
+      .limit(1);
+
+    if (existingInternship.length === 0) {
+      return NextResponse.json(
+        { error: "Internship not found" },
+        { status: 404 }
+      );
+    }
+
+    const internship = existingInternship[0];
+
+    const updatedInternship = await db
+      .update(internships)
+      .set({
+        isActive: !internship.isActive, // toggle hide/unhide
+        updatedAt: new Date(),
+      })
+      .where(eq(internships.id, id))
+      .returning();
+
+    return NextResponse.json({
+      success: true,
+      internship: updatedInternship[0],
+    });
+  } catch (error) {
+    console.error("Error updating internship visibility:", error);
+    return NextResponse.json(
+      { error: "Failed to update internship visibility" },
       { status: 500 }
     );
   }
@@ -263,6 +325,8 @@ export async function DELETE(
         { status: 404 }
       );
     }
+
+    
 
     const internship = existingInternship[0];
     const isOwner = internship.userId === currentUser.currentUser.id;

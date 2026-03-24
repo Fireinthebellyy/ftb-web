@@ -1,14 +1,14 @@
 "use client";
 
 import axios from "axios";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, FormProvider } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { internshipFormSchema, InternshipFormData } from "./schema";
+import { internshipFormSchema, internshipEditFormSchema, InternshipFormData } from "./schema";
 import { TitleField } from "./fields/TitleField";
 import { DescriptionField } from "./fields/DescriptionField";
 import { HiringOrganizationField } from "./fields/HiringOrganizationField";
@@ -18,18 +18,40 @@ import { MetaFields } from "./fields/MetaFields";
 import { TagsField } from "./fields/TagsField";
 import { EligibilityField } from "./fields/EligibilityField";
 
+interface Internship {
+  id: string;
+  title: string;
+  description: string;
+  hiringOrganization?: string;
+  tags?: string[] | string;
+  eligibility?: string;
+  type?: "onsite" | "remote" | "hybrid";
+  timing?: "full_time" | "part_time";
+  location?: string;
+  stipend?: number;
+  hiringManager?: string;
+  hiringManagerEmail?: string;
+  experience?: string;
+  duration?: string;
+  link?: string;
+  deadline?: string;
+}
+
 export default function NewInternshipForm({
   onInternshipCreated,
   onCancel,
+  internship,
 }: {
   onInternshipCreated: () => void;
   onCancel?: () => void;
+  internship?: Internship;
 }) {
+  const isEditing = !!internship;
   const [loading, setLoading] = useState(false);
   const queryClient = useQueryClient();
 
   const form = useForm<InternshipFormData>({
-    resolver: zodResolver(internshipFormSchema),
+    resolver: zodResolver(isEditing ? internshipEditFormSchema : internshipFormSchema),
     mode: "onBlur",
     reValidateMode: "onChange",
     defaultValues: {
@@ -50,6 +72,31 @@ export default function NewInternshipForm({
       deadline: "",
     },
   });
+
+  useEffect(() => {
+    if (internship) {
+      form.reset({
+        type: internship.type ?? undefined,
+        timing: internship.timing ?? undefined,
+        title: internship.title ?? "",
+        description: internship.description ?? "",
+        hiringOrganization: internship.hiringOrganization ?? "",
+        tags: Array.isArray(internship.tags)
+          ? internship.tags.join(", ")
+          : internship.tags ?? "",
+        eligibility: internship.eligibility ?? undefined,
+        location: internship.location ?? "",
+        stipend: internship.stipend ?? undefined,
+        hiringManager: internship.hiringManager ?? "",
+        hiringManagerEmail: internship.hiringManagerEmail ?? "",
+        experience: internship.experience ?? "",
+        duration: internship.duration ?? "",
+        link: internship.link ?? "",
+        deadline: internship.deadline ?? "",
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [internship]);
 
   const watchedType = form.watch("type");
   const watchedTiming = form.watch("timing");
@@ -82,25 +129,28 @@ export default function NewInternshipForm({
         experience: data.experience || undefined,
         duration: data.duration || undefined,
         eligibility: data.eligibility || undefined,
+        timing: data.timing || undefined,
+        type: data.type || undefined,
       };
 
-      const res = await axios.post("/api/internships", payload);
-      if (res.status !== 200 && res.status !== 201)
-        throw new Error("Failed to create internship");
+      if (isEditing) {
+        const res = await axios.put(`/api/internships/${internship.id}`, payload);
+        if (res.status !== 200) throw new Error("Failed to update internship");
+        toast.success("Internship updated successfully!");
+      } else {
+        const res = await axios.post("/api/internships", payload);
+        if (res.status !== 200 && res.status !== 201)
+          throw new Error("Failed to create internship");
+        toast.success("Internship submitted successfully!");
+      }
 
-      toast.success("Internship submitted successfully!");
       queryClient.invalidateQueries({ queryKey: ["internships"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-internship-management"] });
       onInternshipCreated();
     } catch (err: unknown) {
-      console.error("=== FORM SUBMISSION ERROR ===");
-      console.error("Error:", err);
-
       if (axios.isAxiosError(err)) {
-        console.error("Axios error response:", err.response?.data);
-        console.error("Axios error status:", err.response?.status);
         const errorData = err.response?.data;
         if (errorData?.error && Array.isArray(errorData.error)) {
-          // Zod validation errors
           const errorMessages = errorData.error
             .map((e: any) => e.message)
             .join(", ");
@@ -109,15 +159,14 @@ export default function NewInternshipForm({
           toast.error(errorData.message);
         } else {
           toast.error(
-            "Failed to create internship. Please check all required fields."
+            isEditing
+              ? "Failed to update internship."
+              : "Failed to create internship. Please check all required fields."
           );
         }
       } else if (err instanceof Error) {
-        console.error("Error message:", err.message);
-        console.error("Error stack:", err.stack);
         toast.error(err.message);
       } else {
-        console.error("Unknown error type:", typeof err);
         toast.error("Unknown error occurred");
       }
     } finally {
@@ -139,17 +188,18 @@ export default function NewInternshipForm({
 
           <EligibilityField control={form.control} />
 
-
           <TypeSelector
             control={form.control}
             value={watchedType}
             onChange={handleTypeChange}
+            isRequired={!isEditing}
           />
 
           <TimingSelector
             control={form.control}
             value={watchedTiming}
             onChange={handleTimingChange}
+            isRequired={!isEditing}
           />
 
           <MetaFields control={form.control} />
@@ -166,7 +216,9 @@ export default function NewInternshipForm({
               </Button>
             )}
             <Button type="submit" disabled={loading} className="px-6">
-              {loading ? "Creating..." : "Create Internship"}
+              {loading
+                ? isEditing ? "Updating..." : "Creating..."
+                : isEditing ? "Update Internship" : "Create Internship"}
             </Button>
           </div>
         </form>

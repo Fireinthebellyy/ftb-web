@@ -24,8 +24,19 @@ import AdminOpportunitiesTable from "./AdminOpportunitiesTable";
 import AdminToolkitsTable from "./AdminToolkitsTable";
 import AdminUngatekeepTable from "./AdminUngatekeepTable";
 import AdminCouponsTable from "./AdminCouponsTable";
+import OpportunityManagementTable from "./OpportunityManagementTable";
+import InternshipManagementTable from "./InternshipManagementTable";
 
-type TabValue = AdminTabValue;
+const TAB_VALUES = [
+  "opportunities",
+  "OpportunityManagement",
+  "internships",
+  "users",
+  "toolkits",
+  "coupons",
+  "ungatekeep",
+] as const;
+type TabValue = (typeof TAB_VALUES)[number];
 
 function isValidTab(value: string | null): value is TabValue {
   return isAdminTab(value);
@@ -43,6 +54,20 @@ const adminCards: Array<{
     description:
       "Review and approve or reject opportunities submitted by users",
     icon: CircleCheck,
+  },
+
+  {
+  key: "OpportunityManagement",
+  title: "Opportunity Management",
+  description: "Search, edit or delete opportunities",
+  icon: CircleCheck,
+  },
+
+  {
+  key: "internships",
+  title: "Internship Management",
+  description: "Search, edit or delete internships",
+  icon: CircleCheck,
   },
   {
     key: "users",
@@ -128,6 +153,8 @@ export function AdminTabs({
       </div>
 
       {activeTab === "opportunities" ? <AdminOpportunitiesTable /> : null}
+      {activeTab === "OpportunityManagement" ? <OpportunityManagementTable /> : null}
+      {activeTab === "internships" ? <InternshipManagementTable /> : null}
       {activeTab === "users" ? (
         <AdminUsersTable currentUserId={currentUserId} />
       ) : null}

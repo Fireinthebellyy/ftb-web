@@ -87,6 +87,8 @@ export function useInfiniteInternships(
       }
       return undefined;
     },
+    placeholderData: (previous) =>
+      previous ?? { pages: [], pageParams: [] },
     staleTime: 1000 * 30,
   });
 }
@@ -95,8 +97,8 @@ export function useInternship(id: string) {
   return useQuery({
     queryKey: ["internship", id],
     queryFn: async () => {
-      const { data } = await axios.get(`/api/internships/${id}`);
-      return data.internship;
+     const { data } = await axios.get<{ internship: Internship }>(`/api/internships/${id}`);
+     return data.internship;
     },
     staleTime: 1000 * 30,
   });

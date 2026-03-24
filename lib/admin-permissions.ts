@@ -4,6 +4,8 @@ export type UserRole = (typeof userRoles)[number];
 
 export const adminTabValues = [
   "opportunities",
+  "OpportunityManagement",
+  "internships",
   "users",
   "toolkits",
   "coupons",

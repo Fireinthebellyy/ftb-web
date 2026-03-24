@@ -38,11 +38,11 @@ interface Internship {
   description: string;
   createdAt: string;
   isActive: boolean;
+  isFlagged: boolean;
   user: {
     id: string;
     name: string;
   };
-  // full fields for edit form
   hiringOrganization?: string;
   tags?: string[] | string;
   eligibility?: string;
@@ -160,6 +160,15 @@ export default function InternshipManagementTable() {
           new Date(row.original.createdAt).toLocaleDateString(),
       },
       {
+        accessorKey: "isFlagged",
+        header: "Flagged",
+        cell: ({ row }) => (
+          <span className={row.original.isFlagged ? "text-red-500 font-medium" : "text-gray-400"}>
+            {row.original.isFlagged ? "Yes" : "No"}
+          </span>
+        ),
+      },
+      {
         id: "actions",
         header: "Actions",
         cell: ({ row }) => {
@@ -173,7 +182,7 @@ export default function InternshipManagementTable() {
                 onClick={() => handleEdit(internship)}
                 disabled={isLoadingThis}
               >
-                {isLoadingThis ? "Loading..." : "Edit"}
+                Edit
               </Button>
 
               <Button
@@ -181,6 +190,11 @@ export default function InternshipManagementTable() {
                 variant="outline"
                 onClick={async () => {
                   await axios.patch(`/api/internships/${internship.id}`);
+                  toast.success(
+                    internship.isActive
+                      ? "Internship hidden"
+                      : "Internship is now visible"
+                  );
                   queryClient.invalidateQueries({
                     queryKey: ["admin-internship-management"],
                   });

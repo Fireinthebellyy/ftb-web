@@ -8,7 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { internshipFormSchema, InternshipFormData } from "./schema";
+import { internshipFormSchema, internshipEditFormSchema, InternshipFormData } from "./schema";
 import { TitleField } from "./fields/TitleField";
 import { DescriptionField } from "./fields/DescriptionField";
 import { HiringOrganizationField } from "./fields/HiringOrganizationField";
@@ -51,7 +51,7 @@ export default function NewInternshipForm({
   const queryClient = useQueryClient();
 
   const form = useForm<InternshipFormData>({
-    resolver: zodResolver(internshipFormSchema),
+    resolver: zodResolver(isEditing ? internshipEditFormSchema : internshipFormSchema),
     mode: "onBlur",
     reValidateMode: "onChange",
     defaultValues: {
@@ -128,10 +128,12 @@ export default function NewInternshipForm({
         experience: data.experience || undefined,
         duration: data.duration || undefined,
         eligibility: data.eligibility || undefined,
+        timing: data.timing || undefined,
+        type: data.type || undefined,
       };
 
       if (isEditing) {
-        const res = await axios.patch(`/api/internships/${internship.id}`, payload);
+        const res = await axios.put(`/api/internships/${internship.id}`, payload);
         if (res.status !== 200) throw new Error("Failed to update internship");
         toast.success("Internship updated successfully!");
       } else {
@@ -189,12 +191,14 @@ export default function NewInternshipForm({
             control={form.control}
             value={watchedType}
             onChange={handleTypeChange}
+            isRequired={!isEditing}
           />
 
           <TimingSelector
             control={form.control}
             value={watchedTiming}
             onChange={handleTimingChange}
+            isRequired={!isEditing}
           />
 
           <MetaFields control={form.control} />

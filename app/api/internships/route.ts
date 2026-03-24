@@ -120,7 +120,12 @@ export async function GET(req: NextRequest) {
           .filter(Boolean)
       : [];
 
-    const location = locationParam ? locationParam.trim() : "";
+    const rawLocations = locationParam
+      ? locationParam
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean)
+      : [];
     const minStipend = Number.isNaN(minStipendParam)
       ? undefined
       : minStipendParam;

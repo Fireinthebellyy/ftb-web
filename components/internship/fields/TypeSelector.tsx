@@ -17,50 +17,51 @@ type Props = {
   control: Control<InternshipFormData>;
   value: "onsite" | "remote" | "hybrid" | undefined;
   onChange: (v: "onsite" | "remote" | "hybrid") => void;
+  isRequired?: boolean;
 };
 
-export function TypeSelector({ control, value, onChange }: Props) {
+export function TypeSelector({ control, value, onChange, isRequired = true }: Props) {
   return (
     <FormField
       control={control}
       name="type"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Internship Type *</FormLabel>
+          <FormLabel>Internship Type {isRequired && "*"}</FormLabel>
           <FormControl>
             <div
               className="flex items-center gap-1 flex-wrap"
               role="radiogroup"
               aria-label="Internship type"
             >
-                {internshipTypes.map((type) => (
-                  <Badge
-                    key={type.id}
-                    variant={value === type.id ? "default" : "outline"}
-                    className={cn(
-                      "text-xs cursor-pointer transition-all px-2 py-0.5 h-auto",
-                      value === type.id
-                        ? "bg-blue-100 text-blue-800 hover:bg-blue-200 border-transparent"
-                        : "bg-gray-50 text-gray-500 hover:bg-gray-100 border-gray-200"
-                    )}
-                    onClick={() => {
+              {internshipTypes.map((type) => (
+                <Badge
+                  key={type.id}
+                  variant={value === type.id ? "default" : "outline"}
+                  className={cn(
+                    "text-xs cursor-pointer transition-all px-2 py-0.5 h-auto",
+                    value === type.id
+                      ? "bg-blue-100 text-blue-800 hover:bg-blue-200 border-transparent"
+                      : "bg-gray-50 text-gray-500 hover:bg-gray-100 border-gray-200"
+                  )}
+                  onClick={() => {
+                    onChange(type.id as "onsite" | "remote" | "hybrid");
+                    field.onChange(type.id);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
                       onChange(type.id as "onsite" | "remote" | "hybrid");
                       field.onChange(type.id);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        onChange(type.id as "onsite" | "remote" | "hybrid");
-                        field.onChange(type.id);
-                      }
-                    }}
-                    role="radio"
-                    aria-checked={value === type.id}
-                    tabIndex={0}
-                  >
-                    {type.label}
-                  </Badge>
-                ))}
+                    }
+                  }}
+                  role="radio"
+                  aria-checked={value === type.id}
+                  tabIndex={0}
+                >
+                  {type.label}
+                </Badge>
+              ))}
             </div>
           </FormControl>
           <FormMessage />

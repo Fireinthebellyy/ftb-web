@@ -16,7 +16,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 
-function handleAddToCalendar(title: string, endDate: string, description?: string) {
+function handleAddToCalendar(title: string, endDate: string) {
   const date = new Date(endDate);
 
   const year = date.getUTCFullYear();
@@ -208,7 +208,7 @@ export default function BookmarksPage() {
                 {item.endDate && (
                   <button
                     title="Add to calendar"
-                    onClick={() => handleAddToCalendar(item.title, item.endDate!, item.description)}
+                    onClick={() => handleAddToCalendar(item.title, item.endDate!)}
                     className="flex-shrink-0 text-gray-600 hover:text-gray-900 transition-colors"
                     aria-label="Add to calendar"
                   >

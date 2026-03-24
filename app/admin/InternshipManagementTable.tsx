@@ -274,6 +274,7 @@ export default function InternshipManagementTable() {
           isLoading={isLoading}
           isError={isError}
           isEmpty={!internships.length}
+          emptyMessage="No internships found"
         >
           <AdminDataTable
             tableId="internship-management"

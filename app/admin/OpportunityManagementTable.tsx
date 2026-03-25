@@ -38,6 +38,9 @@ interface Opportunity {
   description: string;
   createdAt: string;
   isActive: boolean;
+  type: "hackathon" | "grant" | "competition" | "ideathon";
+  upvoteCount: number;
+  upvoterIds: string[];
   user: {
     id: string;
     name: string;

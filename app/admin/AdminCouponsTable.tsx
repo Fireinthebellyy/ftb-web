@@ -103,8 +103,8 @@ export default function AdminCouponsTable() {
       setDialogOpen(false);
     },
     onError: (error) => {
-      if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.error || "Failed to save coupon");
+      if ((error as any).isAxiosError) {
+        toast.error((error as any).response?.data?.error || "Failed to delete coupon");
       } else {
         toast.error("Failed to save coupon");
       }
@@ -120,8 +120,8 @@ export default function AdminCouponsTable() {
       queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
     },
     onError: (error) => {
-      if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.error || "Failed to delete coupon");
+      if ((error as any).isAxiosError) {
+        toast.error((error as any).response?.data?.error || "Failed to save coupon");
       } else {
         toast.error("Failed to delete coupon");
       }

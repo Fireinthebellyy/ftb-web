@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   MapPin,
-  IndianRupee,
   Calendar,
   CalendarPlus,
   Bookmark,
@@ -68,7 +67,7 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
             )}
             {internship.stipend !== null && internship.stipend !== undefined && (
               <div className="flex items-center gap-2">
-                <IndianRupee className="w-4 h-4 text-slate-400" />
+                <span className="text-sm font-bold text-slate-400 uppercase tracking-tight">Stipend:</span>
                 <span>{formatSalary(internship.stipend)}</span>
               </div>
             )}

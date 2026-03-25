@@ -16,7 +16,6 @@ import {
   canAccessAdminTab,
   getAllowedAdminTabs,
   isAdminTab,
-  type AdminTabValue,
 } from "@/lib/admin-permissions";
 import { Button } from "@/components/ui/button";
 import AdminUsersTable from "./AdminUsersTable";
@@ -27,7 +26,7 @@ import AdminCouponsTable from "./AdminCouponsTable";
 import OpportunityManagementTable from "./OpportunityManagementTable";
 import InternshipManagementTable from "./InternshipManagementTable";
 
-const TAB_VALUES = [
+const _TAB_VALUES = [
   "opportunities",
   "OpportunityManagement",
   "internships",
@@ -36,7 +35,7 @@ const TAB_VALUES = [
   "coupons",
   "ungatekeep",
 ] as const;
-type TabValue = (typeof TAB_VALUES)[number];
+type TabValue = (typeof _TAB_VALUES)[number];
 
 function isValidTab(value: string | null): value is TabValue {
   return isAdminTab(value);
@@ -55,19 +54,17 @@ const adminCards: Array<{
       "Review and approve or reject opportunities submitted by users",
     icon: CircleCheck,
   },
-
   {
-  key: "OpportunityManagement",
-  title: "Opportunity Management",
-  description: "Search, edit or delete opportunities",
-  icon: CircleCheck,
+    key: "OpportunityManagement",
+    title: "Opportunity Management",
+    description: "Search, edit or delete opportunities",
+    icon: CircleCheck,
   },
-
   {
-  key: "internships",
-  title: "Internship Management",
-  description: "Search, edit or delete internships",
-  icon: CircleCheck,
+    key: "internships",
+    title: "Internship Management",
+    description: "Search, edit or delete internships",
+    icon: CircleCheck,
   },
   {
     key: "users",

@@ -13,14 +13,6 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { user as userTable } from "@/lib/schema";
 
-const adminTabValues = [
-  "opportunities",
-  "OpportunityManagement",
-  "users",
-  "toolkits",
-  "coupons",
-  "ungatekeep",
-] as const;
 
 type AdminPageProps = {
   searchParams: Promise<{ tab?: string | string[] }>;

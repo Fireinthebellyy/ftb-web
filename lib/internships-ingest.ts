@@ -169,26 +169,34 @@ function normalizeTags(tags: string[] | string | null | undefined) {
     .filter(Boolean);
 }
 
-function parseStipend(
-  stipend: string | number | null | undefined,
-  fallbackText?: string | null
-) {
+function parseStipend(stipend: string | number | null | undefined) {
   if (typeof stipend === "number" && Number.isFinite(stipend)) {
     return stipend;
   }
 
-  const fromValue = typeof stipend === "string" ? stipend : "";
-  const source = `${fromValue} ${fallbackText ?? ""}`;
-  const match = source.match(
-    /(?:₹|rs\.?|inr)?\s*([0-9][0-9,]*)\s*(?:\/?\s*month|pm|per\s*month)?/i
-  );
+  if (typeof stipend !== "string") {
+    return null;
+  }
 
+  // Handle "unpaid" string explicitly if it's the value of the stipend field
+  if (/\b(unpaid|nil|no stipend|none)\b/i.test(stipend)) {
+    return 0;
+  }
+
+  // Extract the first number from the stipend-specific string only
+  const match = stipend.match(/([0-9][0-9,]*[kK]?)/);
   if (!match) {
     return null;
   }
 
-  const parsed = Number.parseInt(match[1].replace(/,/g, ""), 10);
-  return Number.isNaN(parsed) ? null : parsed;
+  const numericPart = match[1].toLowerCase();
+  let value = Number.parseInt(numericPart.replace(/,/g, ""), 10);
+
+  if (!Number.isNaN(value) && numericPart.endsWith("k")) {
+    value *= 1000;
+  }
+
+  return Number.isNaN(value) ? null : value;
 }
 
 function parseDeadline(
@@ -280,7 +288,7 @@ export function buildInternshipInsertValues(
 
     const normalizedType = normalizeType(record.type, fallbackText);
     const normalizedTiming = normalizeTiming(record.timing, fallbackText);
-    const parsedStipend = parseStipend(record.stipend, fallbackText);
+    const parsedStipend = parseStipend(record.stipend);
     const parsedDeadline = parseDeadline(record.deadline, fallbackText);
 
     return {

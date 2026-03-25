@@ -26,6 +26,10 @@ export default function WhatsAppWidget() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
+
   const isToolkitDetailPage =
     pathname.startsWith("/toolkit/") && pathname !== "/toolkit";
 

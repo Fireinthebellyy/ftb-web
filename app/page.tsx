@@ -6,10 +6,8 @@ import {
   ArrowRight,
   BriefcaseBusiness,
   ChartColumnBig,
-  CirclePlay,
   Code,
   Compass,
-  Construction,
   Database,
   LockOpen,
   Megaphone,
@@ -150,7 +148,7 @@ export default function LandingPage() {
       <section className="bg-white py-6 sm:py-8">
         <div className="mx-auto max-w-7xl px-4 text-center">
           <h2 className={`${righteous.className} text-3xl sm:text-5xl md:text-6xl leading-tight tracking-normal text-neutral-900`}>
-            Turning 20's <span className="text-neutral-400">SUFFER</span> into <span className="text-primary uppercase">SAFFAR</span>
+            Turning 20&apos;s <span className="text-neutral-400">SUFFER</span> into <span className="text-primary uppercase">SAFFAR</span>
           </h2>
         </div>
       </section>

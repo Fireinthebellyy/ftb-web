@@ -63,6 +63,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "www.figma.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "*.cloudfront.net",
         pathname: "/**",
       },

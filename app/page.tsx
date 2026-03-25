@@ -1,441 +1,320 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  ArrowRight,
-  BriefcaseBusiness,
-  ChartColumnBig,
-  Code,
-  Compass,
-  Database,
-  LockOpen,
-  Megaphone,
-  Sparkles,
-  Wrench,
-} from "lucide-react";
-import { Inter, Plus_Jakarta_Sans, Righteous } from "next/font/google";
+import { ArrowRight, Star } from "lucide-react";
+import { Archivo_Black, Space_Grotesk } from "next/font/google";
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-const plusJakarta = Plus_Jakarta_Sans({
+const archivoBlack = Archivo_Black({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: "400",
 });
 
-const inter = Inter({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
 
-const righteous = Righteous({
-  weight: "400",
-  subsets: ["latin"],
-});
 
-const offerings = [
-  { title: "Opportunities", icon: Compass, image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=600&fit=crop" },
-  { title: "Internships", icon: BriefcaseBusiness, image: "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=400&h=600&fit=crop" },
-  { title: "Tracker", icon: ChartColumnBig, image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=600&fit=crop" },
-  { title: "Toolkit", icon: Wrench, image: "https://images.unsplash.com/photo-1581291518629-4c1266205cd4?w=400&h=600&fit=crop" },
-  { title: "Ungatekeep", icon: LockOpen, image: "https://images.unsplash.com/photo-1542626991-cbc4e32524cc?w=400&h=600&fit=crop" },
-];
 
-const benefits = [
+const toolkitCards = [
   {
-    image: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=800&h=400&fit=crop",
-    alt: "Feature Poster 1"
+    title: "Productivity Kit",
+    description: "Essential tools to boost your daily efficiency and output.",
   },
   {
-    image: "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=800&h=400&fit=crop",
-    alt: "Feature Poster 2"
+    title: "Career Starter Kit",
+    description: "Everything you need to land your first high-paying role.",
   },
   {
-    image: "https://images.unsplash.com/photo-1614850523598-8442b85d5e7a?w=800&h=400&fit=crop",
-    alt: "Feature Poster 3"
-  }
-];
-
-const toolkits = [
-  {
-    title: "Design Masterclass",
-    description: "From Figma basics to high-fidelity prototyping.",
-    modules: "12 Modules",
-    icon: Sparkles,
-  },
-  {
-    title: "Product Engineering",
-    description: "Full stack development for future founders.",
-    modules: "8 Modules",
-    icon: Code,
-  },
-  {
-    title: "Growth Marketing",
-    description: "The science behind building a viral presence.",
-    modules: "10 Modules",
-    icon: Megaphone,
-  },
-  {
-    title: "Data Analytics",
-    description: "Make decisions driven by data, not gut feelings.",
-    modules: "15 Modules",
-    icon: Database,
+    title: "Interview Mastery",
+    description: "Mock interviews and resources to ace any technical round.",
   },
 ];
 
-export default function LandingPage() {
-  const [currentBenefit, setCurrentBenefit] = useState(0);
+const universityLogos = [
+  {
+    alt: "University of Delhi",
+    label: "University of Delhi",
+    src: "https://www.figma.com/api/mcp/asset/ff93751d-13fe-45b7-a1d5-a2407d47ac23",
+  },
+  {
+    alt: "Christ University",
+    label: "Christ University",
+    src: "https://www.figma.com/api/mcp/asset/4e409eea-d7dd-407e-ae06-b6a336a4d784",
+  },
+  {
+    alt: "Jawaharlal Nehru University",
+    label: "Jawaharlal Nehru University",
+    src: "https://www.figma.com/api/mcp/asset/2acb0a60-392f-42a8-a0d0-6c8689a5f882",
+  },
+  {
+    alt: "Lovely Professional University",
+    label: "Lovely Professional University",
+    src: "https://www.figma.com/api/mcp/asset/2d2ca4db-9f0b-465c-8372-076454be26a9",
+  },
+];
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentBenefit((prev) => (prev + 1) % benefits.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
-
+function UniversityLogoBanner() {
   return (
-    <div className={`${plusJakarta.className} bg-white text-neutral-900`}>
-
-      <section className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
-        {/* Force row layout with inline style to guarantee left-right on all screen sizes */}
-        <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: "1rem" }}>
-          {/* Mascot — fixed height to match carousel */}
-          <div style={{ flexShrink: 0, height: "220px" }} className="sm:h-[260px] md:h-[300px]">
-            <img
-              alt="Fire in the Belly Penguin Mascot"
-              className="h-full w-auto object-contain transition-transform hover:scale-105"
-              src="/images/pingo.jpeg"
-            />
+    <section className="w-full">
+      <p className="text-sm tracking-[0.12em] text-black/45 uppercase">Our Partners</p>
+      <h2 className={`${archivoBlack.className} mt-2 text-3xl leading-tight md:text-4xl`}>
+        Trusted by Students Across Universities
+      </h2>
+      <p className="mt-2 text-base text-black/55">Exclusive Internship and Opportunities</p>
+      <div className="mt-8 grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-4">
+        {universityLogos.map((logo) => (
+          <div key={logo.alt} className="flex flex-col items-center gap-3 text-center">
+            <Image src={logo.src} alt={logo.alt} width={80} height={62} className="h-[62px] w-[80px] object-contain" />
+            <p className="text-[14px] leading-[1.2] text-black/50">{logo.label}</p>
           </div>
+        ))}
+      </div>
+    </section>
+  );
+}
 
-          {/* Carousel Poster — capped to same height */}
-          <div style={{ flex: 1, minWidth: 0, maxWidth: "560px" }}>
-            <div className="w-full overflow-hidden rounded-xl bg-neutral-100 shadow-sm md:rounded-3xl" style={{ height: "220px" }} >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentBenefit}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
-                  className="h-full w-full"
-                >
-                  <img 
-                    src={benefits[currentBenefit].image} 
-                    alt={benefits[currentBenefit].alt}
-                    className="h-full w-full object-cover"
-                  />
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            {/* Pagination Dots */}
-            <div className="mt-2 flex gap-1.5 sm:mt-4 sm:gap-2">
-              {benefits.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentBenefit(index)}
-                  className={`h-1 rounded-full transition-all duration-300 ${
-                    index === currentBenefit ? "w-4 bg-primary sm:w-8" : "w-1 bg-primary/20 sm:w-1.5"
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
+function MobileToolkitCard({ title, description }: { title: string; description: string }) {
+  return (
+    <article className="flex h-[343px] min-w-[340px] flex-col justify-between rounded-[24px] border border-black/10 bg-white p-4 shadow-[0_6px_16px_rgba(0,0,0,0.06)]">
+      <div className="space-y-4">
+        <div className="inline-flex size-10 items-center justify-center rounded-xl bg-primary/15 text-xs font-semibold text-primary">
+          FTB
         </div>
-      </section>
-
-      <section className="bg-white py-6 sm:py-8">
-        <div className="mx-auto max-w-7xl px-4 text-center">
-          <h2 className={`${righteous.className} text-3xl sm:text-5xl md:text-6xl leading-tight tracking-normal text-neutral-900`}>
-            Turning 20&apos;s <span className="text-neutral-400">SUFFER</span> into <span className="text-primary uppercase">SAFFAR</span>
-          </h2>
+        <h3 className="text-[34px] leading-[0.95] font-semibold text-black">{title}</h3>
+        <p className="max-w-[308px] text-[15px] text-black/70">{description}</p>
+        <div className="flex items-center justify-center gap-2 text-primary">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Star key={index} className="size-4 fill-current" />
+          ))}
         </div>
-      </section>
+      </div>
+      <Button className="mx-auto h-11 w-[152px] rounded-full bg-black px-5 text-sm text-white hover:bg-black/90">
+        Buy now
+      </Button>
+    </article>
+  );
+}
 
-      <section className="bg-white py-8 sm:py-10">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-          <h2 className="mb-8 text-sm font-bold tracking-[0.16em] text-primary uppercase">
-            Offerings
-          </h2>
-          <div className="flex gap-4 overflow-x-auto pb-6 md:grid md:grid-cols-6 lg:grid-cols-6">
-            {offerings.map((item) => (
-              <div
-                key={item.title}
-                className="group relative aspect-[2/3] w-32 min-w-[128px] cursor-pointer overflow-hidden rounded-lg border border-neutral-100 bg-neutral-900 shadow-sm transition-transform hover:scale-105 sm:w-40 sm:min-w-[160px]"
-              >
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  className="absolute inset-0 h-full w-full object-cover opacity-70 transition-opacity group-hover:opacity-90"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-                <div className="absolute bottom-3 left-3 right-3">
-                  <h3 className="text-[10px] font-black text-white uppercase tracking-wider sm:text-xs">
-                    {item.title}
-                  </h3>
-                </div>
-              </div>
-            ))}
-          </div>
+function DesktopToolkitCard({ title, description }: { title: string; description: string }) {
+  return (
+    <article className="flex h-[280px] min-w-[260px] flex-col justify-between rounded-[24px] border border-black/10 bg-white p-5 shadow-[0_6px_16px_rgba(0,0,0,0.06)] md:min-w-[300px]">
+      <div className="space-y-5">
+        <div className="inline-flex size-10 items-center justify-center rounded-xl bg-primary/15 text-xs font-semibold text-primary">
+          FTB
         </div>
-      </section>
-
-      <section className="overflow-hidden bg-white py-6 sm:py-8">
-        <div className="mx-auto flex w-full max-w-7xl flex-col items-center px-4 sm:px-6">
-          <p className="mb-8 text-center text-sm font-medium text-neutral-400">
-            TRUSTED BY AMBITIOUS STUDENTS FROM
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-5 opacity-30 grayscale sm:gap-x-12">
-            {[
-              "GOOGLE",
-              "META",
-              "STRIPE",
-              "MICROSOFT",
-              "APPLE",
-              "NOTION",
-            ].map((brand) => (
-              <div key={brand} className="text-xl font-black sm:text-2xl">
-                {brand}
-              </div>
-            ))}
-          </div>
+        <h3 className="text-xl leading-[1.1] font-semibold text-black">{title}</h3>
+        <p className="max-w-[32ch] text-sm text-black/70">{description}</p>
+        <div className="flex items-center gap-1 text-primary">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Star key={index} className="size-5 fill-current" />
+          ))}
         </div>
-      </section>
+      </div>
+      <Button className="h-10 w-fit rounded-full bg-black px-5 text-sm text-white hover:bg-black/90">
+        Buy now
+      </Button>
+    </article>
+  );
+}
 
-      <section className="overflow-hidden bg-black py-10 text-white sm:py-14">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-          <div className="mb-5 flex items-end justify-between sm:mb-6">
-            <div>
-              <h2 className="mb-3 text-3xl font-bold text-white sm:mb-4 sm:text-4xl">
-                Trending Toolkits
-              </h2>
-              <p className="text-white/60">
-                Everything you need to master your niche.
+export default function HomePage() {
+  return (
+    <main className={`${spaceGrotesk.className} bg-[#fcf9f4] text-black`}>
+      <div className="hidden md:block">
+        <section className="mx-auto w-full max-w-[1728px] px-4 pt-4 pb-16 md:px-4 md:pt-[16px]">
+          <div className="rounded-[42px] border border-black/10 bg-[radial-gradient(circle_at_20%_15%,rgba(255,180,57,0.25),transparent_40%),radial-gradient(circle_at_88%_10%,rgba(0,0,0,0.08),transparent_26%),#fff] p-6 md:p-10">
+
+            <div className="mx-auto max-w-[945px] text-center">
+
+              <h1 className={`${archivoBlack.className} text-balance text-4xl leading-[0.96] tracking-tight md:text-6xl lg:text-7xl`}>
+                Find Internships That Actually Fit You
+              </h1>
+
+              <p className="mx-auto mt-5 max-w-[820px] text-pretty text-lg leading-relaxed text-black/65 md:text-2xl">
+                Discover opportunities tailored to your skills, interests, and career goals all in one place.
               </p>
-            </div>
-            <Link
-              className="flex items-center gap-1 font-bold text-primary hover:underline"
-              href="/toolkit"
-            >
-              See all <ArrowRight className="size-4" />
-            </Link>
-          </div>
 
-          <div className="hide-scrollbar -mx-4 flex gap-5 overflow-x-auto px-4 pb-4 sm:-mx-6 sm:gap-6 sm:px-6 sm:pb-8">
-            {toolkits.map((toolkit) => {
-              const Icon = toolkit.icon;
-              return (
-                <div
-                  key={toolkit.title}
-                  className="min-w-[260px] cursor-pointer rounded-3xl border border-white/10 bg-white/5 p-7 transition-colors hover:bg-white/10 sm:min-w-[280px] sm:p-8"
-                >
-                  <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-primary/20">
-                    <Icon className="size-5 text-primary" />
+            </div>
+
+            <div className="mx-auto mt-14 max-w-[830px] overflow-hidden rounded-[34px] border border-black/10 bg-[#101010] p-4 md:p-6">
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="rounded-2xl bg-white/10 p-4">
+                  <p className="text-sm tracking-[0.12em] text-white/70 uppercase">Internships</p>
+                  <p className="mt-6 text-5xl font-bold text-white">1,280+</p>
+                </div>
+                <div className="rounded-2xl bg-primary p-4">
+                  <p className="text-sm tracking-[0.12em] text-black/70 uppercase">New This Week</p>
+                  <p className="mt-6 text-5xl font-bold text-black">346</p>
+                </div>
+                <div className="relative min-h-[176px] overflow-hidden rounded-2xl bg-white p-4">
+                  <p className="text-sm tracking-[0.12em] text-black/60 uppercase">Hiring Partners</p>
+                  <p className="mt-6 text-5xl font-bold text-black">420+</p>
+                  <div className="absolute right-2 bottom-2">
+                    <div className="relative size-20 overflow-hidden rounded-2xl border border-black/10 bg-[#fff9ef]">
+                      <Image src="/images/pingo.jpeg" alt="Penguin mascot" fill className="object-cover" />
+                    </div>
                   </div>
-                  <h3 className="mb-2 text-xl font-bold break-words">
-                    {toolkit.title}
-                  </h3>
-                  <p className="mb-6 text-sm break-words opacity-60">
-                    {toolkit.description}
-                  </p>
-                  <span
-                    className={`${inter.className} text-xs font-bold tracking-[0.14em] text-primary uppercase`}
-                  >
-                    {toolkit.modules}
-                  </span>
                 </div>
-              );
-            })}
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="bg-white py-8 sm:py-12">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-          <div className="mb-5 flex items-end justify-between sm:mb-6">
-            <h2 className="text-3xl font-bold text-primary sm:text-4xl">
-              Best of #FTB UnGateKeep
-            </h2>
-            <Link
-              className="flex items-center gap-1 font-bold text-primary hover:underline"
-              href="/ungatekeep"
-            >
-              See all <ArrowRight className="size-4" />
+        <section className="px-4 pt-4 pb-20 text-center md:px-8 md:pt-12 md:pb-24">
+          <h2 className={`${archivoBlack.className} mx-auto max-w-[700px] text-balance text-3xl leading-tight md:text-5xl`}>
+            Make your Twenties Zafar not Suffer
+          </h2>
+        </section>
+
+        <section className="px-4 pb-20 md:px-8 md:pb-24">
+          <UniversityLogoBanner />
+        </section>
+
+        <section className="mx-auto w-full max-w-[1728px] px-4 pb-20 md:px-8 md:pb-24">
+          <div className="mx-auto grid max-w-[1600px] gap-8">
+            <div className="grid gap-8 md:grid-cols-2">
+              <article className="rounded-[34px] border border-black/10 bg-white p-6 shadow-[0_10px_28px_rgba(0,0,0,0.06)] md:min-h-[520px] md:p-9">
+                <p className="text-sm tracking-[0.12em] text-black/45 uppercase">Built for students</p>
+                <h3 className="mt-4 text-3xl leading-tight font-bold md:text-4xl">One home for internships, toolkit and mentorship</h3>
+                <p className="mt-5 max-w-[40ch] text-lg text-black/65">
+                  Replace random scrolling and dead-end forms with a clear path to your first great role.
+                </p>
+                <div className="relative mt-8 h-[220px] overflow-hidden rounded-[28px] bg-[linear-gradient(130deg,#111,#383838)] md:h-[260px]">
+                  <Image src="/images/pingo.jpeg" alt="Penguin illustration" fill className="object-cover opacity-80" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                </div>
+              </article>
+
+              <article className="rounded-[34px] border border-black/10 bg-[#111111] p-6 text-white shadow-[0_10px_28px_rgba(0,0,0,0.16)] md:min-h-[520px] md:p-9">
+                <div className="h-[250px] rounded-[28px] border border-white/15 bg-[linear-gradient(145deg,#1f1f1f,#0f0f0f)] p-6 md:h-[280px]">
+                  <div className="relative h-full overflow-hidden rounded-[22px] border border-white/20">
+                    <Image src="/images/fire-logo.png" alt="FTB graphic" fill className="object-contain p-10" />
+                  </div>
+                </div>
+                <div className="mt-6 flex items-start gap-4 rounded-3xl bg-white/8 p-5">
+                  <div className="relative size-14 overflow-hidden rounded-2xl bg-primary/20">
+                    <Image src="/images/du.svg" alt="Toolkit icon" fill className="object-contain p-3" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl leading-none font-bold md:text-3xl">Exclusive Tool Kits</h3>
+                    <p className="mt-2 text-base text-white/70 md:text-lg">Exclusive Internship and Oppurtunities</p>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <article className="grid h-auto gap-6 rounded-[34px] border border-black/10 bg-white p-6 shadow-[0_10px_28px_rgba(0,0,0,0.06)] md:grid-cols-[1.6fr_1fr] md:items-center md:p-9">
+              <div className="flex items-center gap-5">
+                <div className="relative size-14 overflow-hidden rounded-2xl bg-primary/15">
+                  <Image src="/images/du.svg" alt="Ungatekeep icon" fill className="object-contain p-3" />
+                </div>
+                <div>
+                  <p className="text-sm tracking-[0.12em] text-black/45 uppercase">UnGATEKEEPED</p>
+                  <h3 className="mt-2 text-3xl leading-tight font-bold md:text-4xl">Exclusive Internship and Oppurtunities</h3>
+                </div>
+              </div>
+              <div className="relative h-[300px] overflow-hidden rounded-[28px] bg-[linear-gradient(130deg,#ffd48d,#ff9e45)] md:h-[420px]">
+                <div className="absolute -top-6 -left-6 size-24 rounded-full bg-white/45" />
+                <div className="absolute -right-5 -bottom-5 size-28 rounded-full bg-black/10" />
+                <div className="absolute right-6 bottom-6 flex items-end gap-3">
+                  <div className="relative size-20 overflow-hidden rounded-2xl border border-black/10 bg-white/80 md:size-24">
+                    <Image src="/images/pingo.jpeg" alt="Penguin mascot" fill className="object-cover" />
+                  </div>
+                  <div className="relative size-12 overflow-hidden rounded-xl border border-black/10 bg-white/80 md:size-14">
+                    <Image src="/images/fire-logo.png" alt="Brand badge" fill className="object-contain p-2" />
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section className="mx-auto w-full max-w-[1728px] px-4 pb-24 md:px-8 md:pb-28">
+          <div className="mx-auto mb-7 flex max-w-[1600px] items-end justify-between gap-4">
+            <h2 className={`${archivoBlack.className} text-3xl md:text-5xl`}>Trending Toolkits</h2>
+            <Link href="/toolkit" className="flex items-center gap-2 text-lg font-semibold text-black/75 hover:text-black">
+              See All
+              <ArrowRight className="size-5" />
             </Link>
           </div>
 
-          <div className="flex gap-4 overflow-x-auto pb-6 md:grid md:grid-cols-6 lg:grid-cols-6">
-            {[
-              {
-                title: "Design Insider",
-                image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBHjlCpXTZGQxpgr6RdDsG9zZ7SZ3jYqGaxhTTx80bdcxCnSAl1PCw3gI4YPXaZ9QEqPgHR2YZJkr8GqTGx1z9TvKl0N571aOdIEigqAlo1xhplZRvhPo5FVwugiumfZohKDGxEat8tfravys9grDrhAMa5rFZrzuTgkhT1L2Z3aN14k3UMyoZfTn7g65kyO-1dHH5jRK9Hwzx9nPY6XCNCHAGfYdrkiy41SLkMqI4f2dP2YJzvb_5XM1DNd70lhQz2-4ti6q5Bdw",
-              },
-              {
-                title: "VC Decoding",
-                image: "https://lh3.googleusercontent.com/aida-public/AB6AXuB8iapg1h3AKWhpcHf02ckboNzKRNEL6toVT5LAi8jcKulGm7aVhrPluri4S7dd8QU63S7TuQooGWTSrB48EncQhwDzInDTSwKmlL-rpsV01FC03z6M-WUlUEZsiahI1U5dF06J4fwGs7SG22jxCpoKJdRSJUvpvFZ4swDebBUDRBG_EtZd0H3596f-keMl9iE-GdEaGHtxJcNX8AvBj_f233mwCIzYZywv9kE7I4JY5K1DpVfMC1S6hwpqWDW_bx1ykU_ia4-T9g",
-              },
-              {
-                title: "Startup Blueprint",
-                image: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=600&fit=crop",
-              },
-              {
-                title: "Tech Recruiting",
-                image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=400&h=600&fit=crop",
-              },
-            ].map((card, idx) => (
-              <div key={idx} className="group relative aspect-[2/3] w-32 min-w-[128px] cursor-pointer overflow-hidden rounded-lg bg-neutral-900 shadow-md transition-transform hover:scale-105 sm:w-40 sm:min-w-[160px]">
-                <img
-                  alt={card.title}
-                  className="absolute inset-0 h-full w-full object-cover opacity-70 transition-transform duration-700 group-hover:scale-110 group-hover:opacity-90"
-                  src={card.image}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                <div className="absolute bottom-3 left-3 right-3">
-                  <h4 className="text-[10px] font-black text-white uppercase tracking-wider sm:text-xs">
-                    {card.title}
-                  </h4>
-                </div>
-              </div>
+          <div className="hide-scrollbar mx-auto flex max-w-[1600px] gap-8 overflow-x-auto pb-2">
+            {toolkitCards.map((card, index) => (
+              <DesktopToolkitCard key={`${card.title}-${index}`} title={card.title} description={card.description} />
             ))}
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
-      <section className="bg-white py-8 sm:py-12">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-          <div className="mb-5 flex items-end justify-between sm:mb-6">
-            <h2 className="text-3xl font-bold text-primary sm:text-4xl">
-              Internships
-            </h2>
-            <a
-              className="flex items-center gap-1 font-bold text-[var(--color-primary)] hover:underline"
-              href="#"
-            >
-              See all <ArrowRight className="size-4" />
-            </a>
+      <div className="mx-auto min-h-screen w-full max-w-[440px] px-4 py-4 md:hidden">
+
+        <section className="rounded-[28px] border border-black/10 bg-[radial-gradient(circle_at_20%_15%,rgba(255,180,57,0.26),transparent_40%),#fff] p-4">
+          <div className="text-center">
+
+            <h1 className={`${archivoBlack.className} mt-4 text-balance px-2 text-[34px] leading-[1.02]`}>
+              Find Internships That Actually Fit You
+            </h1>
+            <p className="mx-auto mt-3 max-w-[320px] text-[14px] leading-6 text-black/65">
+              Discover opportunities tailored to your skills, interests, and career goals all in one place.
+            </p>
+
           </div>
 
-          <div className="hide-scrollbar flex gap-4 overflow-x-auto pb-4 md:grid md:grid-cols-2 md:gap-8 md:overflow-visible">
-            <div className="w-[78vw] shrink-0 cursor-pointer rounded-[2rem] border border-neutral-100 bg-neutral-50 p-6 transition-all hover:border-primary/20 md:w-auto">
-              <div className="mb-6 flex items-start justify-between">
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-white text-lg font-bold text-primary shadow-sm">
-                  VRCL
-                </div>
-                <span className="rounded-full bg-primary/20 px-3 py-1 text-sm font-bold text-primary">
-                  New
-                </span>
-              </div>
-              <h4 className="mb-2 text-xl font-bold">
-                Vercel: Frontend Fellow
-              </h4>
-              <p className="mb-6 text-sm text-neutral-600">
-                Work directly with the Core Team on Next.js features. Remote/Global.
-              </p>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="text-sm font-semibold opacity-60">12 Weeks</div>
-                <Button className="rounded-full bg-black px-6 py-2 text-sm font-bold text-white">
-                  Apply Now
-                </Button>
-              </div>
-            </div>
-
-            <div className="w-[78vw] shrink-0 cursor-pointer rounded-[2rem] border border-neutral-100 bg-neutral-50 p-6 transition-all hover:border-primary/20 md:w-auto">
-              <div className="mb-6 flex items-start justify-between">
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-white text-lg font-bold text-primary shadow-sm">
-                  NOTN
-                </div>
-                <span className="rounded-full bg-primary/20 px-3 py-1 text-sm font-bold text-primary">
-                  Remote
-                </span>
-              </div>
-              <h4 className="mb-2 text-xl font-bold">
-                Notion: Campus Lead
-              </h4>
-              <p className="mb-6 text-sm text-neutral-600">
-                Build community and influence on your campus. High growth potential.
-              </p>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="text-sm font-semibold opacity-60">Stipend + Swag</div>
-                <Button className="rounded-full bg-black px-6 py-2 text-sm font-bold text-white">
-                  Apply Now
-                </Button>
-              </div>
-            </div>
+          <div className="relative mt-6 h-[238px] overflow-hidden rounded-2xl border border-black/10 bg-[linear-gradient(130deg,#111,#383838)]">
+            <Image src="/images/pingo.jpeg" alt="Hero graphic" fill className="object-cover opacity-80" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="bg-white py-8 sm:py-12">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-          <div className="mb-10 flex items-end justify-between sm:mb-12">
-            <h2 className="text-3xl font-bold text-primary sm:text-4xl">
-              Talk of the Hour in Opportunities
-            </h2>
-            <a
-              className="flex items-center gap-1 font-bold text-primary hover:underline"
-              href="#"
-            >
-              See all <ArrowRight className="size-4" />
-            </a>
-          </div>
-
-          <div className="flex gap-4 overflow-x-auto pb-6 md:grid md:grid-cols-6 lg:grid-cols-6">
-            {[
-              { title: "Stripe AE", image: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=400&h=600&fit=crop" },
-              { title: "MS Resident", image: "https://images.unsplash.com/photo-1593642532400-2682810df593?w=400&h=600&fit=crop" },
-              { title: "Apple Ops", image: "https://images.unsplash.com/photo-1517245318728-4903328e13fe?w=400&h=600&fit=crop" },
-              { title: "Meta Analyst", image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=600&fit=crop" },
-              { title: "Notion Community", image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=600&fit=crop" },
-            ].map((opp, idx) => (
-              <div key={idx} className="group relative aspect-[2/3] w-32 min-w-[128px] cursor-pointer overflow-hidden rounded-lg bg-neutral-900 shadow-md transition-transform hover:scale-105 sm:w-40 sm:min-w-[160px]">
-                <img
-                  src={opp.image}
-                  alt={opp.title}
-                  className="absolute inset-0 h-full w-full object-cover opacity-70 transition-opacity group-hover:opacity-90"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-                <div className="absolute bottom-3 left-3 right-3">
-                  <h4 className="text-[10px] font-black text-white uppercase tracking-wider sm:text-xs">
-                    {opp.title}
-                  </h4>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-white py-8 sm:py-12">
-        <div className="mx-auto w-full max-w-3xl px-4 sm:px-6">
-          <h2 className="mb-6 text-center text-3xl font-bold text-primary sm:mb-8 sm:text-4xl">
-            Frequently Asked Queries
+        <section className="px-3 py-6 text-center">
+          <h2 className={`${archivoBlack.className} mx-auto max-w-[300px] text-[34px] leading-[0.95]`}>
+            Make your Twenties Zafar not Suffer
           </h2>
-          <div className="space-y-4">
-            {[
-              "Is it free to use?",
-              "What is included in the Paid plan?",
-              "How often are opportunities updated?",
-              "Do you offer 1-on-1 coaching?",
-            ].map((question) => (
-              <div
-                key={question}
-                className="overflow-hidden rounded-2xl border border-transparent bg-neutral-50 transition-all hover:border-primary/20"
-              >
-                <button className="group flex w-full items-center justify-between px-6 py-5 text-left sm:px-8 sm:py-6">
-                  <h4 className="text-base font-bold break-words transition-colors group-hover:text-primary sm:text-lg">
-                    {question}
-                  </h4>
-                  <span className="text-2xl leading-none text-primary transition-transform group-hover:rotate-45">
-                    +
-                  </span>
-                </button>
+        </section>
+
+        <section className="pb-4">
+          <UniversityLogoBanner />
+        </section>
+
+        <section className="mt-4 rounded-[24px] border border-black/10 bg-white p-4 shadow-[0_6px_16px_rgba(0,0,0,0.06)]">
+          <div className="flex items-center gap-3">
+            <div className="relative size-10 overflow-hidden rounded-lg bg-primary/15">
+              <Image src="/images/du.svg" alt="Ungatekeep icon" fill className="object-contain p-2" />
+            </div>
+            <div>
+              <p className="text-[11px] tracking-[0.12em] text-black/45 uppercase">UnGATEKEEPED</p>
+              <h3 className="text-xl leading-tight font-bold">Exclusive Internship and Oppurtunities</h3>
+            </div>
+          </div>
+          <div className="relative mt-4 h-[140px] overflow-hidden rounded-xl bg-[linear-gradient(130deg,#ffd48d,#ff9e45)]">
+            <div className="absolute right-3 bottom-3 flex items-end gap-2">
+              <div className="relative size-12 overflow-hidden rounded-lg border border-black/10 bg-white/80">
+                <Image src="/images/pingo.jpeg" alt="Penguin mascot" fill className="object-cover" />
               </div>
+              <div className="relative size-8 overflow-hidden rounded-md border border-black/10 bg-white/80">
+                <Image src="/images/fire-logo.png" alt="Brand badge" fill className="object-contain p-1.5" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="pt-4">
+          <div className="mb-3 flex items-end justify-between">
+            <h2 className={`${archivoBlack.className} text-3xl leading-none`}>Trending Toolkits</h2>
+            <Link href="/toolkit" className="flex items-center gap-1 text-xs font-semibold text-black/75 hover:text-black">
+              See All
+              <ArrowRight className="size-3.5" />
+            </Link>
+          </div>
+
+          <div className="hide-scrollbar flex gap-2 overflow-x-auto pb-2">
+            {toolkitCards.map((card, index) => (
+              <MobileToolkitCard key={`${card.title}-${index}`} title={card.title} description={card.description} />
             ))}
           </div>
-        </div>
-      </section>
-      {/* Footer removed as per request */}
-    </div>
+        </section>
+      </div>
+    </main>
   );
 }

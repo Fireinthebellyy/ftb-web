@@ -29,15 +29,16 @@ export const InternshipHero: React.FC<InternshipHeroProps> = ({ internship }) =>
 
         {/* Info Cards Grid */}
         <div className="grid grid-cols-3 gap-3 w-full">
-          <div className="bg-white rounded-xl p-4 flex flex-col items-start border border-orange-50 shadow-sm text-left">
-            <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-1.5">
-              Salary
-            </span>
-            <span className="text-[15px] font-extrabold text-[#111827] leading-tight">
-              {formatSalary(internship.stipend)}
-            </span>
-          </div>
-          
+          {internship.stipend !== null && internship.stipend !== undefined && (
+            <div className="bg-white rounded-xl p-4 flex flex-col items-start border border-orange-50 shadow-sm text-left">
+              <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-1.5">
+                Salary
+              </span>
+              <span className="text-[15px] font-extrabold text-[#111827] leading-tight">
+                {formatSalary(internship.stipend)}
+              </span>
+            </div>
+          )}
           <div className="bg-white rounded-xl p-4 flex flex-col items-start border border-orange-50 shadow-sm text-left">
             <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-1.5">
               Duration

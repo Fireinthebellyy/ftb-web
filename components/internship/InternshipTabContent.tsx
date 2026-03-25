@@ -127,10 +127,9 @@ export const InternshipTabContent: React.FC<InternshipTabContentProps> = ({
           </div>
           <div className="grid grid-cols-1 gap-3">
             {[
-              {
-                label: "Competitive Stipend",
-                value: formatSalary(internship.stipend),
-              },
+              ...(internship.stipend !== null && internship.stipend !== undefined
+                ? [{ label: "Competitive Stipend", value: formatSalary(internship.stipend) }]
+                : []),
               { 
                 label: "Mentorship", 
                 value: (internship as any).mentorship || "Guided by senior experts" 

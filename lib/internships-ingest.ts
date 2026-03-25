@@ -171,7 +171,7 @@ function normalizeTags(tags: string[] | string | null | undefined) {
 
 function parseStipend(stipend: string | number | null | undefined) {
   if (typeof stipend === "number" && Number.isFinite(stipend)) {
-    return stipend;
+    return Math.trunc(stipend);
   }
 
   if (typeof stipend !== "string") {

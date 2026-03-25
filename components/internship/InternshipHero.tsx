@@ -28,7 +28,7 @@ export const InternshipHero: React.FC<InternshipHeroProps> = ({ internship }) =>
         </div>
 
         {/* Info Cards Grid */}
-        <div className="grid grid-cols-3 gap-3 w-full">
+        <div className={`grid ${internship.stipend !== null && internship.stipend !== undefined ? 'grid-cols-3' : 'grid-cols-2'} gap-3 w-full`}>
           {internship.stipend !== null && internship.stipend !== undefined && (
             <div className="bg-white rounded-xl p-4 flex flex-col items-start border border-orange-50 shadow-sm text-left">
               <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-1.5">

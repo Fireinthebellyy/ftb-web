@@ -1,7 +1,7 @@
-import { ArrowRight, Star } from "lucide-react";
-import { Archivo_Black, Space_Grotesk } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
+import { Archivo_Black, Space_Grotesk } from "next/font/google";
+import { ArrowRight, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const archivoBlack = Archivo_Black({
@@ -35,22 +35,22 @@ const universityLogos = [
   {
     alt: "University of Delhi",
     label: "University of Delhi",
-    src: "https://www.figma.com/api/mcp/asset/ff93751d-13fe-45b7-a1d5-a2407d47ac23",
+    src: "/images/du.png",
   },
   {
     alt: "Christ University",
     label: "Christ University",
-    src: "https://www.figma.com/api/mcp/asset/4e409eea-d7dd-407e-ae06-b6a336a4d784",
+    src: "/images/christ.jpg",
   },
   {
     alt: "Jawaharlal Nehru University",
     label: "Jawaharlal Nehru University",
-    src: "https://www.figma.com/api/mcp/asset/2acb0a60-392f-42a8-a0d0-6c8689a5f882",
+    src: "/images/jnu.png",
   },
   {
     alt: "Lovely Professional University",
     label: "Lovely Professional University",
-    src: "https://www.figma.com/api/mcp/asset/2d2ca4db-9f0b-465c-8372-076454be26a9",
+    src: "/images/lpu.png",
   },
 ];
 
@@ -198,7 +198,7 @@ export default function HomePage() {
                   </div>
                   <div>
                     <h3 className="text-2xl leading-none font-bold md:text-3xl">Exclusive Tool Kits</h3>
-                    <p className="mt-2 text-base text-white/70 md:text-lg">Exclusive Internship and Oppurtunities</p>
+                    <p className="mt-2 text-base text-white/70 md:text-lg">Exclusive Internship and Opportunities</p>
                   </div>
                 </div>
               </article>
@@ -211,7 +211,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <p className="text-sm tracking-[0.12em] text-black/45 uppercase">UnGATEKEEPED</p>
-                  <h3 className="mt-2 text-3xl leading-tight font-bold md:text-4xl">Exclusive Internship and Oppurtunities</h3>
+                  <h3 className="mt-2 text-3xl leading-tight font-bold md:text-4xl">Exclusive Internship and Opportunities</h3>
                 </div>
               </div>
               <div className="relative h-[300px] overflow-hidden rounded-[28px] bg-[linear-gradient(130deg,#ffd48d,#ff9e45)] md:h-[420px]">
@@ -284,7 +284,7 @@ export default function HomePage() {
             </div>
             <div>
               <p className="text-[11px] tracking-[0.12em] text-black/45 uppercase">UnGATEKEEPED</p>
-              <h3 className="text-xl leading-tight font-bold">Exclusive Internship and Oppurtunities</h3>
+              <h3 className="text-xl leading-tight font-bold">Exclusive Internship and Opportunities</h3>
             </div>
           </div>
           <div className="relative mt-4 h-[140px] overflow-hidden rounded-xl bg-[linear-gradient(130deg,#ffd48d,#ff9e45)]">

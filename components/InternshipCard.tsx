@@ -101,9 +101,15 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
 
     try {
       if (isBookmarked) {
-        await removeFromTracker(id, "internship");
+        const removed = await removeFromTracker(id, "internship");
+        if (removed) toast.success("Deleted from Tracker");
       } else {
-        await addToTracker(id, "Not Applied", "internship");
+        const added = await addToTracker(id, "Not Applied", "internship");
+        if (added) {
+          toast.success("Saved to Tracker");
+        } else {
+          toast.info("Already in Tracker");
+        }
       }
     } catch (error) {
       console.error("Failed to update tracker:", error);

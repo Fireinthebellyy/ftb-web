@@ -68,11 +68,11 @@ interface TrackerContextType {
     oppOrId: number | string | ManualTrackerInput,
     initialStatus?: string,
     kind?: "internship" | "opportunity"
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   removeFromTracker: (
     oppId: number | string,
     kind?: "internship" | "opportunity"
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   updateStatus: (
     oppId: number | string,
     status: string,
@@ -105,6 +105,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
   const [hydratedItems, setHydratedItems] = useState<TrackerItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
+  const pendingAdds = React.useRef<Set<string>>(new Set());
 
   // Initial Load from API with LocalStorage Fallback/Sync
   useEffect(() => {
@@ -203,7 +204,6 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
       });
     } catch (e) {
       console.error("Failed to sync item", e);
-      toast.error("Failed to save changes to cloud");
     }
   };
 
@@ -390,7 +390,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     const optimisticId = Date.now().toString(); // Use string ID
     const newItem = { ...event, id: optimisticId };
     setEvents((prev) => [...prev, newItem]);
-    toast.success(`📅 Event Added: ${event.title}`);
+    // UI should handle notifications for events
 
     // Backend Sync
     fetch("/api/tracker", {
@@ -421,7 +421,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     oppOrId: number | string | ManualTrackerInput,
     initialStatus = "Not Applied",
     kind: "internship" | "opportunity" = "internship"
-  ): Promise<void> => {
+  ): Promise<boolean> => {
     const isManual = typeof oppOrId === "object";
     const idToCheck = isManual
       ? ((oppOrId as ManualTrackerInput).id ?? Date.now())
@@ -432,28 +432,20 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
         : kind;
     const nextKey = getTrackerKey(idToCheck, effectiveKind);
 
+    // Prevent duplicate concurrent adds for same key
+    if (pendingAdds.current.has(nextKey)) return false;
+
     const isAlreadyAdded = trackedItems.some(
       (i) => getTrackerKey(i.oppId, i.kind) === nextKey
     );
 
     if (isAlreadyAdded) {
-      toast.info("Already in Tracker");
-      return;
+      // caller should show "Already in Tracker" if desired
+      return false;
     }
 
-    if (initialStatus === "Not Applied") {
-      const trackerTab =
-        effectiveKind === "opportunity" ? "opportunity" : "internship";
-
-      toast.success("Saved to Tracker", {
-        action: {
-          label: "View",
-          onClick: () => router.push(`/tracker?tab=${trackerTab}`),
-        },
-      });
-    } else if (initialStatus === "Draft") {
-      toast.success("Draft Saved");
-    }
+    // mark pending
+    pendingAdds.current.add(nextKey);
 
     const inputData = isManual ? (oppOrId as ManualTrackerInput) : {};
     const newItem = {
@@ -477,12 +469,15 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     // Backend Sync
     try {
       await syncItemToBackend(newItem);
+      return true;
     } catch (error) {
       console.error("Optimistic add failed, reverting:", error);
       setTrackedItems((prevItems) =>
         prevItems.filter((i) => getTrackerKey(i.oppId, i.kind) !== nextKey)
       );
-      // toast is already in syncItemToBackend
+      return false;
+    } finally {
+      pendingAdds.current.delete(nextKey);
     }
   };
 
@@ -516,15 +511,15 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
   const removeFromTracker = async (
     oppId: number | string,
     kind?: "internship" | "opportunity"
-  ): Promise<void> => {
+  ): Promise<boolean> => {
     const targetKey = getTrackerKey(oppId, kind);
 
     // Optimistic remove
     setTrackedItems((prevItems) =>
       prevItems.filter((i) => getTrackerKey(i.oppId, i.kind) !== targetKey)
     );
-    toast.success("Deleted from Tracker");
     await deleteFromBackend(oppId, "item", kind);
+    return true;
   };
 
   const getStatus = (

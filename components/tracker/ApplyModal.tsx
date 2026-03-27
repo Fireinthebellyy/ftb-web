@@ -60,11 +60,19 @@ export default function ApplyModal({
       setIsSubmitting(true);
       const oppId: number | string = opportunity.id;
       // Ensure persistence is awaited before closing or navigating
-      await addToTracker({ 
-        ...opportunity, 
-        id: oppId,
-        kind: opportunity.kind || "internship"
-      }, "Not Applied");
+      const added = await addToTracker(
+        {
+          ...opportunity,
+          id: oppId,
+          kind: opportunity.kind || "internship",
+        },
+        "Not Applied"
+      );
+      if (added) {
+        toast.success("Saved to Tracker");
+      } else {
+        toast.info("Already in Tracker");
+      }
       onClose();
       router.push("/tracker");
     } catch (error) {

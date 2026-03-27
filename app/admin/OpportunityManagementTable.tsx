@@ -61,6 +61,7 @@ export default function OpportunityManagementTable() {
     useState<Opportunity | null>(null);
   const [open, setOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const handleEdit = (opportunity: Opportunity) => {
     setOpen(false);
@@ -144,10 +145,12 @@ export default function OpportunityManagementTable() {
               <Button
                 size="sm"
                 variant="outline"
+                disabled={togglingId === opportunity.id}
                 aria-label={
                   opportunity.isActive ? "Hide opportunity" : "Show opportunity"
                 }
                 onClick={async () => {
+                  setTogglingId(opportunity.id);
                   try {
                     await axios.patch(
                       `/api/admin/opportunities/${opportunity.id}`,
@@ -163,6 +166,7 @@ export default function OpportunityManagementTable() {
                   } catch {
                     toast.error("Failed to update visibility.");
                   } finally {
+                    setTogglingId(null);
                     queryClient.invalidateQueries({
                       queryKey: ["admin-opportunity-management"],
                     });
@@ -212,7 +216,7 @@ export default function OpportunityManagementTable() {
                 try {
                   const results = await Promise.allSettled(
                     selectedIds.map((id) =>
-                      axios.delete(`/api/opportunities/${id}`)
+                      axios.delete(`/api/admin/opportunities/${id}`)
                     )
                   );
                   const failed = results.filter(

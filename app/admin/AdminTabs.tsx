@@ -150,8 +150,16 @@ export function AdminTabs({
       </div>
 
       {activeTab === "opportunities" ? <AdminOpportunitiesTable /> : null}
-      {activeTab === "OpportunityManagement" ? <OpportunityManagementTable /> : null}
-      {activeTab === "internships" ? <InternshipManagementTable /> : null}
+      {activeTab === "OpportunityManagement" ? (
+        <OpportunityManagementTable />
+      ) : null}
+      {activeTab === "internships" ? (
+        <InternshipManagementTable
+          canCreateInternship={
+            currentUserRole === "admin" || currentUserRole === "editor"
+          }
+        />
+      ) : null}
       {activeTab === "users" ? (
         <AdminUsersTable currentUserId={currentUserId} />
       ) : null}

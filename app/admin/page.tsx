@@ -2,7 +2,6 @@ import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import NewInternshipButton from "@/components/internship/NewInternshipButton";
 import {
   canAccessAdminPanel,
   getAllowedAdminTabs,
@@ -12,7 +11,6 @@ import { AdminTabs } from "./AdminTabs";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { user as userTable } from "@/lib/schema";
-
 
 type AdminPageProps = {
   searchParams: Promise<{ tab?: string | string[] }>;
@@ -54,7 +52,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <div className="mb-8">
             <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-              {currentUser.role === "admin" ? <NewInternshipButton /> : null}
             </div>
             <p className="text-muted-foreground">
               Manage users, opportunities, and platform content

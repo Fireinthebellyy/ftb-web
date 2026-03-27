@@ -77,7 +77,11 @@ export default function AdminOpportunitiesTable() {
   });
 
   useEffect(() => {
-    if (error && axios.isAxiosError(error) && error.response?.status === 403) {
+    if (
+      error &&
+      (error as any).isAxiosError &&
+      (error as any).response?.status === 403
+) {
       router.push("/");
       toast.error("You don't have permission to access this page");
       return;
@@ -102,7 +106,7 @@ export default function AdminOpportunitiesTable() {
           action,
         }
       );
-      return { opportunityId, action, opportunity: response.data.opportunity };
+      return { opportunityId, action, opportunity: (response as any).data.opportunity };
     },
     onMutate: ({ opportunityId }) => {
       setUpdatingOpportunities((prev) => new Set(prev).add(opportunityId));
@@ -127,9 +131,9 @@ export default function AdminOpportunitiesTable() {
       toast.success(`Opportunity ${action}d successfully`);
     },
     onError: (mutationError) => {
-      if (axios.isAxiosError(mutationError)) {
+      if ((mutationError as any).isAxiosError) {
         const message =
-          mutationError.response?.data?.error || "Failed to update opportunity";
+          (mutationError as any).response?.data?.error || "Failed to update opportunity";
         toast.error(message);
       } else {
         toast.error("Failed to update opportunity");

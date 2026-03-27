@@ -19,6 +19,9 @@ export const internshipFormSchema = z.object({
     .string()
     .min(1, {
       message: "Description is required.",
+    })
+    .max(2000, {
+      message: "Description must not exceed 2000 characters.",
     }),
   hiringOrganization: z.string().min(1, {
     message: "Hiring organization is required.",
@@ -50,6 +53,11 @@ export const internshipFormSchema = z.object({
     }),
   link: z.string().url({ message: "Application link is required." }),
   deadline: z.string().optional(),
+});
+
+export const internshipEditFormSchema = internshipFormSchema.extend({
+  timing: z.enum(["full_time", "part_time"]).optional(),
+  type: z.enum(["onsite", "remote", "hybrid"]).optional(),
 });
 
 export type InternshipFormData = z.infer<typeof internshipFormSchema>;

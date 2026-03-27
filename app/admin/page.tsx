@@ -13,6 +13,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { user as userTable } from "@/lib/schema";
 
+
 type AdminPageProps = {
   searchParams: Promise<{ tab?: string | string[] }>;
 };

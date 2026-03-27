@@ -34,7 +34,7 @@ interface User {
 
 async function fetchUsers(): Promise<User[]> {
   const response = await axios.get<{ users: User[] }>("/api/admin/users");
-  return (response as any).data.user;
+  return response.data.users;
 }
 
 interface AdminUsersTableProps {

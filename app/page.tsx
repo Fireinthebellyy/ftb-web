@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Inter, Outfit, Satisfy } from "next/font/google";
@@ -91,7 +91,7 @@ function TaglineSection() {
 }
 
 function InternshipStrip() {
-  const sliderRef = useRef<HTMLDivElement>(null);
+  const [activeSlide, setActiveSlide] = useState(0);
 
   const slides = [
     {
@@ -124,24 +124,23 @@ function InternshipStrip() {
     },
   ] as const;
 
-  const scrollByAmount = (direction: "left" | "right") => {
-    if (!sliderRef.current) return;
-    const cardWidth = 400;
-    const gap = 16;
-    const amount = cardWidth + gap;
+  const goToPrevious = () => {
+    setActiveSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+  };
 
-    sliderRef.current.scrollBy({
-      left: direction === "left" ? -amount : amount,
-      behavior: "smooth",
-    });
+  const goToNext = () => {
+    setActiveSlide((prev) => (prev + 1) % slides.length);
   };
 
   return (
     <section className="pt-4 pb-4 md:px-8 md:py-8">
-      <div ref={sliderRef} className="hide-scrollbar overflow-x-auto px-5 md:px-0">
-        <div className="flex w-max snap-x snap-mandatory gap-4">
+      <div className="mx-auto w-[400px] overflow-hidden px-5 md:w-[680px] md:px-0">
+        <div
+          className="flex transition-transform duration-300 ease-out"
+          style={{ transform: `translateX(-${activeSlide * 100}%)` }}
+        >
           {slides.map((slide) => (
-            <article key={slide.key} className="w-[400px] shrink-0 snap-center md:w-[680px]">
+            <article key={slide.key} className="w-[400px] shrink-0 md:w-[680px]">
               <div className="mx-auto h-[240px] w-[390px] rounded-2xl border border-black/30 bg-white p-[10px] md:h-[320px] md:w-[660px] md:rounded-[24px] md:p-4">
                 <div className="grid h-full grid-cols-[160px_200px] gap-[10px] md:grid-cols-[280px_340px] md:gap-4">
                   {slide.leftMode === "badge" ? (
@@ -171,28 +170,28 @@ function InternshipStrip() {
                   </div>
                 </div>
               </div>
-
-              <div className="mt-2 flex items-center justify-center gap-[16.74px]">
-                <button
-                  type="button"
-                  aria-label="Previous slide"
-                  onClick={() => scrollByAmount("left")}
-                  className="grid size-[46px] place-items-center rounded-full border border-black/20 bg-white text-[#ff6e00]"
-                >
-                  <ChevronLeft className="size-[30px]" />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Next slide"
-                  onClick={() => scrollByAmount("right")}
-                  className="grid size-[46px] place-items-center rounded-full border border-black/20 bg-white text-[#ff6e00]"
-                >
-                  <ChevronRight className="size-[30px]" />
-                </button>
-              </div>
             </article>
           ))}
         </div>
+      </div>
+
+      <div className="mt-2 flex items-center justify-center gap-[16.74px]">
+        <button
+          type="button"
+          aria-label="Previous slide"
+          onClick={goToPrevious}
+          className="grid size-[46px] place-items-center rounded-full border border-black/20 bg-white text-[#ff6e00]"
+        >
+          <ChevronLeft className="size-[30px]" />
+        </button>
+        <button
+          type="button"
+          aria-label="Next slide"
+          onClick={goToNext}
+          className="grid size-[46px] place-items-center rounded-full border border-black/20 bg-white text-[#ff6e00]"
+        >
+          <ChevronRight className="size-[30px]" />
+        </button>
       </div>
     </section>
   );

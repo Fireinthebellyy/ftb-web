@@ -134,7 +134,7 @@ export default function InternshipDetailPage() {
   };
 
   const handleOpenChat = () => {
-    const link = `https://wa.me/917014885565?text=${encodeURIComponent(
+    const link = `https://wa.me/916377492042?text=${encodeURIComponent(
       `Type: Internship Help\nSource: /intern/${id}\n\nI need help with: ${internship?.title} at ${internship?.hiringOrganization}`
     )}`;
     window.open(link, "_blank");

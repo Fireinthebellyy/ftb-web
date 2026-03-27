@@ -84,7 +84,7 @@ export default function WhatsAppWidget() {
             <p className="text-lg font-semibold">How can we help?</p>
             <div className="mt-3 space-y-3">
               {options.map((type) => {
-                const link = `https://wa.me/917014885565?text=${encodeURIComponent(
+                const link = `https://wa.me/916377492042?text=${encodeURIComponent(
                   `Type: ${type}\nSource: ${source}\n\nPlease describe your feedback:`
                 )}`;
                 return ( <a
@@ -122,7 +122,7 @@ export default function WhatsAppWidget() {
           <DialogTitle>How can we help?</DialogTitle>
           <div className="mt-3 space-y-3">
             {options.map((type) => {
-              const link = `https://wa.me/917014885565?text=${encodeURIComponent(
+              const link = `https://wa.me/916377492042?text=${encodeURIComponent(
                 `Type: ${type}\nSource: ${source}\n\nPlease describe your feedback:`
               )}`;
               return ( <a

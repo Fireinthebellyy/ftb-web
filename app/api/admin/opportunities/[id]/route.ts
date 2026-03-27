@@ -8,7 +8,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 const updateOpportunitySchema = z.object({
-  action: z.enum(["approve", "reject"]),
+  action: z.enum(["approve", "reject", "toggle"]),
 });
 
 export async function PATCH(
@@ -32,7 +32,7 @@ export async function PATCH(
       );
     }
 
-    // Check if user is admin
+    // Check if admin
     const currentUser = await getCurrentUser();
     activityAdminUserId = currentUser?.currentUser?.id ?? null;
     if (!canAccessAdminTab(currentUser?.currentUser?.role, "opportunities")) {
@@ -44,6 +44,7 @@ export async function PATCH(
     const { id } = await params;
     const opportunityId = id;
     activityEntityId = opportunityId;
+
     if (!opportunityId) {
       activityStatus = 400;
       activityError = "Opportunity ID is required";
@@ -70,6 +71,7 @@ export async function PATCH(
         { status: 404 }
       );
     }
+
     activityBeforeState = existingOpportunity[0];
 
     const updateData: any = {
@@ -81,8 +83,8 @@ export async function PATCH(
       updateData.isVerified = true;
     } else if (validatedData.action === "reject") {
       updateData.isActive = false;
-      // Optionally set deletedAt for rejected opportunities
-      // updateData.deletedAt = new Date();
+    } else if (validatedData.action === "toggle") {
+      updateData.isActive = !existingOpportunity[0].isActive;
     }
 
     const updatedOpportunity = await db
@@ -106,7 +108,10 @@ export async function PATCH(
     return NextResponse.json(
       {
         success: true,
-        message: `Opportunity ${validatedData.action === "approve" ? "approved" : "rejected"} successfully`,
+        message:
+          validatedData.action === "approve"
+            ? "Opportunity approved successfully"
+            : "Opportunity rejected successfully",
         opportunity: updatedOpportunity[0],
       },
       { status: 200 }
@@ -121,6 +126,7 @@ export async function PATCH(
     activityError = error;
     console.error("Error updating opportunity:", error);
     activityStatus = 500;
+
     return NextResponse.json(
       { error: "Failed to update opportunity" },
       { status: 500 }
@@ -140,3 +146,101 @@ export async function PATCH(
     });
   }
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  let activityStatus = 500;
+  let activityError: unknown = null;
+  let activityAdminUserId: string | null = null;
+  let activityEntityId: string | null = null;
+  let activityBeforeState: unknown = null;
+
+  try {
+    if (!db) {
+      activityStatus = 500;
+      activityError = "Database connection not available";
+
+      return NextResponse.json(
+        { error: "Database connection not available" },
+        { status: 500 }
+      );
+    }
+
+    // Check admin
+    const currentUser = await getCurrentUser();
+    activityAdminUserId = currentUser?.currentUser?.id ?? null;
+
+    if (currentUser?.currentUser?.role !== "admin") {
+      activityStatus = 403;
+      activityError = "Unauthorized";
+
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
+    const { id } = await params;
+    activityEntityId = id;
+
+    if (!id) {
+      activityStatus = 400;
+      activityError = "Opportunity ID is required";
+
+      return NextResponse.json(
+        { error: "Opportunity ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const existingOpportunity = await db
+      .select()
+      .from(opportunities)
+      .where(eq(opportunities.id, id))
+      .limit(1);
+
+    if (existingOpportunity.length === 0) {
+      activityStatus = 404;
+      activityError = "Opportunity not found";
+
+      return NextResponse.json(
+        { error: "Opportunity not found" },
+        { status: 404 }
+      );
+    }
+
+    activityBeforeState = existingOpportunity[0];
+
+    await db.delete(opportunities).where(eq(opportunities.id, id));
+
+    activityStatus = 200;
+
+    return NextResponse.json({
+      success: true,
+      message: "Opportunity deleted successfully",
+    });
+  } catch (error) {
+    activityError = error;
+    activityStatus = 500;
+
+    console.error("Error deleting opportunity:", error);
+
+    return NextResponse.json(
+      { error: "Failed to delete opportunity" },
+      { status: 500 }
+    );
+  } finally {
+    void logAdminActivity({
+      request: req,
+      action: "admin.opportunities.delete",
+      statusCode: activityStatus,
+      success: activityStatus >= 200 && activityStatus < 300,
+      adminUserId: activityAdminUserId,
+      entityType: "opportunity",
+      entityId: activityEntityId,
+      beforeState: activityBeforeState,
+      afterState: null,
+      error: activityError,
+    });
+  }
+}
+

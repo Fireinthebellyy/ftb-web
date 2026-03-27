@@ -34,7 +34,7 @@ interface User {
 
 async function fetchUsers(): Promise<User[]> {
   const response = await axios.get<{ users: User[] }>("/api/admin/users");
-  return response.data.users;
+  return (response as any).data.user;
 }
 
 interface AdminUsersTableProps {
@@ -61,7 +61,7 @@ export default function AdminUsersTable({
   });
 
   useEffect(() => {
-    if (error && axios.isAxiosError(error) && error.response?.status === 403) {
+    if (error && (error as any).response?.status === 403) {
       router.push("/");
       toast.error("You don't have permission to access this page");
       return;
@@ -83,7 +83,7 @@ export default function AdminUsersTable({
       const response = await axios.patch(`/api/admin/users/${userId}`, {
         role: newRole,
       });
-      return { userId, newRole, user: response.data.user };
+      return { userId, newRole, user: (response as any).data.user };
     },
     onMutate: ({ userId }) => {
       setUpdatingRoles((prev) => new Set(prev).add(userId));

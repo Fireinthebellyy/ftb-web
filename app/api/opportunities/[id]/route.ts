@@ -34,22 +34,16 @@ const updateOpportunitySchema = z.object({
 function parsePublishAt(
   publishAt: string | "" | null | undefined
 ): Date | null | undefined {
-  if (publishAt === undefined) {
-    return undefined;
-  }
+  if (publishAt === undefined) return undefined;
+  if (publishAt === "" || publishAt === null) return null;
 
-  if (publishAt === "" || publishAt === null) {
-    return null;
-  }
+  const parsed = new Date(publishAt);
+  if (Number.isNaN(parsed.getTime())) return undefined;
 
-  const parsedPublishAt = new Date(publishAt);
-  if (Number.isNaN(parsedPublishAt.getTime())) {
-    return undefined;
-  }
-
-  return parsedPublishAt;
+  return parsed;
 }
 
+// ===================== UPDATE =====================
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -71,7 +65,6 @@ export async function PUT(
     const body = await req.json();
     const validatedData = updateOpportunitySchema.parse(body);
 
-    // Check if the opportunity exists and belongs to the current user
     const existingOpportunity = await db
       .select()
       .from(opportunities)
@@ -85,63 +78,53 @@ export async function PUT(
       );
     }
 
-    if (existingOpportunity[0].userId !== user.currentUser.id) {
+    // ✅ FIX: ADMIN CAN EDIT
+    if (
+      existingOpportunity[0].userId !== user.currentUser.id &&
+      user.currentUser.role !== "admin" &&
+      user.currentUser.role !== "editor"
+    ) {
       return NextResponse.json(
         { error: "You don't have permission to edit this opportunity" },
         { status: 403 }
       );
     }
 
-    // Build update data
     const updateData: any = {};
 
-    // Handle optional fields
-    if (validatedData.type !== undefined) {
-      updateData.type = validatedData.type;
-    }
-    if (validatedData.title !== undefined) {
-      updateData.title = validatedData.title;
-    }
-    if (validatedData.description !== undefined) {
-      updateData.description = validatedData.description;
-    }
-    if (validatedData.images !== undefined) {
-      updateData.images = validatedData.images;
-    }
-    if (validatedData.attachments !== undefined) {
-      updateData.attachments = validatedData.attachments;
-    }
-    if (validatedData.tags !== undefined) {
-      updateData.tagIds = await upsertTagsAndGetIds(validatedData.tags);
-    }
-    if (validatedData.location !== undefined) {
-      updateData.location = validatedData.location;
-    }
-    if (validatedData.organiserInfo !== undefined) {
-      updateData.organiserInfo = validatedData.organiserInfo;
-    }
+    if (validatedData.type !== undefined) updateData.type = validatedData.type;
 
-    // Handle date fields
+    if (validatedData.title !== undefined)
+      updateData.title = validatedData.title;
+
+    if (validatedData.description !== undefined)
+      updateData.description = validatedData.description;
+
+    if (validatedData.images !== undefined)
+      updateData.images = validatedData.images;
+
+    if (validatedData.attachments !== undefined)
+      updateData.attachments = validatedData.attachments;
+
+    if (validatedData.tags !== undefined)
+      updateData.tagIds = await upsertTagsAndGetIds(validatedData.tags);
+
+    if (validatedData.location !== undefined)
+      updateData.location = validatedData.location;
+
+    if (validatedData.organiserInfo !== undefined)
+      updateData.organiserInfo = validatedData.organiserInfo;
+
     if (validatedData.startDate !== undefined) {
-      if (validatedData.startDate) {
-        const startDate = new Date(validatedData.startDate);
-        if (!isNaN(startDate.getTime())) {
-          updateData.startDate = startDate.toISOString().split("T")[0];
-        }
-      } else {
-        updateData.startDate = null;
-      }
+      updateData.startDate = validatedData.startDate
+        ? new Date(validatedData.startDate).toISOString().split("T")[0]
+        : null;
     }
 
     if (validatedData.endDate !== undefined) {
-      if (validatedData.endDate) {
-        const endDate = new Date(validatedData.endDate);
-        if (!isNaN(endDate.getTime())) {
-          updateData.endDate = endDate.toISOString().split("T")[0];
-        }
-      } else {
-        updateData.endDate = null;
-      }
+      updateData.endDate = validatedData.endDate
+        ? new Date(validatedData.endDate).toISOString().split("T")[0]
+        : null;
     }
 
     const parsedPublishAt = parsePublishAt(validatedData.publishAt);
@@ -149,7 +132,6 @@ export async function PUT(
       updateData.publishAt = parsedPublishAt;
     }
 
-    // Update the opportunity
     const [updatedOpportunity] = await db
       .update(opportunities)
       .set({
@@ -169,13 +151,14 @@ export async function PUT(
     }
 
     console.error("Error updating opportunity:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Internal Server Error";
-
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
 
+// ===================== DELETE =====================
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -195,7 +178,6 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Check if the opportunity exists and belongs to the current user
     const existingOpportunity = await db
       .select()
       .from(opportunities)
@@ -209,14 +191,19 @@ export async function DELETE(
       );
     }
 
-    if (existingOpportunity[0].userId !== user.currentUser.id) {
+    // ✅ FIX: ADMIN CAN DELETE
+    if (
+      existingOpportunity[0].userId !== user.currentUser.id &&
+      user.currentUser.role !== "admin" &&
+      user.currentUser.role !== "editor"
+    ) {
       return NextResponse.json(
         { error: "You don't have permission to delete this opportunity" },
         { status: 403 }
       );
     }
 
-    // Soft delete by setting deletedAt timestamp
+    // ✅ SOFT DELETE
     await db
       .update(opportunities)
       .set({
@@ -231,9 +218,9 @@ export async function DELETE(
     );
   } catch (error) {
     console.error("Error deleting opportunity:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Internal Server Error";
-
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

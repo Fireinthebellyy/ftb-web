@@ -16,7 +16,6 @@ import {
   canAccessAdminTab,
   getAllowedAdminTabs,
   isAdminTab,
-  type AdminTabValue,
 } from "@/lib/admin-permissions";
 import { Button } from "@/components/ui/button";
 import AdminUsersTable from "./AdminUsersTable";
@@ -24,8 +23,19 @@ import AdminOpportunitiesTable from "./AdminOpportunitiesTable";
 import AdminToolkitsTable from "./AdminToolkitsTable";
 import AdminUngatekeepTable from "./AdminUngatekeepTable";
 import AdminCouponsTable from "./AdminCouponsTable";
+import OpportunityManagementTable from "./OpportunityManagementTable";
+import InternshipManagementTable from "./InternshipManagementTable";
 
-type TabValue = AdminTabValue;
+const _TAB_VALUES = [
+  "opportunities",
+  "OpportunityManagement",
+  "internships",
+  "users",
+  "toolkits",
+  "coupons",
+  "ungatekeep",
+] as const;
+type TabValue = (typeof _TAB_VALUES)[number];
 
 function isValidTab(value: string | null): value is TabValue {
   return isAdminTab(value);
@@ -42,6 +52,18 @@ const adminCards: Array<{
     title: "Pending Opportunities",
     description:
       "Review and approve or reject opportunities submitted by users",
+    icon: CircleCheck,
+  },
+  {
+    key: "OpportunityManagement",
+    title: "Opportunity Management",
+    description: "Search, edit or delete opportunities",
+    icon: CircleCheck,
+  },
+  {
+    key: "internships",
+    title: "Internship Management",
+    description: "Search, edit or delete internships",
     icon: CircleCheck,
   },
   {
@@ -128,6 +150,8 @@ export function AdminTabs({
       </div>
 
       {activeTab === "opportunities" ? <AdminOpportunitiesTable /> : null}
+      {activeTab === "OpportunityManagement" ? <OpportunityManagementTable /> : null}
+      {activeTab === "internships" ? <InternshipManagementTable /> : null}
       {activeTab === "users" ? (
         <AdminUsersTable currentUserId={currentUserId} />
       ) : null}

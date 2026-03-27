@@ -81,7 +81,8 @@ export async function PUT(
     // ✅ FIX: ADMIN CAN EDIT
     if (
       existingOpportunity[0].userId !== user.currentUser.id &&
-      user.currentUser.role !== "admin"
+      user.currentUser.role !== "admin" &&
+      user.currentUser.role !== "editor"
     ) {
       return NextResponse.json(
         { error: "You don't have permission to edit this opportunity" },
@@ -91,8 +92,7 @@ export async function PUT(
 
     const updateData: any = {};
 
-    if (validatedData.type !== undefined)
-      updateData.type = validatedData.type;
+    if (validatedData.type !== undefined) updateData.type = validatedData.type;
 
     if (validatedData.title !== undefined)
       updateData.title = validatedData.title;
@@ -194,7 +194,8 @@ export async function DELETE(
     // ✅ FIX: ADMIN CAN DELETE
     if (
       existingOpportunity[0].userId !== user.currentUser.id &&
-      user.currentUser.role !== "admin"
+      user.currentUser.role !== "admin" &&
+      user.currentUser.role !== "editor"
     ) {
       return NextResponse.json(
         { error: "You don't have permission to delete this opportunity" },

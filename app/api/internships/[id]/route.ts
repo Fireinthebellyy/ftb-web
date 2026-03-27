@@ -38,8 +38,6 @@ export async function GET(
       );
     }
 
-
-
     const { id } = await params;
     if (!id) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
@@ -118,7 +116,8 @@ export async function PATCH(
     }
 
     const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.currentUser?.role !== "admin") {
+    const role = currentUser?.currentUser?.role;
+    if (!currentUser || (role !== "admin" && role !== "editor")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -199,9 +198,11 @@ export async function PUT(
 
     const internship = existingInternship[0];
     const isOwner = internship.userId === currentUser.currentUser.id;
-    const isAdmin = currentUser.currentUser.role === "admin";
+    const isModerator =
+      currentUser.currentUser.role === "admin" ||
+      currentUser.currentUser.role === "editor";
 
-    if (!isOwner && !isAdmin) {
+    if (!isOwner && !isModerator) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -261,10 +262,10 @@ export async function PUT(
     if (validatedData.stipend !== undefined) {
       updateData.stipend = validatedData.stipend;
     }
-    if (validatedData.isVerified !== undefined && isAdmin) {
+    if (validatedData.isVerified !== undefined && isModerator) {
       updateData.isVerified = validatedData.isVerified;
     }
-    if (validatedData.isActive !== undefined && isAdmin) {
+    if (validatedData.isActive !== undefined && isModerator) {
       updateData.isActive = validatedData.isActive;
     }
 
@@ -326,13 +327,13 @@ export async function DELETE(
       );
     }
 
-    
-
     const internship = existingInternship[0];
     const isOwner = internship.userId === currentUser.currentUser.id;
-    const isAdmin = currentUser.currentUser.role === "admin";
+    const isModerator =
+      currentUser.currentUser.role === "admin" ||
+      currentUser.currentUser.role === "editor";
 
-    if (!isOwner && !isAdmin) {
+    if (!isOwner && !isModerator) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

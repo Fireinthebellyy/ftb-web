@@ -7,8 +7,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+// router and toasts removed from provider; UI handles notifications
 import { fetchInternshipsPaginated } from "@/lib/queries-internships";
 import { fetchOpportunitiesPaginated } from "@/lib/queries-opportunities";
 import { Internship, Opportunity } from "@/types/interfaces";
@@ -99,7 +98,7 @@ export const useTracker = () => {
 };
 
 export const TrackerProvider = ({ children }: { children: ReactNode }) => {
-  const router = useRouter();
+  // router not needed in provider
   const [trackedItems, setTrackedItems] = useState<TrackerItem[]>([]);
   const [events, setEvents] = useState<TrackerEvent[]>([]);
   const [hydratedItems, setHydratedItems] = useState<TrackerItem[]>([]);

@@ -220,8 +220,8 @@ function TrustedSection() {
           <span className="font-semibold text-[rgba(0,0,0,0.6)]">Delhi University | Christ University | IIITs | IIMs | BHU</span>
         </p>
 
-        <div className="hide-scrollbar mt-2 overflow-x-auto">
-          <div className="animate-marquee-slow flex w-max items-center gap-8 pr-6">
+        <div className="relative mt-2 overflow-hidden">
+          <div className="animate-marquee-slow flex items-center gap-8" style={{ minWidth: "200%" }}>
             {logos.concat(logos).map((logo, index) => (
               <div key={`${logo}-${index}`} className="relative h-[81px] w-[70px] shrink-0">
                 <Image src={logo} alt="University logo" fill className="object-contain" />
@@ -461,8 +461,8 @@ function FaqSection() {
 
 export default function HomePage() {
   return (
-    <main className={`${outfit.className} min-h-screen bg-white text-black md:bg-[radial-gradient(120%_120%_at_50%_0%,#ffffff_0%,#f3f4f6_100%)]`}>
-      <div className="mx-auto w-full max-w-[440px] md:max-w-none md:[&>section]:mx-auto md:[&>section]:w-full md:[&>section]:max-w-[1240px]">
+    <main className={`${outfit.className} min-h-screen bg-white text-black`}>
+      <div className="mx-auto w-full max-w-[440px] px-4 md:px-8 md:max-w-[1240px] lg:max-w-[1400px]">
         <HeroSection />
         <TaglineSection />
         <InternshipStrip />

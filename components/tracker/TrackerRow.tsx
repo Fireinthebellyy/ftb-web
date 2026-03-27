@@ -153,11 +153,7 @@ export default function TrackerRow({
                 <Calendar size={12} /> Exp: {opp.expectedResultWindow}
               </span>
             )}
-            {opp.isHighPriority && (
-              <span className="flex items-center gap-1 rounded-full border border-rose-100 bg-rose-50 px-2 py-0.5 text-xs font-bold text-rose-600">
-                <AlertCircle size={10} /> HIGH PRIORITY
-              </span>
-            )}
+            {/* High priority badge removed for desktop (was awkward) */}
           </div>
         </div>
       </div>

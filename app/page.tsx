@@ -21,7 +21,7 @@ const satisfy = Satisfy({
   weight: ["400"],
 });
 
-const sfProClass = "font-[\"SF Pro Display\",\"SF Pro Text\",Inter,sans-serif]";
+const sfProClass = inter.className;
 
 const toolkitCards = [
   { title: "Cold Mailing", description: "", compact: true },
@@ -70,7 +70,7 @@ function HeroSection() {
         </div>
 
         <div className="relative h-[256px] w-[282px] md:h-[420px] md:w-[500px]">
-          <Image src="/images/pingo.png" alt="Hero visual" fill priority sizes="282px" className="object-contain object-top" />
+          <Image src="/images/pingo.png" alt="Hero visual" fill priority sizes="(min-width: 768px) 500px, 282px" className="object-contain object-top" />
         </div>
       </div>
     </section>
@@ -217,7 +217,7 @@ function TrustedSection() {
         </p>
 
         <div className="hide-scrollbar mt-2 overflow-x-auto">
-          <div className="flex w-max items-center gap-8 pr-6">
+          <div className="animate-marquee-slow flex w-max items-center gap-8 pr-6">
             {logos.concat(logos).map((logo, index) => (
               <div key={`${logo}-${index}`} className="relative h-[81px] w-[70px] shrink-0">
                 <Image src={logo} alt="University logo" fill className="object-contain" />
@@ -264,16 +264,18 @@ function ToolkitCarousel() {
               </div>
 
               <div className="flex items-center justify-between gap-[10px]">
-                <button
+                <Link
+                  href="/buy"
                   className={`${outfit.className} inline-flex h-12 items-center justify-center whitespace-nowrap rounded-[39px] bg-white px-3 text-[18px] leading-none font-medium tracking-[-0.25px] text-black`}
                 >
                   Buy now
-                </button>
-                <button
+                </Link>
+                <Link
+                  href="/explore"
                   className={`${sfProClass} inline-flex h-12 items-center justify-center whitespace-nowrap rounded-[39px] border border-white/50 px-3 text-[18px] leading-none font-normal tracking-[-0.25px] text-white/50`}
                 >
                   Explore
-                </button>
+                </Link>
               </div>
             </article>
           ))}
@@ -283,17 +285,19 @@ function ToolkitCarousel() {
   );
 }
 
+interface CardCarouselSectionProps {
+  title: string;
+  subtitle: string;
+  href: string;
+  spacing?: "featured" | "compact";
+}
+
 function CardCarouselSection({
   title,
   subtitle,
   href,
   spacing = "compact",
-}: {
-  title: string;
-  subtitle: string;
-  href: string;
-  spacing?: "featured" | "compact";
-}) {
+}: CardCarouselSectionProps) {
   const stackGapClass = spacing === "featured" ? "gap-8" : "gap-4";
   const titleClass =
     spacing === "featured"

@@ -184,7 +184,7 @@ export default function OpportunityManagementTable() {
         },
       },
     ];
-  }, [selectedIds, opportunities, queryClient]);
+  }, [selectedIds, opportunities, queryClient, togglingId]);
 
   const deleteToolbar =
     selectedIds.length > 0 ? (

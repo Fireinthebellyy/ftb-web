@@ -102,9 +102,18 @@ export default function InternshipDetailPage() {
     if (!id || !internship) return;
     try {
       if (isBookmarked) {
-        await removeFromTracker(id, "internship");
+        const removed = await removeFromTracker(id, "internship");
+        if (removed) toast.success("Deleted from Tracker");
       } else {
-        await addToTracker(id, "Not Applied", "internship");
+        const added = await addToTracker(id, "Not Applied", "internship");
+        if (added) {
+          const trackerTab = "internship";
+          toast.success("Saved to Tracker", {
+            action: { label: "View", onClick: () => router.push(`/tracker?tab=${trackerTab}`) },
+          });
+        } else {
+          toast.info("Already in Tracker");
+        }
       }
     } catch (error) {
       console.error("Failed to update bookmark:", error);

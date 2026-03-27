@@ -46,7 +46,7 @@ interface MobileTrackerCardProps {
     extraData?: Record<string, unknown>,
     kind?: "internship" | "opportunity"
   ) => Promise<void>;
-  onDelete: (id: number | string, kind?: "internship" | "opportunity") => Promise<void>;
+  onDelete: (id: number | string, kind?: "internship" | "opportunity") => Promise<boolean | void>;
   onClick: (opp: TrackerItem) => void;
 }
 

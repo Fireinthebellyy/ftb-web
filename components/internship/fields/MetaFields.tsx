@@ -52,7 +52,7 @@ export function MetaFields({ control }: Props) {
           name="stipend"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Stipend (₹)</FormLabel>
+              <FormLabel>Stipend</FormLabel>
               <FormControl>
                 <Input
                   {...field}

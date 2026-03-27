@@ -10,8 +10,7 @@ import { Analytics } from "@vercel/analytics/next";
 import QueryProvider from "@/components/Providers";
 import ProgressProvider from "./providers";
 import Script from "next/script";
-import WhatsAppWidget from "@/components/WhatsAppWidget";
-import FeedbackWidget from "@/components/FeedbackWidget";
+import ConditionalWidgets from "@/components/ConditionalWidgets";
 import PostOnboardingSurveyWidget from "@/components/PostOnboardingSurveyWidget";
 import { TrackerProvider } from "@/components/providers/TrackerProvider";
 import { CSPostHogProvider } from "./providers/posthog-provider";
@@ -55,8 +54,7 @@ export default function RootLayout({
                   <main className="grow pt-16 pb-20 md:pb-0">{children}</main>
                   <BottomNav />
                   <Footer />
-                  <WhatsAppWidget />
-                  <FeedbackWidget />
+                  <ConditionalWidgets />
                   <PostOnboardingSurveyWidget />
                 </TrackerProvider>
               </CSPostHogProvider>

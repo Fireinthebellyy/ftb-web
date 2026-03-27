@@ -87,6 +87,7 @@ export function toTitleCase(str: string | null | undefined): string {
  */
 export function formatSalary(stipend: number | null | undefined): string {
   if (stipend === null || stipend === undefined) return "Unpaid / Not disclosed";
+  if (stipend === 0) return "Unpaid";
   return `${stipend.toLocaleString()} / mo`;
 }
 

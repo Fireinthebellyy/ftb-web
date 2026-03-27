@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import {
   canAccessAdminTab,
+  canCreateInternship,
   getAllowedAdminTabs,
   isAdminTab,
 } from "@/lib/admin-permissions";
@@ -155,9 +156,7 @@ export function AdminTabs({
       ) : null}
       {activeTab === "internships" ? (
         <InternshipManagementTable
-          canCreateInternship={
-            currentUserRole === "admin" || currentUserRole === "editor"
-          }
+          canCreateInternship={canCreateInternship(currentUserRole)}
         />
       ) : null}
       {activeTab === "users" ? (

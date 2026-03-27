@@ -4,15 +4,16 @@ import { useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { Eye, EyeOff, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
 import { AdminTableState } from "@/components/admin/AdminTableState";
 import { AdminTabLayout } from "@/components/admin/AdminTabLayout";
-import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Trash2 } from "lucide-react";
-
+import NewInternshipButton from "@/components/internship/NewInternshipButton";
 import NewInternshipForm from "@/components/internship/NewInternshipForm";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
@@ -27,7 +28,6 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import NewInternshipButton from "@/components/internship/NewInternshipButton";
 
 interface Internship {
   id: string;
@@ -170,11 +170,11 @@ export default function InternshipManagementTable({
         header: "Flagged",
         cell: ({ row }) => (
           <span
-            className={
+            className={cn(
               row.original.isFlagged
                 ? "font-medium text-red-500"
                 : "text-gray-400"
-            }
+            )}
           >
             {row.original.isFlagged ? "Yes" : "No"}
           </span>
@@ -274,6 +274,12 @@ export default function InternshipManagementTable({
                   ).length;
                   if (failed > 0) toast.error(`${failed} deletion(s) failed.`);
                   else toast.success("Deleted successfully");
+                } catch (error) {
+                  const message =
+                    error instanceof Error
+                      ? error.message
+                      : "Unexpected error while deleting internships.";
+                  toast.error(`Bulk delete failed: ${message}`);
                 } finally {
                   setSelectedIds([]);
                   queryClient.invalidateQueries({

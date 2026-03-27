@@ -145,7 +145,7 @@ export default function TrackerRow({
                 {new Date(opp.deadline).toLocaleDateString()}
               </span>
             )}
-            {opp.deadline && opp.kind === "opportunity" && (
+            {opp.deadline && (
               <DeadlineBadge deadline={opp.deadline} />
             )}
             {opp.expectedResultWindow && (

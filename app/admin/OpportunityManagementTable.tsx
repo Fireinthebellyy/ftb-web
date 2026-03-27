@@ -14,11 +14,7 @@ import { Eye, EyeOff, Trash2 } from "lucide-react";
 
 import NewOpportunityForm from "@/components/opportunity/NewOpportunityForm";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 import {
   AlertDialog,
@@ -44,6 +40,7 @@ interface Opportunity {
   user: {
     id: string;
     name: string;
+    image: string;
   };
 }
 
@@ -60,7 +57,8 @@ const EMPTY_OPPORTUNITIES: Opportunity[] = [];
 export default function OpportunityManagementTable() {
   const queryClient = useQueryClient();
 
-  const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
+  const [selectedOpportunity, setSelectedOpportunity] =
+    useState<Opportunity | null>(null);
   const [open, setOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
@@ -83,8 +81,7 @@ export default function OpportunityManagementTable() {
 
   const columns = useMemo<ColumnDef<Opportunity>[]>(() => {
     const allSelected =
-      opportunities.length > 0 &&
-      selectedIds.length === opportunities.length;
+      opportunities.length > 0 && selectedIds.length === opportunities.length;
 
     return [
       {
@@ -147,12 +144,17 @@ export default function OpportunityManagementTable() {
               <Button
                 size="sm"
                 variant="outline"
-                aria-label={opportunity.isActive ? "Hide opportunity" : "Show opportunity"}
+                aria-label={
+                  opportunity.isActive ? "Hide opportunity" : "Show opportunity"
+                }
                 onClick={async () => {
                   try {
-                    await axios.patch(`/api/admin/opportunities/${opportunity.id}`, {
-                      action: "toggle",
-                    });
+                    await axios.patch(
+                      `/api/admin/opportunities/${opportunity.id}`,
+                      {
+                        action: "toggle",
+                      }
+                    );
                     toast.success(
                       opportunity.isActive
                         ? "Opportunity hidden"
@@ -180,53 +182,58 @@ export default function OpportunityManagementTable() {
     ];
   }, [selectedIds, opportunities, queryClient]);
 
-  const deleteToolbar = selectedIds.length > 0 ? (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50"
-        >
-          <Trash2 className="h-4 w-4 text-red-600" />
-          Delete ({selectedIds.length})
-        </Button>
-      </AlertDialogTrigger>
-
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete Opportunities</AlertDialogTitle>
-          <AlertDialogDescription>
-            Are you sure you want to delete selected opportunities?
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            className="bg-red-600 hover:bg-red-700 text-white"
-            onClick={async () => {
-              try {
-                const results = await Promise.allSettled(
-                  selectedIds.map((id) => axios.delete(`/api/opportunities/${id}`))
-                );
-                const failed = results.filter((r) => r.status === "rejected").length;
-                if (failed > 0) toast.error(`${failed} deletion(s) failed.`);
-                else toast.success("Deleted successfully");
-              } finally {
-                setSelectedIds([]);
-                queryClient.invalidateQueries({
-                  queryKey: ["admin-opportunity-management"],
-                });
-              }
-            }}
+  const deleteToolbar =
+    selectedIds.length > 0 ? (
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2 border-red-200 text-red-600 hover:bg-red-50"
           >
-            Delete
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  ) : null;
+            <Trash2 className="h-4 w-4 text-red-600" />
+            Delete ({selectedIds.length})
+          </Button>
+        </AlertDialogTrigger>
+
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Opportunities</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete selected opportunities?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 text-white hover:bg-red-700"
+              onClick={async () => {
+                try {
+                  const results = await Promise.allSettled(
+                    selectedIds.map((id) =>
+                      axios.delete(`/api/opportunities/${id}`)
+                    )
+                  );
+                  const failed = results.filter(
+                    (r) => r.status === "rejected"
+                  ).length;
+                  if (failed > 0) toast.error(`${failed} deletion(s) failed.`);
+                  else toast.success("Deleted successfully");
+                } finally {
+                  setSelectedIds([]);
+                  queryClient.invalidateQueries({
+                    queryKey: ["admin-opportunity-management"],
+                  });
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    ) : null;
 
   return (
     <>

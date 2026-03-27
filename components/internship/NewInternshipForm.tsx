@@ -8,7 +8,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { internshipFormSchema, internshipEditFormSchema, InternshipFormData } from "./schema";
+import {
+  internshipFormSchema,
+  internshipEditFormSchema,
+  InternshipFormData,
+} from "./schema";
 import { TitleField } from "./fields/TitleField";
 import { DescriptionField } from "./fields/DescriptionField";
 import { HiringOrganizationField } from "./fields/HiringOrganizationField";
@@ -24,7 +28,7 @@ interface Internship {
   description: string;
   hiringOrganization?: string;
   tags?: string[] | string;
-  eligibility?: string;
+  eligibility?: string[] | string;
   type?: "onsite" | "remote" | "hybrid";
   timing?: "full_time" | "part_time";
   location?: string;
@@ -51,7 +55,9 @@ export default function NewInternshipForm({
   const queryClient = useQueryClient();
 
   const form = useForm<InternshipFormData>({
-    resolver: zodResolver(isEditing ? internshipEditFormSchema : internshipFormSchema),
+    resolver: zodResolver(
+      isEditing ? internshipEditFormSchema : internshipFormSchema
+    ),
     mode: "onBlur",
     reValidateMode: "onChange",
     defaultValues: {
@@ -83,8 +89,15 @@ export default function NewInternshipForm({
         hiringOrganization: internship.hiringOrganization ?? "",
         tags: Array.isArray(internship.tags)
           ? internship.tags.join(", ")
-          : internship.tags ?? "",
-        eligibility: internship.eligibility ?? undefined,
+          : (internship.tags ?? ""),
+        eligibility: Array.isArray(internship.eligibility)
+          ? internship.eligibility
+          : internship.eligibility
+            ? internship.eligibility
+                .split(",")
+                .map((item) => item.trim())
+                .filter(Boolean)
+            : undefined,
         location: internship.location ?? "",
         stipend: internship.stipend ?? undefined,
         hiringManager: internship.hiringManager ?? "",
@@ -134,7 +147,10 @@ export default function NewInternshipForm({
       };
 
       if (isEditing) {
-        const res = await axios.put(`/api/internships/${internship.id}`, payload);
+        const res = await axios.put(
+          `/api/internships/${internship.id}`,
+          payload
+        );
         if (res.status !== 200) throw new Error("Failed to update internship");
         toast.success("Internship updated successfully!");
       } else {
@@ -145,7 +161,9 @@ export default function NewInternshipForm({
       }
 
       queryClient.invalidateQueries({ queryKey: ["internships"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-internship-management"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-internship-management"],
+      });
       onInternshipCreated();
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
@@ -217,8 +235,12 @@ export default function NewInternshipForm({
             )}
             <Button type="submit" disabled={loading} className="px-6">
               {loading
-                ? isEditing ? "Updating..." : "Creating..."
-                : isEditing ? "Update Internship" : "Create Internship"}
+                ? isEditing
+                  ? "Updating..."
+                  : "Creating..."
+                : isEditing
+                  ? "Update Internship"
+                  : "Create Internship"}
             </Button>
           </div>
         </form>

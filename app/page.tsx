@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { Inter, Outfit, Satisfy } from "next/font/google";
@@ -90,7 +91,7 @@ function TaglineSection() {
   );
 }
 
-function InternshipStrip() {
+function InternshipStripClient() {
   const [activeSlide, setActiveSlide] = useState(0);
 
   const slides = [
@@ -196,6 +197,10 @@ function InternshipStrip() {
     </section>
   );
 }
+
+const InternshipStrip = dynamic(async () => InternshipStripClient, {
+  ssr: false,
+});
 
 function TrustedSection() {
   const logos = ["/images/du.png", "/images/christ.jpg", "/images/srcc.png", "/images/ssc.png", "/images/iim.jpg"];

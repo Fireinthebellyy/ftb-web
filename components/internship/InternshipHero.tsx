@@ -56,7 +56,6 @@ export const InternshipHero: React.FC<InternshipHeroProps> = ({
 
           <div className="flex flex-col items-start rounded-xl border border-orange-50 bg-white p-4 text-left shadow-sm">
             <span className="mb-1.5 text-[10px] font-bold tracking-wider text-slate-500 uppercase">
->>>>>>> f73957dc75751b725adee446a25b04e280f80452
               Duration
             </span>
             <span className="text-[15px] leading-tight font-extrabold text-[#111827]">

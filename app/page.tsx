@@ -1,72 +1,449 @@
+"use client";
+
+import { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Archivo_Black, Space_Grotesk } from "next/font/google";
-import { ArrowRight, Star } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Inter, Outfit, Satisfy } from "next/font/google";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 
-const archivoBlack = Archivo_Black({
+const outfit = Outfit({
   subsets: ["latin"],
-  weight: "400",
+  weight: ["400", "500", "700"],
 });
 
-const spaceGrotesk = Space_Grotesk({
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
 });
 
+const satisfy = Satisfy({
+  subsets: ["latin"],
+  weight: ["400"],
+});
 
+const sfProClass = "font-[\"SF Pro Display\",\"SF Pro Text\",Inter,sans-serif]";
 
 const toolkitCards = [
-  {
-    title: "Productivity Kit",
-    description: "Essential tools to boost your daily efficiency and output.",
-  },
-  {
-    title: "Career Starter Kit",
-    description: "Everything you need to land your first high-paying role.",
-  },
-  {
-    title: "Interview Mastery",
-    description: "Mock interviews and resources to ace any technical round.",
-  },
+  { title: "Cold Mailing", description: "", compact: true },
+  { title: "Interviews", description: "", compact: true },
+  { title: "Case Comp", description: "Buy this toolkit to access\nexclusive content" },
+  { title: "CV/Resume", description: "Buy this toolkit to access\nexclusive content" },
+  { title: "Random Tool Kit", description: "Buy this toolkit to access\nexclusive content" },
 ];
 
-const universityLogos = [
-  {
-    alt: "University of Delhi",
-    label: "University of Delhi",
-    src: "/images/du.png",
-  },
-  {
-    alt: "Christ University",
-    label: "Christ University",
-    src: "/images/christ.jpg",
-  },
-  {
-    alt: "Jawaharlal Nehru University",
-    label: "Jawaharlal Nehru University",
-    src: "/images/jnu.png",
-  },
-  {
-    alt: "Lovely Professional University",
-    label: "Lovely Professional University",
-    src: "/images/lpu.png",
-  },
+const genericCards = [
+  "Random Tool Kit",
+  "Random Tool Kit",
+  "Random Tool Kit",
+  "Random Tool Kit",
+  "Random Tool Kit",
+  "Random Tool Kit",
 ];
 
-function UniversityLogoBanner() {
+function StarRow({ size = 20 }: { size?: number }) {
   return (
-    <section className="w-full">
-      <p className="text-sm tracking-[0.12em] text-black/45 uppercase">Our Partners</p>
-      <h2 className={`${archivoBlack.className} mt-2 text-3xl leading-tight md:text-4xl`}>
-        Trusted by Students Across Universities
+    <div className="flex items-center gap-2">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <span key={index} className="inline-block text-white" style={{ fontSize: `${size}px`, lineHeight: 1 }}>
+          ★
+        </span>
+      ))}
+    </div>
+  );
+}
+
+
+
+function HeroSection() {
+  return (
+    <section className="px-4 py-4 md:px-8 md:py-8">
+      <div className="flex flex-col items-center gap-2">
+        <div className="flex w-full flex-col items-center gap-4 px-0 pt-[10px] pb-[10px] text-center">
+          <h1 className={`${outfit.className} max-w-[408px] text-[44px] leading-[50px] font-bold tracking-[-2.25px] text-black md:max-w-[820px] md:text-[68px] md:leading-[72px]`}>
+            Everything you need to get ahead.
+            <br />
+            Finally, in one place.
+          </h1>
+          <p className={`${inter.className} max-w-[330px] text-center text-2xl leading-8 font-normal tracking-[-0.25px] text-black/50 md:max-w-[760px] md:text-[30px] md:leading-[38px]`}>
+            So you stop missing out and start making smarter moves.
+          </p>
+        </div>
+
+        <div className="relative h-[256px] w-[282px] md:h-[420px] md:w-[500px]">
+          <Image src="/images/pingo.png" alt="Hero visual" fill priority sizes="282px" className="object-contain object-top" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TaglineSection() {
+  return (
+    <section className="px-4 pt-4 pb-0 md:px-8 md:pt-6">
+      <h2 className="px-[10px] text-center text-[40px] leading-10 tracking-[-2.25px] md:text-[64px] md:leading-[64px]">
+        <span className={`${outfit.className} font-bold text-[rgba(0,0,0,0.8)]`}>Turning your</span>
+        <span className={`${satisfy.className} text-[#ff6e00]`}> 20&rsquo;s ka suffer</span>
+        <span className={`${outfit.className} font-bold text-[rgba(0,0,0,0.8)]`}> into </span>
+        <span className={`${satisfy.className} lowercase text-[#ff6e00]`}>सफ़र</span>
       </h2>
-      <p className="mt-2 text-base text-black/55">Exclusive Internship and Opportunities</p>
-      <div className="mt-8 grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-4">
-        {universityLogos.map((logo) => (
-          <div key={logo.alt} className="flex flex-col items-center gap-3 text-center">
-            <Image src={logo.src} alt={logo.alt} width={80} height={62} className="h-[62px] w-[80px] object-contain" />
-            <p className="text-[14px] leading-[1.2] text-black/50">{logo.label}</p>
+    </section>
+  );
+}
+
+function InternshipStrip() {
+  const sliderRef = useRef<HTMLDivElement>(null);
+
+  const slides = [
+    {
+      key: "internships",
+      title: "Internships",
+      description: "Apply smarter, track everything & add to calendar - hit the golden window",
+      leftImage: "/images/internship.png",
+      leftMode: "badge",
+    },
+    {
+      key: "toolkits",
+      title: "Toolkits",
+      description: "Cold emails, interviews & case comps - mastered with playbooks that ACTUALLY work.",
+      leftImage: "/images/toolkits-left.png",
+      leftMode: "cover",
+    },
+    {
+      key: "opportunities",
+      title: "Opportunities",
+      description: "Discover & never ever miss a deadline - hackathons, competitions, fellowships & more",
+      leftImage: "/images/opportunities-graphics.png",
+      leftMode: "cover",
+    },
+    {
+      key: "ungatekeep",
+      title: "Ungatekeep",
+      description: "Zero gatekeeping - just recommendations & real answers to college AMAs",
+      leftImage: "/images/ungatekeep-left.png",
+      leftMode: "cover",
+    },
+  ] as const;
+
+  const scrollByAmount = (direction: "left" | "right") => {
+    if (!sliderRef.current) return;
+    const cardWidth = 400;
+    const gap = 16;
+    const amount = cardWidth + gap;
+
+    sliderRef.current.scrollBy({
+      left: direction === "left" ? -amount : amount,
+      behavior: "smooth",
+    });
+  };
+
+  return (
+    <section className="pt-4 pb-4 md:px-8 md:py-8">
+      <div ref={sliderRef} className="hide-scrollbar overflow-x-auto px-5 md:px-0">
+        <div className="flex w-max snap-x snap-mandatory gap-4">
+          {slides.map((slide) => (
+            <article key={slide.key} className="w-[400px] shrink-0 snap-center md:w-[680px]">
+              <div className="mx-auto h-[240px] w-[390px] rounded-2xl border border-black/30 bg-white p-[10px] md:h-[320px] md:w-[660px] md:rounded-[24px] md:p-4">
+                <div className="grid h-full grid-cols-[160px_200px] gap-[10px] md:grid-cols-[280px_340px] md:gap-4">
+                  {slide.leftMode === "badge" ? (
+                    <div className="flex h-[220px] flex-col justify-between rounded-2xl bg-white p-4 md:h-[288px] md:p-6">
+                      <div className="h-[37px] w-[142px] rounded-2xl md:h-[56px] md:w-[220px]" />
+                      <div className="relative h-[37px] w-[128px] overflow-hidden rounded-2xl md:h-[52px] md:w-[200px]">
+                        <Image src={slide.leftImage} alt={`${slide.title} badge`} fill className="object-contain object-left" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative h-[220px] w-[160px] overflow-hidden rounded-2xl md:h-[288px] md:w-[280px]">
+                      <Image src={slide.leftImage} alt={`${slide.title} visual`} fill className="object-cover" />
+                    </div>
+                  )}
+
+                  <div className="flex h-[220px] flex-col border border-black/30 bg-white p-3 md:h-[288px] md:p-5">
+                    <div className="mb-2 flex justify-end md:mb-4">
+                      <div className="relative size-[50px] overflow-hidden md:size-[72px]">
+                        <Image src="/images/ftb-seal.png" alt="icon" fill className="object-contain" />
+                      </div>
+                    </div>
+
+                    <div className="mt-1 rounded-2xl px-1 text-center">
+                      <h3 className={`${outfit.className} text-[20px] leading-[25px] font-medium text-black md:text-[36px] md:leading-[40px]`}>{slide.title}</h3>
+                      <p className={`${sfProClass} mt-2 text-[16px] leading-4 text-black/50 md:text-[24px] md:leading-[26px]`}>{slide.description}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-2 flex items-center justify-center gap-[16.74px]">
+                <button
+                  type="button"
+                  aria-label="Previous slide"
+                  onClick={() => scrollByAmount("left")}
+                  className="grid size-[46px] place-items-center rounded-full border border-black/20 bg-white text-[#ff6e00]"
+                >
+                  <ChevronLeft className="size-[30px]" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Next slide"
+                  onClick={() => scrollByAmount("right")}
+                  className="grid size-[46px] place-items-center rounded-full border border-black/20 bg-white text-[#ff6e00]"
+                >
+                  <ChevronRight className="size-[30px]" />
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TrustedSection() {
+  const logos = ["/images/du.png", "/images/christ.jpg", "/images/srcc.png", "/images/ssc.png", "/images/iim.jpg"];
+
+  return (
+    <section className="px-4 pb-0">
+      <div className="rounded-2xl bg-white p-4">
+        <div className="mx-auto w-fit text-center">
+          <p className={`${outfit.className} text-[12px] text-black/50`}>Rated</p>
+          <p className={`${outfit.className} text-[40px] leading-[50px] font-bold text-black`}>4.8/5</p>
+        </div>
+        <p className={`${sfProClass} mt-2 text-center text-[16px] leading-normal`}>
+          <span className="font-normal text-[rgba(0,0,0,0.5)]">
+            Trusted by ambitious students &amp; early career professionals from across
+          </span>
+          <span className="font-medium text-[rgba(0,0,0,0.8)]"> </span>
+          <span className="font-semibold text-[rgba(0,0,0,0.6)]">Delhi University | Christ University | IIITs | IIMs | BHU</span>
+        </p>
+
+        <div className="hide-scrollbar mt-2 overflow-x-auto">
+          <div className="flex w-max items-center gap-8 pr-6">
+            {logos.concat(logos).map((logo, index) => (
+              <div key={`${logo}-${index}`} className="relative h-[81px] w-[70px] shrink-0">
+                <Image src={logo} alt="University logo" fill className="object-contain" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ToolkitCarousel() {
+  return (
+    <section className="mt-0 bg-black px-4 pt-2 pb-2 md:px-8 md:py-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h3 className={`${outfit.className} text-[30px] leading-[30px] font-medium tracking-[-0.25px] text-white`}>Trending toolkits</h3>
+          <p className={`${outfit.className} mt-0 text-[20px] leading-5 tracking-[-0.25px] text-[#ff6e00]/75`}>Built to get you moving &amp; acing</p>
+        </div>
+        <Link href="/toolkit" className={`${outfit.className} text-[16px] leading-[110px] tracking-[-0.25px] text-[#ff6e00]`}>
+          See All
+        </Link>
+      </div>
+
+      <div className="hide-scrollbar overflow-x-auto pb-2">
+        <div className="flex w-max gap-2">
+          {toolkitCards.map((card, index) => (
+            <article
+              key={`${card.title}-${index}`}
+              className="mt-2 flex h-[270px] w-[218px] shrink-0 flex-col justify-between rounded-2xl border border-white/50 px-4 py-4 md:h-[340px] md:w-[280px] md:px-5 md:py-5"
+            >
+              <div>
+                <h4 className={`${outfit.className} text-center text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-white`}>{card.title}</h4>
+                {card.description ? (
+                  <p className={`${sfProClass} mt-1 whitespace-pre-line text-center text-[20px] leading-[30px] tracking-[-1px] text-white/50`}>
+                    {card.description}
+                  </p>
+                ) : (
+                  <div className="mt-1 flex justify-center">
+                    <StarRow size={20} />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between gap-[10px]">
+                <button
+                  className={`${outfit.className} inline-flex h-12 items-center justify-center whitespace-nowrap rounded-[39px] bg-white px-3 text-[18px] leading-none font-medium tracking-[-0.25px] text-black`}
+                >
+                  Buy now
+                </button>
+                <button
+                  className={`${sfProClass} inline-flex h-12 items-center justify-center whitespace-nowrap rounded-[39px] border border-white/50 px-3 text-[18px] leading-none font-normal tracking-[-0.25px] text-white/50`}
+                >
+                  Explore
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CardCarouselSection({
+  title,
+  subtitle,
+  href,
+  spacing = "compact",
+}: {
+  title: string;
+  subtitle: string;
+  href: string;
+  spacing?: "featured" | "compact";
+}) {
+  const stackGapClass = spacing === "featured" ? "gap-8" : "gap-4";
+  const titleClass =
+    spacing === "featured"
+      ? `${outfit.className} text-[30px] leading-[30px] font-medium tracking-[-2.25px] text-black/80`
+      : `${outfit.className} whitespace-pre-line text-[30px] leading-[30px] font-medium tracking-[-2.25px] text-black/80`;
+  const subtitleClass =
+    spacing === "featured"
+      ? `${outfit.className} w-full text-[20px] leading-5 tracking-[-0.25px] text-black/50`
+      : `${outfit.className} whitespace-nowrap text-[20px] leading-5 tracking-[-0.25px] text-black/50`;
+
+  return (
+    <section className="bg-white px-4 py-4 md:px-8 md:py-6">
+      <div className={`flex flex-col ${stackGapClass}`}>
+        <div className="space-y-2 text-center">
+          <h3 className={titleClass}>{title}</h3>
+          <p className={subtitleClass}>{subtitle}</p>
+        </div>
+
+        <div className="hide-scrollbar overflow-x-auto">
+          <div className="flex w-max gap-4">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="relative h-[199px] w-[160px] shrink-0 overflow-hidden rounded-2xl border border-black/20 md:h-[280px] md:w-[240px]">
+                <Image src="/images/graphic1.png" alt="Card visual" fill className="object-cover" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <Link href={href} className={`${sfProClass} text-left text-[16px] leading-[30px] font-medium tracking-[-1px] text-[#ff6e00]`}>
+          Learn more
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function OpportunitiesSection() {
+  return (
+    <section className="bg-white px-4 py-4 md:px-8 md:py-6">
+      <div className="space-y-2 text-center">
+        <h3 className={`${outfit.className} text-[30px] leading-[30px] font-medium tracking-[-2.25px] text-black/80`}>
+          Talk of the hour in Opportunities
+        </h3>
+        <p className={`${outfit.className} whitespace-nowrap text-[20px] leading-5 tracking-[-0.25px] text-black/50`}>Step up, stand out - bring the A-game.</p>
+      </div>
+
+      <div className="hide-scrollbar mt-[10px] overflow-x-auto">
+        <div className="flex w-max gap-4">
+          {genericCards.map((title, index) => (
+            <article key={`${title}-${index}`} className="h-[199px] w-[160px] shrink-0 rounded-2xl border border-black/30 p-4 md:h-[280px] md:w-[240px] md:p-6">
+              <div className="relative mx-auto size-10">
+                <Image src="/images/Shape Set.svg" alt="Opportunity icon" fill className="object-contain" />
+              </div>
+              <div className="mt-[10px] px-4 md:mt-6 md:px-2">
+                <h4 className={`${outfit.className} whitespace-pre-line text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-black md:text-[34px] md:leading-[40px]`}>
+                  Random {"\n"}Tool Kit
+                </h4>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      <Link href="/opportunities" className={`${sfProClass} mt-4 text-left text-[16px] leading-[30px] font-medium tracking-[-1px] text-[#ff6e00]`}>
+        Learn more
+      </Link>
+    </section>
+  );
+}
+
+function FaqSection() {
+  const faqs = [
+    {
+      question: "What exactly is FTB?",
+      answer:
+        "FTB is an all-in-one platform for ambitious students across India to discover, track, and apply smarter to legit internships and opportunities. Beyond access, we solve for clarity - with Ungatekeep content and toolkits designed to give you an unfair advantage.",
+    },
+    {
+      question: "Who is FTB for?",
+      answer: "Students and early professionals in their 20s who want clarity, direction, and real opportunities to grow.",
+    },
+    {
+      question: "How do I actually use FTB to get ahead?",
+      answer: "Explore opportunities, save the ones that fit you, track deadlines, and use toolkits to apply smarter and improve your chances.",
+    },
+    {
+      question: "What kind of opportunities can I find here?",
+      answer: "Internships, case competitions, hackathons, fellowships, scholarships, and more - across multiple domains.",
+    },
+    {
+      question: "What is the \"Smart Apply\" feature?",
+      answer: "It helps you save, track, and manage your applications in one place - so you never miss the right moment to apply.",
+    },
+    {
+      question: "What are Toolkits? Are they worth it?",
+      answer: "Toolkits are step-by-step playbooks to help you land and crack opportunities. If you want to stop guessing and start getting results - they are worth it.",
+    },
+    {
+      question: "What is Ungatekeep?",
+      answer: "Everything students usually figure out too late - shared early. From cold emails to interview scripts, real answers and insider breakdowns.",
+    },
+    {
+      question: "Are these opportunities verified?",
+      answer: "Yes - opportunities are curated and verified by our team, along with trusted submissions from organizations and communities.",
+    },
+    {
+      question: "Can I intern with FTB or get involved?",
+      answer: "Yes! We are always looking for driven people to join us. Keep an eye on openings or reach out - we would love to hear from you.",
+    },
+    {
+      question: "Can I connect 1:1 for guidance or queries?",
+      answer:
+        "Yes - through mentorship sessions and community support (rolling out soon). You will also find answers through toolkits and Ungatekeep content.",
+    },
+    {
+      question: "How can I share feedback or a testimonial?",
+      answer: "We would love that. You can share feedback directly on the platform or reach out to us - we are always building with our users.",
+    },
+  ];
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  return (
+    <section className="bg-white px-4 py-4 md:px-8 md:py-8">
+      <div className="space-y-1 text-center">
+        <h3 className={`${outfit.className} text-[30px] leading-[30px] font-medium tracking-[-2.25px] text-black/80`}>
+          Frequently Asked Questions
+        </h3>
+        <p className={`${outfit.className} whitespace-nowrap text-[20px] leading-5 tracking-[-0.25px] text-[#ff6e00]/75`}>#beeninyourshoes</p>
+      </div>
+
+      <div className="mt-4">
+        {faqs.map((item, index) => (
+          <div key={`${item.question}-${index}`} className="rounded-none px-4 py-4">
+            <button
+              type="button"
+              onClick={() => setOpenIndex((prev) => (prev === index ? null : index))}
+              className="flex w-full items-center justify-between"
+              aria-expanded={openIndex === index}
+              aria-controls={`faq-answer-${index}`}
+            >
+              <p className={`${outfit.className} flex-1 pr-3 text-left text-[20px] leading-[30px] font-medium tracking-[-0.25px] text-black/80`}>
+                {item.question}
+              </p>
+              <Plus className={`size-5 shrink-0 text-black/70 transition-transform ${openIndex === index ? "rotate-45" : "rotate-0"}`} />
+            </button>
+            {openIndex === index ? (
+              <p id={`faq-answer-${index}`} className={`${sfProClass} mt-2 pr-8 text-left text-[16px] leading-6 tracking-[-0.25px] text-black/60`}>
+                {item.answer}
+              </p>
+            ) : null}
           </div>
         ))}
       </div>
@@ -74,246 +451,29 @@ function UniversityLogoBanner() {
   );
 }
 
-function MobileToolkitCard({ title, description }: { title: string; description: string }) {
-  return (
-    <article className="flex h-[343px] min-w-[340px] flex-col justify-between rounded-[24px] border border-black/10 bg-white p-4 shadow-[0_6px_16px_rgba(0,0,0,0.06)]">
-      <div className="space-y-4">
-        <div className="inline-flex size-10 items-center justify-center rounded-xl bg-primary/15 text-xs font-semibold text-primary">
-          FTB
-        </div>
-        <h3 className="text-[34px] leading-[0.95] font-semibold text-black">{title}</h3>
-        <p className="max-w-[308px] text-[15px] text-black/70">{description}</p>
-        <div className="flex items-center justify-center gap-2 text-primary">
-          {Array.from({ length: 5 }).map((_, index) => (
-            <Star key={index} className="size-4 fill-current" />
-          ))}
-        </div>
-      </div>
-      <Button className="mx-auto h-11 w-[152px] rounded-full bg-black px-5 text-sm text-white hover:bg-black/90">
-        Buy now
-      </Button>
-    </article>
-  );
-}
-
-function DesktopToolkitCard({ title, description }: { title: string; description: string }) {
-  return (
-    <article className="flex h-[280px] min-w-[260px] flex-col justify-between rounded-[24px] border border-black/10 bg-white p-5 shadow-[0_6px_16px_rgba(0,0,0,0.06)] md:min-w-[300px]">
-      <div className="space-y-5">
-        <div className="inline-flex size-10 items-center justify-center rounded-xl bg-primary/15 text-xs font-semibold text-primary">
-          FTB
-        </div>
-        <h3 className="text-xl leading-[1.1] font-semibold text-black">{title}</h3>
-        <p className="max-w-[32ch] text-sm text-black/70">{description}</p>
-        <div className="flex items-center gap-1 text-primary">
-          {Array.from({ length: 5 }).map((_, index) => (
-            <Star key={index} className="size-5 fill-current" />
-          ))}
-        </div>
-      </div>
-      <Button className="h-10 w-fit rounded-full bg-black px-5 text-sm text-white hover:bg-black/90">
-        Buy now
-      </Button>
-    </article>
-  );
-}
-
 export default function HomePage() {
   return (
-    <main className={`${spaceGrotesk.className} bg-[#fcf9f4] text-black`}>
-      <div className="hidden md:block">
-        <section className="mx-auto w-full max-w-[1728px] px-4 pt-4 pb-16 md:px-4 md:pt-[16px]">
-          <div className="rounded-[42px] border border-black/10 bg-[radial-gradient(circle_at_20%_15%,rgba(255,180,57,0.25),transparent_40%),radial-gradient(circle_at_88%_10%,rgba(0,0,0,0.08),transparent_26%),#fff] p-6 md:p-10">
-
-            <div className="mx-auto max-w-[945px] text-center">
-
-              <h1 className={`${archivoBlack.className} text-balance text-4xl leading-[0.96] tracking-tight md:text-6xl lg:text-7xl`}>
-                Find Internships That Actually Fit You
-              </h1>
-
-              <p className="mx-auto mt-5 max-w-[820px] text-pretty text-lg leading-relaxed text-black/65 md:text-2xl">
-                Discover opportunities tailored to your skills, interests, and career goals all in one place.
-              </p>
-
-            </div>
-
-            <div className="mx-auto mt-14 max-w-[830px] overflow-hidden rounded-[34px] border border-black/10 bg-[#101010] p-4 md:p-6">
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="rounded-2xl bg-white/10 p-4">
-                  <p className="text-sm tracking-[0.12em] text-white/70 uppercase">Internships</p>
-                  <p className="mt-6 text-5xl font-bold text-white">1,280+</p>
-                </div>
-                <div className="rounded-2xl bg-primary p-4">
-                  <p className="text-sm tracking-[0.12em] text-black/70 uppercase">New This Week</p>
-                  <p className="mt-6 text-5xl font-bold text-black">346</p>
-                </div>
-                <div className="relative min-h-[176px] overflow-hidden rounded-2xl bg-white p-4">
-                  <p className="text-sm tracking-[0.12em] text-black/60 uppercase">Hiring Partners</p>
-                  <p className="mt-6 text-5xl font-bold text-black">420+</p>
-                  <div className="absolute right-2 bottom-2">
-                    <div className="relative size-20 overflow-hidden rounded-2xl border border-black/10 bg-[#fff9ef]">
-                      <Image src="/images/pingo.jpeg" alt="Penguin mascot" fill className="object-cover" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="px-4 pt-4 pb-20 text-center md:px-8 md:pt-12 md:pb-24">
-          <h2 className={`${archivoBlack.className} mx-auto max-w-[700px] text-balance text-3xl leading-tight md:text-5xl`}>
-            Make your Twenties Zafar not Suffer
-          </h2>
-        </section>
-
-        <section className="px-4 pb-20 md:px-8 md:pb-24">
-          <UniversityLogoBanner />
-        </section>
-
-        <section className="mx-auto w-full max-w-[1728px] px-4 pb-20 md:px-8 md:pb-24">
-          <div className="mx-auto grid max-w-[1600px] gap-8">
-            <div className="grid gap-8 md:grid-cols-2">
-              <article className="rounded-[34px] border border-black/10 bg-white p-6 shadow-[0_10px_28px_rgba(0,0,0,0.06)] md:min-h-[520px] md:p-9">
-                <p className="text-sm tracking-[0.12em] text-black/45 uppercase">Built for students</p>
-                <h3 className="mt-4 text-3xl leading-tight font-bold md:text-4xl">One home for internships, toolkit and mentorship</h3>
-                <p className="mt-5 max-w-[40ch] text-lg text-black/65">
-                  Replace random scrolling and dead-end forms with a clear path to your first great role.
-                </p>
-                <div className="relative mt-8 h-[220px] overflow-hidden rounded-[28px] bg-[linear-gradient(130deg,#111,#383838)] md:h-[260px]">
-                  <Image src="/images/pingo.jpeg" alt="Penguin illustration" fill className="object-cover opacity-80" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                </div>
-              </article>
-
-              <article className="rounded-[34px] border border-black/10 bg-[#111111] p-6 text-white shadow-[0_10px_28px_rgba(0,0,0,0.16)] md:min-h-[520px] md:p-9">
-                <div className="h-[250px] rounded-[28px] border border-white/15 bg-[linear-gradient(145deg,#1f1f1f,#0f0f0f)] p-6 md:h-[280px]">
-                  <div className="relative h-full overflow-hidden rounded-[22px] border border-white/20">
-                    <Image src="/images/fire-logo.png" alt="FTB graphic" fill className="object-contain p-10" />
-                  </div>
-                </div>
-                <div className="mt-6 flex items-start gap-4 rounded-3xl bg-white/8 p-5">
-                  <div className="relative size-14 overflow-hidden rounded-2xl bg-primary/20">
-                    <Image src="/images/du.svg" alt="Toolkit icon" fill className="object-contain p-3" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl leading-none font-bold md:text-3xl">Exclusive Tool Kits</h3>
-                    <p className="mt-2 text-base text-white/70 md:text-lg">Exclusive Internship and Opportunities</p>
-                  </div>
-                </div>
-              </article>
-            </div>
-
-            <article className="grid h-auto gap-6 rounded-[34px] border border-black/10 bg-white p-6 shadow-[0_10px_28px_rgba(0,0,0,0.06)] md:grid-cols-[1.6fr_1fr] md:items-center md:p-9">
-              <div className="flex items-center gap-5">
-                <div className="relative size-14 overflow-hidden rounded-2xl bg-primary/15">
-                  <Image src="/images/du.svg" alt="Ungatekeep icon" fill className="object-contain p-3" />
-                </div>
-                <div>
-                  <p className="text-sm tracking-[0.12em] text-black/45 uppercase">UnGATEKEEPED</p>
-                  <h3 className="mt-2 text-3xl leading-tight font-bold md:text-4xl">Exclusive Internship and Opportunities</h3>
-                </div>
-              </div>
-              <div className="relative h-[300px] overflow-hidden rounded-[28px] bg-[linear-gradient(130deg,#ffd48d,#ff9e45)] md:h-[420px]">
-                <div className="absolute -top-6 -left-6 size-24 rounded-full bg-white/45" />
-                <div className="absolute -right-5 -bottom-5 size-28 rounded-full bg-black/10" />
-                <div className="absolute right-6 bottom-6 flex items-end gap-3">
-                  <div className="relative size-20 overflow-hidden rounded-2xl border border-black/10 bg-white/80 md:size-24">
-                    <Image src="/images/pingo.jpeg" alt="Penguin mascot" fill className="object-cover" />
-                  </div>
-                  <div className="relative size-12 overflow-hidden rounded-xl border border-black/10 bg-white/80 md:size-14">
-                    <Image src="/images/fire-logo.png" alt="Brand badge" fill className="object-contain p-2" />
-                  </div>
-                </div>
-              </div>
-            </article>
-          </div>
-        </section>
-
-        <section className="mx-auto w-full max-w-[1728px] px-4 pb-24 md:px-8 md:pb-28">
-          <div className="mx-auto mb-7 flex max-w-[1600px] items-end justify-between gap-4">
-            <h2 className={`${archivoBlack.className} text-3xl md:text-5xl`}>Trending Toolkits</h2>
-            <Link href="/toolkit" className="flex items-center gap-2 text-lg font-semibold text-black/75 hover:text-black">
-              See All
-              <ArrowRight className="size-5" />
-            </Link>
-          </div>
-
-          <div className="hide-scrollbar mx-auto flex max-w-[1600px] gap-8 overflow-x-auto pb-2">
-            {toolkitCards.map((card, index) => (
-              <DesktopToolkitCard key={`${card.title}-${index}`} title={card.title} description={card.description} />
-            ))}
-          </div>
-        </section>
-      </div>
-
-      <div className="mx-auto min-h-screen w-full max-w-[440px] px-4 py-4 md:hidden">
-
-        <section className="rounded-[28px] border border-black/10 bg-[radial-gradient(circle_at_20%_15%,rgba(255,180,57,0.26),transparent_40%),#fff] p-4">
-          <div className="text-center">
-
-            <h1 className={`${archivoBlack.className} mt-4 text-balance px-2 text-[34px] leading-[1.02]`}>
-              Find Internships That Actually Fit You
-            </h1>
-            <p className="mx-auto mt-3 max-w-[320px] text-[14px] leading-6 text-black/65">
-              Discover opportunities tailored to your skills, interests, and career goals all in one place.
-            </p>
-
-          </div>
-
-          <div className="relative mt-6 h-[238px] overflow-hidden rounded-2xl border border-black/10 bg-[linear-gradient(130deg,#111,#383838)]">
-            <Image src="/images/pingo.jpeg" alt="Hero graphic" fill className="object-cover opacity-80" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-          </div>
-        </section>
-
-        <section className="px-3 py-6 text-center">
-          <h2 className={`${archivoBlack.className} mx-auto max-w-[300px] text-[34px] leading-[0.95]`}>
-            Make your Twenties Zafar not Suffer
-          </h2>
-        </section>
-
-        <section className="pb-4">
-          <UniversityLogoBanner />
-        </section>
-
-        <section className="mt-4 rounded-[24px] border border-black/10 bg-white p-4 shadow-[0_6px_16px_rgba(0,0,0,0.06)]">
-          <div className="flex items-center gap-3">
-            <div className="relative size-10 overflow-hidden rounded-lg bg-primary/15">
-              <Image src="/images/du.svg" alt="Ungatekeep icon" fill className="object-contain p-2" />
-            </div>
-            <div>
-              <p className="text-[11px] tracking-[0.12em] text-black/45 uppercase">UnGATEKEEPED</p>
-              <h3 className="text-xl leading-tight font-bold">Exclusive Internship and Opportunities</h3>
-            </div>
-          </div>
-          <div className="relative mt-4 h-[140px] overflow-hidden rounded-xl bg-[linear-gradient(130deg,#ffd48d,#ff9e45)]">
-            <div className="absolute right-3 bottom-3 flex items-end gap-2">
-              <div className="relative size-12 overflow-hidden rounded-lg border border-black/10 bg-white/80">
-                <Image src="/images/pingo.jpeg" alt="Penguin mascot" fill className="object-cover" />
-              </div>
-              <div className="relative size-8 overflow-hidden rounded-md border border-black/10 bg-white/80">
-                <Image src="/images/fire-logo.png" alt="Brand badge" fill className="object-contain p-1.5" />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="pt-4">
-          <div className="mb-3 flex items-end justify-between">
-            <h2 className={`${archivoBlack.className} text-3xl leading-none`}>Trending Toolkits</h2>
-            <Link href="/toolkit" className="flex items-center gap-1 text-xs font-semibold text-black/75 hover:text-black">
-              See All
-              <ArrowRight className="size-3.5" />
-            </Link>
-          </div>
-
-          <div className="hide-scrollbar flex gap-2 overflow-x-auto pb-2">
-            {toolkitCards.map((card, index) => (
-              <MobileToolkitCard key={`${card.title}-${index}`} title={card.title} description={card.description} />
-            ))}
-          </div>
-        </section>
+    <main className={`${outfit.className} min-h-screen bg-white text-black md:bg-[radial-gradient(120%_120%_at_50%_0%,#ffffff_0%,#f3f4f6_100%)]`}>
+      <div className="mx-auto w-full max-w-[440px] md:max-w-none md:[&>section]:mx-auto md:[&>section]:w-full md:[&>section]:max-w-[1240px]">
+        <HeroSection />
+        <TaglineSection />
+        <InternshipStrip />
+        <TrustedSection />
+        <ToolkitCarousel />
+        <CardCarouselSection
+          title="Truly UnGATEKEEPED"
+          subtitle="Posting everything students usually figure out too late."
+          href="/ungatekeep"
+          spacing="featured"
+        />
+        <CardCarouselSection
+          title={"This week’s internships-\nworth a shot"}
+          subtitle="Build skills, not just your resume"
+          href="/internships"
+          spacing="compact"
+        />
+        <OpportunitiesSection />
+        <FaqSection />
       </div>
     </main>
   );

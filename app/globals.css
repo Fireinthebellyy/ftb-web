@@ -210,6 +210,29 @@ body,
   background-size: 200% 200%;
   animation: gradient-shift 3s ease infinite;
 }
+
+@keyframes marquee-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee-left 18s linear infinite;
+}
+
+.animate-marquee-slow {
+  animation: marquee-left 26s linear infinite;
+}
+
+.animate-marquee:hover,
+.animate-marquee-slow:hover {
+  animation-play-state: paused;
+}
+
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }

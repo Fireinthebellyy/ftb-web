@@ -57,3 +57,7 @@ export function canAccessAdminTab(
 ): boolean {
   return getAllowedAdminTabs(role).includes(tab);
 }
+
+export function canCreateInternship(role: string | null | undefined): boolean {
+  return role === "admin" || role === "editor";
+}

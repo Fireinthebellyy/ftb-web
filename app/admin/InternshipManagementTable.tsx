@@ -4,21 +4,18 @@ import { useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { Eye, EyeOff, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
 import { AdminTableState } from "@/components/admin/AdminTableState";
 import { AdminTabLayout } from "@/components/admin/AdminTabLayout";
-import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Trash2 } from "lucide-react";
-
+import NewInternshipButton from "@/components/internship/NewInternshipButton";
 import NewInternshipForm from "@/components/internship/NewInternshipForm";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 import {
   AlertDialog,
@@ -75,10 +72,17 @@ async function fetchInternshipById(id: string): Promise<Internship> {
 // Stable empty array to prevent unnecessary useMemo recomputation
 const EMPTY_INTERNSHIPS: Internship[] = [];
 
-export default function InternshipManagementTable() {
+interface InternshipManagementTableProps {
+  canCreateInternship: boolean;
+}
+
+export default function InternshipManagementTable({
+  canCreateInternship,
+}: InternshipManagementTableProps) {
   const queryClient = useQueryClient();
 
-  const [selectedInternship, setSelectedInternship] = useState<Internship | null>(null);
+  const [selectedInternship, setSelectedInternship] =
+    useState<Internship | null>(null);
   const [open, setOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loadingEditId, setLoadingEditId] = useState<string | null>(null);
@@ -109,8 +113,7 @@ export default function InternshipManagementTable() {
 
   const columns = useMemo<ColumnDef<Internship>[]>(() => {
     const allSelected =
-      internships.length > 0 &&
-      selectedIds.length === internships.length;
+      internships.length > 0 && selectedIds.length === internships.length;
 
     return [
       {
@@ -166,7 +169,13 @@ export default function InternshipManagementTable() {
         accessorKey: "isFlagged",
         header: "Flagged",
         cell: ({ row }) => (
-          <span className={row.original.isFlagged ? "text-red-500 font-medium" : "text-gray-400"}>
+          <span
+            className={cn(
+              row.original.isFlagged
+                ? "font-medium text-red-500"
+                : "text-gray-400"
+            )}
+          >
             {row.original.isFlagged ? "Yes" : "No"}
           </span>
         ),
@@ -191,7 +200,9 @@ export default function InternshipManagementTable() {
               <Button
                 size="sm"
                 variant="outline"
-                aria-label={internship.isActive ? "Hide internship" : "Show internship"}
+                aria-label={
+                  internship.isActive ? "Hide internship" : "Show internship"
+                }
                 onClick={async () => {
                   try {
                     await axios.patch(`/api/internships/${internship.id}`);
@@ -225,62 +236,74 @@ export default function InternshipManagementTable() {
     ];
   }, [selectedIds, internships, queryClient, loadingEditId]);
 
-  const deleteToolbar = selectedIds.length > 0 ? (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50"
-        >
-          <Trash2 className="h-4 w-4 text-red-600" />
-          Delete ({selectedIds.length})
-        </Button>
-      </AlertDialogTrigger>
-
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete Internships</AlertDialogTitle>
-          <AlertDialogDescription>
-            Are you sure you want to delete selected internships?
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            className="bg-red-600 hover:bg-red-700 text-white"
-            onClick={async () => {
-              try {
-                const results = await Promise.allSettled(
-                  selectedIds.map((id) => axios.delete(`/api/internships/${id}`))
-                );
-                const failed = results.filter((r) => r.status === "rejected").length;
-                if (failed > 0) toast.error(`${failed} deletion(s) failed.`);
-                else toast.success("Deleted successfully");
-              } finally {
-                setSelectedIds([]);
-                queryClient.invalidateQueries({
-                  queryKey: ["admin-internship-management"],
-                });
-                queryClient.invalidateQueries({
-                  queryKey: ["internships"],
-                });
-              }
-            }}
+  const deleteToolbar =
+    selectedIds.length > 0 ? (
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2 border-red-200 text-red-600 hover:bg-red-50"
           >
-            Delete
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  ) : null;
+            <Trash2 className="h-4 w-4 text-red-600" />
+            Delete ({selectedIds.length})
+          </Button>
+        </AlertDialogTrigger>
+
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Internships</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete selected internships?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 text-white hover:bg-red-700"
+              onClick={async () => {
+                try {
+                  const results = await Promise.allSettled(
+                    selectedIds.map((id) =>
+                      axios.delete(`/api/internships/${id}`)
+                    )
+                  );
+                  const failed = results.filter(
+                    (r) => r.status === "rejected"
+                  ).length;
+                  if (failed > 0) toast.error(`${failed} deletion(s) failed.`);
+                  else toast.success("Deleted successfully");
+                } catch (error) {
+                  const message =
+                    error instanceof Error
+                      ? error.message
+                      : "Unexpected error while deleting internships.";
+                  toast.error(`Bulk delete failed: ${message}`);
+                } finally {
+                  setSelectedIds([]);
+                  queryClient.invalidateQueries({
+                    queryKey: ["admin-internship-management"],
+                  });
+                  queryClient.invalidateQueries({
+                    queryKey: ["internships"],
+                  });
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    ) : null;
 
   return (
     <>
       <AdminTabLayout
         title="Internship Management"
         description="Search, edit, hide or delete internships"
+        actions={canCreateInternship ? <NewInternshipButton /> : null}
       >
         <AdminTableState
           isLoading={isLoading}

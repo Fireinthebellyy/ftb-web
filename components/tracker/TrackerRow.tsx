@@ -1,11 +1,5 @@
 import Image from "next/image";
-import {
-  Clock,
-  AlertCircle,
-  Trash2,
-  ChevronDown,
-  Calendar,
-} from "lucide-react";
+import { Clock, Trash2, ChevronDown, Calendar } from "lucide-react";
 import clsx from "clsx";
 import { TrackerItem } from "@/components/providers/TrackerProvider";
 import { differenceInCalendarDays } from "date-fns";
@@ -62,7 +56,7 @@ interface TrackerRowProps {
   onDelete: (
     id: number | string,
     kind?: "internship" | "opportunity"
-  ) => Promise<void>;
+  ) => Promise<boolean | void>;
 }
 
 export default function TrackerRow({

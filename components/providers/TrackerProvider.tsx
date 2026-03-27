@@ -517,6 +517,10 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     setTrackedItems((prevItems) =>
       prevItems.filter((i) => getTrackerKey(i.oppId, i.kind) !== targetKey)
     );
+    // Also remove from hydrated items immediately to avoid transient stale entries
+    setHydratedItems((prev) =>
+      prev.filter((i) => getTrackerKey(i.oppId, i.kind) !== targetKey)
+    );
     await deleteFromBackend(oppId, "item", kind);
     return true;
   };

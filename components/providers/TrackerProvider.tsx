@@ -232,16 +232,25 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     id: string | number,
     type: "item" | "event",
     kind?: "internship" | "opportunity"
-  ) => {
+  ): Promise<boolean> => {
     try {
       const params = new URLSearchParams({ type, id: String(id) });
       if (type === "item") {
         params.set("kind", resolveTrackerKind(kind));
       }
 
-      await fetch(`/api/tracker?${params.toString()}`, { method: "DELETE" });
+      const res = await fetch(`/api/tracker?${params.toString()}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        console.error("Failed to delete from backend", await res.text());
+        return false;
+      }
+      return true;
     } catch (e) {
       console.error("Failed to delete from backend", e);
+      return false;
     }
   };
 
@@ -513,16 +522,38 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
   ): Promise<boolean> => {
     const targetKey = getTrackerKey(oppId, kind);
 
+    // Snapshot current state so we can revert on failure
+    const prevTracked = trackedItems;
+    const prevHydrated = hydratedItems;
+
+    // Compute optimistic new states
+    const newTracked = prevTracked.filter(
+      (i) => getTrackerKey(i.oppId, i.kind) !== targetKey
+    );
+    const newHydrated = prevHydrated.filter(
+      (i) => getTrackerKey(i.oppId, i.kind) !== targetKey
+    );
+
     // Optimistic remove
-    setTrackedItems((prevItems) =>
-      prevItems.filter((i) => getTrackerKey(i.oppId, i.kind) !== targetKey)
-    );
-    // Also remove from hydrated items immediately to avoid transient stale entries
-    setHydratedItems((prev) =>
-      prev.filter((i) => getTrackerKey(i.oppId, i.kind) !== targetKey)
-    );
-    await deleteFromBackend(oppId, "item", kind);
-    return true;
+    setTrackedItems(newTracked);
+    setHydratedItems(newHydrated);
+
+    // Attempt backend deletion and revert on failure
+    try {
+      const success = await deleteFromBackend(oppId, "item", kind);
+      if (!success) {
+        // Revert optimistic update
+        setTrackedItems(prevTracked);
+        setHydratedItems(prevHydrated);
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.error("Unexpected error while deleting tracker item:", e);
+      setTrackedItems(prevTracked);
+      setHydratedItems(prevHydrated);
+      return false;
+    }
   };
 
   const getStatus = (

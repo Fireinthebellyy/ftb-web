@@ -61,7 +61,7 @@ export function LoginForm({
       await authClient.signIn.social({
         provider: "google",
         callbackURL: returnUrl,
-        newUserCallbackURL: "/onboarding",
+        newUserCallbackURL: "/intern",
       });
     } catch (error) {
       console.error("Google sign-in error:", error);
@@ -77,7 +77,7 @@ export function LoginForm({
       await authClient.signIn.social({
         provider: "linkedin",
         callbackURL: returnUrl,
-        newUserCallbackURL: "/onboarding",
+        newUserCallbackURL: "/intern",
       });
     } catch (error) {
       console.error("LinkedIn sign-in error:", error);
@@ -113,11 +113,13 @@ export function LoginForm({
                 const createdAt = ctx.data?.user?.createdAt;
                 const updatedAt = ctx.data?.user?.updatedAt;
 
-                const isNewUser = createdAt && updatedAt
-                  ? new Date(createdAt).getTime() === new Date(updatedAt).getTime()
-                  : false;
+                const isNewUser =
+                  createdAt && updatedAt
+                    ? new Date(createdAt).getTime() ===
+                      new Date(updatedAt).getTime()
+                    : false;
 
-                router.push(isNewUser ? "/onboarding" : returnUrl);
+                router.push(isNewUser ? "/intern" : returnUrl);
               }
             } catch (error) {
               console.error("Error checking onboarding status:", error);
@@ -125,11 +127,13 @@ export function LoginForm({
               const createdAt = ctx.data?.user?.createdAt;
               const updatedAt = ctx.data?.user?.updatedAt;
 
-              const isNewUser = createdAt && updatedAt
-                ? new Date(createdAt).getTime() === new Date(updatedAt).getTime()
-                : false;
+              const isNewUser =
+                createdAt && updatedAt
+                  ? new Date(createdAt).getTime() ===
+                    new Date(updatedAt).getTime()
+                  : false;
 
-              router.push(isNewUser ? "/onboarding" : returnUrl);
+              router.push(isNewUser ? "/intern" : returnUrl);
             }
           },
         }
@@ -244,7 +248,11 @@ export function LoginForm({
                           </Link>
                         </div>
                       </div>
-                      <Button type="submit" className="w-full" disabled={isLoading}>
+                      <Button
+                        type="submit"
+                        className="w-full"
+                        disabled={isLoading}
+                      >
                         {isLoading ? (
                           <Loader2 className="size-4 animate-spin" />
                         ) : (
@@ -257,7 +265,10 @@ export function LoginForm({
                 {ENABLE_EMAIL_PASSWORD_LOGIN && (
                   <div className="text-center text-sm">
                     Don&apos;t have an account?{" "}
-                    <Link href="/signup" className="underline underline-offset-4">
+                    <Link
+                      href="/signup"
+                      className="underline underline-offset-4"
+                    >
                       Sign up
                     </Link>
                   </div>

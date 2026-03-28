@@ -237,7 +237,7 @@ export function ToolkitFormFields({
                 onChange={(e) => {
                   const value = e.target.value;
                   setHighlightsInput(value);
-                  field.onChange(value.split(",").map((s) => s.trim()));
+                  field.onChange(value.split(","));
                 }}
               />
             </FormControl>
@@ -269,7 +269,7 @@ export function ToolkitFormFields({
                 name={`testimonials.${index}.name`}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name *</FormLabel>
+                    <FormLabel>Name</FormLabel>
                     <FormControl>
                       <Input placeholder="Aditi Sharma" {...field} />
                     </FormControl>
@@ -283,7 +283,7 @@ export function ToolkitFormFields({
                 name={`testimonials.${index}.role`}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Role *</FormLabel>
+                    <FormLabel>Role</FormLabel>
                     <FormControl>
                       <Input placeholder="Final Year Student" {...field} />
                     </FormControl>

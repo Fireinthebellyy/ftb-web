@@ -69,8 +69,8 @@ const toolkitFormSchema = z.object({
   testimonials: z
     .array(
       z.object({
-        name: z.string().min(1, "Name is required"),
-        role: z.string().min(1, "Role is required"),
+        name: z.string(),
+        role: z.string(),
         message: z.string().min(1, "Message is required"),
       })
     )
@@ -157,7 +157,10 @@ export default function NewToolkitModal({
         videoUrl: data.videoUrl || undefined,
         category: data.category || undefined,
         totalDuration: data.totalDuration || undefined,
-        highlights: data.highlights?.filter(Boolean) || undefined,
+        highlights:
+          data.highlights
+            ?.map((highlight) => highlight.trim())
+            .filter(Boolean) || undefined,
         testimonials: data.testimonials?.length
           ? data.testimonials.map((item) => ({
               name: item.name.trim(),
@@ -406,7 +409,7 @@ export default function NewToolkitModal({
                       name={`testimonials.${index}.name`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Name *</FormLabel>
+                          <FormLabel>Name</FormLabel>
                           <FormControl>
                             <Input placeholder="Aditi Sharma" {...field} />
                           </FormControl>
@@ -420,7 +423,7 @@ export default function NewToolkitModal({
                       name={`testimonials.${index}.role`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Role *</FormLabel>
+                          <FormLabel>Role</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="Final Year Student"
@@ -496,12 +499,7 @@ export default function NewToolkitModal({
                       {...field}
                       value={field.value?.join(", ") ?? ""}
                       onChange={(e) =>
-                        field.onChange(
-                          e.target.value
-                            .split(",")
-                            .map((s) => s.trim())
-                            .filter(Boolean)
-                        )
+                        field.onChange(e.target.value.split(","))
                       }
                     />
                   </FormControl>

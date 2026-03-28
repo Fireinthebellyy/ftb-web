@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { db } from "@/lib/db";
 import { logAdminActivity } from "@/lib/admin-activity";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
@@ -109,6 +110,14 @@ export async function GET(req: NextRequest) {
     );
   } catch (error) {
     activityError = error;
+    Sentry.captureException(error, {
+      tags: {
+        action: "admin.opportunities.pending_list",
+      },
+      user: {
+        id: activityAdminUserId ?? undefined,
+      },
+    });
     console.error("Error fetching pending opportunities:", error);
     activityStatus = 500;
     return NextResponse.json(

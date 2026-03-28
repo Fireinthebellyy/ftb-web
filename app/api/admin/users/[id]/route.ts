@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { auth } from "@/lib/auth";
 import { userRoles, type UserRole } from "@/lib/admin-permissions";
 import { logAdminActivity } from "@/lib/admin-activity";
@@ -115,6 +116,17 @@ export async function PATCH(
     return NextResponse.json({ user: updated }, { status: 200 });
   } catch (error) {
     activityError = error;
+    Sentry.captureException(error, {
+      tags: {
+        action: "admin.users.update_role",
+      },
+      user: {
+        id: activityAdminUserId ?? undefined,
+      },
+      extra: {
+        targetUserId: activityEntityId,
+      },
+    });
     console.error("Error updating user role:", error);
     activityStatus = 500;
     return NextResponse.json(

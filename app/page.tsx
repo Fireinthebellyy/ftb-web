@@ -8,6 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Inter, Outfit, Satisfy } from "next/font/google";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import HomeInternshipCardsSection from "@/components/internship/HomeInternshipCardsSection";
 import HomeOpportunitiesSection from "@/components/opportunity/HomeOpportunitiesSection";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
@@ -368,6 +369,8 @@ function ToolkitCarousel() {
   const toolkitCards = toolkits.slice(0, 6);
   const shouldShowComingSoon = toolkitCards.length < 2;
 
+  const router = useRouter();
+
   const handleBuyNow = async (toolkitId: string) => {
     setProcessingToolkitId(toolkitId);
 
@@ -399,7 +402,17 @@ function ToolkitCarousel() {
           {toolkitCards.map((card, index) => (
             <article
               key={`${card.id}-${index}`}
-              className="relative mt-2 flex h-[270px] w-[218px] shrink-0 flex-col justify-between overflow-hidden rounded-2xl border border-white/50 px-4 py-4 md:h-[340px] md:w-[280px] md:px-5 md:py-5"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && card.id) {
+                  router.push(`/toolkit/${card.id}`);
+                }
+              }}
+              onClick={() => {
+                if (card.id) router.push(`/toolkit/${card.id}`);
+              }}
+              className="relative mt-2 flex h-[270px] w-[218px] shrink-0 flex-col justify-between overflow-hidden rounded-2xl border border-white/50 px-0 py-0 md:h-[340px] md:w-[280px] md:px-0 md:py-0"
             >
               {card.coverImageUrl || card.bannerImageUrl ? (
                 <>
@@ -407,28 +420,25 @@ function ToolkitCarousel() {
                     src={card.coverImageUrl ?? card.bannerImageUrl!}
                     alt={card.title}
                     fill
-                    className="object-cover opacity-45 blur-[1px]"
+                    className="object-cover"
                     sizes="(max-width: 768px) 218px, 280px"
                   />
-                  <div className="absolute inset-0 bg-black/55" />
+                  <div className="absolute inset-0 bg-black/45" />
                 </>
               ) : null}
 
-              <div className="relative z-10 flex flex-1 items-center justify-center">
-                <h4 className={`${outfit.className} line-clamp-2 text-center text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-white`}>
-                  {card.title}
-                </h4>
-              </div>
-
-              <div className="relative z-10 flex items-center justify-between gap-[10px]">
+              <div className="relative z-10 flex flex-1 items-end justify-between gap-[10px] px-4 py-4 md:px-5 md:py-5">
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
                     if (card.id) {
                       void handleBuyNow(card.id);
                     }
                   }}
                   onTouchEnd={(e) => {
+                    e.stopPropagation();
                     e.preventDefault();
                     if (card.id && processingToolkitId !== card.id) {
                       void handleBuyNow(card.id);
@@ -439,12 +449,17 @@ function ToolkitCarousel() {
                 >
                   {processingToolkitId === card.id ? "Processing..." : "Buy now"}
                 </button>
-                <Link
-                  href={card.id ? `/toolkit/${card.id}` : "/toolkit"}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    if (card.id) router.push(`/toolkit/${card.id}`);
+                  }}
                   className={`${sfProClass} inline-flex h-12 items-center justify-center whitespace-nowrap rounded-[39px] border border-white/50 px-3 text-[18px] leading-none font-normal tracking-[-0.25px] text-white/50`}
                 >
                   Explore
-                </Link>
+                </button>
               </div>
             </article>
           ))}

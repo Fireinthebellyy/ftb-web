@@ -150,6 +150,7 @@ export type UploadProgress = {
 export type FileKind = "image" | "pdf" | "ppt";
 
 export interface FileItem {
+  id: string;
   name: string;
   size: number;
   file: File;
@@ -160,6 +161,7 @@ export interface FileItem {
   fileId?: string;
   error?: boolean;
   errorMessage?: string;
+  addedAt?: number;
 }
 
 export type PrivacyPolicy = {

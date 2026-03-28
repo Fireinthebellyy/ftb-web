@@ -3,6 +3,8 @@ import OpportunityList from './OpportunityList';
 import { db } from '@/lib/db';
 import { tags } from '@/lib/schema';
 
+export const dynamic = 'force-dynamic';
+
 // Metadata
 export const metadata: Metadata = {
   title: 'OpportunityHub - Discover Amazing Opportunities',

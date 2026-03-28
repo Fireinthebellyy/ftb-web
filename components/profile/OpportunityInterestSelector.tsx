@@ -86,9 +86,18 @@ export default function OpportunityInterestSelector({ control, isEditing }: Prop
                                 : "bg-gray-50 text-gray-500 hover:bg-gray-100 border-gray-200"
                             )}
                             onClick={() => {
-                              const next = isActive
-                                ? selected.filter((v: string) => v !== opt.id)
-                                : [...selected, opt.id];
+                              let next;
+                              if (opt.id === "Other") {
+                                const base = selected.filter(
+                                  (v: string) =>
+                                    presetIds.includes(v) && v !== "Other"
+                                );
+                                next = isActive ? base : [...base, "Other"];
+                              } else {
+                                next = isActive
+                                  ? selected.filter((v: string) => v !== opt.id)
+                                  : [...selected, opt.id];
+                              }
                               field.onChange(next);
                             }}
                             role="checkbox"

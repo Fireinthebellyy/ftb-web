@@ -135,11 +135,11 @@ export default function ProfileForm({
   const initialFieldInterestsRaw = normalizeDomainPreferences(user.fieldInterests ?? []);
   const initialOppInterestsRaw = normalizeOpportunityInterests(user.opportunityInterests ?? []);
 
-  const derivedFieldInterestOther = initialFieldInterestsRaw.find(v => !domainOptions.some(opt => opt.id === v)) || "";
-  const derivedOppInterestOther = initialOppInterestsRaw.find(v => !opportunityOptions.some(opt => opt.id === v)) || "";
+  const derivedFieldInterestOther = initialFieldInterestsRaw.find(v => v !== "Other" && !domainOptions.some(opt => opt.id === v)) || "";
+  const derivedOppInterestOther = initialOppInterestsRaw.find(v => v !== "Other" && !opportunityOptions.some(opt => opt.id === v)) || "";
 
-  const normalizedFieldInterests = initialFieldInterestsRaw.map(v => domainOptions.some(opt => opt.id === v) ? v : "Other");
-  const normalizedOppInterests = initialOppInterestsRaw.map(v => opportunityOptions.some(opt => opt.id === v) ? v : "Other");
+  const normalizedFieldInterests = Array.from(new Set(initialFieldInterestsRaw.map(v => domainOptions.some(opt => opt.id === v) ? v : "Other")));
+  const normalizedOppInterests = Array.from(new Set(initialOppInterestsRaw.map(v => opportunityOptions.some(opt => opt.id === v) ? v : "Other")));
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

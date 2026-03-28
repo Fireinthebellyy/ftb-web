@@ -27,11 +27,13 @@ type BaseProps = {
   maxFiles: number;
   className?: string;
   buttonClassName?: string;
+  loading?: boolean;
 };
 
 type ExistingImagesProps = {
   existingImages: string[];
   onRemoveExisting: (imageId: string) => void;
+  loading?: boolean;
 };
 
 export function ImagePicker({
@@ -106,8 +108,10 @@ export function ImagePicker({
 export function SelectedImages({
   files,
   setFiles,
-}: Pick<BaseProps, "files" | "setFiles">) {
+  loading,
+}: Pick<BaseProps, "files" | "setFiles" | "loading">) {
   const removeFile = (fileItem: FileItem) => {
+    if (loading || fileItem.uploading) return;
     setFiles((prev) => {
       const updated = [...prev];
       const index = updated.findIndex(
@@ -152,6 +156,7 @@ export function SelectedImages({
             size="sm"
             className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0"
             onClick={() => removeFile(file)}
+            disabled={loading || file.uploading}
           >
             <X className="h-2 w-2" />
           </Button>
@@ -168,6 +173,7 @@ export function SelectedImages({
 export function ExistingImages({
   existingImages,
   onRemoveExisting,
+  loading,
 }: ExistingImagesProps) {
   const [previewImageId, setPreviewImageId] = useState<string | null>(null);
 
@@ -207,8 +213,10 @@ export function ExistingImages({
               className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-white p-0 hover:bg-red-50"
               onClick={(e) => {
                 e.stopPropagation();
+                if (loading) return;
                 onRemoveExisting(imageId);
               }}
+              disabled={loading}
             >
               <X className="h-2 w-2" />
             </Button>
@@ -254,17 +262,20 @@ export function UnifiedFilesPreview({
   setFiles,
   attachmentFiles,
   setAttachmentFiles,
+  loading,
 }: {
   files: FileItem[];
   setFiles: (updater: (prev: FileItem[]) => FileItem[]) => void;
   attachmentFiles: FileItem[];
   setAttachmentFiles: (updater: (prev: FileItem[]) => FileItem[]) => void;
+  loading?: boolean;
 }) {
   const allFiles = [...files, ...attachmentFiles].sort(
     (a, b) => (a.addedAt || 0) - (b.addedAt || 0)
   );
 
   const removeFile = (fileItem: FileItem) => {
+    if (loading || fileItem.uploading) return;
     if (fileItem.kind === "image") {
       setFiles((prev) => {
         const updated = [...prev];
@@ -349,6 +360,7 @@ export function UnifiedFilesPreview({
               size="icon"
               className="h-7 w-7 rounded-full hover:bg-red-50 hover:text-red-500"
               onClick={() => removeFile(file)}
+              disabled={loading || file.uploading}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -613,8 +625,10 @@ export function UnifiedFilePicker({
 export function SelectedAttachments({
   files,
   setFiles,
-}: Pick<AttachmentBaseProps, "files" | "setFiles">) {
+  loading,
+}: Pick<BaseProps, "files" | "setFiles" | "loading">) {
   const removeFile = (fileItem: FileItem) => {
+    if (loading || fileItem.uploading) return;
     setFiles((prev) => {
       const updated = [...prev];
       const index = updated.findIndex(
@@ -655,6 +669,7 @@ export function SelectedAttachments({
             size="sm"
             className="h-5 w-5 shrink-0 p-0"
             onClick={() => removeFile(file)}
+            disabled={loading || file.uploading}
           >
             <X className="h-3 w-3" />
           </Button>
@@ -667,11 +682,13 @@ export function SelectedAttachments({
 type ExistingAttachmentsProps = {
   existingAttachments: string[];
   onRemoveExisting: (attachmentId: string) => void;
+  loading?: boolean;
 };
 
 export function ExistingAttachments({
   existingAttachments,
   onRemoveExisting,
+  loading,
 }: ExistingAttachmentsProps) {
   if (existingAttachments.length === 0) return null;
 
@@ -691,7 +708,11 @@ export function ExistingAttachments({
             variant="ghost"
             size="sm"
             className="h-5 w-5 shrink-0 p-0 hover:bg-red-50"
-            onClick={() => onRemoveExisting(attachmentId)}
+            onClick={() => {
+              if (loading) return;
+              onRemoveExisting(attachmentId);
+            }}
+            disabled={loading}
           >
             <X className="h-3 w-3" />
           </Button>

@@ -15,11 +15,13 @@ import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 type ExistingImagesProps = {
   existingImages: string[];
   onRemoveExisting: (imageId: string) => void;
+  loading?: boolean;
 };
 
 export function ExistingImages({
   existingImages,
   onRemoveExisting,
+  loading,
 }: ExistingImagesProps) {
   const [previewImageId, setPreviewImageId] = useState<string | null>(null);
 
@@ -59,8 +61,10 @@ export function ExistingImages({
               className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-white p-0 hover:bg-red-50"
               onClick={(e) => {
                 e.stopPropagation();
+                if (loading) return;
                 onRemoveExisting(imageId);
               }}
+              disabled={loading}
             >
               <X className="h-2 w-2" />
             </Button>

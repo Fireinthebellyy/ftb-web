@@ -205,21 +205,24 @@ export default function NewOpportunityForm({
             <ExistingImages
               existingImages={existingImages}
               onRemoveExisting={handleRemoveExistingImage}
+              loading={loading}
             />
           )}
 
-          <SelectedImages files={files} setFiles={setFiles} />
+          <SelectedImages files={files} setFiles={setFiles} loading={loading} />
 
           {opportunity && (
             <ExistingAttachments
               existingAttachments={existingAttachments}
               onRemoveExisting={handleRemoveExistingAttachment}
+              loading={loading}
             />
           )}
 
           <SelectedAttachments
             files={attachmentFiles}
             setFiles={setAttachmentFiles}
+            loading={loading}
           />
 
           <TagsField control={form.control} />

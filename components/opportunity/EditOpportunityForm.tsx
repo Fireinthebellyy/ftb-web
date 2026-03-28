@@ -258,18 +258,21 @@ export default function EditOpportunityForm({
           <ExistingImages
             existingImages={existingImages}
             onRemoveExisting={handleRemoveExistingImage}
+            loading={loading}
           />
 
-          <SelectedImages files={files} setFiles={setFiles} />
+          <SelectedImages files={files} setFiles={setFiles} loading={loading} />
 
           <ExistingAttachments
             existingAttachments={existingAttachments}
             onRemoveExisting={handleRemoveExistingAttachment}
+            loading={loading}
           />
 
           <SelectedAttachments
             files={attachmentFiles}
             setFiles={setAttachmentFiles}
+            loading={loading}
           />
 
           <TagsField control={form.control} />

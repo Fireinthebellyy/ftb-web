@@ -459,11 +459,25 @@ export default function NewUngatekeepForm({
                 imageFiles={files}
                 setImageFiles={setFiles}
                 maxImageFiles={maxFiles}
-                existingImagesCount={0} // merged into attachments
+                existingImagesCount={
+                  existingFiles.filter(
+                    (f) =>
+                      !f.toLowerCase().endsWith(".pdf") &&
+                      !f.toLowerCase().endsWith(".ppt") &&
+                      !f.toLowerCase().endsWith(".pptx")
+                  ).length
+                }
                 attachmentFiles={attachmentFiles}
                 setAttachmentFiles={setAttachmentFiles}
                 maxAttachmentFiles={maxAttachments}
-                existingAttachmentsCount={existingFiles.length}
+                existingAttachmentsCount={
+                  existingFiles.filter(
+                    (f) =>
+                      f.toLowerCase().endsWith(".pdf") ||
+                      f.toLowerCase().endsWith(".ppt") ||
+                      f.toLowerCase().endsWith(".pptx")
+                  ).length
+                }
                 showLabel
                 label="Upload files"
                 compactLabel="Upload files"
@@ -477,6 +491,7 @@ export default function NewUngatekeepForm({
               <ExistingAttachments
                 existingAttachments={existingFiles}
                 onRemoveExisting={handleRemoveExistingFile}
+                loading={isSubmitting}
               />
             )}
             <UnifiedFilesPreview
@@ -484,6 +499,7 @@ export default function NewUngatekeepForm({
               setFiles={setFiles}
               attachmentFiles={attachmentFiles}
               setAttachmentFiles={setAttachmentFiles}
+              loading={isSubmitting}
             />
           </div>
 

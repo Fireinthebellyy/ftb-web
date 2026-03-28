@@ -6,6 +6,7 @@ export type PageBannerPlacement = "internship" | "ungatekeep";
 export interface PageBanner {
   _id: string;
   placement: PageBannerPlacement;
+  order?: number;
   isActive?: boolean;
   image?: {
     alt?: string;
@@ -45,9 +46,10 @@ const featuredQuery = `*[_type == "featured"] | order(priority, _createdAt desc)
     }
 }`;
 
-const pageBannersByPlacementQuery = `*[_type == "pageBanner" && coalesce(isActive, true) == true && placement == $placement] | order(_createdAt desc) {
+const pageBannersByPlacementQuery = `*[_type == "pageBanner" && coalesce(isActive, true) == true && placement == $placement] | order(coalesce(order, 9999) asc, _createdAt desc) {
   _id,
   placement,
+  order,
   isActive,
   image {
     alt,

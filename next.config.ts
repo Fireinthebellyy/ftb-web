@@ -34,6 +34,9 @@ const r2RemotePatterns = r2BaseUrlEnvVars
   );
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: __dirname,
+  },
   images: {
     remotePatterns: [
       {

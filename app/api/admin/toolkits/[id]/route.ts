@@ -31,8 +31,8 @@ const updateToolkitSchema = z.object({
   testimonials: z
     .array(
       z.object({
-        name: z.string().min(1, "Name is required"),
-        role: z.string().min(1, "Role is required"),
+        name: z.string(),
+        role: z.string(),
         message: z.string().min(1, "Message is required"),
       })
     )

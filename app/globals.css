@@ -263,7 +263,6 @@ body,
 .animate-internship-stack {
   animation: internship-stack-up 9s ease-in-out infinite;
 }
-
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }

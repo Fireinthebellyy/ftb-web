@@ -5,21 +5,10 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios from "axios";
 import ToolkitCardNew from "@/components/toolkit/ToolkitCardNew";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import { Toolkit } from "@/types/interfaces";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const CATEGORIES = [
-  "Interview Prep",
-  "Career",
-];
-
 export default function ToolkitPage() {
-  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(
-    null
-  );
-
   const { data: toolkits = [], isLoading } = useQuery<Toolkit[]>({
     queryKey: ["toolkits"],
     queryFn: async () => {
@@ -35,13 +24,6 @@ export default function ToolkitPage() {
     staleTime: 1000 * 60 * 10,
   });
 
-  const filteredToolkits = React.useMemo(() => {
-    if (!selectedCategory) {
-      return toolkits;
-    }
-    return toolkits.filter((toolkit) => toolkit.category === selectedCategory);
-  }, [toolkits, selectedCategory]);
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -49,12 +31,6 @@ export default function ToolkitPage() {
           <div className="mb-6 space-y-2">
             <Skeleton className="h-8 w-32" />
             <Skeleton className="h-4 w-full max-w-md" />
-          </div>
-
-          <div className="mb-6 flex flex-wrap items-center gap-2">
-            {CATEGORIES.map((category, index) => (
-              <Skeleton className="h-8 w-20 rounded-full" key={index} />
-            ))}
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -101,38 +77,16 @@ export default function ToolkitPage() {
           </p>
         </div>
 
-        <div className="mb-6 flex flex-wrap items-center gap-2">
-          {CATEGORIES.map((category) => (
-            <Badge
-              key={category}
-              variant={selectedCategory === category ? "default" : "outline"}
-              className={cn(
-                "cursor-pointer px-3 py-1 text-sm",
-                selectedCategory === category
-                  ? "bg-neutral-700 text-gray-200"
-                  : "bg-white text-gray-700"
-              )}
-              onClick={() => setSelectedCategory(category)}
-            >
-              {category}
-            </Badge>
-          ))}
-        </div>
-
-        {filteredToolkits.length === 0 ? (
+        {toolkits.length === 0 ? (
           <div className="rounded-lg border bg-white py-12 text-center">
             <h3 className="mb-2 text-lg font-semibold text-gray-600">
               No toolkits found
             </h3>
-            <p className="text-gray-500">
-              {selectedCategory
-                ? `No toolkits in ${selectedCategory} category yet.`
-                : "Check back soon for new content!"}
-            </p>
+            <p className="text-gray-500">Check back soon for new content!</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredToolkits.map((toolkit) => (
+            {toolkits.map((toolkit) => (
               <ToolkitCardNew
                 key={toolkit.id}
                 toolkit={toolkit}

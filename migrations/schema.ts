@@ -30,10 +30,16 @@ export const internshipType = pgEnum("internship_type", [
   "hybrid",
 ]);
 export const opportunityType = pgEnum("opportunity_type", [
-  "hackathon",
-  "grant application",
-  "competition",
-  "ideathon",
+  "competitions_open_calls",
+  "case_competitions",
+  "hackathons",
+  "fellowships",
+  "ideathon_think_tanks",
+  "leadership_programs",
+  "awards_recognition",
+  "grants_scholarships",
+  "research_paper_ra_calls",
+  "upskilling_events",
 ]);
 export const personaType = pgEnum("persona_type", ["student", "society"]);
 export const toolkitContentItemType = pgEnum("toolkit_content_item_type", [

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import InternshipPost from "@/components/InternshipCard";
-import FeedbackWidget from "@/components/FeedbackWidget";
+import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { useInfiniteInternships } from "@/lib/queries-internships";
 import {
   Dialog,

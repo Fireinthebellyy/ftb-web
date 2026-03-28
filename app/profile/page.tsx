@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import ProfileCard from "@/components/profile/ProfileCard";
-import FeedbackWidget from "@/components/FeedbackWidget";
+import { FeedbackWidget } from "@/components/FeedbackWidget";
 
 export default async function ProfilePage() {
   try {

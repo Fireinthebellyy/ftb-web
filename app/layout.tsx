@@ -11,7 +11,7 @@ import QueryProvider from "@/components/Providers";
 import ProgressProvider from "./providers";
 import Script from "next/script";
 import WhatsAppWidget from "@/components/WhatsAppWidget";
-import FeedbackWidget from "@/components/FeedbackWidget";
+import { FeedbackWidget } from "@/components/FeedbackWidget";
 import PostOnboardingSurveyWidget from "@/components/PostOnboardingSurveyWidget";
 import { TrackerProvider } from "@/components/providers/TrackerProvider";
 import { CSPostHogProvider } from "./providers/posthog-provider";

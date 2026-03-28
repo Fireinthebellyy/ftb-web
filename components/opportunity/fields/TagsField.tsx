@@ -97,6 +97,14 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
     };
   }, [currentToken, selectedTagSet]);
 
+  const parseTag = (tag: string) => {
+    const match = tag.match(/^(.*)\((.*)\)$/);
+    if (match) {
+      return { label: match[1], description: match[2] };
+    }
+    return { label: tag, description: "" };
+  };
+
   function addTag(tag: string) {
     const seen = new Set<string>();
     const result = [...committedTokens, tag].filter((t) => {
@@ -145,32 +153,36 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
         className="flex min-h-10 w-full flex-wrap items-center gap-1.5 rounded-md bg-transparent px-2 py-1 text-sm focus-within:ring-1 focus-within:ring-ring"
         onClick={() => inputRef.current?.focus()}
       >
-        {committedTokens.map((tag) => (
-          <Badge
-            key={tag}
-            variant="secondary"
-            className="gap-1 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200"
-          >
-            {tag}
-            <button
-              type="button"
-              className="rounded-full p-0.5 text-blue-700 hover:bg-blue-300/60"
-              onClick={(e) => {
-                e.stopPropagation();
-                removeTag(tag);
-                requestAnimationFrame(() => inputRef.current?.focus());
-              }}
-              aria-label={`Remove ${tag}`}
+        {committedTokens.map((tag) => {
+          const { label, description } = parseTag(tag);
+          return (
+            <Badge
+              key={tag}
+              variant="secondary"
+              className="gap-1 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200"
+              title={description}
             >
-              <X className="h-3 w-3" />
-            </button>
-          </Badge>
-        ))}
+              {label}
+              <button
+                type="button"
+                className="rounded-full p-0.5 text-blue-700 hover:bg-blue-300/60"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeTag(tag);
+                  requestAnimationFrame(() => inputRef.current?.focus());
+                }}
+                aria-label={`Remove ${tag}`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          );
+        })}
         <Input
           value={currentToken}
           ref={inputRef}
           autoComplete="off"
-          placeholder={committedTokens.length === 0 ? "Add tags *" : "Add more"}
+          placeholder={committedTokens.length === 0 ? "Add field tags *" : "Add more"}
           className="h-8 min-w-24 flex-1 border-none px-1 shadow-none focus-visible:ring-0"
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={() => setShow(suggestions.length > 0)}
@@ -190,17 +202,25 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
           onMouseDown={(e) => e.preventDefault()}
           onTouchStart={(e) => e.preventDefault()}
         >
-          {suggestions.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => addTag(tag)}
-              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
-            >
-              {tag}
-            </button>
-          ))}
+          {suggestions.map((tag) => {
+            const { label, description } = parseTag(tag);
+            return (
+              <button
+                key={tag}
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => addTag(tag)}
+                className="w-full px-3 py-2 text-left hover:bg-gray-50 flex flex-col gap-0.5"
+              >
+                <span className="text-sm font-medium">{label}</span>
+                {description && (
+                  <span className="text-[10px] text-gray-500 line-clamp-1">
+                    {description}
+                  </span>
+                )}
+              </button>
+            );
+          })}
           {suggestions.length === 0 && (
             <div className="px-3 py-2 text-sm text-gray-500">No tags found</div>
           )}

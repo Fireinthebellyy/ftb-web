@@ -5,26 +5,24 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Search, Filter, Loader2, ChevronDown, X } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Filter, Loader2, ChevronDown, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import OpportunityPost from "@/components/OpportunityCard";
 import { NewOpportunityButton } from "@/components/opportunity/NewOpportunityButton";
 import FeaturedOpportunities from "@/components/opportunity/FeaturedOpportunities";
 import { TagsDropdown } from "@/components/opportunity/TagsDropdown";
+import { FeedbackWidget } from "@/components/FeedbackWidget";
 import {
-  AVAILABLE_TAGS,
   AVAILABLE_TYPES,
   FEATURE_FLAGS,
   getTypeDropdownLabel,
-  SEARCH_PLACEHOLDERS,
   formatTypeName,
 } from "./constants";
 import { useOpportunityFeed } from "./useOpportunityFeed";
@@ -33,7 +31,11 @@ const CalendarWidget = dynamic(
 );
 const TaskWidget = dynamic(() => import("@/components/opportunity/TaskWidget"));
 
-export default function OpportunityCardsPage() {
+interface OpportunityListProps {
+  initialTags?: string[];
+}
+
+export default function OpportunityCardsPage({ initialTags }: OpportunityListProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -41,8 +43,9 @@ export default function OpportunityCardsPage() {
   // Initialize state from URL on mount
   const getInitialSearch = () => searchParams.get("search") || "";
   const getInitialTypes = () => {
-    const typesParam = searchParams.get("types") || "";
-    return typesParam ? typesParam.split(",").filter(Boolean) : [];
+    const typesParam = searchParams.get("types");
+    if (typesParam === null) return [...AVAILABLE_TYPES];
+    return typesParam === "" ? [] : typesParam.split(",").filter(Boolean);
   };
   const getInitialTags = () => {
     const tagsParam = searchParams.get("tags") || "";
@@ -56,17 +59,22 @@ export default function OpportunityCardsPage() {
   const [selectedTypes, setSelectedTypes] = useState<string[]>(getInitialTypes);
   const [selectedTags, setSelectedTags] = useState<string[]>(getInitialTags);
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
-  const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [showSecondaryWidgets, setShowSecondaryWidgets] = useState(false);
 
   // Derive state from URL query parameters whenever searchParams changes (for browser navigation)
   useEffect(() => {
     const searchParam = searchParams.get("search") || "";
-    const typesParam = searchParams.get("types") || "";
+    const typesParam = searchParams.get("types");
     const tagsParam = searchParams.get("tags") || "";
 
     const newSearchTerm = searchParam;
-    const newTypes = typesParam ? typesParam.split(",").filter(Boolean) : [];
+    const newTypes =
+      typesParam === null
+        ? [...AVAILABLE_TYPES]
+        : typesParam === ""
+          ? []
+          : typesParam.split(",").filter(Boolean);
     const newTags = tagsParam ? tagsParam.split(",").filter(Boolean) : [];
 
     // Update state from URL - use functional updates to compare and only update if changed
@@ -152,8 +160,11 @@ export default function OpportunityCardsPage() {
     }
 
     // Update types
-    if (stateTypes.length > 0) {
+    if (stateTypes.length > 0 && stateTypes.length < AVAILABLE_TYPES.length) {
       params.set("types", stateTypes.join(","));
+    } else if (stateTypes.length === 0) {
+      // Explicitly set empty if none selected, so it doesn't default back to 'all' on refresh
+      params.set("types", "");
     }
 
     // Update tags
@@ -202,17 +213,6 @@ export default function OpportunityCardsPage() {
 
   const shouldEnableWidgetQueries = !shouldUseBootstrap || !isBootstrapPending;
 
-  // Rotate placeholders every 3 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentPlaceholderIndex(
-        (prev) => (prev + 1) % SEARCH_PLACEHOLDERS.length
-      );
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, []);
-
   // Intersection observer for infinite scroll
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const desktopTriggerRef = useRef<HTMLDivElement>(null);
@@ -259,17 +259,14 @@ export default function OpportunityCardsPage() {
 
 
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
-  };
-
   const toggleType = (type: string) => {
     setSelectedTypes((prev) =>
       prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
     );
   };
+
+  const selectAllTypes = () => setSelectedTypes([...AVAILABLE_TYPES]);
+  const unselectAllTypes = () => setSelectedTypes([]);
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -294,66 +291,63 @@ export default function OpportunityCardsPage() {
     <div className="h-full grow bg-gray-50">
       <div className="container mx-auto max-w-7xl px-4 pt-2">
         <div className="mb-5 lg:hidden">
-          <div className="relative mb-3 bg-white">
-            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
-            <Input
-              placeholder={SEARCH_PLACEHOLDERS[currentPlaceholderIndex]}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pr-10 pl-10"
-            />
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={() => setSearchTerm("")}
-                className="absolute top-1/2 right-3 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-
-          <div className="mb-2 flex items-start justify-between">
-            <div className="flex flex-wrap items-center gap-2">
-              {AVAILABLE_TAGS.map((tag) => {
-                const isSelected = selectedTags.includes(tag);
-                const displayTag = tag.charAt(0).toUpperCase() + tag.slice(1);
-                return (
-                  <Badge
-                    key={tag}
-                    variant={isSelected ? "default" : "outline"}
-                    className={`cursor-pointer px-3 py-1 text-sm ${isSelected
-                      ? "bg-neutral-700 text-gray-200"
-                      : "bg-white text-gray-700"
-                      }`}
-                    onClick={() => toggleTag(tag)}
-                  >
-                    <span>{displayTag}</span>
-                  </Badge>
-                );
-              })}
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-600">
+                Filter the Noise, explore what matters.
+              </p>
             </div>
-
             <Button
-              variant="ghost"
               size="sm"
               onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
-              className="shrink-0 cursor-pointer hover:bg-orange-600 hover:text-white"
+              className="shrink-0 cursor-pointer bg-orange-600 text-white"
             >
-              <Filter className="size-4 text-gray-600" />
+              <Filter className="size-4 text-white" />
             </Button>
           </div>
 
           {isFilterBoxOpen && (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-[1fr_1.3fr] gap-2">
+              <TagsDropdown
+                selectedTags={selectedTags}
+                onTagsChange={setSelectedTags}
+                align="start"
+                className="w-full text-xs sm:text-sm"
+                initialTags={initialTags}
+              />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between">
-                    {getTypeDropdownLabel(selectedTypes, true)}
-                    <ChevronDown className="h-4 w-4 opacity-60" />
+                  <Button variant="outline" className="w-full justify-between px-2 py-2 text-xs sm:text-sm">
+                    <span className="truncate">{getTypeDropdownLabel(selectedTypes)}</span>
+                    <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="start">
+                <DropdownMenuContent className="w-[calc(100vw-32px)] sm:w-64" align="end">
+                  <div className="flex items-center justify-between px-2 py-1.5">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 px-2 text-xs font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        selectAllTypes();
+                      }}
+                    >
+                      Select All
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 px-2 text-xs font-medium text-gray-500 hover:text-gray-600 hover:bg-gray-50"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        unselectAllTypes();
+                      }}
+                    >
+                      Unselect All
+                    </Button>
+                  </div>
+                  <DropdownMenuSeparator />
                   {AVAILABLE_TYPES.map((type) => (
                     <DropdownMenuCheckboxItem
                       key={type}
@@ -366,13 +360,6 @@ export default function OpportunityCardsPage() {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-
-              <TagsDropdown
-                selectedTags={selectedTags}
-                onTagsChange={setSelectedTags}
-                align="end"
-                className="w-56"
-              />
             </div>
           )}
         </div>
@@ -380,35 +367,26 @@ export default function OpportunityCardsPage() {
         <div className="hidden gap-6 lg:grid lg:grid-cols-12">
           <aside className="col-span-3">
             <div className="sticky top-6 space-y-6">
-              <div className="relative bg-white">
-                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
-                <Input
-                  placeholder={SEARCH_PLACEHOLDERS[currentPlaceholderIndex]}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pr-10 pl-10"
-                />
-                {searchTerm && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchTerm("")}
-                    className="absolute top-1/2 right-3 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-
               <div className="rounded-lg border bg-white px-4 py-3">
                 <h3 className="mb-3 font-semibold text-gray-900">
                   Quick Links
                 </h3>
                 <div className="space-y-2">
-                  <p
-                    onClick={() => setIsNewOpportunityOpen(true)}
-                    className="block cursor-pointer text-sm text-blue-600 hover:text-blue-800"
+                  <Link
+                    href={`https://wa.me/916377492042?text=${encodeURIComponent(
+                      "Hey, I would like to connect with you!"
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-sm text-gray-600 hover:text-gray-800"
                   >
-                    Post Opportunity
+                    Connect with us
+                  </Link>
+                  <p
+                    onClick={() => setFeedbackOpen(true)}
+                    className="block cursor-pointer text-sm text-gray-600 hover:text-gray-800"
+                  >
+                    Testimonial/Feedback
                   </p>
                   <Link
                     href="/profile"
@@ -425,31 +403,16 @@ export default function OpportunityCardsPage() {
           </aside>
 
           <main className="col-span-6 max-h-[90vh] overflow-y-scroll pr-2">
-            <div className="mb-4 flex items-center gap-2">
-              <div className="flex flex-1 flex-wrap items-center gap-2">
-                {AVAILABLE_TAGS.map((tag) => {
-                  const isSelected = selectedTags.includes(tag);
-                  const displayTag = tag.charAt(0).toUpperCase() + tag.slice(1);
-                  return (
-                    <Badge
-                      key={tag}
-                      variant={isSelected ? "default" : "outline"}
-                      className={`cursor-pointer px-3 py-1 text-sm ${isSelected
-                        ? "bg-neutral-700 text-gray-200"
-                        : "bg-white text-gray-700"
-                        }`}
-                      onClick={() => toggleTag(tag)}
-                    >
-                      <span>{displayTag}</span>
-                    </Badge>
-                  );
-                })}
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <div className="flex-1">
+                <p className="text-md font-medium text-gray-600">
+                  Filter the Noise, explore what matters.
+                </p>
               </div>
               <Button
-                variant="ghost"
                 size="sm"
                 onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
-                className={`shrink-0 transition-all hover:bg-orange-600 hover:text-white ${isFilterBoxOpen
+                className={`shrink-0 transition-all bg-orange-600 text-white hover:bg-orange-700 hover:text-white ${isFilterBoxOpen
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-gray-400"
                   }`}
@@ -461,6 +424,13 @@ export default function OpportunityCardsPage() {
             {isFilterBoxOpen && (
               <div className="mb-4 rounded-lg border bg-white p-4">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <TagsDropdown
+                    selectedTags={selectedTags}
+                    onTagsChange={setSelectedTags}
+                    align="start"
+                    className="w-full"
+                    initialTags={initialTags}
+                  />
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -471,7 +441,32 @@ export default function OpportunityCardsPage() {
                         <ChevronDown className="h-4 w-4 opacity-60" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-64" align="start">
+                    <DropdownMenuContent className="w-64" align="end">
+                      <div className="flex items-center justify-between px-2 py-1.5">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 px-2 text-xs font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            selectAllTypes();
+                          }}
+                        >
+                          Select All
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 px-2 text-xs font-medium text-gray-500 hover:text-gray-600 hover:bg-gray-50"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            unselectAllTypes();
+                          }}
+                        >
+                          Unselect All
+                        </Button>
+                      </div>
+                      <DropdownMenuSeparator />
                       {AVAILABLE_TYPES.map((type) => (
                         <DropdownMenuCheckboxItem
                           key={type}
@@ -484,13 +479,6 @@ export default function OpportunityCardsPage() {
                       ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
-
-                  <TagsDropdown
-                    selectedTags={selectedTags}
-                    onTagsChange={setSelectedTags}
-                    align="end"
-                    className="w-64"
-                  />
                 </div>
               </div>
             )}
@@ -603,7 +591,7 @@ export default function OpportunityCardsPage() {
                 <>
                   <div className="rounded-lg border bg-white px-4 py-3">
                     <h3 className="mb-4 font-semibold text-gray-900">
-                      Trending Tags
+                      Trending Field tags
                     </h3>
                     <div className="flex flex-wrap gap-2">
                       <span className="rounded bg-blue-100 px-2 py-1 text-xs text-blue-800">
@@ -705,6 +693,7 @@ export default function OpportunityCardsPage() {
             </>
           )}
         </div>
+        <FeedbackWidget isOpen={feedbackOpen} onOpenChange={setFeedbackOpen} />
       </div>
     </div>
   );

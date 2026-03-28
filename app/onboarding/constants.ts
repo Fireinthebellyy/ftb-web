@@ -19,28 +19,26 @@ export const fieldOptions = [
 ];
 
 export const opportunityOptions = [
-    "Internships",
-    "Scholarships",
-    "Competitions",
-    "Fellowships",
+    "Competitions/Open Calls",
+    "Case Competitions",
     "Hackathons",
-    "Research programs",
-    "Bootcamps",
+    "Fellowships",
+    "Ideathon/Think Tanks",
+    "Leadership Programs",
+    "Awards & Recognition",
+    "Grants & Scholarships",
+    "Research Paper Conferences/RA calls",
+    "Upskilling Courses/Certification/Events",
 ];
 
 export const domainOptions = [
-    "AI & ML",
-    "Web / App Dev",
-    "Design & No-Code",
-    "Product thinking",
-    "Finance & Markets",
-    "Marketing & Growth",
-    "Research & Policy",
-    "Psychology / Behaviour",
-    "Climate & Sustainability",
-    "GRE / Masters prep",
-    "Fellowships & grants",
-    "Career playbooks",
+    "Business, Management & Consulting",
+    "Creative & Content",
+    "Tech & Data",
+    "Impact & Change",
+    "Law & Policy",
+    "Startup & Finance",
+    "People & Mind",
 ];
 
 export const struggleOptions = [

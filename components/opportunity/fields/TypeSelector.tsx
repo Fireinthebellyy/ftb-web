@@ -49,10 +49,10 @@ export function TypeSelector({ control, value, onChange }: Props) {
                     key={type.id}
                     variant={value === type.id ? "default" : "outline"}
                     className={cn(
-                      "text-xs cursor-pointer transition-all px-2 py-0.5 h-auto",
+                      "text-[10px] sm:text-xs cursor-pointer transition-all px-2.5 py-1 h-auto rounded-full font-medium",
                       value === type.id
-                        ? "bg-blue-100 text-blue-800 hover:bg-blue-200 border-transparent"
-                        : "bg-gray-50 text-gray-500 hover:bg-gray-100 border-gray-200"
+                        ? "bg-orange-500 text-white hover:bg-orange-600 border-transparent shadow-sm"
+                        : "bg-white text-gray-600 hover:bg-gray-50 border-gray-200"
                     )}
                     onClick={() => onChange(type.id)}
                     role="radio"

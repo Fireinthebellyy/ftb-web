@@ -54,6 +54,14 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
     return () => clearTimeout(id);
   }, [currentToken]);
 
+  const parseTag = (tag: string) => {
+    const match = tag.match(/^(.*)\((.*)\)$/);
+    if (match) {
+      return { label: match[1], description: match[2] };
+    }
+    return { label: tag, description: "" };
+  };
+
   function addTag(tag: string) {
     const parts = (value || "")
       .split(",")
@@ -97,17 +105,25 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
           onMouseDown={(e) => e.preventDefault()}
           onTouchStart={(e) => e.preventDefault()}
         >
-          {suggestions.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => addTag(tag)}
-              className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm"
-            >
-              {tag}
-            </button>
-          ))}
+          {suggestions.map((tag) => {
+            const { label, description } = parseTag(tag);
+            return (
+              <button
+                key={tag}
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => addTag(tag)}
+                className="w-full text-left px-3 py-2 hover:bg-gray-50 flex flex-col gap-0.5"
+              >
+                <span className="text-sm font-medium">{label}</span>
+                {description && (
+                  <span className="text-[10px] text-gray-500 line-clamp-1">
+                    {description}
+                  </span>
+                )}
+              </button>
+            );
+          })}
           {suggestions.length === 0 && (
             <div className="px-3 py-2 text-sm text-gray-500">No tags found</div>
           )}

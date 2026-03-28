@@ -450,11 +450,20 @@ function ToolkitCarousel() {
           ))}
 
           {shouldShowComingSoon ? (
-            <article className="mt-2 flex h-[270px] w-[218px] shrink-0 flex-col items-center justify-center rounded-2xl border border-dashed border-white/60 bg-white/5 px-4 py-4 text-center md:h-[340px] md:w-[280px] md:px-5 md:py-5">
-              <p className={`${outfit.className} text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-white`}>
+            <article className="relative mt-2 flex h-[270px] w-[218px] shrink-0 flex-col items-center justify-center overflow-hidden rounded-2xl border border-dashed border-white/60 bg-white/5 px-4 py-4 text-center md:h-[340px] md:w-[280px] md:px-5 md:py-5">
+              <Image
+                src="/images/toolkit-comingsoon.png"
+                alt=""
+                fill
+                sizes="(max-width: 768px) 218px, 280px"
+                className="object-cover opacity-65"
+                aria-hidden="true"
+              />
+              <div className="absolute inset-0 bg-black/35" />
+              <p className={`${outfit.className} relative z-10 text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-white`}>
                 Coming Soon,
               </p>
-              <p className={`${sfProClass} mt-1 text-[20px] leading-[26px] text-white/80`}>
+              <p className={`${sfProClass} relative z-10 mt-1 text-[20px] leading-[26px] text-white/80`}>
                 Stay Tuned!
               </p>
             </article>

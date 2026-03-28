@@ -239,29 +239,15 @@ body,
 
 @keyframes internship-stack-up {
   0% {
-    opacity: 0;
-    transform: translateY(100%);
-  }
-  10% {
-    opacity: 1;
     transform: translateY(0%);
-  }
-  30% {
-    opacity: 1;
-    transform: translateY(0%);
-  }
-  40% {
-    opacity: 0;
-    transform: translateY(-100%);
   }
   100% {
-    opacity: 0;
-    transform: translateY(-100%);
+    transform: translateY(-50%);
   }
 }
 
 .animate-internship-stack {
-  animation: internship-stack-up 9s ease-in-out infinite;
+  animation: internship-stack-up 6s linear infinite;
 }
 .hide-scrollbar::-webkit-scrollbar {
   display: none;

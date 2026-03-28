@@ -212,7 +212,7 @@ export async function GET(req: NextRequest) {
     const filters =
       conditions.length === 1 ? conditions[0] : and(...conditions);
 
-    let query = db
+    const query = db
       .select({
         id: internships.id,
         title: internships.title,
@@ -246,11 +246,10 @@ export async function GET(req: NextRequest) {
       .where(filters)
       .orderBy(desc(internships.createdAt));
 
-    if (limit !== undefined) {
-      query = query.limit(limit).offset(offset);
-    }
-
-    const allInternships = await query;
+    const allInternships =
+      limit !== undefined
+        ? await query.limit(limit).offset(offset)
+        : await query;
 
     return NextResponse.json(
       {

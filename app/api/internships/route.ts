@@ -101,6 +101,8 @@ export async function GET(req: NextRequest) {
       searchParams.get("maxStipend") ?? "",
       10
     );
+    const limitParam = Number.parseInt(searchParams.get("limit") ?? "", 10);
+    const offsetParam = Number.parseInt(searchParams.get("offset") ?? "", 10);
 
     const searchTerm = searchParam ? searchParam.trim() : "";
     const rawTypes = typesParam
@@ -132,6 +134,12 @@ export async function GET(req: NextRequest) {
     const maxStipend = Number.isNaN(maxStipendParam)
       ? undefined
       : maxStipendParam;
+    const limit = Number.isNaN(limitParam)
+      ? undefined
+      : Math.min(Math.max(limitParam, 1), 100);
+    const offset = Number.isNaN(offsetParam)
+      ? 0
+      : Math.max(offsetParam, 0);
 
     const conditions: SQL<unknown>[] = [isNull(internships.deletedAt)];
 
@@ -204,8 +212,7 @@ export async function GET(req: NextRequest) {
     const filters =
       conditions.length === 1 ? conditions[0] : and(...conditions);
 
-    // ✅ NO LIMIT (ALL DATA)
-    const allInternships = await db
+    let query = db
       .select({
         id: internships.id,
         title: internships.title,
@@ -238,6 +245,12 @@ export async function GET(req: NextRequest) {
       .leftJoin(user, eq(internships.userId, user.id))
       .where(filters)
       .orderBy(desc(internships.createdAt));
+
+    if (limit !== undefined) {
+      query = query.limit(limit).offset(offset);
+    }
+
+    const allInternships = await query;
 
     return NextResponse.json(
       {

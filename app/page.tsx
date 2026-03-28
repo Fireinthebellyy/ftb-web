@@ -39,15 +39,15 @@ const genericCards = [
   "Random Tool Kit",
 ];
 
-type UngatekeepHomePost = {
+interface UngatekeepHomePost {
   id: string;
   attachments: string[];
   videoUrl?: string | null;
-};
+}
 
-type UngatekeepHomeResponse = {
+interface UngatekeepHomeResponse {
   posts: UngatekeepHomePost[];
-};
+}
 
 function HeroSection() {
   return (
@@ -504,7 +504,7 @@ function CardCarouselSection({
 function MarqueeLikeCards() {
   const [failedPostIds, setFailedPostIds] = useState<Set<string>>(new Set());
 
-  const { data } = useQuery<UngatekeepHomeResponse>({
+  const { data, isPending, isError } = useQuery<UngatekeepHomeResponse>({
     queryKey: ["home-ungatekeep-posts"],
     queryFn: async () => {
       const response = await axios.get<UngatekeepHomeResponse>("/api/ungatekeep?page=1&limit=8");
@@ -535,7 +535,7 @@ function MarqueeLikeCards() {
       (card): card is { id: string; cardGraphic: string } =>
         card !== null && !failedPostIds.has(card.id)
     );
-  const shouldShowComingSoon = cardsWithMedia.length < 2;
+  const shouldShowComingSoon = !isPending && !isError && cardsWithMedia.length < 2;
 
   const {
     containerRef,

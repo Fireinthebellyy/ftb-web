@@ -86,13 +86,16 @@ export default function HomeInternshipCardsSection({
   outfitClass,
   sfProClass,
 }: HomeInternshipCardsSectionProps) {
+  const limit = 8;
+  const offset = 0;
+
   const { data } = useQuery<{ internships: Internship[] }>({
-    queryKey: ["internships-home"],
+    queryKey: ["internships-home", limit, offset],
     queryFn: async () => {
       const response = await axios.get<{ internships: Internship[] }>(
         "/api/internships",
         {
-          params: { limit: 12, offset: 0 },
+          params: { limit, offset },
         }
       );
       return response.data;
@@ -100,7 +103,7 @@ export default function HomeInternshipCardsSection({
     staleTime: 1000 * 60 * 5,
   });
 
-  const internships = (data?.internships ?? []).slice(0, 8);
+  const internships = data?.internships ?? [];
 
   return (
     <section className="bg-white px-4 py-4 md:px-8 md:py-6">

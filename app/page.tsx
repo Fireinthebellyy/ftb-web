@@ -450,7 +450,11 @@ function ToolkitCarousel() {
           ))}
 
           {shouldShowComingSoon ? (
-            <article className="relative mt-2 flex h-[270px] w-[218px] shrink-0 flex-col items-center justify-center overflow-hidden rounded-2xl border border-dashed border-white/60 bg-white/5 px-4 py-4 text-center md:h-[340px] md:w-[280px] md:px-5 md:py-5">
+            <Link
+              href="/toolkit"
+              aria-label="See all toolkits"
+              className="relative mt-2 block h-[270px] w-[218px] shrink-0 overflow-hidden rounded-2xl border border-dashed border-white/60 bg-white/5 cursor-pointer md:h-[340px] md:w-[280px]"
+            >
               <Image
                 src="/images/toolkit-comingsoon.png"
                 alt=""
@@ -460,13 +464,16 @@ function ToolkitCarousel() {
                 aria-hidden="true"
               />
               <div className="absolute inset-0 bg-black/35" />
-              <p className={`${outfit.className} relative z-10 text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-white`}>
-                Coming Soon,
-              </p>
-              <p className={`${sfProClass} relative z-10 mt-1 text-[20px] leading-[26px] text-white/80`}>
-                Stay Tuned!
-              </p>
-            </article>
+
+              <div className="absolute left-0 right-0 bottom-4 z-10 px-4 text-center md:bottom-6">
+                <p className={`${outfit.className} text-[20px] md:text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-white`}>
+                  Coming Soon
+                </p>
+                <p className={`${sfProClass} mt-1 text-[14px] md:text-[20px] leading-[20px] text-white/80`}>
+                  See all
+                </p>
+              </div>
+            </Link>
           ) : null}
         </div>
       </div>
@@ -603,7 +610,7 @@ function MarqueeLikeCards() {
         ))}
         {shouldShowComingSoon ? (
           <article className="flex h-[199px] w-[160px] shrink-0 flex-col items-center justify-center rounded-2xl border border-dashed border-black/25 bg-black/[0.03] px-4 text-center md:h-[280px] md:w-[240px]">
-            <p className={`${outfit.className} text-[20px] leading-[24px] font-medium tracking-[-0.25px] text-black/80 md:text-[24px] md:leading-[30px]`}>Coming Soon,</p>
+            <p className={`${outfit.className} text-[20px] leading-[24px] font-medium tracking-[-0.25px] text-black/80 md:text-[24px] md:leading-[30px]`}>Coming Soon</p>
             <p className={`${sfProClass} mt-1 text-[14px] leading-[18px] text-black/60 md:text-[16px] md:leading-[22px]`}>Stay Tuned!</p>
           </article>
         ) : null}

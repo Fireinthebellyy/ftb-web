@@ -289,23 +289,6 @@ export default function PurchaseSidebar({
                   d="M5 13l4 4L19 7"
                 />
               </svg>
-              Lifetime access
-            </li>
-
-            <li className="flex items-start gap-2">
-              <svg
-                className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
               Access on all devices
             </li>
           </ul>

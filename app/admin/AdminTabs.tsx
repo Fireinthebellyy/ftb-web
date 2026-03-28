@@ -12,24 +12,34 @@ import {
   Ticket,
   Users,
 } from "lucide-react";
+import {
+  canAccessAdminTab,
+  canCreateInternship,
+  getAllowedAdminTabs,
+  isAdminTab,
+} from "@/lib/admin-permissions";
 import { Button } from "@/components/ui/button";
 import AdminUsersTable from "./AdminUsersTable";
 import AdminOpportunitiesTable from "./AdminOpportunitiesTable";
 import AdminToolkitsTable from "./AdminToolkitsTable";
 import AdminUngatekeepTable from "./AdminUngatekeepTable";
 import AdminCouponsTable from "./AdminCouponsTable";
+import OpportunityManagementTable from "./OpportunityManagementTable";
+import InternshipManagementTable from "./InternshipManagementTable";
 
-const TAB_VALUES = [
+const _TAB_VALUES = [
   "opportunities",
+  "OpportunityManagement",
+  "internships",
   "users",
   "toolkits",
   "coupons",
   "ungatekeep",
 ] as const;
-type TabValue = (typeof TAB_VALUES)[number];
+type TabValue = (typeof _TAB_VALUES)[number];
 
 function isValidTab(value: string | null): value is TabValue {
-  return value !== null && TAB_VALUES.includes(value as TabValue);
+  return isAdminTab(value);
 }
 
 const adminCards: Array<{
@@ -46,9 +56,22 @@ const adminCards: Array<{
     icon: CircleCheck,
   },
   {
+    key: "OpportunityManagement",
+    title: "Opportunity Management",
+    description: "Search, edit or delete opportunities",
+    icon: CircleCheck,
+  },
+  {
+    key: "internships",
+    title: "Internship Management",
+    description: "Search, edit or delete internships",
+    icon: CircleCheck,
+  },
+  {
     key: "users",
     title: "User Management",
-    description: "Manage user accounts and assign roles (user, member, admin)",
+    description:
+      "Manage user accounts and assign roles (user, member, editor, admin)",
     icon: Users,
   },
   {
@@ -72,15 +95,26 @@ const adminCards: Array<{
   },
 ];
 
-export function AdminTabs({ currentUserId }: { currentUserId: string }) {
+export function AdminTabs({
+  currentUserId,
+  currentUserRole,
+}: {
+  currentUserId: string;
+  currentUserRole: string;
+}) {
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab");
-  const activeTab = isValidTab(tab) ? tab : null;
+  const allowedTabs = getAllowedAdminTabs(currentUserRole);
+  const visibleCards = adminCards.filter((card) =>
+    canAccessAdminTab(currentUserRole, card.key)
+  );
+  const activeTab =
+    isValidTab(tab) && allowedTabs.includes(tab) ? (tab as TabValue) : null;
 
   if (!activeTab) {
     return (
       <div className="flex flex-wrap gap-4">
-        {adminCards.map((card) => {
+        {visibleCards.map((card) => {
           const Icon = card.icon;
 
           return (
@@ -117,6 +151,14 @@ export function AdminTabs({ currentUserId }: { currentUserId: string }) {
       </div>
 
       {activeTab === "opportunities" ? <AdminOpportunitiesTable /> : null}
+      {activeTab === "OpportunityManagement" ? (
+        <OpportunityManagementTable />
+      ) : null}
+      {activeTab === "internships" ? (
+        <InternshipManagementTable
+          canCreateInternship={canCreateInternship(currentUserRole)}
+        />
+      ) : null}
       {activeTab === "users" ? (
         <AdminUsersTable currentUserId={currentUserId} />
       ) : null}

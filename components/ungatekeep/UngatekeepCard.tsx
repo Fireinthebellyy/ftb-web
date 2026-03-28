@@ -56,7 +56,7 @@ interface UngatekeepCardProps {
 
 const CONTENT_PREVIEW_LENGTH = 150;
 
-const WHATSAPP_NUMBER = "917014885565";
+const WHATSAPP_NUMBER = "916377492042";
 
 function AttachmentSlide({
   imageId,

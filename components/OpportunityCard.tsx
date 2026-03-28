@@ -84,7 +84,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
     try {
       if (newState) {
-        await addToTracker(
+        const added = await addToTracker(
           {
             id,
             opportunityId: id,
@@ -107,12 +107,15 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           "Not Applied",
           "opportunity"
         );
+        if (added) toast.success("Saved to Tracker");
+        else toast.info("Already in Tracker");
       } else {
         if (trackedItem) {
-          await removeFromTracker(
+          const removed = await removeFromTracker(
             trackedItem.oppId as string | number,
             trackedItem.kind ?? "opportunity"
           );
+          if (removed) toast.success("Deleted from Tracker");
         }
       }
 

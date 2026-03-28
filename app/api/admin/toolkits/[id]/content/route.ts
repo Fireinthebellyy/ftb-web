@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { logAdminActivity } from "@/lib/admin-activity";
+import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { db } from "@/lib/db";
 import { toolkitContentItems, toolkits } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
@@ -35,7 +36,7 @@ export async function GET(
     if (
       !currentUser ||
       !currentUser.currentUser?.id ||
-      currentUser.currentUser.role !== "admin"
+      !canAccessAdminTab(currentUser.currentUser.role, "toolkits")
     ) {
       activityStatus = 401;
       activityError = "Unauthorized";
@@ -92,7 +93,7 @@ export async function POST(
     if (
       !currentUser ||
       !currentUser.currentUser?.id ||
-      currentUser.currentUser.role !== "admin"
+      !canAccessAdminTab(currentUser.currentUser.role, "toolkits")
     ) {
       activityStatus = 401;
       activityError = "Unauthorized";

@@ -35,7 +35,7 @@ interface UngatekeepPost {
 
 async function fetchPosts(): Promise<UngatekeepPost[]> {
   const response = await axios.get("/api/admin/ungatekeep");
-  return response.data;
+  return (response as any).data;
 }
 
 export default function AdminUngatekeepTable() {

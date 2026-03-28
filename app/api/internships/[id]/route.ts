@@ -5,7 +5,6 @@ import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-
 const internshipUpdateSchema = z.object({
   title: z.string().min(1, "Title is required").optional(),
   description: z.string().optional().nullable(),
@@ -44,8 +43,6 @@ export async function GET(
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
-
-
     const internship = await db
       .select({
         id: internships.id,
@@ -65,6 +62,7 @@ export async function GET(
         createdAt: internships.createdAt,
         updatedAt: internships.updatedAt,
         isVerified: internships.isVerified,
+        isFlagged: internships.isFlagged,
         isActive: internships.isActive,
         userId: internships.userId,
         user: {
@@ -86,7 +84,6 @@ export async function GET(
       );
     }
 
-
     return NextResponse.json({
       success: true,
       internship: internship[0],
@@ -95,6 +92,67 @@ export async function GET(
     console.error("Error fetching internship:", error);
     return NextResponse.json(
       { error: "Failed to fetch internship" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    if (!db) {
+      return NextResponse.json(
+        { error: "Database connection not available" },
+        { status: 500 }
+      );
+    }
+
+    const { id } = await params;
+
+    if (!id) {
+      return NextResponse.json({ error: "ID is required" }, { status: 400 });
+    }
+
+    const currentUser = await getCurrentUser();
+    const role = currentUser?.currentUser?.role;
+    if (!currentUser || (role !== "admin" && role !== "editor")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const existingInternship = await db
+      .select()
+      .from(internships)
+      .where(and(eq(internships.id, id), isNull(internships.deletedAt)))
+      .limit(1);
+
+    if (existingInternship.length === 0) {
+      return NextResponse.json(
+        { error: "Internship not found" },
+        { status: 404 }
+      );
+    }
+
+    const internship = existingInternship[0];
+
+    const updatedInternship = await db
+      .update(internships)
+      .set({
+        isActive: !internship.isActive, // toggle hide/unhide
+        updatedAt: new Date(),
+      })
+      .where(eq(internships.id, id))
+      .returning();
+
+    return NextResponse.json({
+      success: true,
+      internship: updatedInternship[0],
+    });
+  } catch (error) {
+    console.error("Error updating internship visibility:", error);
+    return NextResponse.json(
+      { error: "Failed to update internship visibility" },
       { status: 500 }
     );
   }
@@ -116,8 +174,6 @@ export async function PUT(
     if (!id) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
-
-
 
     const currentUser = await getCurrentUser();
     if (!currentUser || !currentUser.currentUser?.id) {
@@ -142,9 +198,11 @@ export async function PUT(
 
     const internship = existingInternship[0];
     const isOwner = internship.userId === currentUser.currentUser.id;
-    const isAdmin = currentUser.currentUser.role === "admin";
+    const isModerator =
+      currentUser.currentUser.role === "admin" ||
+      currentUser.currentUser.role === "editor";
 
-    if (!isOwner && !isAdmin) {
+    if (!isOwner && !isModerator) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -204,10 +262,10 @@ export async function PUT(
     if (validatedData.stipend !== undefined) {
       updateData.stipend = validatedData.stipend;
     }
-    if (validatedData.isVerified !== undefined && isAdmin) {
+    if (validatedData.isVerified !== undefined && isModerator) {
       updateData.isVerified = validatedData.isVerified;
     }
-    if (validatedData.isActive !== undefined && isAdmin) {
+    if (validatedData.isActive !== undefined && isModerator) {
       updateData.isActive = validatedData.isActive;
     }
 
@@ -251,8 +309,6 @@ export async function DELETE(
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
-
-
     const currentUser = await getCurrentUser();
     if (!currentUser || !currentUser.currentUser?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -273,9 +329,11 @@ export async function DELETE(
 
     const internship = existingInternship[0];
     const isOwner = internship.userId === currentUser.currentUser.id;
-    const isAdmin = currentUser.currentUser.role === "admin";
+    const isModerator =
+      currentUser.currentUser.role === "admin" ||
+      currentUser.currentUser.role === "editor";
 
-    if (!isOwner && !isAdmin) {
+    if (!isOwner && !isModerator) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

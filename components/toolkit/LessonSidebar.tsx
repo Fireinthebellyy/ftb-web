@@ -41,6 +41,14 @@ export default function LessonNavigation({
           {sortedItems.map((item) => {
             const isActive = item.id === currentItemId;
             const isCompleted = completedItems.includes(item.id);
+            const hasVideo = Boolean(item.bunnyVideoUrl?.trim());
+            const hasArticle = Boolean(item.content?.trim());
+            const lessonTypeLabel =
+              hasArticle && hasVideo
+                ? "article + video"
+                : hasVideo
+                  ? "video"
+                  : "article";
 
             return (
               <li key={item.id}>
@@ -58,14 +66,14 @@ export default function LessonNavigation({
                       "flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full",
                       isActive
                         ? "bg-orange-500 text-white"
-                        : item.type === "video"
+                        : hasVideo
                           ? "bg-red-100 text-red-600"
                           : "bg-blue-100 text-blue-600"
                     )}
                   >
                     {isCompleted ? (
                       <CheckCircle className="h-4 w-4" />
-                    ) : item.type === "video" ? (
+                    ) : hasVideo ? (
                       <Video className="h-3.5 w-3.5" />
                     ) : (
                       <FileText className="h-3.5 w-3.5" />
@@ -82,7 +90,7 @@ export default function LessonNavigation({
                       {item.title}
                     </p>
                     <p className="text-xs text-gray-500 capitalize">
-                      {item.type}
+                      {lessonTypeLabel}
                     </p>
                   </div>
 

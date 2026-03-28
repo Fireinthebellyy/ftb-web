@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Lock, Bookmark, Loader2, Pin } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
-import { useInView } from "react-intersection-observer";
 import PageBannerCarousel from "@/components/banner/PageBannerCarousel";
 import FeaturedToolkits from "@/components/toolkit/FeaturedToolkits";
 import { Button } from "@/components/ui/button";
@@ -24,7 +23,16 @@ type UngatekeepPost = {
   linkTitle?: string | null;
   linkImage?: string | null;
   videoUrl?: string | null;
-  tag?: "announcement" | "company_experience" | "resources" | "playbooks" | "college_hacks" | "interview" | "ama_drops" | "ftb_recommends" | null;
+  tag?:
+    | "announcement"
+    | "company_experience"
+    | "resources"
+    | "playbooks"
+    | "college_hacks"
+    | "interview"
+    | "ama_drops"
+    | "ftb_recommends"
+    | null;
   isPinned: boolean;
   isSaved?: boolean;
   publishedAt?: string | null;
@@ -41,7 +49,7 @@ type UngatekeepResponse = {
 
 export default function UngatekeepPage() {
   const { data: session } = useSession();
-  const { ref, inView } = useInView();
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   const savedButtonControls = useAnimation();
   const { data: savedCountData } = useQuery({
     queryKey: ["ungatekeep-saved-count", session?.user?.id],
@@ -67,7 +75,9 @@ export default function UngatekeepPage() {
     queryKey: ["ungatekeep", session?.user?.id],
     queryFn: async ({ pageParam = 1 }) => {
       try {
-        const response = await axios.get(`/api/ungatekeep?page=${pageParam}&limit=10`);
+        const response = await axios.get(
+          `/api/ungatekeep?page=${pageParam}&limit=10`
+        );
         return response.data;
       } catch (error) {
         console.error("Error fetching ungatekeep posts:", error);
@@ -86,10 +96,33 @@ export default function UngatekeepPage() {
   });
 
   useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
+    const target = loadMoreRef.current;
+    if (!target || !hasNextPage) {
+      return;
     }
-  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries.some((entry) => entry.isIntersecting) &&
+          !isFetchingNextPage
+        ) {
+          fetchNextPage();
+        }
+      },
+      {
+        threshold: 0,
+        rootMargin: "200px",
+      }
+    );
+
+    observer.observe(target);
+
+    return () => {
+      observer.unobserve(target);
+      observer.disconnect();
+    };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Refetch when session changes (login/logout) to ensure correct permissions/isSaved status
   useEffect(() => {
@@ -97,17 +130,18 @@ export default function UngatekeepPage() {
   }, [session?.user?.id, refetch]);
 
   const posts = data?.pages.flatMap((page) => page.posts) ?? [];
-  const pinnedPosts = posts.filter(post => post.isPinned);
+  const pinnedPosts = posts.filter((post) => post.isPinned);
   const firstPage = data?.pages[0];
 
   const scrollToPost = (id: string) => {
     const element = document.getElementById(`post-${id}`);
     if (element) {
       const navbarHeight = 80;
-      const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+      const elementPosition =
+        element.getBoundingClientRect().top + window.scrollY;
       window.scrollTo({
         top: elementPosition - navbarHeight,
-        behavior: "smooth"
+        behavior: "smooth",
       });
     }
   };
@@ -152,14 +186,14 @@ export default function UngatekeepPage() {
           <div className="min-w-0 flex-1">
             <PageBannerCarousel
               placement="ungatekeep"
-              className="w-full mb-4 lg:mb-6"
+              className="mb-4 w-full lg:mb-6"
             />
             <div className="flex items-start justify-between">
               <div>
                 <h1 className="mb-1 text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
                   Ungatekeep
                 </h1>
-                <p className="text-sm text-gray-600 md:text-base mb-3">
+                <p className="mb-3 text-sm text-gray-600 md:text-base">
                   Posting everything students usually figure out too late.
                 </p>
               </div>
@@ -167,11 +201,11 @@ export default function UngatekeepPage() {
                 <Link
                   href="/ungatekeep/saved"
                   aria-label="View saved posts"
-                  className="group relative flex items-center gap-1.5 rounded-full border bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm transition-all hover:bg-gray-50 hover:text-primary active:scale-95"
+                  className="group hover:text-primary relative flex items-center gap-1.5 rounded-full border bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm transition-all hover:bg-gray-50 active:scale-95"
                 >
-                  <Bookmark className="h-3 w-3 sm:h-4 sm:w-4 transition-colors group-hover:fill-primary group-hover:text-primary" />
+                  <Bookmark className="group-hover:fill-primary group-hover:text-primary h-3 w-3 transition-colors sm:h-4 sm:w-4" />
                   {savedCount > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-white">
+                    <span className="bg-primary absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[10px] text-white">
                       {savedCount}
                     </span>
                   )}
@@ -193,7 +227,7 @@ export default function UngatekeepPage() {
                   >
                     <div className="flex items-center gap-2">
                       <Pin className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-                      <p className="line-clamp-2 flex-1 text-[11px] font-medium text-yellow-800 leading-tight">
+                      <p className="line-clamp-2 flex-1 text-[11px] leading-tight font-medium text-yellow-800">
                         {stripHtml(post.content)}
                       </p>
                     </div>
@@ -230,9 +264,9 @@ export default function UngatekeepPage() {
                 ))}
 
                 {hasNextPage && (
-                  <div ref={ref} className="flex justify-center py-4">
+                  <div ref={loadMoreRef} className="flex justify-center py-4">
                     {isFetchingNextPage && (
-                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <Loader2 className="text-primary h-6 w-6 animate-spin" />
                     )}
                   </div>
                 )}

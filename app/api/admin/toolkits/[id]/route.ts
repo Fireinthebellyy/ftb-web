@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { logAdminActivity } from "@/lib/admin-activity";
+import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { db } from "@/lib/db";
 import { toolkits } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
@@ -30,8 +31,8 @@ const updateToolkitSchema = z.object({
   testimonials: z
     .array(
       z.object({
-        name: z.string().min(1, "Name is required"),
-        role: z.string().min(1, "Role is required"),
+        name: z.string(),
+        role: z.string(),
         message: z.string().min(1, "Message is required"),
       })
     )
@@ -63,7 +64,7 @@ export async function PUT(
     if (
       !currentUser ||
       !currentUser.currentUser?.id ||
-      currentUser.currentUser.role !== "admin"
+      !canAccessAdminTab(currentUser.currentUser.role, "toolkits")
     ) {
       activityStatus = 401;
       activityError = "Unauthorized";
@@ -198,7 +199,7 @@ export async function DELETE(
     if (
       !currentUser ||
       !currentUser.currentUser?.id ||
-      currentUser.currentUser.role !== "admin"
+      !canAccessAdminTab(currentUser.currentUser.role, "toolkits")
     ) {
       activityStatus = 401;
       activityError = "Unauthorized";

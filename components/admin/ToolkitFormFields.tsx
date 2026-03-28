@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Control, useFieldArray } from "react-hook-form";
 import { Plus, Trash2 } from "lucide-react";
 import {
@@ -38,23 +37,10 @@ export function ToolkitFormFields({
   onBannerImageRemove,
   isSubmitting = false,
 }: ToolkitFormFieldsProps) {
-  const [highlightsInput, setHighlightsInput] = useState("");
   const { fields, append, remove } = useFieldArray({
     control,
     name: "testimonials",
   });
-
-  useEffect(() => {
-    const subscription = control._subjects.state.subscribe({
-      next: (state: any) => {
-        const value = state.values?.highlights;
-        if (value !== undefined && Array.isArray(value)) {
-          setHighlightsInput(value.join(", "));
-        }
-      },
-    });
-    return () => subscription.unsubscribe();
-  }, [control]);
 
   return (
     <>
@@ -233,11 +219,9 @@ export function ToolkitFormFields({
             <FormControl>
               <Input
                 placeholder="Lifetime access, Downloadable resources, Certificate"
-                value={highlightsInput}
+                value={field.value?.join(", ") ?? ""}
                 onChange={(e) => {
-                  const value = e.target.value;
-                  setHighlightsInput(value);
-                  field.onChange(value.split(",").map((s) => s.trim()));
+                  field.onChange(e.target.value.split(","));
                 }}
               />
             </FormControl>
@@ -269,7 +253,7 @@ export function ToolkitFormFields({
                 name={`testimonials.${index}.name`}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name *</FormLabel>
+                    <FormLabel>Name</FormLabel>
                     <FormControl>
                       <Input placeholder="Aditi Sharma" {...field} />
                     </FormControl>
@@ -283,7 +267,7 @@ export function ToolkitFormFields({
                 name={`testimonials.${index}.role`}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Role *</FormLabel>
+                    <FormLabel>Role</FormLabel>
                     <FormControl>
                       <Input placeholder="Final Year Student" {...field} />
                     </FormControl>

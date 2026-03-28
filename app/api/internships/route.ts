@@ -89,8 +89,6 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
-    const limitParam = Number.parseInt(searchParams.get("limit") ?? "", 10);
-    const offsetParam = Number.parseInt(searchParams.get("offset") ?? "", 10);
     const searchParam = searchParams.get("search");
     const typesParam = searchParams.get("types") ?? searchParams.get("type");
     const tagsParam = searchParams.get("tags");
@@ -104,8 +102,6 @@ export async function GET(req: NextRequest) {
       10
     );
 
-    const limit = Number.isNaN(limitParam) ? 10 : limitParam;
-    const offset = Number.isNaN(offsetParam) ? 0 : offsetParam;
     const searchTerm = searchParam ? searchParam.trim() : "";
     const rawTypes = typesParam
       ? typesParam
@@ -116,13 +112,20 @@ export async function GET(req: NextRequest) {
     const validTypes = rawTypes.filter((type) =>
       canonicalTypes.includes(type as (typeof canonicalTypes)[number])
     );
+
     const rawTags = tagsParam
       ? tagsParam
           .split(",")
           .map((value) => value.trim().toLowerCase())
           .filter(Boolean)
       : [];
-    const location = locationParam ? locationParam.trim() : "";
+
+    const rawLocations = locationParam
+      ? locationParam
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean)
+      : [];
     const minStipend = Number.isNaN(minStipendParam)
       ? undefined
       : minStipendParam;
@@ -160,15 +163,19 @@ export async function GET(req: NextRequest) {
           )`
       );
 
-      if (tagConditions.length === 1) {
-        conditions.push(tagConditions[0]);
-      } else {
-        conditions.push(or(...tagConditions));
-      }
+      conditions.push(tagConditions.length === 1 ? tagConditions[0] : or(...tagConditions));
     }
 
-    if (location) {
-      conditions.push(ilike(internships.location, `%${location}%`));
+    if (rawLocations.length > 0) {
+      const locationConditions = rawLocations.map((value) =>
+        ilike(internships.location, `%${value}%`)
+      );
+
+      if (locationConditions.length === 1) {
+        conditions.push(locationConditions[0]);
+      } else {
+        conditions.push(or(...locationConditions));
+      }
     }
 
     if (minStipend !== undefined) {
@@ -179,16 +186,14 @@ export async function GET(req: NextRequest) {
       conditions.push(lte(internships.stipend, maxStipend));
     }
 
-    // Filter: Show internships created in last 5 days OR with future deadline
+    // 🔥 Recent OR future deadline filter
     const fiveDaysAgo = new Date();
     fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
     fiveDaysAgo.setHours(0, 0, 0, 0);
 
     conditions.push(
       or(
-        // Created within last 5 days
         gte(internships.createdAt, fiveDaysAgo),
-        // OR has a future deadline (deadline > today)
         and(
           isNull(internships.deletedAt),
           gt(internships.deadline, sql`CURRENT_DATE`)
@@ -199,7 +204,8 @@ export async function GET(req: NextRequest) {
     const filters =
       conditions.length === 1 ? conditions[0] : and(...conditions);
 
-    const paginated = await db
+    // ✅ NO LIMIT (ALL DATA)
+    const allInternships = await db
       .select({
         id: internships.id,
         title: internships.title,
@@ -218,6 +224,7 @@ export async function GET(req: NextRequest) {
         createdAt: internships.createdAt,
         updatedAt: internships.updatedAt,
         isVerified: internships.isVerified,
+        isFlagged: internships.isFlagged,
         isActive: internships.isActive,
         userId: internships.userId,
         user: {
@@ -230,24 +237,12 @@ export async function GET(req: NextRequest) {
       .from(internships)
       .leftJoin(user, eq(internships.userId, user.id))
       .where(filters)
-      .orderBy(desc(internships.createdAt))
-      .limit(limit + 1)
-      .offset(offset);
-
-    const hasMore = paginated.length > limit;
-    const pageItems = hasMore ? paginated.slice(0, limit) : paginated;
-    const totalCount = hasMore ? offset + limit + 1 : offset + pageItems.length;
+      .orderBy(desc(internships.createdAt));
 
     return NextResponse.json(
       {
         success: true,
-        internships: pageItems,
-        pagination: {
-          limit,
-          offset,
-          total: totalCount,
-          hasMore,
-        },
+        internships: allInternships,
       },
       { status: 200 }
     );

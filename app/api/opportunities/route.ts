@@ -148,10 +148,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const validatedData = opportunitySchema.parse(body);
 
-    // Check user role - users with role "user" need approval, members and admins can post directly
     const canPostDirectly = userRole === "admin" || userRole === "member";
 
-    // Build insertData with careful array handling
     const insertData: any = {
       type: validatedData.type,
       title: validatedData.title,
@@ -159,11 +157,9 @@ export async function POST(req: NextRequest) {
       userId: session.user.id,
       isFlagged: false,
       isVerified: false,
-      // Set isActive based on user role - members and admins post directly, users need approval
       isActive: canPostDirectly,
     };
 
-    // Handle arrays properly - only add if they have values
     if (validatedData.tags && Array.isArray(validatedData.tags)) {
       timer.mark("tags_upsert_start", {
         incomingTags: validatedData.tags.length,
@@ -191,7 +187,6 @@ export async function POST(req: NextRequest) {
       insertData.attachments = validatedData.attachments;
     }
 
-    // Optional string fields
     if (validatedData.location) {
       insertData.location = validatedData.location;
     }
@@ -200,11 +195,9 @@ export async function POST(req: NextRequest) {
       insertData.organiserInfo = validatedData.organiserInfo;
     }
 
-    // Date handling - convert to proper date format
     if (validatedData.startDate) {
       const startDate = new Date(validatedData.startDate);
       if (!isNaN(startDate.getTime())) {
-        // Convert to YYYY-MM-DD format for PostgreSQL date type
         insertData.startDate = startDate.toISOString().split("T")[0];
       }
     }
@@ -212,7 +205,6 @@ export async function POST(req: NextRequest) {
     if (validatedData.endDate) {
       const endDate = new Date(validatedData.endDate);
       if (!isNaN(endDate.getTime())) {
-        // Convert to YYYY-MM-DD format for PostgreSQL date type
         insertData.endDate = endDate.toISOString().split("T")[0];
       }
     }
@@ -284,7 +276,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get pagination parameters from URL
     const { searchParams } = new URL(req.url);
     const limitParam = Number.parseInt(searchParams.get("limit") ?? "", 10);
     const offsetParam = Number.parseInt(searchParams.get("offset") ?? "", 10);
@@ -311,9 +302,8 @@ export async function GET(req: NextRequest) {
           .filter(Boolean)
       : [];
 
-    // Validate pagination parameters
-    const validLimit = Math.min(Math.max(limit, 1), 50); // Between 1 and 50
-    const validOffset = Math.max(offset, 0); // Non-negative
+    const validLimit = Math.min(Math.max(limit, 1), 50);
+    const validOffset = Math.max(offset, 0);
     const idsParam = searchParams.get("ids");
     const ids = idsParam
       ? idsParam
@@ -454,12 +444,12 @@ export async function GET(req: NextRequest) {
     };
 
     let paginated: Awaited<ReturnType<typeof fetchPage>>["paginated"];
-    let totalCount = 0;
+    let totalCount: number;
 
     try {
       const result = await fetchPage(true);
       paginated = result.paginated;
-      totalCount = result.totalCount;
+      totalCount = result.totalCount ?? 0;
     } catch (error) {
       if (!isMissingPublishAtColumnError(error)) {
         throw error;
@@ -468,24 +458,13 @@ export async function GET(req: NextRequest) {
       timer.mark("publish_at_fallback");
       const result = await fetchPage(false);
       paginated = result.paginated;
-      totalCount = result.totalCount;
+      totalCount = result.totalCount ?? 0;
     }
 
-    // (Resolved merge conflict: nothing needed here, this block is redundant and should be removed.)
     timer.mark("query_page_done", { rows: paginated.length });
 
-    const hasMore = paginated.length > validLimit;
-    const pageItems = hasMore ? paginated.slice(0, validLimit) : paginated;
-
-    if (!includeTotal) {
-      totalCount = hasMore
-        ? validOffset + validLimit + 1
-        : validOffset + pageItems.length;
-    }
-
-    // Calculate userHasUpvoted for each opportunity
     const currentUserId = session.user.id;
-    const opportunitiesWithUpvote = pageItems.map((opp) => {
+    const opportunitiesWithUpvote = paginated.map((opp) => {
       let userHasUpvoted = false;
       if (currentUserId && Array.isArray(opp.upvoterIds)) {
         userHasUpvoted = opp.upvoterIds.includes(currentUserId);
@@ -498,7 +477,6 @@ export async function GET(req: NextRequest) {
 
     timer.mark("transform_done", {
       rows: opportunitiesWithUpvote.length,
-      hasMore,
     });
 
     timer.end({ status: 200 });
@@ -506,12 +484,7 @@ export async function GET(req: NextRequest) {
       {
         success: true,
         opportunities: opportunitiesWithUpvote,
-        pagination: {
-          limit: validLimit,
-          offset: validOffset,
-          total: totalCount,
-          hasMore,
-        },
+        ...(includeTotal && { total: totalCount }),
       },
       { status: 200 }
     );

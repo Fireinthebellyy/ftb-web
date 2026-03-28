@@ -1,5 +1,7 @@
+import * as Sentry from "@sentry/nextjs";
 import { db } from "@/lib/db";
 import { logAdminActivity } from "@/lib/admin-activity";
+import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { opportunities, user, tags } from "@/lib/schema";
 import { getCurrentUserOptional } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
@@ -21,7 +23,10 @@ export async function GET(req: NextRequest) {
     // Check if user is admin - using optional to avoid redirect on API routes
     const currentUser = await getCurrentUserOptional();
     activityAdminUserId = currentUser?.currentUser?.id ?? null;
-    if (!currentUser || currentUser.currentUser?.role !== "admin") {
+    if (
+      !currentUser ||
+      !canAccessAdminTab(currentUser.currentUser?.role, "opportunities")
+    ) {
       activityStatus = 403;
       activityError = "Unauthorized";
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
@@ -105,6 +110,14 @@ export async function GET(req: NextRequest) {
     );
   } catch (error) {
     activityError = error;
+    Sentry.captureException(error, {
+      tags: {
+        action: "admin.opportunities.pending_list",
+      },
+      user: {
+        id: activityAdminUserId ?? undefined,
+      },
+    });
     console.error("Error fetching pending opportunities:", error);
     activityStatus = 500;
     return NextResponse.json(

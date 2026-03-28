@@ -1,307 +1,692 @@
 "use client";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
-import { Righteous } from "next/font/google";
-import { useRouter } from "next/navigation";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 
-const righteous = Righteous({
-  weight: "400",
+import { useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+import Link from "next/link";
+import { Inter, Outfit, Satisfy } from "next/font/google";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const outfit = Outfit({
   subsets: ["latin"],
-  variable: "--font-righteous",
+  weight: ["400", "500", "700"],
 });
 
-export default function LandingPage() {
-  const router = useRouter();
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
+
+const satisfy = Satisfy({
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
+const sfProClass = inter.className;
+
+const toolkitCards = [
+  { title: "Cold Mailing", description: "", compact: true },
+  { title: "Interviews", description: "", compact: true },
+  { title: "Case Comp", description: "Buy this toolkit to access\nexclusive content" },
+  { title: "CV/Resume", description: "Buy this toolkit to access\nexclusive content" },
+  { title: "Random Tool Kit", description: "Buy this toolkit to access\nexclusive content" },
+];
+
+const genericCards = [
+  "Random Tool Kit",
+  "Random Tool Kit",
+  "Random Tool Kit",
+  "Random Tool Kit",
+  "Random Tool Kit",
+  "Random Tool Kit",
+];
+
+function StarRow({ size = 20 }: { size?: number }) {
   return (
-    <div className="flex h-full grow flex-col">
-      <main className="flex-1 bg-gradient-to-b from-neutral-50 via-orange-50 to-neutral-50">
-        <section className="container mx-auto py-24 md:py-28">
-          <div className="px-4 text-center">
-            <div className="mx-auto max-w-6xl">
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className="mx-auto mb-4 w-52 rounded-full border border-orange-600/70 bg-orange-600/10 py-2 text-sm shadow-xl shadow-amber-600/10"
-              >
-                Built for ambitious students
-              </motion.p>
-
-              <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className={`${righteous.className} text-foreground mb-6 text-4xl leading-tight font-semibold tracking-tight md:text-7xl`}
-              >
-                Because the right{" "}
-                <span className="text-orange-600/70">opportunity</span> changes
-                everything.
-              </motion.h1>
-
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-                className="text-muted-foreground mx-auto mb-8 max-w-2xl text-base md:text-lg"
-              >
-                Access hackathons, grants, and competitions. Bookmark everything
-                and stay ahead of every deadline.
-              </motion.p>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  default: { duration: 0.5, delay: 0.6 },
-                  scale: { duration: 0.1 },
-                }}
-                whileHover={{ scale: 1.1, transition: { duration: 0.2 } }}
-                className="mx-auto mb-12 flex w-fit flex-col items-center justify-center gap-4 sm:flex-row"
-              >
-                <Button
-                  size="lg"
-                  variant="default"
-                  className="px-8 text-base text-shadow-sm"
-                  onClick={() => router.push("/opportunities")}
-                >
-                  Find your next opportunity
-                  <ArrowRight />
-                </Button>
-              </motion.div>
-            </div>
-          </div>
-        </section>
-        <section className="container mx-auto mb-4 flex min-h-[600px] flex-col justify-center gap-4 rounded-xl bg-orange-600/60 p-12 shadow-lg">
-          <h2 className="mb-8 text-center text-3xl font-bold text-white">
-            Supercharge Your Growth
-          </h2>
-
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              whileHover={{
-                scale: 1.05,
-                boxShadow: "0 10px 20px rgba(0,0,0,0.12)",
-              }}
-              className="flex cursor-pointer flex-col overflow-hidden rounded-xl border border-gray-200 bg-white"
-            >
-              <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200">
-                <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px]" />
-              </div>
-              <div className="flex flex-1 flex-col p-6">
-                <h3 className="mb-3 flex items-center gap-2 text-xl font-semibold text-gray-900">
-                  <ArrowRight className="h-5 w-5 text-orange-600" />
-                  Access Opportunities
-                </h3>
-                <p className="flex-1 text-base text-gray-700">
-                  Discover hackathons, grants, and competitions.
-                </p>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              whileHover={{
-                scale: 1.05,
-                boxShadow: "0 10px 20px rgba(0,0,0,0.12)",
-              }}
-              className="flex cursor-pointer flex-col overflow-hidden rounded-xl border border-gray-200 bg-white"
-            >
-              <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200">
-                <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px]" />
-              </div>
-              <div className="flex flex-1 flex-col p-6">
-                <h3 className="mb-3 flex items-center gap-2 text-xl font-semibold text-gray-900">
-                  <ArrowRight className="h-5 w-5 text-orange-600" />
-                  Crafted Resources
-                </h3>
-                <p className="flex-1 text-base text-gray-700">
-                  Access carefully selected resources on our featured route to
-                  boost your learning.
-                </p>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-              whileHover={{
-                scale: 1.05,
-                boxShadow: "0 10px 20px rgba(0,0,0,0.12)",
-              }}
-              className="flex cursor-pointer flex-col overflow-hidden rounded-xl border border-gray-200 bg-white"
-            >
-              <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200">
-                <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px]" />
-              </div>
-              <div className="flex flex-1 flex-col p-6">
-                <h3 className="mb-3 flex items-center gap-2 text-xl font-semibold text-gray-900">
-                  <ArrowRight className="h-5 w-5 text-orange-600" />
-                  Stay Ahead of Deadlines
-                </h3>
-                <p className="flex-1 text-base text-gray-700">
-                  Bookmark opportunities and never miss important deadlines.
-                </p>
-              </div>
-            </motion.div>
-          </div>
-        </section>
-
-        <section className="container mx-auto py-24 md:py-28">
-          <div className="px-4">
-            <div className="mx-auto max-w-6xl">
-              <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-start">
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
-                  className="lg:sticky lg:top-24"
-                >
-                  <h2
-                    className={`${righteous.className} mb-4 text-3xl font-semibold tracking-tight md:text-5xl`}
-                  >
-                    Frequently Asked Questions
-                  </h2>
-                  <p className="text-muted-foreground mb-6 text-base leading-relaxed md:text-lg">
-                    Everything you need to know about finding and managing
-                    opportunities
-                  </p>
-                  <p className="text-muted-foreground text-sm leading-relaxed md:text-base">
-                    Have questions? We&apos;ve got answers. Browse through our
-                    most commonly asked questions to learn more about how our
-                    platform works and how it can help you discover your next
-                    big opportunity.
-                  </p>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                >
-                  <Accordion
-                    type="single"
-                    collapsible
-                    className="w-full space-y-4"
-                  >
-                    <AccordionItem
-                      value="item-1"
-                      className="rounded-lg border border-gray-200 bg-white px-6 shadow-sm transition-shadow hover:shadow-md"
-                    >
-                      <AccordionTrigger className="text-left font-semibold text-gray-900 hover:no-underline">
-                        What types of opportunities can I find on this platform?
-                      </AccordionTrigger>
-                      <AccordionContent className="text-muted-foreground text-base leading-relaxed">
-                        Our platform features a wide range of opportunities
-                        including hackathons, grants, competitions, internships,
-                        scholarships, and other programs designed for ambitious
-                        students. You can browse by category, filter by
-                        deadline, and discover opportunities that match your
-                        interests and goals.
-                      </AccordionContent>
-                    </AccordionItem>
-
-                    <AccordionItem
-                      value="item-2"
-                      className="rounded-lg border border-gray-200 bg-white px-6 shadow-sm transition-shadow hover:shadow-md"
-                    >
-                      <AccordionTrigger className="text-left font-semibold text-gray-900 hover:no-underline">
-                        How do bookmarks work?
-                      </AccordionTrigger>
-                      <AccordionContent className="text-muted-foreground text-base leading-relaxed">
-                        You can bookmark any opportunity that interests you to
-                        save it for later. Bookmarked opportunities are stored
-                        in your profile, making it easy to track deadlines and
-                        revisit opportunities you&apos;re considering. This
-                        helps you stay organized and never miss an important
-                        deadline.
-                      </AccordionContent>
-                    </AccordionItem>
-
-                    <AccordionItem
-                      value="item-3"
-                      className="rounded-lg border border-gray-200 bg-white px-6 shadow-sm transition-shadow hover:shadow-md"
-                    >
-                      <AccordionTrigger className="text-left font-semibold text-gray-900 hover:no-underline">
-                        Is the platform free to use?
-                      </AccordionTrigger>
-                      <AccordionContent className="text-muted-foreground text-base leading-relaxed">
-                        Yes! Our platform is completely free for students. You
-                        can browse opportunities, create bookmarks, set up your
-                        profile, and access all features without any cost.
-                        We&apos;re committed to making opportunities accessible
-                        to all ambitious students.
-                      </AccordionContent>
-                    </AccordionItem>
-
-                    <AccordionItem
-                      value="item-4"
-                      className="rounded-lg border border-gray-200 bg-white px-6 shadow-sm transition-shadow hover:shadow-md"
-                    >
-                      <AccordionTrigger className="text-left font-semibold text-gray-900 hover:no-underline">
-                        How do I stay updated on new opportunities?
-                      </AccordionTrigger>
-                      <AccordionContent className="text-muted-foreground text-base leading-relaxed">
-                        New opportunities are added regularly to the platform.
-                        You can browse the opportunities page to see the latest
-                        additions, filter by date, and check the featured
-                        section for curated highlights. Make sure to bookmark
-                        opportunities you&apos;re interested in to track their
-                        deadlines.
-                      </AccordionContent>
-                    </AccordionItem>
-
-                    <AccordionItem
-                      value="item-5"
-                      className="rounded-lg border border-gray-200 bg-white px-6 shadow-sm transition-shadow hover:shadow-md"
-                    >
-                      <AccordionTrigger className="text-left font-semibold text-gray-900 hover:no-underline">
-                        Can I submit my own opportunities?
-                      </AccordionTrigger>
-                      <AccordionContent className="text-muted-foreground text-base leading-relaxed">
-                        Currently, opportunities are curated by our team to
-                        ensure quality and relevance. If you know of an
-                        opportunity that should be featured on our platform,
-                        please reach out through our feedback system. We&apos;re
-                        always looking to expand our database with valuable
-                        opportunities for students.
-                      </AccordionContent>
-                    </AccordionItem>
-
-                    <AccordionItem
-                      value="item-6"
-                      className="rounded-lg border border-gray-200 bg-white px-6 shadow-sm transition-shadow hover:shadow-md"
-                    >
-                      <AccordionTrigger className="text-left font-semibold text-gray-900 hover:no-underline">
-                        What information do I need to create an account?
-                      </AccordionTrigger>
-                      <AccordionContent className="text-muted-foreground text-base leading-relaxed">
-                        Creating an account is simple and quick. You&apos;ll
-                        need a valid email address to sign up. Once registered,
-                        you can enhance your profile with information about your
-                        interests, current role, and field of study to get
-                        personalized opportunity recommendations.
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                </motion.div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
+    <div className="flex items-center gap-2">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <span key={index} className="inline-block text-white" style={{ fontSize: `${size}px`, lineHeight: 1 }}>
+          ★
+        </span>
+      ))}
     </div>
+  );
+}
+
+
+
+function HeroSection() {
+  return (
+    <section className="px-4 py-4 md:px-8 md:py-8">
+      <div className="flex flex-col items-center gap-2">
+        <div className="flex w-full flex-col items-center gap-4 px-0 pt-[10px] pb-[10px] text-center">
+          <h1 className={`${outfit.className} max-w-[408px] text-[44px] leading-[50px] font-bold tracking-[-2.25px] text-black md:max-w-[820px] md:text-[68px] md:leading-[72px]`}>
+            Everything you need to get ahead.
+            <br />
+            Finally, in one place.
+          </h1>
+          <p className={`${inter.className} max-w-[330px] text-center text-2xl leading-8 font-normal tracking-[-0.25px] text-black/50 md:max-w-[760px] md:text-[30px] md:leading-[38px]`}>
+            So you stop missing out and start making smarter moves.
+          </p>
+        </div>
+
+        <div className="relative h-[256px] w-[282px] md:h-[420px] md:w-[500px]">
+          <Image src="/images/pingo.png" alt="Hero visual" fill priority sizes="(min-width: 768px) 500px, 282px" className="object-contain object-top" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TaglineSection() {
+  return (
+    <section className="px-4 pt-4 pb-0 md:px-8 md:pt-6">
+      <h2 className="px-[10px] text-center text-[40px] leading-10 tracking-[-2.25px] md:text-[64px] md:leading-[64px]">
+        <span className={`${outfit.className} font-bold text-[rgba(0,0,0,0.8)]`}>Turning your</span>
+        <span className={`${satisfy.className} text-[#ff6e00]`}> 20&rsquo;s ka suffer</span>
+        <span className={`${outfit.className} font-bold text-[rgba(0,0,0,0.8)]`}> into </span>
+        <span className={`${satisfy.className} lowercase text-[#ff6e00]`}>सफ़र</span>
+      </h2>
+    </section>
+  );
+}
+
+function InternshipStripClient() {
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  const slides = [
+    {
+      key: "internships",
+      title: "Internships",
+      description: "Apply smarter, track everything & add to calendar - hit the golden window",
+      leftImage: "/images/internship.png",
+      leftMode: "badge",
+    },
+    {
+      key: "toolkits",
+      title: "Toolkits",
+      description: "Cold emails, interviews & case comps - mastered with playbooks that ACTUALLY work.",
+      leftImage: "/images/toolkits-left.png",
+      leftMode: "cover",
+    },
+    {
+      key: "opportunities",
+      title: "Opportunities",
+      description: "Discover & never ever miss a deadline - hackathons, competitions, fellowships & more",
+      leftImage: "/images/opportunities-graphics.png",
+      leftMode: "cover",
+    },
+    {
+      key: "ungatekeep",
+      title: "Ungatekeep",
+      description: "Zero gatekeeping - just recommendations & real answers to college AMAs",
+      leftImage: "/images/ungatekeep-left.png",
+      leftMode: "cover",
+    },
+  ] as const;
+
+  const goToPrevious = () => {
+    setActiveSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+  };
+
+  const goToNext = () => {
+    setActiveSlide((prev) => (prev + 1) % slides.length);
+  };
+
+  return (
+    <section className="pt-4 pb-4 md:px-8 md:py-8">
+      <div className="mx-auto w-[400px] overflow-hidden px-5 md:w-[680px] md:px-0">
+        <div
+          className="flex transition-transform duration-300 ease-out"
+          style={{ transform: `translateX(-${activeSlide * 100}%)` }}
+        >
+          {slides.map((slide) => (
+            <article key={slide.key} className="w-[400px] shrink-0 md:w-[680px]">
+              <div className="mx-auto h-[240px] w-[390px] rounded-2xl border border-black/30 bg-white p-[10px] md:h-[320px] md:w-[660px] md:rounded-[24px] md:p-4">
+                <div className="grid h-full grid-cols-[160px_200px] gap-[10px] md:grid-cols-[280px_340px] md:gap-4">
+                  {slide.leftMode === "badge" ? (
+                    <div className="flex h-[220px] flex-col justify-between rounded-2xl bg-white p-4 md:h-[288px] md:p-6">
+                      <div className="h-[37px] w-[142px] rounded-2xl md:h-[56px] md:w-[220px]" />
+                      <div className="relative h-[37px] w-[128px] overflow-hidden rounded-2xl md:h-[52px] md:w-[200px]">
+                        <Image src={slide.leftImage} alt={`${slide.title} badge`} fill className="object-contain object-left" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative h-[220px] w-[160px] overflow-hidden rounded-2xl md:h-[288px] md:w-[280px]">
+                      <Image src={slide.leftImage} alt={`${slide.title} visual`} fill className="object-cover" />
+                    </div>
+                  )}
+
+                  <div className="flex h-[220px] flex-col border border-black/30 bg-white p-3 md:h-[288px] md:p-5">
+                    <div className="mb-2 flex justify-end md:mb-4">
+                      <div className="relative size-[50px] overflow-hidden md:size-[72px]">
+                        <Image src="/images/ftb-seal.png" alt="icon" fill className="object-contain" />
+                      </div>
+                    </div>
+
+                    <div className="mt-1 rounded-2xl px-1 text-center">
+                      <h3 className={`${outfit.className} text-[20px] leading-[25px] font-medium text-black md:text-[36px] md:leading-[40px]`}>{slide.title}</h3>
+                      <p className={`${sfProClass} mt-2 text-[16px] leading-4 text-black/50 md:text-[24px] md:leading-[26px]`}>{slide.description}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-2 flex items-center justify-center gap-[16.74px]">
+        <button
+          type="button"
+          aria-label="Previous slide"
+          onClick={goToPrevious}
+          className="grid size-[46px] place-items-center rounded-full border border-black/20 bg-white text-[#ff6e00]"
+        >
+          <ChevronLeft className="size-[30px]" />
+        </button>
+        <button
+          type="button"
+          aria-label="Next slide"
+          onClick={goToNext}
+          className="grid size-[46px] place-items-center rounded-full border border-black/20 bg-white text-[#ff6e00]"
+        >
+          <ChevronRight className="size-[30px]" />
+        </button>
+      </div>
+    </section>
+  );
+}
+
+const InternshipStrip = dynamic(async () => InternshipStripClient, {
+  ssr: false,
+});
+
+function TrustedSection() {
+  const logos = ["/images/du.png", "/images/christ.jpg", "/images/manipal.png", "/images/srcc.png", "/images/ssc.png", "/images/bhu.png", "/images/iim.jpg"];
+
+  return (
+    <section className="px-4 pb-0">
+      <div className="rounded-2xl bg-white p-4">
+        <div className="mx-auto w-fit text-center">
+          <p className={`${outfit.className} text-[12px] text-black/50`}>Rated</p>
+          <p className={`${outfit.className} text-[40px] leading-[50px] font-bold text-black`}>4.8/5</p>
+        </div>
+        <p className={`${sfProClass} mt-2 text-center text-[16px] leading-normal`}>
+          <span className="font-normal text-[rgba(0,0,0,0.5)]">
+            Trusted by ambitious students &amp; early career professionals from across
+          </span>
+          <span className="font-medium text-[rgba(0,0,0,0.8)]"> </span>
+          <span className="font-semibold text-[rgba(0,0,0,0.6)]">Delhi University | Christ University | IIITs | IIMs | BHU</span>
+        </p>
+
+        <div className="relative mt-2 overflow-hidden">
+          <div className="animate-marquee-slow flex w-max items-center gap-8">
+            <div className="flex items-center gap-8">
+              {logos.map((logo, index) => (
+                <div key={`logo-${index}`} className="relative h-[81px] w-[70px] shrink-0">
+                  <Image src={logo} alt="University logo" fill className="object-contain" />
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-8" aria-hidden="true">
+              {logos.map((logo, index) => (
+                <div key={`logo-dup-${index}`} className="relative h-[81px] w-[70px] shrink-0">
+                <Image src={logo} alt="University logo" fill className="object-contain" />
+              </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function useDragMarquee() {
+  const [paused, setPaused] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const isDown = useRef(false);
+  const startX = useRef(0);
+  const scrollLeftRef = useRef(0);
+
+  const cleanupDrag = (pointerId?: number) => {
+    const el = containerRef.current;
+    isDown.current = false;
+    if (el && pointerId !== undefined) {
+      try {
+        el.releasePointerCapture(pointerId);
+      } catch {}
+    }
+    setPaused(false);
+  };
+
+  const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const el = containerRef.current;
+    if (!el) return;
+    isDown.current = true;
+    try {
+      el.setPointerCapture?.(e.pointerId);
+    } catch {}
+    startX.current = e.clientX;
+    scrollLeftRef.current = el.scrollLeft;
+    setPaused(true);
+  };
+
+  const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!isDown.current || !containerRef.current) return;
+    const walk = e.clientX - startX.current;
+    containerRef.current.scrollLeft = scrollLeftRef.current - walk;
+  };
+
+  const onPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    cleanupDrag(e.pointerId);
+  };
+
+  const onPointerLeave = () => {
+    cleanupDrag();
+  };
+
+  const onPointerCancel = () => {
+    cleanupDrag();
+  };
+
+  const onKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const viewportStep = Math.max(120, Math.round(el.clientWidth * 0.8));
+
+    if (e.key === "ArrowRight" || e.key === "PageDown") {
+      e.preventDefault();
+      setPaused(true);
+      el.scrollBy({ left: viewportStep, behavior: "smooth" });
+      return;
+    }
+
+    if (e.key === "ArrowLeft" || e.key === "PageUp") {
+      e.preventDefault();
+      setPaused(true);
+      el.scrollBy({ left: -viewportStep, behavior: "smooth" });
+      return;
+    }
+
+    if (e.key === "Home") {
+      e.preventDefault();
+      setPaused(true);
+      el.scrollTo({ left: 0, behavior: "smooth" });
+      return;
+    }
+
+    if (e.key === "End") {
+      e.preventDefault();
+      setPaused(true);
+      el.scrollTo({ left: el.scrollWidth, behavior: "smooth" });
+    }
+  };
+
+  const onBlur = () => {
+    cleanupDrag();
+  };
+
+  return {
+    paused,
+    setPaused,
+    containerRef,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerLeave,
+    onPointerCancel,
+    onKeyDown,
+    onBlur,
+  };
+}
+
+function ToolkitCarousel() {
+  return (
+    <section className="mt-0 bg-black px-4 pt-2 pb-2 md:px-8 md:py-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h3 className={`${outfit.className} text-[30px] leading-[30px] font-medium tracking-[-0.25px] text-white`}>Trending toolkits</h3>
+          <p className={`${outfit.className} mt-0 text-[20px] leading-5 tracking-[-0.25px] text-[#ff6e00]/75`}>Built to get you moving &amp; acing</p>
+        </div>
+        <Link href="/toolkit" className={`${outfit.className} text-[16px] leading-[110px] tracking-[-0.25px] text-[#ff6e00]`}>
+          See All
+        </Link>
+      </div>
+
+      <div className="hide-scrollbar overflow-x-auto pb-2">
+        <div className="flex w-max gap-2">
+          {toolkitCards.map((card, index) => (
+            <article
+              key={`${card.title}-${index}`}
+              className="mt-2 flex h-[270px] w-[218px] shrink-0 flex-col justify-between rounded-2xl border border-white/50 px-4 py-4 md:h-[340px] md:w-[280px] md:px-5 md:py-5"
+            >
+              <div>
+                <h4 className={`${outfit.className} text-center text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-white`}>{card.title}</h4>
+                {card.description ? (
+                  <p className={`${sfProClass} mt-1 whitespace-pre-line text-center text-[20px] leading-[30px] tracking-[-1px] text-white/50`}>
+                    {card.description}
+                  </p>
+                ) : (
+                  <div className="mt-1 flex justify-center">
+                    <StarRow size={20} />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between gap-[10px]">
+                <Link
+                  href="/buy"
+                  className={`${outfit.className} inline-flex h-12 items-center justify-center whitespace-nowrap rounded-[39px] bg-white px-3 text-[18px] leading-none font-medium tracking-[-0.25px] text-black`}
+                >
+                  Buy now
+                </Link>
+                <Link
+                  href="/explore"
+                  className={`${sfProClass} inline-flex h-12 items-center justify-center whitespace-nowrap rounded-[39px] border border-white/50 px-3 text-[18px] leading-none font-normal tracking-[-0.25px] text-white/50`}
+                >
+                  Explore
+                </Link>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+interface CardCarouselSectionProps {
+  title: string;
+  subtitle: string;
+  href: string;
+  spacing?: "featured" | "compact";
+}
+
+function CardCarouselSection({
+  title,
+  subtitle,
+  href,
+  spacing = "compact",
+}: CardCarouselSectionProps) {
+  const stackGapClass = spacing === "featured" ? "gap-8" : "gap-4";
+  const titleClass =
+    spacing === "featured"
+      ? `${outfit.className} text-[30px] leading-[30px] font-medium tracking-[-2.25px] text-black/80`
+      : `${outfit.className} whitespace-pre-line md:whitespace-nowrap text-[30px] leading-[30px] font-medium tracking-[-2.25px] text-black/80`;
+  const subtitleClass =
+    spacing === "featured"
+      ? `${outfit.className} w-full text-[20px] leading-5 tracking-[-0.25px] text-black/50`
+      : `${outfit.className} whitespace-nowrap text-[20px] leading-5 tracking-[-0.25px] text-black/50`;
+
+  return (
+    <section className="bg-white px-4 py-4 md:px-8 md:py-6">
+      <div className={`flex flex-col ${stackGapClass}`}>
+        <div className="space-y-2 text-center">
+          <h3 className={titleClass}>{title}</h3>
+          <p className={subtitleClass}>{subtitle}</p>
+        </div>
+
+        {/* marquee with drag + hover-to-pause */}
+        <MarqueeLikeCards />
+
+        <Link href={href} className={`${sfProClass} text-left text-[16px] leading-[30px] font-medium tracking-[-1px] text-[#ff6e00]`}>
+          Learn more
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function MarqueeLikeCards() {
+  const {
+    paused,
+    setPaused,
+    containerRef,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerLeave,
+    onPointerCancel,
+    onKeyDown,
+    onBlur,
+  } = useDragMarquee();
+
+  return (
+    <div
+      ref={containerRef}
+      tabIndex={0}
+      role="region"
+      aria-label="Ungatekeep and internship cards carousel. Use arrow keys to scroll."
+      className={cn("hide-scrollbar mt-[6px]", paused ? "overflow-x-auto" : "overflow-hidden")}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerLeave={onPointerLeave}
+      onPointerCancel={onPointerCancel}
+      onKeyDown={onKeyDown}
+      onBlur={onBlur}
+    >
+      <div
+        role="list"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        className="animate-marquee-slow flex w-max gap-4"
+        style={{ minWidth: "200%", animationPlayState: paused ? "paused" : "running" }}
+      >
+        {genericCards
+          .map((title, index) => (
+            <div key={`card-${index}`} className="relative h-[199px] w-[160px] shrink-0 overflow-hidden rounded-2xl border border-black/20 md:h-[280px] md:w-[240px]">
+              <Image src="/images/graphic1.png" alt={`Card visual ${index + 1}`} fill className="object-cover" />
+            </div>
+          ))
+          .concat(
+            genericCards.map((title, index) => (
+              <div aria-hidden="true" key={`card-dup-${index}`} className="relative h-[199px] w-[160px] shrink-0 overflow-hidden rounded-2xl border border-black/20 md:h-[280px] md:w-[240px]">
+                <Image src="/images/graphic1.png" alt={`Card visual dup ${index + 1}`} fill className="object-cover" />
+              </div>
+            ))
+          )}
+      </div>
+    </div>
+  );
+}
+
+function OpportunitiesSection() {
+  const {
+    paused,
+    setPaused,
+    containerRef,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerLeave,
+    onPointerCancel,
+    onKeyDown,
+    onBlur,
+  } = useDragMarquee();
+
+  return (
+    <section className="bg-white px-4 py-4 md:px-8 md:py-6">
+      <div className="space-y-2 text-center">
+        <h3 className={`${outfit.className} text-[30px] leading-[30px] font-medium tracking-[-2.25px] text-black/80`}>
+          Talk of the hour in Opportunities
+        </h3>
+        <p className={`${outfit.className} whitespace-nowrap text-[20px] leading-5 tracking-[-0.25px] text-black/50`}>Step up, stand out - bring the A-game.</p>
+      </div>
+
+      <div
+        ref={containerRef}
+        tabIndex={0}
+        role="region"
+        aria-label="Opportunities carousel. Use arrow keys to scroll."
+        className={cn("hide-scrollbar mt-[10px]", paused ? "overflow-x-auto" : "overflow-hidden")}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerLeave}
+        onPointerCancel={onPointerCancel}
+        onKeyDown={onKeyDown}
+        onBlur={onBlur}
+      >
+        <div
+          role="list"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+          className="animate-marquee-slow flex w-max gap-4"
+          style={{ minWidth: "200%", animationPlayState: paused ? "paused" : "running" }}
+        >
+          {genericCards
+            .map((title, index) => (
+              <article key={`opp-${index}`} className="h-[199px] w-[160px] shrink-0 rounded-2xl border border-black/30 p-4 md:h-[280px] md:w-[240px] md:p-6">
+                <div className="relative mx-auto size-10">
+                  <Image src="/images/Shape Set.svg" alt="Opportunity icon" fill className="object-contain" />
+                </div>
+                <div className="mt-[10px] px-4 md:mt-6 md:px-2">
+                  <h4 className={`${outfit.className} whitespace-pre-line text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-black md:text-[34px] md:leading-[40px]`}>
+                    {title}
+                  </h4>
+                </div>
+              </article>
+            ))
+            .concat(
+              genericCards.map((title, index) => (
+                <article aria-hidden="true" key={`opp-dup-${index}`} className="h-[199px] w-[160px] shrink-0 rounded-2xl border border-black/30 p-4 md:h-[280px] md:w-[240px] md:p-6">
+                  <div className="relative mx-auto size-10">
+                    <Image src="/images/Shape Set.svg" alt="Opportunity icon" fill className="object-contain" />
+                  </div>
+                  <div className="mt-[10px] px-4 md:mt-6 md:px-2">
+                    <h4 className={`${outfit.className} whitespace-pre-line text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-black md:text-[34px] md:leading-[40px]`}>
+                      {title}
+                    </h4>
+                  </div>
+                </article>
+              ))
+            )}
+        </div>
+      </div>
+
+      <Link href="/opportunities" className={`${sfProClass} mt-4 text-left text-[16px] leading-[30px] font-medium tracking-[-1px] text-[#ff6e00]`}>
+        Learn more
+      </Link>
+    </section>
+  );
+}
+
+function FaqSection() {
+  const faqs = [
+    {
+      question: "What exactly is FTB?",
+      answer:
+        "FTB is an all-in-one platform for ambitious students across India to discover, track, and apply smarter to legit internships and opportunities. Beyond access, we solve for clarity - with Ungatekeep content and toolkits designed to give you an unfair advantage.",
+    },
+    {
+      question: "Who is FTB for?",
+      answer: "Students and early professionals in their 20s who want clarity, direction, and real opportunities to grow.",
+    },
+    {
+      question: "How do I actually use FTB to get ahead?",
+      answer: "Explore opportunities, save the ones that fit you, track deadlines, and use toolkits to apply smarter and improve your chances.",
+    },
+    {
+      question: "What kind of opportunities can I find here?",
+      answer: "Internships, case competitions, hackathons, fellowships, scholarships, and more - across multiple domains.",
+    },
+    {
+      question: "What is the \"Smart Apply\" feature?",
+      answer: "It helps you save, track, and manage your applications in one place - so you never miss the right moment to apply.",
+    },
+    {
+      question: "What are Toolkits? Are they worth it?",
+      answer: "Toolkits are step-by-step playbooks to help you land and crack opportunities. If you want to stop guessing and start getting results - they are worth it.",
+    },
+    {
+      question: "What is Ungatekeep?",
+      answer: "Everything students usually figure out too late - shared early. From cold emails to interview scripts, real answers and insider breakdowns.",
+    },
+    {
+      question: "Are these opportunities verified?",
+      answer: "Yes - opportunities are curated and verified by our team, along with trusted submissions from organizations and communities.",
+    },
+    {
+      question: "Can I intern with FTB or get involved?",
+      answer: "Yes! We are always looking for driven people to join us. Keep an eye on openings or reach out - we would love to hear from you.",
+    },
+    {
+      question: "Can I connect 1:1 for guidance or queries?",
+      answer:
+        "Yes - through mentorship sessions and community support (rolling out soon). You will also find answers through toolkits and Ungatekeep content.",
+    },
+    {
+      question: "How can I share feedback or a testimonial?",
+      answer: "We would love that. You can share feedback directly on the platform or reach out to us - we are always building with our users.",
+    },
+  ];
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  return (
+    <section className="bg-white px-4 py-4 md:px-8 md:py-8">
+      <div className="space-y-1 text-center">
+        <h3 className={`${outfit.className} text-[30px] leading-[30px] font-medium tracking-[-2.25px] text-black/80`}>
+          Frequently Asked Questions
+        </h3>
+        <p className={`${outfit.className} whitespace-nowrap text-[20px] leading-5 tracking-[-0.25px] text-[#ff6e00]/75`}>#beeninyourshoes</p>
+      </div>
+
+      <div className="mt-4">
+        {faqs.map((item, index) => (
+          <div key={`${item.question}-${index}`} className="rounded-none px-4 py-4">
+            <button
+              type="button"
+              onClick={() => setOpenIndex((prev) => (prev === index ? null : index))}
+              className="flex w-full items-center justify-between"
+              aria-expanded={openIndex === index}
+              aria-controls={`faq-answer-${index}`}
+            >
+              <p className={`${outfit.className} flex-1 pr-3 text-left text-[20px] leading-[30px] font-medium tracking-[-0.25px] text-black/80`}>
+                {item.question}
+              </p>
+              <Plus className={`size-5 shrink-0 text-black/70 transition-transform ${openIndex === index ? "rotate-45" : "rotate-0"}`} />
+            </button>
+            {openIndex === index ? (
+              <p id={`faq-answer-${index}`} className={`${sfProClass} mt-2 pr-8 text-left text-[16px] leading-6 tracking-[-0.25px] text-black/60`}>
+                {item.answer}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <main className={`${outfit.className} min-h-screen bg-white text-black`}>
+      <div className="w-full px-4 md:px-0">
+        <HeroSection />
+        <TaglineSection />
+        <InternshipStrip />
+        <TrustedSection />
+        <ToolkitCarousel />
+        <CardCarouselSection
+          title="Truly UnGATEKEEPED"
+          subtitle="Posting everything students usually figure out too late."
+          href="/ungatekeep"
+          spacing="featured"
+        />
+        <CardCarouselSection
+          title={"This week’s internships-\nworth a shot"}
+          subtitle="Build skills, not just your resume"
+          href="/internships"
+          spacing="compact"
+        />
+        <OpportunitiesSection />
+        <FaqSection />
+      </div>
+    </main>
   );
 }

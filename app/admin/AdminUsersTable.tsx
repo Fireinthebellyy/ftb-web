@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import * as Sentry from "@sentry/nextjs";
 import axios from "axios";
 import { toast } from "sonner";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
@@ -20,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
-type UserRole = "user" | "member" | "admin";
+type UserRole = "user" | "member" | "editor" | "admin";
 
 interface User {
   id: string;
@@ -61,16 +62,24 @@ export default function AdminUsersTable({
   });
 
   useEffect(() => {
-    if (error && axios.isAxiosError(error) && error.response?.status === 403) {
+    if (error && (error as any).response?.status === 403) {
       router.push("/");
       toast.error("You don't have permission to access this page");
       return;
     }
 
     if (error) {
+      Sentry.captureException(error, {
+        tags: {
+          action: "admin.users.load",
+        },
+        user: {
+          id: currentUserId,
+        },
+      });
       toast.error("Failed to load users");
     }
-  }, [error, router]);
+  }, [currentUserId, error, router]);
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({
@@ -83,7 +92,7 @@ export default function AdminUsersTable({
       const response = await axios.patch(`/api/admin/users/${userId}`, {
         role: newRole,
       });
-      return { userId, newRole, user: response.data.user };
+      return { userId, newRole, user: (response as any).data.user };
     },
     onMutate: ({ userId }) => {
       setUpdatingRoles((prev) => new Set(prev).add(userId));
@@ -96,7 +105,19 @@ export default function AdminUsersTable({
       );
       toast.success(`User role updated to ${newRole}`);
     },
-    onError: (mutationError) => {
+    onError: (mutationError, variables) => {
+      Sentry.captureException(mutationError, {
+        tags: {
+          action: "admin.users.update_role",
+        },
+        user: {
+          id: currentUserId,
+        },
+        extra: {
+          targetUserId: variables.userId,
+          attemptedRole: variables.newRole,
+        },
+      });
       if (axios.isAxiosError(mutationError)) {
         const message =
           mutationError.response?.data?.error || "Failed to update user role";
@@ -164,7 +185,9 @@ export default function AdminUsersTable({
               ? "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-50"
               : role === "member"
                 ? "border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-50"
-                : "border border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-50";
+                : role === "editor"
+                  ? "border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-50"
+                  : "border border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-50";
 
           return <Badge className={roleBadgeClassName}>{role}</Badge>;
         },
@@ -213,6 +236,7 @@ export default function AdminUsersTable({
               <SelectContent>
                 <SelectItem value="user">User</SelectItem>
                 <SelectItem value="member">Member</SelectItem>
+                <SelectItem value="editor">Editor</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
               </SelectContent>
             </Select>

@@ -56,7 +56,7 @@ export function SignupForm({
     await authClient.signIn.social({
       provider: "google",
       callbackURL: "/opportunities",
-      newUserCallbackURL: "/onboarding",
+      newUserCallbackURL: "/intern",
     });
   };
 
@@ -64,7 +64,7 @@ export function SignupForm({
     await authClient.signIn.social({
       provider: "linkedin",
       callbackURL: "/opportunities",
-      newUserCallbackURL: "/onboarding",
+      newUserCallbackURL: "/intern",
     });
   };
 
@@ -85,7 +85,7 @@ export function SignupForm({
               ctx.data?.user?.createdAt === ctx.data?.user?.updatedAt;
 
             if (isNewUser) {
-              router.push("/onboarding");
+              router.push("/intern");
             } else {
               router.push("/dashboard");
             }

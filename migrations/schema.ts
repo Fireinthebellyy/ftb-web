@@ -51,7 +51,12 @@ export const ungatekeepTag = pgEnum("ungatekeep_tag", [
   "company_experience",
   "resources",
 ]);
-export const userRole = pgEnum("user_role", ["user", "member", "admin"]);
+export const userRole = pgEnum("user_role", [
+  "user",
+  "member",
+  "editor",
+  "admin",
+]);
 
 export const bookmarks = pgTable("bookmarks", {
   id: uuid().defaultRandom().primaryKey().notNull(),

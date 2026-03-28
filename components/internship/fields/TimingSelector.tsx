@@ -17,16 +17,17 @@ type Props = {
   control: Control<InternshipFormData>;
   value: "full_time" | "part_time" | undefined;
   onChange: (v: "full_time" | "part_time") => void;
+  isRequired?: boolean;
 };
 
-export function TimingSelector({ control, value, onChange }: Props) {
+export function TimingSelector({ control, value, onChange, isRequired = true }: Props) {
   return (
     <FormField
       control={control}
       name="timing"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Internship Timing *</FormLabel>
+          <FormLabel>Internship Timing {isRequired && "*"}</FormLabel>
           <FormControl>
             <div
               className="flex items-center gap-1 flex-wrap"
@@ -46,21 +47,15 @@ export function TimingSelector({ control, value, onChange }: Props) {
                     onClick={() => {
                       onChange(timing.id as "full_time" | "part_time");
                       field.onChange(timing.id);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        onChange(timing.id as "full_time" | "part_time");
-                        field.onChange(timing.id);
-                      }
-                    }}
-                    tabIndex={0}
-                    role="radio"
-                    aria-checked={value === timing.id}
-                  >
-                    {timing.label}
-                  </Badge>
-                ))}
+                    }
+                  }}
+                  tabIndex={0}
+                  role="radio"
+                  aria-checked={value === timing.id}
+                >
+                  {timing.label}
+                </Badge>
+              ))}
             </div>
           </FormControl>
           <FormMessage />

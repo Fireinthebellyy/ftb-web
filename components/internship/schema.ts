@@ -55,4 +55,9 @@ export const internshipFormSchema = z.object({
   deadline: z.string().optional(),
 });
 
+export const internshipEditFormSchema = internshipFormSchema.extend({
+  timing: z.enum(["full_time", "part_time"]).optional(),
+  type: z.enum(["onsite", "remote", "hybrid"]).optional(),
+});
+
 export type InternshipFormData = z.infer<typeof internshipFormSchema>;

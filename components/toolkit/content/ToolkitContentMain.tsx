@@ -51,6 +51,9 @@ export default function ToolkitContentMain({
   onNavigateNext,
   onCompleteLast,
 }: ToolkitContentMainProps) {
+  const hasVideo = Boolean(currentItem?.bunnyVideoUrl?.trim());
+  const hasArticle = Boolean(currentItem?.content?.trim());
+
   if (isAccessLoading) {
     return <MainContentSkeleton />;
   }
@@ -72,7 +75,7 @@ export default function ToolkitContentMain({
         desktopSidebarOpen ? "lg:max-w-3xl" : "lg:max-w-4xl"
       )}
     >
-      {currentItem.type === "video" && currentItem.bunnyVideoUrl && (
+      {hasVideo && (
         <BunnyPlayer
           videoId={currentItem.id}
           title={currentItem.title}
@@ -80,7 +83,7 @@ export default function ToolkitContentMain({
         />
       )}
 
-      {currentItem.type === "article" && currentItem.content && (
+      {hasArticle && (
         <Card>
           <CardContent className="p-3 sm:p-4">
             <HtmlRenderer

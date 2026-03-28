@@ -131,19 +131,26 @@ export async function POST(request: Request) {
         ? normalizeDomainPreferences(fieldInterests)
         : undefined;
 
+    const updatePayload: any = {
+      name,
+      image: image ?? null,
+      dateOfBirth: dateOfBirth ?? null,
+      collegeInstitute: collegeInstitute ?? null,
+      contactNumber: contactNumber ?? null,
+      currentRole: currentRole ?? null,
+      updatedAt: new Date(),
+    };
+
+    if (typeof normalizedFieldInterests !== "undefined") {
+      updatePayload.fieldInterests = normalizedFieldInterests;
+    }
+    if (typeof normalizedOpportunityInterests !== "undefined") {
+      updatePayload.opportunityInterests = normalizedOpportunityInterests;
+    }
+
     const [updated] = await db
       .update(userTable)
-      .set({
-        name,
-        image: image ?? null,
-        fieldInterests: normalizedFieldInterests ?? [],
-        opportunityInterests: normalizedOpportunityInterests ?? [],
-        dateOfBirth: dateOfBirth ?? null,
-        collegeInstitute: collegeInstitute ?? null,
-        contactNumber: contactNumber ?? null,
-        currentRole: currentRole ?? null,
-        updatedAt: new Date(),
-      })
+      .set(updatePayload)
       .where(eq(userTable.id, session.user.id))
       .returning({
         id: userTable.id,

@@ -398,12 +398,13 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
                   >
                     Connect with us
                   </Link>
-                  <p
+                  <button
+                    type="button"
                     onClick={() => setFeedbackOpen(true)}
                     className="block cursor-pointer text-sm text-gray-600 hover:text-gray-800"
                   >
                     Testimonial/Feedback
-                  </p>
+                  </button>
                   <Link
                     href="/profile"
                     prefetch={false}

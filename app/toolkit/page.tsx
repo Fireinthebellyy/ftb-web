@@ -5,10 +5,33 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios from "axios";
 import ToolkitCardNew from "@/components/toolkit/ToolkitCardNew";
+import ToolkitComingSoonCard from "@/components/toolkit/ToolkitComingSoonCard";
 import { Toolkit } from "@/types/interfaces";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const toolkitTestimonials = [
+  "These toolkits cut through the noise. I stopped overthinking and started taking action with a clear plan.",
+  "I finally understood what to do week by week for internships. Super practical and easy to follow.",
+  "The lessons feel like senior guidance, not generic advice. Helped me move faster with confidence.",
+  "Whenever I feel stuck, I open a toolkit and leave with a clear next step.",
+];
+
 export default function ToolkitPage() {
+  const [activeTestimonialIndex, setActiveTestimonialIndex] =
+    React.useState<number>(0);
+
+  React.useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setActiveTestimonialIndex((prev) =>
+        prev === toolkitTestimonials.length - 1 ? 0 : prev + 1
+      );
+    }, 3500);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
   const { data: toolkits = [], isLoading } = useQuery<Toolkit[]>({
     queryKey: ["toolkits"],
     queryFn: async () => {
@@ -85,14 +108,38 @@ export default function ToolkitPage() {
             <p className="text-gray-500">Check back soon for new content!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {toolkits.map((toolkit) => (
-              <ToolkitCardNew
-                key={toolkit.id}
-                toolkit={toolkit}
-                href={`/toolkit/${toolkit.id}`}
-              />
-            ))}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {toolkits.map((toolkit) => (
+                <ToolkitCardNew
+                  key={toolkit.id}
+                  toolkit={toolkit}
+                  href={`/toolkit/${toolkit.id}`}
+                />
+              ))}
+              {toolkits.length === 1 && <ToolkitComingSoonCard />}
+            </div>
+
+            <div className="rounded-lg border border-orange-100 bg-white px-4 py-4 sm:px-5">
+              <p className="text-xs font-semibold tracking-wide text-orange-700 uppercase">
+                Student feedback
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-gray-700 sm:text-base">
+                &ldquo;{toolkitTestimonials[activeTestimonialIndex]}&rdquo;
+              </p>
+              <div className="mt-3 flex items-center gap-1.5">
+                {toolkitTestimonials.map((_, index) => (
+                  <span
+                    key={index}
+                    className={`h-1.5 rounded-full transition-all ${
+                      index === activeTestimonialIndex
+                        ? "w-4 bg-orange-500"
+                        : "w-1.5 bg-orange-200"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>

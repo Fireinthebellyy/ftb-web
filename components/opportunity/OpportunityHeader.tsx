@@ -13,6 +13,28 @@ interface OpportunityHeaderProps {
   isExpanded?: boolean;
 }
 
+const ORGANISER_MAX_LENGTH = 40;
+
+const formatOrganiserInfo = (value?: string): string => {
+  if (!value) {
+    return "";
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  const firstSegment = trimmed.split("|")[0]?.trim() ?? "";
+  const normalized = firstSegment || trimmed;
+
+  if (normalized.length <= ORGANISER_MAX_LENGTH) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, ORGANISER_MAX_LENGTH - 1).trimEnd()}...`;
+};
+
 export function OpportunityHeader({
   opportunity,
   isExpanded = true,
@@ -29,6 +51,7 @@ export function OpportunityHeader({
     createdAt,
     publishAt,
   } = opportunity;
+  const displayOrganiserInfo = formatOrganiserInfo(organiserInfo);
 
   return (
     <div className="relative px-3 py-2 sm:px-4">
@@ -64,7 +87,7 @@ export function OpportunityHeader({
         <ExpandableDescription text={description} isCardExpanded={isExpanded} />
       )}
 
-      {(location || organiserInfo || startDate || endDate) && (
+      {(location || displayOrganiserInfo || startDate || endDate) && (
         <div className="mb-3 flex">
           <div className="flex gap-2 text-xs text-gray-600 sm:flex-row sm:flex-wrap sm:gap-4">
             {location && (
@@ -74,10 +97,10 @@ export function OpportunityHeader({
               </div>
             )}
 
-            {organiserInfo && (
+            {displayOrganiserInfo && (
               <div className="flex items-center gap-1">
                 <Building2 className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-                <span className="truncate text-xs">{organiserInfo}</span>
+                <span className="truncate text-xs">{displayOrganiserInfo}</span>
               </div>
             )}
           </div>

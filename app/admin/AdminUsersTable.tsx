@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import * as Sentry from "@sentry/nextjs";
 import axios from "axios";
 import { toast } from "sonner";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
@@ -68,9 +69,17 @@ export default function AdminUsersTable({
     }
 
     if (error) {
+      Sentry.captureException(error, {
+        tags: {
+          action: "admin.users.load",
+        },
+        user: {
+          id: currentUserId,
+        },
+      });
       toast.error("Failed to load users");
     }
-  }, [error, router]);
+  }, [currentUserId, error, router]);
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({
@@ -96,7 +105,19 @@ export default function AdminUsersTable({
       );
       toast.success(`User role updated to ${newRole}`);
     },
-    onError: (mutationError) => {
+    onError: (mutationError, variables) => {
+      Sentry.captureException(mutationError, {
+        tags: {
+          action: "admin.users.update_role",
+        },
+        user: {
+          id: currentUserId,
+        },
+        extra: {
+          targetUserId: variables.userId,
+          attemptedRole: variables.newRole,
+        },
+      });
       if (axios.isAxiosError(mutationError)) {
         const message =
           mutationError.response?.data?.error || "Failed to update user role";

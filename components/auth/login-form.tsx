@@ -46,7 +46,13 @@ export function LoginForm({
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnUrl = searchParams.get("returnUrl") || "/opportunities";
+  const rawReturnUrl = searchParams.get("returnUrl");
+  const returnUrl =
+    rawReturnUrl &&
+    rawReturnUrl.startsWith("/") &&
+    !rawReturnUrl.startsWith("//")
+      ? rawReturnUrl
+      : "/";
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -61,7 +67,7 @@ export function LoginForm({
       await authClient.signIn.social({
         provider: "google",
         callbackURL: returnUrl,
-        newUserCallbackURL: "/intern",
+        newUserCallbackURL: returnUrl,
       });
     } catch (error) {
       console.error("Google sign-in error:", error);
@@ -77,7 +83,7 @@ export function LoginForm({
       await authClient.signIn.social({
         provider: "linkedin",
         callbackURL: returnUrl,
-        newUserCallbackURL: "/intern",
+        newUserCallbackURL: returnUrl,
       });
     } catch (error) {
       console.error("LinkedIn sign-in error:", error);
@@ -97,7 +103,7 @@ export function LoginForm({
           password: values.password,
         },
         {
-          onSuccess: async (ctx) => {
+          onSuccess: async (_ctx) => {
             // Check if user has completed onboarding by fetching profile
             try {
               const response = await fetch("/api/onboarding");
@@ -109,31 +115,11 @@ export function LoginForm({
               if (hasCompletedOnboarding) {
                 router.push(returnUrl);
               } else {
-                // Fallback to robust timestamp comparison
-                const createdAt = ctx.data?.user?.createdAt;
-                const updatedAt = ctx.data?.user?.updatedAt;
-
-                const isNewUser =
-                  createdAt && updatedAt
-                    ? new Date(createdAt).getTime() ===
-                      new Date(updatedAt).getTime()
-                    : false;
-
-                router.push(isNewUser ? "/intern" : returnUrl);
+                router.push(returnUrl);
               }
             } catch (error) {
               console.error("Error checking onboarding status:", error);
-              // Fallback to timestamp comparison if API call fails
-              const createdAt = ctx.data?.user?.createdAt;
-              const updatedAt = ctx.data?.user?.updatedAt;
-
-              const isNewUser =
-                createdAt && updatedAt
-                  ? new Date(createdAt).getTime() ===
-                    new Date(updatedAt).getTime()
-                  : false;
-
-              router.push(isNewUser ? "/intern" : returnUrl);
+              router.push(returnUrl);
             }
           },
         }

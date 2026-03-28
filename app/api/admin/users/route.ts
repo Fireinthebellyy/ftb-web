@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { auth } from "@/lib/auth";
 import { logAdminActivity } from "@/lib/admin-activity";
 import { db } from "@/lib/db";
@@ -55,6 +56,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ users }, { status: 200 });
   } catch (error) {
     activityError = error;
+    Sentry.captureException(error, {
+      tags: {
+        action: "admin.users.list",
+      },
+      user: {
+        id: activityAdminUserId ?? undefined,
+      },
+    });
     console.error("Error fetching users:", error);
     activityStatus = 500;
     return NextResponse.json(

@@ -25,8 +25,8 @@ type AutosuggestProps = {
 function composeTagsValue(committed: string[], activeToken = ""): string {
   const normalizedActiveToken = activeToken.trim();
   if (committed.length === 0) return normalizedActiveToken;
-  if (!normalizedActiveToken) return `${committed.join(", ")}, `;
-  return `${committed.join(", ")}, ${normalizedActiveToken}`;
+  if (!normalizedActiveToken) return `${committed.join("|")}|`;
+  return `${committed.join("|")}|${normalizedActiveToken}`;
 }
 
 function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
@@ -39,26 +39,26 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
   const allTokens = useMemo(
     () =>
       normalizedValue
-        .split(",")
+        .split("|")
         .map((t) => t.trim())
         .filter(Boolean),
     [normalizedValue]
   );
 
   const currentToken = useMemo(() => {
-    const parts = normalizedValue.split(",");
+    const parts = normalizedValue.split("|");
     return parts[parts.length - 1]?.trim() || "";
   }, [normalizedValue]);
 
-  const hasTrailingComma = useMemo(
-    () => /,\s*$/.test(normalizedValue),
+  const hasTrailingDelimiter = useMemo(
+    () => /\|\s*$/.test(normalizedValue),
     [normalizedValue]
   );
 
   const committedTokens = useMemo(() => {
     if (allTokens.length === 0) return [];
-    return hasTrailingComma ? allTokens : allTokens.slice(0, -1);
-  }, [allTokens, hasTrailingComma]);
+    return hasTrailingDelimiter ? allTokens : allTokens.slice(0, -1);
+  }, [allTokens, hasTrailingDelimiter]);
 
   const selectedTagSet = useMemo(
     () => new Set(committedTokens.map((token) => token.toLowerCase())),
@@ -130,7 +130,7 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
   }
 
   function handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if ((e.key === "Enter" || e.key === ",") && currentToken.trim()) {
+    if ((e.key === "Enter" || e.key === "|") && currentToken.trim()) {
       e.preventDefault();
       addTag(currentToken.trim());
       return;

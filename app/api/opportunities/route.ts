@@ -297,7 +297,7 @@ export async function GET(req: NextRequest) {
     const validTypes = rawTypes.filter((type) => allowedTypes.includes(type));
     const rawTags = tagsParam
       ? tagsParam
-          .split(",")
+          .split("|")
           .map((value) => value.trim().toLowerCase())
           .filter(Boolean)
       : [];

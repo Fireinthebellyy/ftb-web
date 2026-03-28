@@ -28,7 +28,7 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const currentToken = useMemo(() => {
-    const parts = (value || "").split(",");
+    const parts = (value || "").split("|");
     return parts[parts.length - 1]?.trim() || "";
   }, [value]);
 
@@ -64,7 +64,7 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
 
   function addTag(tag: string) {
     const parts = (value || "")
-      .split(",")
+      .split("|")
       .map((t: string) => t.trim());
 
     if (parts.length === 0) {
@@ -79,7 +79,7 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
           seen.add(t.toLowerCase());
           return true;
         });
-      onChange(result.join(", "));
+      onChange(result.join("|"));
     }
     setShow(false);
     requestAnimationFrame(() => inputRef.current?.focus());
@@ -91,7 +91,7 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
         value={value ?? ""}
         ref={inputRef}
         autoComplete="off"
-        placeholder="Javascript, React, Frontend, etc."
+        placeholder="Javascript | React | Frontend | etc."
         className="focus-visible:ring-1"
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setShow(suggestions.length > 0)}

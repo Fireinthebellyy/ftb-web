@@ -326,7 +326,7 @@ export const opportunities = pgTable(
     userId: text("user_id").notNull(),
     deletedAt: timestamp("deleted_at", { mode: "string" }),
     images: text().array().default([""]),
-    type: text().default("hackathon").notNull(),
+    type: opportunityType().default("hackathons").notNull(),
     upvoterIds: text("upvoter_ids").array().default([""]),
     upvoteCount: integer("upvote_count").default(0),
     tagIds: uuid("tag_ids").array().default([""]),

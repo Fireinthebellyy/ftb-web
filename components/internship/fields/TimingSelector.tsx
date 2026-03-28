@@ -47,12 +47,11 @@ export function TimingSelector({ control, value, onChange, isRequired = true }: 
                     onClick={() => {
                       onChange(timing.id as "full_time" | "part_time");
                       field.onChange(timing.id);
-                    }
-                  }}
-                  tabIndex={0}
-                  role="radio"
-                  aria-checked={value === timing.id}
-                >
+                    }}
+                    tabIndex={0}
+                    role="radio"
+                    aria-checked={value === timing.id}
+                  >
                   {timing.label}
                 </Badge>
               ))}

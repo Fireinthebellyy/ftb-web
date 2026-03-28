@@ -158,13 +158,22 @@ export function TagsDropdown({
                       toggleTag(tag);
                     }}
                     className={cn(
-                      "flex flex-col items-start gap-0.5 py-2 pl-4 text-left whitespace-normal break-words cursor-pointer",
-                      isSelected ? "text-orange-600 focus:text-orange-600 focus:bg-orange-50" : ""
+                      "flex flex-col items-start gap-0.5 py-2 pl-4 text-left whitespace-normal break-words cursor-pointer transition-colors",
+                      isSelected
+                        ? "bg-orange-50 text-orange-600 focus:bg-orange-100 focus:text-orange-700"
+                        : "text-gray-700 hover:bg-gray-50 focus:bg-gray-50"
                     )}
                   >
-                    <span className={cn("font-medium", isSelected && "text-orange-600")}>{label}</span>
+                    <span className={cn("font-medium", isSelected && "text-orange-600")}>
+                      {label}
+                    </span>
                     {description && (
-                      <span className={cn("text-[10px]", isSelected ? "text-orange-500/80" : "text-gray-500")}>
+                      <span
+                        className={cn(
+                          "text-[10px]",
+                          isSelected ? "text-orange-500/80" : "text-gray-500"
+                        )}
+                      >
                         {description}
                       </span>
                     )}

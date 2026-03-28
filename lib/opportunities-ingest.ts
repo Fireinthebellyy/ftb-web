@@ -5,10 +5,16 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 const opportunityTypeValues = [
-  "hackathon",
-  "grant",
-  "competition",
-  "ideathon",
+  "competitions_open_calls",
+  "case_competitions",
+  "hackathons",
+  "fellowships",
+  "ideathon_think_tanks",
+  "leadership_programs",
+  "awards_recognition",
+  "grants_scholarships",
+  "research_paper_ra_calls",
+  "upskilling_events",
 ] as const;
 
 const nullableDateStringSchema = z

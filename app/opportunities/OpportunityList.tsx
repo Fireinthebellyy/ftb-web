@@ -49,7 +49,7 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
   };
   const getInitialTags = () => {
     const tagsParam = searchParams.get("tags") || "";
-    return tagsParam ? tagsParam.split(",").filter(Boolean) : [];
+    return tagsParam ? tagsParam.split("|").filter(Boolean) : [];
   };
 
   const [isNewOpportunityOpen, setIsNewOpportunityOpen] = useState(false);
@@ -75,7 +75,7 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
         : typesParam === ""
           ? []
           : typesParam.split(",").filter(Boolean);
-    const newTags = tagsParam ? tagsParam.split(",").filter(Boolean) : [];
+    const newTags = tagsParam ? tagsParam.split("|").filter(Boolean) : [];
 
     // Update state from URL - use functional updates to compare and only update if changed
     setSearchTerm((prev) => (prev !== newSearchTerm ? newSearchTerm : prev));
@@ -130,7 +130,7 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
       .filter(Boolean)
       .sort();
     const currentTags = (searchParams.get("tags") || "")
-      .split(",")
+      .split("|")
       .filter(Boolean)
       .sort();
 
@@ -169,7 +169,7 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
 
     // Update tags
     if (stateTags.length > 0) {
-      params.set("tags", stateTags.join(","));
+      params.set("tags", stateTags.join("|"));
     }
 
     // Build new URL

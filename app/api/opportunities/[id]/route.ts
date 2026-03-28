@@ -7,7 +7,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 const updateOpportunitySchema = z.object({
-  type: z.enum(["hackathon", "grant", "competition", "ideathon"]).optional(),
+  type: z
+    .enum([
+      "competitions_open_calls",
+      "case_competitions",
+      "hackathons",
+      "fellowships",
+      "ideathon_think_tanks",
+      "leadership_programs",
+      "awards_recognition",
+      "grants_scholarships",
+      "research_paper_ra_calls",
+      "upskilling_events",
+    ])
+    .optional(),
   title: z.string().min(1, "Title is required").optional(),
   description: z.string().min(1, "Description is required").optional(),
   images: z.array(z.string()).optional(),

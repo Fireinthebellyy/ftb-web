@@ -72,7 +72,7 @@ export default function NewOpportunityForm({
       type: opportunity?.type || "",
       title: opportunity?.title || "",
       description: opportunity?.description || "",
-      tags: opportunity?.tags?.join(", ") || "",
+      tags: opportunity?.tags?.join("|") || "",
       location: opportunity?.location || "",
       organiserInfo: opportunity?.organiserInfo || "",
       dateRange: undefined,

@@ -34,7 +34,17 @@ interface Opportunity {
   description: string;
   createdAt: string;
   isActive: boolean;
-  type: "hackathon" | "grant" | "competition" | "ideathon";
+  type:
+    | "competitions_open_calls"
+    | "case_competitions"
+    | "hackathons"
+    | "fellowships"
+    | "ideathon_think_tanks"
+    | "leadership_programs"
+    | "awards_recognition"
+    | "grants_scholarships"
+    | "research_paper_ra_calls"
+    | "upskilling_events";
   upvoteCount: number;
   upvoterIds: string[];
   user: {

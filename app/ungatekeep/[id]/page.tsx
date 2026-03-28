@@ -10,7 +10,7 @@ import axios from "axios";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Pin, ExternalLink } from "lucide-react";
+import { ArrowLeft, Pin, ExternalLink, FileText } from "lucide-react";
 import { format } from "date-fns";
 import FeaturedToolkits from "@/components/toolkit/FeaturedToolkits";
 import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
@@ -37,6 +37,14 @@ export default function UngatekeepPostPage() {
   const params = useParams();
   const router = useRouter();
   const postId = params.id as string;
+  const [isMobile, setIsMobile] = React.useState<boolean | null>(null);
+
+  React.useEffect(() => {
+    setIsMobile(
+      typeof window !== "undefined" &&
+        /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+    );
+  }, []);
 
   const {
     data: post,
@@ -245,29 +253,96 @@ export default function UngatekeepPostPage() {
               {post.attachments && post.attachments.length > 0 && (
                 <div className="mb-4">
                   {post.attachments.length === 1 ? (
-                    <div className="bg-muted relative aspect-video w-full overflow-hidden rounded-lg">
-                      <Image
-                        src={getImageUrl(post.attachments[0])}
-                        alt="Post attachment"
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-2">
-                      {post.attachments.map((fileId, idx) => (
-                        <div
-                          key={idx}
-                          className="bg-muted relative aspect-square overflow-hidden rounded-lg"
-                        >
+                    (() => {
+                      const imageId = post.attachments[0];
+                      const isPdf = imageId.toLowerCase().endsWith(".pdf");
+                      const fullUrl = getImageUrl(imageId);
+                      const pdfSrc = isMobile
+                        ? `https://docs.google.com/viewer?url=${encodeURIComponent(
+                            fullUrl
+                          )}&embedded=true`
+                        : `${fullUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
+
+                      if (isPdf) {
+                        if (isMobile === null) {
+                          return (
+                            <div className="relative aspect-[9/16] max-h-[400px] w-full overflow-hidden rounded-lg border bg-muted animate-pulse md:aspect-video md:max-h-none" />
+                          );
+                        }
+                        return (
+                          <div className="relative aspect-[9/16] max-h-[400px] w-full overflow-hidden rounded-lg border bg-white md:aspect-video md:max-h-none">
+                            <iframe
+                              src={pdfSrc}
+                              className="h-full w-full border-none"
+                              title="PDF Document"
+                            />
+                            <a
+                              href={fullUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="bg-white/90 text-primary absolute bottom-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-full border shadow-md transition-colors hover:bg-white"
+                              title="Open full document"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="bg-muted relative aspect-video w-full overflow-hidden rounded-lg">
                           <Image
-                            src={getImageUrl(fileId)}
-                            alt={`Post attachment ${idx + 1}`}
+                            src={fullUrl}
+                            alt="Post attachment"
                             fill
                             className="object-cover"
                           />
                         </div>
-                      ))}
+                      );
+                    })()
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                      {post.attachments.map((fileId, idx) => {
+                        const isPdf = fileId.toLowerCase().endsWith(".pdf");
+                        const fullUrl = getImageUrl(fileId);
+
+                        if (isPdf) {
+                          return (
+                            <div
+                              key={idx}
+                              className="bg-muted relative flex aspect-square flex-col items-center justify-center gap-2 overflow-hidden rounded-lg border"
+                            >
+                              <FileText className="h-10 w-10 text-blue-500" />
+                              <span className="px-2 text-center text-[10px] font-medium line-clamp-1">
+                                PDF Document
+                              </span>
+                              <a
+                                href={fullUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-primary text-primary-foreground flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-medium"
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                Open
+                              </a>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div
+                            key={idx}
+                            className="bg-muted relative aspect-square overflow-hidden rounded-lg"
+                          >
+                            <Image
+                              src={fullUrl}
+                              alt={`Post attachment ${idx + 1}`}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

@@ -61,15 +61,20 @@ export function OpportunityHeader({
 
       {tags && tags.length > 0 && (
         <div className="mb-1 flex flex-wrap gap-1.5 sm:gap-2">
-          {(isExpanded ? tags : tags.slice(0, 4)).map((tag, idx) => (
-            <Badge
-              key={idx}
-              className="cursor-default bg-neutral-200 px-2 py-1 text-[10px] text-gray-700 sm:text-xs"
-              variant="secondary"
-            >
-              #{tag}
-            </Badge>
-          ))}
+          {(isExpanded ? tags : tags.slice(0, 4)).map((tag, idx) => {
+            const match = tag.match(/^(.*)\((.*)\)$/);
+            const displayTag = match ? match[1] : tag;
+            return (
+              <Badge
+                key={idx}
+                className="cursor-default bg-neutral-200 px-2 py-1 text-[10px] text-gray-700 sm:text-xs"
+                variant="secondary"
+                title={match ? match[2] : undefined}
+              >
+                #{displayTag}
+              </Badge>
+            );
+          })}
           {!isExpanded && tags.length > 4 && (
             <Badge className="bg-neutral-200 px-2 py-1 text-[10px] text-gray-600 sm:text-xs">
               +{tags.length - 4} more

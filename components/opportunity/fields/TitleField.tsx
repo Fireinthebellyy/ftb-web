@@ -1,13 +1,14 @@
 "use client";
 
+import { useCallback, useEffect, useRef } from "react";
 import {
   FormField,
   FormItem,
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Control } from "react-hook-form";
+import { Textarea } from "@/components/ui/textarea";
+import { Control, useWatch } from "react-hook-form";
 import { FormData } from "../schema";
 
 type Props = {
@@ -15,6 +16,20 @@ type Props = {
 };
 
 export function TitleField({ control }: Props) {
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const titleValue = useWatch({ control, name: "title" });
+
+  const adjustTextareaHeight = useCallback((elem: HTMLTextAreaElement) => {
+    elem.style.height = "auto";
+    elem.style.height = `${elem.scrollHeight}px`;
+  }, []);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      adjustTextareaHeight(textareaRef.current);
+    }
+  }, [titleValue, adjustTextareaHeight]);
+
   return (
     <FormField
       control={control}
@@ -22,10 +37,18 @@ export function TitleField({ control }: Props) {
       render={({ field }) => (
         <FormItem>
           <FormControl>
-            <Input
+            <Textarea
               {...field}
-              placeholder="What's the opportunity about? *"
-              className="text-xl md:text-xl font-medium border-none px-0 focus-visible:ring-0 placeholder:text-gray-400 shadow-none"
+              ref={(e) => {
+                field.ref(e);
+                textareaRef.current = e;
+              }}
+              placeholder="What's the opportunity about? (Title) *"
+              rows={1}
+              className="text-lg md:text-xl font-medium border-none px-0 focus-visible:ring-0 placeholder:text-gray-400 shadow-none resize-none min-h-[40px] overflow-hidden"
+              onInput={(e: React.FormEvent<HTMLTextAreaElement>) =>
+                adjustTextareaHeight(e.currentTarget)
+              }
             />
           </FormControl>
           <FormMessage />

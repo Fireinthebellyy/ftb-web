@@ -5,6 +5,7 @@ import { ExternalLink, Calculator, Target } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { TrackerItem } from '@/components/providers/TrackerProvider';
+import { formatTypeName } from '@/app/opportunities/constants';
 
 
 
@@ -46,7 +47,7 @@ export default function TrackerDetailModal({ isOpen, onClose, opportunity, onSma
                             <div className="flex items-center gap-2 text-slate-500 text-sm mt-1">
                                 <span className="font-medium text-slate-700">{opportunity.company}</span>
                                 <span>•</span>
-                                <span>{opportunity.type}</span>
+                                <span>{opportunity.type ? formatTypeName(Array.isArray(opportunity.type) ? opportunity.type[0] : (opportunity.type as string)) : "Opportunity"}</span>
                             </div>
                         </div>
                     </div>

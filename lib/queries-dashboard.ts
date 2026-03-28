@@ -17,7 +17,7 @@ type DashboardBootstrapResponse = {
 type DashboardBootstrapParams = {
   limit: number;
   search?: string;
-  types: string[];
+  types: string[] | null;
   tags: string[];
   month: string;
 };
@@ -31,7 +31,7 @@ export async function fetchDashboardBootstrap(
       params: {
         limit: params.limit,
         search: params.search?.trim() ? params.search : undefined,
-        types: params.types.length > 0 ? params.types.join(",") : undefined,
+        types: params.types && params.types.length > 0 ? params.types.join(",") : undefined,
         tags: params.tags.length > 0 ? params.tags.join(",") : undefined,
         month: params.month,
       },
@@ -44,7 +44,7 @@ export async function fetchDashboardBootstrap(
 function opportunitiesInfiniteKey(
   limit: number,
   search: string,
-  types: string[],
+  types: string[] | null,
   tags: string[]
 ) {
   return [
@@ -52,7 +52,7 @@ function opportunitiesInfiniteKey(
     "infinite",
     limit,
     search,
-    types.join(","),
+    types ? types.join(",") : "__NONE__",
     tags.join(","),
   ] as const;
 }
@@ -63,7 +63,7 @@ export function useDashboardBootstrap(
 ) {
   const queryClient = useQueryClient();
   const normalizedSearch = params.search?.trim() ?? "";
-  const sortedTypes = [...params.types].sort();
+  const sortedTypes = params.types ? [...params.types].sort() : null;
   const sortedTags = params.tags.map((tag) => tag.toLowerCase()).sort();
 
   const query = useQuery({
@@ -72,7 +72,7 @@ export function useDashboardBootstrap(
       "bootstrap",
       params.limit,
       params.search ?? "",
-      params.types.join(","),
+      params.types ? params.types.join(",") : "__NONE__",
       params.tags.join(","),
       params.month,
     ],

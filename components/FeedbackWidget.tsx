@@ -57,12 +57,21 @@ function markFeedbackSubmittedForPath(path?: string) {
   }
 }
 
-export default function FeedbackWidget() {
+export function FeedbackWidget({
+  isOpen,
+  onOpenChange,
+}: {
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+} = {}) {
   const pathname = usePathname();
   const shouldHideOnPage = pathname.startsWith("/toolkit");
   const isInternshipDetailPage = pathname.startsWith("/intern/");
 
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isOpen !== undefined ? isOpen : internalOpen;
+  const setOpen = onOpenChange !== undefined ? onOpenChange : setInternalOpen;
+
   const [mood, setMood] = useState<FeedbackMood | null>(null);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -116,7 +125,7 @@ export default function FeedbackWidget() {
 
   return (
     <>
-      {!submitted && (
+      {!onOpenChange && !submitted && (
         <button
           type="button"
           aria-label="Open feedback"

@@ -20,6 +20,8 @@ import {
   domainOptions,
   educationLevels,
   fieldOptions,
+  normalizeDomainPreferences,
+  normalizeOpportunityInterests,
   opportunityOptions,
   stateOptions,
   stepAnim,
@@ -71,10 +73,11 @@ function titleCase(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-function pickLabel(list: string[], max = 3) {
+function pickLabel(list: string[], options: { id: string; label: string }[], max = 3) {
   if (!list.length) return "—";
-  if (list.length <= max) return list.join(", ");
-  return `${list.slice(0, max).join(", ")} +${list.length - max}`;
+  const labels = list.map(id => options.find(o => o.id === id)?.label || id);
+  if (labels.length <= max) return labels.join(", ");
+  return `${labels.slice(0, max).join(", ")} +${labels.length - max}`;
 }
 
 export default function OnboardingPage() {
@@ -149,8 +152,8 @@ export default function OnboardingPage() {
         educationLevel: profile.educationLevel ?? "",
         fieldOfStudy: profile.fieldOfStudy ?? "",
         fieldOther: profile.fieldOther ?? "",
-        opportunities: profile.opportunityInterests ?? [],
-        domains: profile.domainPreferences ?? [],
+        opportunities: normalizeOpportunityInterests(profile.opportunityInterests ?? []),
+        domains: normalizeDomainPreferences(profile.domainPreferences ?? []),
       }));
       hasHydratedProfile.current = true;
     }
@@ -527,13 +530,13 @@ export default function OnboardingPage() {
                         <div className="grid gap-3 md:grid-cols-2">
                           {opportunityOptions.map((item) => (
                             <SelectableButton
-                              key={item}
-                              label={item}
-                              selected={answers.opportunities.includes(item)}
-                              onClick={() => updateArray("opportunities", item)}
+                              key={item.id}
+                              label={item.label}
+                              selected={answers.opportunities.includes(item.id)}
+                              onClick={() => updateArray("opportunities", item.id)}
                               onKeyDown={handleKeyDown}
                               icon={
-                                answers.opportunities.includes(item) ? (
+                                answers.opportunities.includes(item.id) ? (
                                   <Check />
                                 ) : undefined
                               }
@@ -562,13 +565,13 @@ export default function OnboardingPage() {
                         <div className="grid gap-3 md:grid-cols-2">
                           {domainOptions.map((item) => (
                             <SelectableButton
-                              key={item}
-                              label={item}
-                              selected={answers.domains.includes(item)}
-                              onClick={() => updateArray("domains", item)}
+                              key={item.id}
+                              label={item.label}
+                              selected={answers.domains.includes(item.id)}
+                              onClick={() => updateArray("domains", item.id)}
                               onKeyDown={handleKeyDown}
                               icon={
-                                answers.domains.includes(item) ? (
+                                answers.domains.includes(item.id) ? (
                                   <Check />
                                 ) : undefined
                               }
@@ -621,17 +624,20 @@ export default function OnboardingPage() {
                         />
                         <SummaryItem
                           title="Wants"
-                          value={pickLabel(answers.opportunities)}
+                          value={pickLabel(answers.opportunities, opportunityOptions)}
                         />
                         <SummaryItem
                           title="Topics"
-                          value={pickLabel(answers.domains)}
+                          value={pickLabel(answers.domains, domainOptions)}
                         />
                         <SummaryList
                           title="Opportunities"
-                          items={answers.opportunities}
+                          items={answers.opportunities.map(id => opportunityOptions.find(o => o.id === id)?.label || id)}
                         />
-                        <SummaryList title="Domains" items={answers.domains} />
+                        <SummaryList 
+                          title="Domains" 
+                          items={answers.domains.map(id => domainOptions.find(o => o.id === id)?.label || id)} 
+                        />
                       </div>
                     </div>
                   )}

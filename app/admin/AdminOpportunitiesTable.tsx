@@ -14,6 +14,7 @@ import { AdminTabLayout } from "@/components/admin/AdminTabLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
+import { formatTypeName } from "@/app/opportunities/constants";
 
 interface Opportunity {
   id: string;
@@ -177,8 +178,8 @@ export default function AdminOpportunitiesTable() {
         accessorKey: "type",
         header: "Type",
         cell: ({ row }) => (
-          <Badge variant="outline" className="capitalize">
-            {row.original.type}
+          <Badge variant="outline">
+            {formatTypeName(row.original.type)}
           </Badge>
         ),
       },

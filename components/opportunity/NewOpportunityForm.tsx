@@ -61,7 +61,7 @@ export default function NewOpportunityForm({
     removedAttachmentIds,
   });
 
-  const maxFiles = 4;
+  const maxFiles = 10;
   const maxAttachments = 2;
 
   const form = useForm<FormData>({
@@ -131,7 +131,7 @@ export default function NewOpportunityForm({
       type: opportunity.type || "",
       title: opportunity.title || "",
       description: opportunity.description || "",
-      tags: (opportunity.tags || []).join(", "),
+      tags: (opportunity.tags || []).join("|"),
       location: opportunity.location || "",
       organiserInfo: opportunity.organiserInfo || "",
       dateRange: {
@@ -205,21 +205,24 @@ export default function NewOpportunityForm({
             <ExistingImages
               existingImages={existingImages}
               onRemoveExisting={handleRemoveExistingImage}
+              loading={loading}
             />
           )}
 
-          <SelectedImages files={files} setFiles={setFiles} />
+          <SelectedImages files={files} setFiles={setFiles} loading={loading} />
 
           {opportunity && (
             <ExistingAttachments
               existingAttachments={existingAttachments}
               onRemoveExisting={handleRemoveExistingAttachment}
+              loading={loading}
             />
           )}
 
           <SelectedAttachments
             files={attachmentFiles}
             setFiles={setAttachmentFiles}
+            loading={loading}
           />
 
           <TagsField control={form.control} />

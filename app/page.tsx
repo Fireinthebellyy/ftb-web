@@ -9,6 +9,7 @@ import Link from "next/link";
 import { Inter, Outfit, Satisfy } from "next/font/google";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import HomeInternshipCardsSection from "@/components/internship/HomeInternshipCardsSection";
+import HomeOpportunitiesSection from "@/components/opportunity/HomeOpportunitiesSection";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 import { getYouTubeThumbnailUrl } from "@/lib/youtube";
 import { Toolkit } from "@/types/interfaces";
@@ -29,15 +30,6 @@ const satisfy = Satisfy({
 });
 
 const sfProClass = inter.className;
-
-const genericCards = [
-  "Random Tool Kit",
-  "Random Tool Kit",
-  "Random Tool Kit",
-  "Random Tool Kit",
-  "Random Tool Kit",
-  "Random Tool Kit",
-];
 
 interface UngatekeepHomePost {
   id: string;
@@ -592,70 +584,6 @@ function MarqueeLikeCards() {
   );
 }
 
-function OpportunitiesSection() {
-  const {
-    containerRef,
-    onPointerDown,
-    onPointerMove,
-    onPointerUp,
-    onPointerLeave,
-    onPointerCancel,
-    onKeyDown,
-    onBlur,
-  } = useDragMarquee();
-
-  return (
-    <section className="bg-white px-4 py-4 md:px-8 md:py-6">
-      <div className="relative space-y-2 text-center">
-        <div className="space-y-2">
-          <h3 className={`${outfit.className} text-[30px] leading-[30px] font-medium tracking-[-2.25px] text-black/80`}>
-            Talk of the hour in Opportunities
-          </h3>
-          <p className={`${outfit.className} whitespace-nowrap text-[20px] leading-5 tracking-[-0.25px] text-black/50`}>Step up, stand out - bring the A-game.</p>
-        </div>
-
-        <Link href="/opportunities" className={`${sfProClass} hidden whitespace-nowrap text-[16px] leading-[30px] font-medium tracking-[-1px] text-[#ff6e00] md:absolute md:top-0 md:right-0 md:inline-block`}>
-          See All
-        </Link>
-      </div>
-
-      <div
-        ref={containerRef}
-        tabIndex={0}
-        role="region"
-        aria-label="Opportunities carousel. Use arrow keys to scroll."
-        className="hide-scrollbar mt-[10px] overflow-x-auto"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerLeave={onPointerLeave}
-        onPointerCancel={onPointerCancel}
-        onKeyDown={onKeyDown}
-        onBlur={onBlur}
-      >
-        <div role="list" className="flex w-max gap-4">
-          {genericCards.map((title, index) => (
-            <article key={`opp-${index}`} className="h-[199px] w-[160px] shrink-0 rounded-2xl border border-black/30 p-4 md:h-[280px] md:w-[240px] md:p-6">
-              <div className="relative mx-auto size-10">
-                <Image src="/images/Shape Set.svg" alt="Opportunity icon" fill className="object-contain" />
-              </div>
-              <div className="mt-[10px] px-4 md:mt-6 md:px-2">
-                <h4 className={`${outfit.className} whitespace-pre-line text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-black md:text-[34px] md:leading-[40px]`}>
-                  {title}
-                </h4>
-              </div>
-            </article>
-          ))}
-        </div>
-      </div>
-
-      <Link href="/opportunities" className={`${sfProClass} mt-4 text-left text-[16px] leading-[30px] font-medium tracking-[-1px] text-[#ff6e00] md:hidden`}>
-        See All
-      </Link>
-    </section>
-  );
-}
-
 function FaqSection() {
   const faqs = [
     {
@@ -759,7 +687,7 @@ export default function HomePage() {
           spacing="featured"
         />
         <HomeInternshipCardsSection outfitClass={outfit.className} sfProClass={sfProClass} />
-        <OpportunitiesSection />
+        <HomeOpportunitiesSection outfitClass={outfit.className} sfProClass={sfProClass} />
         <FaqSection />
       </div>
     </main>

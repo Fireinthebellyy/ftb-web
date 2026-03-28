@@ -48,7 +48,11 @@ export function LoginForm({
   const searchParams = useSearchParams();
   const rawReturnUrl = searchParams.get("returnUrl");
   const returnUrl =
-    rawReturnUrl && rawReturnUrl.startsWith("/") ? rawReturnUrl : "/";
+    rawReturnUrl &&
+    rawReturnUrl.startsWith("/") &&
+    !rawReturnUrl.startsWith("//")
+      ? rawReturnUrl
+      : "/";
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {

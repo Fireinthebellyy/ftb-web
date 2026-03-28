@@ -101,7 +101,7 @@ function InternshipStripClient() {
       key: "toolkits",
       title: "Toolkits",
       description: "Cold emails, interviews & case comps - mastered with playbooks that ACTUALLY work.",
-      leftImage: "/images/toolkits-left.png",
+      leftImage: "/images/toolkit-left.png",
       leftMode: "cover",
     },
     {
@@ -158,7 +158,7 @@ function InternshipStripClient() {
                     </div>
                   ) : (
                     <div className="relative h-[220px] w-[160px] overflow-hidden rounded-2xl md:h-[288px] md:w-[280px]">
-                      <Image src={slide.leftImage} alt={`${slide.title} visual`} fill className="object-cover" />
+                      <Image src={slide.leftImage} alt={`${slide.title} visual`} fill className={slide.key === "toolkits" ? "object-contain" : "object-cover"} />
                     </div>
                   )}
 

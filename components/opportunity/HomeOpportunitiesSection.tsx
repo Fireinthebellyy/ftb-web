@@ -46,8 +46,6 @@ export default function HomeOpportunitiesSection({
   const opportunityCardThemes = [
     "bg-[#fff3e0] text-black",
     "bg-[#fffde7] text-black",
-    "bg-white text-black",
-    "bg-[#3f3f3f] text-white",
   ];
 
   return (

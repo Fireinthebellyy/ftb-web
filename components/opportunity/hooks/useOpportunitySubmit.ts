@@ -47,8 +47,8 @@ async function uploadFilesToBucket(
         onProgress: (progress: number) => {
           const uploadProgress = Math.round(progress || 0);
           setItems((prev) =>
-            prev.map((f, idx) =>
-              idx === i ? { ...f, progress: uploadProgress } : f
+            prev.map((f) =>
+              f.id === file.id ? { ...f, progress: uploadProgress } : f
             )
           );
         },
@@ -56,8 +56,8 @@ async function uploadFilesToBucket(
 
       uploadedIds.push(result.key);
       setItems((prev) =>
-        prev.map((f, idx) =>
-          idx === i ? { ...f, uploading: false, fileId: result.key } : f
+        prev.map((f) =>
+          f.id === file.id ? { ...f, uploading: false, fileId: result.key } : f
         )
       );
     } catch (err) {
@@ -66,8 +66,8 @@ async function uploadFilesToBucket(
       const errorMessage =
         err instanceof Error ? err.message : "Unknown upload error";
       setItems((prev) =>
-        prev.map((f, idx) =>
-          idx === i ? { ...f, uploading: false, error: true, errorMessage } : f
+        prev.map((f) =>
+          f.id === file.id ? { ...f, uploading: false, error: true, errorMessage } : f
         )
       );
       toast.error(`Failed to upload "${file.name}": ${errorMessage}`);

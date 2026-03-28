@@ -226,13 +226,13 @@ export default function NewUngatekeepForm({
             if (isImage) {
               setFiles((prev) =>
                 prev.map((f) =>
-                  f.name === fileItem.name ? { ...f, progress: percent } : f
+                  f.id === fileItem.id ? { ...f, progress: percent } : f
                 )
               );
             } else {
               setAttachmentFiles((prev) =>
                 prev.map((f) =>
-                  f.name === fileItem.name ? { ...f, progress: percent } : f
+                  f.id === fileItem.id ? { ...f, progress: percent } : f
                 )
               );
             }
@@ -243,7 +243,7 @@ export default function NewUngatekeepForm({
         if (isImage) {
           setFiles((prev) =>
             prev.map((f) =>
-              f.name === fileItem.name
+              f.id === fileItem.id
                 ? { ...f, uploading: false, fileId: uploaded.key }
                 : f
             )
@@ -251,7 +251,7 @@ export default function NewUngatekeepForm({
         } else {
           setAttachmentFiles((prev) =>
             prev.map((f) =>
-              f.name === fileItem.name
+              f.id === fileItem.id
                 ? { ...f, uploading: false, fileId: uploaded.key }
                 : f
             )
@@ -263,7 +263,7 @@ export default function NewUngatekeepForm({
         if (isImage) {
           setFiles((prev) =>
             prev.map((f) =>
-              f.name === fileItem.name
+              f.id === fileItem.id
                 ? {
                     ...f,
                     uploading: false,
@@ -277,7 +277,7 @@ export default function NewUngatekeepForm({
         } else {
           setAttachmentFiles((prev) =>
             prev.map((f) =>
-              f.name === fileItem.name
+              f.id === fileItem.id
                 ? {
                     ...f,
                     uploading: false,

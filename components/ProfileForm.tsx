@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { normalizeOpportunityInterests, normalizeDomainPreferences } from "@/app/onboarding/constants";
+import { normalizeOpportunityInterests, normalizeDomainPreferences, domainOptions, opportunityOptions } from "@/app/onboarding/constants";
 
 const formSchema = z
   .object({
@@ -131,16 +131,24 @@ export default function ProfileForm({
   const firstEditableRef = useRef<HTMLInputElement | null>(null);
   const modeChangeLiveRef = useRef<HTMLDivElement | null>(null);
 
+  // Normalize initial values for form defaults and dirty tracking
+  const initialFieldInterestsRaw = normalizeDomainPreferences(user.fieldInterests ?? []);
+  const initialOppInterestsRaw = normalizeOpportunityInterests(user.opportunityInterests ?? []);
+
+  const derivedFieldInterestOther = initialFieldInterestsRaw.find(v => !domainOptions.some(opt => opt.id === v)) || "";
+  const derivedOppInterestOther = initialOppInterestsRaw.find(v => !opportunityOptions.some(opt => opt.id === v)) || "";
+
+  const normalizedFieldInterests = initialFieldInterestsRaw.map(v => domainOptions.some(opt => opt.id === v) ? v : "Other");
+  const normalizedOppInterests = initialOppInterestsRaw.map(v => opportunityOptions.some(opt => opt.id === v) ? v : "Other");
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: user.name ?? "",
-      fieldInterests: normalizeDomainPreferences(user.fieldInterests ?? []),
-      fieldInterestOther: "",
-      opportunityInterests: normalizeOpportunityInterests(
-        user.opportunityInterests ?? []
-      ),
-      opportunityInterestOther: "",
+      fieldInterests: normalizedFieldInterests,
+      fieldInterestOther: derivedFieldInterestOther,
+      opportunityInterests: normalizedOppInterests,
+      opportunityInterestOther: derivedOppInterestOther,
       dateOfBirth: user.dateOfBirth ?? "",
       collegeInstitute: user.collegeInstitute ?? "",
       contactNumber: user.contactNumber ?? "",
@@ -285,10 +293,10 @@ export default function ProfileForm({
   const initialValuesRef = useRef({
     name: user.name ?? "",
     image: user.image ?? null,
-    fieldInterests: user.fieldInterests ?? [],
-    fieldInterestOther: "", // Initial load doesn't populate "Other" text specifically unless parsed, handled by form default
-    opportunityInterests: user.opportunityInterests ?? [],
-    opportunityInterestOther: "",
+    fieldInterests: normalizedFieldInterests,
+    fieldInterestOther: derivedFieldInterestOther,
+    opportunityInterests: normalizedOppInterests,
+    opportunityInterestOther: derivedOppInterestOther,
     dateOfBirth: user.dateOfBirth ?? "",
     collegeInstitute: user.collegeInstitute ?? "",
     contactNumber: user.contactNumber ?? "",

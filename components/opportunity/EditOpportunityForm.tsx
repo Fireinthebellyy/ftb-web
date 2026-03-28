@@ -97,7 +97,7 @@ export default function EditOpportunityForm({
       type: opportunity.type || "",
       title: opportunity.title || "",
       description: opportunity.description || "",
-      tags: opportunity.tags?.join(", ") || "",
+      tags: opportunity.tags?.join("|") || "",
       location: opportunity.location || "",
       organiserInfo: opportunity.organiserInfo || "",
       dateRange: undefined,
@@ -146,8 +146,8 @@ export default function EditOpportunityForm({
           onProgress: (progress) => {
             const percent = Math.round(progress || 0);
             setItems((prev) =>
-              prev.map((f, idx) =>
-                idx === i ? { ...f, progress: percent } : f
+              prev.map((f) =>
+                f.id === file.id ? { ...f, progress: percent } : f
               )
             );
           },
@@ -155,8 +155,8 @@ export default function EditOpportunityForm({
 
         uploadedFileIds.push(uploaded.key);
         setItems((prev) =>
-          prev.map((f, idx) =>
-            idx === i ? { ...f, uploading: false, fileId: uploaded.key } : f
+          prev.map((f) =>
+            f.id === file.id ? { ...f, uploading: false, fileId: uploaded.key } : f
           )
         );
       } catch (err) {
@@ -164,8 +164,8 @@ export default function EditOpportunityForm({
         const errorMessage =
           err instanceof Error ? err.message : "Unknown upload error";
         setItems((prev) =>
-          prev.map((f, idx) =>
-            idx === i
+          prev.map((f) =>
+            f.id === file.id
               ? { ...f, uploading: false, error: true, errorMessage }
               : f
           )
@@ -212,7 +212,7 @@ export default function EditOpportunityForm({
         endDate: data.dateRange?.to?.toISOString(),
         tags:
           data.tags
-            ?.split(",")
+            ?.split("|")
             .map((t) => t.trim())
             .filter(Boolean) || [],
         images: finalImages,

@@ -51,14 +51,18 @@ export function ImagePicker({
     const filesToAdd = acceptedFiles.slice(0, remainingSlots);
 
     let i = 0;
-    const newFiles: FileItem[] = filesToAdd.map((file) => ({
-      name: file.name,
-      size: file.size,
-      file,
-      preview: URL.createObjectURL(file),
-      kind: "image" as const,
-      addedAt: Date.now() + i++,
-    }));
+    const newFiles: FileItem[] = filesToAdd.map((file) => {
+      const addedAt = Date.now() + i++;
+      return {
+        id: `${file.name}-${addedAt}`,
+        name: file.name,
+        size: file.size,
+        file,
+        preview: URL.createObjectURL(file),
+        kind: "image" as const,
+        addedAt,
+      };
+    });
 
     setFiles((prev) => [...prev, ...newFiles]);
   };
@@ -103,11 +107,16 @@ export function SelectedImages({
   files,
   setFiles,
 }: Pick<BaseProps, "files" | "setFiles">) {
-  const removeFile = (index: number) => {
+  const removeFile = (fileItem: FileItem) => {
     setFiles((prev) => {
       const updated = [...prev];
-      URL.revokeObjectURL(updated[index].preview);
-      updated.splice(index, 1);
+      const index = updated.findIndex(
+        (f) => f.name === fileItem.name && f.addedAt === fileItem.addedAt
+      );
+      if (index !== -1) {
+        URL.revokeObjectURL(updated[index].preview);
+        updated.splice(index, 1);
+      }
       return updated;
     });
   };
@@ -116,8 +125,8 @@ export function SelectedImages({
 
   return (
     <div className="flex flex-wrap gap-2 py-2">
-      {files.map((file, idx) => (
-        <div key={idx} className="group relative">
+      {files.map((file) => (
+        <div key={file.id} className="group relative">
           <div className="h-16 w-16 overflow-hidden rounded-lg border bg-gray-100">
             <Image
               src={file.preview}
@@ -142,7 +151,7 @@ export function SelectedImages({
             variant="outline"
             size="sm"
             className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0"
-            onClick={() => removeFile(idx)}
+            onClick={() => removeFile(file)}
           >
             <X className="h-2 w-2" />
           </Button>
@@ -259,7 +268,9 @@ export function UnifiedFilesPreview({
     if (fileItem.kind === "image") {
       setFiles((prev) => {
         const updated = [...prev];
-        const index = updated.findIndex((f) => f.name === fileItem.name);
+        const index = updated.findIndex(
+          (f) => f.name === fileItem.name && f.addedAt === fileItem.addedAt
+        );
         if (index !== -1) {
           URL.revokeObjectURL(updated[index].preview);
           updated.splice(index, 1);
@@ -269,7 +280,9 @@ export function UnifiedFilesPreview({
     } else {
       setAttachmentFiles((prev) => {
         const updated = [...prev];
-        const index = updated.findIndex((f) => f.name === fileItem.name);
+        const index = updated.findIndex(
+          (f) => f.name === fileItem.name && f.addedAt === fileItem.addedAt
+        );
         if (index !== -1) {
           updated.splice(index, 1);
         }
@@ -282,9 +295,9 @@ export function UnifiedFilesPreview({
 
   return (
     <div className="flex flex-col gap-2 py-2">
-      {allFiles.map((file, idx) => (
+      {allFiles.map((file) => (
         <div
-          key={`${file.name}-${idx}`}
+          key={file.id}
           className="group relative flex items-center justify-between gap-3 rounded-lg border bg-muted/10 p-2 transition-colors hover:bg-muted/20"
         >
           <div className="flex items-center gap-3 overflow-hidden">
@@ -396,14 +409,18 @@ export function AttachmentPicker({
     const filesToAdd = acceptedFiles.slice(0, remainingSlots);
 
     let i = 0;
-    const newFiles: FileItem[] = filesToAdd.map((file) => ({
-      name: file.name,
-      size: file.size,
-      file,
-      preview: "",
-      kind: resolveFileKind(file),
-      addedAt: Date.now() + i++,
-    }));
+    const newFiles: FileItem[] = filesToAdd.map((file) => {
+      const addedAt = Date.now() + i++;
+      return {
+        id: `${file.name}-${addedAt}`,
+        name: file.name,
+        size: file.size,
+        file,
+        preview: "",
+        kind: resolveFileKind(file),
+        addedAt,
+      };
+    });
 
     setFiles((prev) => [...prev, ...newFiles]);
   };
@@ -499,9 +516,11 @@ export function UnifiedFilePicker({
       let i = 0;
       for (const file of acceptedFiles) {
         const addedAt = Date.now() + i++;
+        const id = `${file.name}-${addedAt}`;
         if (isImageFile(file)) {
           if (totalImages + newImages.length < maxImageFiles) {
             newImages.push({
+              id,
               name: file.name,
               size: file.size,
               file,
@@ -513,6 +532,7 @@ export function UnifiedFilePicker({
         } else {
           if (totalAttachments + newAttachments.length < maxAttachmentFiles) {
             newAttachments.push({
+              id,
               name: file.name,
               size: file.size,
               file,
@@ -594,10 +614,15 @@ export function SelectedAttachments({
   files,
   setFiles,
 }: Pick<AttachmentBaseProps, "files" | "setFiles">) {
-  const removeFile = (index: number) => {
+  const removeFile = (fileItem: FileItem) => {
     setFiles((prev) => {
       const updated = [...prev];
-      updated.splice(index, 1);
+      const index = updated.findIndex(
+        (f) => f.name === fileItem.name && f.addedAt === fileItem.addedAt
+      );
+      if (index !== -1) {
+        updated.splice(index, 1);
+      }
       return updated;
     });
   };
@@ -606,9 +631,9 @@ export function SelectedAttachments({
 
   return (
     <div className="flex flex-col gap-1.5 py-2">
-      {files.map((file, idx) => (
+      {files.map((file) => (
         <div
-          key={idx}
+          key={file.id}
           className="flex items-center gap-2 rounded-md border bg-gray-50 px-2 py-1.5 text-sm"
         >
           <AttachmentIcon kind={file.kind} />
@@ -629,7 +654,7 @@ export function SelectedAttachments({
             variant="ghost"
             size="sm"
             className="h-5 w-5 shrink-0 p-0"
-            onClick={() => removeFile(idx)}
+            onClick={() => removeFile(file)}
           >
             <X className="h-3 w-3" />
           </Button>

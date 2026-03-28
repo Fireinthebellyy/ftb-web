@@ -37,6 +37,12 @@ export default function ContentList({
     (item) =>
       Boolean(item.content?.trim()) && !Boolean(item.bunnyVideoUrl?.trim())
   );
+  const groupedItemIds = new Set([
+    ...mixedItems.map((item) => item.id),
+    ...videoItems.map((item) => item.id),
+    ...articleItems.map((item) => item.id),
+  ]);
+  const otherItems = sortedItems.filter((item) => !groupedItemIds.has(item.id));
 
   const renderContentItem = (item: ToolkitContentItem) => {
     const isLocked = !hasPurchased;
@@ -47,7 +53,9 @@ export default function ContentList({
         ? "article + video"
         : hasVideo
           ? "video"
-          : "article";
+          : hasArticle
+            ? "article"
+            : "other";
 
     return (
       <div
@@ -155,6 +163,22 @@ export default function ContentList({
               <AccordionContent>
                 <div className="space-y-1 pb-2">
                   {articleItems.map((item) => renderContentItem(item))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
+          {otherItems.length > 0 && (
+            <AccordionItem value="other">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-gray-500" />
+                  <span>Other ({otherItems.length})</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-1 pb-2">
+                  {otherItems.map((item) => renderContentItem(item))}
                 </div>
               </AccordionContent>
             </AccordionItem>

@@ -61,6 +61,26 @@ const quillModules = {
   ],
 };
 
+const hasMeaningfulRichText = (value?: string): boolean => {
+  if (!value) {
+    return false;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return false;
+  }
+
+  const withoutTags = trimmed.replace(/<[^>]*>/g, " ");
+  const normalizedText = withoutTags
+    .replace(/&nbsp;|&#160;|&#xA0;/gi, " ")
+    .replace(/\u00a0/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return normalizedText.length > 0;
+};
+
 const contentItemSchema = z
   .object({
     title: z.string().min(1, { message: "Title is required" }),
@@ -72,6 +92,15 @@ const contentItemSchema = z
   })
   .refine((data) => data.isArticle || data.isVideo, {
     message: "Select at least one type",
+    path: ["isArticle"],
+  })
+  .refine((data) => !data.isArticle || hasMeaningfulRichText(data.content), {
+    message: "Content is required for article items",
+    path: ["content"],
+  })
+  .refine((data) => !data.isVideo || Boolean(data.bunnyVideoUrl?.trim()), {
+    message: "Video URL is required for video items",
+    path: ["bunnyVideoUrl"],
   });
 
 type ContentItemFormValues = z.infer<typeof contentItemSchema>;

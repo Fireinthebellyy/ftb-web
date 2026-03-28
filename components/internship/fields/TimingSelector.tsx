@@ -34,31 +34,24 @@ export function TimingSelector({ control, value, onChange, isRequired = true }: 
               role="radiogroup"
               aria-label="Internship timing"
             >
-              {internshipTimings.map((timing) => (
-                <Badge
-                  key={timing.id}
-                  variant={value === timing.id ? "default" : "outline"}
-                  className={cn(
-                    "text-xs cursor-pointer transition-all px-2 py-0.5 h-auto",
-                    value === timing.id
-                      ? "bg-blue-100 text-blue-800 hover:bg-blue-200 border-transparent"
-                      : "bg-gray-50 text-gray-500 hover:bg-gray-100 border-gray-200"
-                  )}
-                  onClick={() => {
-                    onChange(timing.id as "full_time" | "part_time");
-                    field.onChange(timing.id);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
+                {internshipTimings.map((timing) => (
+                  <Badge
+                    key={timing.id}
+                    variant={value === timing.id ? "default" : "outline"}
+                    className={cn(
+                      "text-[10px] sm:text-xs cursor-pointer transition-all px-2.5 py-1 h-auto rounded-full font-medium",
+                      value === timing.id
+                        ? "bg-orange-500 text-white hover:bg-orange-600 border-transparent shadow-sm"
+                        : "bg-white text-gray-600 hover:bg-gray-50 border-gray-200"
+                    )}
+                    onClick={() => {
                       onChange(timing.id as "full_time" | "part_time");
                       field.onChange(timing.id);
-                    }
-                  }}
-                  tabIndex={0}
-                  role="radio"
-                  aria-checked={value === timing.id}
-                >
+                    }}
+                    tabIndex={0}
+                    role="radio"
+                    aria-checked={value === timing.id}
+                  >
                   {timing.label}
                 </Badge>
               ))}

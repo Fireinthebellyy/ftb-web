@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { user as userTable } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
+import { normalizeOpportunityInterests, normalizeDomainPreferences } from "@/app/onboarding/constants";
 
 export async function POST(request: Request) {
   try {
@@ -117,19 +118,39 @@ export async function POST(request: Request) {
       );
     }
 
+    // Normalize opportunityInterests if provided
+    const normalizedOpportunityInterests =
+      typeof opportunityInterests !== "undefined" &&
+      Array.isArray(opportunityInterests)
+        ? normalizeOpportunityInterests(opportunityInterests)
+        : undefined;
+
+    // Normalize fieldInterests if provided
+    const normalizedFieldInterests =
+      typeof fieldInterests !== "undefined" && Array.isArray(fieldInterests)
+        ? normalizeDomainPreferences(fieldInterests)
+        : undefined;
+
+    const updatePayload: any = {
+      name,
+      image: image ?? null,
+      dateOfBirth: dateOfBirth ?? null,
+      collegeInstitute: collegeInstitute ?? null,
+      contactNumber: contactNumber ?? null,
+      currentRole: currentRole ?? null,
+      updatedAt: new Date(),
+    };
+
+    if (typeof normalizedFieldInterests !== "undefined") {
+      updatePayload.fieldInterests = normalizedFieldInterests;
+    }
+    if (typeof normalizedOpportunityInterests !== "undefined") {
+      updatePayload.opportunityInterests = normalizedOpportunityInterests;
+    }
+
     const [updated] = await db
       .update(userTable)
-      .set({
-        name,
-        image: image ?? null,
-        fieldInterests: fieldInterests ?? [],
-        opportunityInterests: opportunityInterests ?? [],
-        dateOfBirth: dateOfBirth ?? null,
-        collegeInstitute: collegeInstitute ?? null,
-        contactNumber: contactNumber ?? null,
-        currentRole: currentRole ?? null,
-        updatedAt: new Date(),
-      })
+      .set(updatePayload)
       .where(eq(userTable.id, session.user.id))
       .returning({
         id: userTable.id,

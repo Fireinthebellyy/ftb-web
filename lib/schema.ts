@@ -32,10 +32,16 @@ export const onboardingTrafficSourceEnum = pgEnum("onboarding_traffic_source", [
   "other",
 ]);
 export const opportunityTypeEnum = pgEnum("opportunity_type", [
-  "hackathon",
-  "grant",
-  "competition",
-  "ideathon",
+  "competitions_open_calls",
+  "case_competitions",
+  "hackathons",
+  "fellowships",
+  "ideathon_think_tanks",
+  "leadership_programs",
+  "awards_recognition",
+  "grants_scholarships",
+  "research_paper_ra_calls",
+  "upskilling_events",
 ]);
 
 export const mentors = pgTable("mentors", {

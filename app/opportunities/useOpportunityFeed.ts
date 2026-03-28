@@ -5,7 +5,7 @@ import { useDashboardBootstrap } from "@/lib/queries-dashboard";
 import {
   useInfiniteOpportunities,
 } from "@/lib/queries-opportunities";
-
+import { AVAILABLE_TYPES } from "./constants";
 interface UseOpportunityFeedParams {
   debouncedSearchTerm: string;
   selectedTypes: string[];
@@ -18,10 +18,19 @@ export function useOpportunityFeed({
   selectedTags,
 }: UseOpportunityFeedParams) {
   const normalizedSearchTerm = debouncedSearchTerm.trim();
-  const normalizedTypes = useMemo(
-    () => [...selectedTypes].sort(),
-    [selectedTypes]
-  );
+  
+  const allSelected = selectedTypes.length === AVAILABLE_TYPES.length;
+  const noneSelected = selectedTypes.length === 0;
+  const isFilterEmpty = normalizedSearchTerm.length === 0 && selectedTags.length === 0;
+
+  const normalizedTypes = useMemo(() => {
+    // If all are selected, we don't send any type filter to the API (which the backend treats as "all")
+    if (allSelected) return [];
+    // If none are selected, return null as a sentinel
+    if (noneSelected) return null;
+    return [...selectedTypes].sort();
+  }, [selectedTypes, allSelected, noneSelected]);
+
   const normalizedTags = useMemo(
     () => selectedTags.map((tag) => tag.toLowerCase()).sort(),
     [selectedTags]
@@ -31,10 +40,11 @@ export function useOpportunityFeed({
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   }, []);
 
-  const shouldUseBootstrap =
-    normalizedSearchTerm.length === 0 &&
-    normalizedTypes.length === 0 &&
-    normalizedTags.length === 0;
+  // Use bootstrap only when all types are selected and there are no other filters
+  const shouldUseBootstrap = isFilterEmpty && allSelected;
+  
+  // If no types are selected, we should show nothing (suppress queries)
+  const shouldShowNothing = noneSelected;
 
   const bootstrapQuery = useDashboardBootstrap(
     {
@@ -49,8 +59,7 @@ export function useOpportunityFeed({
     }
   );
 
-  const shouldEnableInfiniteQuery =
-    !shouldUseBootstrap || bootstrapQuery.isSuccess || bootstrapQuery.isError;
+  const shouldEnableInfiniteQuery = !shouldUseBootstrap && !shouldShowNothing;
 
   const opportunitiesQuery = useInfiniteOpportunities(
     10,

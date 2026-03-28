@@ -17,7 +17,7 @@ import {
   FileText,
   Bookmark,
   ExternalLink,
-  MessageCircleQuestion,
+  MessagesSquare,
   Share2,
   Pin,
 } from "lucide-react";
@@ -68,6 +68,15 @@ function AttachmentSlide({
   idx?: number;
 }) {
   const [error, setError] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setIsMobile(
+      typeof window !== "undefined" &&
+        /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+    );
+  }, []);
+
   const lower = imageId.toLowerCase();
   const isPdf = lower.endsWith(".pdf");
   const fileName = `Document ${idx !== undefined ? idx + 1 : ""}`;
@@ -101,11 +110,23 @@ function AttachmentSlide({
   }
 
   if (isPdf) {
+    // Some mobile browsers don't support embedding PDF in iframe directly.
+    // We use Google Docs Viewer for a consistent experience on mobile.
+    if (isMobile === null) {
+      return (
+        <div className="relative h-full w-full bg-muted animate-pulse" />
+      );
+    }
+
+    const pdfSrc = isMobile
+      ? `https://docs.google.com/viewer?url=${encodeURIComponent(fullUrl)}&embedded=true`
+      : `${fullUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
+
     return (
       <div className="relative h-full w-full group overflow-hidden bg-white">
         {/* PDF content with interaction enabled for scrolling */}
         <iframe
-          src={`${fullUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
+          src={pdfSrc}
           className="h-full w-full border-none"
           title={fileName}
         />
@@ -115,10 +136,10 @@ function AttachmentSlide({
           href={fullUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="absolute bottom-2 right-2 z-10 flex sm:h-8 sm:w-8 h-7 w-7 items-center justify-center rounded-full bg-white/90 text-primary shadow-md hover:bg-white transition-colors border"
+          className="absolute bottom-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-primary shadow-md hover:bg-white transition-colors border sm:h-8 sm:w-8"
           title="Open full document"
         >
-          <ExternalLink className="sm:h-4 sm:w-4 h-3.5 w-3.5 " />
+          <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </a>
       </div>
     );
@@ -567,7 +588,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
               aria-label="Ask query"
               className="hover:text-primary flex items-center gap-1 py-1 text-xs transition-colors"
             >
-              <MessageCircleQuestion className="h-3.5 w-3.5" />
+              <MessagesSquare className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Ask query</span>
             </Link>
 

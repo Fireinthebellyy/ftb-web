@@ -1,5 +1,5 @@
 import {
-  Heart,
+  Flame,
   MessageSquare,
   Bookmark,
   Share2,
@@ -7,6 +7,7 @@ import {
   Trash2,
   PencilLine,
 } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import {
@@ -93,7 +94,25 @@ export function OpportunityActions({
         <div className="flex h-9 items-center space-x-4 text-gray-500 sm:space-x-6">
           <div className="flex items-center space-x-3 sm:space-x-4">
             <button
-              onClick={() => !toggleUpvote.isPending && toggleUpvote.mutate()}
+              onClick={() => {
+                if (!toggleUpvote.isPending) {
+                  toggleUpvote.mutate(undefined, {
+                    onSuccess: (data) => {
+                      if (data.hasUserUpvoted) {
+                        toast.success(
+                          "Great taste! We'll recommend more opportunities like this in the future. Save to tracker and add to calendar to never miss a deadline!",
+                          {
+                            duration: 5000,
+                            style: {
+                              alignItems: "start",
+                            },
+                          }
+                        );
+                      }
+                    },
+                  });
+                }
+              }}
               title="Upvote"
               aria-label="Upvote"
               disabled={toggleUpvote.isPending}
@@ -103,7 +122,7 @@ export function OpportunityActions({
                   : "hover:text-orange-600"
               } ${toggleUpvote.isPending ? "cursor-not-allowed opacity-60" : ""}`}
             >
-              <Heart
+              <Flame
                 className={`${actionIconClass} ${
                   userHasUpvoted ? "fill-current" : ""
                 }`}
@@ -160,37 +179,77 @@ export function OpportunityActions({
             </Dialog>
           </div>
         </div>
-        {session?.user?.id === user?.id && (
-          <div className="flex items-center">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <EllipsisVertical className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-42">
-                <DropdownMenuItem
-                  onClick={onEdit}
-                  className="flex items-center gap-2"
-                >
-                  <PencilLine />
-                  <p className="text-muted-foreground text-sm">Edit Post</p>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex items-center gap-2"
-                  onClick={() => {
-                    if (confirm("Are you sure you want to delete this post?")) {
-                      handleDeletePost();
-                    }
-                  }}
-                >
-                  <Trash2 />
-                  <p className="text-muted-foreground text-sm">Delete Post</p>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
+
+        <div className="flex items-center gap-2">
+          <a
+              href={`https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
+                `Apply to: ${opportunity.title}`
+              )}&dates=${(() => {
+                let date: Date;
+                if (opportunity.endDate) {
+                  date = new Date(opportunity.endDate);
+                } else {
+                  const baseDate = opportunity.createdAt
+                    ? new Date(opportunity.createdAt)
+                    : new Date();
+                  date = new Date(baseDate.getTime() + 3 * 24 * 60 * 60 * 1000);
+                }
+                const formatted = date
+                  .toISOString()
+                  .replace(/[-:]|\.\d{3}/g, "");
+                return `${formatted}/${formatted}`;
+              })()}&details=${encodeURIComponent(
+                `Check out this opportunity: ${opportunity.title}\n\nLink: ${shareUrl}`
+              )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            title="Add to calendar"
+            className="group flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-blue-50"
+          >
+            <Image
+              src="/images/google-calendar.webp"
+              alt="Google Calendar"
+              width={16}
+              height={16}
+              className="h-4 w-4 object-contain"
+            />
+          </a>
+
+          {session?.user?.id === user?.id && (
+            <div className="flex items-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <EllipsisVertical className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-42">
+                  <DropdownMenuItem
+                    onClick={onEdit}
+                    className="flex items-center gap-2"
+                  >
+                    <PencilLine />
+                    <p className="text-muted-foreground text-sm">Edit Post</p>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="flex items-center gap-2"
+                    onClick={() => {
+                      if (
+                        confirm("Are you sure you want to delete this post?")
+                      ) {
+                        handleDeletePost();
+                      }
+                    }}
+                  >
+                    <Trash2 />
+                    <p className="text-muted-foreground text-sm">Delete Post</p>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
+        </div>
       </footer>
 
       {showComments && <CommentSection opportunityId={id} />}

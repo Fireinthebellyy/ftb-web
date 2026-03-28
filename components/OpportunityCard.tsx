@@ -21,6 +21,7 @@ import { OpportunityAttachments } from "./opportunity/OpportunityAttachments";
 import { OpportunityActions } from "./opportunity/OpportunityActions";
 import NewOpportunityForm from "./opportunity/NewOpportunityForm";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
+import { formatTypeName } from "@/app/opportunities/constants";
 
 const isValidUUID = (uuid: string): boolean => {
   const uuidRegex =
@@ -30,10 +31,16 @@ const isValidUUID = (uuid: string): boolean => {
 
 const getTypeBadgeColor = (type?: string): string => {
   const colors: Record<string, string> = {
-    hackathon: "bg-blue-100 text-blue-800",
-    grant: "bg-green-100 text-green-800",
-    competition: "bg-purple-100 text-purple-800",
-    ideathon: "bg-orange-100 text-orange-800",
+    competitions_open_calls: "bg-blue-100 text-blue-800",
+    case_competitions: "bg-indigo-100 text-indigo-800",
+    hackathons: "bg-cyan-100 text-cyan-800",
+    fellowships: "bg-purple-100 text-purple-800",
+    ideathon_think_tanks: "bg-orange-100 text-orange-800",
+    leadership_programs: "bg-amber-100 text-amber-800",
+    awards_recognition: "bg-yellow-100 text-yellow-800",
+    grants_scholarships: "bg-green-100 text-green-800",
+    research_paper_ra_calls: "bg-rose-100 text-rose-800",
+    upskilling_events: "bg-teal-100 text-teal-800",
     others: "bg-gray-100 text-gray-800",
   };
   return colors[type?.toLowerCase() || "others"] || colors.others;
@@ -130,7 +137,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               primaryType
             )} rounded-tl-none rounded-br-none px-2 py-1 text-[10px] font-medium sm:text-xs`}
           >
-            {primaryType.charAt(0).toUpperCase() + primaryType.slice(1)}
+            {formatTypeName(primaryType)}
           </Badge>
         </div>
       )}

@@ -21,7 +21,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 const opportunitySchema = z.object({
-  type: z.enum(["hackathon", "grant", "competition", "ideathon"]),
+  type: z.enum([
+    "competitions_open_calls",
+    "case_competitions",
+    "hackathons",
+    "fellowships",
+    "ideathon_think_tanks",
+    "leadership_programs",
+    "awards_recognition",
+    "grants_scholarships",
+    "research_paper_ra_calls",
+    "upskilling_events",
+  ]),
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   images: z.array(z.string()).optional(),
@@ -286,7 +297,7 @@ export async function GET(req: NextRequest) {
     const validTypes = rawTypes.filter((type) => allowedTypes.includes(type));
     const rawTags = tagsParam
       ? tagsParam
-          .split(",")
+          .split("|")
           .map((value) => value.trim().toLowerCase())
           .filter(Boolean)
       : [];
@@ -406,8 +417,14 @@ export async function GET(req: NextRequest) {
         .from(opportunities)
         .leftJoin(user, eq(opportunities.userId, user.id))
         .where(filters)
-        .orderBy(desc(opportunities.createdAt))
-        .limit(validLimit)
+        .orderBy(
+          sql`CASE 
+            WHEN COALESCE(${opportunities.endDate}, (${opportunities.createdAt} + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END ASC`,
+          desc(opportunities.createdAt)
+        )
+        .limit(validLimit + 1)
         .offset(validOffset);
 
       let totalCount = 0;
@@ -444,10 +461,14 @@ export async function GET(req: NextRequest) {
       totalCount = result.totalCount ?? 0;
     }
 
-    timer.mark("query_page_done", { rows: paginated.length });
+    // Handle pagination correctly using the extra row sentinel
+    const hasMore = paginated.length > validLimit;
+    const finalRows = hasMore ? paginated.slice(0, validLimit) : paginated;
+
+    timer.mark("query_page_done", { rows: finalRows.length, hasMore });
 
     const currentUserId = session.user.id;
-    const opportunitiesWithUpvote = paginated.map((opp) => {
+    const opportunitiesWithUpvote = finalRows.map((opp) => {
       let userHasUpvoted = false;
       if (currentUserId && Array.isArray(opp.upvoterIds)) {
         userHasUpvoted = opp.upvoterIds.includes(currentUserId);
@@ -467,6 +488,12 @@ export async function GET(req: NextRequest) {
       {
         success: true,
         opportunities: opportunitiesWithUpvote,
+        pagination: {
+          limit: validLimit,
+          offset: validOffset,
+          total: totalCount,
+          hasMore,
+        },
         ...(includeTotal && { total: totalCount }),
       },
       { status: 200 }

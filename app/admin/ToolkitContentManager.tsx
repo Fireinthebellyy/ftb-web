@@ -144,12 +144,15 @@ export default function ToolkitContentManager({
   }, [fetchContentItems]);
 
   const handleEdit = (contentItem: ContentItem) => {
+    const hasArticle = Boolean(contentItem.content?.trim());
+    const hasVideo = Boolean(contentItem.bunnyVideoUrl?.trim());
+
     setEditingContentItem(contentItem);
     setIsAdding(false);
     form.reset({
       title: contentItem.title,
-      isArticle: contentItem.type === "article",
-      isVideo: contentItem.type === "video",
+      isArticle: hasArticle || contentItem.type === "article",
+      isVideo: hasVideo || contentItem.type === "video",
       content: contentItem.content ?? "",
       bunnyVideoUrl: contentItem.bunnyVideoUrl ?? "",
       orderIndex: contentItem.orderIndex,
@@ -219,20 +222,19 @@ export default function ToolkitContentManager({
       const payload = {
         ...rest,
         content: isArticle ? normalizeQuillContent(content ?? "") : "",
-        bunnyVideoUrl: extractVideoUrl(bunnyVideoUrl || ""),
-        type:
-          isArticle && isVideo ? "article" : isArticle ? "article" : "video",
+        bunnyVideoUrl: isVideo ? extractVideoUrl(bunnyVideoUrl || "") : "",
+        type: isVideo && !isArticle ? "video" : "article",
       };
 
-      if (isAdding) {
-        await axios.post(`/api/admin/toolkits/${toolkitId}/content`, payload);
-        toast.success("Content item added successfully!");
-      } else if (editingContentItem) {
+      if (editingContentItem) {
         await axios.put(
           `/api/admin/toolkit-content-items/${editingContentItem.id}`,
           payload
         );
         toast.success("Content item updated successfully!");
+      } else {
+        await axios.post(`/api/admin/toolkits/${toolkitId}/content`, payload);
+        toast.success("Content item added successfully!");
       }
 
       setEditDialogOpen(false);
@@ -326,12 +328,14 @@ export default function ToolkitContentManager({
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
-                            {contentItem.type === "article" && (
+                            {(contentItem.type === "article" ||
+                              contentItem.content?.trim()) && (
                               <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
                                 Article
                               </span>
                             )}
-                            {contentItem.type === "video" && (
+                            {(contentItem.type === "video" ||
+                              contentItem.bunnyVideoUrl?.trim()) && (
                               <span className="inline-flex items-center rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700">
                                 Video
                               </span>
@@ -443,6 +447,9 @@ export default function ToolkitContentManager({
                         )}
                       />
                     </div>
+                    <p className="text-muted-foreground text-xs">
+                      Select both to include article and video in one lesson.
+                    </p>
                   </FormItem>
 
                   <FormField

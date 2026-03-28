@@ -190,7 +190,10 @@ export default function AdminToolkitsTable() {
         videoUrl: data.videoUrl || undefined,
         category: data.category || undefined,
         totalDuration: data.totalDuration || undefined,
-        highlights: data.highlights?.filter(Boolean) || undefined,
+        highlights:
+          data.highlights
+            ?.map((highlight) => highlight.trim())
+            .filter(Boolean) || undefined,
         testimonials: data.testimonials?.length
           ? data.testimonials.map((item) => ({
               name: item.name.trim(),

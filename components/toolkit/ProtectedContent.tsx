@@ -63,7 +63,8 @@ export default function ProtectedContent({
           -ms-user-select: none;
         }
         .protected-content a {
-          pointer-events: none;
+          pointer-events: auto;
+          cursor: pointer;
         }
       `}</style>
     </div>

@@ -43,6 +43,9 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"div">) {
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingProvider, setLoadingProvider] = useState<
+    "google" | "linkedin" | null
+  >(null);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -58,6 +61,7 @@ export function LoginForm({
   const signInWithGoogle = async () => {
     try {
       setIsLoading(true);
+      setLoadingProvider("google");
       await authClient.signIn.social({
         provider: "google",
         callbackURL: returnUrl,
@@ -68,12 +72,14 @@ export function LoginForm({
       toast.error("Google sign-in failed. Please try again.");
     } finally {
       setIsLoading(false);
+      setLoadingProvider(null);
     }
   };
 
   const signInWithLinkedIn = async () => {
     try {
       setIsLoading(true);
+      setLoadingProvider("linkedin");
       await authClient.signIn.social({
         provider: "linkedin",
         callbackURL: returnUrl,
@@ -84,6 +90,7 @@ export function LoginForm({
       toast.error("LinkedIn sign-in failed. Please try again.");
     } finally {
       setIsLoading(false);
+      setLoadingProvider(null);
     }
   };
 
@@ -164,38 +171,55 @@ export function LoginForm({
                     className="w-full"
                     type="button"
                     onClick={signInWithGoogle}
+                    disabled={isLoading}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                      <path
-                        d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                    Login with Google
+                    {loadingProvider === "google" ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    )}
+                    {loadingProvider === "google"
+                      ? "Signing in with Google..."
+                      : "Login with Google"}
                   </Button>
                   <Button
                     variant="outline"
                     className="w-full"
                     type="button"
                     onClick={signInWithLinkedIn}
+                    disabled={isLoading}
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="lucide lucide-linkedin-icon lucide-linkedin"
-                    >
-                      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
-                      <rect width="4" height="12" x="2" y="9" />
-                      <circle cx="4" cy="4" r="2" />
-                    </svg>
-                    Login with LinkedIn
+                    {loadingProvider === "linkedin" ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="lucide lucide-linkedin-icon lucide-linkedin"
+                      >
+                        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+                        <rect width="4" height="12" x="2" y="9" />
+                        <circle cx="4" cy="4" r="2" />
+                      </svg>
+                    )}
+                    {loadingProvider === "linkedin"
+                      ? "Signing in with LinkedIn..."
+                      : "Login with LinkedIn"}
                   </Button>
                 </div>
                 {ENABLE_EMAIL_PASSWORD_LOGIN && (

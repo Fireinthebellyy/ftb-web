@@ -228,9 +228,54 @@ body,
   animation: marquee-left 26s linear infinite;
 }
 
+.animate-marquee-logo {
+  animation: marquee-left 14s linear infinite;
+}
+
 .animate-marquee:hover,
 .animate-marquee-slow:hover {
   animation-play-state: paused;
+}
+
+@keyframes internship-stack-up {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0%);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(0%);
+  }
+  40% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+
+.animate-internship-stack {
+  animation: internship-stack-up 9s ease-in-out infinite;
+}
+
+@keyframes internship-marquee-down {
+  0% {
+    transform: translateY(-50%);
+  }
+  100% {
+    transform: translateY(0%);
+  }
+}
+
+.animate-internship-marquee-down {
+  animation: internship-marquee-down 8s linear infinite;
+  will-change: transform;
 }
 
 .hide-scrollbar::-webkit-scrollbar {

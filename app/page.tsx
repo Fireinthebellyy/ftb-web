@@ -1,12 +1,15 @@
 "use client";
 
 import { useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { Inter, Outfit, Satisfy } from "next/font/google";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Toolkit } from "@/types/interfaces";
+import { startToolkitCheckout } from "@/lib/toolkit-checkout";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -24,14 +27,6 @@ const satisfy = Satisfy({
 });
 
 const sfProClass = inter.className;
-
-const toolkitCards = [
-  { title: "Cold Mailing", description: "", compact: true },
-  { title: "Interviews", description: "", compact: true },
-  { title: "Case Comp", description: "Buy this toolkit to access\nexclusive content" },
-  { title: "CV/Resume", description: "Buy this toolkit to access\nexclusive content" },
-  { title: "Random Tool Kit", description: "Buy this toolkit to access\nexclusive content" },
-];
 
 const genericCards = [
   "Random Tool Kit",
@@ -64,14 +59,14 @@ function HeroSection() {
           <h1 className={`${outfit.className} max-w-[408px] text-[44px] leading-[50px] font-bold tracking-[-2.25px] text-black md:max-w-[820px] md:text-[68px] md:leading-[72px]`}>
             Everything you need to get ahead.
             <br />
-            Finally, in one place.
+            {"Finally,\u00A0in\u00A0one\u00A0place."}
           </h1>
           <p className={`${inter.className} max-w-[330px] text-center text-2xl leading-8 font-normal tracking-[-0.25px] text-black/50 md:max-w-[760px] md:text-[30px] md:leading-[38px]`}>
             So you stop missing out and start making smarter moves.
           </p>
         </div>
 
-        <div className="relative h-[256px] w-[282px] md:h-[420px] md:w-[500px]">
+        <div className="relative h-[256px] w-[282px] max-w-full md:h-[420px] md:w-[500px]">
           <Image src="/images/pingo.png" alt="Hero visual" fill priority sizes="(min-width: 768px) 500px, 282px" className="object-contain object-top" />
         </div>
       </div>
@@ -94,6 +89,7 @@ function TaglineSection() {
 
 function InternshipStripClient() {
   const [activeSlide, setActiveSlide] = useState(0);
+  const internshipStackImages = ["/images/internship2.jpeg", "/images/internship3.jpeg", "/images/internship.jpeg"];
 
   const slides = [
     {
@@ -135,21 +131,34 @@ function InternshipStripClient() {
   };
 
   return (
-    <section className="pt-4 pb-4 md:px-8 md:py-8">
-      <div className="mx-auto w-[400px] overflow-hidden px-5 md:w-[680px] md:px-0">
+    <section className="-mx-4 pt-4 pb-4 md:mx-0 md:px-8 md:py-8">
+      <div className="mx-auto w-[390px] overflow-hidden md:w-[680px]">
         <div
           className="flex transition-transform duration-300 ease-out"
           style={{ transform: `translateX(-${activeSlide * 100}%)` }}
         >
           {slides.map((slide) => (
-            <article key={slide.key} className="w-[400px] shrink-0 md:w-[680px]">
+            <article key={slide.key} className="w-[390px] shrink-0 md:w-[680px]">
               <div className="mx-auto h-[240px] w-[390px] rounded-2xl border border-black/30 bg-white p-[10px] md:h-[320px] md:w-[660px] md:rounded-[24px] md:p-4">
                 <div className="grid h-full grid-cols-[160px_200px] gap-[10px] md:grid-cols-[280px_340px] md:gap-4">
                   {slide.leftMode === "badge" ? (
                     <div className="flex h-[220px] flex-col justify-between rounded-2xl bg-white p-4 md:h-[288px] md:p-6">
                       <div className="h-[37px] w-[142px] rounded-2xl md:h-[56px] md:w-[220px]" />
                       <div className="relative h-[37px] w-[128px] overflow-hidden rounded-2xl md:h-[52px] md:w-[200px]">
-                        <Image src={slide.leftImage} alt={`${slide.title} badge`} fill className="object-contain object-left" />
+                        <div
+                          className="animate-internship-marquee-down flex w-full flex-col"
+                          style={{ animation: "internship-marquee-down 4s linear infinite", willChange: "transform" }}
+                        >
+                          {internshipStackImages.concat(internshipStackImages).map((src, index) => (
+                            <div
+                              key={`${src}-${index}`}
+                              aria-hidden={index >= internshipStackImages.length ? "true" : undefined}
+                              className="relative h-[37px] w-[128px] shrink-0 md:h-[52px] md:w-[200px]"
+                            >
+                              <Image src={src} alt={`${slide.title} badge ${index + 1}`} fill className="object-contain object-left" />
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   ) : (
@@ -166,8 +175,8 @@ function InternshipStripClient() {
                     </div>
 
                     <div className="mt-1 rounded-2xl px-1 text-center">
-                      <h3 className={`${outfit.className} text-[20px] leading-[25px] font-medium text-black md:text-[36px] md:leading-[40px]`}>{slide.title}</h3>
-                      <p className={`${sfProClass} mt-2 text-[16px] leading-4 text-black/50 md:text-[24px] md:leading-[26px]`}>{slide.description}</p>
+                      <h3 className={`${outfit.className} text-[20px] leading-[25px] font-medium text-black md:text-[32px] md:leading-[36px]`}>{slide.title}</h3>
+                      <p className={`${sfProClass} mt-2 text-[16px] leading-4 text-black/50 md:text-[20px] md:leading-[24px]`}>{slide.description}</p>
                     </div>
                   </div>
                 </div>
@@ -222,15 +231,15 @@ function TrustedSection() {
         </p>
 
         <div className="relative mt-2 overflow-hidden">
-          <div className="animate-marquee-slow flex w-max items-center gap-8">
-            <div className="flex items-center gap-8">
+          <div className="animate-marquee-logo flex w-max items-center" style={{ animation: "marquee-left 14s linear infinite", willChange: "transform" }}>
+            <div className="flex shrink-0 items-center gap-8">
               {logos.map((logo, index) => (
                 <div key={`logo-${index}`} className="relative h-[81px] w-[70px] shrink-0">
                   <Image src={logo} alt="University logo" fill className="object-contain" />
                 </div>
               ))}
             </div>
-            <div className="flex items-center gap-8" aria-hidden="true">
+            <div className="flex shrink-0 items-center gap-8" aria-hidden="true">
               {logos.map((logo, index) => (
                 <div key={`logo-dup-${index}`} className="relative h-[81px] w-[70px] shrink-0">
                 <Image src={logo} alt="University logo" fill className="object-contain" />
@@ -345,6 +354,34 @@ function useDragMarquee() {
 }
 
 function ToolkitCarousel() {
+  const [processingToolkitId, setProcessingToolkitId] = useState<string | null>(null);
+
+  const { data: toolkits = [] } = useQuery<Toolkit[]>({
+    queryKey: ["toolkits"],
+    queryFn: async () => {
+      const response = await axios.get<Toolkit[]>("/api/toolkits");
+      return response.data;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const toolkitCards = toolkits.slice(0, 6);
+  const shouldShowComingSoon = toolkitCards.length < 2;
+
+  const handleBuyNow = async (toolkitId: string) => {
+    setProcessingToolkitId(toolkitId);
+
+    try {
+      await startToolkitCheckout(toolkitId, (path) => {
+        window.location.href = path;
+      });
+    } catch (error) {
+      console.error("Purchase error:", error);
+    } finally {
+      setProcessingToolkitId(null);
+    }
+  };
+
   return (
     <section className="mt-0 bg-black px-4 pt-2 pb-2 md:px-8 md:py-6">
       <div className="flex items-start justify-between gap-4">
@@ -361,13 +398,28 @@ function ToolkitCarousel() {
         <div className="flex w-max gap-2">
           {toolkitCards.map((card, index) => (
             <article
-              key={`${card.title}-${index}`}
-              className="mt-2 flex h-[270px] w-[218px] shrink-0 flex-col justify-between rounded-2xl border border-white/50 px-4 py-4 md:h-[340px] md:w-[280px] md:px-5 md:py-5"
+              key={`${card.id}-${index}`}
+              className="relative mt-2 flex h-[270px] w-[218px] shrink-0 flex-col justify-between overflow-hidden rounded-2xl border border-white/50 px-4 py-4 md:h-[340px] md:w-[280px] md:px-5 md:py-5"
             >
-              <div>
-                <h4 className={`${outfit.className} text-center text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-white`}>{card.title}</h4>
+              {card.coverImageUrl || card.bannerImageUrl ? (
+                <>
+                  <Image
+                    src={card.coverImageUrl ?? card.bannerImageUrl!}
+                    alt={card.title}
+                    fill
+                    className="object-cover opacity-45 blur-[1px]"
+                    sizes="(max-width: 768px) 218px, 280px"
+                  />
+                  <div className="absolute inset-0 bg-black/55" />
+                </>
+              ) : null}
+
+              <div className="relative z-10">
+                <h4 className={`${outfit.className} line-clamp-2 text-center text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-white`}>
+                  {card.title}
+                </h4>
                 {card.description ? (
-                  <p className={`${sfProClass} mt-1 whitespace-pre-line text-center text-[20px] leading-[30px] tracking-[-1px] text-white/50`}>
+                  <p className={`${sfProClass} mt-1 line-clamp-3 text-center text-[18px] leading-[24px] tracking-[-0.25px] text-white/80`}>
                     {card.description}
                   </p>
                 ) : (
@@ -377,15 +429,21 @@ function ToolkitCarousel() {
                 )}
               </div>
 
-              <div className="flex items-center justify-between gap-[10px]">
-                <Link
-                  href="/buy"
-                  className={`${outfit.className} inline-flex h-12 items-center justify-center whitespace-nowrap rounded-[39px] bg-white px-3 text-[18px] leading-none font-medium tracking-[-0.25px] text-black`}
+              <div className="relative z-10 flex items-center justify-between gap-[10px]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (card.id) {
+                      void handleBuyNow(card.id);
+                    }
+                  }}
+                  disabled={!card.id || processingToolkitId === card.id}
+                  className={`${outfit.className} inline-flex h-12 items-center justify-center whitespace-nowrap rounded-[39px] bg-white px-3 text-[18px] leading-none font-medium tracking-[-0.25px] text-black disabled:cursor-not-allowed disabled:opacity-60`}
                 >
-                  Buy now
-                </Link>
+                  {processingToolkitId === card.id ? "Processing..." : "Buy now"}
+                </button>
                 <Link
-                  href="/explore"
+                  href={card.id ? `/toolkit/${card.id}` : "/toolkit"}
                   className={`${sfProClass} inline-flex h-12 items-center justify-center whitespace-nowrap rounded-[39px] border border-white/50 px-3 text-[18px] leading-none font-normal tracking-[-0.25px] text-white/50`}
                 >
                   Explore
@@ -393,6 +451,17 @@ function ToolkitCarousel() {
               </div>
             </article>
           ))}
+
+          {shouldShowComingSoon ? (
+            <article className="mt-2 flex h-[270px] w-[218px] shrink-0 flex-col items-center justify-center rounded-2xl border border-dashed border-white/60 bg-white/5 px-4 py-4 text-center md:h-[340px] md:w-[280px] md:px-5 md:py-5">
+              <p className={`${outfit.className} text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-white`}>
+                Coming Soon,
+              </p>
+              <p className={`${sfProClass} mt-1 text-[20px] leading-[26px] text-white/80`}>
+                Stay Tuned!
+              </p>
+            </article>
+          ) : null}
         </div>
       </div>
     </section>
@@ -425,16 +494,22 @@ function CardCarouselSection({
   return (
     <section className="bg-white px-4 py-4 md:px-8 md:py-6">
       <div className={`flex flex-col ${stackGapClass}`}>
-        <div className="space-y-2 text-center">
-          <h3 className={titleClass}>{title}</h3>
-          <p className={subtitleClass}>{subtitle}</p>
+        <div className="relative space-y-2 text-center">
+          <div className="space-y-2">
+            <h3 className={titleClass}>{title}</h3>
+            <p className={subtitleClass}>{subtitle}</p>
+          </div>
+
+          <Link href={href} className={`${sfProClass} hidden whitespace-nowrap text-[16px] leading-[30px] font-medium tracking-[-1px] text-[#ff6e00] md:absolute md:top-0 md:right-0 md:inline-block`}>
+            See All
+          </Link>
         </div>
 
         {/* marquee with drag + hover-to-pause */}
         <MarqueeLikeCards />
 
-        <Link href={href} className={`${sfProClass} text-left text-[16px] leading-[30px] font-medium tracking-[-1px] text-[#ff6e00]`}>
-          Learn more
+        <Link href={href} className={`${sfProClass} text-left text-[16px] leading-[30px] font-medium tracking-[-1px] text-[#ff6e00] md:hidden`}>
+          See All
         </Link>
       </div>
     </section>
@@ -443,8 +518,6 @@ function CardCarouselSection({
 
 function MarqueeLikeCards() {
   const {
-    paused,
-    setPaused,
     containerRef,
     onPointerDown,
     onPointerMove,
@@ -461,7 +534,7 @@ function MarqueeLikeCards() {
       tabIndex={0}
       role="region"
       aria-label="Ungatekeep and internship cards carousel. Use arrow keys to scroll."
-      className={cn("hide-scrollbar mt-[6px]", paused ? "overflow-x-auto" : "overflow-hidden")}
+      className="hide-scrollbar mt-[6px] overflow-x-auto"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -470,26 +543,12 @@ function MarqueeLikeCards() {
       onKeyDown={onKeyDown}
       onBlur={onBlur}
     >
-      <div
-        role="list"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-        className="animate-marquee-slow flex w-max gap-4"
-        style={{ minWidth: "200%", animationPlayState: paused ? "paused" : "running" }}
-      >
-        {genericCards
-          .map((title, index) => (
-            <div key={`card-${index}`} className="relative h-[199px] w-[160px] shrink-0 overflow-hidden rounded-2xl border border-black/20 md:h-[280px] md:w-[240px]">
-              <Image src="/images/graphic1.png" alt={`Card visual ${index + 1}`} fill className="object-cover" />
-            </div>
-          ))
-          .concat(
-            genericCards.map((title, index) => (
-              <div aria-hidden="true" key={`card-dup-${index}`} className="relative h-[199px] w-[160px] shrink-0 overflow-hidden rounded-2xl border border-black/20 md:h-[280px] md:w-[240px]">
-                <Image src="/images/graphic1.png" alt={`Card visual dup ${index + 1}`} fill className="object-cover" />
-              </div>
-            ))
-          )}
+      <div role="list" className="flex w-max gap-4">
+        {genericCards.map((title, index) => (
+          <div key={`card-${index}`} className="relative h-[199px] w-[160px] shrink-0 overflow-hidden rounded-2xl border border-black/20 md:h-[280px] md:w-[240px]">
+            <Image src="/images/graphic1.png" alt={`Card visual ${index + 1}`} fill className="object-cover" />
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -497,8 +556,6 @@ function MarqueeLikeCards() {
 
 function OpportunitiesSection() {
   const {
-    paused,
-    setPaused,
     containerRef,
     onPointerDown,
     onPointerMove,
@@ -511,11 +568,17 @@ function OpportunitiesSection() {
 
   return (
     <section className="bg-white px-4 py-4 md:px-8 md:py-6">
-      <div className="space-y-2 text-center">
-        <h3 className={`${outfit.className} text-[30px] leading-[30px] font-medium tracking-[-2.25px] text-black/80`}>
-          Talk of the hour in Opportunities
-        </h3>
-        <p className={`${outfit.className} whitespace-nowrap text-[20px] leading-5 tracking-[-0.25px] text-black/50`}>Step up, stand out - bring the A-game.</p>
+      <div className="relative space-y-2 text-center">
+        <div className="space-y-2">
+          <h3 className={`${outfit.className} text-[30px] leading-[30px] font-medium tracking-[-2.25px] text-black/80`}>
+            Talk of the hour in Opportunities
+          </h3>
+          <p className={`${outfit.className} whitespace-nowrap text-[20px] leading-5 tracking-[-0.25px] text-black/50`}>Step up, stand out - bring the A-game.</p>
+        </div>
+
+        <Link href="/opportunities" className={`${sfProClass} hidden whitespace-nowrap text-[16px] leading-[30px] font-medium tracking-[-1px] text-[#ff6e00] md:absolute md:top-0 md:right-0 md:inline-block`}>
+          See All
+        </Link>
       </div>
 
       <div
@@ -523,7 +586,7 @@ function OpportunitiesSection() {
         tabIndex={0}
         role="region"
         aria-label="Opportunities carousel. Use arrow keys to scroll."
-        className={cn("hide-scrollbar mt-[10px]", paused ? "overflow-x-auto" : "overflow-hidden")}
+        className="hide-scrollbar mt-[10px] overflow-x-auto"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -532,45 +595,24 @@ function OpportunitiesSection() {
         onKeyDown={onKeyDown}
         onBlur={onBlur}
       >
-        <div
-          role="list"
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}
-          className="animate-marquee-slow flex w-max gap-4"
-          style={{ minWidth: "200%", animationPlayState: paused ? "paused" : "running" }}
-        >
-          {genericCards
-            .map((title, index) => (
-              <article key={`opp-${index}`} className="h-[199px] w-[160px] shrink-0 rounded-2xl border border-black/30 p-4 md:h-[280px] md:w-[240px] md:p-6">
-                <div className="relative mx-auto size-10">
-                  <Image src="/images/Shape Set.svg" alt="Opportunity icon" fill className="object-contain" />
-                </div>
-                <div className="mt-[10px] px-4 md:mt-6 md:px-2">
-                  <h4 className={`${outfit.className} whitespace-pre-line text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-black md:text-[34px] md:leading-[40px]`}>
-                    {title}
-                  </h4>
-                </div>
-              </article>
-            ))
-            .concat(
-              genericCards.map((title, index) => (
-                <article aria-hidden="true" key={`opp-dup-${index}`} className="h-[199px] w-[160px] shrink-0 rounded-2xl border border-black/30 p-4 md:h-[280px] md:w-[240px] md:p-6">
-                  <div className="relative mx-auto size-10">
-                    <Image src="/images/Shape Set.svg" alt="Opportunity icon" fill className="object-contain" />
-                  </div>
-                  <div className="mt-[10px] px-4 md:mt-6 md:px-2">
-                    <h4 className={`${outfit.className} whitespace-pre-line text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-black md:text-[34px] md:leading-[40px]`}>
-                      {title}
-                    </h4>
-                  </div>
-                </article>
-              ))
-            )}
+        <div role="list" className="flex w-max gap-4">
+          {genericCards.map((title, index) => (
+            <article key={`opp-${index}`} className="h-[199px] w-[160px] shrink-0 rounded-2xl border border-black/30 p-4 md:h-[280px] md:w-[240px] md:p-6">
+              <div className="relative mx-auto size-10">
+                <Image src="/images/Shape Set.svg" alt="Opportunity icon" fill className="object-contain" />
+              </div>
+              <div className="mt-[10px] px-4 md:mt-6 md:px-2">
+                <h4 className={`${outfit.className} whitespace-pre-line text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-black md:text-[34px] md:leading-[40px]`}>
+                  {title}
+                </h4>
+              </div>
+            </article>
+          ))}
         </div>
       </div>
 
-      <Link href="/opportunities" className={`${sfProClass} mt-4 text-left text-[16px] leading-[30px] font-medium tracking-[-1px] text-[#ff6e00]`}>
-        Learn more
+      <Link href="/opportunities" className={`${sfProClass} mt-4 text-left text-[16px] leading-[30px] font-medium tracking-[-1px] text-[#ff6e00] md:hidden`}>
+        See All
       </Link>
     </section>
   );

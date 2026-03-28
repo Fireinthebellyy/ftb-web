@@ -46,16 +46,6 @@ export const normalizeType = (type: string): string => {
   return legacyMap[normalized] || normalized;
 };
 
-export const FIELD_TAGS = [
-  "Business, Management & Consulting(Consulting/Management/Product/Strategy/Operations)",
-  "Creative & Content(Marketing/Design/UI UX/Literature/Film & Media/Content)",
-  "Tech & Data(AI/ML/Analytics/Tech/Data Science)",
-  "Impact & Change(Social Impact/Dev Comm)",
-  "Law & Policy(Law, Governance, Policy, Think Tanks)",
-  "Startup & Finance(Entrepreneurship, VC, Finance)",
-  "People & Mind(HR, Psychology, Research)",
-];
-
 export const formatTypeName = (type: string): string => {
   const mapping: Record<string, string> = {
     competitions_open_calls: "Competitions/Open Calls",

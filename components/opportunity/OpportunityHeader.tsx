@@ -15,6 +15,13 @@ interface OpportunityHeaderProps {
 
 const ORGANISER_MAX_LENGTH = 40;
 
+const truncateToWords = (str: string, count: number): string => {
+  if (!str) return "";
+  const words = str.trim().split(/\s+/);
+  if (words.length <= count) return str;
+  return words.slice(0, count).join(" ") + "...";
+};
+
 const formatOrganiserInfo = (value?: string): string => {
   if (!value) {
     return "";
@@ -100,7 +107,12 @@ export function OpportunityHeader({
             {displayOrganiserInfo && (
               <div className="flex items-center gap-1">
                 <Building2 className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-                <span className="truncate text-xs">{displayOrganiserInfo}</span>
+                <span className="truncate text-xs sm:hidden">
+                  {truncateToWords(displayOrganiserInfo, 2)}
+                </span>
+                <span className="hidden truncate text-xs sm:inline">
+                  {displayOrganiserInfo}
+                </span>
               </div>
             )}
           </div>
@@ -156,7 +168,13 @@ export function OpportunityHeader({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <p className="truncate text-sm font-semibold text-gray-900">
+            <p className="truncate text-sm font-semibold text-gray-900 sm:hidden">
+              {truncateToWords(
+                user && user.name ? user.name : "Opportunity Organizer",
+                2
+              )}
+            </p>
+            <p className="hidden truncate text-sm font-semibold text-gray-900 sm:block">
               {user && user.name ? user.name : "Opportunity Organizer"}
             </p>
             {user?.role === "member" && (

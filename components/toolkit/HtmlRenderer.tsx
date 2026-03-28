@@ -70,6 +70,18 @@ export default function HtmlRenderer({
     };
   }, [itemId]);
 
+  useEffect(() => {
+    if (!contentRef.current) {
+      return;
+    }
+
+    const links = contentRef.current.querySelectorAll("a[href]");
+    links.forEach((link) => {
+      link.setAttribute("target", "_blank");
+      link.setAttribute("rel", "noopener noreferrer");
+    });
+  }, [safeHtml]);
+
   const htmlContent = (
     <div
       ref={contentRef}

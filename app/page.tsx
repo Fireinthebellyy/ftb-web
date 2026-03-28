@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
@@ -203,7 +203,7 @@ const InternshipStrip = dynamic(async () => InternshipStripClient, {
 });
 
 function TrustedSection() {
-  const logos = ["/images/du.png", "/images/christ.jpg", "/images/srcc.png", "/images/ssc.png", "/images/iim.jpg"];
+  const logos = ["/images/du.png", "/images/christ.jpg", "/images/manipal.png", "/images/srcc.png", "/images/ssc.png", "/images/bhu.png", "/images/iim.jpg"];
 
   return (
     <section className="px-4 pb-0">
@@ -306,7 +306,7 @@ function CardCarouselSection({
   const titleClass =
     spacing === "featured"
       ? `${outfit.className} text-[30px] leading-[30px] font-medium tracking-[-2.25px] text-black/80`
-      : `${outfit.className} whitespace-pre-line text-[30px] leading-[30px] font-medium tracking-[-2.25px] text-black/80`;
+      : `${outfit.className} whitespace-pre-line md:whitespace-nowrap text-[30px] leading-[30px] font-medium tracking-[-2.25px] text-black/80`;
   const subtitleClass =
     spacing === "featured"
       ? `${outfit.className} w-full text-[20px] leading-5 tracking-[-0.25px] text-black/50`
@@ -320,15 +320,8 @@ function CardCarouselSection({
           <p className={subtitleClass}>{subtitle}</p>
         </div>
 
-        <div className="hide-scrollbar overflow-x-auto">
-          <div className="flex w-max gap-4">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="relative h-[199px] w-[160px] shrink-0 overflow-hidden rounded-2xl border border-black/20 md:h-[280px] md:w-[240px]">
-                <Image src="/images/graphic1.png" alt="Card visual" fill className="object-cover" />
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* marquee with drag + hover-to-pause */}
+        <MarqueeLikeCards />
 
         <Link href={href} className={`${sfProClass} text-left text-[16px] leading-[30px] font-medium tracking-[-1px] text-[#ff6e00]`}>
           Learn more
@@ -338,7 +331,84 @@ function CardCarouselSection({
   );
 }
 
+function MarqueeLikeCards() {
+  const [paused, setPaused] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const isDown = useRef(false);
+  const startX = useRef(0);
+  const scrollLeftRef = useRef(0);
+
+  return (
+    <div
+      ref={containerRef}
+      className={`hide-scrollbar mt-[6px] ${paused ? "overflow-x-auto" : "overflow-hidden"}`}
+      onPointerDown={(e) => {
+        const el = containerRef.current;
+        if (!el) return;
+        isDown.current = true;
+        try {
+          el.setPointerCapture?.(e.pointerId);
+        } catch {}
+        startX.current = e.clientX;
+        scrollLeftRef.current = el.scrollLeft;
+        setPaused(true);
+      }}
+      onPointerMove={(e) => {
+        if (!isDown.current || !containerRef.current) return;
+        const x = e.clientX;
+        const walk = x - startX.current;
+        containerRef.current.scrollLeft = scrollLeftRef.current - walk;
+      }}
+      onPointerUp={(e) => {
+        if (!containerRef.current) return;
+        isDown.current = false;
+        try {
+          containerRef.current.releasePointerCapture(e.pointerId);
+        } catch {}
+        setPaused(false);
+      }}
+      onPointerLeave={() => {
+        if (isDown.current) isDown.current = false;
+      }}
+      onPointerCancel={() => {
+        if (isDown.current) isDown.current = false;
+      }}
+    >
+      <div
+        role="list"
+        tabIndex={0}
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        onFocus={() => setPaused(true)}
+        onBlur={() => setPaused(false)}
+        className="animate-marquee-slow flex w-max gap-4"
+        style={{ minWidth: "200%", animationPlayState: paused ? "paused" : "running" }}
+      >
+        {genericCards
+          .map((title, index) => (
+            <div key={`card-${index}`} className="relative h-[199px] w-[160px] shrink-0 overflow-hidden rounded-2xl border border-black/20 md:h-[280px] md:w-[240px]">
+              <Image src="/images/graphic1.png" alt={`Card visual ${index + 1}`} fill className="object-cover" />
+            </div>
+          ))
+          .concat(
+            genericCards.map((title, index) => (
+              <div key={`card-dup-${index}`} className="relative h-[199px] w-[160px] shrink-0 overflow-hidden rounded-2xl border border-black/20 md:h-[280px] md:w-[240px]">
+                <Image src="/images/graphic1.png" alt={`Card visual dup ${index + 1}`} fill className="object-cover" />
+              </div>
+            ))
+          )}
+      </div>
+    </div>
+  );
+}
+
 function OpportunitiesSection() {
+  const [paused, setPaused] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const isDown = useRef(false);
+  const startX = useRef(0);
+  const scrollLeftRef = useRef(0);
+
   return (
     <section className="bg-white px-4 py-4 md:px-8 md:py-6">
       <div className="space-y-2 text-center">
@@ -348,20 +418,78 @@ function OpportunitiesSection() {
         <p className={`${outfit.className} whitespace-nowrap text-[20px] leading-5 tracking-[-0.25px] text-black/50`}>Step up, stand out - bring the A-game.</p>
       </div>
 
-      <div className="hide-scrollbar mt-[10px] overflow-x-auto">
-        <div className="flex w-max gap-4">
-          {genericCards.map((title, index) => (
-            <article key={`${title}-${index}`} className="h-[199px] w-[160px] shrink-0 rounded-2xl border border-black/30 p-4 md:h-[280px] md:w-[240px] md:p-6">
-              <div className="relative mx-auto size-10">
-                <Image src="/images/Shape Set.svg" alt="Opportunity icon" fill className="object-contain" />
-              </div>
-              <div className="mt-[10px] px-4 md:mt-6 md:px-2">
-                <h4 className={`${outfit.className} whitespace-pre-line text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-black md:text-[34px] md:leading-[40px]`}>
-                  Random {"\n"}Tool Kit
-                </h4>
-              </div>
-            </article>
-          ))}
+      <div
+        ref={containerRef}
+        className={`hide-scrollbar mt-[10px] ${paused ? "overflow-x-auto" : "overflow-hidden"}`}
+        onPointerDown={(e) => {
+          const el = containerRef.current;
+          if (!el) return;
+          isDown.current = true;
+          try {
+            el.setPointerCapture?.(e.pointerId);
+          } catch {}
+          startX.current = e.clientX;
+          scrollLeftRef.current = el.scrollLeft;
+          setPaused(true);
+        }}
+        onPointerMove={(e) => {
+          if (!isDown.current || !containerRef.current) return;
+          const x = e.clientX;
+          const walk = x - startX.current;
+          containerRef.current.scrollLeft = scrollLeftRef.current - walk;
+        }}
+        onPointerUp={(e) => {
+          if (!containerRef.current) return;
+          isDown.current = false;
+          try {
+            containerRef.current.releasePointerCapture(e.pointerId);
+          } catch {}
+          setPaused(false);
+        }}
+        onPointerLeave={() => {
+          if (isDown.current) isDown.current = false;
+        }}
+        onPointerCancel={() => {
+          if (isDown.current) isDown.current = false;
+        }}
+      >
+        <div
+          role="list"
+          tabIndex={0}
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+          onFocus={() => setPaused(true)}
+          onBlur={() => setPaused(false)}
+          className="animate-marquee-slow flex w-max gap-4"
+          style={{ minWidth: "200%", animationPlayState: paused ? "paused" : "running" }}
+        >
+          {genericCards
+            .map((title, index) => (
+              <article key={`opp-${index}`} className="h-[199px] w-[160px] shrink-0 rounded-2xl border border-black/30 p-4 md:h-[280px] md:w-[240px] md:p-6">
+                <div className="relative mx-auto size-10">
+                  <Image src="/images/Shape Set.svg" alt="Opportunity icon" fill className="object-contain" />
+                </div>
+                <div className="mt-[10px] px-4 md:mt-6 md:px-2">
+                  <h4 className={`${outfit.className} whitespace-pre-line text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-black md:text-[34px] md:leading-[40px]`}>
+                    {title}
+                  </h4>
+                </div>
+              </article>
+            ))
+            .concat(
+              genericCards.map((title, index) => (
+                <article key={`opp-dup-${index}`} className="h-[199px] w-[160px] shrink-0 rounded-2xl border border-black/30 p-4 md:h-[280px] md:w-[240px] md:p-6">
+                  <div className="relative mx-auto size-10">
+                    <Image src="/images/Shape Set.svg" alt="Opportunity icon" fill className="object-contain" />
+                  </div>
+                  <div className="mt-[10px] px-4 md:mt-6 md:px-2">
+                    <h4 className={`${outfit.className} whitespace-pre-line text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-black md:text-[34px] md:leading-[40px]`}>
+                      {title}
+                    </h4>
+                  </div>
+                </article>
+              ))
+            )}
         </div>
       </div>
 
@@ -462,7 +590,7 @@ function FaqSection() {
 export default function HomePage() {
   return (
     <main className={`${outfit.className} min-h-screen bg-white text-black`}>
-      <div className="mx-auto w-full max-w-[440px] px-4 md:px-8 md:max-w-[1240px] lg:max-w-[1400px]">
+      <div className="w-full px-4 md:px-0">
         <HeroSection />
         <TaglineSection />
         <InternshipStrip />

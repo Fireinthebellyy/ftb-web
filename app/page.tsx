@@ -134,19 +134,19 @@ function InternshipStripClient() {
                   {slide.leftMode === "badge" ? (
                     <div className="relative h-[220px] w-[160px] overflow-hidden rounded-2xl bg-white md:h-[288px] md:w-[280px]">
                       <div className="flex h-full w-full flex-col">
-                        {internshipStackImages.map((src, index) => (
-                          <div key={`${src}-${index}`} className="relative min-h-0 flex-1">
-                            <Image
-                              src={src}
-                              alt={`${slide.title} visual ${index + 1}`}
-                              fill
-                              quality={95}
-                              sizes="(min-width: 768px) 280px, 160px"
-                              className="object-cover"
-                            />
-                          </div>
-                        ))}
-                      </div>
+                          {internshipStackImages.map((src, index) => (
+                            <div key={`${src}-${index}`} className="relative min-h-0 h-1/3 animate-internship-stack">
+                              <Image
+                                src={src}
+                                alt={`${slide.title} visual ${index + 1}`}
+                                fill
+                                quality={95}
+                                sizes="(min-width: 768px) 280px, 160px"
+                                className="object-contain"
+                              />
+                            </div>
+                          ))}
+                        </div>
                     </div>
                   ) : (
                     <div className="relative h-[220px] w-[160px] overflow-hidden rounded-2xl md:h-[288px] md:w-[280px]">

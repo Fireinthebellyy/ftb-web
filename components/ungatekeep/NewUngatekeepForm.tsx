@@ -14,9 +14,8 @@ import {
 } from "@/lib/storage/client";
 import {
   UnifiedFilePicker,
-  SelectedImages,
-  SelectedAttachments,
   ExistingAttachments,
+  UnifiedFilesPreview,
 } from "@/components/opportunity/images/ImageDropzone";
 import { SchedulePublishPopover } from "@/components/opportunity/fields/MetaPopovers";
 import { toDateTimeLocalValue } from "@/lib/date-utils";
@@ -143,7 +142,7 @@ export default function NewUngatekeepForm({
   const [removedFileIds, setRemovedFileIds] = useState<string[]>([]);
   const [scheduleMessage, setScheduleMessage] = useState<string | null>(null);
 
-  const maxFiles = 4;
+  const maxFiles = 10;
   const maxAttachments = 2;
 
   const form = useForm<UngatekeepFormValues>({
@@ -212,93 +211,87 @@ export default function NewUngatekeepForm({
       prev.map((file) => ({ ...file, uploading: true, progress: 0 }))
     );
 
-    // Upload images (will be merged into attachments)
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    const allNewFiles = [...files, ...attachmentFiles].sort(
+      (a, b) => (a.addedAt || 0) - (b.addedAt || 0)
+    );
+
+    for (const fileItem of allNewFiles) {
+      const isImage = fileItem.kind === "image";
       try {
         const uploaded = await uploadFileViaSignedUrl({
           domain: "ungatekeep-images",
-          file: file.file,
+          file: fileItem.file,
           onProgress: (progress) => {
             const percent = Math.round(progress || 0);
-            setFiles((prev) =>
-              prev.map((f, idx) =>
-                idx === i ? { ...f, progress: percent } : f
-              )
-            );
+            if (isImage) {
+              setFiles((prev) =>
+                prev.map((f) =>
+                  f.name === fileItem.name ? { ...f, progress: percent } : f
+                )
+              );
+            } else {
+              setAttachmentFiles((prev) =>
+                prev.map((f) =>
+                  f.name === fileItem.name ? { ...f, progress: percent } : f
+                )
+              );
+            }
           },
         });
 
         uploadedFileIds.push(uploaded.key);
-        setFiles((prev) =>
-          prev.map((f, idx) =>
-            idx === i ? { ...f, uploading: false, fileId: uploaded.key } : f
-          )
-        );
+        if (isImage) {
+          setFiles((prev) =>
+            prev.map((f) =>
+              f.name === fileItem.name
+                ? { ...f, uploading: false, fileId: uploaded.key }
+                : f
+            )
+          );
+        } else {
+          setAttachmentFiles((prev) =>
+            prev.map((f) =>
+              f.name === fileItem.name
+                ? { ...f, uploading: false, fileId: uploaded.key }
+                : f
+            )
+          );
+        }
       } catch (err) {
-        console.error(`Upload failed for ${file.name}:`, err);
+        console.error(`Upload failed for ${fileItem.name}:`, err);
         hasError = true;
-        setFiles((prev) =>
-          prev.map((f, idx) =>
-            idx === i
-              ? {
-                  ...f,
-                  uploading: false,
-                  error: true,
-                  errorMessage:
-                    err instanceof Error ? err.message : "Unknown upload error",
-                }
-              : f
-          )
-        );
+        if (isImage) {
+          setFiles((prev) =>
+            prev.map((f) =>
+              f.name === fileItem.name
+                ? {
+                    ...f,
+                    uploading: false,
+                    error: true,
+                    errorMessage:
+                      err instanceof Error ? err.message : "Unknown upload error",
+                  }
+                : f
+            )
+          );
+        } else {
+          setAttachmentFiles((prev) =>
+            prev.map((f) =>
+              f.name === fileItem.name
+                ? {
+                    ...f,
+                    uploading: false,
+                    error: true,
+                    errorMessage:
+                      err instanceof Error ? err.message : "Unknown upload error",
+                  }
+                : f
+            )
+          );
+        }
         const message =
           err instanceof Error ? err.message : "Unknown upload error";
-        toast.error(`Failed to upload "${file.name}": ${message}`);
-      }
-    }
-
-    // Upload attachments
-    for (let i = 0; i < attachmentFiles.length; i++) {
-      const file = attachmentFiles[i];
-      try {
-        const uploaded = await uploadFileViaSignedUrl({
-          domain: "ungatekeep-images",
-          file: file.file,
-          onProgress: (progress) => {
-            const percent = Math.round(progress || 0);
-            setAttachmentFiles((prev) =>
-              prev.map((f, idx) =>
-                idx === i ? { ...f, progress: percent } : f
-              )
-            );
-          },
-        });
-
-        uploadedFileIds.push(uploaded.key);
-        setAttachmentFiles((prev) =>
-          prev.map((f, idx) =>
-            idx === i ? { ...f, uploading: false, fileId: uploaded.key } : f
-          )
-        );
-      } catch (err) {
-        console.error(`Upload failed for ${file.name}:`, err);
-        hasError = true;
-        setAttachmentFiles((prev) =>
-          prev.map((f, idx) =>
-            idx === i
-              ? {
-                  ...f,
-                  uploading: false,
-                  error: true,
-                  errorMessage:
-                    err instanceof Error ? err.message : "Unknown upload error",
-                }
-              : f
-          )
-        );
-        const message =
-          err instanceof Error ? err.message : "Unknown upload error";
-        toast.error(`Failed to upload "${file.name}": ${message}`);
+        toast.error(`Failed to upload "${fileItem.name}": ${message}`);
       }
     }
 
@@ -451,10 +444,14 @@ export default function NewUngatekeepForm({
           <div className="flex flex-col gap-3 border-t pt-4">
             <div className="flex items-center justify-between">
               <FormLabel>Uploads (Optional)</FormLabel>
-              <span className="text-muted-foreground text-xs">
-                {files.length + attachmentFiles.length + existingFiles.length} /{" "}
-                {maxFiles + maxAttachments}
-              </span>
+              <div className="flex flex-col items-end gap-0.5">
+                <span className="text-muted-foreground text-[10px]">
+                  {files.length + existingFiles.filter(f => !f.toLowerCase().endsWith('.pdf') && !f.toLowerCase().endsWith('.ppt') && !f.toLowerCase().endsWith('.pptx')).length} / {maxFiles} images
+                </span>
+                <span className="text-muted-foreground text-[10px]">
+                  {attachmentFiles.length + existingFiles.filter(f => f.toLowerCase().endsWith('.pdf') || f.toLowerCase().endsWith('.ppt') || f.toLowerCase().endsWith('.pptx')).length} / {maxAttachments} documents
+                </span>
+              </div>
             </div>
 
             <div className="flex items-center gap-2">
@@ -482,10 +479,11 @@ export default function NewUngatekeepForm({
                 onRemoveExisting={handleRemoveExistingFile}
               />
             )}
-            <SelectedImages files={files} setFiles={setFiles} />
-            <SelectedAttachments
-              files={attachmentFiles}
-              setFiles={setAttachmentFiles}
+            <UnifiedFilesPreview
+              files={files}
+              setFiles={setFiles}
+              attachmentFiles={attachmentFiles}
+              setAttachmentFiles={setAttachmentFiles}
             />
           </div>
 

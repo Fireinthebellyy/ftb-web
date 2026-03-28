@@ -160,6 +160,7 @@ export interface FileItem {
   fileId?: string;
   error?: boolean;
   errorMessage?: string;
+  addedAt?: number;
 }
 
 export type PrivacyPolicy = {

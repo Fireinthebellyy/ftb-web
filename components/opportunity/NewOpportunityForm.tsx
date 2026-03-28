@@ -61,7 +61,7 @@ export default function NewOpportunityForm({
     removedAttachmentIds,
   });
 
-  const maxFiles = 4;
+  const maxFiles = 10;
   const maxAttachments = 2;
 
   const form = useForm<FormData>({

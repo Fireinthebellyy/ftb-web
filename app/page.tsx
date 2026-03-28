@@ -8,6 +8,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { Inter, Outfit, Satisfy } from "next/font/google";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import HomeInternshipCardsSection from "@/components/internship/HomeInternshipCardsSection";
+import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
+import { getYouTubeThumbnailUrl } from "@/lib/youtube";
 import { Toolkit } from "@/types/interfaces";
 import { startToolkitCheckout } from "@/lib/toolkit-checkout";
 
@@ -20,7 +23,6 @@ const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
 });
-
 const satisfy = Satisfy({
   subsets: ["latin"],
   weight: ["400"],
@@ -37,19 +39,15 @@ const genericCards = [
   "Random Tool Kit",
 ];
 
-function StarRow({ size = 20 }: { size?: number }) {
-  return (
-    <div className="flex items-center gap-2">
-      {Array.from({ length: 5 }).map((_, index) => (
-        <span key={index} className="inline-block text-white" style={{ fontSize: `${size}px`, lineHeight: 1 }}>
-          ★
-        </span>
-      ))}
-    </div>
-  );
+interface UngatekeepHomePost {
+  id: string;
+  attachments: string[];
+  videoUrl?: string | null;
 }
 
-
+interface UngatekeepHomeResponse {
+  posts: UngatekeepHomePost[];
+}
 
 function HeroSection() {
   return (
@@ -140,25 +138,22 @@ function InternshipStripClient() {
           {slides.map((slide) => (
             <article key={slide.key} className="w-[390px] shrink-0 md:w-[680px]">
               <div className="mx-auto h-[240px] w-[390px] rounded-2xl border border-black/30 bg-white p-[10px] md:h-[320px] md:w-[660px] md:rounded-[24px] md:p-4">
-                <div className="grid h-full grid-cols-[160px_200px] gap-[10px] md:grid-cols-[280px_340px] md:gap-4">
+                <div className="grid h-full grid-cols-[160px_200px] gap-[10px] md:grid-cols-[280px_332px] md:gap-4">
                   {slide.leftMode === "badge" ? (
-                    <div className="flex h-[220px] flex-col justify-between rounded-2xl bg-white p-4 md:h-[288px] md:p-6">
-                      <div className="h-[37px] w-[142px] rounded-2xl md:h-[56px] md:w-[220px]" />
-                      <div className="relative h-[37px] w-[128px] overflow-hidden rounded-2xl md:h-[52px] md:w-[200px]">
-                        <div
-                          className="animate-internship-marquee-down flex w-full flex-col"
-                          style={{ animation: "internship-marquee-down 4s linear infinite", willChange: "transform" }}
-                        >
-                          {internshipStackImages.concat(internshipStackImages).map((src, index) => (
-                            <div
-                              key={`${src}-${index}`}
-                              aria-hidden={index >= internshipStackImages.length ? "true" : undefined}
-                              className="relative h-[37px] w-[128px] shrink-0 md:h-[52px] md:w-[200px]"
-                            >
-                              <Image src={src} alt={`${slide.title} badge ${index + 1}`} fill className="object-contain object-left" />
-                            </div>
-                          ))}
-                        </div>
+                    <div className="relative h-[220px] w-[160px] overflow-hidden rounded-2xl bg-white md:h-[288px] md:w-[280px]">
+                      <div className="flex h-full w-full flex-col">
+                        {internshipStackImages.map((src, index) => (
+                          <div key={`${src}-${index}`} className="relative min-h-0 flex-1">
+                            <Image
+                              src={src}
+                              alt={`${slide.title} visual ${index + 1}`}
+                              fill
+                              quality={95}
+                              sizes="(min-width: 768px) 280px, 160px"
+                              className="object-cover"
+                            />
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ) : (
@@ -414,19 +409,10 @@ function ToolkitCarousel() {
                 </>
               ) : null}
 
-              <div className="relative z-10">
+              <div className="relative z-10 flex flex-1 items-center justify-center">
                 <h4 className={`${outfit.className} line-clamp-2 text-center text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-white`}>
                   {card.title}
                 </h4>
-                {card.description ? (
-                  <p className={`${sfProClass} mt-1 line-clamp-3 text-center text-[18px] leading-[24px] tracking-[-0.25px] text-white/80`}>
-                    {card.description}
-                  </p>
-                ) : (
-                  <div className="mt-1 flex justify-center">
-                    <StarRow size={20} />
-                  </div>
-                )}
               </div>
 
               <div className="relative z-10 flex items-center justify-between gap-[10px]">
@@ -505,7 +491,6 @@ function CardCarouselSection({
           </Link>
         </div>
 
-        {/* marquee with drag + hover-to-pause */}
         <MarqueeLikeCards />
 
         <Link href={href} className={`${sfProClass} text-left text-[16px] leading-[30px] font-medium tracking-[-1px] text-[#ff6e00] md:hidden`}>
@@ -517,6 +502,41 @@ function CardCarouselSection({
 }
 
 function MarqueeLikeCards() {
+  const [failedPostIds, setFailedPostIds] = useState<Set<string>>(new Set());
+
+  const { data, isPending, isError } = useQuery<UngatekeepHomeResponse>({
+    queryKey: ["home-ungatekeep-posts"],
+    queryFn: async () => {
+      const response = await axios.get<UngatekeepHomeResponse>("/api/ungatekeep?page=1&limit=8");
+      return response.data;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const posts = data?.posts ?? [];
+  const cardsWithMedia = posts
+    .map((post) => {
+      const videoThumbnail = getYouTubeThumbnailUrl(post.videoUrl);
+      const firstImage = post.attachments?.[0]
+        ? tryGetStoragePublicUrl("ungatekeep-images", post.attachments[0])
+        : null;
+      const cardGraphic = videoThumbnail ?? firstImage;
+
+      if (!cardGraphic) {
+        return null;
+      }
+
+      return {
+        id: post.id,
+        cardGraphic,
+      };
+    })
+    .filter(
+      (card): card is { id: string; cardGraphic: string } =>
+        card !== null && !failedPostIds.has(card.id)
+    );
+  const shouldShowComingSoon = !isPending && !isError && cardsWithMedia.length < 2;
+
   const {
     containerRef,
     onPointerDown,
@@ -544,11 +564,29 @@ function MarqueeLikeCards() {
       onBlur={onBlur}
     >
       <div role="list" className="flex w-max gap-4">
-        {genericCards.map((title, index) => (
-          <div key={`card-${index}`} className="relative h-[199px] w-[160px] shrink-0 overflow-hidden rounded-2xl border border-black/20 md:h-[280px] md:w-[240px]">
-            <Image src="/images/graphic1.png" alt={`Card visual ${index + 1}`} fill className="object-cover" />
-          </div>
+        {cardsWithMedia.map((card, index) => (
+          <Link
+            key={card.id}
+            href={`/ungatekeep/${card.id}`}
+            aria-label={`Open ungatekeep post ${index + 1}`}
+            className="relative h-[199px] w-[160px] shrink-0 overflow-hidden rounded-2xl border border-black/20 md:h-[280px] md:w-[240px]"
+          >
+            <Image
+              src={card.cardGraphic}
+              alt={`Ungatekeep post ${index + 1}`}
+              fill
+              className="object-cover"
+              unoptimized={true}
+              onError={() => setFailedPostIds((prev) => (prev.has(card.id) ? prev : new Set(prev).add(card.id)))}
+            />
+          </Link>
         ))}
+        {shouldShowComingSoon ? (
+          <article className="flex h-[199px] w-[160px] shrink-0 flex-col items-center justify-center rounded-2xl border border-dashed border-black/25 bg-black/[0.03] px-4 text-center md:h-[280px] md:w-[240px]">
+            <p className={`${outfit.className} text-[20px] leading-[24px] font-medium tracking-[-0.25px] text-black/80 md:text-[24px] md:leading-[30px]`}>Coming Soon,</p>
+            <p className={`${sfProClass} mt-1 text-[14px] leading-[18px] text-black/60 md:text-[16px] md:leading-[22px]`}>Stay Tuned!</p>
+          </article>
+        ) : null}
       </div>
     </div>
   );
@@ -720,12 +758,7 @@ export default function HomePage() {
           href="/ungatekeep"
           spacing="featured"
         />
-        <CardCarouselSection
-          title={"This week’s internships-\nworth a shot"}
-          subtitle="Build skills, not just your resume"
-          href="/internships"
-          spacing="compact"
-        />
+        <HomeInternshipCardsSection outfitClass={outfit.className} sfProClass={sfProClass} />
         <OpportunitiesSection />
         <FaqSection />
       </div>

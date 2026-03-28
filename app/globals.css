@@ -263,21 +263,6 @@ body,
 .animate-internship-stack {
   animation: internship-stack-up 9s ease-in-out infinite;
 }
-
-@keyframes internship-marquee-down {
-  0% {
-    transform: translateY(-50%);
-  }
-  100% {
-    transform: translateY(0%);
-  }
-}
-
-.animate-internship-marquee-down {
-  animation: internship-marquee-down 8s linear infinite;
-  will-change: transform;
-}
-
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }

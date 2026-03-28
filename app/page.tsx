@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { Inter, Outfit, Satisfy } from "next/font/google";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -221,17 +222,126 @@ function TrustedSection() {
         </p>
 
         <div className="relative mt-2 overflow-hidden">
-          <div className="animate-marquee-slow flex items-center gap-8" style={{ minWidth: "200%" }}>
-            {logos.concat(logos).map((logo, index) => (
-              <div key={`${logo}-${index}`} className="relative h-[81px] w-[70px] shrink-0">
+          <div className="animate-marquee-slow flex w-max items-center gap-8">
+            <div className="flex items-center gap-8">
+              {logos.map((logo, index) => (
+                <div key={`logo-${index}`} className="relative h-[81px] w-[70px] shrink-0">
+                  <Image src={logo} alt="University logo" fill className="object-contain" />
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-8" aria-hidden="true">
+              {logos.map((logo, index) => (
+                <div key={`logo-dup-${index}`} className="relative h-[81px] w-[70px] shrink-0">
                 <Image src={logo} alt="University logo" fill className="object-contain" />
               </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
     </section>
   );
+}
+
+function useDragMarquee() {
+  const [paused, setPaused] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const isDown = useRef(false);
+  const startX = useRef(0);
+  const scrollLeftRef = useRef(0);
+
+  const cleanupDrag = (pointerId?: number) => {
+    const el = containerRef.current;
+    isDown.current = false;
+    if (el && pointerId !== undefined) {
+      try {
+        el.releasePointerCapture(pointerId);
+      } catch {}
+    }
+    setPaused(false);
+  };
+
+  const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const el = containerRef.current;
+    if (!el) return;
+    isDown.current = true;
+    try {
+      el.setPointerCapture?.(e.pointerId);
+    } catch {}
+    startX.current = e.clientX;
+    scrollLeftRef.current = el.scrollLeft;
+    setPaused(true);
+  };
+
+  const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!isDown.current || !containerRef.current) return;
+    const walk = e.clientX - startX.current;
+    containerRef.current.scrollLeft = scrollLeftRef.current - walk;
+  };
+
+  const onPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    cleanupDrag(e.pointerId);
+  };
+
+  const onPointerLeave = () => {
+    cleanupDrag();
+  };
+
+  const onPointerCancel = () => {
+    cleanupDrag();
+  };
+
+  const onKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const viewportStep = Math.max(120, Math.round(el.clientWidth * 0.8));
+
+    if (e.key === "ArrowRight" || e.key === "PageDown") {
+      e.preventDefault();
+      setPaused(true);
+      el.scrollBy({ left: viewportStep, behavior: "smooth" });
+      return;
+    }
+
+    if (e.key === "ArrowLeft" || e.key === "PageUp") {
+      e.preventDefault();
+      setPaused(true);
+      el.scrollBy({ left: -viewportStep, behavior: "smooth" });
+      return;
+    }
+
+    if (e.key === "Home") {
+      e.preventDefault();
+      setPaused(true);
+      el.scrollTo({ left: 0, behavior: "smooth" });
+      return;
+    }
+
+    if (e.key === "End") {
+      e.preventDefault();
+      setPaused(true);
+      el.scrollTo({ left: el.scrollWidth, behavior: "smooth" });
+    }
+  };
+
+  const onBlur = () => {
+    cleanupDrag();
+  };
+
+  return {
+    paused,
+    setPaused,
+    containerRef,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerLeave,
+    onPointerCancel,
+    onKeyDown,
+    onBlur,
+  };
 }
 
 function ToolkitCarousel() {
@@ -332,55 +442,38 @@ function CardCarouselSection({
 }
 
 function MarqueeLikeCards() {
-  const [paused, setPaused] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const isDown = useRef(false);
-  const startX = useRef(0);
-  const scrollLeftRef = useRef(0);
+  const {
+    paused,
+    setPaused,
+    containerRef,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerLeave,
+    onPointerCancel,
+    onKeyDown,
+    onBlur,
+  } = useDragMarquee();
 
   return (
     <div
       ref={containerRef}
-      className={`hide-scrollbar mt-[6px] ${paused ? "overflow-x-auto" : "overflow-hidden"}`}
-      onPointerDown={(e) => {
-        const el = containerRef.current;
-        if (!el) return;
-        isDown.current = true;
-        try {
-          el.setPointerCapture?.(e.pointerId);
-        } catch {}
-        startX.current = e.clientX;
-        scrollLeftRef.current = el.scrollLeft;
-        setPaused(true);
-      }}
-      onPointerMove={(e) => {
-        if (!isDown.current || !containerRef.current) return;
-        const x = e.clientX;
-        const walk = x - startX.current;
-        containerRef.current.scrollLeft = scrollLeftRef.current - walk;
-      }}
-      onPointerUp={(e) => {
-        if (!containerRef.current) return;
-        isDown.current = false;
-        try {
-          containerRef.current.releasePointerCapture(e.pointerId);
-        } catch {}
-        setPaused(false);
-      }}
-      onPointerLeave={() => {
-        if (isDown.current) isDown.current = false;
-      }}
-      onPointerCancel={() => {
-        if (isDown.current) isDown.current = false;
-      }}
+      tabIndex={0}
+      role="region"
+      aria-label="Ungatekeep and internship cards carousel. Use arrow keys to scroll."
+      className={cn("hide-scrollbar mt-[6px]", paused ? "overflow-x-auto" : "overflow-hidden")}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerLeave={onPointerLeave}
+      onPointerCancel={onPointerCancel}
+      onKeyDown={onKeyDown}
+      onBlur={onBlur}
     >
       <div
         role="list"
-        tabIndex={0}
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
-        onFocus={() => setPaused(true)}
-        onBlur={() => setPaused(false)}
         className="animate-marquee-slow flex w-max gap-4"
         style={{ minWidth: "200%", animationPlayState: paused ? "paused" : "running" }}
       >
@@ -392,7 +485,7 @@ function MarqueeLikeCards() {
           ))
           .concat(
             genericCards.map((title, index) => (
-              <div key={`card-dup-${index}`} className="relative h-[199px] w-[160px] shrink-0 overflow-hidden rounded-2xl border border-black/20 md:h-[280px] md:w-[240px]">
+              <div aria-hidden="true" key={`card-dup-${index}`} className="relative h-[199px] w-[160px] shrink-0 overflow-hidden rounded-2xl border border-black/20 md:h-[280px] md:w-[240px]">
                 <Image src="/images/graphic1.png" alt={`Card visual dup ${index + 1}`} fill className="object-cover" />
               </div>
             ))
@@ -403,11 +496,18 @@ function MarqueeLikeCards() {
 }
 
 function OpportunitiesSection() {
-  const [paused, setPaused] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const isDown = useRef(false);
-  const startX = useRef(0);
-  const scrollLeftRef = useRef(0);
+  const {
+    paused,
+    setPaused,
+    containerRef,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerLeave,
+    onPointerCancel,
+    onKeyDown,
+    onBlur,
+  } = useDragMarquee();
 
   return (
     <section className="bg-white px-4 py-4 md:px-8 md:py-6">
@@ -420,46 +520,22 @@ function OpportunitiesSection() {
 
       <div
         ref={containerRef}
-        className={`hide-scrollbar mt-[10px] ${paused ? "overflow-x-auto" : "overflow-hidden"}`}
-        onPointerDown={(e) => {
-          const el = containerRef.current;
-          if (!el) return;
-          isDown.current = true;
-          try {
-            el.setPointerCapture?.(e.pointerId);
-          } catch {}
-          startX.current = e.clientX;
-          scrollLeftRef.current = el.scrollLeft;
-          setPaused(true);
-        }}
-        onPointerMove={(e) => {
-          if (!isDown.current || !containerRef.current) return;
-          const x = e.clientX;
-          const walk = x - startX.current;
-          containerRef.current.scrollLeft = scrollLeftRef.current - walk;
-        }}
-        onPointerUp={(e) => {
-          if (!containerRef.current) return;
-          isDown.current = false;
-          try {
-            containerRef.current.releasePointerCapture(e.pointerId);
-          } catch {}
-          setPaused(false);
-        }}
-        onPointerLeave={() => {
-          if (isDown.current) isDown.current = false;
-        }}
-        onPointerCancel={() => {
-          if (isDown.current) isDown.current = false;
-        }}
+        tabIndex={0}
+        role="region"
+        aria-label="Opportunities carousel. Use arrow keys to scroll."
+        className={cn("hide-scrollbar mt-[10px]", paused ? "overflow-x-auto" : "overflow-hidden")}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerLeave}
+        onPointerCancel={onPointerCancel}
+        onKeyDown={onKeyDown}
+        onBlur={onBlur}
       >
         <div
           role="list"
-          tabIndex={0}
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
-          onFocus={() => setPaused(true)}
-          onBlur={() => setPaused(false)}
           className="animate-marquee-slow flex w-max gap-4"
           style={{ minWidth: "200%", animationPlayState: paused ? "paused" : "running" }}
         >
@@ -478,7 +554,7 @@ function OpportunitiesSection() {
             ))
             .concat(
               genericCards.map((title, index) => (
-                <article key={`opp-dup-${index}`} className="h-[199px] w-[160px] shrink-0 rounded-2xl border border-black/30 p-4 md:h-[280px] md:w-[240px] md:p-6">
+                <article aria-hidden="true" key={`opp-dup-${index}`} className="h-[199px] w-[160px] shrink-0 rounded-2xl border border-black/30 p-4 md:h-[280px] md:w-[240px] md:p-6">
                   <div className="relative mx-auto size-10">
                     <Image src="/images/Shape Set.svg" alt="Opportunity icon" fill className="object-contain" />
                   </div>

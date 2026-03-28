@@ -25,10 +25,11 @@ export function useOpportunityFeed({
 
   const normalizedTypes = useMemo(() => {
     // If all are selected, we don't send any type filter to the API (which the backend treats as "all")
-    // This is more robust than sending a very long string of all types.
     if (allSelected) return [];
+    // If none are selected, return null as a sentinel
+    if (noneSelected) return null;
     return [...selectedTypes].sort();
-  }, [selectedTypes, allSelected]);
+  }, [selectedTypes, allSelected, noneSelected]);
 
   const normalizedTags = useMemo(
     () => selectedTags.map((tag) => tag.toLowerCase()).sort(),
@@ -42,8 +43,8 @@ export function useOpportunityFeed({
   // Use bootstrap only when all types are selected and there are no other filters
   const shouldUseBootstrap = isFilterEmpty && allSelected;
   
-  // If no types are selected and there are no other filters, we should show nothing
-  const shouldShowNothing = isFilterEmpty && noneSelected;
+  // If no types are selected, we should show nothing (suppress queries)
+  const shouldShowNothing = noneSelected;
 
   const bootstrapQuery = useDashboardBootstrap(
     {

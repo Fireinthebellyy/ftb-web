@@ -12,22 +12,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Control, useWatch } from "react-hook-form";
 import { cn } from "@/lib/utils";
+import { opportunityOptions } from "@/app/onboarding/constants";
 
 type Props = {
   control: Control<any>;
   isEditing: boolean;
 };
 
-const PRESET_OPP_INTERESTS: string[] = [
-  "Hackathons",
-  "Grants",
-  "Competitions",
-  "Ideathons",
-  "Internships",
-  "Scholarships",
-  "Conferences",
-  "Other",
-];
+const PRESET_OPP_INTERESTS = [...opportunityOptions, { id: "Other", label: "Other" }];
 
 export default function OpportunityInterestSelector({ control, isEditing }: Props) {
   const selectable = useMemo(() => PRESET_OPP_INTERESTS, []);
@@ -38,9 +30,10 @@ export default function OpportunityInterestSelector({ control, isEditing }: Prop
       control={control}
       name="opportunityInterests"
       render={({ field }) => {
-        const selected = field.value || [];
-        const hasCustom = selected.some((v: string) => !selectable.includes(v));
-        const hasOther = selected.includes("Other") || hasCustom;
+        const selected = (field.value || []) as string[];
+        const presetIds = selectable.map(opt => opt.id);
+        const hasCustom = selected.some((v: string) => !presetIds.includes(v));
+        const isOtherSelected = selected.includes("Other") || hasCustom;
 
         return (
           <FormItem>
@@ -51,11 +44,14 @@ export default function OpportunityInterestSelector({ control, isEditing }: Prop
                   {selected.length === 0 ? (
                     <div className="py-2 px-3 rounded-md border bg-muted/30 text-sm">—</div>
                   ) : (
-                    selected.map((itm: string) => (
-                      <Badge key={itm} variant="secondary" className="text-xs px-2 py-0.5 h-auto">
-                        {itm}
-                      </Badge>
-                    ))
+                    selected.map((itm: string) => {
+                      const opt = selectable.find(o => o.id === itm);
+                      return (
+                        <Badge key={itm} variant="secondary" className="text-xs px-2 py-0.5 h-auto">
+                          {opt ? opt.label : itm}
+                        </Badge>
+                      );
+                    })
                   )}
                 </div>
               ) : (
@@ -63,17 +59,17 @@ export default function OpportunityInterestSelector({ control, isEditing }: Prop
                   <div className="flex items-center gap-1 flex-wrap" role="group" aria-label="Select your opportunity interests">
                     {selectable.map((opt) => {
                       const isActive =
-                        opt === "Other"
-                          ? selected.includes("Other") || hasCustom
-                          : selected.includes(opt);
+                        opt.id === "Other"
+                          ? isOtherSelected
+                          : selected.includes(opt.id);
                       const showCustomBadge =
-                        opt === "Other" && (selected.includes("Other") || hasCustom) && (otherValue || "").trim().length > 0;
+                        opt.id === "Other" && isOtherSelected && (otherValue || "").trim().length > 0;
 
                       return (
-                        <Fragment key={opt}>
+                        <Fragment key={opt.id}>
                           {showCustomBadge && (
                             <Badge
-                              key={`${opt}-custom`}
+                              key={`${opt.id}-custom`}
                               variant="default"
                               className="text-xs px-2 py-0.5 h-auto bg-blue-100 text-blue-800 hover:bg-blue-200 border-transparent"
                             >
@@ -81,7 +77,7 @@ export default function OpportunityInterestSelector({ control, isEditing }: Prop
                             </Badge>
                           )}
                           <Badge
-                            key={opt}
+                            key={opt.id}
                             variant={isActive ? "default" : "outline"}
                             className={cn(
                               "text-xs cursor-pointer transition-all px-2 py-0.5 h-auto",
@@ -91,21 +87,21 @@ export default function OpportunityInterestSelector({ control, isEditing }: Prop
                             )}
                             onClick={() => {
                               const next = isActive
-                                ? selected.filter((s: string) => s !== opt)
-                                : [...selected, opt];
+                                ? selected.filter((v: string) => v !== opt.id)
+                                : [...selected, opt.id];
                               field.onChange(next);
                             }}
                             role="checkbox"
                             aria-checked={isActive}
                           >
-                            {opt}
+                            {opt.label}
                           </Badge>
                         </Fragment>
                       );
                     })}
                   </div>
 
-                  {hasOther && (
+                  {isOtherSelected && (
                     <FormField
                       control={control}
                       name="opportunityInterestOther"

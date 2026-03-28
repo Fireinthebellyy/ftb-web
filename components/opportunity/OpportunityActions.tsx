@@ -100,7 +100,7 @@ export function OpportunityActions({
                     onSuccess: (data) => {
                       if (data.hasUserUpvoted) {
                         toast.success(
-                          "Great taste bud. We would recommend you more opportunities like these in future. Save to tracker and Add to calender - and never miss out a deadline ever again!",
+                          "Great taste! We'll recommend more opportunities like this in the future. Save to tracker and add to calendar to never miss a deadline!",
                           {
                             duration: 5000,
                             style: {

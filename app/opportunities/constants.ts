@@ -15,6 +15,33 @@ export const AVAILABLE_TYPES = [
   "upskilling_events",
 ];
 
+/**
+ * Normalizes legacy type values to the current taxonomy.
+ */
+export const normalizeType = (type: string): string => {
+  const normalized = type.toLowerCase().trim();
+  const legacyMap: Record<string, string> = {
+    competitions: "competitions_open_calls",
+    "open-calls": "competitions_open_calls",
+    "open_calls": "competitions_open_calls",
+    case_comp: "case_competitions",
+    "case-competitions": "case_competitions",
+    ideathons: "ideathon_think_tanks",
+    "think-tanks": "ideathon_think_tanks",
+    "think_tanks": "ideathon_think_tanks",
+    leadership: "leadership_programs",
+    awards: "awards_recognition",
+    grants: "grants_scholarships",
+    scholarships: "grants_scholarships",
+    "research-papers": "research_paper_ra_calls",
+    "research_papers": "research_paper_ra_calls",
+    "ra-calls": "research_paper_ra_calls",
+    upskilling: "upskilling_events",
+    courses: "upskilling_events",
+  };
+  return legacyMap[normalized] || normalized;
+};
+
 export const FIELD_TAGS = [
   "Business, Management & Consulting(Consulting/Management/Product/Strategy/Operations)",
   "Creative & Content(Marketing/Design/UI UX/Literature/Film & Media/Content)",

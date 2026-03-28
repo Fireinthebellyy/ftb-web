@@ -6,6 +6,7 @@ import {
 } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
+import { normalizeOpportunityInterests, normalizeDomainPreferences } from "@/app/onboarding/constants";
 
 const jsonHeaders = { "Content-Type": "application/json" };
 
@@ -23,6 +24,11 @@ export async function GET() {
             .select()
             .from(userOnboardingProfiles)
             .where(eq(userOnboardingProfiles.userId, session.user.id));
+
+        if (profile) {
+            profile.opportunityInterests = normalizeOpportunityInterests(profile.opportunityInterests || []);
+            profile.domainPreferences = normalizeDomainPreferences(profile.domainPreferences || []);
+        }
 
         return new Response(JSON.stringify({ profile: profile ?? null }), {
             status: 200,
@@ -82,11 +88,11 @@ export async function POST(request: Request) {
 
         const opportunityInterests =
             isStudent && arraysAreStrings(body.opportunityInterests)
-                ? (body.opportunityInterests as string[])
+                ? normalizeOpportunityInterests(body.opportunityInterests as string[])
                 : [];
         const domainPreferences =
             isStudent && arraysAreStrings(body.domainPreferences)
-                ? (body.domainPreferences as string[])
+                ? normalizeDomainPreferences(body.domainPreferences as string[])
                 : [];
         const struggles =
             isStudent && arraysAreStrings(body.struggles)

@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { normalizeOpportunityInterests, normalizeDomainPreferences } from "@/app/onboarding/constants";
 
 const formSchema = z
   .object({
@@ -134,9 +135,11 @@ export default function ProfileForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: user.name ?? "",
-      fieldInterests: user.fieldInterests ?? [],
+      fieldInterests: normalizeDomainPreferences(user.fieldInterests ?? []),
       fieldInterestOther: "",
-      opportunityInterests: user.opportunityInterests ?? [],
+      opportunityInterests: normalizeOpportunityInterests(
+        user.opportunityInterests ?? []
+      ),
       opportunityInterestOther: "",
       dateOfBirth: user.dateOfBirth ?? "",
       collegeInstitute: user.collegeInstitute ?? "",

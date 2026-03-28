@@ -37,6 +37,14 @@ export default function UngatekeepPostPage() {
   const params = useParams();
   const router = useRouter();
   const postId = params.id as string;
+  const [isMobile, setIsMobile] = React.useState<boolean | null>(null);
+
+  React.useEffect(() => {
+    setIsMobile(
+      typeof window !== "undefined" &&
+        /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+    );
+  }, []);
 
   const {
     data: post,
@@ -249,11 +257,6 @@ export default function UngatekeepPostPage() {
                       const imageId = post.attachments[0];
                       const isPdf = imageId.toLowerCase().endsWith(".pdf");
                       const fullUrl = getImageUrl(imageId);
-                      const isMobile =
-                        typeof window !== "undefined" &&
-                        /Mobi|Android|iPhone|iPad|iPod/i.test(
-                          navigator.userAgent
-                        );
                       const pdfSrc = isMobile
                         ? `https://docs.google.com/viewer?url=${encodeURIComponent(
                             fullUrl
@@ -261,6 +264,11 @@ export default function UngatekeepPostPage() {
                         : `${fullUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
 
                       if (isPdf) {
+                        if (isMobile === null) {
+                          return (
+                            <div className="relative aspect-[9/16] max-h-[400px] w-full overflow-hidden rounded-lg border bg-muted animate-pulse md:aspect-video md:max-h-none" />
+                          );
+                        }
                         return (
                           <div className="relative aspect-[9/16] max-h-[400px] w-full overflow-hidden rounded-lg border bg-white md:aspect-video md:max-h-none">
                             <iframe

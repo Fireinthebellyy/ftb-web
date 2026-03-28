@@ -461,10 +461,14 @@ export async function GET(req: NextRequest) {
       totalCount = result.totalCount ?? 0;
     }
 
-    timer.mark("query_page_done", { rows: paginated.length });
+    // Handle pagination correctly using the extra row sentinel
+    const hasMore = paginated.length > validLimit;
+    const finalRows = hasMore ? paginated.slice(0, validLimit) : paginated;
+
+    timer.mark("query_page_done", { rows: finalRows.length, hasMore });
 
     const currentUserId = session.user.id;
-    const opportunitiesWithUpvote = paginated.map((opp) => {
+    const opportunitiesWithUpvote = finalRows.map((opp) => {
       let userHasUpvoted = false;
       if (currentUserId && Array.isArray(opp.upvoterIds)) {
         userHasUpvoted = opp.upvoterIds.includes(currentUserId);
@@ -484,6 +488,12 @@ export async function GET(req: NextRequest) {
       {
         success: true,
         opportunities: opportunitiesWithUpvote,
+        pagination: {
+          limit: validLimit,
+          offset: validOffset,
+          total: totalCount,
+          hasMore,
+        },
         ...(includeTotal && { total: totalCount }),
       },
       { status: 200 }

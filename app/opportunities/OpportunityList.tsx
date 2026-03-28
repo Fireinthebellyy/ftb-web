@@ -24,6 +24,7 @@ import {
   FEATURE_FLAGS,
   getTypeDropdownLabel,
   formatTypeName,
+  normalizeType,
 } from "./constants";
 import { useOpportunityFeed } from "./useOpportunityFeed";
 const CalendarWidget = dynamic(
@@ -45,7 +46,13 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
   const getInitialTypes = () => {
     const typesParam = searchParams.get("types");
     if (typesParam === null) return [...AVAILABLE_TYPES];
-    return typesParam === "" ? [] : typesParam.split(",").filter(Boolean);
+    return typesParam === ""
+      ? []
+      : typesParam
+          .split(",")
+          .filter(Boolean)
+          .map(normalizeType)
+          .filter((t) => AVAILABLE_TYPES.includes(t));
   };
   const getInitialTags = () => {
     const tagsParam = searchParams.get("tags") || "";
@@ -74,7 +81,11 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
         ? [...AVAILABLE_TYPES]
         : typesParam === ""
           ? []
-          : typesParam.split(",").filter(Boolean);
+          : typesParam
+              .split(",")
+              .filter(Boolean)
+              .map(normalizeType)
+              .filter((t) => AVAILABLE_TYPES.includes(t));
     const newTags = tagsParam ? tagsParam.split("|").filter(Boolean) : [];
 
     // Update state from URL - use functional updates to compare and only update if changed
@@ -160,12 +171,14 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
     }
 
     // Update types
-    if (stateTypes.length > 0 && stateTypes.length < AVAILABLE_TYPES.length) {
-      params.set("types", stateTypes.join(","));
-    } else if (stateTypes.length === 0) {
+    if (stateTypes.length === 0) {
       // Explicitly set empty if none selected, so it doesn't default back to 'all' on refresh
       params.set("types", "");
+    } else if (stateTypes.length < AVAILABLE_TYPES.length) {
+      params.set("types", stateTypes.join(","));
     }
+    // Note: If all are selected (stateTypes.length === AVAILABLE_TYPES.length), 
+    // we omit the param to restore default behavior.
 
     // Update tags
     if (stateTags.length > 0) {
@@ -301,13 +314,16 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
               size="sm"
               onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
               className="shrink-0 cursor-pointer bg-orange-600 text-white"
+              aria-label="Toggle filters"
+              aria-expanded={isFilterBoxOpen}
+              aria-controls="filters-panel-mobile"
             >
               <Filter className="size-4 text-white" />
             </Button>
           </div>
 
           {isFilterBoxOpen && (
-            <div className="grid grid-cols-[1fr_1.3fr] gap-2">
+            <div id="filters-panel-mobile" className="grid grid-cols-[1fr_1.3fr] gap-2">
               <TagsDropdown
                 selectedTags={selectedTags}
                 onTagsChange={setSelectedTags}
@@ -416,13 +432,16 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-gray-400"
                   }`}
+                aria-label="Toggle filters"
+                aria-expanded={isFilterBoxOpen}
+                aria-controls="filters-panel-desktop"
               >
                 <Filter className="h-5 w-5" />
               </Button>
             </div>
 
             {isFilterBoxOpen && (
-              <div className="mb-4 rounded-lg border bg-white p-4">
+              <div id="filters-panel-desktop" className="mb-4 rounded-lg border bg-white p-4">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <TagsDropdown
                     selectedTags={selectedTags}

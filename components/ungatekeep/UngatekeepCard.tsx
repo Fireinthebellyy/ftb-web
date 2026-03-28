@@ -68,6 +68,15 @@ function AttachmentSlide({
   idx?: number;
 }) {
   const [error, setError] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setIsMobile(
+      typeof window !== "undefined" &&
+        /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+    );
+  }, []);
+
   const lower = imageId.toLowerCase();
   const isPdf = lower.endsWith(".pdf");
   const fileName = `Document ${idx !== undefined ? idx + 1 : ""}`;
@@ -103,11 +112,15 @@ function AttachmentSlide({
   if (isPdf) {
     // Some mobile browsers don't support embedding PDF in iframe directly.
     // We use Google Docs Viewer for a consistent experience on mobile.
-    const pdfSrc =
-      typeof window !== "undefined" &&
-      /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-        ? `https://docs.google.com/viewer?url=${encodeURIComponent(fullUrl)}&embedded=true`
-        : `${fullUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
+    if (isMobile === null) {
+      return (
+        <div className="relative h-full w-full bg-muted animate-pulse" />
+      );
+    }
+
+    const pdfSrc = isMobile
+      ? `https://docs.google.com/viewer?url=${encodeURIComponent(fullUrl)}&embedded=true`
+      : `${fullUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
 
     return (
       <div className="relative h-full w-full group overflow-hidden bg-white">

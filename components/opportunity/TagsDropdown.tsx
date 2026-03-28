@@ -83,10 +83,18 @@ export function TagsDropdown({
     }
   };
 
+  const parseTag = (tag: string) => {
+    const match = tag.match(/^(.*)\((.*)\)$/);
+    if (match) {
+      return { label: match[1], description: match[2] };
+    }
+    return { label: tag, description: "" };
+  };
+
   const getLabel = () => {
     if (triggerLabel) return triggerLabel;
     if (selectedTags.length === 0) return "Field tags";
-    if (selectedTags.length === 1) return selectedTags[0];
+    if (selectedTags.length === 1) return parseTag(selectedTags[0]).label;
     return `${selectedTags.length} tags`;
   };
 
@@ -100,14 +108,6 @@ export function TagsDropdown({
       if (!aSelected && bSelected) return 1;
       return a.localeCompare(b); // Alphabetical order for same selection status
     });
-
-  const parseTag = (tag: string) => {
-    const match = tag.match(/^(.*)\((.*)\)$/);
-    if (match) {
-      return { label: match[1], description: match[2] };
-    }
-    return { label: tag, description: "" };
-  };
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -133,6 +133,8 @@ export function TagsDropdown({
             />
             {searchQuery && (
               <button
+                type="button"
+                aria-label="Clear search"
                 onClick={() => setSearchQuery("")}
                 className="absolute top-1/2 right-2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
               >

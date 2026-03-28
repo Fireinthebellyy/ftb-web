@@ -200,11 +200,11 @@ export function useOpportunitiesPaginated(
 export function useInfiniteOpportunities(
   limit: number = 10,
   search?: string,
-  types: string[] = [],
+  types: string[] | null = [],
   tags: string[] = [],
   options?: { enabled?: boolean }
 ) {
-  const serializedTypes = types.join(",");
+  const serializedTypes = types ? types.join(",") : "__NONE__";
   const serializedTags = tags.join(",");
 
   return useInfiniteQuery<OpportunitiesResponse>({
@@ -221,7 +221,7 @@ export function useInfiniteOpportunities(
         limit,
         pageParam as number,
         search,
-        types,
+        types || [],
         tags
       ),
     initialPageParam: 0,

@@ -133,20 +133,20 @@ function InternshipStripClient() {
                 <div className="grid h-full grid-cols-[160px_200px] gap-[10px] md:grid-cols-[280px_332px] md:gap-4">
                   {slide.leftMode === "badge" ? (
                     <div className="relative h-[220px] w-[160px] overflow-hidden rounded-2xl bg-white md:h-[288px] md:w-[280px]">
-                      <div className="flex h-full w-full flex-col animate-internship-stack">
-                        {[...internshipStackImages, ...internshipStackImages].map((src, index) => (
-                          <div key={`${src}-${index}`} className="relative min-h-0 flex-1">
-                            <Image
-                              src={src}
-                              alt={`${slide.title} visual ${index + 1}`}
-                              fill
-                              quality={95}
-                              sizes="(min-width: 768px) 280px, 160px"
-                              className="object-contain"
-                            />
-                          </div>
-                        ))}
-                      </div>
+                      <div className="flex h-full w-full flex-col">
+                          {internshipStackImages.map((src, index) => (
+                            <div key={`${src}-${index}`} className="relative min-h-0 h-1/3 animate-internship-stack">
+                              <Image
+                                src={src}
+                                alt={`${slide.title} visual ${index + 1}`}
+                                fill
+                                quality={95}
+                                sizes="(min-width: 768px) 280px, 160px"
+                                className="object-contain"
+                              />
+                            </div>
+                          ))}
+                        </div>
                     </div>
                   ) : (
                     <div className="relative h-[220px] w-[160px] overflow-hidden rounded-2xl md:h-[288px] md:w-[280px]">

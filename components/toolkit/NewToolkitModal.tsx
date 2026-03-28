@@ -79,6 +79,16 @@ const toolkitFormSchema = z.object({
 
 type ToolkitFormValues = z.infer<typeof toolkitFormSchema>;
 
+function formatHighlight(highlight: string) {
+  const trimmed = highlight.trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  return `${trimmed.charAt(0).toUpperCase()}${trimmed.slice(1)}`;
+}
+
 interface NewToolkitModalProps {
   children: React.ReactNode;
   onSuccess?: () => void;
@@ -158,9 +168,7 @@ export default function NewToolkitModal({
         category: data.category || undefined,
         totalDuration: data.totalDuration || undefined,
         highlights:
-          data.highlights
-            ?.map((highlight) => highlight.trim())
-            .filter(Boolean) || undefined,
+          data.highlights?.map(formatHighlight).filter(Boolean) || undefined,
         testimonials: data.testimonials?.length
           ? data.testimonials.map((item) => ({
               name: item.name.trim(),

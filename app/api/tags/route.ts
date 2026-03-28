@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ilike } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 
-const TWENTY_FOUR_HOURS = 86400;
+const ONE_HOUR = 3600;
 
 const getAllTags = unstable_cache(
   async (limit?: number) => {
@@ -13,7 +13,7 @@ const getAllTags = unstable_cache(
     return rows.map((r) => r.name);
   },
   ["tags-all"],
-  { revalidate: TWENTY_FOUR_HOURS }
+  { revalidate: ONE_HOUR }
 );
 
 const getFilteredTags = unstable_cache(
@@ -27,7 +27,7 @@ const getFilteredTags = unstable_cache(
     return rows.map((r) => r.name);
   },
   ["tags-filtered"],
-  { revalidate: TWENTY_FOUR_HOURS }
+  { revalidate: ONE_HOUR }
 );
 
 export async function GET(req: NextRequest) {

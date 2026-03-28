@@ -46,6 +46,16 @@ async function fetchToolkits(): Promise<Toolkit[]> {
   return response.data;
 }
 
+function formatHighlight(highlight: string) {
+  const trimmed = highlight.trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  return `${trimmed.charAt(0).toUpperCase()}${trimmed.slice(1)}`;
+}
+
 export default function AdminToolkitsTable() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingToolkit, setEditingToolkit] = useState<Toolkit | null>(null);
@@ -191,9 +201,7 @@ export default function AdminToolkitsTable() {
         category: data.category || undefined,
         totalDuration: data.totalDuration || undefined,
         highlights:
-          data.highlights
-            ?.map((highlight) => highlight.trim())
-            .filter(Boolean) || undefined,
+          data.highlights?.map(formatHighlight).filter(Boolean) || undefined,
         testimonials: data.testimonials?.length
           ? data.testimonials.map((item) => ({
               name: item.name.trim(),
@@ -524,7 +532,14 @@ export default function AdminToolkitsTable() {
                   type="submit"
                   disabled={updateToolkitMutation.isPending}
                 >
-                  Update Toolkit
+                  {updateToolkitMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    "Update Toolkit"
+                  )}
                 </Button>
               </div>
             </form>

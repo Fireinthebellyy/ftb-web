@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import dynamic from "next/dynamic";
@@ -343,6 +343,19 @@ function useDragMarquee() {
 function ToolkitCarousel() {
   const [processingToolkitId, setProcessingToolkitId] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if ((window as any).Razorpay) return;
+
+    const selector = 'script[src="https://checkout.razorpay.com/v1/checkout.js"]';
+    if (document.querySelector(selector)) return;
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
   const { data: toolkits = [] } = useQuery<Toolkit[]>({
     queryKey: ["toolkits"],
     queryFn: async () => {
@@ -415,8 +428,14 @@ function ToolkitCarousel() {
                       void handleBuyNow(card.id);
                     }
                   }}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    if (card.id && processingToolkitId !== card.id) {
+                      void handleBuyNow(card.id);
+                    }
+                  }}
                   disabled={!card.id || processingToolkitId === card.id}
-                  className={`${outfit.className} inline-flex h-12 items-center justify-center whitespace-nowrap rounded-[39px] bg-white px-3 text-[18px] leading-none font-medium tracking-[-0.25px] text-black disabled:cursor-not-allowed disabled:opacity-60`}
+                  className={`${outfit.className} inline-flex h-12 touch-manipulation items-center justify-center whitespace-nowrap rounded-[39px] bg-white px-3 text-[18px] leading-none font-medium tracking-[-0.25px] text-black disabled:cursor-not-allowed disabled:opacity-60`}
                 >
                   {processingToolkitId === card.id ? "Processing..." : "Buy now"}
                 </button>

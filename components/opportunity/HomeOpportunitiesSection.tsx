@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import Image from "next/image";
 import Link from "next/link";
 
 interface OpportunityHomeItem {
@@ -81,10 +82,13 @@ export default function HomeOpportunitiesSection({
             <Link
               key={opportunity.id}
               href={`/opportunities/${opportunity.id}`}
-              className={`flex h-[199px] w-[160px] shrink-0 items-center justify-center rounded-2xl border border-black/20 p-4 text-center md:h-[280px] md:w-[240px] md:p-6 ${opportunityCardThemes[index % opportunityCardThemes.length]}`}
+              className={`flex h-[199px] w-[160px] shrink-0 flex-col items-center justify-center rounded-2xl border border-black/20 p-4 text-center md:h-[280px] md:w-[240px] md:p-6 ${opportunityCardThemes[index % opportunityCardThemes.length]}`}
             >
+              <div className="relative mb-[10px] size-10 md:mb-6">
+                <Image src="/images/Shape Set.svg" alt="Opportunity icon" fill className="object-contain" />
+              </div>
               <h4
-                className={`${outfitClass} line-clamp-3 text-center text-[24px] leading-[30px] font-medium tracking-[-0.25px] md:text-[34px] md:leading-[40px]`}
+                className={`${outfitClass} line-clamp-3 max-w-full overflow-hidden text-center text-[20px] leading-[26px] font-medium tracking-[-0.25px] break-words hyphens-auto md:text-[28px] md:leading-[34px]`}
               >
                 {opportunity.title}
               </h4>

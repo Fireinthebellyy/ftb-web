@@ -10,6 +10,7 @@ import { internships, user } from "@/lib/schema";
 import {
   SQL,
   and,
+  count,
   desc,
   eq,
   gt,
@@ -137,9 +138,7 @@ export async function GET(req: NextRequest) {
     const limit = Number.isNaN(limitParam)
       ? undefined
       : Math.min(Math.max(limitParam, 1), 100);
-    const offset = Number.isNaN(offsetParam)
-      ? 0
-      : Math.max(offsetParam, 0);
+    const offset = Number.isNaN(offsetParam) ? 0 : Math.max(offsetParam, 0);
 
     const conditions: SQL<unknown>[] = [isNull(internships.deletedAt)];
 
@@ -171,7 +170,9 @@ export async function GET(req: NextRequest) {
           )`
       );
 
-      conditions.push(tagConditions.length === 1 ? tagConditions[0] : or(...tagConditions));
+      conditions.push(
+        tagConditions.length === 1 ? tagConditions[0] : or(...tagConditions)
+      );
     }
 
     if (rawLocations.length > 0) {
@@ -246,15 +247,42 @@ export async function GET(req: NextRequest) {
       .where(filters)
       .orderBy(desc(internships.createdAt));
 
-    const allInternships =
+    const rows =
       limit !== undefined
-        ? await query.limit(limit).offset(offset)
+        ? await query.limit(limit + 1).offset(offset)
         : await query;
+    let allInternships = rows;
+    let pagination:
+      | {
+          limit: number;
+          offset: number;
+          total: number;
+          hasMore: boolean;
+        }
+      | undefined;
+
+    if (limit !== undefined) {
+      const hasMore = rows.length > limit;
+      allInternships = hasMore ? rows.slice(0, limit) : rows;
+
+      const total =
+        (
+          await db.select({ total: count() }).from(internships).where(filters)
+        )[0]?.total ?? 0;
+
+      pagination = {
+        limit,
+        offset,
+        total,
+        hasMore,
+      };
+    }
 
     return NextResponse.json(
       {
         success: true,
         internships: allInternships,
+        ...(pagination ? { pagination } : {}),
       },
       { status: 200 }
     );

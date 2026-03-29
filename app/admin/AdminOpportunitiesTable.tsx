@@ -46,20 +46,43 @@ interface OpportunitiesResponse {
 }
 
 async function fetchPendingOpportunities(): Promise<OpportunitiesResponse> {
-  const response = await axios.get<{
-    success: boolean;
-    opportunities: Opportunity[];
-    pagination: {
-      total: number;
-      limit: number;
-      offset: number;
-      hasMore: boolean;
-    };
-  }>("/api/admin/opportunities");
+  const limit = 50;
+  let offset = 0;
+  let hasMore = true;
+  let total = 0;
+  const allOpportunities: Opportunity[] = [];
+
+  while (hasMore) {
+    const response = await axios.get<{
+      success: boolean;
+      opportunities: Opportunity[];
+      pagination: {
+        total: number;
+        limit: number;
+        offset: number;
+        hasMore: boolean;
+      };
+    }>("/api/admin/opportunities", {
+      params: {
+        limit,
+        offset,
+      },
+    });
+
+    allOpportunities.push(...response.data.opportunities);
+    total = response.data.pagination.total;
+    hasMore = response.data.pagination.hasMore;
+    offset += limit;
+  }
 
   return {
-    opportunities: response.data.opportunities,
-    pagination: response.data.pagination,
+    opportunities: allOpportunities,
+    pagination: {
+      total,
+      limit,
+      offset: 0,
+      hasMore: false,
+    },
   };
 }
 
@@ -82,7 +105,7 @@ export default function AdminOpportunitiesTable() {
       error &&
       (error as any).isAxiosError &&
       (error as any).response?.status === 403
-) {
+    ) {
       router.push("/");
       toast.error("You don't have permission to access this page");
       return;
@@ -107,7 +130,11 @@ export default function AdminOpportunitiesTable() {
           action,
         }
       );
-      return { opportunityId, action, opportunity: (response as any).data.opportunity };
+      return {
+        opportunityId,
+        action,
+        opportunity: (response as any).data.opportunity,
+      };
     },
     onMutate: ({ opportunityId }) => {
       setUpdatingOpportunities((prev) => new Set(prev).add(opportunityId));
@@ -134,7 +161,8 @@ export default function AdminOpportunitiesTable() {
     onError: (mutationError) => {
       if ((mutationError as any).isAxiosError) {
         const message =
-          (mutationError as any).response?.data?.error || "Failed to update opportunity";
+          (mutationError as any).response?.data?.error ||
+          "Failed to update opportunity";
         toast.error(message);
       } else {
         toast.error("Failed to update opportunity");
@@ -178,9 +206,7 @@ export default function AdminOpportunitiesTable() {
         accessorKey: "type",
         header: "Type",
         cell: ({ row }) => (
-          <Badge variant="outline">
-            {formatTypeName(row.original.type)}
-          </Badge>
+          <Badge variant="outline">{formatTypeName(row.original.type)}</Badge>
         ),
       },
       {

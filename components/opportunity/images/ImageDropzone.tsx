@@ -176,11 +176,20 @@ export function ExistingImages({
   loading,
 }: ExistingImagesProps) {
   const [previewImageId, setPreviewImageId] = useState<string | null>(null);
+  const [brokenImageIds, setBrokenImageIds] = useState<string[]>([]);
 
   if (existingImages.length === 0) return null;
 
   const getImageUrl = (imageId: string) =>
     tryGetStoragePublicUrl("opportunity-images", imageId);
+
+  const isBrokenImage = (imageId: string) => brokenImageIds.includes(imageId);
+
+  const markBrokenImage = (imageId: string) => {
+    setBrokenImageIds((prev) =>
+      prev.includes(imageId) ? prev : [...prev, imageId]
+    );
+  };
 
   return (
     <>
@@ -198,13 +207,19 @@ export function ExistingImages({
                 }
               }}
             >
-              <Image
-                src={getImageUrl(imageId)}
-                alt="Existing image"
-                className="h-full w-full object-cover"
-                width={64}
-                height={64}
-              />
+              {isBrokenImage(imageId) ? (
+                <div className="flex h-full w-full items-center justify-center bg-gray-100 text-[10px] text-gray-500">
+                  Invalid
+                </div>
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={getImageUrl(imageId)}
+                  alt="Existing image"
+                  className="h-full w-full object-cover"
+                  onError={() => markBrokenImage(imageId)}
+                />
+              )}
             </div>
             <Button
               type="button"
@@ -238,13 +253,19 @@ export function ExistingImages({
           </DialogHeader>
           {previewImageId && (
             <div className="relative">
-              <Image
-                src={getImageUrl(previewImageId)}
-                alt="Full preview"
-                className="h-auto max-h-[80vh] w-full object-contain"
-                width={800}
-                height={600}
-              />
+              {isBrokenImage(previewImageId) ? (
+                <div className="text-muted-foreground flex h-[40vh] w-full items-center justify-center text-sm">
+                  Unable to preview this image URL
+                </div>
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={getImageUrl(previewImageId)}
+                  alt="Full preview"
+                  className="h-auto max-h-[80vh] w-full object-contain"
+                  onError={() => markBrokenImage(previewImageId)}
+                />
+              )}
             </div>
           )}
         </DialogContent>
@@ -309,7 +330,7 @@ export function UnifiedFilesPreview({
       {allFiles.map((file) => (
         <div
           key={file.id}
-          className="group relative flex items-center justify-between gap-3 rounded-lg border bg-muted/10 p-2 transition-colors hover:bg-muted/20"
+          className="group bg-muted/10 hover:bg-muted/20 relative flex items-center justify-between gap-3 rounded-lg border p-2 transition-colors"
         >
           <div className="flex items-center gap-3 overflow-hidden">
             {file.kind === "image" ? (
@@ -329,7 +350,7 @@ export function UnifiedFilesPreview({
             )}
             <div className="flex flex-col overflow-hidden">
               <span className="truncate text-xs font-medium">{file.name}</span>
-              <span className="text-[10px] text-muted-foreground uppercase">
+              <span className="text-muted-foreground text-[10px] uppercase">
                 {formatBytes(file.size)} • {file.kind}
               </span>
             </div>
@@ -338,13 +359,13 @@ export function UnifiedFilesPreview({
           <div className="flex items-center gap-2">
             {file.uploading && (
               <div className="flex items-center gap-1.5">
-                <div className="h-1.5 w-12 overflow-hidden rounded-full bg-muted">
+                <div className="bg-muted h-1.5 w-12 overflow-hidden rounded-full">
                   <div
-                    className="h-full bg-primary transition-all duration-300"
+                    className="bg-primary h-full transition-all duration-300"
                     style={{ width: `${file.progress}%` }}
                   />
                 </div>
-                <span className="text-[10px] font-medium text-primary">
+                <span className="text-primary text-[10px] font-medium">
                   {file.progress}%
                 </span>
               </div>

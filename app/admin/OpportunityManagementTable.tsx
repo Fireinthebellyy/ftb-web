@@ -34,6 +34,14 @@ interface Opportunity {
   description: string;
   createdAt: string;
   isActive: boolean;
+  tags?: string[];
+  images?: string[];
+  attachments?: string[];
+  location?: string;
+  organiserInfo?: string;
+  startDate?: string;
+  endDate?: string;
+  publishAt?: string;
   type:
     | "competitions_open_calls"
     | "case_competitions"
@@ -55,10 +63,31 @@ interface Opportunity {
 }
 
 async function fetchAllOpportunities(): Promise<Opportunity[]> {
-  const response = await axios.get<{ opportunities: Opportunity[] }>(
-    "/api/opportunities"
-  );
-  return response.data.opportunities;
+  const limit = 50;
+  let offset = 0;
+  let hasMore = true;
+  const allOpportunities: Opportunity[] = [];
+
+  while (hasMore) {
+    const response = await axios.get<{
+      opportunities: Opportunity[];
+      pagination: {
+        hasMore: boolean;
+      };
+    }>("/api/admin/opportunities", {
+      params: {
+        scope: "all",
+        limit,
+        offset,
+      },
+    });
+
+    allOpportunities.push(...response.data.opportunities);
+    hasMore = response.data.pagination?.hasMore ?? false;
+    offset += limit;
+  }
+
+  return allOpportunities;
 }
 
 // Stable empty array to prevent unnecessary useMemo recomputation
@@ -72,15 +101,28 @@ export default function OpportunityManagementTable() {
   const [open, setOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [loadingEditId, setLoadingEditId] = useState<string | null>(null);
 
-  const handleEdit = (opportunity: Opportunity) => {
-    setOpen(false);
-    setSelectedOpportunity(null);
+  const handleEdit = async (opportunity: Opportunity) => {
+    setLoadingEditId(opportunity.id);
 
-    setTimeout(() => {
-      setSelectedOpportunity(opportunity);
-      setOpen(true);
-    }, 50);
+    try {
+      const response = await axios.get<{ opportunity: Opportunity }>(
+        `/api/admin/opportunities/${opportunity.id}`
+      );
+
+      setOpen(false);
+      setSelectedOpportunity(null);
+
+      setTimeout(() => {
+        setSelectedOpportunity(response.data.opportunity);
+        setOpen(true);
+      }, 50);
+    } catch {
+      toast.error("Failed to load opportunity details");
+    } finally {
+      setLoadingEditId(null);
+    }
   };
 
   const { data, isLoading, isError } = useQuery({
@@ -149,7 +191,11 @@ export default function OpportunityManagementTable() {
           const opportunity = row.original;
           return (
             <div className="flex items-center gap-2">
-              <Button size="sm" onClick={() => handleEdit(opportunity)}>
+              <Button
+                size="sm"
+                onClick={() => handleEdit(opportunity)}
+                disabled={loadingEditId === opportunity.id}
+              >
                 Edit
               </Button>
               <Button
@@ -194,7 +240,7 @@ export default function OpportunityManagementTable() {
         },
       },
     ];
-  }, [selectedIds, opportunities, queryClient, togglingId]);
+  }, [selectedIds, opportunities, queryClient, togglingId, loadingEditId]);
 
   const deleteToolbar =
     selectedIds.length > 0 ? (

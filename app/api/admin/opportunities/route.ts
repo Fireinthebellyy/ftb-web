@@ -36,18 +36,20 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const limitParam = Number.parseInt(searchParams.get("limit") ?? "", 10);
     const offsetParam = Number.parseInt(searchParams.get("offset") ?? "", 10);
+    const scopeParam = searchParams.get("scope");
     const limit = Number.isNaN(limitParam) ? 10 : limitParam;
     const offset = Number.isNaN(offsetParam) ? 0 : offsetParam;
+    const isManagementScope = scopeParam === "all";
 
     // Validate pagination parameters
     const validLimit = Math.min(Math.max(limit, 1), 50);
     const validOffset = Math.max(offset, 0);
 
-    // Get pending opportunities (isActive = false and not deleted)
-    const conditions = and(
-      eq(opportunities.isActive, false),
-      isNull(opportunities.deletedAt)
-    );
+    // Default scope lists pending opportunities only.
+    // Management scope lists all non-deleted opportunities.
+    const conditions = isManagementScope
+      ? isNull(opportunities.deletedAt)
+      : and(eq(opportunities.isActive, false), isNull(opportunities.deletedAt));
 
     const [totalResult, pendingOpportunities] = await Promise.all([
       db.select({ total: count() }).from(opportunities).where(conditions),

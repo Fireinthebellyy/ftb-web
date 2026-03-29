@@ -1,15 +1,102 @@
 import { db } from "@/lib/db";
 import { logAdminActivity } from "@/lib/admin-activity";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
-import { opportunities } from "@/lib/schema";
+import { opportunities, tags, user } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 
 const updateOpportunitySchema = z.object({
   action: z.enum(["approve", "reject", "toggle"]),
 });
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    if (!db) {
+      return NextResponse.json(
+        { error: "Database connection not available" },
+        { status: 500 }
+      );
+    }
+
+    const currentUser = await getCurrentUser();
+    if (
+      !currentUser ||
+      !canAccessAdminTab(currentUser.currentUser?.role, "OpportunityManagement")
+    ) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
+    const { id } = await params;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Opportunity ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const row = await db
+      .select({
+        id: opportunities.id,
+        type: opportunities.type,
+        title: opportunities.title,
+        description: opportunities.description,
+        images: opportunities.images,
+        attachments: opportunities.attachments,
+        tags: sql<string[]>`(
+          SELECT coalesce(array_agg(t.name ORDER BY t.name), '{}')
+          FROM ${tags} t
+          WHERE t.id = ANY(${opportunities.tagIds})
+        )`,
+        location: opportunities.location,
+        organiserInfo: opportunities.organiserInfo,
+        startDate: opportunities.startDate,
+        endDate: opportunities.endDate,
+        publishAt: opportunities.publishAt,
+        isFlagged: opportunities.isFlagged,
+        createdAt: opportunities.createdAt,
+        updatedAt: opportunities.updatedAt,
+        isVerified: opportunities.isVerified,
+        isActive: opportunities.isActive,
+        upvoteCount: opportunities.upvoteCount,
+        upvoterIds: opportunities.upvoterIds,
+        userId: opportunities.userId,
+        user: {
+          id: user.id,
+          name: user.name,
+          image: user.image,
+          role: user.role,
+        },
+      })
+      .from(opportunities)
+      .leftJoin(user, eq(opportunities.userId, user.id))
+      .where(and(eq(opportunities.id, id), isNull(opportunities.deletedAt)))
+      .limit(1);
+
+    if (row.length === 0) {
+      return NextResponse.json(
+        { error: "Opportunity not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      { success: true, opportunity: row[0] },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error fetching opportunity:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch opportunity" },
+      { status: 500 }
+    );
+  }
+}
 
 export async function PATCH(
   req: NextRequest,
@@ -243,4 +330,3 @@ export async function DELETE(
     });
   }
 }
-

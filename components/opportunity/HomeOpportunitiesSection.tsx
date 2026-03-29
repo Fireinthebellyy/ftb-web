@@ -30,7 +30,7 @@ export default function HomeOpportunitiesSection({
     queryKey: ["opportunities-home", limit, offset],
     queryFn: async () => {
       const response = await axios.get<OpportunitiesHomeResponse>(
-        "/api/opportunities",
+        "/api/opportunities/public",
         {
           params: { limit, offset },
         }
@@ -42,7 +42,7 @@ export default function HomeOpportunitiesSection({
 
   const opportunities = data?.opportunities ?? [];
   const shouldShowComingSoon =
-    !isPending && !isError && opportunities.length < 2;
+    !isPending && (isError || opportunities.length < 2);
   const opportunityCardThemes = [
     "bg-[#fff3e0] text-black",
     "bg-[#fffde7] text-black",
@@ -58,7 +58,7 @@ export default function HomeOpportunitiesSection({
             Talk of the hour in Opportunities
           </h3>
           <p
-            className={`${outfitClass} whitespace-nowrap text-[20px] leading-5 tracking-[-0.25px] text-black/50`}
+            className={`${outfitClass} text-[20px] leading-5 tracking-[-0.25px] whitespace-nowrap text-black/50`}
           >
             Step up, stand out - bring the A-game.
           </p>
@@ -66,15 +66,13 @@ export default function HomeOpportunitiesSection({
 
         <Link
           href="/opportunities"
-          className={`${sfProClass} hidden whitespace-nowrap text-[16px] leading-[30px] font-medium tracking-[-1px] text-[#ff6e00] md:absolute md:top-0 md:right-0 md:inline-block`}
+          className={`${sfProClass} hidden text-[16px] leading-[30px] font-medium tracking-[-1px] whitespace-nowrap text-[#ff6e00] md:absolute md:top-0 md:right-0 md:inline-block`}
         >
           See All
         </Link>
       </div>
 
-      <div
-        className="hide-scrollbar mt-[10px] overflow-x-auto"
-      >
+      <div className="hide-scrollbar mt-[10px] overflow-x-auto">
         <div role="list" className="flex w-max gap-4">
           {opportunities.map((opportunity, index) => (
             <Link
@@ -83,7 +81,12 @@ export default function HomeOpportunitiesSection({
               className={`flex h-[199px] w-[160px] shrink-0 flex-col items-center justify-center rounded-2xl border border-black/20 p-4 text-center md:h-[280px] md:w-[240px] md:p-6 ${opportunityCardThemes[index % opportunityCardThemes.length]}`}
             >
               <div className="relative mb-[10px] size-10 md:mb-6">
-                <Image src="/images/Shape Set.svg" alt="Opportunity icon" fill className="object-contain" />
+                <Image
+                  src="/images/Shape Set.svg"
+                  alt="Opportunity icon"
+                  fill
+                  className="object-contain"
+                />
               </div>
               <h4
                 className={`${outfitClass} line-clamp-3 max-w-full overflow-hidden text-center text-[20px] leading-[26px] font-medium tracking-[-0.25px] break-words hyphens-auto md:text-[28px] md:leading-[34px]`}

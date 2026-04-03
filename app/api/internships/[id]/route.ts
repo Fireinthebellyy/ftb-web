@@ -146,17 +146,30 @@ export async function PATCH(
 
     const internship = existingInternship[0];
 
-    let body: unknown = {};
-    try {
-      body = await req.json();
-    } catch {
-      body = {};
-    }
+    const rawBody = await req.text();
+    const trimmedBody = rawBody.trim();
 
-    const parsedBody =
-      body && typeof body === "object" && !Array.isArray(body)
-        ? (body as Record<string, unknown>)
-        : {};
+    let parsedBody: Record<string, unknown> = {};
+    if (trimmedBody.length > 0) {
+      let body: unknown;
+      try {
+        body = JSON.parse(trimmedBody);
+      } catch {
+        return NextResponse.json(
+          { error: "Malformed request body" },
+          { status: 400 }
+        );
+      }
+
+      if (!body || typeof body !== "object" || Array.isArray(body)) {
+        return NextResponse.json(
+          { error: "Malformed request body" },
+          { status: 400 }
+        );
+      }
+
+      parsedBody = body as Record<string, unknown>;
+    }
 
     const hasIsHomepageFeatured = Object.prototype.hasOwnProperty.call(
       parsedBody,
@@ -322,6 +335,18 @@ export async function PUT(
     }
     if (validatedData.isActive !== undefined && isModerator) {
       updateData.isActive = validatedData.isActive;
+    }
+    if (validatedData.isHomepageFeatured !== undefined && isModerator) {
+      updateData.isHomepageFeatured = validatedData.isHomepageFeatured;
+      if (!validatedData.isHomepageFeatured) {
+        updateData.homepageFeatureOrder = null;
+      }
+    }
+    if (validatedData.homepageFeatureOrder !== undefined && isModerator) {
+      updateData.homepageFeatureOrder = validatedData.homepageFeatureOrder;
+      if (validatedData.homepageFeatureOrder !== null) {
+        updateData.isHomepageFeatured = true;
+      }
     }
 
     const updatedInternship = await db

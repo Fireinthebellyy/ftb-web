@@ -2,7 +2,18 @@ import { describe, expect, it } from "vitest";
 import {
   formatGoogleCalendarDate,
   getTrackerDisplayValues,
+  getTrackerLogoUrl,
 } from "@/components/tracker/utils";
+import type { TrackerItem } from "@/components/providers/TrackerProvider";
+
+const baseTrackerItem: TrackerItem = {
+  oppId: "opp-1",
+  status: "Not Applied",
+  addedAt: "2026-01-01T00:00:00.000Z",
+  appliedAt: null,
+  result: null,
+  notes: "",
+};
 
 describe("tracker utils", () => {
   describe("getTrackerDisplayValues", () => {
@@ -28,7 +39,7 @@ describe("tracker utils", () => {
       expect(result).toEqual({
         companyName: "Source unavailable",
         titleText: "Archived item",
-        avatarInitial: "S",
+        avatarInitial: "A",
       });
     });
   });
@@ -56,6 +67,40 @@ describe("tracker utils", () => {
 
       expect(beforeDst).toBe("20260308T093000Z");
       expect(afterDst).toBe("20260308T103000Z");
+    });
+  });
+
+  describe("getTrackerLogoUrl", () => {
+    it("prefers snapshot logo when both snapshot and top-level logo exist", () => {
+      const value = getTrackerLogoUrl({
+        ...baseTrackerItem,
+        snapshot: { logo: "https://cdn.example.com/snapshot.png" },
+        logo: "https://cdn.example.com/top-level.png",
+      });
+
+      expect(value).toBe("https://cdn.example.com/snapshot.png");
+    });
+
+    it("returns top-level logo when snapshot logo is missing", () => {
+      const value = getTrackerLogoUrl({
+        ...baseTrackerItem,
+        logo: "https://cdn.example.com/top-level.png",
+        snapshot: { logo: "" },
+      });
+
+      expect(value).toBe("https://cdn.example.com/top-level.png");
+    });
+
+    it("returns empty fallback when no logo source is available", () => {
+      const value = getTrackerLogoUrl({
+        ...baseTrackerItem,
+        logo: "",
+        poster: "",
+        images: [],
+        snapshot: { logo: "", poster: "", images: [] },
+      });
+
+      expect(value).toBe("");
     });
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
@@ -98,6 +98,9 @@ export default function InternshipManagementTable({
   const [featuredOrderDrafts, setFeaturedOrderDrafts] = useState<
     Record<string, string>
   >({});
+  const [localFeaturedState, setLocalFeaturedState] = useState<
+    Record<string, boolean>
+  >({});
 
   const handleEdit = async (internship: Internship) => {
     setLoadingEditId(internship.id);
@@ -133,6 +136,32 @@ export default function InternshipManagementTable({
 
     return internships;
   }, [internships, featuredFilter]);
+
+  useEffect(() => {
+    const visibleIds = new Set(filteredInternships.map((item) => item.id));
+    setSelectedIds((prev) => prev.filter((id) => visibleIds.has(id)));
+  }, [featuredFilter, filteredInternships]);
+
+  useEffect(() => {
+    setLocalFeaturedState((prev) => {
+      const next = { ...prev };
+      const currentIds = new Set(internships.map((item) => item.id));
+
+      Object.keys(next).forEach((id) => {
+        if (!currentIds.has(id)) {
+          delete next[id];
+        }
+      });
+
+      internships.forEach((item) => {
+        if (updatingFeaturedId !== item.id) {
+          next[item.id] = Boolean(item.isHomepageFeatured);
+        }
+      });
+
+      return next;
+    });
+  }, [internships, updatingFeaturedId]);
 
   const columns = useMemo<ColumnDef<Internship>[]>(() => {
     const visibleIds = filteredInternships.map((item) => item.id);
@@ -215,6 +244,9 @@ export default function InternshipManagementTable({
         cell: ({ row }) => {
           const internship = row.original;
           const isLoadingThis = loadingEditId === internship.id;
+          const localIsFeatured =
+            localFeaturedState[internship.id] ??
+            Boolean(internship.isHomepageFeatured);
 
           return (
             <div className="flex items-center gap-2">
@@ -265,21 +297,27 @@ export default function InternshipManagementTable({
               <label className="ml-2 inline-flex items-center gap-2 text-xs">
                 <input
                   type="checkbox"
-                  checked={Boolean(internship.isHomepageFeatured)}
+                  checked={localIsFeatured}
                   disabled={updatingFeaturedId === internship.id}
                   onChange={async (e) => {
+                    const nextFeatured = e.target.checked;
+                    const previousFeatured = localIsFeatured;
+                    setLocalFeaturedState((prev) => ({
+                      ...prev,
+                      [internship.id]: nextFeatured,
+                    }));
                     setUpdatingFeaturedId(internship.id);
                     try {
                       await axios.patch(`/api/internships/${internship.id}`, {
                         action: "set_featured",
-                        isHomepageFeatured: e.target.checked,
-                        homepageFeatureOrder: e.target.checked
+                        isHomepageFeatured: nextFeatured,
+                        homepageFeatureOrder: nextFeatured
                           ? (internship.homepageFeatureOrder ?? null)
                           : null,
                       });
                       setFeaturedOrderDrafts((prev) => {
                         const next = { ...prev };
-                        if (!e.target.checked) {
+                        if (!nextFeatured) {
                           delete next[internship.id];
                         } else if (!(internship.id in next)) {
                           next[internship.id] =
@@ -288,11 +326,15 @@ export default function InternshipManagementTable({
                         return next;
                       });
                       toast.success(
-                        e.target.checked
+                        nextFeatured
                           ? "Internship featured on homepage"
                           : "Internship removed from homepage"
                       );
                     } catch {
+                      setLocalFeaturedState((prev) => ({
+                        ...prev,
+                        [internship.id]: previousFeatured,
+                      }));
                       toast.error("Failed to update homepage featured setting.");
                     } finally {
                       setUpdatingFeaturedId(null);
@@ -316,7 +358,7 @@ export default function InternshipManagementTable({
                   internship.homepageFeatureOrder?.toString() ??
                   ""
                 }
-                disabled={!internship.isHomepageFeatured || updatingFeaturedId === internship.id}
+                disabled={!localIsFeatured || updatingFeaturedId === internship.id}
                 placeholder="Order"
                 className="h-8 w-20 rounded border border-input bg-background px-2 text-xs"
                 onChange={(e) => {
@@ -327,7 +369,7 @@ export default function InternshipManagementTable({
                   }));
                 }}
                 onBlur={async () => {
-                  if (!internship.isHomepageFeatured) return;
+                  if (!localIsFeatured) return;
                   const raw = (
                     featuredOrderDrafts[internship.id] ??
                     internship.homepageFeatureOrder?.toString() ??
@@ -391,6 +433,7 @@ export default function InternshipManagementTable({
     loadingEditId,
     updatingFeaturedId,
     featuredOrderDrafts,
+    localFeaturedState,
   ]);
 
   const deleteToolbar =

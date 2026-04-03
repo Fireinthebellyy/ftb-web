@@ -5,26 +5,27 @@ interface TrackerDisplayInput {
   title?: string;
 }
 
-export function getTrackerDisplayValues({
-  company,
-  title,
-}: TrackerDisplayInput): {
+export interface TrackerDisplayValues {
   companyName: string;
   titleText: string;
   avatarInitial: string;
-} {
+}
+
+export function getTrackerDisplayValues({
+  company,
+  title,
+}: TrackerDisplayInput): TrackerDisplayValues {
+  const trimmedCompany = typeof company === "string" ? company.trim() : "";
+  const trimmedTitle = typeof title === "string" ? title.trim() : "";
+
   const companyName =
-    typeof company === "string" && company.trim().length > 0
-      ? company.trim()
-      : "Source unavailable";
+    trimmedCompany.length > 0 ? trimmedCompany : "Source unavailable";
 
   const titleText =
-    typeof title === "string" && title.trim().length > 0
-      ? title.trim()
-      : "Archived item";
+    trimmedTitle.length > 0 ? trimmedTitle : "Archived item";
 
   const avatarInitial =
-    (companyName.charAt(0) || titleText.charAt(0) || "A").toUpperCase();
+    (trimmedCompany.charAt(0) || trimmedTitle.charAt(0) || "A").toUpperCase();
 
   return {
     companyName,
@@ -49,5 +50,19 @@ export function formatGoogleCalendarDate(
 }
 
 export function getTrackerLogoUrl(opp: TrackerItem): string {
-  return opp.logo || opp.poster || opp.images?.[0] || "";
+  const snapshot = (opp.snapshot ?? {}) as {
+    logo?: string;
+    poster?: string;
+    images?: string[];
+  };
+
+  return (
+    snapshot.logo ||
+    opp.logo ||
+    snapshot.poster ||
+    opp.poster ||
+    snapshot.images?.[0] ||
+    opp.images?.[0] ||
+    ""
+  );
 }

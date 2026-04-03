@@ -24,6 +24,14 @@ const internshipUpdateSchema = z.object({
   duration: z.string().optional().nullable(),
   isVerified: z.boolean().optional(),
   isActive: z.boolean().optional(),
+  isHomepageFeatured: z.boolean().optional(),
+  homepageFeatureOrder: z.number().int().min(1).nullable().optional(),
+});
+
+const internshipAdminPatchSchema = z.object({
+  action: z.enum(["toggle_visibility", "set_featured"]).optional(),
+  isHomepageFeatured: z.boolean().optional(),
+  homepageFeatureOrder: z.number().int().min(1).nullable().optional(),
 });
 
 export async function GET(
@@ -64,6 +72,8 @@ export async function GET(
         isVerified: internships.isVerified,
         isFlagged: internships.isFlagged,
         isActive: internships.isActive,
+        isHomepageFeatured: internships.isHomepageFeatured,
+        homepageFeatureOrder: internships.homepageFeatureOrder,
         userId: internships.userId,
         user: {
           id: user.id,
@@ -98,7 +108,7 @@ export async function GET(
 }
 
 export async function PATCH(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -136,12 +146,41 @@ export async function PATCH(
 
     const internship = existingInternship[0];
 
+    let body: unknown = {};
+    try {
+      body = await req.json();
+    } catch {
+      body = {};
+    }
+
+    const parsed = internshipAdminPatchSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.errors }, { status: 400 });
+    }
+
+    const { action, isHomepageFeatured, homepageFeatureOrder } = parsed.data;
+    const shouldUpdateFeaturedFields =
+      action === "set_featured" ||
+      isHomepageFeatured !== undefined ||
+      homepageFeatureOrder !== undefined;
+
+    const updateData: Partial<typeof internships.$inferInsert> = {
+      updatedAt: new Date(),
+    };
+
+    if (shouldUpdateFeaturedFields) {
+      const nextFeatured = isHomepageFeatured ?? internship.isHomepageFeatured ?? false;
+      updateData.isHomepageFeatured = nextFeatured;
+      updateData.homepageFeatureOrder = nextFeatured
+        ? (homepageFeatureOrder ?? internship.homepageFeatureOrder ?? null)
+        : null;
+    } else {
+      updateData.isActive = !internship.isActive;
+    }
+
     const updatedInternship = await db
       .update(internships)
-      .set({
-        isActive: !internship.isActive, // toggle hide/unhide
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(internships.id, id))
       .returning();
 

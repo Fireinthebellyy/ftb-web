@@ -56,6 +56,17 @@ export default function MobileTrackerCard({
   onDelete,
   onClick,
 }: MobileTrackerCardProps) {
+  const companyName =
+    typeof opp.company === "string" && opp.company.trim().length > 0
+      ? opp.company.trim()
+      : "Source unavailable";
+  const titleText =
+    typeof opp.title === "string" && opp.title.trim().length > 0
+      ? opp.title.trim()
+      : "Archived item";
+  const avatarInitial =
+    (companyName.charAt(0) || titleText.charAt(0) || "A").toUpperCase();
+
   const statuses = [
     "Not Applied",
     "Applied",
@@ -106,21 +117,26 @@ export default function MobileTrackerCard({
                 "opportunity-images",
                 opp.logo || opp.poster || opp.images?.[0] || ""
               )}
-              alt={opp.company}
+              alt={companyName}
               className="h-10 w-10 shrink-0 rounded-lg border border-slate-100 bg-white object-contain p-0.5"
             />
           ) : (
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-sm font-bold text-slate-500">
-              {opp.company ? opp.company.charAt(0) : "?"}
+              {avatarInitial}
             </div>
           )}
           <div className="min-w-0">
             <h4 className="mb-0.5 truncate pr-1 text-base leading-tight font-bold text-slate-900">
-              {opp.title}
+              {titleText}
             </h4>
             <p className="truncate text-xs font-medium text-slate-500">
-              {opp.company}
+              {companyName}
             </p>
+            {opp.isArchived ? (
+              <p className="mt-0.5 text-[10px] font-semibold uppercase text-slate-400">
+                Archived
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -171,7 +187,7 @@ export default function MobileTrackerCard({
           {opp.deadline && (
             <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5">
               <a
-                href={`https://www.google.com/calendar/render?action=TEMPLATE&text=Deadline: ${encodeURIComponent(opp.title)}&dates=${new Date(opp.deadline).toISOString().replace(/-|:|\.\d\d\d/g, "")}/${new Date(opp.deadline).toISOString().replace(/-|:|\.\d\d\d/g, "")}&details=Company: ${encodeURIComponent(opp.company)}`}
+                href={`https://www.google.com/calendar/render?action=TEMPLATE&text=Deadline: ${encodeURIComponent(titleText)}&dates=${new Date(opp.deadline).toISOString().replace(/-|:|\.\d\d\d/g, "")}/${new Date(opp.deadline).toISOString().replace(/-|:|\.\d\d\d/g, "")}&details=Company: ${encodeURIComponent(companyName)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
+import { useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import dynamic from "next/dynamic";
@@ -14,7 +14,6 @@ import HomeOpportunitiesSection from "@/components/opportunity/HomeOpportunities
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 import { getYouTubeThumbnailUrl } from "@/lib/youtube";
 import { Toolkit } from "@/types/interfaces";
-import { startToolkitCheckout } from "@/lib/toolkit-checkout";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -342,21 +341,6 @@ function useDragMarquee() {
 }
 
 function ToolkitCarousel() {
-  const [processingToolkitId, setProcessingToolkitId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if ((window as any).Razorpay) return;
-
-    const selector = 'script[src="https://checkout.razorpay.com/v1/checkout.js"]';
-    if (document.querySelector(selector)) return;
-
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
-
   const { data: toolkits = [] } = useQuery<Toolkit[]>({
     queryKey: ["toolkits"],
     queryFn: async () => {
@@ -370,20 +354,6 @@ function ToolkitCarousel() {
   const shouldShowComingSoon = toolkitCards.length < 2;
 
   const router = useRouter();
-
-  const handleBuyNow = async (toolkitId: string) => {
-    setProcessingToolkitId(toolkitId);
-
-    try {
-      await startToolkitCheckout(toolkitId, (path) => {
-        window.location.href = path;
-      });
-    } catch (error) {
-      console.error("Purchase error:", error);
-    } finally {
-      setProcessingToolkitId(null);
-    }
-  };
 
   return (
     <section className="mt-0 bg-black px-4 pt-2 pb-2 md:px-8 md:py-6">
@@ -423,32 +393,11 @@ function ToolkitCarousel() {
                     className="object-cover"
                     sizes="(max-width: 768px) 218px, 280px"
                   />
-                  <div className="absolute inset-0 bg-black/45" />
                 </>
               ) : null}
 
               <div className="relative z-10 flex flex-1 items-end justify-between gap-[10px] px-4 py-4 md:px-5 md:py-5">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    if (card.id) {
-                      void handleBuyNow(card.id);
-                    }
-                  }}
-                  onTouchEnd={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    if (card.id && processingToolkitId !== card.id) {
-                      void handleBuyNow(card.id);
-                    }
-                  }}
-                  disabled={!card.id || processingToolkitId === card.id}
-                  className={`${outfit.className} inline-flex h-12 touch-manipulation items-center justify-center whitespace-nowrap rounded-[39px] bg-white px-3 text-[18px] leading-none font-medium tracking-[-0.25px] text-black disabled:cursor-not-allowed disabled:opacity-60`}
-                >
-                  {processingToolkitId === card.id ? "Processing..." : "Buy now"}
-                </button>
+                {/* Buy now button removed per request */}
                 <button
                   type="button"
                   onClick={(e) => {
@@ -456,7 +405,7 @@ function ToolkitCarousel() {
                     e.preventDefault();
                     if (card.id) router.push(`/toolkit/${card.id}`);
                   }}
-                  className={`${sfProClass} inline-flex h-12 items-center justify-center whitespace-nowrap rounded-[39px] border border-white/50 px-3 text-[18px] leading-none font-normal tracking-[-0.25px] text-white/50`}
+                  className={`${sfProClass} z-30 inline-flex h-12 items-center justify-center whitespace-nowrap rounded-[39px] px-6 min-w-[140px] text-[18px] leading-none font-medium tracking-[-0.25px] bg-black text-white`}
                 >
                   Explore
                 </button>
@@ -475,19 +424,11 @@ function ToolkitCarousel() {
                 alt=""
                 fill
                 sizes="(max-width: 768px) 218px, 280px"
-                className="object-cover opacity-65"
+                className="object-cover"
                 aria-hidden="true"
               />
-              <div className="absolute inset-0 bg-black/35" />
 
-              <div className="absolute left-0 right-0 bottom-4 z-10 px-4 text-center md:bottom-6">
-                <p className={`${outfit.className} text-[20px] md:text-[24px] leading-[30px] font-medium tracking-[-0.25px] text-white`}>
-                  Coming Soon
-                </p>
-                <p className={`${sfProClass} mt-1 text-[14px] md:text-[20px] leading-[20px] text-white/80`}>
-                  See all
-                </p>
-              </div>
+              {/* Coming Soon text removed per request */}
             </Link>
           ) : null}
         </div>

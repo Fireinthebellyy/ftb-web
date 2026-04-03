@@ -36,6 +36,8 @@ interface Internship {
   createdAt: string;
   isActive: boolean;
   isFlagged: boolean;
+  isHomepageFeatured?: boolean;
+  homepageFeatureOrder?: number | null;
   user: {
     id: string;
     name: string;
@@ -54,6 +56,8 @@ interface Internship {
   link?: string;
   deadline?: string;
 }
+
+type FeaturedFilter = "all" | "featured" | "non-featured";
 
 async function fetchAllInternships(): Promise<Internship[]> {
   const response = await axios.get<{ internships: Internship[] }>(
@@ -86,6 +90,11 @@ export default function InternshipManagementTable({
   const [open, setOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loadingEditId, setLoadingEditId] = useState<string | null>(null);
+  const [updatingFeaturedId, setUpdatingFeaturedId] = useState<string | null>(
+    null
+  );
+  const [featuredFilter, setFeaturedFilter] =
+    useState<FeaturedFilter>("all");
 
   const handleEdit = async (internship: Internship) => {
     setLoadingEditId(internship.id);
@@ -110,10 +119,23 @@ export default function InternshipManagementTable({
   });
 
   const internships = data ?? EMPTY_INTERNSHIPS;
+  const filteredInternships = useMemo(() => {
+    if (featuredFilter === "featured") {
+      return internships.filter((item) => Boolean(item.isHomepageFeatured));
+    }
+
+    if (featuredFilter === "non-featured") {
+      return internships.filter((item) => !item.isHomepageFeatured);
+    }
+
+    return internships;
+  }, [internships, featuredFilter]);
 
   const columns = useMemo<ColumnDef<Internship>[]>(() => {
+    const visibleIds = filteredInternships.map((item) => item.id);
     const allSelected =
-      internships.length > 0 && selectedIds.length === internships.length;
+      visibleIds.length > 0 &&
+      visibleIds.every((id) => selectedIds.includes(id));
 
     return [
       {
@@ -126,9 +148,13 @@ export default function InternshipManagementTable({
             checked={allSelected}
             onChange={(e) => {
               if (e.target.checked) {
-                setSelectedIds(internships.map((i) => i.id));
+                setSelectedIds((prev) =>
+                  Array.from(new Set([...prev, ...visibleIds]))
+                );
               } else {
-                setSelectedIds([]);
+                setSelectedIds((prev) =>
+                  prev.filter((id) => !visibleIds.includes(id))
+                );
               }
             }}
           />
@@ -220,6 +246,9 @@ export default function InternshipManagementTable({
                     queryClient.invalidateQueries({
                       queryKey: ["internships"],
                     });
+                    queryClient.invalidateQueries({
+                      queryKey: ["internships-home"],
+                    });
                   }
                 }}
               >
@@ -229,12 +258,97 @@ export default function InternshipManagementTable({
                   <EyeOff className="h-4 w-4" />
                 )}
               </Button>
+
+              <label className="ml-2 inline-flex items-center gap-2 text-xs">
+                <input
+                  type="checkbox"
+                  checked={Boolean(internship.isHomepageFeatured)}
+                  disabled={updatingFeaturedId === internship.id}
+                  onChange={async (e) => {
+                    setUpdatingFeaturedId(internship.id);
+                    try {
+                      await axios.patch(`/api/internships/${internship.id}`, {
+                        action: "set_featured",
+                        isHomepageFeatured: e.target.checked,
+                        homepageFeatureOrder: e.target.checked
+                          ? (internship.homepageFeatureOrder ?? null)
+                          : null,
+                      });
+                      toast.success(
+                        e.target.checked
+                          ? "Internship featured on homepage"
+                          : "Internship removed from homepage"
+                      );
+                    } catch {
+                      toast.error("Failed to update homepage featured setting.");
+                    } finally {
+                      setUpdatingFeaturedId(null);
+                      queryClient.invalidateQueries({
+                        queryKey: ["admin-internship-management"],
+                      });
+                      queryClient.invalidateQueries({
+                        queryKey: ["internships-home"],
+                      });
+                    }
+                  }}
+                />
+                <span>Featured</span>
+              </label>
+
+              <input
+                type="number"
+                min={1}
+                defaultValue={internship.homepageFeatureOrder ?? ""}
+                disabled={!internship.isHomepageFeatured || updatingFeaturedId === internship.id}
+                placeholder="Order"
+                className="h-8 w-20 rounded border border-input bg-background px-2 text-xs"
+                onBlur={async (e) => {
+                  if (!internship.isHomepageFeatured) return;
+                  const raw = e.target.value.trim();
+                  const parsed = raw ? Number.parseInt(raw, 10) : null;
+
+                  if (raw && (!Number.isFinite(parsed) || (parsed ?? 0) < 1)) {
+                    toast.error("Priority must be a number greater than 0.");
+                    return;
+                  }
+
+                  if ((parsed ?? null) === (internship.homepageFeatureOrder ?? null)) {
+                    return;
+                  }
+
+                  setUpdatingFeaturedId(internship.id);
+                  try {
+                    await axios.patch(`/api/internships/${internship.id}`, {
+                      action: "set_featured",
+                      isHomepageFeatured: true,
+                      homepageFeatureOrder: parsed,
+                    });
+                    toast.success("Homepage priority updated.");
+                  } catch {
+                    toast.error("Failed to update homepage priority.");
+                  } finally {
+                    setUpdatingFeaturedId(null);
+                    queryClient.invalidateQueries({
+                      queryKey: ["admin-internship-management"],
+                    });
+                    queryClient.invalidateQueries({
+                      queryKey: ["internships-home"],
+                    });
+                  }
+                }}
+              />
             </div>
           );
         },
       },
     ];
-  }, [selectedIds, internships, queryClient, loadingEditId]);
+  }, [
+    selectedIds,
+    filteredInternships,
+    queryClient,
+    loadingEditId,
+    updatingFeaturedId,
+  ]);
 
   const deleteToolbar =
     selectedIds.length > 0 ? (
@@ -288,6 +402,9 @@ export default function InternshipManagementTable({
                   queryClient.invalidateQueries({
                     queryKey: ["internships"],
                   });
+                  queryClient.invalidateQueries({
+                    queryKey: ["internships-home"],
+                  });
                 }
               }}
             >
@@ -297,6 +414,22 @@ export default function InternshipManagementTable({
         </AlertDialogContent>
       </AlertDialog>
     ) : null;
+
+  const toolbarActions = (
+    <>
+      <select
+        value={featuredFilter}
+        onChange={(e) => setFeaturedFilter(e.target.value as FeaturedFilter)}
+        className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+        aria-label="Filter internships by featured status"
+      >
+        <option value="all">All</option>
+        <option value="featured">Featured</option>
+        <option value="non-featured">Non-featured</option>
+      </select>
+      {deleteToolbar}
+    </>
+  );
 
   return (
     <>
@@ -308,17 +441,17 @@ export default function InternshipManagementTable({
         <AdminTableState
           isLoading={isLoading}
           isError={isError}
-          isEmpty={!internships.length}
+          isEmpty={!filteredInternships.length}
           emptyMessage="No internships found"
         >
           <AdminDataTable
             tableId="internship-management"
             columns={columns}
-            data={internships}
+            data={filteredInternships}
             filterColumnId="title"
             filterPlaceholder="Search internships by title"
             emptyMessage="No internships found"
-            toolbarActions={deleteToolbar}
+            toolbarActions={toolbarActions}
           />
         </AdminTableState>
       </AdminTabLayout>
@@ -340,6 +473,9 @@ export default function InternshipManagementTable({
                 setOpen(false);
                 queryClient.invalidateQueries({
                   queryKey: ["admin-internship-management"],
+                });
+                queryClient.invalidateQueries({
+                  queryKey: ["internships-home"],
                 });
               }}
             />

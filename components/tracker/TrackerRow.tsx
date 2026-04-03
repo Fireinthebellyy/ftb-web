@@ -65,6 +65,16 @@ export default function TrackerRow({
   onClick,
   onDelete,
 }: TrackerRowProps) {
+  const companyName =
+    typeof opp.company === "string" && opp.company.trim().length > 0
+      ? opp.company.trim()
+      : "Source unavailable";
+  const titleText =
+    typeof opp.title === "string" && opp.title.trim().length > 0
+      ? opp.title.trim()
+      : "Archived item";
+  const avatarInitial = (companyName.charAt(0) || titleText.charAt(0) || "A").toUpperCase();
+
   const handleRowClick = () => {
     posthog.capture("tracker_row_clicked", {
       tracker_id: opp.oppId,
@@ -104,19 +114,24 @@ export default function TrackerRow({
               "opportunity-images",
               opp.logo || opp.poster || opp.images?.[0] || ""
             )}
-            alt={opp.company}
+            alt={companyName}
             width={48}
             height={48}
             className="h-12 w-12 rounded-xl border border-slate-100 bg-white object-contain p-1"
           />
         ) : (
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-lg font-bold text-slate-500">
-            {opp.company ? opp.company.charAt(0) : "?"}
+            {avatarInitial}
           </div>
         )}
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h4 className="truncate font-bold text-slate-900">{opp.title}</h4>
+            <h4 className="truncate font-bold text-slate-900">{titleText}</h4>
+            {opp.isArchived ? (
+              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500 uppercase">
+                Archived
+              </span>
+            ) : null}
             <span
               className={clsx(
                 "rounded-md px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase",
@@ -127,7 +142,7 @@ export default function TrackerRow({
             </span>
           </div>
           <div className="mt-0.5 flex items-center gap-3 text-sm text-slate-500">
-            <span>{opp.company}</span>
+            <span>{companyName}</span>
             {opp.deadline && (
               <span
                 className={clsx(
@@ -181,7 +196,7 @@ export default function TrackerRow({
       <div className="flex items-center gap-1">
         {opp.deadline && (
           <a
-            href={`https://www.google.com/calendar/render?action=TEMPLATE&text=Deadline: ${encodeURIComponent(opp.title)}&dates=${new Date(opp.deadline).toISOString().replace(/-|:|\.\d\d\d/g, "")}/${new Date(opp.deadline).toISOString().replace(/-|:|\.\d\d\d/g, "")}&details=Company: ${encodeURIComponent(opp.company)}`}
+            href={`https://www.google.com/calendar/render?action=TEMPLATE&text=Deadline: ${encodeURIComponent(titleText)}&dates=${new Date(opp.deadline).toISOString().replace(/-|:|\.\d\d\d/g, "")}/${new Date(opp.deadline).toISOString().replace(/-|:|\.\d\d\d/g, "")}&details=Company: ${encodeURIComponent(companyName)}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}

@@ -29,15 +29,29 @@ export default function HomeOpportunitiesSection({
   const { data, isPending, isError } = useQuery<OpportunitiesHomeResponse>({
     queryKey: ["opportunities-home", limit, offset],
     queryFn: async () => {
-      const response = await axios.get<OpportunitiesHomeResponse>(
+      const featuredResponse = await axios.get<OpportunitiesHomeResponse>(
+        "/api/opportunities/public",
+        {
+          params: { limit, offset, featured: true },
+        }
+      );
+
+      if ((featuredResponse.data.opportunities?.length ?? 0) > 0) {
+        return featuredResponse.data;
+      }
+
+      const fallbackResponse = await axios.get<OpportunitiesHomeResponse>(
         "/api/opportunities/public",
         {
           params: { limit, offset },
         }
       );
-      return response.data;
+
+      return fallbackResponse.data;
     },
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 15,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   const opportunities = data?.opportunities ?? [];

@@ -235,6 +235,8 @@ export default function EditOpportunityForm({
 
       toast.success("Opportunity updated successfully!");
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+      queryClient.invalidateQueries({ queryKey: ["opportunities-home"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
       onOpportunityUpdated();
     } catch (err: unknown) {
       if (err instanceof Error) {

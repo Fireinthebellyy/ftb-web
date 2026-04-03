@@ -40,6 +40,7 @@ export interface TrackerItem {
   eligibility?: string[];
   skills?: string[];
   tags?: string[];
+  isArchived?: boolean;
   [key: string]: unknown;
 }
 
@@ -368,16 +369,34 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
             }
           }
 
+          const snapshotTitle =
+            typeof item.title === "string" ? item.title.trim() : "";
+          const snapshotCompany =
+            typeof item.company === "string" ? item.company.trim() : "";
+          const snapshotLogo =
+            typeof item.logo === "string" ? item.logo.trim() : "";
+
           if (Object.keys(apiData).length === 0) {
-            return item;
+            return {
+              ...item,
+              title:
+                snapshotTitle ||
+                (item.kind === "opportunity"
+                  ? "Archived opportunity"
+                  : "Archived internship"),
+              company: snapshotCompany || "Source unavailable",
+              logo: snapshotLogo || undefined,
+              isArchived: true,
+            };
           }
 
           return {
             ...item, // Keep local status, notes, etc.
             ...apiData, // API data overrides stale local data
-            title: apiData.title || item.title, // Prefer API title
-            company: apiData.company || item.company,
-            logo: apiData.logo || item.logo, // Prefer API logo
+            title: apiData.title || snapshotTitle || item.title, // Prefer API title
+            company: apiData.company || snapshotCompany || item.company,
+            logo: apiData.logo || snapshotLogo || item.logo, // Prefer API logo
+            isArchived: false,
           };
         });
 

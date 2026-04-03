@@ -106,7 +106,7 @@ export default function HomeInternshipCardsSection({
         : fallbackResponse.data;
     },
     staleTime: 1000 * 60,
-    refetchOnMount: "ifStale",
+    refetchOnMount: true,
     refetchOnWindowFocus: false,
   });
 

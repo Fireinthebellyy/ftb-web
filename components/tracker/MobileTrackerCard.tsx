@@ -1,9 +1,15 @@
 import React from "react";
+import Image from "next/image";
 import { Trash2, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { TrackerItem } from "@/components/providers/TrackerProvider";
 import { differenceInCalendarDays } from "date-fns";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
+import {
+  formatGoogleCalendarDate,
+  getTrackerDisplayValues,
+  getTrackerLogoUrl,
+} from "@/components/tracker/utils";
 
 function DeadlineBadge({ deadline }: { deadline: string }) {
   const daysDiff = differenceInCalendarDays(new Date(deadline), new Date());
@@ -56,16 +62,12 @@ export default function MobileTrackerCard({
   onDelete,
   onClick,
 }: MobileTrackerCardProps) {
-  const companyName =
-    typeof opp.company === "string" && opp.company.trim().length > 0
-      ? opp.company.trim()
-      : "Source unavailable";
-  const titleText =
-    typeof opp.title === "string" && opp.title.trim().length > 0
-      ? opp.title.trim()
-      : "Archived item";
-  const avatarInitial =
-    (companyName.charAt(0) || titleText.charAt(0) || "A").toUpperCase();
+  const { companyName, titleText, avatarInitial } = getTrackerDisplayValues({
+    company: opp.company,
+    title: opp.title,
+  });
+  const logoUrl = getTrackerLogoUrl(opp);
+  const deadlineDate = formatGoogleCalendarDate(opp.deadline);
 
   const statuses = [
     "Not Applied",
@@ -110,14 +112,12 @@ export default function MobileTrackerCard({
       {/* Top Row: Logo, Info, and Delete */}
       <div className="mb-4 flex items-start justify-between">
         <div className="flex min-w-0 flex-1 items-center gap-3 pr-2">
-          {opp.logo || opp.poster || opp.images?.[0] ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={tryGetStoragePublicUrl(
-                "opportunity-images",
-                opp.logo || opp.poster || opp.images?.[0] || ""
-              )}
+          {logoUrl ? (
+            <Image
+              src={tryGetStoragePublicUrl("opportunity-images", logoUrl)}
               alt={companyName}
+              width={40}
+              height={40}
               className="h-10 w-10 shrink-0 rounded-lg border border-slate-100 bg-white object-contain p-0.5"
             />
           ) : (
@@ -184,20 +184,21 @@ export default function MobileTrackerCard({
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          {opp.deadline && (
+          {opp.deadline && deadlineDate && (
             <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5">
               <a
-                href={`https://www.google.com/calendar/render?action=TEMPLATE&text=Deadline: ${encodeURIComponent(titleText)}&dates=${new Date(opp.deadline).toISOString().replace(/-|:|\.\d\d\d/g, "")}/${new Date(opp.deadline).toISOString().replace(/-|:|\.\d\d\d/g, "")}&details=Company: ${encodeURIComponent(companyName)}`}
+                href={`https://www.google.com/calendar/render?action=TEMPLATE&text=Deadline: ${encodeURIComponent(titleText)}&dates=${deadlineDate}/${deadlineDate}&details=Company: ${encodeURIComponent(companyName)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
                 className="shrink-0 text-slate-400 transition-colors hover:text-blue-600"
                 title="Add to Google Calendar"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src="/images/google-calendar.webp"
                   alt="Google Calendar"
+                  width={16}
+                  height={16}
                   className="h-4 w-4 object-contain"
                 />
               </a>

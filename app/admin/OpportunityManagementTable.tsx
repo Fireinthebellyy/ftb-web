@@ -111,6 +111,9 @@ export default function OpportunityManagementTable() {
   );
   const [featuredFilter, setFeaturedFilter] =
     useState<FeaturedFilter>("all");
+  const [featuredOrderDrafts, setFeaturedOrderDrafts] = useState<
+    Record<string, string>
+  >({});
 
   const handleEdit = async (opportunity: Opportunity) => {
     setLoadingEditId(opportunity.id);
@@ -283,6 +286,16 @@ export default function OpportunityManagementTable() {
                             : null,
                         }
                       );
+                      setFeaturedOrderDrafts((prev) => {
+                        const next = { ...prev };
+                        if (!e.target.checked) {
+                          delete next[opportunity.id];
+                        } else if (!(opportunity.id in next)) {
+                          next[opportunity.id] =
+                            opportunity.homepageFeatureOrder?.toString() ?? "";
+                        }
+                        return next;
+                      });
                       toast.success(
                         e.target.checked
                           ? "Opportunity featured on homepage"
@@ -307,13 +320,28 @@ export default function OpportunityManagementTable() {
               <input
                 type="number"
                 min={1}
-                defaultValue={opportunity.homepageFeatureOrder ?? ""}
+                value={
+                  featuredOrderDrafts[opportunity.id] ??
+                  opportunity.homepageFeatureOrder?.toString() ??
+                  ""
+                }
                 disabled={!opportunity.isHomepageFeatured || updatingFeaturedId === opportunity.id}
                 placeholder="Order"
                 className="h-8 w-20 rounded border border-input bg-background px-2 text-xs"
-                onBlur={async (e) => {
+                onChange={(e) => {
+                  const nextValue = e.target.value;
+                  setFeaturedOrderDrafts((prev) => ({
+                    ...prev,
+                    [opportunity.id]: nextValue,
+                  }));
+                }}
+                onBlur={async () => {
                   if (!opportunity.isHomepageFeatured) return;
-                  const raw = e.target.value.trim();
+                  const raw = (
+                    featuredOrderDrafts[opportunity.id] ??
+                    opportunity.homepageFeatureOrder?.toString() ??
+                    ""
+                  ).trim();
                   const parsed = raw ? Number.parseInt(raw, 10) : null;
 
                   if (raw && (!Number.isFinite(parsed) || (parsed ?? 0) < 1)) {
@@ -335,8 +363,22 @@ export default function OpportunityManagementTable() {
                         homepageFeatureOrder: parsed,
                       }
                     );
+                    setFeaturedOrderDrafts((prev) => {
+                      const next = { ...prev };
+                      if (parsed === null) {
+                        delete next[opportunity.id];
+                      } else {
+                        next[opportunity.id] = String(parsed);
+                      }
+                      return next;
+                    });
                     toast.success("Homepage priority updated.");
                   } catch {
+                    setFeaturedOrderDrafts((prev) => ({
+                      ...prev,
+                      [opportunity.id]:
+                        opportunity.homepageFeatureOrder?.toString() ?? "",
+                    }));
                     toast.error("Failed to update homepage priority.");
                   } finally {
                     setUpdatingFeaturedId(null);
@@ -361,6 +403,7 @@ export default function OpportunityManagementTable() {
     togglingId,
     loadingEditId,
     updatingFeaturedId,
+    featuredOrderDrafts,
   ]);
 
   const deleteToolbar =

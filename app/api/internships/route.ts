@@ -218,7 +218,7 @@ export async function GET(req: NextRequest) {
     fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
     fiveDaysAgo.setHours(0, 0, 0, 0);
 
-    if (ids.length === 0) {
+    if (ids.length === 0 && !featuredOnly) {
       conditions.push(
         or(
           gte(internships.createdAt, fiveDaysAgo),

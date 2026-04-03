@@ -397,7 +397,6 @@ function ToolkitCarousel() {
               ) : null}
 
               <div className="relative z-10 flex flex-1 items-end justify-between gap-[10px] px-4 py-4 md:px-5 md:py-5">
-                {/* Buy now button removed per request */}
                 <button
                   type="button"
                   onClick={(e) => {
@@ -427,8 +426,6 @@ function ToolkitCarousel() {
                 className="object-cover"
                 aria-hidden="true"
               />
-
-              {/* Coming Soon text removed per request */}
             </Link>
           ) : null}
         </div>

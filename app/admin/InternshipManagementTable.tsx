@@ -95,6 +95,9 @@ export default function InternshipManagementTable({
   );
   const [featuredFilter, setFeaturedFilter] =
     useState<FeaturedFilter>("all");
+  const [featuredOrderDrafts, setFeaturedOrderDrafts] = useState<
+    Record<string, string>
+  >({});
 
   const handleEdit = async (internship: Internship) => {
     setLoadingEditId(internship.id);
@@ -274,6 +277,16 @@ export default function InternshipManagementTable({
                           ? (internship.homepageFeatureOrder ?? null)
                           : null,
                       });
+                      setFeaturedOrderDrafts((prev) => {
+                        const next = { ...prev };
+                        if (!e.target.checked) {
+                          delete next[internship.id];
+                        } else if (!(internship.id in next)) {
+                          next[internship.id] =
+                            internship.homepageFeatureOrder?.toString() ?? "";
+                        }
+                        return next;
+                      });
                       toast.success(
                         e.target.checked
                           ? "Internship featured on homepage"
@@ -298,13 +311,28 @@ export default function InternshipManagementTable({
               <input
                 type="number"
                 min={1}
-                defaultValue={internship.homepageFeatureOrder ?? ""}
+                value={
+                  featuredOrderDrafts[internship.id] ??
+                  internship.homepageFeatureOrder?.toString() ??
+                  ""
+                }
                 disabled={!internship.isHomepageFeatured || updatingFeaturedId === internship.id}
                 placeholder="Order"
                 className="h-8 w-20 rounded border border-input bg-background px-2 text-xs"
-                onBlur={async (e) => {
+                onChange={(e) => {
+                  const nextValue = e.target.value;
+                  setFeaturedOrderDrafts((prev) => ({
+                    ...prev,
+                    [internship.id]: nextValue,
+                  }));
+                }}
+                onBlur={async () => {
                   if (!internship.isHomepageFeatured) return;
-                  const raw = e.target.value.trim();
+                  const raw = (
+                    featuredOrderDrafts[internship.id] ??
+                    internship.homepageFeatureOrder?.toString() ??
+                    ""
+                  ).trim();
                   const parsed = raw ? Number.parseInt(raw, 10) : null;
 
                   if (raw && (!Number.isFinite(parsed) || (parsed ?? 0) < 1)) {
@@ -323,8 +351,22 @@ export default function InternshipManagementTable({
                       isHomepageFeatured: true,
                       homepageFeatureOrder: parsed,
                     });
+                    setFeaturedOrderDrafts((prev) => {
+                      const next = { ...prev };
+                      if (parsed === null) {
+                        delete next[internship.id];
+                      } else {
+                        next[internship.id] = String(parsed);
+                      }
+                      return next;
+                    });
                     toast.success("Homepage priority updated.");
                   } catch {
+                    setFeaturedOrderDrafts((prev) => ({
+                      ...prev,
+                      [internship.id]:
+                        internship.homepageFeatureOrder?.toString() ?? "",
+                    }));
                     toast.error("Failed to update homepage priority.");
                   } finally {
                     setUpdatingFeaturedId(null);
@@ -348,6 +390,7 @@ export default function InternshipManagementTable({
     queryClient,
     loadingEditId,
     updatingFeaturedId,
+    featuredOrderDrafts,
   ]);
 
   const deleteToolbar =

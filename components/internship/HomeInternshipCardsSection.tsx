@@ -92,29 +92,22 @@ export default function HomeInternshipCardsSection({
   const { data } = useQuery<{ internships: Internship[] }>({
     queryKey: ["internships-home", limit, offset],
     queryFn: async () => {
-      const featuredResponse = await axios.get<{ internships: Internship[] }>(
-        "/api/internships",
-        {
+      const [featuredResponse, fallbackResponse] = await Promise.all([
+        axios.get<{ internships: Internship[] }>("/api/internships", {
           params: { limit, offset, featured: true },
-        }
-      );
-
-      if ((featuredResponse.data.internships?.length ?? 0) > 0) {
-        return featuredResponse.data;
-      }
-
-      const fallbackResponse = await axios.get<{ internships: Internship[] }>(
-        "/api/internships",
-        {
+        }),
+        axios.get<{ internships: Internship[] }>("/api/internships", {
           params: { limit, offset },
-        }
-      );
+        }),
+      ]);
 
-      return fallbackResponse.data;
+      return (featuredResponse.data.internships?.length ?? 0) > 0
+        ? featuredResponse.data
+        : fallbackResponse.data;
     },
-    staleTime: 1000 * 15,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
+    staleTime: 1000 * 60,
+    refetchOnMount: "ifStale",
+    refetchOnWindowFocus: false,
   });
 
   const internships = data?.internships ?? [];

@@ -26,36 +26,44 @@ export async function GET(req: NextRequest) {
       0
     );
     const featuredOnly = featuredParam === "true";
+    const preferFeatured = featuredParam === "preferred";
 
-    const rows = await db
-      .select({
-        id: opportunities.id,
-        title: opportunities.title,
-      })
-      .from(opportunities)
-      .where(
-        and(
-          isNull(opportunities.deletedAt),
-          eq(opportunities.isActive, true),
-          featuredOnly
-            ? eq(opportunities.isHomepageFeatured, true)
-            : sql`true`,
-          or(
-            isNull(opportunities.publishAt),
-            lte(opportunities.publishAt, new Date())
+    const baseFilters = and(
+      isNull(opportunities.deletedAt),
+      eq(opportunities.isActive, true),
+      or(isNull(opportunities.publishAt), lte(opportunities.publishAt, new Date()))
+    );
+
+    const fetchRows = async (onlyFeatured: boolean) =>
+      db
+        .select({
+          id: opportunities.id,
+          title: opportunities.title,
+        })
+        .from(opportunities)
+        .where(
+          and(
+            baseFilters,
+            onlyFeatured ? eq(opportunities.isHomepageFeatured, true) : sql`true`
           )
         )
-      )
-      .orderBy(
-        featuredOnly
-          ? asc(sql`coalesce(${opportunities.homepageFeatureOrder}, 2147483647)`)
-          : desc(opportunities.createdAt),
-        desc(opportunities.createdAt)
-      )
-      .limit(validLimit)
-      .offset(validOffset);
+        .orderBy(
+          onlyFeatured
+            ? asc(sql`coalesce(${opportunities.homepageFeatureOrder}, 2147483647)`)
+            : desc(opportunities.createdAt),
+          desc(opportunities.createdAt)
+        )
+        .limit(validLimit)
+        .offset(validOffset);
 
-    return NextResponse.json({ opportunities: rows }, { status: 200 });
+    const rows = preferFeatured
+      ? await fetchRows(true)
+      : await fetchRows(featuredOnly);
+
+    const resolvedRows =
+      preferFeatured && rows.length === 0 ? await fetchRows(false) : rows;
+
+    return NextResponse.json({ opportunities: resolvedRows }, { status: 200 });
   } catch (error) {
     console.error("Error fetching public opportunities:", error);
     return NextResponse.json(

@@ -238,13 +238,13 @@ export async function POST(req: NextRequest) {
           manualData: validated.manualData
             ? JSON.stringify(validated.manualData)
             : null,
-          snapshotTitle: validated.title?.trim() || null,
-          snapshotCompany: validated.company?.trim() || null,
+          snapshotTitle: validated.title?.trim() || undefined,
+          snapshotCompany: validated.company?.trim() || undefined,
           snapshotLogo:
             validated.logo?.trim() ||
             validated.poster?.trim() ||
             validated.images?.[0]?.trim() ||
-            null,
+            undefined,
         })
         .onConflictDoUpdate({
           target: [trackerItems.userId, trackerItems.kind, trackerItems.oppId],
@@ -313,13 +313,13 @@ export async function POST(req: NextRequest) {
             manualData: parsed.data.manualData
               ? JSON.stringify(parsed.data.manualData)
               : null,
-            snapshotTitle: parsed.data.title?.trim() || null,
-            snapshotCompany: parsed.data.company?.trim() || null,
+            snapshotTitle: parsed.data.title?.trim() || undefined,
+            snapshotCompany: parsed.data.company?.trim() || undefined,
             snapshotLogo:
               parsed.data.logo?.trim() ||
               parsed.data.poster?.trim() ||
               parsed.data.images?.[0]?.trim() ||
-              null,
+              undefined,
           });
         }
       }

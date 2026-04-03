@@ -153,7 +153,21 @@ export async function PATCH(
       body = {};
     }
 
-    const parsed = internshipAdminPatchSchema.safeParse(body);
+    const parsedBody =
+      body && typeof body === "object" && !Array.isArray(body)
+        ? (body as Record<string, unknown>)
+        : {};
+
+    const hasIsHomepageFeatured = Object.prototype.hasOwnProperty.call(
+      parsedBody,
+      "isHomepageFeatured"
+    );
+    const hasHomepageFeatureOrder = Object.prototype.hasOwnProperty.call(
+      parsedBody,
+      "homepageFeatureOrder"
+    );
+
+    const parsed = internshipAdminPatchSchema.safeParse(parsedBody);
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.errors }, { status: 400 });
     }
@@ -161,8 +175,8 @@ export async function PATCH(
     const { action, isHomepageFeatured, homepageFeatureOrder } = parsed.data;
     const shouldUpdateFeaturedFields =
       action === "set_featured" ||
-      isHomepageFeatured !== undefined ||
-      homepageFeatureOrder !== undefined;
+      hasIsHomepageFeatured ||
+      hasHomepageFeatureOrder;
 
     const updateData: Partial<typeof internships.$inferInsert> = {
       updatedAt: new Date(),
@@ -172,7 +186,9 @@ export async function PATCH(
       const nextFeatured = isHomepageFeatured ?? internship.isHomepageFeatured ?? false;
       updateData.isHomepageFeatured = nextFeatured;
       updateData.homepageFeatureOrder = nextFeatured
-        ? (homepageFeatureOrder ?? internship.homepageFeatureOrder ?? null)
+        ? (hasHomepageFeatureOrder
+            ? homepageFeatureOrder
+            : (internship.homepageFeatureOrder ?? null))
         : null;
     } else {
       updateData.isActive = !internship.isActive;

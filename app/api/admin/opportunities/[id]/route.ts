@@ -146,7 +146,19 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const validatedData = updateOpportunitySchema.parse(body);
+    const parsedBody =
+      body && typeof body === "object" && !Array.isArray(body)
+        ? (body as Record<string, unknown>)
+        : {};
+    const validatedData = updateOpportunitySchema.parse(parsedBody);
+    const hasIsHomepageFeatured = Object.prototype.hasOwnProperty.call(
+      parsedBody,
+      "isHomepageFeatured"
+    );
+    const hasHomepageFeatureOrder = Object.prototype.hasOwnProperty.call(
+      parsedBody,
+      "homepageFeatureOrder"
+    );
 
     const existingOpportunity = await db
       .select()
@@ -177,11 +189,16 @@ export async function PATCH(
     } else if (validatedData.action === "toggle") {
       updateData.isActive = !existingOpportunity[0].isActive;
     } else if (validatedData.action === "set_featured") {
-      const nextFeatured = validatedData.isHomepageFeatured ?? false;
-      updateData.isHomepageFeatured = nextFeatured;
-      updateData.homepageFeatureOrder = nextFeatured
-        ? (validatedData.homepageFeatureOrder ?? existingOpportunity[0].homepageFeatureOrder ?? null)
-        : null;
+      if (hasIsHomepageFeatured) {
+        updateData.isHomepageFeatured = validatedData.isHomepageFeatured;
+      }
+
+      if (hasHomepageFeatureOrder) {
+        updateData.homepageFeatureOrder = validatedData.homepageFeatureOrder;
+      } else if (hasIsHomepageFeatured && validatedData.isHomepageFeatured) {
+        updateData.homepageFeatureOrder =
+          existingOpportunity[0].homepageFeatureOrder ?? null;
+      }
     }
 
     const updatedOpportunity = await db

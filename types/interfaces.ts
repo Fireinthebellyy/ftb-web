@@ -12,8 +12,6 @@ export type Opportunity = {
   startDate?: string;
   endDate?: string;
   publishAt?: string;
-  isHomepageFeatured?: boolean;
-  homepageFeatureOrder?: number | null;
   upvoteCount: number;
   upvoterIds: string[];
   userHasUpvoted?: boolean;
@@ -44,8 +42,6 @@ export type Internship = {
   isVerified?: boolean;
   isFlagged?: boolean;
   isActive?: boolean;
-  isHomepageFeatured?: boolean;
-  homepageFeatureOrder?: number | null;
   user: {
     id: string;
     name: string;

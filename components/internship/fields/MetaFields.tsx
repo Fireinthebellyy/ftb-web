@@ -38,7 +38,6 @@ export function MetaFields({ control }: Props) {
               <FormControl>
                 <Input
                   {...field}
-                  value={field.value ?? ""}
                   placeholder="City, Country"
                   className="focus-visible:ring-1"
                 />
@@ -56,16 +55,7 @@ export function MetaFields({ control }: Props) {
               <FormLabel>Stipend</FormLabel>
               <FormControl>
                 <Input
-                  name={field.name}
-                  ref={field.ref}
-                  onBlur={field.onBlur}
-                  value={field.value ?? ""}
-                  onChange={(e) => {
-                    const rawValue = e.target.value;
-                    field.onChange(
-                      rawValue === "" ? undefined : Number(rawValue)
-                    );
-                  }}
+                  {...field}
                   type="number"
                   placeholder="Monthly stipend amount"
                   className="focus-visible:ring-1"
@@ -87,7 +77,6 @@ export function MetaFields({ control }: Props) {
               <FormControl>
                 <Input
                   {...field}
-                  value={field.value ?? ""}
                   placeholder="Contact person name"
                   className="focus-visible:ring-1"
                 />
@@ -106,7 +95,6 @@ export function MetaFields({ control }: Props) {
               <FormControl>
                 <Input
                   {...field}
-                  value={field.value ?? ""}
                   type="email"
                   placeholder="manager@company.com"
                   className="focus-visible:ring-1"
@@ -128,7 +116,6 @@ export function MetaFields({ control }: Props) {
               <FormControl>
                 <Input
                   {...field}
-                  value={field.value ?? ""}
                   placeholder="e.g., 6 months, 2 years"
                   className="focus-visible:ring-1"
                 />
@@ -147,7 +134,6 @@ export function MetaFields({ control }: Props) {
               <FormControl>
                 <Input
                   {...field}
-                  value={field.value ?? ""}
                   placeholder="e.g., 3 months, 6 months"
                   className="focus-visible:ring-1"
                 />
@@ -167,7 +153,6 @@ export function MetaFields({ control }: Props) {
             <FormControl>
               <Input
                 {...field}
-                value={field.value ?? ""}
                 placeholder="https://..."
                 className="focus-visible:ring-1"
               />

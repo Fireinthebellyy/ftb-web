@@ -22,11 +22,6 @@ const trackerItemSchema = z.object({
   result: z.string().nullable().optional(),
   isManual: z.boolean().optional(),
   manualData: z.unknown().optional(), // Safer than z.any(), requires checking before use
-  title: z.string().optional().nullable(),
-  company: z.string().optional().nullable(),
-  logo: z.string().optional().nullable(),
-  poster: z.string().optional().nullable(),
-  images: z.array(z.string()).optional(),
 });
 
 const trackerEventSchema = z.object({
@@ -127,9 +122,6 @@ export async function GET(req: NextRequest) {
       return {
         ...item,
         manualData: parsedManualData,
-        title: item.snapshotTitle ?? undefined,
-        company: item.snapshotCompany ?? undefined,
-        logo: item.snapshotLogo ?? undefined,
       };
     });
 
@@ -238,25 +230,11 @@ export async function POST(req: NextRequest) {
           manualData: validated.manualData
             ? JSON.stringify(validated.manualData)
             : null,
-          snapshotTitle: validated.title?.trim() || undefined,
-          snapshotCompany: validated.company?.trim() || undefined,
-          snapshotLogo:
-            validated.logo?.trim() ||
-            validated.poster?.trim() ||
-            validated.images?.[0]?.trim() ||
-            undefined,
         })
         .onConflictDoUpdate({
           target: [trackerItems.userId, trackerItems.kind, trackerItems.oppId],
           set: {
             status: validated.status,
-            snapshotTitle: validated.title?.trim() || undefined,
-            snapshotCompany: validated.company?.trim() || undefined,
-            snapshotLogo:
-              validated.logo?.trim() ||
-              validated.poster?.trim() ||
-              validated.images?.[0]?.trim() ||
-              undefined,
             updatedAt: new Date(),
           },
         });
@@ -313,13 +291,6 @@ export async function POST(req: NextRequest) {
             manualData: parsed.data.manualData
               ? JSON.stringify(parsed.data.manualData)
               : null,
-            snapshotTitle: parsed.data.title?.trim() || undefined,
-            snapshotCompany: parsed.data.company?.trim() || undefined,
-            snapshotLogo:
-              parsed.data.logo?.trim() ||
-              parsed.data.poster?.trim() ||
-              parsed.data.images?.[0]?.trim() ||
-              undefined,
           });
         }
       }

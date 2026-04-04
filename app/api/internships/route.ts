@@ -10,7 +10,6 @@ import { internships, user } from "@/lib/schema";
 import {
   SQL,
   and,
-  asc,
   count,
   desc,
   eq,
@@ -105,8 +104,6 @@ export async function GET(req: NextRequest) {
     );
     const limitParam = Number.parseInt(searchParams.get("limit") ?? "", 10);
     const offsetParam = Number.parseInt(searchParams.get("offset") ?? "", 10);
-    const featuredParam = searchParams.get("featured");
-    const idsParam = searchParams.get("ids");
 
     const searchTerm = searchParam ? searchParam.trim() : "";
     const rawTypes = typesParam
@@ -142,13 +139,6 @@ export async function GET(req: NextRequest) {
       ? undefined
       : Math.min(Math.max(limitParam, 1), 100);
     const offset = Number.isNaN(offsetParam) ? 0 : Math.max(offsetParam, 0);
-    const featuredOnly = featuredParam === "true";
-    const ids = idsParam
-      ? idsParam
-          .split(",")
-          .map((id) => id.trim())
-          .filter(Boolean)
-      : [];
 
     const conditions: SQL<unknown>[] = [isNull(internships.deletedAt)];
 
@@ -205,30 +195,20 @@ export async function GET(req: NextRequest) {
       conditions.push(lte(internships.stipend, maxStipend));
     }
 
-    if (featuredOnly) {
-      conditions.push(eq(internships.isHomepageFeatured, true));
-    }
-
-    if (ids.length > 0) {
-      conditions.push(inArray(internships.id, ids));
-    }
-
     // 🔥 Recent OR future deadline filter
     const fiveDaysAgo = new Date();
     fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
     fiveDaysAgo.setHours(0, 0, 0, 0);
 
-    if (ids.length === 0 && !featuredOnly) {
-      conditions.push(
-        or(
-          gte(internships.createdAt, fiveDaysAgo),
-          and(
-            isNull(internships.deletedAt),
-            gt(internships.deadline, sql`CURRENT_DATE`)
-          )
+    conditions.push(
+      or(
+        gte(internships.createdAt, fiveDaysAgo),
+        and(
+          isNull(internships.deletedAt),
+          gt(internships.deadline, sql`CURRENT_DATE`)
         )
-      );
-    }
+      )
+    );
 
     const filters =
       conditions.length === 1 ? conditions[0] : and(...conditions);
@@ -254,8 +234,6 @@ export async function GET(req: NextRequest) {
         isVerified: internships.isVerified,
         isFlagged: internships.isFlagged,
         isActive: internships.isActive,
-        isHomepageFeatured: internships.isHomepageFeatured,
-        homepageFeatureOrder: internships.homepageFeatureOrder,
         userId: internships.userId,
         user: {
           id: user.id,
@@ -267,12 +245,7 @@ export async function GET(req: NextRequest) {
       .from(internships)
       .leftJoin(user, eq(internships.userId, user.id))
       .where(filters)
-      .orderBy(
-        featuredOnly
-          ? asc(sql`coalesce(${internships.homepageFeatureOrder}, 2147483647)`)
-          : desc(internships.createdAt),
-        desc(internships.createdAt)
-      );
+      .orderBy(desc(internships.createdAt));
 
     const rows =
       limit !== undefined

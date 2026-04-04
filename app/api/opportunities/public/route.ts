@@ -3,6 +3,23 @@ import { opportunities } from "@/lib/schema";
 import { and, asc, desc, eq, isNull, lte, or, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
+function isMissingHomepageFeatureColumnError(error: unknown): boolean {
+  const err = error as {
+    message?: string;
+    cause?: { code?: string; column?: string; message?: string };
+  };
+
+  if (err?.cause?.code !== "42703") {
+    return false;
+  }
+
+  const details = `${err?.cause?.column ?? ""} ${err?.cause?.message ?? ""} ${err?.message ?? ""}`.toLowerCase();
+  return (
+    details.includes("is_homepage_featured") ||
+    details.includes("homepage_feature_order")
+  );
+}
+
 export async function GET(req: NextRequest) {
   try {
     if (!db) {
@@ -34,7 +51,10 @@ export async function GET(req: NextRequest) {
       or(isNull(opportunities.publishAt), lte(opportunities.publishAt, new Date()))
     );
 
-    const fetchRows = async (onlyFeatured: boolean) =>
+    const fetchRows = async (
+      onlyFeatured: boolean,
+      withFeaturedColumns: boolean
+    ) =>
       db
         .select({
           id: opportunities.id,
@@ -44,11 +64,13 @@ export async function GET(req: NextRequest) {
         .where(
           and(
             baseFilters,
-            onlyFeatured ? eq(opportunities.isHomepageFeatured, true) : sql`true`
+            onlyFeatured && withFeaturedColumns
+              ? eq(opportunities.isHomepageFeatured, true)
+              : sql`true`
           )
         )
         .orderBy(
-          onlyFeatured
+          onlyFeatured && withFeaturedColumns
             ? asc(sql`coalesce(${opportunities.homepageFeatureOrder}, 2147483647)`)
             : desc(opportunities.createdAt),
           desc(opportunities.createdAt)
@@ -56,12 +78,25 @@ export async function GET(req: NextRequest) {
         .limit(validLimit)
         .offset(validOffset);
 
-    const rows = preferFeatured
-      ? await fetchRows(true)
-      : await fetchRows(featuredOnly);
+    const runWithFeaturePreference = async (withFeaturedColumns: boolean) => {
+      const rows = preferFeatured
+        ? await fetchRows(true, withFeaturedColumns)
+        : await fetchRows(featuredOnly, withFeaturedColumns);
 
-    const resolvedRows =
-      preferFeatured && rows.length === 0 ? await fetchRows(false) : rows;
+      return preferFeatured && rows.length === 0
+        ? fetchRows(false, withFeaturedColumns)
+        : rows;
+    };
+
+    let resolvedRows;
+    try {
+      resolvedRows = await runWithFeaturePreference(true);
+    } catch (error) {
+      if (!isMissingHomepageFeatureColumnError(error)) {
+        throw error;
+      }
+      resolvedRows = await runWithFeaturePreference(false);
+    }
 
     return NextResponse.json({ opportunities: resolvedRows }, { status: 200 });
   } catch (error) {

@@ -28,6 +28,23 @@ import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+function isMissingHomepageFeatureColumnError(error: unknown): boolean {
+  const err = error as {
+    message?: string;
+    cause?: { code?: string; column?: string; message?: string };
+  };
+
+  if (err?.cause?.code !== "42703") {
+    return false;
+  }
+
+  const details = `${err?.cause?.column ?? ""} ${err?.cause?.message ?? ""} ${err?.message ?? ""}`.toLowerCase();
+  return (
+    details.includes("is_homepage_featured") ||
+    details.includes("homepage_feature_order")
+  );
+}
+
 export async function POST(req: NextRequest) {
   try {
     if (!db) {
@@ -205,10 +222,6 @@ export async function GET(req: NextRequest) {
       conditions.push(lte(internships.stipend, maxStipend));
     }
 
-    if (featuredOnly) {
-      conditions.push(eq(internships.isHomepageFeatured, true));
-    }
-
     if (ids.length > 0) {
       conditions.push(inArray(internships.id, ids));
     }
@@ -230,86 +243,135 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const filters =
-      conditions.length === 1 ? conditions[0] : and(...conditions);
+    const runQuery = async (withFeaturedColumns: boolean) => {
+      const localConditions = [...conditions];
+      if (featuredOnly && withFeaturedColumns) {
+        localConditions.push(eq(internships.isHomepageFeatured, true));
+      }
 
-    const query = db
-      .select({
-        id: internships.id,
-        title: internships.title,
-        description: internships.description,
-        type: internships.type,
-        timing: internships.timing,
-        link: internships.link,
-        tags: internships.tags,
-        stipend: internships.stipend,
-        duration: internships.duration,
-        experience: internships.experience,
-        location: internships.location,
-        deadline: internships.deadline,
-        hiringOrganization: internships.hiringOrganization,
-        hiringManager: internships.hiringManager,
-        createdAt: internships.createdAt,
-        updatedAt: internships.updatedAt,
-        isVerified: internships.isVerified,
-        isFlagged: internships.isFlagged,
-        isActive: internships.isActive,
-        isHomepageFeatured: internships.isHomepageFeatured,
-        homepageFeatureOrder: internships.homepageFeatureOrder,
-        userId: internships.userId,
-        user: {
-          id: user.id,
-          name: user.name,
-          image: user.image,
-          role: user.role,
-        },
-      })
-      .from(internships)
-      .leftJoin(user, eq(internships.userId, user.id))
-      .where(filters)
-      .orderBy(
-        featuredOnly
-          ? asc(sql`coalesce(${internships.homepageFeatureOrder}, 2147483647)`)
-          : desc(internships.createdAt),
-        desc(internships.createdAt)
-      );
+      const filters =
+        localConditions.length === 1
+          ? localConditions[0]
+          : and(...localConditions);
 
-    const rows =
-      limit !== undefined
-        ? await query.limit(limit + 1).offset(offset)
-        : await query;
-    let allInternships = rows;
-    let pagination:
-      | {
-          limit: number;
-          offset: number;
-          total: number;
-          hasMore: boolean;
-        }
-      | undefined;
+      const query = db
+        .select({
+          id: internships.id,
+          title: internships.title,
+          description: internships.description,
+          type: internships.type,
+          timing: internships.timing,
+          link: internships.link,
+          tags: internships.tags,
+          stipend: internships.stipend,
+          duration: internships.duration,
+          experience: internships.experience,
+          location: internships.location,
+          deadline: internships.deadline,
+          hiringOrganization: internships.hiringOrganization,
+          hiringManager: internships.hiringManager,
+          createdAt: internships.createdAt,
+          updatedAt: internships.updatedAt,
+          isVerified: internships.isVerified,
+          isFlagged: internships.isFlagged,
+          isActive: internships.isActive,
+          ...(withFeaturedColumns
+            ? {
+                isHomepageFeatured: internships.isHomepageFeatured,
+                homepageFeatureOrder: internships.homepageFeatureOrder,
+              }
+            : {}),
+          userId: internships.userId,
+          user: {
+            id: user.id,
+            name: user.name,
+            image: user.image,
+            role: user.role,
+          },
+        })
+        .from(internships)
+        .leftJoin(user, eq(internships.userId, user.id))
+        .where(filters)
+        .orderBy(
+          featuredOnly && withFeaturedColumns
+            ? asc(sql`coalesce(${internships.homepageFeatureOrder}, 2147483647)`)
+            : desc(internships.createdAt),
+          desc(internships.createdAt)
+        );
 
-    if (limit !== undefined) {
-      const hasMore = rows.length > limit;
-      allInternships = hasMore ? rows.slice(0, limit) : rows;
+      const rows =
+        limit !== undefined
+          ? await query.limit(limit + 1).offset(offset)
+          : await query;
 
-      const total =
-        (
-          await db.select({ total: count() }).from(internships).where(filters)
-        )[0]?.total ?? 0;
+      let allInternships = rows;
+      let pagination:
+        | {
+            limit: number;
+            offset: number;
+            total: number;
+            hasMore: boolean;
+          }
+        | undefined;
 
-      pagination = {
-        limit,
-        offset,
-        total,
-        hasMore,
+      if (limit !== undefined) {
+        const hasMore = rows.length > limit;
+        allInternships = hasMore ? rows.slice(0, limit) : rows;
+
+        const total =
+          (
+            await db
+              .select({ total: count() })
+              .from(internships)
+              .where(filters)
+          )[0]?.total ?? 0;
+
+        pagination = {
+          limit,
+          offset,
+          total,
+          hasMore,
+        };
+      }
+
+      return {
+        internships: withFeaturedColumns
+          ? allInternships
+          : allInternships.map((item) => ({
+              ...item,
+              isHomepageFeatured: false,
+              homepageFeatureOrder: null,
+            })),
+        pagination,
       };
+    };
+
+    let payload: {
+      internships: unknown[];
+      pagination:
+        | {
+            limit: number;
+            offset: number;
+            total: number;
+            hasMore: boolean;
+          }
+        | undefined;
+    };
+
+    try {
+      payload = await runQuery(true);
+    } catch (error) {
+      if (!isMissingHomepageFeatureColumnError(error)) {
+        throw error;
+      }
+      payload = await runQuery(false);
     }
 
     return NextResponse.json(
       {
         success: true,
-        internships: allInternships,
-        ...(pagination ? { pagination } : {}),
+        internships: payload.internships,
+        ...(payload.pagination ? { pagination: payload.pagination } : {}),
       },
       { status: 200 }
     );

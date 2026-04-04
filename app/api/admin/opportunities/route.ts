@@ -7,6 +7,23 @@ import { getCurrentUserOptional } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { eq, and, isNull, sql, desc } from "drizzle-orm";
 
+function isMissingHomepageFeatureColumnError(error: unknown): boolean {
+  const err = error as {
+    message?: string;
+    cause?: { code?: string; column?: string; message?: string };
+  };
+
+  if (err?.cause?.code !== "42703") {
+    return false;
+  }
+
+  const details = `${err?.cause?.column ?? ""} ${err?.cause?.message ?? ""} ${err?.message ?? ""}`.toLowerCase();
+  return (
+    details.includes("is_homepage_featured") ||
+    details.includes("homepage_feature_order")
+  );
+}
+
 export async function GET(req: NextRequest) {
   let activityStatus = 500;
   let activityError: unknown = null;
@@ -51,8 +68,7 @@ export async function GET(req: NextRequest) {
       ? isNull(opportunities.deletedAt)
       : and(eq(opportunities.isActive, false), isNull(opportunities.deletedAt));
 
-    const [totalResult, pendingOpportunities] = await Promise.all([
-      db.select({ total: count() }).from(opportunities).where(conditions),
+    const fetchOpportunities = async (withFeaturedColumns: boolean) =>
       db
         .select({
           id: opportunities.id,
@@ -75,8 +91,12 @@ export async function GET(req: NextRequest) {
           updatedAt: opportunities.updatedAt,
           isVerified: opportunities.isVerified,
           isActive: opportunities.isActive,
-          isHomepageFeatured: opportunities.isHomepageFeatured,
-          homepageFeatureOrder: opportunities.homepageFeatureOrder,
+          ...(withFeaturedColumns
+            ? {
+                isHomepageFeatured: opportunities.isHomepageFeatured,
+                homepageFeatureOrder: opportunities.homepageFeatureOrder,
+              }
+            : {}),
           upvoteCount: opportunities.upvoteCount,
           upvoterIds: opportunities.upvoterIds,
           userId: opportunities.userId,
@@ -92,8 +112,36 @@ export async function GET(req: NextRequest) {
         .where(conditions)
         .orderBy(desc(opportunities.createdAt))
         .limit(validLimit)
-        .offset(validOffset),
-    ]);
+        .offset(validOffset);
+
+    const totalPromise = db
+      .select({ total: count() })
+      .from(opportunities)
+      .where(conditions);
+
+    let totalResult;
+    let pendingOpportunities;
+    try {
+      [totalResult, pendingOpportunities] = await Promise.all([
+        totalPromise,
+        fetchOpportunities(true),
+      ]);
+    } catch (error) {
+      if (!isMissingHomepageFeatureColumnError(error)) {
+        throw error;
+      }
+
+      [totalResult, pendingOpportunities] = await Promise.all([
+        totalPromise,
+        fetchOpportunities(false),
+      ]);
+
+      pendingOpportunities = pendingOpportunities.map((item) => ({
+        ...item,
+        isHomepageFeatured: false,
+        homepageFeatureOrder: null,
+      }));
+    }
 
     const totalCount = totalResult[0]?.total ?? 0;
     const hasMore = validOffset + pendingOpportunities.length < totalCount;

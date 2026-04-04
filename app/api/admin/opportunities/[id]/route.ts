@@ -8,7 +8,9 @@ import { and, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 
 const updateOpportunitySchema = z.object({
-  action: z.enum(["approve", "reject", "toggle"]),
+  action: z.enum(["approve", "reject", "toggle", "set_featured"]),
+  isHomepageFeatured: z.boolean().optional(),
+  homepageFeatureOrder: z.number().int().min(1).nullable().optional(),
 });
 
 export async function GET(
@@ -63,6 +65,8 @@ export async function GET(
         updatedAt: opportunities.updatedAt,
         isVerified: opportunities.isVerified,
         isActive: opportunities.isActive,
+        isHomepageFeatured: opportunities.isHomepageFeatured,
+        homepageFeatureOrder: opportunities.homepageFeatureOrder,
         upvoteCount: opportunities.upvoteCount,
         upvoterIds: opportunities.upvoterIds,
         userId: opportunities.userId,
@@ -142,7 +146,19 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const validatedData = updateOpportunitySchema.parse(body);
+    const parsedBody =
+      body && typeof body === "object" && !Array.isArray(body)
+        ? (body as Record<string, unknown>)
+        : {};
+    const validatedData = updateOpportunitySchema.parse(parsedBody);
+    const hasIsHomepageFeatured = Object.prototype.hasOwnProperty.call(
+      parsedBody,
+      "isHomepageFeatured"
+    );
+    const hasHomepageFeatureOrder = Object.prototype.hasOwnProperty.call(
+      parsedBody,
+      "homepageFeatureOrder"
+    );
 
     const existingOpportunity = await db
       .select()
@@ -172,6 +188,17 @@ export async function PATCH(
       updateData.isActive = false;
     } else if (validatedData.action === "toggle") {
       updateData.isActive = !existingOpportunity[0].isActive;
+    } else if (validatedData.action === "set_featured") {
+      if (hasIsHomepageFeatured) {
+        updateData.isHomepageFeatured = validatedData.isHomepageFeatured;
+      }
+
+      if (hasHomepageFeatureOrder) {
+        updateData.homepageFeatureOrder = validatedData.homepageFeatureOrder;
+      } else if (hasIsHomepageFeatured && validatedData.isHomepageFeatured) {
+        updateData.homepageFeatureOrder =
+          existingOpportunity[0].homepageFeatureOrder ?? null;
+      }
     }
 
     const updatedOpportunity = await db
@@ -198,7 +225,11 @@ export async function PATCH(
         message:
           validatedData.action === "approve"
             ? "Opportunity approved successfully"
-            : "Opportunity rejected successfully",
+            : validatedData.action === "reject"
+              ? "Opportunity rejected successfully"
+              : validatedData.action === "set_featured"
+                ? "Homepage featured settings updated"
+                : "Opportunity updated successfully",
         opportunity: updatedOpportunity[0],
       },
       { status: 200 }

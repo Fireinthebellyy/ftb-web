@@ -24,6 +24,14 @@ const internshipUpdateSchema = z.object({
   duration: z.string().optional().nullable(),
   isVerified: z.boolean().optional(),
   isActive: z.boolean().optional(),
+  isHomepageFeatured: z.boolean().optional(),
+  homepageFeatureOrder: z.number().int().min(1).nullable().optional(),
+});
+
+const internshipAdminPatchSchema = z.object({
+  action: z.enum(["toggle_visibility", "set_featured"]).optional(),
+  isHomepageFeatured: z.boolean().optional(),
+  homepageFeatureOrder: z.number().int().min(1).nullable().optional(),
 });
 
 export async function GET(
@@ -64,6 +72,8 @@ export async function GET(
         isVerified: internships.isVerified,
         isFlagged: internships.isFlagged,
         isActive: internships.isActive,
+        isHomepageFeatured: internships.isHomepageFeatured,
+        homepageFeatureOrder: internships.homepageFeatureOrder,
         userId: internships.userId,
         user: {
           id: user.id,
@@ -98,7 +108,7 @@ export async function GET(
 }
 
 export async function PATCH(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -136,12 +146,70 @@ export async function PATCH(
 
     const internship = existingInternship[0];
 
+    const rawBody = await req.text();
+    const trimmedBody = rawBody.trim();
+
+    let parsedBody: Record<string, unknown> = {};
+    if (trimmedBody.length > 0) {
+      let body: unknown;
+      try {
+        body = JSON.parse(trimmedBody);
+      } catch {
+        return NextResponse.json(
+          { error: "Malformed request body" },
+          { status: 400 }
+        );
+      }
+
+      if (!body || typeof body !== "object" || Array.isArray(body)) {
+        return NextResponse.json(
+          { error: "Malformed request body" },
+          { status: 400 }
+        );
+      }
+
+      parsedBody = body as Record<string, unknown>;
+    }
+
+    const hasIsHomepageFeatured = Object.prototype.hasOwnProperty.call(
+      parsedBody,
+      "isHomepageFeatured"
+    );
+    const hasHomepageFeatureOrder = Object.prototype.hasOwnProperty.call(
+      parsedBody,
+      "homepageFeatureOrder"
+    );
+
+    const parsed = internshipAdminPatchSchema.safeParse(parsedBody);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.errors }, { status: 400 });
+    }
+
+    const { action, isHomepageFeatured, homepageFeatureOrder } = parsed.data;
+    const shouldUpdateFeaturedFields =
+      action === "set_featured" ||
+      hasIsHomepageFeatured ||
+      hasHomepageFeatureOrder;
+
+    const updateData: Partial<typeof internships.$inferInsert> = {
+      updatedAt: new Date(),
+    };
+
+    if (shouldUpdateFeaturedFields) {
+      const nextFeatured = isHomepageFeatured ?? internship.isHomepageFeatured ?? false;
+      updateData.isHomepageFeatured = nextFeatured;
+      updateData.homepageFeatureOrder = nextFeatured
+        ? (hasHomepageFeatureOrder
+            ? homepageFeatureOrder
+            : (internship.homepageFeatureOrder ?? null))
+        : null;
+    } else {
+      updateData.isActive = !internship.isActive;
+    }
+
     const updatedInternship = await db
       .update(internships)
-      .set({
-        isActive: !internship.isActive, // toggle hide/unhide
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(internships.id, id))
       .returning();
 
@@ -267,6 +335,18 @@ export async function PUT(
     }
     if (validatedData.isActive !== undefined && isModerator) {
       updateData.isActive = validatedData.isActive;
+    }
+    if (validatedData.isHomepageFeatured !== undefined && isModerator) {
+      updateData.isHomepageFeatured = validatedData.isHomepageFeatured;
+      if (!validatedData.isHomepageFeatured) {
+        updateData.homepageFeatureOrder = null;
+      }
+    }
+    if (validatedData.homepageFeatureOrder !== undefined && isModerator) {
+      updateData.homepageFeatureOrder = validatedData.homepageFeatureOrder;
+      if (validatedData.homepageFeatureOrder !== null) {
+        updateData.isHomepageFeatured = true;
+      }
     }
 
     const updatedInternship = await db

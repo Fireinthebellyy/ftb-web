@@ -197,8 +197,6 @@ export function useOpportunitySubmit({
             : "Opportunity submitted successfully!"
       );
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
-      queryClient.invalidateQueries({ queryKey: ["opportunities-home"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
       onOpportunityCreated();
     } catch (err: unknown) {
       if (err instanceof Error) {

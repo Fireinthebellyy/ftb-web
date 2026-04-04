@@ -75,8 +75,6 @@ export async function GET(req: NextRequest) {
           updatedAt: opportunities.updatedAt,
           isVerified: opportunities.isVerified,
           isActive: opportunities.isActive,
-          isHomepageFeatured: opportunities.isHomepageFeatured,
-          homepageFeatureOrder: opportunities.homepageFeatureOrder,
           upvoteCount: opportunities.upvoteCount,
           upvoterIds: opportunities.upvoterIds,
           userId: opportunities.userId,

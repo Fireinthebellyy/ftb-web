@@ -32,12 +32,15 @@ export default function HomeOpportunitiesSection({
       const response = await axios.get<OpportunitiesHomeResponse>(
         "/api/opportunities/public",
         {
-          params: { limit, offset },
+          params: { limit, offset, featured: "preferred" },
         }
       );
+
       return response.data;
     },
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
   });
 
   const opportunities = data?.opportunities ?? [];

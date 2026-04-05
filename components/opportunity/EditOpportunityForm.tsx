@@ -11,7 +11,6 @@ import {
   deleteStorageObjectClient,
   uploadFileViaSignedUrl,
 } from "@/lib/storage/client";
-import { normalizeTags } from "./utils/normalizeTags";
 import { TitleField } from "./fields/TitleField";
 import { DescriptionField } from "./fields/DescriptionField";
 import { TagsField } from "./fields/TagsField";
@@ -29,6 +28,7 @@ import { FileItem } from "@/types/interfaces";
 import { useQueryClient } from "@tanstack/react-query";
 import { opportunities } from "@/lib/schema";
 import { InferSelectModel } from "drizzle-orm";
+import { normalizeTags } from "./utils/normalizeTags";
 
 type Opportunity = InferSelectModel<typeof opportunities> & { tags?: string[] };
 

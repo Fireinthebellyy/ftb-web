@@ -2,9 +2,9 @@
 
 import { useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import dynamic from "next/dynamic";
+import { Inter, Outfit, Satisfy } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
-import { Inter, Outfit, Satisfy } from "next/font/google";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
@@ -378,7 +378,15 @@ function ToolkitCarousel() {
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && card.id) {
+                const isEnter = e.key === "Enter";
+                const isSpace =
+                  e.key === " " || e.key === "Space" || e.key === "Spacebar";
+
+                if (isSpace) {
+                  e.preventDefault();
+                }
+
+                if ((isEnter || isSpace) && card.id) {
                   router.push(`/toolkit/${card.id}`);
                 }
               }}

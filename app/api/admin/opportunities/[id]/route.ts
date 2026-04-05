@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { isMissingHomepageFeatureColumnError } from "@/lib/db-errors";
 import { logAdminActivity } from "@/lib/admin-activity";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { opportunities, tags, user } from "@/lib/schema";
@@ -90,7 +91,11 @@ export async function GET(
     let row;
     try {
       row = await fetchRow(true);
-    } catch {
+    } catch (e) {
+      if (!isMissingHomepageFeatureColumnError(e)) {
+        throw e;
+      }
+
       row = (await fetchRow(false)).map((item) => ({
         ...item,
         isHomepageFeatured: undefined,

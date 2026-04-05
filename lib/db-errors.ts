@@ -1,10 +1,13 @@
 export function isMissingHomepageFeatureColumnError(error: unknown): boolean {
   const err = error as {
+    code?: string;
     message?: string;
     cause?: { code?: string; column?: string; message?: string };
   };
 
-  if (err?.cause?.code !== "42703") {
+  const code = err?.code || err?.cause?.code;
+
+  if (code !== "42703") {
     return false;
   }
 

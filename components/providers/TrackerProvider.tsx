@@ -125,7 +125,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
   }, [trackedItems]);
 
   // Ref for latest trackedItems inside effects without re-triggering them
-  const trackedItemsRef = useRef(trackedItems);
+  const trackedItemsRef = useRef<TrackerItem[]>(trackedItems);
   trackedItemsRef.current = trackedItems;
 
   // Initial load from API with local cache fallback on failures.
@@ -138,8 +138,8 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
         if (response.ok) {
           const data = await response.json();
 
-          setTrackedItems(data.items || []);
-          setEvents(data.events || []);
+          setTrackedItems(Array.isArray(data.items) ? data.items : []);
+          setEvents(Array.isArray(data.events) ? data.events : []);
           localStorage.removeItem("tracker_items");
           localStorage.removeItem("tracker_events");
           return;
@@ -149,15 +149,21 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
         const cachedItems = localStorage.getItem("tracker_items");
         const cachedEvents = localStorage.getItem("tracker_events");
 
-        setTrackedItems(cachedItems ? JSON.parse(cachedItems) : []);
-        setEvents(cachedEvents ? JSON.parse(cachedEvents) : []);
+        const parsedItems = cachedItems ? JSON.parse(cachedItems) : [];
+        const parsedEvents = cachedEvents ? JSON.parse(cachedEvents) : [];
+
+        setTrackedItems(Array.isArray(parsedItems) ? parsedItems : []);
+        setEvents(Array.isArray(parsedEvents) ? parsedEvents : []);
       } catch (error) {
         console.error("Failed to initialize tracker:", error);
         try {
           const cachedItems = localStorage.getItem("tracker_items");
           const cachedEvents = localStorage.getItem("tracker_events");
-          setTrackedItems(cachedItems ? JSON.parse(cachedItems) : []);
-          setEvents(cachedEvents ? JSON.parse(cachedEvents) : []);
+          const parsedItems = cachedItems ? JSON.parse(cachedItems) : [];
+          const parsedEvents = cachedEvents ? JSON.parse(cachedEvents) : [];
+
+          setTrackedItems(Array.isArray(parsedItems) ? parsedItems : []);
+          setEvents(Array.isArray(parsedEvents) ? parsedEvents : []);
         } catch {
           setTrackedItems([]);
           setEvents([]);

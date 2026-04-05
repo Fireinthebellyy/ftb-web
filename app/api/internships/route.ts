@@ -234,7 +234,7 @@ export async function GET(req: NextRequest) {
       onlyFeatured: boolean = featuredOnly
     ) => {
       const localConditions = [...conditions];
-      if (onlyFeatured) {
+      if (onlyFeatured && withFeaturedColumns) {
         localConditions.push(eq(internships.isHomepageFeatured, true));
       }
 

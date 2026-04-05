@@ -252,7 +252,9 @@ function useDragMarquee() {
     isDown.current = false;
     if (el && pointerId !== undefined) {
       try {
-        el.releasePointerCapture(pointerId);
+        if (el.hasPointerCapture(pointerId)) {
+          el.releasePointerCapture(pointerId);
+        }
       } catch {}
     }
     setPaused(false);

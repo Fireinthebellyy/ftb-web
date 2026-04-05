@@ -121,85 +121,33 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
   const trackedItemsRef = useRef(trackedItems);
   trackedItemsRef.current = trackedItems;
 
-  // Initial Load from API with LocalStorage Fallback/Sync
+  // Initial load from API only; backend is the source of truth.
   useEffect(() => {
     const initializeTracker = async () => {
       try {
+        localStorage.removeItem("tracker_items");
+        localStorage.removeItem("tracker_events");
+
         // 1. Fetch from API
         const response = await fetch("/api/tracker");
 
         if (response.ok) {
           const data = await response.json();
 
-          // 2. Check if API has data
-          if (data.items && data.items.length > 0) {
-            setTrackedItems(data.items);
-            setEvents(data.events || []);
-            setIsLoaded(true);
-            return; // API is source of truth
-          }
+          setTrackedItems(data.items || []);
+          setEvents(data.events || []);
+          return;
         }
 
-        // 3. Fallback: If API empty (or failed), load from LocalStorage
-        const savedItems = localStorage.getItem("tracker_items");
-        const savedEvents = localStorage.getItem("tracker_events");
-
-        let localItems: TrackerItem[] = [];
-        let localEvents: TrackerEvent[] = [];
-
-        if (savedItems) {
-          try {
-            localItems = JSON.parse(savedItems);
-          } catch (e) {
-            console.error("Failed to parse local tracker_items", e);
-          }
-        }
-
-        if (savedEvents) {
-          try {
-            localEvents = JSON.parse(savedEvents);
-          } catch (e) {
-            console.error("Failed to parse local tracker_events", e);
-          }
-        }
-
-        // 4. MIGRATION: If we have local data but API was empty, sync to backend
-        if ((localItems.length > 0 || localEvents.length > 0) && response.ok) {
-          console.log("Migrating local data to backend...");
-
-          if (localItems.length > 0) {
-            await fetch("/api/tracker", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ action: "sync_items", data: localItems }),
-            });
-          }
-
-          if (localEvents.length > 0) {
-            await fetch("/api/tracker", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                action: "sync_events",
-                data: localEvents,
-              }),
-            });
-          }
-
-          // After sync, setting state from local is fine as it matches backend now
-        }
-
-        setTrackedItems(localItems);
-        setEvents(localEvents);
+        console.warn(
+          "Tracker API request failed; showing empty state instead of local cache."
+        );
+        setTrackedItems([]);
+        setEvents([]);
       } catch (error) {
         console.error("Failed to initialize tracker:", error);
-
-        try {
-          const savedItems = localStorage.getItem("tracker_items");
-          if (savedItems) setTrackedItems(JSON.parse(savedItems));
-        } catch (e) {
-          console.error("Failed to recover from local storage", e);
-        }
+        setTrackedItems([]);
+        setEvents([]);
       } finally {
         setIsLoaded(true);
       }
@@ -268,17 +216,6 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
       return false;
     }
   };
-
-  // Persistence (Keep LocalStorage as backup/cache)
-  useEffect(() => {
-    if (isLoaded)
-      localStorage.setItem("tracker_items", JSON.stringify(trackedItems));
-  }, [trackedItems, isLoaded]);
-
-  useEffect(() => {
-    if (isLoaded)
-      localStorage.setItem("tracker_events", JSON.stringify(events));
-  }, [events, isLoaded]);
 
   // Hydrate Data from API
   useEffect(() => {

@@ -115,6 +115,7 @@ describe("useOpportunitySubmit", () => {
     const mockFile = new File(["test"], "test.png", { type: "image/png" });
     const files = [
       {
+        id: "file-1",
         file: mockFile,
         progress: 0,
         uploading: false,
@@ -170,6 +171,7 @@ describe("useOpportunitySubmit", () => {
     const mockFile = new File(["test"], "test.png", { type: "image/png" });
     const files = [
       {
+        id: "file-2",
         file: mockFile,
         progress: 0,
         uploading: false,

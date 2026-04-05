@@ -222,11 +222,31 @@ export async function PATCH(
       }
     }
 
-    const updatedOpportunity = await db
-      .update(opportunities)
-      .set(updateData)
-      .where(eq(opportunities.id, opportunityId))
-      .returning();
+    let updatedOpportunity;
+    try {
+      updatedOpportunity = await db
+        .update(opportunities)
+        .set(updateData)
+        .where(eq(opportunities.id, opportunityId))
+        .returning();
+    } catch (e) {
+      // If featured columns don't exist and we're trying to set featured, clear those from updateData
+      if (
+        validatedData.action === "set_featured" &&
+        isMissingHomepageFeatureColumnError(e)
+      ) {
+        delete updateData.isHomepageFeatured;
+        delete updateData.homepageFeatureOrder;
+
+        updatedOpportunity = await db
+          .update(opportunities)
+          .set(updateData)
+          .where(eq(opportunities.id, opportunityId))
+          .returning();
+      } else {
+        throw e;
+      }
+    }
 
     if (updatedOpportunity.length === 0) {
       activityStatus = 404;

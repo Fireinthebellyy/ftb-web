@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { isMissingHomepageFeatureColumnError } from "@/lib/db-errors";
 import { internships, user } from "@/lib/schema";
 import { and, eq, isNull } from "drizzle-orm";
 import { getCurrentUser } from "@/server/users";
@@ -51,41 +52,61 @@ export async function GET(
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
-    const internship = await db
-      .select({
-        id: internships.id,
-        title: internships.title,
-        description: internships.description,
-        type: internships.type,
-        timing: internships.timing,
-        link: internships.link,
-        tags: internships.tags,
-        location: internships.location,
-        deadline: internships.deadline,
-        stipend: internships.stipend,
-        hiringOrganization: internships.hiringOrganization,
-        hiringManager: internships.hiringManager,
-        experience: internships.experience,
-        duration: internships.duration,
-        createdAt: internships.createdAt,
-        updatedAt: internships.updatedAt,
-        isVerified: internships.isVerified,
-        isFlagged: internships.isFlagged,
-        isActive: internships.isActive,
-        isHomepageFeatured: internships.isHomepageFeatured,
-        homepageFeatureOrder: internships.homepageFeatureOrder,
-        userId: internships.userId,
-        user: {
-          id: user.id,
-          name: user.name,
-          image: user.image,
-          role: user.role,
-        },
-      })
-      .from(internships)
-      .leftJoin(user, eq(internships.userId, user.id))
-      .where(and(eq(internships.id, id), isNull(internships.deletedAt)))
-      .limit(1);
+    const fetchInternship = async (withFeaturedColumns: boolean) =>
+      db
+        .select({
+          id: internships.id,
+          title: internships.title,
+          description: internships.description,
+          type: internships.type,
+          timing: internships.timing,
+          link: internships.link,
+          tags: internships.tags,
+          location: internships.location,
+          deadline: internships.deadline,
+          stipend: internships.stipend,
+          hiringOrganization: internships.hiringOrganization,
+          hiringManager: internships.hiringManager,
+          experience: internships.experience,
+          duration: internships.duration,
+          createdAt: internships.createdAt,
+          updatedAt: internships.updatedAt,
+          isVerified: internships.isVerified,
+          isFlagged: internships.isFlagged,
+          isActive: internships.isActive,
+          ...(withFeaturedColumns
+            ? {
+                isHomepageFeatured: internships.isHomepageFeatured,
+                homepageFeatureOrder: internships.homepageFeatureOrder,
+              }
+            : {}),
+          userId: internships.userId,
+          user: {
+            id: user.id,
+            name: user.name,
+            image: user.image,
+            role: user.role,
+          },
+        })
+        .from(internships)
+        .leftJoin(user, eq(internships.userId, user.id))
+        .where(and(eq(internships.id, id), isNull(internships.deletedAt)))
+        .limit(1);
+
+    let internship;
+    try {
+      internship = await fetchInternship(true);
+    } catch (e) {
+      if (!isMissingHomepageFeatureColumnError(e)) {
+        throw e;
+      }
+
+      internship = (await fetchInternship(false)).map((item) => ({
+        ...item,
+        isHomepageFeatured: undefined,
+        homepageFeatureOrder: undefined,
+      }));
+    }
 
     if (internship.length === 0) {
       return NextResponse.json(
@@ -207,11 +228,31 @@ export async function PATCH(
       updateData.isActive = !internship.isActive;
     }
 
-    const updatedInternship = await db
-      .update(internships)
-      .set(updateData)
-      .where(eq(internships.id, id))
-      .returning();
+    let updatedInternship;
+    try {
+      updatedInternship = await db
+        .update(internships)
+        .set(updateData)
+        .where(eq(internships.id, id))
+        .returning();
+    } catch (e) {
+      // If featured columns don't exist and we're setting featured, remove them and retry
+      if (
+        shouldUpdateFeaturedFields &&
+        isMissingHomepageFeatureColumnError(e)
+      ) {
+        delete updateData.isHomepageFeatured;
+        delete updateData.homepageFeatureOrder;
+
+        updatedInternship = await db
+          .update(internships)
+          .set(updateData)
+          .where(eq(internships.id, id))
+          .returning();
+      } else {
+        throw e;
+      }
+    }
 
     return NextResponse.json({
       success: true,

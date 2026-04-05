@@ -559,6 +559,7 @@ export const trackerItems = pgTable(
     snapshotTitle: text("snapshot_title"),
     snapshotCompany: text("snapshot_company"),
     snapshotLogo: text("snapshot_logo"),
+    snapshotDeadline: text("snapshot_deadline"), // ISO date string, used to skip hydration for expired items
   },
   (table) => [
     uniqueIndex("tracker_items_user_kind_opp_unique").on(

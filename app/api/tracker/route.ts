@@ -27,6 +27,7 @@ const trackerItemSchema = z.object({
   logo: z.string().optional().nullable(),
   poster: z.string().optional().nullable(),
   images: z.array(z.string()).optional(),
+  deadline: z.string().optional().nullable(),
 });
 
 const trackerEventSchema = z.object({
@@ -130,6 +131,7 @@ export async function GET(req: NextRequest) {
         title: item.snapshotTitle ?? undefined,
         company: item.snapshotCompany ?? undefined,
         logo: item.snapshotLogo ?? undefined,
+        deadline: item.snapshotDeadline ?? undefined,
       };
     });
 
@@ -245,6 +247,7 @@ export async function POST(req: NextRequest) {
             validated.poster?.trim() ||
             validated.images?.[0]?.trim() ||
             undefined,
+          snapshotDeadline: validated.deadline?.trim() || undefined,
         })
         .onConflictDoUpdate({
           target: [trackerItems.userId, trackerItems.kind, trackerItems.oppId],
@@ -257,6 +260,7 @@ export async function POST(req: NextRequest) {
               validated.poster?.trim() ||
               validated.images?.[0]?.trim() ||
               undefined,
+            snapshotDeadline: validated.deadline?.trim() || undefined,
             updatedAt: new Date(),
           },
         });
@@ -320,6 +324,7 @@ export async function POST(req: NextRequest) {
               parsed.data.poster?.trim() ||
               parsed.data.images?.[0]?.trim() ||
               undefined,
+            snapshotDeadline: parsed.data.deadline?.trim() || undefined,
           });
         }
       }
@@ -416,13 +421,17 @@ export async function PATCH(req: NextRequest) {
 
     if (action === "update_status") {
       // Safe allowlist for extraData updates to prevent mass assignment
-      const allowedExtraKeys = ["notes", "result", "manualData", "isManual"]; // Add specific keys as needed
+      const allowedExtraKeys = ["notes", "result", "manualData", "isManual", "deadline"]; // Add specific keys as needed
       const sanitizedExtraData: Record<string, unknown> = {};
 
       if (data.extraData) {
         for (const key of allowedExtraKeys) {
           if (key in data.extraData) {
-            sanitizedExtraData[key] = data.extraData[key];
+            if (key === "deadline") {
+              sanitizedExtraData.snapshotDeadline = data.extraData[key];
+            } else {
+              sanitizedExtraData[key] = data.extraData[key];
+            }
           }
         }
       }

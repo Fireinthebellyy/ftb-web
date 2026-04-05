@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import InternshipList from "@/components/InternshipList";
 
 export default function InternshipsPage() {
-  return <InternshipList />;
+  return (
+    <Suspense fallback={null}>
+      <InternshipList />
+    </Suspense>
+  );
 }

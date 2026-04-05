@@ -5,6 +5,8 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useMemo,
+  useRef,
   ReactNode,
 } from "react";
 // router and toasts removed from provider; UI handles notifications
@@ -106,6 +108,18 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const pendingAdds = React.useRef<Set<string>>(new Set());
+
+  // Stable key: only changes when the set of tracked IDs changes (not on status updates)
+  const trackedIdKey = useMemo(() => {
+    return trackedItems
+      .map((i) => `${i.kind || "internship"}:${i.oppId}`)
+      .sort()
+      .join(",");
+  }, [trackedItems]);
+
+  // Ref for latest trackedItems inside effects without re-triggering them
+  const trackedItemsRef = useRef(trackedItems);
+  trackedItemsRef.current = trackedItems;
 
   // Initial Load from API with LocalStorage Fallback/Sync
   useEffect(() => {
@@ -269,7 +283,8 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
   // Hydrate Data from API
   useEffect(() => {
     const fetchDetails = async () => {
-      if (!isLoaded || trackedItems.length === 0) {
+      const currentItems = trackedItemsRef.current;
+      if (!isLoaded || currentItems.length === 0) {
         setHydratedItems([]);
         return;
       }
@@ -279,14 +294,34 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
 
       setIsFetching(true);
       try {
-        // Separate IDs by kind
-        const internshipIds = trackedItems
-          .filter((i) => (i.kind || "internship") === "internship")
+        const isExpired = (deadline?: string) => {
+          if (!deadline) return false;
+          try {
+            const d = new Date(deadline);
+            if (isNaN(d.getTime())) return false;
+            const today = new Date();
+            // Using a 3-day grace period to ensure we catch last-minute changes but skip truly old ones
+            const cutoff = new Date(today.getTime() - 3 * 24 * 60 * 60 * 1000);
+            return d < cutoff;
+          } catch {
+            return false;
+          }
+        };
+
+        // Separate IDs by kind, skipping items already known to be expired
+        const internshipIds = currentItems
+          .filter(
+            (i) =>
+              (i.kind || "internship") === "internship" && !isExpired(i.deadline)
+          )
           .map((i) => i.oppId as string);
 
-        const opportunityIds = trackedItems
+        const opportunityIds = currentItems
           .filter(
-            (i) => i.kind === "opportunity" && typeof i.oppId === "string"
+            (i) =>
+              i.kind === "opportunity" &&
+              typeof i.oppId === "string" &&
+              !isExpired(i.deadline)
           )
           .map((i) => i.oppId as string);
 
@@ -338,20 +373,20 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
         };
 
         // Merge Data
-        const merged = trackedItems.map((item) => {
+        const merged = currentItems.map((item) => {
           let apiData: Partial<TrackerItem> = {};
 
           if ((item.kind || "internship") === "internship") {
             const fetched = internshipsMap.get(item.oppId as string);
             if (fetched) {
               apiData = {
+                ...fetched,
                 title: fetched.title,
                 company: fetched.hiringOrganization,
                 location: fetched.location,
                 type: fetched.type,
                 deadline: fetched.deadline,
-                logo: undefined, // Internship uses 'poster' (was removed)
-                ...fetched,
+                logo: undefined,
               };
             }
           } else if (item.kind === "opportunity") {
@@ -386,8 +421,15 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
                   : "Archived internship"),
               company: snapshotCompany || "Source unavailable",
               logo: snapshotLogo || undefined,
+              deadline: item.deadline, // Use from state
               isArchived: true,
             };
+          }
+
+          // Backfill snapshotDeadline if missing or different in DB record
+          if (apiData.deadline && apiData.deadline !== item.deadline) {
+            // Background sync (fire and forget)
+            syncStatusToBackend(item.oppId, item.status, { deadline: apiData.deadline }, item.kind);
           }
 
           return {
@@ -403,7 +445,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
         setHydratedItems(merged);
       } catch (error) {
         console.error("Failed to hydrate tracker items", error);
-        setHydratedItems(trackedItems);
+        setHydratedItems(trackedItemsRef.current);
       } finally {
         setIsFetching(false);
       }
@@ -411,7 +453,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
 
     const timeout = setTimeout(fetchDetails, 100);
     return () => clearTimeout(timeout);
-  }, [trackedItems, isLoaded]);
+  }, [trackedIdKey, isLoaded]);
 
   const addEvent = (event: Omit<TrackerEvent, "id">) => {
     const optimisticId = Date.now().toString(); // Use string ID
@@ -586,10 +628,44 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     return item ? item.status : null;
   };
 
+  // Compute final items: hydrated data overlaid with latest local status
+  const contextItems = useMemo(() => {
+    if (hydratedItems.length === 0) return trackedItems;
+
+    const latestMap = new Map(
+      trackedItems.map((t) => [getTrackerKey(t.oppId, t.kind), t])
+    );
+    const hydratedKeys = new Set(
+      hydratedItems.map((h) => getTrackerKey(h.oppId, h.kind))
+    );
+
+    // Overlay latest local status/notes onto hydrated items
+    const merged = hydratedItems.map((h) => {
+      const key = getTrackerKey(h.oppId, h.kind);
+      const latest = latestMap.get(key);
+      if (!latest) return h;
+      return {
+        ...h,
+        status: latest.status,
+        notes: latest.notes,
+        appliedAt: latest.appliedAt,
+        result: latest.result,
+        updatedAt: latest.updatedAt,
+      };
+    });
+
+    // Include newly-added items not yet in hydratedItems
+    const newItems = trackedItems.filter(
+      (t) => !hydratedKeys.has(getTrackerKey(t.oppId, t.kind))
+    );
+
+    return [...merged, ...newItems];
+  }, [hydratedItems, trackedItems]);
+
   return (
     <TrackerContext.Provider
       value={{
-        items: hydratedItems.length > 0 ? hydratedItems : trackedItems,
+        items: contextItems,
         events,
         addToTracker,
         removeFromTracker,

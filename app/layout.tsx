@@ -54,8 +54,12 @@ export default function RootLayout({
                   <main className="grow pt-16 pb-20 md:pb-0">{children}</main>
                   <BottomNav />
                   <Footer />
-                  <ConditionalWidgets />
-                  <PostOnboardingSurveyWidget />
+                  <Suspense fallback={null}>
+                    <ConditionalWidgets />
+                  </Suspense>
+                  <Suspense fallback={null}>
+                    <PostOnboardingSurveyWidget />
+                  </Suspense>
                 </TrackerProvider>
               </CSPostHogProvider>
             </ProgressProvider>

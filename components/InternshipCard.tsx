@@ -104,17 +104,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
         const removed = await removeFromTracker(id, "internship");
         if (removed) toast.success("Deleted from Tracker");
       } else {
-        const added = await addToTracker(
-          {
-            id,
-            title,
-            company: hiringOrganization,
-            kind: "internship",
-            deadline,
-          },
-          "Not Applied",
-          "internship"
-        );
+        const added = await addToTracker(id, "Not Applied", "internship");
         if (added) {
           toast.success("Saved to Tracker");
         } else {

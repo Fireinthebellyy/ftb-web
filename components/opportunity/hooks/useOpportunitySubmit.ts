@@ -10,7 +10,6 @@ import {
 } from "@/lib/storage/client";
 import { FileItem, Opportunity } from "@/types/interfaces";
 import { FormData } from "../schema";
-import { normalizeTags } from "../utils/normalizeTags";
 
 interface UseOpportunitySubmitProps {
   opportunity?: Opportunity;
@@ -142,7 +141,11 @@ export function useOpportunitySubmit({
         ...restData,
         startDate: dateRange?.from?.toISOString(),
         endDate: dateRange?.to?.toISOString(),
-        tags: normalizeTags(data.tags),
+        tags:
+          data.tags
+            ?.split("|")
+            .map((t) => t.trim())
+            .filter(Boolean) || [],
         images: opportunity?.id
           ? finalImages
           : imageResult.ids.length > 0
@@ -194,8 +197,6 @@ export function useOpportunitySubmit({
             : "Opportunity submitted successfully!"
       );
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
-      queryClient.invalidateQueries({ queryKey: ["opportunities-home"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
       onOpportunityCreated();
     } catch (err: unknown) {
       if (err instanceof Error) {

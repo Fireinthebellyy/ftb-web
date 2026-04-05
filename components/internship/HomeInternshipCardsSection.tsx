@@ -95,15 +95,12 @@ export default function HomeInternshipCardsSection({
       const response = await axios.get<{ internships: Internship[] }>(
         "/api/internships",
         {
-          params: { limit, offset, preferred: "featured" },
+          params: { limit, offset },
         }
       );
-
       return response.data;
     },
-    staleTime: 1000 * 60,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
   });
 
   const internships = data?.internships ?? [];

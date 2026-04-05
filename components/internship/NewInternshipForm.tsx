@@ -164,9 +164,6 @@ export default function NewInternshipForm({
       queryClient.invalidateQueries({
         queryKey: ["admin-internship-management"],
       });
-      queryClient.invalidateQueries({
-        queryKey: ["internships-home"],
-      });
       onInternshipCreated();
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {

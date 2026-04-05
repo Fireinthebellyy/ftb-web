@@ -28,7 +28,6 @@ import { FileItem } from "@/types/interfaces";
 import { useQueryClient } from "@tanstack/react-query";
 import { opportunities } from "@/lib/schema";
 import { InferSelectModel } from "drizzle-orm";
-import { normalizeTags } from "./utils/normalizeTags";
 
 type Opportunity = InferSelectModel<typeof opportunities> & { tags?: string[] };
 
@@ -211,7 +210,11 @@ export default function EditOpportunityForm({
         ...data,
         startDate: data.dateRange?.from?.toISOString(),
         endDate: data.dateRange?.to?.toISOString(),
-        tags: normalizeTags(data.tags),
+        tags:
+          data.tags
+            ?.split("|")
+            .map((t) => t.trim())
+            .filter(Boolean) || [],
         images: finalImages,
         attachments: finalAttachments,
       });
@@ -232,8 +235,6 @@ export default function EditOpportunityForm({
 
       toast.success("Opportunity updated successfully!");
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
-      queryClient.invalidateQueries({ queryKey: ["opportunities-home"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
       onOpportunityUpdated();
     } catch (err: unknown) {
       if (err instanceof Error) {

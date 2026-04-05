@@ -1,5 +1,4 @@
 import { db } from "@/lib/db";
-import { isMissingHomepageFeatureColumnError } from "@/lib/db-errors";
 import { logAdminActivity } from "@/lib/admin-activity";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { opportunities, tags, user } from "@/lib/schema";
@@ -9,9 +8,7 @@ import { and, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 
 const updateOpportunitySchema = z.object({
-  action: z.enum(["approve", "reject", "toggle", "set_featured"]),
-  isHomepageFeatured: z.boolean().optional(),
-  homepageFeatureOrder: z.number().int().min(1).nullable().optional(),
+  action: z.enum(["approve", "reject", "toggle"]),
 });
 
 export async function GET(
@@ -43,65 +40,43 @@ export async function GET(
       );
     }
 
-    const fetchRow = async (withFeaturedColumns: boolean) =>
-      db
-        .select({
-          id: opportunities.id,
-          type: opportunities.type,
-          title: opportunities.title,
-          description: opportunities.description,
-          images: opportunities.images,
-          attachments: opportunities.attachments,
-          tags: sql<string[]>`(
-            SELECT coalesce(array_agg(t.name ORDER BY t.name), '{}')
-            FROM ${tags} t
-            WHERE t.id = ANY(${opportunities.tagIds})
-          )`,
-          location: opportunities.location,
-          organiserInfo: opportunities.organiserInfo,
-          startDate: opportunities.startDate,
-          endDate: opportunities.endDate,
-          publishAt: opportunities.publishAt,
-          isFlagged: opportunities.isFlagged,
-          createdAt: opportunities.createdAt,
-          updatedAt: opportunities.updatedAt,
-          isVerified: opportunities.isVerified,
-          isActive: opportunities.isActive,
-          ...(withFeaturedColumns
-            ? {
-                isHomepageFeatured: opportunities.isHomepageFeatured,
-                homepageFeatureOrder: opportunities.homepageFeatureOrder,
-              }
-            : {}),
-          upvoteCount: opportunities.upvoteCount,
-          upvoterIds: opportunities.upvoterIds,
-          userId: opportunities.userId,
-          user: {
-            id: user.id,
-            name: user.name,
-            image: user.image,
-            role: user.role,
-          },
-        })
-        .from(opportunities)
-        .leftJoin(user, eq(opportunities.userId, user.id))
-        .where(and(eq(opportunities.id, id), isNull(opportunities.deletedAt)))
-        .limit(1);
-
-    let row;
-    try {
-      row = await fetchRow(true);
-    } catch (e) {
-      if (!isMissingHomepageFeatureColumnError(e)) {
-        throw e;
-      }
-
-      row = (await fetchRow(false)).map((item) => ({
-        ...item,
-        isHomepageFeatured: undefined,
-        homepageFeatureOrder: undefined,
-      }));
-    }
+    const row = await db
+      .select({
+        id: opportunities.id,
+        type: opportunities.type,
+        title: opportunities.title,
+        description: opportunities.description,
+        images: opportunities.images,
+        attachments: opportunities.attachments,
+        tags: sql<string[]>`(
+          SELECT coalesce(array_agg(t.name ORDER BY t.name), '{}')
+          FROM ${tags} t
+          WHERE t.id = ANY(${opportunities.tagIds})
+        )`,
+        location: opportunities.location,
+        organiserInfo: opportunities.organiserInfo,
+        startDate: opportunities.startDate,
+        endDate: opportunities.endDate,
+        publishAt: opportunities.publishAt,
+        isFlagged: opportunities.isFlagged,
+        createdAt: opportunities.createdAt,
+        updatedAt: opportunities.updatedAt,
+        isVerified: opportunities.isVerified,
+        isActive: opportunities.isActive,
+        upvoteCount: opportunities.upvoteCount,
+        upvoterIds: opportunities.upvoterIds,
+        userId: opportunities.userId,
+        user: {
+          id: user.id,
+          name: user.name,
+          image: user.image,
+          role: user.role,
+        },
+      })
+      .from(opportunities)
+      .leftJoin(user, eq(opportunities.userId, user.id))
+      .where(and(eq(opportunities.id, id), isNull(opportunities.deletedAt)))
+      .limit(1);
 
     if (row.length === 0) {
       return NextResponse.json(
@@ -167,19 +142,7 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const parsedBody =
-      body && typeof body === "object" && !Array.isArray(body)
-        ? (body as Record<string, unknown>)
-        : {};
-    const validatedData = updateOpportunitySchema.parse(parsedBody);
-    const hasIsHomepageFeatured = Object.prototype.hasOwnProperty.call(
-      parsedBody,
-      "isHomepageFeatured"
-    );
-    const hasHomepageFeatureOrder = Object.prototype.hasOwnProperty.call(
-      parsedBody,
-      "homepageFeatureOrder"
-    );
+    const validatedData = updateOpportunitySchema.parse(body);
 
     const existingOpportunity = await db
       .select()
@@ -209,17 +172,6 @@ export async function PATCH(
       updateData.isActive = false;
     } else if (validatedData.action === "toggle") {
       updateData.isActive = !existingOpportunity[0].isActive;
-    } else if (validatedData.action === "set_featured") {
-      if (hasIsHomepageFeatured) {
-        updateData.isHomepageFeatured = validatedData.isHomepageFeatured;
-      }
-
-      if (hasHomepageFeatureOrder) {
-        updateData.homepageFeatureOrder = validatedData.homepageFeatureOrder;
-      } else if (hasIsHomepageFeatured && validatedData.isHomepageFeatured) {
-        updateData.homepageFeatureOrder =
-          existingOpportunity[0].homepageFeatureOrder ?? null;
-      }
     }
 
     const updatedOpportunity = await db
@@ -246,11 +198,7 @@ export async function PATCH(
         message:
           validatedData.action === "approve"
             ? "Opportunity approved successfully"
-            : validatedData.action === "reject"
-              ? "Opportunity rejected successfully"
-              : validatedData.action === "set_featured"
-                ? "Homepage featured settings updated"
-                : "Opportunity updated successfully",
+            : "Opportunity rejected successfully",
         opportunity: updatedOpportunity[0],
       },
       { status: 200 }

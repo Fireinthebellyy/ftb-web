@@ -230,11 +230,20 @@ export async function PATCH(
         .where(eq(opportunities.id, opportunityId))
         .returning();
     } catch (e) {
+      const errorCode = (e as any)?.code || (e as any)?.cause?.code;
+      console.warn(
+        `Update query failed with code ${errorCode}:`,
+        (e as any)?.message || String(e)
+      );
+
       // If featured columns don't exist and we're trying to set featured, clear those from updateData
       if (
         validatedData.action === "set_featured" &&
         isMissingHomepageFeatureColumnError(e)
       ) {
+        console.warn(
+          "Detected missing featured column during update, retrying without them..."
+        );
         delete updateData.isHomepageFeatured;
         delete updateData.homepageFeatureOrder;
 

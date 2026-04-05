@@ -97,18 +97,37 @@ export async function GET(
     try {
       internship = await fetchInternship(true);
     } catch (e) {
+      const errorCode = (e as any)?.code || (e as any)?.cause?.code;
+      console.warn(
+        `Initial query failed with code ${errorCode}:`,
+        (e as any)?.message || String(e)
+      );
+
       if (!isMissingHomepageFeatureColumnError(e)) {
+        console.error("Not a featured column error, rethrowing:", e);
         throw e;
       }
 
-      internship = (await fetchInternship(false)).map((item) => ({
-        ...item,
-        isHomepageFeatured: undefined,
-        homepageFeatureOrder: undefined,
-      }));
+      // Featured columns don't exist, retry without them
+      console.warn("Detected missing featured column, retrying without them...");
+      try {
+        const fallbackResult = await fetchInternship(false);
+        internship = fallbackResult.map((item) => ({
+          ...item,
+          isHomepageFeatured: undefined,
+          homepageFeatureOrder: undefined,
+        }));
+        console.info(`Fallback query succeeded, found ${internship.length} results`);
+      } catch (fallbackError) {
+        console.error(
+          "Fallback query also failed after featured column error:",
+          fallbackError
+        );
+        throw fallbackError;
+      }
     }
 
-    if (internship.length === 0) {
+    if (!internship || internship.length === 0) {
       return NextResponse.json(
         { error: "Internship not found" },
         { status: 404 }

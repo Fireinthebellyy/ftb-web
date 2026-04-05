@@ -1,4 +1,4 @@
-export interface Opportunity {
+export type Opportunity = {
   id: string;
   title: string;
   description: string;
@@ -12,8 +12,6 @@ export interface Opportunity {
   startDate?: string;
   endDate?: string;
   publishAt?: string;
-  isHomepageFeatured?: boolean;
-  homepageFeatureOrder?: number | null;
   upvoteCount: number;
   upvoterIds: string[];
   userHasUpvoted?: boolean;
@@ -23,9 +21,9 @@ export interface Opportunity {
     image: string;
     role?: "user" | "member" | "editor" | "admin";
   };
-}
+};
 
-export interface Internship {
+export type Internship = {
   id: string;
   title: string;
   description?: string | null;
@@ -44,15 +42,13 @@ export interface Internship {
   isVerified?: boolean;
   isFlagged?: boolean;
   isActive?: boolean;
-  isHomepageFeatured?: boolean;
-  homepageFeatureOrder?: number | null;
   user: {
     id: string;
     name: string;
     image: string;
     role?: "user" | "member" | "editor" | "admin";
   };
-}
+};
 
 export interface InternshipData extends Omit<
   Internship,
@@ -93,7 +89,7 @@ export interface ApplyModalOpportunity {
   [key: string]: unknown;
 }
 
-export interface Task {
+export type Task = {
   id: string;
   title: string;
   description?: string;
@@ -102,7 +98,7 @@ export interface Task {
   createdAt: string;
   updatedAt: string;
   userId: string;
-}
+};
 
 export interface OpportunityPostProps {
   opportunity: Opportunity;
@@ -116,7 +112,7 @@ export interface InternshipPostProps {
   isCardExpanded?: boolean;
 }
 
-export interface Comment {
+export type Comment = {
   id: string;
   content: string;
   createdAt: string;
@@ -128,13 +124,13 @@ export interface Comment {
     name: string;
     image: string;
   };
-}
+};
 
-export interface CreateCommentData {
+export type CreateCommentData = {
   content: string;
-}
+};
 
-export interface ProfileUser {
+export type ProfileUser = {
   id: string;
   name: string;
   email: string;
@@ -145,11 +141,11 @@ export interface ProfileUser {
   collegeInstitute?: string | null;
   contactNumber?: string | null;
   currentRole?: string | null;
-}
+};
 
-export interface UploadProgress {
+export type UploadProgress = {
   progress: number;
-}
+};
 
 export type FileKind = "image" | "pdf" | "ppt";
 
@@ -168,25 +164,25 @@ export interface FileItem {
   addedAt?: number;
 }
 
-export interface PrivacyPolicy {
+export type PrivacyPolicy = {
   title: string;
   content: string;
   lastUpdated: string;
-}
+};
 
-export interface TermsType {
+export type TermsType = {
   title: string;
   content: string;
   lastUpdated: string;
-}
+};
 
-export interface ToolkitTestimonial {
+export type ToolkitTestimonial = {
   name: string;
   role: string;
   message: string;
-}
+};
 
-export interface Toolkit {
+export type Toolkit = {
   id: string;
   title: string;
   description: string;
@@ -208,9 +204,9 @@ export interface Toolkit {
   creatorName?: string;
   contentItems?: ToolkitContentItem[];
   testimonials?: ToolkitTestimonial[];
-}
+};
 
-export interface ToolkitContentItem {
+export type ToolkitContentItem = {
   id: string;
   toolkitId: string;
   title: string;
@@ -220,4 +216,4 @@ export interface ToolkitContentItem {
   orderIndex: number;
   createdAt?: string;
   updatedAt?: string;
-}
+};

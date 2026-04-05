@@ -1,5 +1,4 @@
 import * as Sentry from "@sentry/nextjs";
-import { isMissingHomepageFeatureColumnError } from "@/lib/db-errors";
 import { db } from "@/lib/db";
 import { logAdminActivity } from "@/lib/admin-activity";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
@@ -52,7 +51,8 @@ export async function GET(req: NextRequest) {
       ? isNull(opportunities.deletedAt)
       : and(eq(opportunities.isActive, false), isNull(opportunities.deletedAt));
 
-    const fetchOpportunities = async (withFeaturedColumns: boolean) =>
+    const [totalResult, pendingOpportunities] = await Promise.all([
+      db.select({ total: count() }).from(opportunities).where(conditions),
       db
         .select({
           id: opportunities.id,
@@ -75,12 +75,6 @@ export async function GET(req: NextRequest) {
           updatedAt: opportunities.updatedAt,
           isVerified: opportunities.isVerified,
           isActive: opportunities.isActive,
-          ...(withFeaturedColumns
-            ? {
-                isHomepageFeatured: opportunities.isHomepageFeatured,
-                homepageFeatureOrder: opportunities.homepageFeatureOrder,
-              }
-            : {}),
           upvoteCount: opportunities.upvoteCount,
           upvoterIds: opportunities.upvoterIds,
           userId: opportunities.userId,
@@ -96,36 +90,8 @@ export async function GET(req: NextRequest) {
         .where(conditions)
         .orderBy(desc(opportunities.createdAt))
         .limit(validLimit)
-        .offset(validOffset);
-
-    const totalPromise = db
-      .select({ total: count() })
-      .from(opportunities)
-      .where(conditions);
-
-    let totalResult;
-    let pendingOpportunities;
-    try {
-      [totalResult, pendingOpportunities] = await Promise.all([
-        totalPromise,
-        fetchOpportunities(true),
-      ]);
-    } catch (error) {
-      if (!isMissingHomepageFeatureColumnError(error)) {
-        throw error;
-      }
-
-      [totalResult, pendingOpportunities] = await Promise.all([
-        totalPromise,
-        fetchOpportunities(false),
-      ]);
-
-      pendingOpportunities = pendingOpportunities.map((item) => ({
-        ...item,
-        isHomepageFeatured: false,
-        homepageFeatureOrder: null,
-      }));
-    }
+        .offset(validOffset),
+    ]);
 
     const totalCount = totalResult[0]?.total ?? 0;
     const hasMore = validOffset + pendingOpportunities.length < totalCount;

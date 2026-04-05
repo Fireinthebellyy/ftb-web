@@ -4,13 +4,18 @@ import { useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { Eye, EyeOff, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
-import { AdminTabLayout } from "@/components/admin/AdminTabLayout";
 import { AdminTableState } from "@/components/admin/AdminTableState";
+import { AdminTabLayout } from "@/components/admin/AdminTabLayout";
+import { Button } from "@/components/ui/button";
+import { Eye, EyeOff, Trash2 } from "lucide-react";
+
 import NewOpportunityForm from "@/components/opportunity/NewOpportunityForm";
+
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -22,8 +27,6 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface Opportunity {
   id: string;
@@ -39,8 +42,6 @@ interface Opportunity {
   startDate?: string;
   endDate?: string;
   publishAt?: string;
-  isHomepageFeatured?: boolean;
-  homepageFeatureOrder?: number | null;
   type:
     | "competitions_open_calls"
     | "case_competitions"
@@ -60,8 +61,6 @@ interface Opportunity {
     image: string;
   };
 }
-
-type FeaturedFilter = "all" | "featured" | "non-featured";
 
 async function fetchAllOpportunities(): Promise<Opportunity[]> {
   const limit = 50;
@@ -103,14 +102,6 @@ export default function OpportunityManagementTable() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [loadingEditId, setLoadingEditId] = useState<string | null>(null);
-  const [updatingFeaturedId, setUpdatingFeaturedId] = useState<string | null>(
-    null
-  );
-  const [featuredFilter, setFeaturedFilter] =
-    useState<FeaturedFilter>("all");
-  const [featuredOrderDrafts, setFeaturedOrderDrafts] = useState<
-    Record<string, string>
-  >({});
 
   const handleEdit = async (opportunity: Opportunity) => {
     setLoadingEditId(opportunity.id);
@@ -140,23 +131,10 @@ export default function OpportunityManagementTable() {
   });
 
   const opportunities = data ?? EMPTY_OPPORTUNITIES;
-  const filteredOpportunities = useMemo(() => {
-    if (featuredFilter === "featured") {
-      return opportunities.filter((item) => Boolean(item.isHomepageFeatured));
-    }
-
-    if (featuredFilter === "non-featured") {
-      return opportunities.filter((item) => !item.isHomepageFeatured);
-    }
-
-    return opportunities;
-  }, [opportunities, featuredFilter]);
 
   const columns = useMemo<ColumnDef<Opportunity>[]>(() => {
-    const visibleIds = filteredOpportunities.map((item) => item.id);
     const allSelected =
-      visibleIds.length > 0 &&
-      visibleIds.every((id) => selectedIds.includes(id));
+      opportunities.length > 0 && selectedIds.length === opportunities.length;
 
     return [
       {
@@ -167,13 +145,9 @@ export default function OpportunityManagementTable() {
             checked={allSelected}
             onChange={(e) => {
               if (e.target.checked) {
-                setSelectedIds((prev) =>
-                  Array.from(new Set([...prev, ...visibleIds]))
-                );
+                setSelectedIds(opportunities.map((o) => o.id));
               } else {
-                setSelectedIds((prev) =>
-                  prev.filter((id) => !visibleIds.includes(id))
-                );
+                setSelectedIds([]);
               }
             }}
           />
@@ -252,9 +226,6 @@ export default function OpportunityManagementTable() {
                     queryClient.invalidateQueries({
                       queryKey: ["admin-opportunity-management"],
                     });
-                    queryClient.invalidateQueries({
-                      queryKey: ["opportunities-home"],
-                    });
                   }
                 }}
               >
@@ -264,145 +235,12 @@ export default function OpportunityManagementTable() {
                   <EyeOff className="h-4 w-4" />
                 )}
               </Button>
-
-              <label className="ml-2 inline-flex items-center gap-2 text-xs">
-                <input
-                  type="checkbox"
-                  checked={Boolean(opportunity.isHomepageFeatured)}
-                  disabled={updatingFeaturedId === opportunity.id}
-                  onChange={async (e) => {
-                    setUpdatingFeaturedId(opportunity.id);
-                    try {
-                      await axios.patch(
-                        `/api/admin/opportunities/${opportunity.id}`,
-                        {
-                          action: "set_featured",
-                          isHomepageFeatured: e.target.checked,
-                          homepageFeatureOrder: e.target.checked
-                            ? (opportunity.homepageFeatureOrder ?? null)
-                            : null,
-                        }
-                      );
-                      setFeaturedOrderDrafts((prev) => {
-                        const next = { ...prev };
-                        if (!e.target.checked) {
-                          delete next[opportunity.id];
-                        } else if (!(opportunity.id in next)) {
-                          next[opportunity.id] =
-                            opportunity.homepageFeatureOrder?.toString() ?? "";
-                        }
-                        return next;
-                      });
-                      toast.success(
-                        e.target.checked
-                          ? "Opportunity featured on homepage"
-                          : "Opportunity removed from homepage"
-                      );
-                    } catch {
-                      toast.error("Failed to update homepage featured setting.");
-                    } finally {
-                      setUpdatingFeaturedId(null);
-                      queryClient.invalidateQueries({
-                        queryKey: ["admin-opportunity-management"],
-                      });
-                      queryClient.invalidateQueries({
-                        queryKey: ["opportunities-home"],
-                      });
-                    }
-                  }}
-                />
-                <span>Featured</span>
-              </label>
-
-              <input
-                type="number"
-                min={1}
-                aria-label={`Homepage feature order for ${opportunity.title || opportunity.id}`}
-                value={
-                  featuredOrderDrafts[opportunity.id] ??
-                  opportunity.homepageFeatureOrder?.toString() ??
-                  ""
-                }
-                disabled={!opportunity.isHomepageFeatured || updatingFeaturedId === opportunity.id}
-                placeholder="Order"
-                className="h-8 w-20 rounded border border-input bg-background px-2 text-xs"
-                onChange={(e) => {
-                  const nextValue = e.target.value;
-                  setFeaturedOrderDrafts((prev) => ({
-                    ...prev,
-                    [opportunity.id]: nextValue,
-                  }));
-                }}
-                onBlur={async () => {
-                  if (!opportunity.isHomepageFeatured) return;
-                  const raw = (
-                    featuredOrderDrafts[opportunity.id] ??
-                    opportunity.homepageFeatureOrder?.toString() ??
-                    ""
-                  ).trim();
-                  const parsed = raw ? Number.parseInt(raw, 10) : null;
-
-                  if (raw && (!Number.isFinite(parsed) || (parsed ?? 0) < 1)) {
-                    toast.error("Priority must be a number greater than 0.");
-                    return;
-                  }
-
-                  if ((parsed ?? null) === (opportunity.homepageFeatureOrder ?? null)) {
-                    return;
-                  }
-
-                  setUpdatingFeaturedId(opportunity.id);
-                  try {
-                    await axios.patch(
-                      `/api/admin/opportunities/${opportunity.id}`,
-                      {
-                        action: "set_featured",
-                        isHomepageFeatured: true,
-                        homepageFeatureOrder: parsed,
-                      }
-                    );
-                    setFeaturedOrderDrafts((prev) => {
-                      const next = { ...prev };
-                      if (parsed === null) {
-                        delete next[opportunity.id];
-                      } else {
-                        next[opportunity.id] = String(parsed);
-                      }
-                      return next;
-                    });
-                    toast.success("Homepage priority updated.");
-                  } catch {
-                    setFeaturedOrderDrafts((prev) => ({
-                      ...prev,
-                      [opportunity.id]:
-                        opportunity.homepageFeatureOrder?.toString() ?? "",
-                    }));
-                    toast.error("Failed to update homepage priority.");
-                  } finally {
-                    setUpdatingFeaturedId(null);
-                    queryClient.invalidateQueries({
-                      queryKey: ["admin-opportunity-management"],
-                    });
-                    queryClient.invalidateQueries({
-                      queryKey: ["opportunities-home"],
-                    });
-                  }
-                }}
-              />
             </div>
           );
         },
       },
     ];
-  }, [
-    selectedIds,
-    filteredOpportunities,
-    queryClient,
-    togglingId,
-    loadingEditId,
-    updatingFeaturedId,
-    featuredOrderDrafts,
-  ]);
+  }, [selectedIds, opportunities, queryClient, togglingId, loadingEditId]);
 
   const deleteToolbar =
     selectedIds.length > 0 ? (
@@ -447,9 +285,6 @@ export default function OpportunityManagementTable() {
                   queryClient.invalidateQueries({
                     queryKey: ["admin-opportunity-management"],
                   });
-                  queryClient.invalidateQueries({
-                    queryKey: ["opportunities-home"],
-                  });
                 }
               }}
             >
@@ -460,22 +295,6 @@ export default function OpportunityManagementTable() {
       </AlertDialog>
     ) : null;
 
-  const toolbarActions = (
-    <>
-      <select
-        value={featuredFilter}
-        onChange={(e) => setFeaturedFilter(e.target.value as FeaturedFilter)}
-        className="h-9 rounded-md border border-input bg-background px-2 text-sm"
-        aria-label="Filter opportunities by featured status"
-      >
-        <option value="all">All</option>
-        <option value="featured">Featured</option>
-        <option value="non-featured">Non-featured</option>
-      </select>
-      {deleteToolbar}
-    </>
-  );
-
   return (
     <>
       <AdminTabLayout
@@ -485,17 +304,17 @@ export default function OpportunityManagementTable() {
         <AdminTableState
           isLoading={isLoading}
           isError={isError}
-          isEmpty={!filteredOpportunities.length}
+          isEmpty={!opportunities.length}
           emptyMessage="No opportunities found"
         >
           <AdminDataTable
             tableId="opportunity-management"
             columns={columns}
-            data={filteredOpportunities}
+            data={opportunities}
             filterColumnId="title"
             filterPlaceholder="Search opportunities by title"
             emptyMessage="No opportunities found"
-            toolbarActions={toolbarActions}
+            toolbarActions={deleteToolbar}
           />
         </AdminTableState>
       </AdminTabLayout>
@@ -517,9 +336,6 @@ export default function OpportunityManagementTable() {
                 setOpen(false);
                 queryClient.invalidateQueries({
                   queryKey: ["admin-opportunity-management"],
-                });
-                queryClient.invalidateQueries({
-                  queryKey: ["opportunities-home"],
                 });
               }}
             />

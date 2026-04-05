@@ -95,8 +95,6 @@ export const opportunities = pgTable("opportunities", {
   deletedAt: timestamp("deleted_at"), // Soft delete
   isVerified: boolean("is_verified").default(false),
   isActive: boolean("is_active").default(true),
-  isHomepageFeatured: boolean("is_homepage_featured").default(false),
-  homepageFeatureOrder: integer("homepage_feature_order"),
   upvoterIds: text("upvoter_ids").array().default([]),
   upvoteCount: integer("upvote_count").default(0),
   userId: text("user_id")
@@ -122,8 +120,6 @@ export const internships = pgTable("internships", {
   isVerified: boolean("is_verified").default(false),
   isFlagged: boolean("is_flagged").default(false),
   isActive: boolean("is_active").default(true),
-  isHomepageFeatured: boolean("is_homepage_featured").default(false),
-  homepageFeatureOrder: integer("homepage_feature_order"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   deletedAt: timestamp("deleted_at"), // Soft delete
@@ -556,10 +552,6 @@ export const trackerItems = pgTable(
     result: text("result"),
     isManual: boolean("is_manual").default(false),
     manualData: text("manual_data"), // storing JSON stringified manual data
-    snapshotTitle: text("snapshot_title"),
-    snapshotCompany: text("snapshot_company"),
-    snapshotLogo: text("snapshot_logo"),
-    snapshotDeadline: text("snapshot_deadline"), // ISO date string, used to skip hydration for expired items
   },
   (table) => [
     uniqueIndex("tracker_items_user_kind_opp_unique").on(

@@ -42,6 +42,13 @@ export interface TrackerItem {
   eligibility?: string[];
   skills?: string[];
   tags?: string[];
+  snapshot?: {
+    logo?: string;
+    poster?: string;
+    images?: string[];
+  };
+  poster?: string;
+  images?: string[];
   isArchived?: boolean;
   [key: string]: unknown;
 }
@@ -121,13 +128,10 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
   const trackedItemsRef = useRef(trackedItems);
   trackedItemsRef.current = trackedItems;
 
-  // Initial load from API only; backend is the source of truth.
+  // Initial load from API with local cache fallback on failures.
   useEffect(() => {
     const initializeTracker = async () => {
       try {
-        localStorage.removeItem("tracker_items");
-        localStorage.removeItem("tracker_events");
-
         // 1. Fetch from API
         const response = await fetch("/api/tracker");
 
@@ -136,18 +140,28 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
 
           setTrackedItems(data.items || []);
           setEvents(data.events || []);
+          localStorage.removeItem("tracker_items");
+          localStorage.removeItem("tracker_events");
           return;
         }
 
-        console.warn(
-          "Tracker API request failed; showing empty state instead of local cache."
-        );
-        setTrackedItems([]);
-        setEvents([]);
+        console.warn("Tracker API request failed; falling back to local cache.");
+        const cachedItems = localStorage.getItem("tracker_items");
+        const cachedEvents = localStorage.getItem("tracker_events");
+
+        setTrackedItems(cachedItems ? JSON.parse(cachedItems) : []);
+        setEvents(cachedEvents ? JSON.parse(cachedEvents) : []);
       } catch (error) {
         console.error("Failed to initialize tracker:", error);
-        setTrackedItems([]);
-        setEvents([]);
+        try {
+          const cachedItems = localStorage.getItem("tracker_items");
+          const cachedEvents = localStorage.getItem("tracker_events");
+          setTrackedItems(cachedItems ? JSON.parse(cachedItems) : []);
+          setEvents(cachedEvents ? JSON.parse(cachedEvents) : []);
+        } catch {
+          setTrackedItems([]);
+          setEvents([]);
+        }
       } finally {
         setIsLoaded(true);
       }
@@ -183,7 +197,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
           action: "update_status",
           id: oppId,
           kind: resolveTrackerKind(kind),
-          data: { status, ...extraData },
+          data: { status, extraData },
         }),
       });
     } catch (e) {
@@ -216,6 +230,18 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
       return false;
     }
   };
+
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("tracker_items", JSON.stringify(trackedItems));
+    }
+  }, [trackedItems, isLoaded]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("tracker_events", JSON.stringify(events));
+    }
+  }, [events, isLoaded]);
 
   // Hydrate Data from API
   useEffect(() => {
@@ -366,7 +392,12 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
           // Backfill snapshotDeadline if missing or different in DB record
           if (apiData.deadline && apiData.deadline !== item.deadline) {
             // Background sync (fire and forget)
-            syncStatusToBackend(item.oppId, item.status, { deadline: apiData.deadline }, item.kind);
+            syncStatusToBackend(
+              item.oppId,
+              item.status,
+              { deadline: apiData.deadline },
+              item.kind
+            );
           }
 
           return {

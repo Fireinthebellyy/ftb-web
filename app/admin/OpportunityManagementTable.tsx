@@ -4,18 +4,13 @@ import { useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { Eye, EyeOff, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
-import { AdminTableState } from "@/components/admin/AdminTableState";
 import { AdminTabLayout } from "@/components/admin/AdminTabLayout";
-import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Trash2 } from "lucide-react";
-
+import { AdminTableState } from "@/components/admin/AdminTableState";
 import NewOpportunityForm from "@/components/opportunity/NewOpportunityForm";
-
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -27,6 +22,8 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface Opportunity {
   id: string;
@@ -320,6 +317,7 @@ export default function OpportunityManagementTable() {
               <input
                 type="number"
                 min={1}
+                aria-label={`Homepage feature order for ${opportunity.title || opportunity.id}`}
                 value={
                   featuredOrderDrafts[opportunity.id] ??
                   opportunity.homepageFeatureOrder?.toString() ??

@@ -10,6 +10,7 @@ import {
 } from "@/lib/storage/client";
 import { FileItem, Opportunity } from "@/types/interfaces";
 import { FormData } from "../schema";
+import { normalizeTags } from "../utils/normalizeTags";
 
 interface UseOpportunitySubmitProps {
   opportunity?: Opportunity;
@@ -141,11 +142,7 @@ export function useOpportunitySubmit({
         ...restData,
         startDate: dateRange?.from?.toISOString(),
         endDate: dateRange?.to?.toISOString(),
-        tags:
-          data.tags
-            ?.split(/[|,]/)
-            .map((t) => t.trim())
-            .filter(Boolean) || [],
+        tags: normalizeTags(data.tags),
         images: opportunity?.id
           ? finalImages
           : imageResult.ids.length > 0

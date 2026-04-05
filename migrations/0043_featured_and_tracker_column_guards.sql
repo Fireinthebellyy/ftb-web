@@ -22,8 +22,5 @@ ALTER TABLE "opportunities"
 ALTER COLUMN "is_homepage_featured" SET DEFAULT false,
 ALTER COLUMN "is_homepage_featured" SET NOT NULL;
 
-CREATE INDEX IF NOT EXISTS "internships_homepage_featured_idx"
-ON "internships" ("is_homepage_featured", "homepage_feature_order", "created_at" DESC);
-
-CREATE INDEX IF NOT EXISTS "opportunities_homepage_featured_idx"
-ON "opportunities" ("is_homepage_featured", "homepage_feature_order", "created_at" DESC);
+ALTER TABLE "tracker_items"
+ADD COLUMN IF NOT EXISTS "snapshot_deadline" text;

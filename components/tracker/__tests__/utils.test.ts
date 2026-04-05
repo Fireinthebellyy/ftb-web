@@ -56,6 +56,11 @@ describe("tracker utils", () => {
       expect(formatted).toBe("20260404T101530Z");
     });
 
+    it("formats date-only string as all-day Google Calendar format", () => {
+      const formatted = formatGoogleCalendarDate("2026-04-04");
+      expect(formatted).toBe("20260404");
+    });
+
     it("handles timezone offsets consistently", () => {
       const formatted = formatGoogleCalendarDate("2026-04-04T10:15:30+05:30");
       expect(formatted).toBe("20260404T044530Z");
@@ -101,6 +106,66 @@ describe("tracker utils", () => {
       });
 
       expect(value).toBe("");
+    });
+
+    it("prefers snapshot poster over top-level poster", () => {
+      const value = getTrackerLogoUrl({
+        ...baseTrackerItem,
+        logo: "",
+        poster: "https://cdn.example.com/top-level-poster.png",
+        snapshot: {
+          logo: "",
+          poster: "https://cdn.example.com/snapshot-poster.png",
+        },
+      });
+
+      expect(value).toBe("https://cdn.example.com/snapshot-poster.png");
+    });
+
+    it("uses top-level poster when snapshot poster is missing", () => {
+      const value = getTrackerLogoUrl({
+        ...baseTrackerItem,
+        logo: "",
+        poster: "https://cdn.example.com/top-level-poster.png",
+        snapshot: {
+          logo: "",
+          poster: "",
+        },
+      });
+
+      expect(value).toBe("https://cdn.example.com/top-level-poster.png");
+    });
+
+    it("uses snapshot image when logos and posters are unavailable", () => {
+      const value = getTrackerLogoUrl({
+        ...baseTrackerItem,
+        logo: "",
+        poster: "",
+        images: [],
+        snapshot: {
+          logo: "",
+          poster: "",
+          images: ["https://cdn.example.com/snapshot-image.png"],
+        },
+      });
+
+      expect(value).toBe("https://cdn.example.com/snapshot-image.png");
+    });
+
+    it("uses top-level image when snapshot image is unavailable", () => {
+      const value = getTrackerLogoUrl({
+        ...baseTrackerItem,
+        logo: "",
+        poster: "",
+        images: ["https://cdn.example.com/top-level-image.png"],
+        snapshot: {
+          logo: "",
+          poster: "",
+          images: [],
+        },
+      });
+
+      expect(value).toBe("https://cdn.example.com/top-level-image.png");
     });
   });
 });

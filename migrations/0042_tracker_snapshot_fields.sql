@@ -1,7 +1,8 @@
 ALTER TABLE "tracker_items"
 ADD COLUMN IF NOT EXISTS "snapshot_title" text,
 ADD COLUMN IF NOT EXISTS "snapshot_company" text,
-ADD COLUMN IF NOT EXISTS "snapshot_logo" text;
+ADD COLUMN IF NOT EXISTS "snapshot_logo" text,
+ADD COLUMN IF NOT EXISTS "snapshot_deadline" text;
 
 -- Backfill snapshots for internships where source rows still exist
 UPDATE "tracker_items" ti

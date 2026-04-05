@@ -1,17 +1,18 @@
 "use client";
 
 import { useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { Inter, Outfit, Satisfy } from "next/font/google";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import HomeInternshipCardsSection from "@/components/internship/HomeInternshipCardsSection";
 import HomeOpportunitiesSection from "@/components/opportunity/HomeOpportunitiesSection";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
+import { cn } from "@/lib/utils";
 import { getYouTubeThumbnailUrl } from "@/lib/youtube";
 import { Toolkit } from "@/types/interfaces";
 
@@ -406,7 +407,10 @@ function ToolkitCarousel() {
                     e.preventDefault();
                     if (card.id) router.push(`/toolkit/${card.id}`);
                   }}
-                  className={`${sfProClass} z-30 inline-flex h-12 items-center justify-center whitespace-nowrap rounded-[39px] px-6 min-w-[140px] text-[18px] leading-none font-medium tracking-[-0.25px] bg-black text-white`}
+                  className={cn(
+                    sfProClass,
+                    "inline-flex items-center justify-center px-6 h-12 min-w-[140px] text-[18px] leading-none font-medium tracking-[-0.25px] whitespace-nowrap bg-black text-white rounded-[39px] z-30"
+                  )}
                 >
                   Explore
                 </button>

@@ -218,9 +218,9 @@ export async function PATCH(
       internship: updatedInternship[0],
     });
   } catch (error) {
-    console.error("Error updating internship visibility:", error);
+    console.error("Error updating internship visibility/featured status:", error);
     return NextResponse.json(
-      { error: "Failed to update internship visibility" },
+      { error: "Failed to update internship visibility or featured status" },
       { status: 500 }
     );
   }

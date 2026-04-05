@@ -6,6 +6,7 @@ import {
   internshipIngestBatchSchema,
   internshipIngestRecordSchema,
 } from "@/lib/internships-ingest";
+import { isMissingHomepageFeatureColumnError } from "@/lib/db-errors";
 import { internships, user } from "@/lib/schema";
 import {
   SQL,
@@ -27,23 +28,6 @@ import { getSessionCached } from "@/lib/auth-session-cache";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-
-function isMissingHomepageFeatureColumnError(error: unknown): boolean {
-  const err = error as {
-    message?: string;
-    cause?: { code?: string; column?: string; message?: string };
-  };
-
-  if (err?.cause?.code !== "42703") {
-    return false;
-  }
-
-  const details = `${err?.cause?.column ?? ""} ${err?.cause?.message ?? ""} ${err?.message ?? ""}`.toLowerCase();
-  return (
-    details.includes("is_homepage_featured") ||
-    details.includes("homepage_feature_order")
-  );
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -123,6 +107,7 @@ export async function GET(req: NextRequest) {
     const limitParam = Number.parseInt(searchParams.get("limit") ?? "", 10);
     const offsetParam = Number.parseInt(searchParams.get("offset") ?? "", 10);
     const featuredParam = searchParams.get("featured");
+    const preferredParam = searchParams.get("preferred");
     const idsParam = searchParams.get("ids");
 
     const searchTerm = searchParam ? searchParam.trim() : "";
@@ -160,6 +145,7 @@ export async function GET(req: NextRequest) {
       : Math.min(Math.max(limitParam, 1), 100);
     const offset = Number.isNaN(offsetParam) ? 0 : Math.max(offsetParam, 0);
     const featuredOnly = featuredParam === "true";
+    const preferFeatured = preferredParam === "featured";
     const ids = idsParam
       ? idsParam
           .split(",")
@@ -243,9 +229,12 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const runQuery = async (withFeaturedColumns: boolean) => {
+    const runQuery = async (
+      withFeaturedColumns: boolean,
+      onlyFeatured: boolean = featuredOnly
+    ) => {
       const localConditions = [...conditions];
-      if (featuredOnly && withFeaturedColumns) {
+      if (onlyFeatured) {
         localConditions.push(eq(internships.isHomepageFeatured, true));
       }
 
@@ -293,7 +282,7 @@ export async function GET(req: NextRequest) {
         .leftJoin(user, eq(internships.userId, user.id))
         .where(filters)
         .orderBy(
-          featuredOnly && withFeaturedColumns
+          onlyFeatured && withFeaturedColumns
             ? asc(sql`coalesce(${internships.homepageFeatureOrder}, 2147483647)`)
             : desc(internships.createdAt),
           desc(internships.createdAt)
@@ -339,8 +328,8 @@ export async function GET(req: NextRequest) {
           ? allInternships
           : allInternships.map((item) => ({
               ...item,
-              isHomepageFeatured: false,
-              homepageFeatureOrder: null,
+              isHomepageFeatured: undefined,
+              homepageFeatureOrder: undefined,
             })),
         pagination,
       };
@@ -358,13 +347,26 @@ export async function GET(req: NextRequest) {
         | undefined;
     };
 
+    const runWithFeaturePreference = async (withFeaturedColumns: boolean) => {
+      if (!preferFeatured) {
+        return runQuery(withFeaturedColumns, featuredOnly);
+      }
+
+      const featuredPayload = await runQuery(withFeaturedColumns, true);
+      if (featuredPayload.internships.length > 0) {
+        return featuredPayload;
+      }
+
+      return runQuery(withFeaturedColumns, false);
+    };
+
     try {
-      payload = await runQuery(true);
+      payload = await runWithFeaturePreference(true);
     } catch (error) {
       if (!isMissingHomepageFeatureColumnError(error)) {
         throw error;
       }
-      payload = await runQuery(false);
+      payload = await runWithFeaturePreference(false);
     }
 
     return NextResponse.json(

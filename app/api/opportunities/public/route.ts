@@ -1,24 +1,8 @@
 import { db } from "@/lib/db";
+import { isMissingHomepageFeatureColumnError } from "@/lib/db-errors";
 import { opportunities } from "@/lib/schema";
 import { and, asc, desc, eq, isNull, lte, or, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
-
-function isMissingHomepageFeatureColumnError(error: unknown): boolean {
-  const err = error as {
-    message?: string;
-    cause?: { code?: string; column?: string; message?: string };
-  };
-
-  if (err?.cause?.code !== "42703") {
-    return false;
-  }
-
-  const details = `${err?.cause?.column ?? ""} ${err?.cause?.message ?? ""} ${err?.message ?? ""}`.toLowerCase();
-  return (
-    details.includes("is_homepage_featured") ||
-    details.includes("homepage_feature_order")
-  );
-}
 
 export async function GET(req: NextRequest) {
   try {
@@ -64,9 +48,7 @@ export async function GET(req: NextRequest) {
         .where(
           and(
             baseFilters,
-            onlyFeatured && withFeaturedColumns
-              ? eq(opportunities.isHomepageFeatured, true)
-              : sql`true`
+            onlyFeatured ? eq(opportunities.isHomepageFeatured, true) : sql`true`
           )
         )
         .orderBy(

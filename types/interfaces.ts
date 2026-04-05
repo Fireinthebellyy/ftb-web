@@ -1,4 +1,4 @@
-export type Opportunity = {
+export interface Opportunity {
   id: string;
   title: string;
   description: string;
@@ -23,9 +23,9 @@ export type Opportunity = {
     image: string;
     role?: "user" | "member" | "editor" | "admin";
   };
-};
+}
 
-export type Internship = {
+export interface Internship {
   id: string;
   title: string;
   description?: string | null;
@@ -52,7 +52,7 @@ export type Internship = {
     image: string;
     role?: "user" | "member" | "editor" | "admin";
   };
-};
+}
 
 export interface InternshipData extends Omit<
   Internship,
@@ -93,7 +93,7 @@ export interface ApplyModalOpportunity {
   [key: string]: unknown;
 }
 
-export type Task = {
+export interface Task {
   id: string;
   title: string;
   description?: string;
@@ -102,7 +102,7 @@ export type Task = {
   createdAt: string;
   updatedAt: string;
   userId: string;
-};
+}
 
 export interface OpportunityPostProps {
   opportunity: Opportunity;
@@ -116,7 +116,7 @@ export interface InternshipPostProps {
   isCardExpanded?: boolean;
 }
 
-export type Comment = {
+export interface Comment {
   id: string;
   content: string;
   createdAt: string;
@@ -128,13 +128,13 @@ export type Comment = {
     name: string;
     image: string;
   };
-};
+}
 
-export type CreateCommentData = {
+export interface CreateCommentData {
   content: string;
-};
+}
 
-export type ProfileUser = {
+export interface ProfileUser {
   id: string;
   name: string;
   email: string;
@@ -145,11 +145,11 @@ export type ProfileUser = {
   collegeInstitute?: string | null;
   contactNumber?: string | null;
   currentRole?: string | null;
-};
+}
 
-export type UploadProgress = {
+export interface UploadProgress {
   progress: number;
-};
+}
 
 export type FileKind = "image" | "pdf" | "ppt";
 
@@ -168,25 +168,25 @@ export interface FileItem {
   addedAt?: number;
 }
 
-export type PrivacyPolicy = {
+export interface PrivacyPolicy {
   title: string;
   content: string;
   lastUpdated: string;
-};
+}
 
-export type TermsType = {
+export interface TermsType {
   title: string;
   content: string;
   lastUpdated: string;
-};
+}
 
-export type ToolkitTestimonial = {
+export interface ToolkitTestimonial {
   name: string;
   role: string;
   message: string;
-};
+}
 
-export type Toolkit = {
+export interface Toolkit {
   id: string;
   title: string;
   description: string;
@@ -208,9 +208,9 @@ export type Toolkit = {
   creatorName?: string;
   contentItems?: ToolkitContentItem[];
   testimonials?: ToolkitTestimonial[];
-};
+}
 
-export type ToolkitContentItem = {
+export interface ToolkitContentItem {
   id: string;
   toolkitId: string;
   title: string;
@@ -220,4 +220,4 @@ export type ToolkitContentItem = {
   orderIndex: number;
   createdAt?: string;
   updatedAt?: string;
-};
+}

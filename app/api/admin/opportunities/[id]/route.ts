@@ -42,45 +42,61 @@ export async function GET(
       );
     }
 
-    const row = await db
-      .select({
-        id: opportunities.id,
-        type: opportunities.type,
-        title: opportunities.title,
-        description: opportunities.description,
-        images: opportunities.images,
-        attachments: opportunities.attachments,
-        tags: sql<string[]>`(
-          SELECT coalesce(array_agg(t.name ORDER BY t.name), '{}')
-          FROM ${tags} t
-          WHERE t.id = ANY(${opportunities.tagIds})
-        )`,
-        location: opportunities.location,
-        organiserInfo: opportunities.organiserInfo,
-        startDate: opportunities.startDate,
-        endDate: opportunities.endDate,
-        publishAt: opportunities.publishAt,
-        isFlagged: opportunities.isFlagged,
-        createdAt: opportunities.createdAt,
-        updatedAt: opportunities.updatedAt,
-        isVerified: opportunities.isVerified,
-        isActive: opportunities.isActive,
-        isHomepageFeatured: opportunities.isHomepageFeatured,
-        homepageFeatureOrder: opportunities.homepageFeatureOrder,
-        upvoteCount: opportunities.upvoteCount,
-        upvoterIds: opportunities.upvoterIds,
-        userId: opportunities.userId,
-        user: {
-          id: user.id,
-          name: user.name,
-          image: user.image,
-          role: user.role,
-        },
-      })
-      .from(opportunities)
-      .leftJoin(user, eq(opportunities.userId, user.id))
-      .where(and(eq(opportunities.id, id), isNull(opportunities.deletedAt)))
-      .limit(1);
+    const fetchRow = async (withFeaturedColumns: boolean) =>
+      db
+        .select({
+          id: opportunities.id,
+          type: opportunities.type,
+          title: opportunities.title,
+          description: opportunities.description,
+          images: opportunities.images,
+          attachments: opportunities.attachments,
+          tags: sql<string[]>`(
+            SELECT coalesce(array_agg(t.name ORDER BY t.name), '{}')
+            FROM ${tags} t
+            WHERE t.id = ANY(${opportunities.tagIds})
+          )`,
+          location: opportunities.location,
+          organiserInfo: opportunities.organiserInfo,
+          startDate: opportunities.startDate,
+          endDate: opportunities.endDate,
+          publishAt: opportunities.publishAt,
+          isFlagged: opportunities.isFlagged,
+          createdAt: opportunities.createdAt,
+          updatedAt: opportunities.updatedAt,
+          isVerified: opportunities.isVerified,
+          isActive: opportunities.isActive,
+          ...(withFeaturedColumns
+            ? {
+                isHomepageFeatured: opportunities.isHomepageFeatured,
+                homepageFeatureOrder: opportunities.homepageFeatureOrder,
+              }
+            : {}),
+          upvoteCount: opportunities.upvoteCount,
+          upvoterIds: opportunities.upvoterIds,
+          userId: opportunities.userId,
+          user: {
+            id: user.id,
+            name: user.name,
+            image: user.image,
+            role: user.role,
+          },
+        })
+        .from(opportunities)
+        .leftJoin(user, eq(opportunities.userId, user.id))
+        .where(and(eq(opportunities.id, id), isNull(opportunities.deletedAt)))
+        .limit(1);
+
+    let row;
+    try {
+      row = await fetchRow(true);
+    } catch {
+      row = (await fetchRow(false)).map((item) => ({
+        ...item,
+        isHomepageFeatured: undefined,
+        homepageFeatureOrder: undefined,
+      }));
+    }
 
     if (row.length === 0) {
       return NextResponse.json(

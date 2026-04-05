@@ -11,6 +11,7 @@ import {
   deleteStorageObjectClient,
   uploadFileViaSignedUrl,
 } from "@/lib/storage/client";
+import { normalizeTags } from "./utils/normalizeTags";
 import { TitleField } from "./fields/TitleField";
 import { DescriptionField } from "./fields/DescriptionField";
 import { TagsField } from "./fields/TagsField";
@@ -210,11 +211,7 @@ export default function EditOpportunityForm({
         ...data,
         startDate: data.dateRange?.from?.toISOString(),
         endDate: data.dateRange?.to?.toISOString(),
-        tags:
-          data.tags
-            ?.split("|")
-            .map((t) => t.trim())
-            .filter(Boolean) || [],
+        tags: normalizeTags(data.tags),
         images: finalImages,
         attachments: finalAttachments,
       });

@@ -195,14 +195,14 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
 
   // Helper to sync state changes to API (Optimistic updates)
   const syncItemToBackend = async (item: TrackerItem) => {
-    try {
-      await fetch("/api/tracker", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "add_item", data: item }),
-      });
-    } catch (e) {
-      console.error("Failed to sync item", e);
+    const response = await fetch("/api/tracker", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "add_item", data: item }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to sync item: ${response.status}`);
     }
   };
 

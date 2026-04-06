@@ -105,7 +105,19 @@ export default function InternshipDetailPage() {
         const removed = await removeFromTracker(id, "internship");
         if (removed) toast.success("Deleted from Tracker");
       } else {
-        const added = await addToTracker(id, "Not Applied", "internship");
+        const added = await addToTracker(
+          {
+            id,
+            kind: "internship",
+            title: internship.title,
+            company: internship.hiringOrganization,
+            location: internship.location,
+            type: internship.type,
+            deadline: internship.deadline,
+          },
+          "Not Applied",
+          "internship"
+        );
         if (added) {
           const trackerTab = "internship";
           toast.success("Saved to Tracker", {

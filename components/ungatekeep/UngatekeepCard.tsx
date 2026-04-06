@@ -160,19 +160,21 @@ function AttachmentSlide({
   }
 
   return (
-    <div 
-      className="group relative h-full w-full cursor-pointer"
+    <button 
+      type="button"
+      className="group relative h-full w-full cursor-pointer overflow-hidden rounded-lg"
       onClick={onClick}
+      aria-label="Open image viewer"
     >
       <Image
         src={displayUrl}
         alt={idx !== undefined ? `${postTitle} - Item ${idx + 1}` : postTitle}
         fill
-        className="object-cover"
+        className="object-cover transition-transform duration-300 group-hover:scale-105"
         unoptimized={true}
         onError={() => setError(true)}
       />
-    </div>
+    </button>
   );
 }
 

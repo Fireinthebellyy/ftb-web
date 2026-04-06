@@ -19,6 +19,7 @@ import { NewOpportunityButton } from "@/components/opportunity/NewOpportunityBut
 import FeaturedOpportunities from "@/components/opportunity/FeaturedOpportunities";
 import { TagsDropdown } from "@/components/opportunity/TagsDropdown";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
+import { cn } from "@/lib/utils";
 import {
   AVAILABLE_TYPES,
   FEATURE_FLAGS,
@@ -436,10 +437,12 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
               <Button
                 size="sm"
                 onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
-                className={`shrink-0 transition-all bg-orange-600 text-white hover:bg-orange-700 hover:text-white ${isFilterBoxOpen
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-gray-400"
-                  }`}
+                className={cn(
+                  "shrink-0 transition-all",
+                  isFilterBoxOpen
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "bg-orange-600 text-white hover:bg-orange-700 hover:text-white border-gray-400"
+                )}
                 aria-label="Toggle filters"
                 aria-expanded={isFilterBoxOpen}
                 aria-controls="filters-panel-desktop"

@@ -1,6 +1,6 @@
 "use client";
  
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Bookmark } from "lucide-react";
 import UngatekeepCard from "@/components/ungatekeep/UngatekeepCard";
@@ -33,9 +33,11 @@ export default function SavedUngatekeepPage() {
     }
   });
 
-  if (error && !axios.isAxiosError(error)) {
-    toast.error("Failed to load saved posts");
-  }
+  useEffect(() => {
+    if (error && !axios.isAxiosError(error)) {
+      toast.error("Failed to load saved posts");
+    }
+  }, [error]);
 
   if (isLoading) {
     return (
@@ -210,7 +212,20 @@ export default function SavedUngatekeepPage() {
                 <h3 className="mb-2 text-lg font-semibold text-red-600">
                   Failed to load saved posts
                 </h3>
-                <Button onClick={() => refetch()} className="mt-4">Retry</Button>
+                <p className="mb-6 px-4 text-xs text-gray-500">
+                  {axios.isAxiosError(error) && error.response?.status === 401
+                    ? "Please log in to see your saved posts."
+                    : error.message || "An unknown error occurred."}
+                </p>
+                {axios.isAxiosError(error) && error.response?.status === 401 ? (
+                  <Button asChild size="sm">
+                    <Link href="/login?returnUrl=/ungatekeep/saved">Login</Link>
+                  </Button>
+                ) : (
+                  <Button onClick={() => refetch()} size="sm">
+                    Retry
+                  </Button>
+                )}
               </div>
             ) : savedPosts.length === 0 ? (
               <div className="rounded-lg border bg-white py-12 text-center">

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { badRequest } from "@/lib/api-error";
 import { db } from "@/lib/db";
 import { toolkits, user } from "@/lib/schema";
 import { hasMeaningfulRichText, normalizeRichText } from "@/lib/rich-text";
@@ -72,23 +73,36 @@ export async function POST(request: Request) {
       showSaleBadge,
     } = body;
 
-    if (
-      typeof title !== "string" ||
-      typeof description !== "string" ||
-      price === undefined ||
-      !coverImageUrl
-    ) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+    const missingFields: string[] = [];
+
+    if (typeof title !== "string" || !title.trim()) {
+      missingFields.push("title");
+    }
+
+    if (typeof description !== "string" || !description.trim()) {
+      missingFields.push("description");
+    }
+
+    if (price === undefined || price === null) {
+      missingFields.push("price");
+    }
+
+    if (typeof coverImageUrl !== "string" || !coverImageUrl.trim()) {
+      missingFields.push("coverImageUrl");
+    }
+
+    if (missingFields.length > 0) {
+      return badRequest("Please provide all required toolkit fields.", {
+        code: "MISSING_REQUIRED_FIELDS",
+        fields: missingFields,
+      });
     }
 
     if (!hasMeaningfulRichText(description, 10)) {
-      return NextResponse.json(
-        { error: "Description must be at least 10 characters" },
-        { status: 400 }
-      );
+      return badRequest("Description must be at least 10 characters.", {
+        code: "INVALID_DESCRIPTION",
+        fields: ["description"],
+      });
     }
 
     const newToolkit = await db

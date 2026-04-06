@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { validationError } from "@/lib/api-error";
 import { logAdminActivity } from "@/lib/admin-activity";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { db } from "@/lib/db";
@@ -101,10 +102,7 @@ export async function PUT(
     if (!validationResult.success) {
       activityStatus = 400;
       activityError = validationResult.error.errors;
-      return NextResponse.json(
-        { error: "Validation failed", details: validationResult.error.errors },
-        { status: 400 }
-      );
+      return validationError(validationResult.error);
     }
 
     const validatedData = validationResult.data;
@@ -161,10 +159,7 @@ export async function PUT(
     if (error instanceof z.ZodError) {
       activityStatus = 400;
       activityError = error.errors;
-      return NextResponse.json(
-        { error: "Validation failed", details: error.errors },
-        { status: 400 }
-      );
+      return validationError(error);
     }
 
     activityError = error;

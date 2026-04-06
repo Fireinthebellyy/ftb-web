@@ -104,7 +104,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
         const removed = await removeFromTracker(id, "internship");
         if (removed) toast.success("Deleted from Tracker");
       } else {
-        const added = await addToTracker(
+        const addOutcome = await addToTracker(
           {
             id,
             kind: "internship",
@@ -115,10 +115,12 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
           "Not Applied",
           "internship"
         );
-        if (added) {
+        if (addOutcome === "added") {
           toast.success("Saved to Tracker");
-        } else {
+        } else if (addOutcome === "already_exists") {
           toast.info("Already in Tracker");
+        } else {
+          toast.error("Failed to update tracker");
         }
       }
     } catch (error) {

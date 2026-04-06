@@ -304,9 +304,12 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
     <div className="h-full grow bg-gray-50">
       <div className="container mx-auto max-w-7xl px-4 pt-2">
         <div className="mb-5 lg:hidden">
-          <div className="mb-4 flex items-center justify-between gap-2">
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-600">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <div>
+              <h1 className="mb-1 text-xl font-bold text-gray-900">
+                Opportunities
+              </h1>
+              <p className="text-xs text-gray-600">
                 Filter the Noise, explore what matters.
               </p>
             </div>
@@ -419,10 +422,14 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
             </div>
           </aside>
 
-          <main className="col-span-6 max-h-[90vh] overflow-y-scroll pr-2">
-            <div className="mb-4 flex items-center justify-between gap-2">
-              <div className="flex-1">
-                <p className="text-md font-medium text-gray-600">
+          {/* Main Content - 6 columns */}
+          <main className="col-span-6 pr-2">
+            <div className="mb-6 flex items-center justify-between gap-4">
+              <div>
+                <h1 className="mb-1 text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
+                  Opportunities
+                </h1>
+                <p className="text-sm text-gray-600 md:text-base">
                   Filter the Noise, explore what matters.
                 </p>
               </div>

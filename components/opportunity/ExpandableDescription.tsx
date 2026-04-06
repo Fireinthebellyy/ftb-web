@@ -42,7 +42,7 @@ export function ExpandableDescription({
         <button
           type="button"
           onClick={() => setExpanded((prev) => !prev)}
-          className="mt-0.5 text-xs font-medium text-gray-500 hover:text-gray-800"
+          className="mt-0.5 text-xs font-medium text-primary hover:text-primary"
         >
           {expanded ? "Show less" : "Read more"}
         </button>

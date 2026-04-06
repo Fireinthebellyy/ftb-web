@@ -11,6 +11,7 @@ import {
   CarouselItem,
   CarouselPrevious,
   CarouselNext,
+  CarouselDots,
 } from "@/components/ui/carousel";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
@@ -73,10 +74,12 @@ function AttachmentSlide({
   imageId,
   postTitle,
   idx,
+  onClick,
 }: {
   imageId: string;
   postTitle: string;
   idx?: number;
+  onClick?: () => void;
 }) {
   const [error, setError] = useState(false);
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
@@ -157,7 +160,10 @@ function AttachmentSlide({
   }
 
   return (
-    <div className="group relative h-full w-full">
+    <div 
+      className="group relative h-full w-full cursor-pointer"
+      onClick={onClick}
+    >
       <Image
         src={displayUrl}
         alt={idx !== undefined ? `${postTitle} - Item ${idx + 1}` : postTitle}
@@ -170,12 +176,72 @@ function AttachmentSlide({
   );
 }
 
+function ImageModal({
+  attachments,
+  postTitle,
+  modalIndex,
+}: {
+  attachments: string[];
+  postTitle: string;
+  modalIndex: number;
+}) {
+  const [carouselApi, setCarouselApi] = useState<any>(null);
+
+  useEffect(() => {
+    if (carouselApi) {
+      setTimeout(() => carouselApi.scrollTo(modalIndex), 0);
+    }
+  }, [modalIndex, carouselApi]);
+
+  const images = attachments.filter(id => !id.toLowerCase().endsWith(".pdf"));
+
+  if (images.length <= 1) {
+    const fileId = images[0] || attachments[modalIndex];
+    return (
+      <div className="flex items-center justify-center p-0">
+        <Image
+          src={tryGetStoragePublicUrl("ungatekeep-images", fileId)}
+          alt={postTitle}
+          className="max-h-[85vh] w-full object-contain"
+          height={1200}
+          width={1200}
+          unoptimized={true}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <Carousel className="w-full" setApi={setCarouselApi}>
+      <CarouselContent>
+        {images.map((fileId, idx) => (
+          <CarouselItem key={idx}>
+            <div className="flex h-full items-center justify-center bg-transparent">
+              <Image
+                src={tryGetStoragePublicUrl("ungatekeep-images", fileId)}
+                alt={`${postTitle} - Image ${idx + 1}`}
+                className="max-h-[85vh] w-full object-contain"
+                height={1200}
+                width={1200}
+                unoptimized={true}
+              />
+            </div>
+          </CarouselItem>
+        ))}
+      </CarouselContent>
+      <CarouselDots className="mt-4" />
+    </Carousel>
+  );
+}
+
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function UngatekeepCard({ post }: UngatekeepCardProps) {
   const queryClient = useQueryClient();
   const [isExpanded, setIsExpanded] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalIndex, setModalIndex] = useState(0);
   const [isSaved, setIsSaved] = useState(post.isSaved || false);
   const [isFlying, setIsFlying] = useState(false);
   const [flyPos, setFlyPos] = useState({ x: 0, y: 0 });
@@ -404,11 +470,18 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
         {mediaItems.length > 0 && (
           <div className="mt-3">
             {mediaItems.length === 1 ? (
-              <div className="relative aspect-[9/16] max-h-[300px] w-full overflow-hidden rounded-lg bg-muted border">
+              <div className="relative aspect-square max-h-[400px] w-full overflow-hidden rounded-lg bg-muted border">
                 {mediaItems[0].type === "attachment" ? (
                   <AttachmentSlide
                     imageId={mediaItems[0].id}
                     postTitle={plainTextContent.slice(0, 50)}
+                    onClick={() => {
+                      const item = mediaItems[0];
+                      if (item.type === "attachment" && !item.id.toLowerCase().endsWith(".pdf")) {
+                        setModalIndex(0);
+                        setModalOpen(true);
+                      }
+                    }}
                   />
                 ) : (
                   <div className="h-full w-full bg-black">
@@ -434,12 +507,21 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
                         key={idx}
                         className="basis-[85%] pl-2 sm:basis-[75%]"
                       >
-                        <div className="relative aspect-[9/16] max-h-[300px] w-full overflow-hidden rounded-lg bg-muted border">
+                        <div className="relative aspect-square max-h-[400px] w-full overflow-hidden rounded-lg bg-muted border">
                           {item.type === "attachment" ? (
                             <AttachmentSlide
                               imageId={item.id}
                               postTitle={plainTextContent.slice(0, 50)}
                               idx={idx}
+                              onClick={() => {
+                                if (item.type === "attachment" && !item.id.toLowerCase().endsWith(".pdf")) {
+                                  // Find the index in the filtered images list
+                                  const imagesOnly = mediaItems.filter(mi => mi.type === "attachment" && !mi.id.toLowerCase().endsWith(".pdf"));
+                                  const imgIdx = imagesOnly.findIndex(mi => mi.type === "attachment" && mi.id === item.id);
+                                  setModalIndex(imgIdx >= 0 ? imgIdx : 0);
+                                  setModalOpen(true);
+                                }
+                              }}
                             />
                           ) : (
                             <div className="h-full w-full bg-black">
@@ -468,6 +550,19 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
             )}
           </div>
         )}
+
+        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+          <DialogContent
+            className="mx-auto min-w-auto p-0 md:min-w-3xl border-none bg-transparent shadow-none"
+            overlayClassName="bg-black/90 backdrop-blur-sm"
+          >
+            <ImageModal
+              attachments={post.attachments || []}
+              postTitle={plainTextContent.slice(0, 50)}
+              modalIndex={modalIndex}
+            />
+          </DialogContent>
+        </Dialog>
 
         {mediaItems.length === 0 && post.linkUrl && (
           <div className="mt-3 overflow-hidden rounded-lg border hover:bg-muted/50 transition-colors">

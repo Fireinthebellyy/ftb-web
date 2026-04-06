@@ -14,6 +14,8 @@ import UngatekeepCard from "@/components/ungatekeep/UngatekeepCard";
 import { stripHtml } from "@/lib/utils";
 import { useSession } from "@/hooks/use-session";
 import { motion, useAnimation } from "framer-motion";
+import { FeedbackWidget } from "@/components/FeedbackWidget";
+import FeaturedOpportunities from "@/components/opportunity/FeaturedOpportunities";
 
 type UngatekeepPost = {
   id: string;
@@ -150,6 +152,8 @@ export default function UngatekeepPage() {
   const isLimited = firstPage?.isLimited ?? false;
   const hiddenCount = totalCount - posts.length;
 
+  const [feedbackOpen, setFeedbackOpen] = React.useState(false);
+
   if (isLoading) {
     return (
       <div className="bg-gray-50">
@@ -179,11 +183,50 @@ export default function UngatekeepPage() {
   }
 
   return (
-    <div className="bg-gray-50">
-      <div className="container mx-auto max-w-7xl px-4 pt-2 pb-4 md:py-8">
-        <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+    <div className="h-full grow bg-gray-50">
+      <div className="container mx-auto max-w-7xl px-4 pt-2">
+        <div className="hidden gap-6 lg:grid lg:grid-cols-12">
+          {/* Left Sidebar */}
+          <aside className="col-span-3">
+            <div className="sticky top-6 space-y-6">
+              <div className="rounded-lg border bg-white px-4 py-3 shadow-sm">
+                <h3 className="mb-3 font-semibold text-gray-900">
+                  Quick Links
+                </h3>
+                <div className="space-y-2">
+                  <Link
+                    href={`https://wa.me/916377492042?text=${encodeURIComponent(
+                      "Hey, I would like to connect with you!"
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-sm text-gray-600 hover:text-gray-800"
+                  >
+                    Connect with us
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setFeedbackOpen(true)}
+                    className="block cursor-pointer text-sm text-gray-600 hover:text-gray-800"
+                  >
+                    Testimonial/Feedback
+                  </button>
+                  <Link
+                    href="/profile"
+                    prefetch={false}
+                    className="block text-sm text-gray-600 hover:text-gray-800"
+                  >
+                    My Profile
+                  </Link>
+                </div>
+              </div>
+
+              <FeaturedOpportunities />
+            </div>
+          </aside>
+
           {/* Main Content */}
-          <div className="min-w-0 flex-1">
+          <main className="col-span-6 max-h-[90vh] overflow-y-auto pr-2 thin-scrollbar">
             <PageBannerCarousel
               placement="ungatekeep"
               className="mb-4 w-full lg:mb-6"
@@ -293,16 +336,74 @@ export default function UngatekeepPage() {
                 ) : null}
               </div>
             )}
-          </div>
+          </main>
 
           {/* Right Sidebar */}
-          <aside className="w-full shrink-0 lg:w-80">
-            <div className="space-y-4 lg:sticky lg:top-20">
+          <aside className="col-span-3">
+            <div className="sticky top-6 space-y-6">
               <FeaturedToolkits />
             </div>
           </aside>
         </div>
+
+        {/* Mobile Feed */}
+        <div className="lg:hidden">
+          <PageBannerCarousel
+            placement="ungatekeep"
+            className="mb-4 w-full"
+          />
+          <div className="mb-4 flex items-start justify-between">
+            <div>
+              <h1 className="mb-1 text-xl font-bold text-gray-900">
+                Ungatekeep
+              </h1>
+              <p className="text-xs text-gray-600">
+                Everything students figure out too late.
+              </p>
+            </div>
+            <motion.div animate={savedButtonControls}>
+              <Link
+                href="/ungatekeep/saved"
+                aria-label="View saved posts"
+                className="group hover:text-primary relative flex items-center gap-1.5 rounded-full border bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm transition-all hover:bg-gray-50 active:scale-95"
+              >
+                <Bookmark className="group-hover:fill-primary group-hover:text-primary h-3 w-3 transition-colors sm:h-4 sm:w-4" />
+                {savedCount > 0 && (
+                  <span className="bg-primary absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[10px] text-white">
+                    {savedCount}
+                  </span>
+                )}
+              </Link>
+            </motion.div>
+          </div>
+
+          <div className="w-full space-y-2">
+            {posts.map((post) => (
+              <UngatekeepCard key={post.id} post={post} />
+            ))}
+            {hasNextPage && (
+              <div ref={loadMoreRef} className="flex justify-center py-4">
+                {isFetchingNextPage && (
+                  <Loader2 className="text-primary h-6 w-6 animate-spin" />
+                )}
+              </div>
+            )}
+            {isLimited && (
+              <div className="rounded-lg border border-dashed border-gray-300 bg-white/80 py-8 text-center backdrop-blur-sm">
+                <Lock className="mx-auto mb-3 h-8 w-8 text-gray-400" />
+                <h3 className="mb-2 text-lg font-semibold text-gray-700">
+                  {hiddenCount} more posts available
+                </h3>
+                <p className="mb-4 text-gray-500">Login to see all posts and announcements</p>
+                <Button asChild>
+                  <Link href="/login?returnUrl=/ungatekeep">Login to continue</Link>
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
+      <FeedbackWidget isOpen={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </div>
   );
 }

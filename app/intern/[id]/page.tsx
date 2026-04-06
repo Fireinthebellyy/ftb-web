@@ -105,14 +105,28 @@ export default function InternshipDetailPage() {
         const removed = await removeFromTracker(id, "internship");
         if (removed) toast.success("Deleted from Tracker");
       } else {
-        const added = await addToTracker(id, "Not Applied", "internship");
-        if (added) {
+        const addOutcome = await addToTracker(
+          {
+            id,
+            kind: "internship",
+            title: internship.title,
+            company: internship.hiringOrganization,
+            location: internship.location,
+            type: internship.type,
+            deadline: internship.deadline,
+          },
+          "Not Applied",
+          "internship"
+        );
+        if (addOutcome === "added") {
           const trackerTab = "internship";
           toast.success("Saved to Tracker", {
             action: { label: "View", onClick: () => router.push(`/tracker?tab=${trackerTab}`) },
           });
-        } else {
+        } else if (addOutcome === "already_exists") {
           toast.info("Already in Tracker");
+        } else {
+          toast.error("Failed to update bookmark");
         }
       }
     } catch (error) {

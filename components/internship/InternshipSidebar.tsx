@@ -87,10 +87,6 @@ export const InternshipSidebar: React.FC<InternshipSidebarProps> = ({
         <h4 className="text-[16px] font-bold text-[#ec5b13] mb-2">
           Need Help?
         </h4>
-        <p className="text-[14px] text-slate-600 mb-6 leading-relaxed">
-          Have questions about the application process? Chat with our
-          recruitment bot.
-        </p>
         <Button
           variant="outline"
           onClick={handleOpenChat}

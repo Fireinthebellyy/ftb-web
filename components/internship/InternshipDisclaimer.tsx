@@ -52,15 +52,15 @@ export const InternshipDisclaimer: React.FC<InternshipDisclaimerProps> = ({
         </div>
         <div className="flex items-start gap-3">
           <Flag
-            className={`mt-0.5 shrink-0 text-slate-500 ${
-              isMobile ? "h-4 w-4" : "h-4 w-4 text-slate-600"
+            className={`mt-0.5 shrink-0 text-red-600 ${
+              isMobile ? "h-4 w-4" : "h-4 w-4 text-red-600"
             }`}
           />
           <button
             type="button"
             onClick={onFlag}
             disabled={isFlagging || isFlagged}
-            className={`text-left font-medium text-slate-700 transition-colors hover:text-[#ec5b13] disabled:cursor-not-allowed disabled:text-slate-400 ${
+            className={`text-left font-semibold text-red-700 transition-colors hover:text-red-800 disabled:cursor-not-allowed disabled:text-red-300 ${
               isMobile ? "text-[13px]" : "text-[14px]"
             }`}
           >
@@ -68,7 +68,7 @@ export const InternshipDisclaimer: React.FC<InternshipDisclaimerProps> = ({
               ? "Flagging internship..."
               : isFlagged
                 ? "Internship flagged for review"
-                : "Flag this internship for review"}
+                : "Report this Internship"}
           </button>
         </div>
       </div>

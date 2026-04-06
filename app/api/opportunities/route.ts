@@ -328,7 +328,7 @@ export async function GET(req: NextRequest) {
         conditions.push(inArray(opportunities.id, ids));
       }
 
-      if (usePublishAt) {
+        if (usePublishAt && ids.length === 0) {
         conditions.push(
           or(
             isNull(opportunities.publishAt),
@@ -337,7 +337,7 @@ export async function GET(req: NextRequest) {
         );
       }
 
-      if (sessionRole !== "admin") {
+        if (sessionRole !== "admin" && ids.length === 0) {
         conditions.push(eq(opportunities.isActive, true));
       }
 

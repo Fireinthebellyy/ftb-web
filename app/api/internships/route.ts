@@ -104,6 +104,7 @@ export async function GET(req: NextRequest) {
     );
     const limitParam = Number.parseInt(searchParams.get("limit") ?? "", 10);
     const offsetParam = Number.parseInt(searchParams.get("offset") ?? "", 10);
+    const idsParam = searchParams.get("ids");
 
     const searchTerm = searchParam ? searchParam.trim() : "";
     const rawTypes = typesParam
@@ -139,11 +140,21 @@ export async function GET(req: NextRequest) {
       ? undefined
       : Math.min(Math.max(limitParam, 1), 100);
     const offset = Number.isNaN(offsetParam) ? 0 : Math.max(offsetParam, 0);
+    const ids = idsParam
+      ? idsParam
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean)
+      : [];
 
     const conditions: SQL<unknown>[] = [isNull(internships.deletedAt)];
 
     if (!isAdmin) {
       conditions.push(eq(internships.isActive, true));
+    }
+
+    if (ids.length > 0) {
+      conditions.push(inArray(internships.id, ids));
     }
 
     if (searchTerm) {
@@ -195,20 +206,23 @@ export async function GET(req: NextRequest) {
       conditions.push(lte(internships.stipend, maxStipend));
     }
 
-    // 🔥 Recent OR future deadline filter
-    const fiveDaysAgo = new Date();
-    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
-    fiveDaysAgo.setHours(0, 0, 0, 0);
+    // Keep list behavior for discovery pages, but allow tracker hydration by ids
+    // to include expired internships so saved items do not lose metadata.
+    if (ids.length === 0) {
+      const fiveDaysAgo = new Date();
+      fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+      fiveDaysAgo.setHours(0, 0, 0, 0);
 
-    conditions.push(
-      or(
-        gte(internships.createdAt, fiveDaysAgo),
-        and(
-          isNull(internships.deletedAt),
-          gt(internships.deadline, sql`CURRENT_DATE`)
+      conditions.push(
+        or(
+          gte(internships.createdAt, fiveDaysAgo),
+          and(
+            isNull(internships.deletedAt),
+            gt(internships.deadline, sql`CURRENT_DATE`)
+          )
         )
-      )
-    );
+      );
+    }
 
     const filters =
       conditions.length === 1 ? conditions[0] : and(...conditions);

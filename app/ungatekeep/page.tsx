@@ -51,7 +51,8 @@ type UngatekeepResponse = {
 
 export default function UngatekeepPage() {
   const { data: session } = useSession();
-  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const loadMoreRefDesktop = useRef<HTMLDivElement>(null);
+  const loadMoreRefMobile = useRef<HTMLDivElement>(null);
   const savedButtonControls = useAnimation();
   const { data: savedCountData } = useQuery({
     queryKey: ["ungatekeep-saved-count", session?.user?.id],
@@ -98,10 +99,7 @@ export default function UngatekeepPage() {
   });
 
   useEffect(() => {
-    const target = loadMoreRef.current;
-    if (!target || !hasNextPage) {
-      return;
-    }
+    if (!hasNextPage) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -118,10 +116,15 @@ export default function UngatekeepPage() {
       }
     );
 
-    observer.observe(target);
+    const desktopTarget = loadMoreRefDesktop.current;
+    const mobileTarget = loadMoreRefMobile.current;
+
+    if (desktopTarget) observer.observe(desktopTarget);
+    if (mobileTarget) observer.observe(mobileTarget);
 
     return () => {
-      observer.unobserve(target);
+      if (desktopTarget) observer.unobserve(desktopTarget);
+      if (mobileTarget) observer.unobserve(mobileTarget);
       observer.disconnect();
     };
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
@@ -307,7 +310,7 @@ export default function UngatekeepPage() {
                 ))}
 
                 {hasNextPage && (
-                  <div ref={loadMoreRef} className="flex justify-center py-4">
+                  <div ref={loadMoreRefDesktop} className="flex justify-center py-4">
                     {isFetchingNextPage && (
                       <Loader2 className="text-primary h-6 w-6 animate-spin" />
                     )}
@@ -377,30 +380,53 @@ export default function UngatekeepPage() {
             </motion.div>
           </div>
 
-          <div className="w-full space-y-2">
-            {posts.map((post) => (
-              <UngatekeepCard key={post.id} post={post} />
-            ))}
-            {hasNextPage && (
-              <div ref={loadMoreRef} className="flex justify-center py-4">
-                {isFetchingNextPage && (
-                  <Loader2 className="text-primary h-6 w-6 animate-spin" />
-                )}
-              </div>
-            )}
-            {isLimited && (
-              <div className="rounded-lg border border-dashed border-gray-300 bg-white/80 py-8 text-center backdrop-blur-sm">
-                <Lock className="mx-auto mb-3 h-8 w-8 text-gray-400" />
-                <h3 className="mb-2 text-lg font-semibold text-gray-700">
-                  {hiddenCount} more posts available
-                </h3>
-                <p className="mb-4 text-gray-500">Login to see all posts and announcements</p>
-                <Button asChild>
-                  <Link href="/login?returnUrl=/ungatekeep">Login to continue</Link>
-                </Button>
-              </div>
-            )}
-          </div>
+          {isError && (
+            <div className="rounded-lg border bg-white py-12 text-center">
+              <h3 className="mb-2 text-lg font-semibold text-red-600">
+                Failed to load posts
+              </h3>
+              <p className="mb-6 text-gray-500 text-xs">
+                {error?.message || "An unknown error occurred."}
+              </p>
+              <Button onClick={() => refetch()} size="sm">Retry</Button>
+            </div>
+          )}
+
+          {!isLoading && !isError && posts.length === 0 ? (
+            <div className="rounded-lg border bg-white py-12 text-center">
+              <h3 className="mb-2 text-sm font-semibold text-gray-600">
+                No posts yet
+              </h3>
+              <p className="text-xs text-gray-500">
+                Check back soon for updates!
+              </p>
+            </div>
+          ) : (
+            <div className="w-full space-y-2">
+              {posts.map((post) => (
+                <UngatekeepCard key={post.id} post={post} />
+              ))}
+              {hasNextPage && (
+                <div ref={loadMoreRefMobile} className="flex justify-center py-4">
+                  {isFetchingNextPage && (
+                    <Loader2 className="text-primary h-6 w-6 animate-spin" />
+                  )}
+                </div>
+              )}
+              {isLimited && (
+                <div className="rounded-lg border border-dashed border-gray-300 bg-white/80 py-8 text-center backdrop-blur-sm">
+                  <Lock className="mx-auto mb-3 h-8 w-8 text-gray-400" />
+                  <h3 className="mb-2 text-sm font-semibold text-gray-700">
+                    {hiddenCount} more posts available
+                  </h3>
+                  <p className="mb-4 text-xs text-gray-500">Login to see all posts and announcements</p>
+                  <Button asChild size="sm">
+                    <Link href="/login?returnUrl=/ungatekeep">Login to continue</Link>
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
       <FeedbackWidget isOpen={feedbackOpen} onOpenChange={setFeedbackOpen} />

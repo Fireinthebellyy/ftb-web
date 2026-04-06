@@ -40,6 +40,8 @@ import {
   deleteStorageObjectClient,
   uploadFileViaSignedUrl,
 } from "@/lib/storage/client";
+import { normalizeRichText } from "@/lib/rich-text";
+import { stripHtml } from "@/lib/utils";
 
 async function fetchToolkits(): Promise<Toolkit[]> {
   const response = await axios.get<Toolkit[]>("/api/admin/toolkits");
@@ -195,6 +197,7 @@ export default function AdminToolkitsTable() {
 
       const cleanedData = {
         ...data,
+        description: normalizeRichText(data.description),
         coverImageUrl,
         bannerImageUrl,
         videoUrl: data.videoUrl || undefined,
@@ -253,7 +256,7 @@ export default function AdminToolkitsTable() {
           <div className="max-w-xs">
             <div className="truncate font-medium">{row.original.title}</div>
             <div className="text-muted-foreground truncate text-sm">
-              {row.original.description}
+              {stripHtml(row.original.description)}
             </div>
           </div>
         ),

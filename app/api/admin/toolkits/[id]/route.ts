@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { logAdminActivity } from "@/lib/admin-activity";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { db } from "@/lib/db";
+import { hasMeaningfulRichText, normalizeRichText } from "@/lib/rich-text";
 import { toolkits } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { eq } from "drizzle-orm";
@@ -9,7 +10,13 @@ import { z } from "zod";
 
 const updateToolkitSchema = z.object({
   title: z.string().min(1, "Title is required").optional(),
-  description: z.string().optional(),
+  description: z
+    .string()
+    .optional()
+    .refine(
+      (value) => value === undefined || hasMeaningfulRichText(value, 10),
+      "Description must be at least 10 characters"
+    ),
   price: z
     .number()
     .min(0, "Price must be greater than or equal to 0")
@@ -108,7 +115,7 @@ export async function PUT(
 
     if (validatedData.title !== undefined) updates.title = validatedData.title;
     if (validatedData.description !== undefined)
-      updates.description = validatedData.description;
+      updates.description = normalizeRichText(validatedData.description);
     if (validatedData.price !== undefined) updates.price = validatedData.price;
     if (validatedData.originalPrice !== undefined)
       updates.originalPrice = validatedData.originalPrice;

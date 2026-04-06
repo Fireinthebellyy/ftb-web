@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import dynamic from "next/dynamic";
 import axios from "axios";
 import { toast } from "sonner";
 import {
@@ -20,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -46,40 +46,7 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import "react-quill-new/dist/quill.snow.css";
-
-const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
-
-const quillModules = {
-  toolbar: [
-    [{ header: [1, 2, 3, false] }],
-    ["bold", "italic", "underline", "strike"],
-    [{ list: "ordered" }, { list: "bullet" }],
-    ["blockquote", "code-block"],
-    ["link"],
-    ["clean"],
-  ],
-};
-
-const hasMeaningfulRichText = (value?: string): boolean => {
-  if (!value) {
-    return false;
-  }
-
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return false;
-  }
-
-  const withoutTags = trimmed.replace(/<[^>]*>/g, " ");
-  const normalizedText = withoutTags
-    .replace(/&nbsp;|&#160;|&#xA0;/gi, " ")
-    .replace(/\u00a0/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  return normalizedText.length > 0;
-};
+import { hasMeaningfulRichText, normalizeRichText } from "@/lib/rich-text";
 
 const contentItemSchema = z
   .object({
@@ -218,39 +185,13 @@ export default function ToolkitContentManager({
     return value;
   };
 
-  const normalizeQuillContent = (value: string): string => {
-    const trimmed = value.trim();
-
-    const decodeHtmlEntities = (input: string): string => {
-      if (typeof window === "undefined") {
-        return input;
-      }
-
-      const textarea = window.document.createElement("textarea");
-      textarea.innerHTML = input;
-      return textarea.value;
-    };
-
-    const withoutTags = trimmed.replace(/<[^>]*>/g, " ");
-    const decodedText = decodeHtmlEntities(withoutTags)
-      .replace(/&nbsp;|&#160;|&#xA0;/gi, " ")
-      .replace(/\u00a0/g, " ");
-    const normalizedText = decodedText.replace(/\s+/g, " ").trim();
-
-    if (!normalizedText) {
-      return "";
-    }
-
-    return trimmed;
-  };
-
   const handleSave = async (data: ContentItemFormValues) => {
     try {
       const { isArticle, isVideo, content, bunnyVideoUrl, ...rest } = data;
 
       const payload = {
         ...rest,
-        content: isArticle ? normalizeQuillContent(content ?? "") : "",
+        content: isArticle ? normalizeRichText(content ?? "") : "",
         bunnyVideoUrl: isVideo ? extractVideoUrl(bunnyVideoUrl || "") : "",
         type: isVideo && !isArticle ? "video" : "article",
       };
@@ -510,15 +451,11 @@ export default function ToolkitContentManager({
                         <FormItem>
                           <FormLabel>Content {"*"}</FormLabel>
                           <FormControl>
-                            <div className="[&_div.ql-container]:min-h-[220px] [&_div.ql-editor]:max-h-[35vh] [&_div.ql-editor]:min-h-[220px] [&_div.ql-editor]:overflow-y-auto">
-                              <ReactQuill
-                                theme="snow"
-                                value={field.value ?? ""}
-                                onChange={field.onChange}
-                                modules={quillModules}
-                                placeholder="Write article content..."
-                              />
-                            </div>
+                            <RichTextEditor
+                              value={field.value ?? ""}
+                              onChange={field.onChange}
+                              placeholder="Write article content..."
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

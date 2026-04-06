@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { hasMeaningfulRichText } from "@/lib/rich-text";
 
 export const toolkitTestimonialSchema = z.object({
   name: z.string(),
@@ -8,9 +9,9 @@ export const toolkitTestimonialSchema = z.object({
 
 export const toolkitFormSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters." }),
-  description: z
-    .string()
-    .min(10, { message: "Description must be at least 10 characters." }),
+  description: z.string().refine((value) => hasMeaningfulRichText(value, 10), {
+    message: "Description must be at least 10 characters.",
+  }),
   price: z.coerce
     .number()
     .min(0, { message: "Price must be a positive number." }),

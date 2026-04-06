@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, BookOpen, Check, Clock, Cloud } from "lucide-react";
+import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
 import ToolkitSidebar from "@/components/toolkit/ToolkitSidebar";
 import ContentList from "@/components/toolkit/ContentList";
 import ToolkitDetailSkeleton from "@/components/toolkit/ToolkitDetailSkeleton";
@@ -241,10 +242,10 @@ export default function ToolkitDetailPage() {
                   </div>
                 </div>
 
-                <p className="text-gray-700">
-                  {toolkit.description.charAt(0).toUpperCase() +
-                    toolkit.description.slice(1)}
-                </p>
+                <HtmlRenderer
+                  content={toolkit.description}
+                  className="text-gray-700"
+                />
 
                 {toolkit.highlights && toolkit.highlights.length > 0 && (
                   <div className="mt-6">

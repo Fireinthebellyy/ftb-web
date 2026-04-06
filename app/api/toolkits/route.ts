@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { toolkits, user } from "@/lib/schema";
+import { hasMeaningfulRichText, normalizeRichText } from "@/lib/rich-text";
 import { getCurrentUser } from "@/server/users";
 import { eq, desc } from "drizzle-orm";
 
@@ -71,9 +72,21 @@ export async function POST(request: Request) {
       showSaleBadge,
     } = body;
 
-    if (!title || !description || price === undefined || !coverImageUrl) {
+    if (
+      typeof title !== "string" ||
+      typeof description !== "string" ||
+      price === undefined ||
+      !coverImageUrl
+    ) {
       return NextResponse.json(
         { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    if (!hasMeaningfulRichText(description, 10)) {
+      return NextResponse.json(
+        { error: "Description must be at least 10 characters" },
         { status: 400 }
       );
     }
@@ -82,7 +95,7 @@ export async function POST(request: Request) {
       .insert(toolkits)
       .values({
         title,
-        description,
+        description: normalizeRichText(description),
         price,
         originalPrice,
         coverImageUrl,

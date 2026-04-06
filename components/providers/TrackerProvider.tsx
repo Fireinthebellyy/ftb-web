@@ -60,6 +60,8 @@ export interface TrackerEvent {
   description: string;
 }
 
+export type TrackerAddOutcome = "added" | "already_exists" | "sync_failed";
+
 interface TrackerContextType {
   items: TrackerItem[];
   events: TrackerEvent[];
@@ -67,7 +69,7 @@ interface TrackerContextType {
     oppOrId: number | string | ManualTrackerInput,
     initialStatus?: string,
     kind?: "internship" | "opportunity"
-  ) => Promise<boolean>;
+  ) => Promise<TrackerAddOutcome>;
   removeFromTracker: (
     oppId: number | string,
     kind?: "internship" | "opportunity"
@@ -194,15 +196,39 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // Helper to sync state changes to API (Optimistic updates)
-  const syncItemToBackend = async (item: TrackerItem) => {
+  const syncItemToBackend = async (
+    item: TrackerItem
+  ): Promise<TrackerAddOutcome> => {
     try {
-      await fetch("/api/tracker", {
+      const response = await fetch("/api/tracker", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "add_item", data: item }),
       });
-    } catch (e) {
-      console.error("Failed to sync item", e);
+
+      let payload: Record<string, unknown> | null = null;
+      try {
+        payload = (await response.json()) as Record<string, unknown>;
+      } catch {
+        payload = null;
+      }
+
+      if (
+        response.status === 409 ||
+        payload?.already_exists === true ||
+        payload?.code === "already_exists"
+      ) {
+        return "already_exists";
+      }
+
+      if (!response.ok || payload?.success === false) {
+        return "sync_failed";
+      }
+
+      return "added";
+    } catch (error) {
+      console.error("Failed to sync item", error);
+      return "sync_failed";
     }
   };
 
@@ -429,7 +455,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     oppOrId: number | string | ManualTrackerInput,
     initialStatus = "Not Applied",
     kind: "internship" | "opportunity" = "internship"
-  ): Promise<boolean> => {
+  ): Promise<TrackerAddOutcome> => {
     const isManual = typeof oppOrId === "object";
     const idToCheck = isManual
       ? ((oppOrId as ManualTrackerInput).id ?? Date.now())
@@ -441,7 +467,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
     const nextKey = getTrackerKey(idToCheck, effectiveKind);
 
     // Prevent duplicate concurrent adds for same key
-    if (pendingAdds.current.has(nextKey)) return false;
+    if (pendingAdds.current.has(nextKey)) return "already_exists";
 
     const isAlreadyAdded = trackedItems.some(
       (i) => getTrackerKey(i.oppId, i.kind) === nextKey
@@ -449,7 +475,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
 
     if (isAlreadyAdded) {
       // caller should show "Already in Tracker" if desired
-      return false;
+      return "already_exists";
     }
 
     // mark pending
@@ -476,14 +502,22 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
 
     // Backend Sync
     try {
-      await syncItemToBackend(newItem);
-      return true;
+      const syncOutcome = await syncItemToBackend(newItem);
+
+      if (syncOutcome === "sync_failed") {
+        setTrackedItems((prevItems) =>
+          prevItems.filter((i) => getTrackerKey(i.oppId, i.kind) !== nextKey)
+        );
+        return "sync_failed";
+      }
+
+      return syncOutcome;
     } catch (error) {
       console.error("Optimistic add failed, reverting:", error);
       setTrackedItems((prevItems) =>
         prevItems.filter((i) => getTrackerKey(i.oppId, i.kind) !== nextKey)
       );
-      return false;
+      return "sync_failed";
     } finally {
       pendingAdds.current.delete(nextKey);
     }

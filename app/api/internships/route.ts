@@ -10,6 +10,7 @@ import { internships, user } from "@/lib/schema";
 import {
   SQL,
   and,
+  count,
   desc,
   eq,
   gt,
@@ -103,6 +104,7 @@ export async function GET(req: NextRequest) {
     );
     const limitParam = Number.parseInt(searchParams.get("limit") ?? "", 10);
     const offsetParam = Number.parseInt(searchParams.get("offset") ?? "", 10);
+    const idsParam = searchParams.get("ids");
 
     const searchTerm = searchParam ? searchParam.trim() : "";
     const rawTypes = typesParam
@@ -137,14 +139,22 @@ export async function GET(req: NextRequest) {
     const limit = Number.isNaN(limitParam)
       ? undefined
       : Math.min(Math.max(limitParam, 1), 100);
-    const offset = Number.isNaN(offsetParam)
-      ? 0
-      : Math.max(offsetParam, 0);
+    const offset = Number.isNaN(offsetParam) ? 0 : Math.max(offsetParam, 0);
+    const ids = idsParam
+      ? idsParam
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean)
+      : [];
 
     const conditions: SQL<unknown>[] = [isNull(internships.deletedAt)];
 
     if (!isAdmin) {
       conditions.push(eq(internships.isActive, true));
+    }
+
+    if (ids.length > 0) {
+      conditions.push(inArray(internships.id, ids));
     }
 
     if (searchTerm) {
@@ -171,7 +181,9 @@ export async function GET(req: NextRequest) {
           )`
       );
 
-      conditions.push(tagConditions.length === 1 ? tagConditions[0] : or(...tagConditions));
+      conditions.push(
+        tagConditions.length === 1 ? tagConditions[0] : or(...tagConditions)
+      );
     }
 
     if (rawLocations.length > 0) {
@@ -194,20 +206,23 @@ export async function GET(req: NextRequest) {
       conditions.push(lte(internships.stipend, maxStipend));
     }
 
-    // 🔥 Recent OR future deadline filter
-    const fiveDaysAgo = new Date();
-    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
-    fiveDaysAgo.setHours(0, 0, 0, 0);
+    // Keep list behavior for discovery pages, but allow tracker hydration by ids
+    // to include expired internships so saved items do not lose metadata.
+    if (ids.length === 0) {
+      const fiveDaysAgo = new Date();
+      fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+      fiveDaysAgo.setHours(0, 0, 0, 0);
 
-    conditions.push(
-      or(
-        gte(internships.createdAt, fiveDaysAgo),
-        and(
-          isNull(internships.deletedAt),
-          gt(internships.deadline, sql`CURRENT_DATE`)
+      conditions.push(
+        or(
+          gte(internships.createdAt, fiveDaysAgo),
+          and(
+            isNull(internships.deletedAt),
+            gt(internships.deadline, sql`CURRENT_DATE`)
+          )
         )
-      )
-    );
+      );
+    }
 
     const filters =
       conditions.length === 1 ? conditions[0] : and(...conditions);
@@ -246,15 +261,42 @@ export async function GET(req: NextRequest) {
       .where(filters)
       .orderBy(desc(internships.createdAt));
 
-    const allInternships =
+    const rows =
       limit !== undefined
-        ? await query.limit(limit).offset(offset)
+        ? await query.limit(limit + 1).offset(offset)
         : await query;
+    let allInternships = rows;
+    let pagination:
+      | {
+          limit: number;
+          offset: number;
+          total: number;
+          hasMore: boolean;
+        }
+      | undefined;
+
+    if (limit !== undefined) {
+      const hasMore = rows.length > limit;
+      allInternships = hasMore ? rows.slice(0, limit) : rows;
+
+      const total =
+        (
+          await db.select({ total: count() }).from(internships).where(filters)
+        )[0]?.total ?? 0;
+
+      pagination = {
+        limit,
+        offset,
+        total,
+        hasMore,
+      };
+    }
 
     return NextResponse.json(
       {
         success: true,
         internships: allInternships,
+        ...(pagination ? { pagination } : {}),
       },
       { status: 200 }
     );

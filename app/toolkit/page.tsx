@@ -10,10 +10,8 @@ import { Toolkit } from "@/types/interfaces";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const toolkitTestimonials = [
-  "These toolkits cut through the noise. I stopped overthinking and started taking action with a clear plan.",
-  "I finally understood what to do week by week for internships. Super practical and easy to follow.",
-  "The lessons feel like senior guidance, not generic advice. Helped me move faster with confidence.",
-  "Whenever I feel stuck, I open a toolkit and leave with a clear next step.",
+  "Not gonna lie, this was crazy helpful. I wasn't expecting something this practical and detailed. -- 2nd year, Christ Bangalore",
+  "I was getting rejected in the first round of every society GD while my classmates were getting into 180DC, IFSA, and P-Cell. I'm naturally introverted and would freeze when asked unexpected questions. The Interview Prep content helped me build a clear way to think and structure my answers on the spot. I stopped blanking out and started responding with more confidence, which honestly changed how I approached interviews. These toolkits will be a saviour for many. -- BCom (Hons) Student, Delhi University",
 ];
 
 export default function ToolkitPage() {

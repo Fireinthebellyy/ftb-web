@@ -60,7 +60,9 @@ const SearchWidget = ({
     if (!isSearchFocused || filteredSuggestions.length === 0) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setFocusedIndex((prev) => Math.min(prev + 1, filteredSuggestions.length - 1));
+      setFocusedIndex((prev) =>
+        Math.min(prev + 1, filteredSuggestions.length - 1)
+      );
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setFocusedIndex((prev) => Math.max(prev - 1, -1));
@@ -124,7 +126,7 @@ const SearchWidget = ({
         </button>
       </div>
       {isSearchFocused && filteredSuggestions.length > 0 && (
-        <ul className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-[16px] border border-slate-200 bg-white shadow-lg">
+        <ul className="absolute top-[calc(100%+8px)] right-0 left-0 z-50 overflow-hidden rounded-[16px] border border-slate-200 bg-white shadow-lg">
           {filteredSuggestions.map((suggestion, idx) => (
             <li key={suggestion}>
               <button
@@ -137,7 +139,8 @@ const SearchWidget = ({
                 }}
                 className={cn(
                   "flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 focus:bg-slate-50",
-                  idx === focusedIndex && "bg-orange-50 text-[#ec5b13] font-bold"
+                  idx === focusedIndex &&
+                    "bg-orange-50 font-bold text-[#ec5b13]"
                 )}
                 tabIndex={-1}
               >
@@ -263,6 +266,7 @@ export default function InternshipList() {
   const {
     data,
     isLoading,
+    isFetching,
     error,
     fetchNextPage,
     hasNextPage,
@@ -289,20 +293,23 @@ export default function InternshipList() {
     []
   );
 
-  const searchSuggestions = useMemo(() => [
-    "Software Engineer",
-    "Data Science",
-    "Product Management",
-    "Marketing",
-    "UI/UX Design",
-    "Finance",
-    "Data Analyst",
-    "Machine Learning",
-    "Business Analyst",
-    "Human Resources",
-    "Sales",
-    "Remote Internships"
-  ], []);
+  const searchSuggestions = useMemo(
+    () => [
+      "Software Engineer",
+      "Data Science",
+      "Product Management",
+      "Marketing",
+      "UI/UX Design",
+      "Finance",
+      "Data Analyst",
+      "Machine Learning",
+      "Business Analyst",
+      "Human Resources",
+      "Sales",
+      "Remote Internships",
+    ],
+    []
+  );
 
   const filteredSuggestions = useMemo(() => {
     if (!searchTerm.trim()) {
@@ -310,7 +317,7 @@ export default function InternshipList() {
     }
     const term = searchTerm.toLowerCase();
     return searchSuggestions
-      .filter(s => s.toLowerCase().includes(term))
+      .filter((s) => s.toLowerCase().includes(term))
       .slice(0, 5);
   }, [searchTerm, searchSuggestions]);
 
@@ -327,12 +334,7 @@ export default function InternshipList() {
       setAppliedTypes(selectedTypes);
       setAppliedPaidOnly(paidOnly);
     },
-    [
-      searchTerm,
-      normalizedLocation,
-      selectedTypes,
-      paidOnly,
-    ]
+    [searchTerm, normalizedLocation, selectedTypes, paidOnly]
   );
 
   // Rotate placeholders every 3 seconds
@@ -350,7 +352,8 @@ export default function InternshipList() {
   const allInternships = (
     data?.pages?.flatMap((page) => page.internships) || []
   ).filter(Boolean);
-  const showInitialSkeleton = isLoading && allInternships.length === 0;
+  const showInitialSkeleton =
+    (isLoading || isFetching) && allInternships.length === 0;
 
   // Intersection observer for infinite scroll
   const loadMoreDesktopRef = useRef<HTMLDivElement>(null);

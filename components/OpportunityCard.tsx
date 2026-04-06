@@ -84,7 +84,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
     try {
       if (newState) {
-        const added = await addToTracker(
+        const addOutcome = await addToTracker(
           {
             id,
             opportunityId: id,
@@ -107,8 +107,13 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           "Not Applied",
           "opportunity"
         );
-        if (added) toast.success("Saved to Tracker");
-        else toast.info("Already in Tracker");
+        if (addOutcome === "added") {
+          toast.success("Saved to Tracker");
+        } else if (addOutcome === "already_exists") {
+          toast.info("Already in Tracker");
+        } else {
+          toast.error("Failed to update bookmark");
+        }
       } else {
         if (trackedItem) {
           const removed = await removeFromTracker(

@@ -68,7 +68,7 @@ export default function WhatsAppWidget() {
         <DrawerTrigger asChild>
           <button
             className={cn(
-              "fixed right-6 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-neutral-200 text-neutral-600 shadow-lg hover:bg-neutral-100 md:hidden",
+              "fixed right-6 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-green-600 text-white shadow-lg hover:bg-green-500 md:hidden",
               mobileBottomClass
             )}
             aria-label="Chat on WhatsApp"
@@ -108,7 +108,7 @@ export default function WhatsAppWidget() {
         <DialogTrigger asChild>
           <button
             className={cn(
-              "fixed right-6 z-50 hidden h-12 w-12 items-center justify-center rounded-full bg-neutral-200 text-neutral-600 shadow-lg hover:bg-neutral-100 md:flex",
+              "fixed right-6 z-50 hidden h-12 w-12 items-center justify-center rounded-full bg-green-600 text-white shadow-lg hover:bg-green-500 md:flex",
               desktopBottomClass
             )}
             aria-label="Chat on WhatsApp"

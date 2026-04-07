@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { badRequest } from "@/lib/api-error";
 import { logAdminActivity } from "@/lib/admin-activity";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { db } from "@/lib/db";
@@ -107,13 +108,50 @@ export async function POST(
     const body = await request.json();
     const { title, type, content, bunnyVideoUrl, orderIndex } = body;
 
-    if (!title || !type) {
+    const missingFields: string[] = [];
+
+    if (typeof title !== "string" || !title.trim()) {
+      missingFields.push("title");
+    }
+
+    if (typeof type !== "string" || !type.trim()) {
+      missingFields.push("type");
+    }
+
+    if (missingFields.length > 0) {
       activityStatus = 400;
-      activityError = "Missing required fields";
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      activityError = "Missing required toolkit content fields";
+      return badRequest("Please provide title and content type.", {
+        code: "MISSING_REQUIRED_FIELDS",
+        fields: missingFields,
+      });
+    }
+
+    if (!["article", "video"].includes(type)) {
+      activityStatus = 400;
+      activityError = "Invalid content type";
+      return badRequest("Content type must be either article or video.", {
+        code: "INVALID_CONTENT_TYPE",
+        fields: ["type"],
+      });
+    }
+
+    if (type === "article" && (!content || !String(content).trim())) {
+      activityStatus = 400;
+      activityError = "Article content is required";
+      return badRequest("Article content is required for article lessons.", {
+        code: "MISSING_REQUIRED_FIELDS",
+        fields: ["content"],
+      });
+    }
+
+    if (type === "video" && (!bunnyVideoUrl || !String(bunnyVideoUrl).trim())) {
+      activityStatus = 400;
+      activityError = "Video URL is required";
+      return badRequest("Video URL is required for video lessons.", {
+        code: "MISSING_REQUIRED_FIELDS",
+        fields: ["bunnyVideoUrl"],
+      });
     }
 
     const newContentItem = await db

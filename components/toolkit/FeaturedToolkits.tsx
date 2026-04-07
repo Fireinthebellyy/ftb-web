@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Play } from "lucide-react";
 import { useToolkits } from "@/lib/queries/toolkits";
+import { stripHtml } from "@/lib/utils";
 
 export default function FeaturedToolkits() {
   const { data: toolkits = [], isLoading } = useToolkits();
@@ -14,7 +15,7 @@ export default function FeaturedToolkits() {
   if (isLoading) {
     return (
       <div className="rounded-lg border bg-white p-4">
-        <Skeleton className="h-5 w-32 mb-3" />
+        <Skeleton className="mb-3 h-5 w-32" />
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
             <Skeleton key={i} className="h-20 w-full rounded-lg" />
@@ -29,18 +30,18 @@ export default function FeaturedToolkits() {
   }
 
   return (
-    <div className="hidden lg:block rounded-lg border bg-white p-4">
-      <h3 className="font-semibold text-gray-900 mb-3">Featured Toolkits</h3>
+    <div className="hidden rounded-lg border bg-white p-4 lg:block">
+      <h3 className="mb-3 font-semibold text-gray-900">Featured Toolkits</h3>
       <div className="space-y-2">
         {featuredToolkits.map((toolkit) => (
           <Link
             key={toolkit.id}
             href={`/toolkit/${toolkit.id}`}
-            className="block group"
+            className="group block"
           >
-            <article className="flex gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+            <article className="hover:bg-muted/50 flex gap-3 rounded-lg p-2 transition-colors">
               {/* Left: Square Image */}
-              <div className="relative shrink-0 w-16 h-16 rounded-md overflow-hidden bg-muted">
+              <div className="bg-muted relative h-16 w-16 shrink-0 overflow-hidden rounded-md">
                 {toolkit.coverImageUrl ? (
                   <>
                     <Image
@@ -58,7 +59,7 @@ export default function FeaturedToolkits() {
                     )}
                   </>
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-100 to-amber-100">
+                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-orange-100 to-amber-100">
                     <span className="text-lg font-bold text-orange-300">
                       {toolkit.title.charAt(0)}
                     </span>
@@ -67,21 +68,21 @@ export default function FeaturedToolkits() {
               </div>
 
               {/* Right: Content */}
-              <div className="flex-1 min-w-0 flex flex-col justify-between">
+              <div className="flex min-w-0 flex-1 flex-col justify-between">
                 {/* Top: Title */}
                 <div>
-                  <h4 className="text-sm font-semibold leading-tight text-foreground line-clamp-1 group-hover:text-orange-600 transition-colors">
+                  <h4 className="text-foreground line-clamp-1 text-sm leading-tight font-semibold transition-colors group-hover:text-orange-600">
                     {toolkit.title}
                   </h4>
                   {toolkit.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                      {toolkit.description}
+                    <p className="text-muted-foreground mt-0.5 line-clamp-1 text-xs">
+                      {stripHtml(toolkit.description)}
                     </p>
                   )}
                 </div>
 
                 {/* Bottom: Price + Category */}
-                <div className="flex items-center gap-1.5 mt-1">
+                <div className="mt-1 flex items-center gap-1.5">
                   {(() => {
                     const displayPrice = toolkit.price ?? null;
                     const currentPrice = toolkit.price ?? 0;
@@ -96,7 +97,9 @@ export default function FeaturedToolkits() {
                             ₹{displayPrice.toLocaleString("en-IN")}
                           </span>
                         ) : (
-                          <span className="text-sm font-bold text-gray-900">—</span>
+                          <span className="text-sm font-bold text-gray-900">
+                            —
+                          </span>
                         )}
                         {showOriginalPrice && (
                           <span className="text-[10px] text-gray-400 line-through">
@@ -109,7 +112,7 @@ export default function FeaturedToolkits() {
                   {toolkit.category && (
                     <Badge
                       variant="outline"
-                      className="shrink-0 text-[10px] px-1 py-0 h-4 ml-auto"
+                      className="ml-auto h-4 shrink-0 px-1 py-0 text-[10px]"
                     >
                       {toolkit.category}
                     </Badge>

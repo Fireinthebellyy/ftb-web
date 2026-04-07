@@ -114,7 +114,11 @@ export default function PurchaseSidebar({
           </span>
           {(hasOriginalPrice || showCouponDiscount) && (
             <span className="text-lg text-gray-400 line-through">
-              ₹{toolkit.price.toLocaleString("en-IN")}
+              ₹
+              {(hasOriginalPrice
+                ? toolkit.originalPrice
+                : toolkit.price
+              )?.toLocaleString("en-IN")}
             </span>
           )}
         </div>

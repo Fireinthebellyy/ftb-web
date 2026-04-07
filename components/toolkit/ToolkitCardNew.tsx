@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn, stripHtml } from "@/lib/utils";
 import { Toolkit } from "@/types/interfaces";
 
 interface ToolkitCardNewProps {
@@ -26,11 +26,11 @@ export default function ToolkitCardNew({
     <Link href={href} className="block" prefetch>
       <Card
         className={cn(
-          "group flex flex-row cursor-pointer gap-0 overflow-hidden border bg-white py-0 transition-shadow hover:shadow-md sm:flex-col",
+          "group flex cursor-pointer flex-row gap-0 overflow-hidden border bg-white py-0 transition-shadow hover:shadow-md sm:flex-col",
           className
         )}
       >
-        <div className="relative min-h-28 w-28 shrink-0 self-stretch overflow-hidden bg-gray-100 sm:h-auto sm:w-full sm:aspect-video">
+        <div className="relative min-h-28 w-28 shrink-0 self-stretch overflow-hidden bg-gray-100 sm:aspect-video sm:h-auto sm:w-full">
           {toolkit.coverImageUrl ? (
             <Image
               src={toolkit.coverImageUrl}
@@ -87,8 +87,7 @@ export default function ToolkitCardNew({
           </h3>
 
           <p className="mb-2 line-clamp-2 text-[11px] text-gray-600 sm:text-xs">
-            {toolkit.description.charAt(0).toUpperCase() +
-              toolkit.description.slice(1)}
+            {stripHtml(toolkit.description)}
           </p>
 
           {toolkit.highlights && toolkit.highlights.length > 0 && (

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { badRequest } from "@/lib/api-error";
 import { db } from "@/lib/db";
 import { userToolkits } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
@@ -18,11 +19,25 @@ export async function POST(
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
       await request.json();
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+    const missingFields: string[] = [];
+
+    if (!razorpay_order_id) {
+      missingFields.push("razorpay_order_id");
+    }
+
+    if (!razorpay_payment_id) {
+      missingFields.push("razorpay_payment_id");
+    }
+
+    if (!razorpay_signature) {
+      missingFields.push("razorpay_signature");
+    }
+
+    if (missingFields.length > 0) {
+      return badRequest("Missing Razorpay verification fields.", {
+        code: "MISSING_REQUIRED_FIELDS",
+        fields: missingFields,
+      });
     }
 
     // Verify signature

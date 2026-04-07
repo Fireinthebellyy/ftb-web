@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { validationError } from "@/lib/api-error";
 import { logAdminActivity } from "@/lib/admin-activity";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { db } from "@/lib/db";
+import { hasMeaningfulRichText, normalizeRichText } from "@/lib/rich-text";
 import { toolkits } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { eq } from "drizzle-orm";
@@ -9,7 +11,13 @@ import { z } from "zod";
 
 const updateToolkitSchema = z.object({
   title: z.string().min(1, "Title is required").optional(),
-  description: z.string().optional(),
+  description: z
+    .string()
+    .optional()
+    .refine(
+      (value) => value === undefined || hasMeaningfulRichText(value, 10),
+      "Description must be at least 10 characters"
+    ),
   price: z
     .number()
     .min(0, "Price must be greater than or equal to 0")
@@ -94,10 +102,7 @@ export async function PUT(
     if (!validationResult.success) {
       activityStatus = 400;
       activityError = validationResult.error.errors;
-      return NextResponse.json(
-        { error: "Validation failed", details: validationResult.error.errors },
-        { status: 400 }
-      );
+      return validationError(validationResult.error);
     }
 
     const validatedData = validationResult.data;
@@ -108,7 +113,7 @@ export async function PUT(
 
     if (validatedData.title !== undefined) updates.title = validatedData.title;
     if (validatedData.description !== undefined)
-      updates.description = validatedData.description;
+      updates.description = normalizeRichText(validatedData.description);
     if (validatedData.price !== undefined) updates.price = validatedData.price;
     if (validatedData.originalPrice !== undefined)
       updates.originalPrice = validatedData.originalPrice;
@@ -154,10 +159,7 @@ export async function PUT(
     if (error instanceof z.ZodError) {
       activityStatus = 400;
       activityError = error.errors;
-      return NextResponse.json(
-        { error: "Validation failed", details: error.errors },
-        { status: 400 }
-      );
+      return validationError(error);
     }
 
     activityError = error;

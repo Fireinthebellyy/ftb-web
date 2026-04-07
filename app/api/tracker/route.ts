@@ -1,4 +1,5 @@
 import { db, dbPool } from "@/lib/db";
+import { badRequest, validationError } from "@/lib/api-error";
 import {
   trackerItems,
   trackerEvents,
@@ -13,7 +14,10 @@ import { eq, and, desc, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 const trackerItemSchema = z.object({
-  oppId: z.string().min(1, "oppId is required").or(z.number().transform(String)),
+  oppId: z
+    .string()
+    .min(1, "oppId is required")
+    .or(z.number().transform(String)),
   status: z.string(),
   kind: z.enum(["internship", "opportunity"]).default("internship"),
   notes: z.string().optional().nullable(),
@@ -74,10 +78,10 @@ export async function GET(req: NextRequest) {
 
     if (kindParam && !kind) {
       timer.end({ status: 400, reason: "invalid_kind" });
-      return NextResponse.json(
-        { error: "Invalid kind. Use 'internship' or 'opportunity'." },
-        { status: 400 }
-      );
+      return badRequest("kind must be either internship or opportunity.", {
+        code: "INVALID_KIND",
+        fields: ["kind"],
+      });
     }
 
     timer.mark("fetch_start");
@@ -261,7 +265,10 @@ export async function POST(req: NextRequest) {
 
     if (action === "sync_items") {
       if (!Array.isArray(data))
-        return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+        return badRequest("data must be an array for sync_items.", {
+          code: "INVALID_DATA",
+          fields: ["data"],
+        });
 
       if (data.length === 0) return NextResponse.json({ success: true });
 
@@ -309,7 +316,10 @@ export async function POST(req: NextRequest) {
 
     if (action === "sync_events") {
       if (!Array.isArray(data))
-        return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+        return badRequest("data must be an array for sync_events.", {
+          code: "INVALID_DATA",
+          fields: ["data"],
+        });
 
       if (data.length === 0) return NextResponse.json({ success: true });
 
@@ -350,7 +360,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+    return badRequest(
+      "Invalid action. Use add_item, add_event, sync_items, or sync_events.",
+      {
+        code: "INVALID_ACTION",
+        fields: ["action"],
+      }
+    );
   } catch (error) {
     console.error("Error in POST /api/tracker:", error);
     return NextResponse.json(
@@ -377,10 +393,7 @@ export async function PATCH(req: NextRequest) {
     // Validate request body
     const parsed = patchSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid request body", details: parsed.error },
-        { status: 400 }
-      );
+      return validationError(parsed.error, "Invalid request body.");
     }
 
     const { action, id, kind, data } = parsed.data;
@@ -428,7 +441,10 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Unreachable due to validation but good for type safety
-    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+    return badRequest("Invalid action. Use update_status.", {
+      code: "INVALID_ACTION",
+      fields: ["action"],
+    });
   } catch (error) {
     console.error("Error in PATCH /api/tracker:", error);
     return NextResponse.json(
@@ -457,10 +473,10 @@ export async function DELETE(req: NextRequest) {
       searchParams.get("kind") === "opportunity" ? "opportunity" : "internship";
 
     if (id === null || id === "" || id === "undefined" || !type) {
-      return NextResponse.json(
-        { error: "Missing or invalid parameters" },
-        { status: 400 }
-      );
+      return badRequest("Missing or invalid tracker delete parameters.", {
+        code: "MISSING_REQUIRED_FIELDS",
+        fields: ["type", "id"],
+      });
     }
 
     if (type === "item") {
@@ -483,7 +499,10 @@ export async function DELETE(req: NextRequest) {
           )
         );
     } else {
-      return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+      return badRequest("type must be either item or event.", {
+        code: "INVALID_TYPE",
+        fields: ["type"],
+      });
     }
 
     return NextResponse.json({ success: true });

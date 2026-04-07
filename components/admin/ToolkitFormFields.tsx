@@ -10,6 +10,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -65,10 +66,11 @@ export function ToolkitFormFields({
           <FormItem>
             <FormLabel>Description *</FormLabel>
             <FormControl>
-              <Textarea
+              <RichTextEditor
+                value={field.value ?? ""}
+                onChange={field.onChange}
                 placeholder="Enter detailed description"
-                className="min-h-[100px]"
-                {...field}
+                className="[&_div.ql-container]:min-h-[160px] [&_div.ql-editor]:max-h-[28vh] [&_div.ql-editor]:min-h-[160px] [&_div.ql-editor]:overflow-y-auto"
               />
             </FormControl>
             <FormMessage />

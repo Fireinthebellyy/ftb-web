@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
-import * as z from "zod";
 import axios from "axios";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -38,6 +37,9 @@ import {
   deleteStorageObjectClient,
   uploadFileViaSignedUrl,
 } from "@/lib/storage/client";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { normalizeRichText } from "@/lib/rich-text";
+import { toolkitFormSchema, ToolkitFormValues } from "@/components/admin/types";
 
 const CATEGORIES = [
   "Career",
@@ -48,36 +50,6 @@ const CATEGORIES = [
   "LinkedIn",
   "Networking",
 ];
-
-const toolkitFormSchema = z.object({
-  title: z.string().min(3, {
-    message: "Title must be at least 3 characters.",
-  }),
-  description: z.string().min(10, {
-    message: "Description must be at least 10 characters.",
-  }),
-  price: z.coerce.number().min(0, {
-    message: "Price must be a positive number.",
-  }),
-  originalPrice: z.coerce.number().min(0).optional(),
-  category: z.string().optional(),
-  coverImageUrl: z.string().url().optional().or(z.literal("")),
-  bannerImageUrl: z.string().url().optional().or(z.literal("")),
-  videoUrl: z.string().url().optional().or(z.literal("")),
-  totalDuration: z.string().optional(),
-  highlights: z.array(z.string()).optional(),
-  testimonials: z
-    .array(
-      z.object({
-        name: z.string(),
-        role: z.string(),
-        message: z.string().min(1, "Message is required"),
-      })
-    )
-    .optional(),
-});
-
-type ToolkitFormValues = z.infer<typeof toolkitFormSchema>;
 
 function formatHighlight(highlight: string) {
   const trimmed = highlight.trim();
@@ -162,6 +134,7 @@ export default function NewToolkitModal({
 
       const cleanedData = {
         ...data,
+        description: normalizeRichText(data.description),
         coverImageUrl,
         bannerImageUrl,
         videoUrl: data.videoUrl || undefined,
@@ -241,10 +214,11 @@ export default function NewToolkitModal({
                 <FormItem>
                   <FormLabel>Description *</FormLabel>
                   <FormControl>
-                    <Textarea
+                    <RichTextEditor
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
                       placeholder="Enter detailed description"
-                      className="min-h-[100px]"
-                      {...field}
+                      className="[&_div.ql-container]:min-h-[160px] [&_div.ql-editor]:max-h-[28vh] [&_div.ql-editor]:min-h-[160px] [&_div.ql-editor]:overflow-y-auto"
                     />
                   </FormControl>
                   <FormMessage />

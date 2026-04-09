@@ -19,6 +19,7 @@ export const defaultQuillModules = {
 interface RichTextEditorProps {
   value: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
   placeholder?: string;
   modules?: typeof defaultQuillModules;
   className?: string;
@@ -27,6 +28,7 @@ interface RichTextEditorProps {
 export function RichTextEditor({
   value,
   onChange,
+  onBlur,
   placeholder,
   modules = defaultQuillModules,
   className,
@@ -42,6 +44,7 @@ export function RichTextEditor({
         theme="snow"
         value={value}
         onChange={onChange}
+        onBlur={onBlur}
         modules={modules}
         placeholder={placeholder}
       />

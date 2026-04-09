@@ -75,6 +75,7 @@ export default function NewOpportunityForm({
       tags: opportunity?.tags?.join("|") || "",
       location: opportunity?.location || "",
       organiserInfo: opportunity?.organiserInfo || "",
+      applyLink: opportunity?.applyLink || "",
       dateRange: undefined,
       publishAt: toDateTimeLocalValue(opportunity?.publishAt),
     },
@@ -83,6 +84,7 @@ export default function NewOpportunityForm({
   const watchedType = form.watch("type");
   const watchedLocation = form.watch("location");
   const watchedOrganiser = form.watch("organiserInfo");
+  const watchedApplyLink = form.watch("applyLink");
   const watchedDateRange = form.watch("dateRange");
   const watchedTitle = form.watch("title");
   const watchedDescription = form.watch("description");
@@ -118,6 +120,7 @@ export default function NewOpportunityForm({
       tags: watchedTags || "",
       location: watchedLocation || "",
       organiserInfo: watchedOrganiser || "",
+      applyLink: watchedApplyLink || "",
       dateRange: {
         from: watchedDateRange?.from
           ? watchedDateRange.from.toISOString()
@@ -134,6 +137,7 @@ export default function NewOpportunityForm({
       tags: (opportunity.tags || []).join("|"),
       location: opportunity.location || "",
       organiserInfo: opportunity.organiserInfo || "",
+      applyLink: opportunity.applyLink || "",
       dateRange: {
         from: opportunity.startDate
           ? new Date(opportunity.startDate).toISOString()
@@ -172,6 +176,7 @@ export default function NewOpportunityForm({
     watchedPublishAt,
     watchedLocation,
     watchedOrganiser,
+    watchedApplyLink,
     watchedDateRange,
     files,
     existingImages,
@@ -241,6 +246,7 @@ export default function NewOpportunityForm({
                   control={form.control}
                   watchedLocation={watchedLocation}
                   watchedOrganiser={watchedOrganiser}
+                  watchedApplyLink={watchedApplyLink}
                   watchedDateRange={watchedDateRange}
                   showSchedule={false}
                   showLabels

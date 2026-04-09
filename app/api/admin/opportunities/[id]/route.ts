@@ -57,6 +57,7 @@ export async function GET(
         organiserInfo: opportunities.organiserInfo,
         startDate: opportunities.startDate,
         endDate: opportunities.endDate,
+        applyLink: opportunities.applyLink,
         publishAt: opportunities.publishAt,
         isFlagged: opportunities.isFlagged,
         createdAt: opportunities.createdAt,

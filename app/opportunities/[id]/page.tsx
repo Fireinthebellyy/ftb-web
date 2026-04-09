@@ -31,6 +31,7 @@ export default async function OpportunityDetailPage({
       organiserInfo: opportunities.organiserInfo,
       startDate: opportunities.startDate,
       endDate: opportunities.endDate,
+      applyLink: opportunities.applyLink,
       publishAt: opportunities.publishAt,
       userId: opportunities.userId,
       createdAt: opportunities.createdAt,

@@ -95,8 +95,8 @@ export function OpportunityHeader({
       )}
 
       {(location || displayOrganiserInfo || startDate || endDate) && (
-        <div className="mb-3 flex">
-          <div className="flex gap-2 text-xs text-gray-600 sm:flex-row sm:flex-wrap sm:gap-4">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5 text-xs text-gray-600 sm:flex-row sm:flex-wrap sm:gap-4">
             {location && (
               <div className="flex items-center gap-1">
                 <MapPin className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
@@ -116,25 +116,28 @@ export function OpportunityHeader({
               </div>
             )}
           </div>
-          <div className="ml-auto flex flex-col items-end gap-1 text-xs text-gray-600">
-            {(startDate || endDate) && (
-              <div className="flex items-baseline gap-1">
-                <CalendarDays className="size-3" />
-                <span className="text-xs">
-                  {startDate && format(new Date(startDate), "MMM dd")}
-                  {startDate && endDate && (
-                    <>
-                      {" - "}
-                      {format(new Date(startDate), "MMM") ===
-                      format(new Date(endDate), "MMM")
-                        ? format(new Date(endDate), "dd")
-                        : format(new Date(endDate), "MMM dd")}
-                    </>
-                  )}
-                  {!startDate && endDate && format(new Date(endDate), "MMM dd")}
-                </span>
-              </div>
-            )}
+
+          <div className="flex shrink-0 items-center gap-2">
+            <div className="flex flex-col items-end gap-1 text-xs text-gray-600">
+              {(startDate || endDate) && (
+                <div className="flex items-baseline gap-1">
+                  <CalendarDays className="size-3" />
+                  <span className="text-xs">
+                    {startDate && format(new Date(startDate), "MMM dd")}
+                    {startDate && endDate && (
+                      <>
+                        {" - "}
+                        {format(new Date(startDate), "MMM") ===
+                        format(new Date(endDate), "MMM")
+                          ? format(new Date(endDate), "dd")
+                          : format(new Date(endDate), "MMM dd")}
+                      </>
+                    )}
+                    {!startDate && endDate && format(new Date(endDate), "MMM dd")}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

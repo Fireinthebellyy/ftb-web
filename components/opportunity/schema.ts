@@ -15,10 +15,16 @@ export const formSchema = z.object({
     }),
   description: z
     .string()
-    .refine((val) => stripHtml(val).length >= 10, {
+    .refine((val) => {
+      const plain = stripHtml(val).replace(/\s+/g, " ").trim();
+      return plain.length >= 10;
+    }, {
       message: "Description must be at least 10 characters.",
     })
-    .refine((val) => stripHtml(val).length <= 4000, {
+    .refine((val) => {
+      const plain = stripHtml(val).replace(/\s+/g, " ").trim();
+      return plain.length <= 4000;
+    }, {
       message: "Description must not exceed 4000 characters.",
     }),
   tags: z.string().min(2, {

@@ -34,20 +34,20 @@ function HorizontalCountProgressBar({
           role="progressbar"
           aria-label="Description length"
           aria-valuemin={0}
-          aria-valuemax={2000}
+          aria-valuemax={4000}
           aria-valuenow={length}
           className="h-[2px] w-full rounded-full bg-gray-200"
         >
           <div
             className="h-[2px] rounded-full bg-gray-600 transition-all duration-150"
             style={{
-              width: `${Math.min(100, (length / 2000) * 100)}%`,
+              width: `${Math.min(100, (length / 4000) * 100)}%`,
             }}
           />
         </div>
       </div>
       <div className="text-right text-xs text-gray-500 md:w-20">
-        {length} / 2000
+        {length} / 4000
       </div>
     </div>
   );

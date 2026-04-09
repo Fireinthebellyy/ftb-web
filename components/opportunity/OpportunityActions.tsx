@@ -183,6 +183,7 @@ export function OpportunityActions({
               <Link
                 href={addUtmParams(opportunity.applyLink, "opportunity_card")}
                 target="_blank"
+                rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
               >
                 <Button

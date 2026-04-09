@@ -54,7 +54,6 @@ export function OpportunityHeader({
     organiserInfo,
     startDate,
     endDate,
-    applyLink,
     user,
     createdAt,
     publishAt,
@@ -95,7 +94,7 @@ export function OpportunityHeader({
         <ExpandableDescription text={description} isCardExpanded={isExpanded} />
       )}
 
-      {(location || displayOrganiserInfo || startDate || endDate || applyLink) && (
+      {(location || displayOrganiserInfo || startDate || endDate) && (
         <div className="mb-3 flex items-center justify-between gap-2">
           <div className="flex min-w-0 flex-1 flex-col gap-1.5 text-xs text-gray-600 sm:flex-row sm:flex-wrap sm:gap-4">
             {location && (

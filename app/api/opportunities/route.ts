@@ -196,8 +196,9 @@ export async function POST(req: NextRequest) {
       insertData.organiserInfo = validatedData.organiserInfo;
     }
 
-    if (validatedData.applyLink) {
-      insertData.applyLink = validatedData.applyLink;
+    if (validatedData.applyLink !== undefined) {
+      insertData.applyLink =
+        validatedData.applyLink === "" ? null : validatedData.applyLink;
     }
 
     if (validatedData.startDate) {

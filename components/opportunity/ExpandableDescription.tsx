@@ -25,10 +25,12 @@ export function ExpandableDescription({
   const plainTextPreview = useMemo(() => stripHtml(text), [text]);
 
   useEffect(() => {
-    if (ref.current) {
+    if (ref.current && isCardExpanded) {
       setClamped(ref.current.scrollHeight > MAX_HEIGHT);
+    } else {
+      setClamped(false);
     }
-  }, [text]);
+  }, [text, isCardExpanded]);
 
   if (!isCardExpanded) {
     return (

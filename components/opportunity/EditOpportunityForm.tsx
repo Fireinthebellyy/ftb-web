@@ -100,6 +100,7 @@ export default function EditOpportunityForm({
       tags: opportunity.tags?.join("|") || "",
       location: opportunity.location || "",
       organiserInfo: opportunity.organiserInfo || "",
+      applyLink: opportunity.applyLink || "",
       dateRange: undefined,
     },
   });
@@ -107,6 +108,7 @@ export default function EditOpportunityForm({
   const watchedType = form.watch("type");
   const watchedLocation = form.watch("location");
   const watchedOrganiser = form.watch("organiserInfo");
+  const watchedApplyLink = form.watch("applyLink");
   const watchedDateRange = form.watch("dateRange");
 
   useEffect(() => {
@@ -290,6 +292,7 @@ export default function EditOpportunityForm({
                 control={form.control}
                 watchedLocation={watchedLocation}
                 watchedOrganiser={watchedOrganiser}
+                watchedApplyLink={watchedApplyLink}
                 watchedDateRange={watchedDateRange}
               />
               <UnifiedFilePicker

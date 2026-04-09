@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { stripHtml } from "@/lib/utils";
 
 export const formSchema = z.object({
   type: z.string().min(1, {
@@ -14,17 +15,18 @@ export const formSchema = z.object({
     }),
   description: z
     .string()
-    .min(10, {
+    .refine((val) => stripHtml(val).length >= 10, {
       message: "Description must be at least 10 characters.",
     })
-    .max(2000, {
-      message: "Description must not exceed 2000 characters.",
+    .refine((val) => stripHtml(val).length <= 4000, {
+      message: "Description must not exceed 4000 characters.",
     }),
   tags: z.string().min(2, {
     message: "Please add at least one tag.",
   }),
   location: z.string().optional(),
   organiserInfo: z.string().optional(),
+  applyLink: z.string().url("Invalid URL format").optional().or(z.literal("")),
   dateRange: z
     .object({
       from: z.date().optional(),

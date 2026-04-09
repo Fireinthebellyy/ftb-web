@@ -42,6 +42,7 @@ const opportunitySchema = z.object({
   organiserInfo: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
+  applyLink: z.string().url("Invalid URL format").optional().or(z.literal("")),
   publishAt: z
     .union([
       z
@@ -193,6 +194,10 @@ export async function POST(req: NextRequest) {
 
     if (validatedData.organiserInfo) {
       insertData.organiserInfo = validatedData.organiserInfo;
+    }
+
+    if (validatedData.applyLink) {
+      insertData.applyLink = validatedData.applyLink;
     }
 
     if (validatedData.startDate) {
@@ -396,6 +401,7 @@ export async function GET(req: NextRequest) {
           organiserInfo: opportunities.organiserInfo,
           startDate: opportunities.startDate,
           endDate: opportunities.endDate,
+          applyLink: opportunities.applyLink,
           publishAt: usePublishAt
             ? opportunities.publishAt
             : sql<Date | null>`null`.as("publish_at"),

@@ -8,6 +8,7 @@ import {
   PencilLine,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import {
@@ -23,6 +24,7 @@ import { ShareDialog } from "./ShareDialog";
 import CommentSection from "./CommentSection";
 import { OpportunityPostProps } from "@/types/interfaces";
 import posthog from "posthog-js";
+import { addUtmParams } from "@/lib/utils";
 
 interface OpportunityActionsProps {
   opportunity: OpportunityPostProps["opportunity"];
@@ -177,6 +179,20 @@ export function OpportunityActions({
                 onShare={handleShare}
               />
             </Dialog>
+            {opportunity.applyLink && (
+              <Link
+                href={addUtmParams(opportunity.applyLink, "opportunity_card")}
+                target="_blank"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Button
+                  size="sm"
+                  className="h-7 sm:h-8 cursor-pointer rounded-lg border-none bg-orange-100 px-2 sm:px-3 text-[10px] sm:text-xs font-bold text-[#ec5b13] shadow-none transition-all hover:bg-orange-200 active:scale-95"
+                >
+                  Apply
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 

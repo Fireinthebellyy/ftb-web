@@ -88,6 +88,7 @@ export const opportunities = pgTable("opportunities", {
   organiserInfo: text("organiser_info"),
   startDate: date("start_date"),
   endDate: date("end_date"),
+  applyLink: text("apply_link"),
   isFlagged: boolean("is_flagged").default(false),
   publishAt: timestamp("publish_at"),
   createdAt: timestamp("created_at").defaultNow(),

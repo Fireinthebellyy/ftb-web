@@ -69,6 +69,7 @@ export async function GET(req: NextRequest) {
           organiserInfo: opportunities.organiserInfo,
           startDate: opportunities.startDate,
           endDate: opportunities.endDate,
+          applyLink: opportunities.applyLink,
           publishAt: opportunities.publishAt,
           isFlagged: opportunities.isFlagged,
           createdAt: opportunities.createdAt,

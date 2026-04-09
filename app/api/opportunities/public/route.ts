@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
       .select({
         id: opportunities.id,
         title: opportunities.title,
+        applyLink: opportunities.applyLink,
       })
       .from(opportunities)
       .where(

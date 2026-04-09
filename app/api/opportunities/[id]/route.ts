@@ -30,6 +30,7 @@ const updateOpportunitySchema = z.object({
   organiserInfo: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
+  applyLink: z.string().url("Invalid URL format").optional().or(z.literal("")),
   publishAt: z
     .union([
       z
@@ -127,6 +128,9 @@ export async function PUT(
 
     if (validatedData.organiserInfo !== undefined)
       updateData.organiserInfo = validatedData.organiserInfo;
+
+    if (validatedData.applyLink !== undefined)
+      updateData.applyLink = validatedData.applyLink;
 
     if (validatedData.startDate !== undefined) {
       updateData.startDate = validatedData.startDate

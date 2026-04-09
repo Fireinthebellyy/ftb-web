@@ -25,6 +25,7 @@ interface Opportunity {
   organiserInfo: string | null;
   startDate: string | null;
   endDate: string | null;
+  applyLink?: string | null;
   createdAt: string;
   userId: string;
   user: {

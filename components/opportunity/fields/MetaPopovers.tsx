@@ -16,7 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Building2, CalendarIcon, Clock3, Flag, MapPin, X } from "lucide-react";
+import { Building2, CalendarIcon, Clock3, Flag, MapPin, X, Link2 } from "lucide-react";
 import { Control, useFormContext } from "react-hook-form";
 import { useState } from "react";
 import { FormData } from "../schema";
@@ -30,6 +30,7 @@ type Props = {
   control: Control<FormData>;
   watchedLocation?: string | null;
   watchedOrganiser?: string | null;
+  watchedApplyLink?: string | null;
   watchedDateRange?: { from?: Date; to?: Date } | undefined;
   showSchedule?: boolean;
   showLabels?: boolean;
@@ -49,6 +50,7 @@ export function MetaPopovers({
   control,
   watchedLocation,
   watchedOrganiser,
+  watchedApplyLink,
   watchedDateRange,
   showSchedule = true,
   showLabels = false,
@@ -65,6 +67,56 @@ export function MetaPopovers({
 
   return (
     <div className="flex items-center gap-1.5 md:gap-2.5">
+      {/* Apply Link */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className={cn(
+              triggerClassName,
+              watchedApplyLink && "bg-blue-50 text-blue-600"
+            )}
+          >
+            <Link2 className="h-4 w-4" />
+            {showLabels && (
+              <>
+                {compactLabels ? (
+                  <>
+                    <span className="md:hidden">APPLY</span>
+                    <span className="hidden md:inline">Apply</span>
+                  </>
+                ) : (
+                  <span>Apply Link</span>
+                )}
+              </>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-64" align="start">
+          <FormField
+            control={control}
+            name="applyLink"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Apply Link</label>
+                    <Input
+                      {...field}
+                      placeholder="https://apply.here"
+                      className="text-sm"
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </PopoverContent>
+      </Popover>
+
       {/* Location */}
       <Popover>
         <PopoverTrigger asChild>

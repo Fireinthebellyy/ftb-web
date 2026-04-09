@@ -5,8 +5,6 @@ import DOMPurify from "dompurify";
 import { cn, stripHtml } from "@/lib/utils";
 
 const CLAMP_LINES = 4;
-const LINE_HEIGHT_PX = 16;
-const MAX_HEIGHT = CLAMP_LINES * LINE_HEIGHT_PX;
 
 interface ExpandableDescriptionProps {
   text: string;
@@ -26,7 +24,10 @@ export function ExpandableDescription({
 
   useEffect(() => {
     if (ref.current && isCardExpanded) {
-      setClamped(ref.current.scrollHeight > MAX_HEIGHT);
+      const computedStyle = window.getComputedStyle(ref.current);
+      const lineHeight = parseFloat(computedStyle.lineHeight);
+      const maxHeight = !isNaN(lineHeight) ? lineHeight * CLAMP_LINES : 16 * CLAMP_LINES;
+      setClamped(ref.current.scrollHeight > maxHeight);
     } else {
       setClamped(false);
     }

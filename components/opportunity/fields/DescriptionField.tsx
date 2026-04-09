@@ -35,7 +35,7 @@ function HorizontalCountProgressBar({
           aria-label="Description length"
           aria-valuemin={0}
           aria-valuemax={4000}
-          aria-valuenow={length}
+          aria-valuenow={Math.min(length, 4000)}
           className="h-[2px] w-full rounded-full bg-gray-200"
         >
           <div
@@ -61,16 +61,15 @@ export function DescriptionField({ control }: Props) {
       render={({ field }) => (
         <FormItem>
           <FormControl>
-            <div className="space-y-1">
-              <RichTextEditor
-                value={field.value || ""}
-                onChange={field.onChange}
-                placeholder="Tell us more about this opportunity... (include URLs if needed) *"
-                className="[&_div.ql-container]:min-h-[160px] [&_div.ql-editor]:max-h-[30vh] [&_div.ql-editor]:min-h-[160px] [&_div.ql-editor]:overflow-y-auto"
-              />
-              <HorizontalCountProgressBar field={field} />
-            </div>
+            <RichTextEditor
+              value={field.value || ""}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              placeholder="Tell us more about this opportunity... (include URLs if needed) *"
+              className="[&_div.ql-container]:min-h-[160px] [&_div.ql-editor]:max-h-[30vh] [&_div.ql-editor]:min-h-[160px] [&_div.ql-editor]:overflow-y-auto"
+            />
           </FormControl>
+          <HorizontalCountProgressBar field={field} />
           <FormMessage />
         </FormItem>
       )}

@@ -179,21 +179,6 @@ export function OpportunityActions({
                 onShare={handleShare}
               />
             </Dialog>
-            {opportunity.applyLink && (
-              <Link
-                href={addUtmParams(opportunity.applyLink, "opportunity_card")}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Button
-                  size="sm"
-                  className="h-7 sm:h-8 cursor-pointer rounded-lg border-none bg-orange-100 px-2 sm:px-3 text-[10px] sm:text-xs font-bold text-[#ec5b13] shadow-none transition-all hover:bg-orange-200 active:scale-95"
-                >
-                  Apply
-                </Button>
-              </Link>
-            )}
           </div>
         </div>
 

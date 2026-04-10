@@ -134,7 +134,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   };
 
   return (
-    <article className="relative mb-3 w-full rounded-lg border bg-white shadow-sm sm:mb-4">
+    <article className="relative mb-3 w-full overflow-hidden rounded-lg border bg-white shadow-sm sm:mb-4">
       {primaryType && (
         <div className="absolute -top-0.5 right-0 z-20">
           <Badge

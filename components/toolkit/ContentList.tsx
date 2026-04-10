@@ -61,7 +61,7 @@ export default function ContentList({
       <div
         key={item.id}
         className={cn(
-          "flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors",
+          "flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors",
           !isLocked && "cursor-pointer hover:bg-orange-50",
           isLocked && "cursor-not-allowed opacity-60"
         )}
@@ -87,7 +87,7 @@ export default function ContentList({
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-gray-900">
+          <p className="block max-w-full text-sm leading-snug font-medium break-words whitespace-normal text-gray-900">
             {item.title}
           </p>
           <p className="text-xs text-gray-500 capitalize">{lessonTypeLabel}</p>

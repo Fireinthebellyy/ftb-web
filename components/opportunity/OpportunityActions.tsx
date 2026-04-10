@@ -198,6 +198,21 @@ export function OpportunityActions({
         </div>
 
         <div className="flex items-center gap-2">
+          {opportunity.applyLink && (
+            <Link
+              href={addUtmParams(opportunity.applyLink, "opportunity_card")}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Button
+                size="sm"
+                className="h-7 cursor-pointer rounded-lg border-none bg-orange-600 px-2 text-[10px] font-bold text-white shadow-none transition-all hover:bg-orange-700 active:scale-95 sm:h-8 sm:px-3 sm:text-xs"
+              >
+                Apply
+              </Button>
+            </Link>
+          )}
           <a
               href={`https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
                 `Apply to: ${opportunity.title}`

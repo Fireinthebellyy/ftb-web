@@ -328,7 +328,7 @@ export default function OpportunityManagementTable() {
         }}
       >
         {selectedOpportunity && (
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto overflow-x-hidden sm:max-w-2xl">
             <DialogTitle>Edit Opportunity</DialogTitle>
             <NewOpportunityForm
               key={selectedOpportunity.id}

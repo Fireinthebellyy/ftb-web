@@ -199,7 +199,13 @@ export function useOpportunitySubmit({
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
       onOpportunityCreated();
     } catch (err: unknown) {
-      if (err instanceof Error) {
+      if (axios.isAxiosError(err)) {
+        const apiMessage =
+          typeof err.response?.data?.error === "string"
+            ? err.response.data.error
+            : err.message;
+        toast.error(apiMessage);
+      } else if (err instanceof Error) {
         toast.error(err.message);
       } else {
         toast.error("Unknown error occurred");

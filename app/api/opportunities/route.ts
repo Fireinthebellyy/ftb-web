@@ -15,7 +15,10 @@ import {
 import { opportunities, tags, user } from "@/lib/schema";
 import { createApiTimer } from "@/lib/api-timing";
 import { getSessionCached } from "@/lib/auth-session-cache";
-import { upsertTagsAndGetIds } from "@/lib/tags";
+import {
+  getExistingTagIdsOrThrow,
+  InvalidTagSelectionError,
+} from "@/lib/tags";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -162,11 +165,11 @@ export async function POST(req: NextRequest) {
     };
 
     if (validatedData.tags && Array.isArray(validatedData.tags)) {
-      timer.mark("tags_upsert_start", {
+      timer.mark("tags_lookup_start", {
         incomingTags: validatedData.tags.length,
       });
-      const tagIds = await upsertTagsAndGetIds(validatedData.tags);
-      timer.mark("tags_upsert_done", { resolvedTagIds: tagIds.length });
+      const tagIds = await getExistingTagIdsOrThrow(validatedData.tags);
+      timer.mark("tags_lookup_done", { resolvedTagIds: tagIds.length });
       if (tagIds.length > 0) {
         insertData.tagIds = tagIds;
       }
@@ -237,6 +240,17 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
+    if (error instanceof InvalidTagSelectionError) {
+      timer.end({ status: 400, reason: "invalid_tag_selection" });
+      return NextResponse.json(
+        {
+          error: "Please select tags from existing suggestions only.",
+          invalidTags: error.invalidTags,
+        },
+        { status: 400 }
+      );
+    }
+
     if (error instanceof z.ZodError) {
       timer.end({ status: 400, reason: "validation_error" });
       return NextResponse.json({ error: error.errors }, { status: 400 });

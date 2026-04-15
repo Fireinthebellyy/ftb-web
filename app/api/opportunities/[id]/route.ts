@@ -1,7 +1,10 @@
 import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { opportunities } from "@/lib/schema";
-import { upsertTagsAndGetIds } from "@/lib/tags";
+import {
+  getExistingTagIdsOrThrow,
+  InvalidTagSelectionError,
+} from "@/lib/tags";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -121,7 +124,7 @@ export async function PUT(
       updateData.attachments = validatedData.attachments;
 
     if (validatedData.tags !== undefined)
-      updateData.tagIds = await upsertTagsAndGetIds(validatedData.tags);
+      updateData.tagIds = await getExistingTagIdsOrThrow(validatedData.tags);
 
     if (validatedData.location !== undefined)
       updateData.location = validatedData.location;
@@ -163,6 +166,16 @@ export async function PUT(
       { status: 200 }
     );
   } catch (error) {
+    if (error instanceof InvalidTagSelectionError) {
+      return NextResponse.json(
+        {
+          error: "Please select tags from existing suggestions only.",
+          invalidTags: error.invalidTags,
+        },
+        { status: 400 }
+      );
+    }
+
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors }, { status: 400 });
     }

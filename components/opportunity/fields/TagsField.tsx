@@ -9,7 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Hash, X } from "lucide-react";
-import { Control } from "react-hook-form";
+import { Control, useFormContext } from "react-hook-form";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FormData } from "../schema";
 
@@ -20,6 +20,8 @@ type Props = {
 type AutosuggestProps = {
   value: string;
   onChange: (val: string) => void;
+  onInvalidTag: (message: string) => void;
+  onValidTagSelection: () => void;
 };
 
 function composeTagsValue(committed: string[], activeToken = ""): string {
@@ -29,7 +31,12 @@ function composeTagsValue(committed: string[], activeToken = ""): string {
   return `${committed.join("|")}|${normalizedActiveToken}`;
 }
 
-function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
+function TagsAutosuggest({
+  value,
+  onChange,
+  onInvalidTag,
+  onValidTagSelection,
+}: AutosuggestProps) {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [show, setShow] = useState(false);
   const [hovering, setHovering] = useState(false);
@@ -114,6 +121,7 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
       return true;
     });
     onChange(composeTagsValue(result));
+    onValidTagSelection();
     setShow(false);
     requestAnimationFrame(() => inputRef.current?.focus());
   }
@@ -129,10 +137,28 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
     onChange(composeTagsValue(committedTokens, nextValue));
   }
 
+  function commitCurrentToken() {
+    const normalizedToken = currentToken.trim();
+    if (!normalizedToken) return;
+
+    const exactMatch = suggestions.find(
+      (suggestion) => suggestion.toLowerCase() === normalizedToken.toLowerCase()
+    );
+
+    if (!exactMatch) {
+      onInvalidTag("Select from existing suggestions only.");
+      onChange(composeTagsValue(committedTokens));
+      setShow(false);
+      return;
+    }
+
+    addTag(exactMatch);
+  }
+
   function handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if ((e.key === "Enter" || e.key === "|") && currentToken.trim()) {
       e.preventDefault();
-      addTag(currentToken.trim());
+      commitCurrentToken();
       return;
     }
 
@@ -188,6 +214,9 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
           onFocus={() => setShow(suggestions.length > 0)}
           onBlur={() =>
             setTimeout(() => {
+              if (currentToken.trim()) {
+                commitCurrentToken();
+              }
               if (!hovering) setShow(false);
             }, 120)
           }
@@ -231,6 +260,8 @@ function TagsAutosuggest({ value, onChange }: AutosuggestProps) {
 }
 
 export function TagsField({ control }: Props) {
+  const { setError, clearErrors } = useFormContext<FormData>();
+
   return (
     <FormField
       control={control}
@@ -240,7 +271,22 @@ export function TagsField({ control }: Props) {
           <FormControl>
             <div className="flex items-center gap-2 pt-2">
               <Hash className="h-4 w-4 text-gray-400" />
-              <TagsAutosuggest value={field.value} onChange={field.onChange} />
+              <TagsAutosuggest
+                value={field.value}
+                onChange={(nextValue) => {
+                  field.onChange(nextValue);
+                  if (!nextValue.trim()) {
+                    clearErrors("tags");
+                  }
+                }}
+                onInvalidTag={(message) => {
+                  setError("tags", {
+                    type: "manual",
+                    message,
+                  });
+                }}
+                onValidTagSelection={() => clearErrors("tags")}
+              />
             </div>
           </FormControl>
           <FormMessage />

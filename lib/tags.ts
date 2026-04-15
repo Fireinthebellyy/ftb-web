@@ -2,6 +2,42 @@ import { db } from "@/lib/db";
 import { tags } from "@/lib/schema";
 import { inArray } from "drizzle-orm";
 
+export class InvalidTagSelectionError extends Error {
+  invalidTags: string[];
+
+  constructor(invalidTags: string[]) {
+    super("Please select tags from existing suggestions only.");
+    this.name = "InvalidTagSelectionError";
+    this.invalidTags = invalidTags;
+  }
+}
+
+export async function getExistingTagIdsOrThrow(
+  tagNames: string[]
+): Promise<string[]> {
+  const normalized = Array.from(
+    new Set(tagNames.map((name) => name.trim()).filter(Boolean))
+  );
+
+  if (normalized.length === 0) return [];
+
+  const existing = await db
+    .select({ id: tags.id, name: tags.name })
+    .from(tags)
+    .where(inArray(tags.name, normalized));
+
+  const existingMap = new Map(existing.map((row) => [row.name, row.id]));
+  const missing = normalized.filter((name) => !existingMap.has(name));
+
+  if (missing.length > 0) {
+    throw new InvalidTagSelectionError(missing);
+  }
+
+  return normalized
+    .map((name) => existingMap.get(name))
+    .filter((id): id is string => Boolean(id));
+}
+
 export async function upsertTagsAndGetIds(tagNames: string[]): Promise<string[]> {
   const normalized = Array.from(new Set(tagNames.map((name) => name.trim()).filter(Boolean)));
 

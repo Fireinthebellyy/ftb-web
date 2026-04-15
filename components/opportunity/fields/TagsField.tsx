@@ -38,6 +38,7 @@ function TagsAutosuggest({
   onValidTagSelection,
 }: AutosuggestProps) {
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [show, setShow] = useState(false);
   const [hovering, setHovering] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -74,13 +75,19 @@ function TagsAutosuggest({
 
   useEffect(() => {
     const controller = new AbortController();
+    const q = currentToken;
+
+    if (!q || q.length < 2) {
+      setSuggestions([]);
+      setShow(false);
+      setIsLoadingSuggestions(false);
+      return () => {
+        controller.abort();
+      };
+    }
+
+    setIsLoadingSuggestions(true);
     const id = setTimeout(async () => {
-      const q = currentToken;
-      if (!q || q.length < 2) {
-        setSuggestions([]);
-        setShow(false);
-        return;
-      }
       try {
         const res = await fetch(`/api/tags?q=${encodeURIComponent(q)}&limit=8`, {
           signal: controller.signal,
@@ -96,6 +103,10 @@ function TagsAutosuggest({
       } catch {
         setSuggestions([]);
         setShow(false);
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsLoadingSuggestions(false);
+        }
       }
     }, 300);
     return () => {
@@ -140,6 +151,11 @@ function TagsAutosuggest({
   function commitCurrentToken() {
     const normalizedToken = currentToken.trim();
     if (!normalizedToken) return;
+
+    if (isLoadingSuggestions) {
+      onInvalidTag("Suggestions are loading, wait a bit and then select.");
+      return;
+    }
 
     const exactMatch = suggestions.find(
       (suggestion) => suggestion.toLowerCase() === normalizedToken.toLowerCase()

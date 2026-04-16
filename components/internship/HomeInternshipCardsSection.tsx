@@ -104,7 +104,7 @@ export default function HomeInternshipCardsSection({
   });
 
   const internships = data?.internships ?? [];
-  const featuredInternships = internships.filter((i: any) => i.is_featured_home);
+  const featuredInternships = internships.filter((i: Internship) => i.is_featured_home);
   const displayInternships = featuredInternships.length > 0 ? featuredInternships : internships;
 
   return (

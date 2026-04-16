@@ -394,12 +394,27 @@ export default function InternshipManagementTable({
             const allHidden = selectedIds.every(
               (id) => !internships.find((i) => i.id === id)?.isActive
             );
-            await Promise.allSettled(
+          
+            const results = await Promise.allSettled(
               selectedIds.map((id) =>
-                axios.patch(`/api/internships/${id}`, { isActive: allHidden })
+                axios.patch(`/api/internships/${id}`, {
+                  isActive: allHidden,
+                })
               )
             );
-            toast.success(allHidden ? `${selectedIds.length} internships unhidden` : `${selectedIds.length} internships hidden`);
+          
+            const failed = results.filter((r) => r.status === "rejected");
+          
+            if (failed.length > 0) {
+              toast.error(`${failed.length} updates failed`);
+            } else {
+              toast.success(
+                allHidden
+                  ? `${selectedIds.length} internships unhidden`
+                  : `${selectedIds.length} internships hidden`
+              );
+            }
+          
             setSelectedIds([]);
             queryClient.invalidateQueries({ queryKey: ["admin-internship-management"] });
             queryClient.invalidateQueries({ queryKey: ["internships"] });

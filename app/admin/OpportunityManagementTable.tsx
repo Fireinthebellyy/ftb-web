@@ -302,17 +302,18 @@ export default function OpportunityManagementTable() {
               type="number"
               defaultValue={opportunity.trendingIndex ?? ""}
               className="border rounded px-2 py-1 text-sm w-[80px]"
-              onBlur={async (e) => {
+             onBlur={async (e) => {
                 const raw = e.target.value;
-                    try {
-                    await axios.patch(`/api/admin/opportunities/${opportunity.id}`, {
-                      trendingIndex: raw === "" ? null : Number(raw),
-                    });
-                      queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
-                  } catch {
+                try {
+                  await axios.patch(`/api/admin/opportunities/${opportunity.id}`, {
+                    trendingIndex: raw === "" ? null : Number(raw),
+                  });
+                  toast.success("Trending index updated");
+                } catch {
                   toast.error("Failed to save index");
+                } finally {
+                  queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
                 }
-                
               }}
             />
           );

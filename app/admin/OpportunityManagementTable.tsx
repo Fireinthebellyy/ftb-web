@@ -191,7 +191,7 @@ export default function OpportunityManagementTable() {
         header: "Opportunity",
         cell: ({ row }) => {
           const opp = row.original;
-          console.log(opp.title, opp.isVerified, typeof opp.isVerified)
+        
           return (
             <div className="max-w-xs space-y-1">
               <div className="flex items-center gap-2">

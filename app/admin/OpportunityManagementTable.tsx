@@ -433,9 +433,12 @@ export default function OpportunityManagementTable() {
             const allHidden = selectedIds.every(
               (id) => !opportunities.find((o) => o.id === id)?.isActive
             );
+           const makeHidden = !allHidden;
             await Promise.allSettled(
               selectedIds.map((id) =>
-                axios.patch(`/api/admin/opportunities/${id}`, { action: "toggle" })
+                axios.patch(`/api/admin/opportunities/${id}`, {
+                  isActive: !makeHidden,
+                })
               )
             );
             toast.success(allHidden ? `${selectedIds.length} opportunities unhidden` : `${selectedIds.length} opportunities hidden`);

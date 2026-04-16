@@ -132,7 +132,7 @@ export default function OpportunityManagementTable() {
     queryKey: ["admin-opportunity-management"],
     queryFn: fetchAllOpportunities,
   });
-  const opportunities = (data ?? EMPTY_OPPORTUNITIES).sort((a, b) => {
+  const opportunities = [...(data ?? EMPTY_OPPORTUNITIES)].sort((a, b) => {
     return (a.trendingIndex ?? 9999) - (b.trendingIndex ?? 9999);
   });
   const handleApproveReject = async (

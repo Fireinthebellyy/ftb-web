@@ -36,6 +36,7 @@ interface UngatekeepHomePost {
   id: string;
   attachments: string[];
   videoUrl?: string | null;
+  is_featured_home?: boolean;
 }
 
 interface UngatekeepHomeResponse {
@@ -366,7 +367,8 @@ function ToolkitCarousel() {
     staleTime: 1000 * 60 * 10,
   });
 
-  const toolkitCards = toolkits.slice(0, 6);
+  const featuredToolkits = toolkits.filter((t: any) => t.is_featured_home);
+  const toolkitCards = featuredToolkits.slice(0, 6);
   const shouldShowComingSoon = toolkitCards.length < 2;
 
   const router = useRouter();
@@ -549,14 +551,16 @@ function MarqueeLikeCards() {
   const { data, isPending, isError } = useQuery<UngatekeepHomeResponse>({
     queryKey: ["home-ungatekeep-posts"],
     queryFn: async () => {
-      const response = await axios.get<UngatekeepHomeResponse>("/api/ungatekeep?page=1&limit=8");
+      const response = await axios.get<UngatekeepHomeResponse>("/api/ungatekeep?page=1&limit=50");
       return response.data;
     },
     staleTime: 1000 * 60 * 10,
   });
 
   const posts = data?.posts ?? [];
-  const cardsWithMedia = posts
+  const featuredPosts = posts.filter((post: any) => post.is_featured_home);
+  const sourcePosts = featuredPosts.length > 0 ? featuredPosts : posts;
+  const cardsWithMedia = sourcePosts
     .map((post) => {
       const videoThumbnail = getYouTubeThumbnailUrl(post.videoUrl);
       const firstImage = post.attachments?.[0]

@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { opportunities } from "@/lib/schema";
-import { and, desc, eq, isNull, lte, or } from "drizzle-orm";
+import { and, desc, eq, isNull, lte, or, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -36,13 +36,17 @@ export async function GET(req: NextRequest) {
         and(
           isNull(opportunities.deletedAt),
           eq(opportunities.isActive, true),
+          eq(opportunities.featuredHome, true),
           or(
             isNull(opportunities.publishAt),
             lte(opportunities.publishAt, new Date())
           )
         )
       )
-      .orderBy(desc(opportunities.createdAt))
+      .orderBy(
+        sql`COALESCE("opportunities"."featured_home_index", 999)`,
+        desc(opportunities.createdAt)
+      )
       .limit(validLimit)
       .offset(validOffset);
 

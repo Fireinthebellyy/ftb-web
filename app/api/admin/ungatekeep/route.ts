@@ -74,6 +74,10 @@ export async function GET(request: Request) {
         updatedAt: ungatekeepPosts.updatedAt,
         userId: ungatekeepPosts.userId,
         creatorName: userTable.name,
+        is_trending: ungatekeepPosts.is_trending,
+        is_featured_home: ungatekeepPosts.is_featured_home,
+        trending_index: ungatekeepPosts.trending_index,
+        featured_home_index: ungatekeepPosts.featured_home_index,
       })
       .from(ungatekeepPosts)
       .leftJoin(userTable, eq(ungatekeepPosts.userId, userTable.id))

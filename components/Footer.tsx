@@ -53,7 +53,7 @@ const Footer = () => {
           </div>
           <div className="flex items-center gap-3">
             <Link
-              href="https://www.instagram.com/fireinthebelly_ftb/"
+              href="https://www.instagram.com/fireinthebelly.in"
               aria-label="Follow us on Instagram"
               target="_blank"
               className="flex items-center justify-center rounded border border-neutral-300 p-2 text-neutral-600 transition-colors hover:border-neutral-400 hover:text-neutral-900"
@@ -69,7 +69,7 @@ const Footer = () => {
               <Linkedin className="h-4 w-4" />
             </Link>
             <Link
-              href="https://www.youtube.com/@fireinthebelly11"
+             href="https://www.youtube.com/@AlmostAdults-FTBPodcast"
               aria-label="Follow us on YouTube"
               target="_blank"
               className="flex items-center justify-center rounded border border-neutral-300 p-2 text-neutral-600 transition-colors hover:border-neutral-400 hover:text-neutral-900"

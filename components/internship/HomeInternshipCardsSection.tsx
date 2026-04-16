@@ -104,6 +104,8 @@ export default function HomeInternshipCardsSection({
   });
 
   const internships = data?.internships ?? [];
+  const featuredInternships = internships.filter((i: Internship) => i.is_featured_home);
+  const displayInternships = featuredInternships.length > 0 ? featuredInternships : internships;
 
   return (
     <section className="bg-white px-4 py-4 md:px-8 md:py-6">
@@ -132,13 +134,14 @@ export default function HomeInternshipCardsSection({
 
         <div className="hide-scrollbar overflow-x-auto">
           <div role="list" className="flex w-max gap-4">
-            {internships.length > 0 ? (
-              internships.map((internship) => (
+            {displayInternships.length > 0 ? (
+              displayInternships.map((internship) => (
                 <article
                   key={internship.id}
                   className="relative h-[199px] w-[160px] shrink-0 overflow-hidden rounded-2xl border border-black/20 md:h-[280px] md:w-[240px]"
                 >
                   <div className="absolute inset-0 bg-gradient-to-b from-[#fdfbfb] to-[#ebedee]" />
+                  
 
                   <div className="absolute inset-x-0 top-5 z-10 flex justify-center md:top-7">
                     <div className="flex h-14 w-14 items-center justify-center rounded-full border border-white/80 bg-white/70 shadow-sm backdrop-blur-[2px] md:h-16 md:w-16">

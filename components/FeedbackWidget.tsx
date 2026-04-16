@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MessageSquare } from "lucide-react";
+import { MessageSquareHeart } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -132,11 +132,11 @@ export function FeedbackWidget({
           title="Share feedback"
           onClick={() => setOpen(true)}
           className={cn(
-            "fixed right-6 z-50 flex size-10 cursor-pointer items-center justify-center rounded-full bg-neutral-200 text-neutral-600 shadow-lg transition hover:bg-neutral-100 focus:ring-2 focus:ring-orange-400 focus:outline-none md:bottom-20 md:size-12",
+            "fixed right-6 z-50 flex size-10 cursor-pointer items-center justify-center rounded-full bg-orange-500 text-white shadow-lg transition hover:bg-orange-600 focus:ring-2 focus:ring-orange-400 focus:outline-none md:bottom-20 md:size-12",
             isInternshipDetailPage ? "bottom-[148px]" : "bottom-[124px]"
           )}
         >
-          <MessageSquare className="size-5 md:size-6" aria-hidden />
+          <MessageSquareHeart className="size-5 md:size-6" aria-hidden />
         </button>
       )}
 

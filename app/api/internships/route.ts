@@ -255,11 +255,23 @@ export async function GET(req: NextRequest) {
           image: user.image,
           role: user.role,
         },
+        is_trending: internships.is_trending,
+        is_featured_home: internships.is_featured_home,
+        display_index: internships.display_index,
+        trending_index: internships.trending_index,
+        featured_home_index: internships.featured_home_index,
       })
       .from(internships)
       .leftJoin(user, eq(internships.userId, user.id))
       .where(filters)
-      .orderBy(desc(internships.createdAt));
+      .orderBy(
+          sql`COALESCE("internships"."trending_index", 999)`,
+          sql`CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END`,
+          desc(internships.createdAt)
+        )
 
     const rows =
       limit !== undefined

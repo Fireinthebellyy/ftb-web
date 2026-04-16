@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { toolkits, user } from "@/lib/schema";
 import { hasMeaningfulRichText, normalizeRichText } from "@/lib/rich-text";
 import { getCurrentUser } from "@/server/users";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 
 // GET all toolkits
 export async function GET() {
@@ -31,11 +31,20 @@ export async function GET() {
         updatedAt: toolkits.updatedAt,
         userId: toolkits.userId,
         creatorName: user.name,
+        is_trending: toolkits.is_trending,
+        is_featured_home: toolkits.is_featured_home,
+        trending_index: toolkits.trending_index,
+        featured_home_index: toolkits.featured_home_index,
       })
       .from(toolkits)
       .leftJoin(user, eq(toolkits.userId, user.id))
       .where(eq(toolkits.isActive, true))
-      .orderBy(desc(toolkits.createdAt));
+      .orderBy(
+        sql`CASE WHEN ${toolkits.is_featured_home} = true THEN 0 ELSE 1 END ASC`,
+        sql`COALESCE(${toolkits.featured_home_index}, 9999) ASC`,
+        sql`COALESCE(${toolkits.trending_index}, 9999) ASC`,
+        desc(toolkits.createdAt)
+      )
 
     return NextResponse.json(allToolkits);
   } catch (error) {

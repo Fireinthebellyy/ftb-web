@@ -31,7 +31,7 @@ export default function ToolkitCardNew({
           className
         )}
       >
-        {(toolkit as any).is_trending && (
+        {toolkit.is_trending && (
           <div className="absolute -top-0.5 right-0 z-20">
             <Badge className="bg-orange-500 text-white rounded-tl-none rounded-br-none px-1 py-0.5 text-[10px] font-medium">
               <Flame className="h-2.5 w-2.5 mr-0.5 inline" />Trending

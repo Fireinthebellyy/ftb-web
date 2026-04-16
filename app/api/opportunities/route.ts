@@ -15,6 +15,7 @@ import {
 import { opportunities, tags, user } from "@/lib/schema";
 import { createApiTimer } from "@/lib/api-timing";
 import { getSessionCached } from "@/lib/auth-session-cache";
+import { normalizeDateOnly } from "@/lib/date-utils";
 import {
   getExistingTagIdsOrThrow,
   InvalidTagSelectionError,
@@ -205,16 +206,16 @@ export async function POST(req: NextRequest) {
     }
 
     if (validatedData.startDate) {
-      const startDate = new Date(validatedData.startDate);
-      if (!isNaN(startDate.getTime())) {
-        insertData.startDate = startDate.toISOString().split("T")[0];
+      const normalizedStartDate = normalizeDateOnly(validatedData.startDate);
+      if (normalizedStartDate) {
+        insertData.startDate = normalizedStartDate;
       }
     }
 
     if (validatedData.endDate) {
-      const endDate = new Date(validatedData.endDate);
-      if (!isNaN(endDate.getTime())) {
-        insertData.endDate = endDate.toISOString().split("T")[0];
+      const normalizedEndDate = normalizeDateOnly(validatedData.endDate);
+      if (normalizedEndDate) {
+        insertData.endDate = normalizedEndDate;
       }
     }
 

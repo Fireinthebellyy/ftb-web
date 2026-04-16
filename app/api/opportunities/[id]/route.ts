@@ -5,6 +5,7 @@ import {
   getExistingTagIdsOrThrow,
   InvalidTagSelectionError,
 } from "@/lib/tags";
+import { normalizeDateOnly } from "@/lib/date-utils";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -136,15 +137,17 @@ export async function PUT(
       updateData.applyLink = validatedData.applyLink;
 
     if (validatedData.startDate !== undefined) {
-      updateData.startDate = validatedData.startDate
-        ? new Date(validatedData.startDate).toISOString().split("T")[0]
-        : null;
+      const normalizedStartDate = normalizeDateOnly(validatedData.startDate);
+      if (normalizedStartDate !== undefined) {
+        updateData.startDate = normalizedStartDate;
+      }
     }
 
     if (validatedData.endDate !== undefined) {
-      updateData.endDate = validatedData.endDate
-        ? new Date(validatedData.endDate).toISOString().split("T")[0]
-        : null;
+      const normalizedEndDate = normalizeDateOnly(validatedData.endDate);
+      if (normalizedEndDate !== undefined) {
+        updateData.endDate = normalizedEndDate;
+      }
     }
 
     const parsedPublishAt = parsePublishAt(validatedData.publishAt);

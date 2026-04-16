@@ -29,6 +29,19 @@ const isValidUUID = (uuid: string): boolean => {
   return uuidRegex.test(uuid);
 };
 
+const resolveOpportunityDeadline = (
+  startDate?: string | null,
+  endDate?: string | null
+): string | undefined => {
+  if (endDate) return endDate;
+  if (!startDate) return undefined;
+  const baseDate = new Date(startDate);
+  if (Number.isNaN(baseDate.getTime())) return undefined;
+  return new Date(baseDate.getTime() + 3 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0];
+};
+
 const getTypeBadgeColor = (type?: string): string => {
   const colors: Record<string, string> = {
     competitions_open_calls: "bg-blue-100 text-blue-800",
@@ -101,7 +114,10 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
               : undefined,
             type: opportunity.type,
             location: opportunity.location,
-            deadline: opportunity.startDate || opportunity.endDate,
+            deadline: resolveOpportunityDeadline(
+              opportunity.startDate,
+              opportunity.endDate
+            ),
             kind: "opportunity",
           } as any,
           "Not Applied",
@@ -186,7 +202,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
         <Dialog open={isEditing} onOpenChange={(open) => setIsEditing(open)}>
           <DialogContent
-            className="mx-auto p-4 md:max-h-[600px] md:min-w-[600px]"
+            className="mx-auto max-h-[90vh] w-full overflow-y-auto overflow-x-hidden [-ms-overflow-style:none] [scrollbar-width:none] sm:max-w-2xl [&::-webkit-scrollbar]:hidden"
             overlayClassName="backdrop-blur-xs bg-black/30"
             onOpenAutoFocus={(event) => event.preventDefault()}
           >

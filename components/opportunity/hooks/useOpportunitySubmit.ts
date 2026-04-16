@@ -8,6 +8,7 @@ import {
   deleteStorageObjectClient,
   uploadFileViaSignedUrl,
 } from "@/lib/storage/client";
+import { toDateOnlyLocalValue } from "@/lib/date-utils";
 import { FileItem, Opportunity } from "@/types/interfaces";
 import { FormData } from "../schema";
 
@@ -139,8 +140,8 @@ export function useOpportunitySubmit({
 
       const payload: Record<string, unknown> = {
         ...restData,
-        startDate: dateRange?.from?.toISOString(),
-        endDate: dateRange?.to?.toISOString(),
+        startDate: toDateOnlyLocalValue(dateRange?.from),
+        endDate: toDateOnlyLocalValue(dateRange?.to),
         tags:
           data.tags
             ?.split("|")

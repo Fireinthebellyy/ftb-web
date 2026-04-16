@@ -206,8 +206,8 @@ export function OpportunityActions({
                 if (opportunity.endDate) {
                   date = new Date(opportunity.endDate);
                 } else {
-                  const baseDate = opportunity.createdAt
-                    ? new Date(opportunity.createdAt)
+                  const baseDate = opportunity.startDate
+                    ? new Date(opportunity.startDate)
                     : new Date();
                   date = new Date(baseDate.getTime() + 3 * 24 * 60 * 60 * 1000);
                 }

@@ -60,6 +60,27 @@ const opportunitySchema = z.object({
     .optional(),
 });
 
+function normalizeDateOnly(value?: string): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  const parsed = new Date(trimmed);
+  if (Number.isNaN(parsed.getTime())) {
+    return undefined;
+  }
+
+  const year = parsed.getUTCFullYear();
+  const month = String(parsed.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 async function getUserRoleFromSession(session: {
   user: { id: string; role?: string };
 }) {
@@ -205,16 +226,16 @@ export async function POST(req: NextRequest) {
     }
 
     if (validatedData.startDate) {
-      const startDate = new Date(validatedData.startDate);
-      if (!isNaN(startDate.getTime())) {
-        insertData.startDate = startDate.toISOString().split("T")[0];
+      const normalizedStartDate = normalizeDateOnly(validatedData.startDate);
+      if (normalizedStartDate) {
+        insertData.startDate = normalizedStartDate;
       }
     }
 
     if (validatedData.endDate) {
-      const endDate = new Date(validatedData.endDate);
-      if (!isNaN(endDate.getTime())) {
-        insertData.endDate = endDate.toISOString().split("T")[0];
+      const normalizedEndDate = normalizeDateOnly(validatedData.endDate);
+      if (normalizedEndDate) {
+        insertData.endDate = normalizedEndDate;
       }
     }
 

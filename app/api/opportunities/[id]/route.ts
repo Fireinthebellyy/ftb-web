@@ -48,6 +48,31 @@ const updateOpportunitySchema = z.object({
     .optional(),
 });
 
+function normalizeDateOnly(value?: string): string | null | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  const parsed = new Date(trimmed);
+  if (Number.isNaN(parsed.getTime())) {
+    return undefined;
+  }
+
+  const year = parsed.getUTCFullYear();
+  const month = String(parsed.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function parsePublishAt(
   publishAt: string | "" | null | undefined
 ): Date | null | undefined {
@@ -136,15 +161,17 @@ export async function PUT(
       updateData.applyLink = validatedData.applyLink;
 
     if (validatedData.startDate !== undefined) {
-      updateData.startDate = validatedData.startDate
-        ? new Date(validatedData.startDate).toISOString().split("T")[0]
-        : null;
+      const normalizedStartDate = normalizeDateOnly(validatedData.startDate);
+      if (normalizedStartDate !== undefined) {
+        updateData.startDate = normalizedStartDate;
+      }
     }
 
     if (validatedData.endDate !== undefined) {
-      updateData.endDate = validatedData.endDate
-        ? new Date(validatedData.endDate).toISOString().split("T")[0]
-        : null;
+      const normalizedEndDate = normalizeDateOnly(validatedData.endDate);
+      if (normalizedEndDate !== undefined) {
+        updateData.endDate = normalizedEndDate;
+      }
     }
 
     const parsedPublishAt = parsePublishAt(validatedData.publishAt);

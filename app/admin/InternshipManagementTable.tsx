@@ -262,6 +262,7 @@ export default function InternshipManagementTable({
           return (
             <OrangeCheckbox
               checked={internship.is_trending ?? false}
+              label="Toggle Trending" 
               onChange={() =>
                 updateInternshipMutation.mutate({
                   id: internship.id,
@@ -280,6 +281,7 @@ export default function InternshipManagementTable({
           return (
             <OrangeCheckbox
               checked={internship.is_featured_home ?? false}
+              label="Toggle Featured Home"
               onChange={() =>
                 updateInternshipMutation.mutate({
                   id: internship.id,

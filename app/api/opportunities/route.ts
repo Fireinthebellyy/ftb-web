@@ -15,6 +15,7 @@ import {
 import { opportunities, tags, user } from "@/lib/schema";
 import { createApiTimer } from "@/lib/api-timing";
 import { getSessionCached } from "@/lib/auth-session-cache";
+import { normalizeDateOnly } from "@/lib/date-utils";
 import {
   getExistingTagIdsOrThrow,
   InvalidTagSelectionError,
@@ -59,27 +60,6 @@ const opportunitySchema = z.object({
     ])
     .optional(),
 });
-
-function normalizeDateOnly(value?: string): string | undefined {
-  if (!value) {
-    return undefined;
-  }
-
-  const trimmed = value.trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-    return trimmed;
-  }
-
-  const parsed = new Date(trimmed);
-  if (Number.isNaN(parsed.getTime())) {
-    return undefined;
-  }
-
-  const year = parsed.getUTCFullYear();
-  const month = String(parsed.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(parsed.getUTCDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
 
 async function getUserRoleFromSession(session: {
   user: { id: string; role?: string };

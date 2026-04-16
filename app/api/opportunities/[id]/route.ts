@@ -5,6 +5,7 @@ import {
   getExistingTagIdsOrThrow,
   InvalidTagSelectionError,
 } from "@/lib/tags";
+import { normalizeDateOnly } from "@/lib/date-utils";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -47,31 +48,6 @@ const updateOpportunitySchema = z.object({
     ])
     .optional(),
 });
-
-function normalizeDateOnly(value?: string): string | null | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-    return trimmed;
-  }
-
-  const parsed = new Date(trimmed);
-  if (Number.isNaN(parsed.getTime())) {
-    return undefined;
-  }
-
-  const year = parsed.getUTCFullYear();
-  const month = String(parsed.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(parsed.getUTCDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
 
 function parsePublishAt(
   publishAt: string | "" | null | undefined

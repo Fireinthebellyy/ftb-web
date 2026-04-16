@@ -38,10 +38,30 @@ export function parseDateOnlyToLocalDate(
     return new Date(Number(year), Number(month) - 1, Number(day));
   }
 
-  const parsed = new Date(value);
+  return undefined;
+}
+
+export function normalizeDateOnly(value?: string): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  const parsed = new Date(trimmed);
   if (Number.isNaN(parsed.getTime())) {
     return undefined;
   }
 
-  return parsed;
+  const year = parsed.getUTCFullYear();
+  const month = String(parsed.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }

@@ -56,4 +56,8 @@ export interface Toolkit {
   updatedAt: string;
   userId: string;
   creatorName: string | null;
+  is_trending: boolean;    
+  is_featured_home: boolean; 
+  trending_index?: number;
+  featured_home_index?: number;
 }

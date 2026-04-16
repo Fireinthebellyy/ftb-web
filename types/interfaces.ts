@@ -16,6 +16,9 @@ export type Opportunity = {
   upvoteCount: number;
   upvoterIds: string[];
   userHasUpvoted?: boolean;
+  trending?: boolean;        
+  featuredHome?: boolean;
+  displayIndex?: number; 
   user: {
     id: string;
     name: string;
@@ -43,6 +46,8 @@ export type Internship = {
   isVerified?: boolean;
   isFlagged?: boolean;
   isActive?: boolean;
+  is_trending?: boolean;
+  is_featured_home?: boolean;
   user: {
     id: string;
     name: string;
@@ -205,6 +210,8 @@ export type Toolkit = {
   creatorName?: string;
   contentItems?: ToolkitContentItem[];
   testimonials?: ToolkitTestimonial[];
+  is_trending?: boolean;
+  is_featured_home?: boolean;
 };
 
 export type ToolkitContentItem = {

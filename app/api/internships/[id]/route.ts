@@ -71,6 +71,8 @@ export async function GET(
           image: user.image,
           role: user.role,
         },
+        is_trending: internships.is_trending,
+        is_featured_home: internships.is_featured_home,
       })
       .from(internships)
       .leftJoin(user, eq(internships.userId, user.id))
@@ -110,7 +112,6 @@ export async function PATCH(
     }
 
     const { id } = await params;
-
     if (!id) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
@@ -136,12 +137,44 @@ export async function PATCH(
 
     const internship = existingInternship[0];
 
+  
+    let body: Record<string, unknown> = {};
+    try {
+      body = await _req.json();
+    } catch {
+      // no body = toggle visibility
+    }
+
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+
+    if (Object.keys(body).length === 0) {
+      updates.isActive = !internship.isActive;
+    } else {
+      if (body.display_index !== undefined) {
+        updates.display_index = body.display_index;
+        if (body.trending_index === undefined) {
+          updates.trending_index = body.display_index;
+        }
+      }
+
+      if (body.trending_index !== undefined) {
+        updates.trending_index = body.trending_index;
+        if (body.display_index === undefined) {
+          updates.display_index = body.trending_index;
+        }
+      }
+
+      if (body.featured_home_index !== undefined) {
+        updates.featured_home_index = body.featured_home_index;
+      }
+      if (body.isActive !== undefined) updates.isActive = body.isActive;
+      if (body.isTrending !== undefined) updates.is_trending = body.isTrending;
+      if (body.isFeaturedHome !== undefined) updates.is_featured_home = body.isFeaturedHome;
+    }
+
     const updatedInternship = await db
       .update(internships)
-      .set({
-        isActive: !internship.isActive, // toggle hide/unhide
-        updatedAt: new Date(),
-      })
+      .set(updates)
       .where(eq(internships.id, id))
       .returning();
 
@@ -150,9 +183,9 @@ export async function PATCH(
       internship: updatedInternship[0],
     });
   } catch (error) {
-    console.error("Error updating internship visibility:", error);
+    console.error("Error updating internship:", error);
     return NextResponse.json(
-      { error: "Failed to update internship visibility" },
+      { error: "Failed to update internship" },
       { status: 500 }
     );
   }

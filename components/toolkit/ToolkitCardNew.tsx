@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn, stripHtml } from "@/lib/utils";
 import { Toolkit } from "@/types/interfaces";
+import { Flame } from "lucide-react";
 
 interface ToolkitCardNewProps {
   toolkit: Toolkit;
@@ -26,10 +27,17 @@ export default function ToolkitCardNew({
     <Link href={href} className="block" prefetch>
       <Card
         className={cn(
-          "group flex cursor-pointer flex-row gap-0 overflow-hidden border bg-white py-0 transition-shadow hover:shadow-md sm:flex-col",
+          "relative group flex cursor-pointer flex-row gap-0 overflow-hidden border bg-white py-0 transition-shadow hover:shadow-md sm:flex-col",
           className
         )}
       >
+        {toolkit.is_trending && (
+          <div className="absolute -top-0.5 right-0 z-20">
+            <Badge className="bg-orange-500 text-white rounded-tl-none rounded-br-none px-1 py-0.5 text-[10px] font-medium">
+              <Flame className="h-2.5 w-2.5 mr-0.5 inline" />Trending
+            </Badge>
+          </div>
+        )}
         <div className="relative min-h-28 w-28 shrink-0 self-stretch overflow-hidden bg-gray-100 sm:aspect-video sm:h-auto sm:w-full">
           {toolkit.coverImageUrl ? (
             <Image

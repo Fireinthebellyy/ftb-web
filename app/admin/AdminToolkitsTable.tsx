@@ -41,7 +41,7 @@ import {
   uploadFileViaSignedUrl,
 } from "@/lib/storage/client";
 import { normalizeRichText } from "@/lib/rich-text";
-import { stripHtml } from "@/lib/utils";
+import { cn, stripHtml } from "@/lib/utils";
 
 async function fetchToolkits(): Promise<Toolkit[]> {
   const response = await axios.get<Toolkit[]>("/api/admin/toolkits");
@@ -50,12 +50,36 @@ async function fetchToolkits(): Promise<Toolkit[]> {
 
 function formatHighlight(highlight: string) {
   const trimmed = highlight.trim();
-
-  if (!trimmed) {
-    return "";
-  }
-
+  if (!trimmed) return "";
   return `${trimmed.charAt(0).toUpperCase()}${trimmed.slice(1)}`;
+}
+
+function OrangeCheckbox({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <label className="relative inline-flex cursor-pointer">
+      <input type="checkbox" checked={checked} className="sr-only" onChange={onChange} />
+      <span
+        className={cn(
+          "flex h-5 w-5 items-center justify-center rounded border-2 transition-colors",
+          checked
+            ? "border-orange-500 bg-orange-500"
+            : "border-gray-300 bg-white hover:border-orange-300"
+        )}
+      >
+        {checked && (
+          <svg className="h-3 w-3 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="1.5,6 4.5,9 10.5,3" />
+          </svg>
+        )}
+      </span>
+    </label>
+  );
 }
 
 export default function AdminToolkitsTable() {
@@ -65,9 +89,7 @@ export default function AdminToolkitsTable() {
   const [managingToolkit, setManagingToolkit] = useState<Toolkit | null>(null);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [bannerImageFile, setBannerImageFile] = useState<File | null>(null);
-  const [updatingActiveToolkitIds, setUpdatingActiveToolkitIds] = useState<
-    Set<string>
-  >(new Set());
+  const [updatingActiveToolkitIds, setUpdatingActiveToolkitIds] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
 
   const {
@@ -111,11 +133,22 @@ export default function AdminToolkitsTable() {
     }) => {
       await axios.put(`/api/admin/toolkits/${id}`, payload);
     },
+    onMutate: async ({ id, payload }) => {
+      await queryClient.cancelQueries({ queryKey: ["admin", "toolkits"] });
+      const previous = queryClient.getQueryData<Toolkit[]>(["admin", "toolkits"]);
+      queryClient.setQueryData<Toolkit[]>(["admin", "toolkits"], (old) =>
+        old?.map((t) => (t.id === id ? { ...t, ...payload } : t)) ?? []
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["admin", "toolkits"], context.previous);
+      }
+      toast.error("Failed to update toolkit");
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "toolkits"] });
-    },
-    onError: () => {
-      toast.error("Failed to update toolkit");
     },
   });
 
@@ -158,9 +191,7 @@ export default function AdminToolkitsTable() {
   );
 
   const handleUpdate = async (data: ToolkitFormValues) => {
-    if (!editingToolkit) {
-      return;
-    }
+    if (!editingToolkit) return;
 
     const currentCoverImageUrl = data.coverImageUrl?.trim() ?? "";
     if (!currentCoverImageUrl && !coverImageFile) {
@@ -203,8 +234,7 @@ export default function AdminToolkitsTable() {
         videoUrl: data.videoUrl || undefined,
         category: data.category || undefined,
         totalDuration: data.totalDuration || undefined,
-        highlights:
-          data.highlights?.map(formatHighlight).filter(Boolean) || undefined,
+        highlights: data.highlights?.map(formatHighlight).filter(Boolean) || undefined,
         testimonials: data.testimonials?.length
           ? data.testimonials.map((item) => ({
               name: item.name.trim(),
@@ -229,12 +259,10 @@ export default function AdminToolkitsTable() {
           deleteStorageObjectClient("ungatekeep-images", key).catch(() => null)
         )
       );
-
       if (error instanceof Error) {
         toast.error(error.message);
         return;
       }
-
       toast.error("Failed to update toolkit");
     }
   };
@@ -305,7 +333,6 @@ export default function AdminToolkitsTable() {
         cell: ({ row }) => {
           const toolkitId = row.original.id;
           const isUpdating = updatingActiveToolkitIds.has(toolkitId);
-
           return (
             <div className="flex items-center gap-2">
               <Switch
@@ -317,7 +344,6 @@ export default function AdminToolkitsTable() {
                     next.add(toolkitId);
                     return next;
                   });
-
                   updateToolkitMutation.mutate(
                     {
                       id: toolkitId,
@@ -370,11 +396,7 @@ export default function AdminToolkitsTable() {
                 }
               )
             }
-            title={
-              row.original.showSaleBadge
-                ? "Disable sale badge"
-                : "Enable sale badge"
-            }
+            title={row.original.showSaleBadge ? "Disable sale badge" : "Enable sale badge"}
           >
             <Badge
               className={
@@ -389,12 +411,85 @@ export default function AdminToolkitsTable() {
         ),
       },
       {
+        id: "trending",
+        header: "Trending",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <OrangeCheckbox
+            checked={row.original.is_trending ?? false}
+            onChange={() =>
+              updateToolkitMutation.mutate({
+                id: row.original.id,
+                payload: { is_trending: !row.original.is_trending },
+              })
+            }
+          />
+        ),
+      },
+      {
+        id: "featuredHome",
+        header: "Featured Home",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <OrangeCheckbox
+            checked={row.original.is_featured_home ?? false}
+            onChange={() =>
+              updateToolkitMutation.mutate({
+                id: row.original.id,
+                payload: { is_featured_home: !row.original.is_featured_home },
+              })
+            }
+          />
+        ),
+      },
+      {
+        accessorKey: "trending_index",
+        header: "Trending Index",
+        cell: ({ row }) => {
+          const toolkit = row.original;
+          return (
+            <input
+              key={`trending-${toolkit.id}-${toolkit.trending_index}`}
+              type="number"
+              defaultValue={toolkit.trending_index ?? ""}
+              className="border rounded px-2 py-1 text-sm w-[80px]"
+              onBlur={async (e) => {
+                const raw = e.target.value;
+                await axios.put(`/api/admin/toolkits/${toolkit.id}`, {
+                  trending_index: raw === "" ? null : Number(raw),
+                });
+              }}
+            />
+          );
+        },
+      },
+      {
+        accessorKey: "featured_home_index",
+        header: "Featured Index",
+        cell: ({ row }) => {
+          const toolkit = row.original;
+          return (
+            <input
+              key={`featured-${toolkit.id}-${toolkit.featured_home_index}`}
+              type="number"
+              defaultValue={toolkit.featured_home_index ?? ""}
+              className="border rounded px-2 py-1 text-sm w-[80px]"
+              onBlur={async (e) => {
+                const raw = e.target.value;
+                await axios.put(`/api/admin/toolkits/${toolkit.id}`, {
+                  featured_home_index: raw === "" ? null : Number(raw),
+                });
+              }}
+            />
+          );
+        },
+      },
+      {
         id: "actions",
         header: "Actions",
         enableSorting: false,
         cell: ({ row }) => {
           const toolkit = row.original;
-
           return (
             <div className="flex items-center gap-2">
               <Button
@@ -421,13 +516,7 @@ export default function AdminToolkitsTable() {
                 size="sm"
                 title="Delete toolkit"
                 onClick={() => {
-                  if (
-                    !confirm(
-                      `Are you sure you want to delete "${toolkit.title}"?`
-                    )
-                  ) {
-                    return;
-                  }
+                  if (!confirm(`Are you sure you want to delete "${toolkit.title}"?`)) return;
                   deleteToolkitMutation.mutate(toolkit.id);
                 }}
               >
@@ -489,10 +578,22 @@ export default function AdminToolkitsTable() {
         <AdminDataTable
           tableId="toolkits"
           columns={columns}
-          data={toolkits}
+          data={[...toolkits].sort((a, b) => {
+            const aTrending = a.trending_index ?? 9999;
+            const bTrending = b.trending_index ?? 9999;
+
+            if (aTrending !== bTrending) return aTrending - bTrending;
+
+            const aFeatured = a.featured_home_index ?? 9999;
+            const bFeatured = b.featured_home_index ?? 9999;
+
+            if (aFeatured !== bFeatured) return aFeatured - bFeatured;
+
+            return 0;
+          })}
           emptyMessage="No toolkits found"
-          filterColumnId="title"
-          filterPlaceholder="Search toolkits"
+          filterFields={["title", "createdAt", "trending_index", "featured_home_index"]}
+          filterPlaceholder="Search by title, date, or index"
         />
       </AdminTableState>
 
@@ -501,12 +602,8 @@ export default function AdminToolkitsTable() {
           <DialogHeader>
             <DialogTitle>Edit Toolkit</DialogTitle>
           </DialogHeader>
-
           <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(handleUpdate)}
-              className="space-y-4"
-            >
+            <form onSubmit={form.handleSubmit(handleUpdate)} className="space-y-4">
               <ToolkitFormFields
                 control={form.control}
                 coverImageFile={coverImageFile}
@@ -524,17 +621,10 @@ export default function AdminToolkitsTable() {
                 isSubmitting={updateToolkitMutation.isPending}
               />
               <div className="flex justify-end space-x-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => handleEditDialogChange(false)}
-                >
+                <Button type="button" variant="outline" onClick={() => handleEditDialogChange(false)}>
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={updateToolkitMutation.isPending}
-                >
+                <Button type="submit" disabled={updateToolkitMutation.isPending}>
                   {updateToolkitMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

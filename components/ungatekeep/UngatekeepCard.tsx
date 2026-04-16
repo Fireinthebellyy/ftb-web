@@ -20,6 +20,7 @@ import {
   ExternalLink,
   Share2,
   Pin,
+  Flame,
 } from "lucide-react";
 import axios from "axios";
 
@@ -60,6 +61,7 @@ type UngatekeepPost = {
   createdAt: string;
   creatorName?: string | null;
   creatorImage?: string | null;
+  is_trending?: boolean;
 };
 
 interface UngatekeepCardProps {
@@ -417,6 +419,14 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
             className={`${getTagBadgeVariant(post.tag)} rounded-tl-none rounded-br-none px-1.5 py-0.5 text-[9px] font-medium sm:px-2 sm:py-1 sm:text-[10px]`}
           >
             {post.tag.replace("_", " ")}
+          </Badge>
+        </div>
+      )}
+
+      {post.is_trending && (
+        <div className="absolute -top-1.5 left-0 z-10 sm:-top-1">
+          <Badge className="bg-orange-500 text-white rounded-tr-none rounded-bl-none px-1.5 py-0.5 text-[9px] font-medium sm:px-2 sm:py-1 sm:text-[10px]">
+             <Flame className="h-2.5 w-2.5 mr-0.5 inline" />Trending
           </Badge>
         </div>
       )}

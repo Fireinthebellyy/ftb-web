@@ -191,6 +191,7 @@ export default function InternshipManagementTable({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-internship-management"] });
+      queryClient.invalidateQueries({ queryKey: ["internships"] });
     },
   });
 

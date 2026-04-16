@@ -60,7 +60,38 @@ async function fetchCoupons(): Promise<Coupon[]> {
   const response = await axios.get<{ coupons: Coupon[] }>("/api/admin/coupons");
   return response.data.coupons;
 }
+function DiscountCell({ coupon, queryClient }: { coupon: Coupon; queryClient: any }) {
+  const [type, setType] = useState<"fixed" | "percentage">(
+    coupon.discountType ?? "fixed"
+  );
 
+  const handleTypeChange = async (value: "fixed" | "percentage") => {
+    setType(value);
+    await axios.patch(`/api/admin/coupons/${coupon.id}`, {
+      discountType: value,
+    });
+    queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      <span>
+        {type === "percentage"
+          ? `${coupon.discountAmount}%`
+          : `₹${coupon.discountAmount}`}
+      </span>
+      <Select value={type} onValueChange={handleTypeChange}>
+        <SelectTrigger className="h-6 w-[75px] text-xs px-1 border-none shadow-none">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="fixed">₹ Fixed</SelectItem>
+          <SelectItem value="percentage">% Off</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
 export default function AdminCouponsTable() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
@@ -183,38 +214,7 @@ export default function AdminCouponsTable() {
       {
         accessorKey: "discountAmount",
         header: "Discount",
-        cell: ({ row }) => {
-          const [type, setType] = useState<"fixed" | "percentage">(
-            row.original.discountType ?? "fixed"
-          );
-
-          const handleTypeChange = async (value: "fixed" | "percentage") => {
-            setType(value);
-            await axios.patch(`/api/admin/coupons/${row.original.id}`, {
-              discountType: value,
-            });
-            queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
-          };
-
-          return (
-            <div className="flex items-center gap-1">
-              <span>
-                {type === "percentage"
-                  ? `${row.original.discountAmount}%`
-                  : `₹${row.original.discountAmount}`}
-              </span>
-              <Select value={type} onValueChange={handleTypeChange}>
-                <SelectTrigger className="h-6 w-[75px] text-xs px-1 border-none shadow-none">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fixed">₹ Fixed</SelectItem>
-                  <SelectItem value="percentage">% Off</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          );
-        },
+        cell: ({ row }) => <DiscountCell coupon={row.original} queryClient={queryClient} />,
       },
       {
         id: "usage",

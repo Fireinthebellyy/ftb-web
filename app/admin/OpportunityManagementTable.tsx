@@ -433,15 +433,29 @@ export default function OpportunityManagementTable() {
             const allHidden = selectedIds.every(
               (id) => !opportunities.find((o) => o.id === id)?.isActive
             );
-           const makeHidden = !allHidden;
-            await Promise.allSettled(
+          
+            const makeHidden = !allHidden;
+          
+            const results = await Promise.allSettled(
               selectedIds.map((id) =>
                 axios.patch(`/api/admin/opportunities/${id}`, {
                   isActive: !makeHidden,
                 })
               )
             );
-            toast.success(allHidden ? `${selectedIds.length} opportunities unhidden` : `${selectedIds.length} opportunities hidden`);
+          
+            const failed = results.filter((r) => r.status === "rejected");
+          
+            if (failed.length > 0) {
+              toast.error(`${failed.length} updates failed`);
+            } else {
+              toast.success(
+                allHidden
+                  ? `${selectedIds.length} opportunities unhidden`
+                  : `${selectedIds.length} opportunities hidden`
+              );
+            }
+          
             setSelectedIds([]);
             queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
           }}

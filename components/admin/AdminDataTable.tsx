@@ -82,7 +82,10 @@ export function AdminDataTable<TData, TValue>({
   const multiFieldFilter: FilterFn<any> = (row, _columnId, value) => {
     const search = value.toLowerCase();
     return (filterFields ?? []).some((field) => {
-      const val = String((row.original as any)[field] ?? "").toLowerCase();
+      let val = String((row.original as any)[field] ?? "").toLowerCase();
+      if (field === "createdAt" && (row.original as any)[field]) {
+        val = new Date((row.original as any)[field]).toLocaleDateString().toLowerCase();
+      }
       return val.includes(search);
     });
   };

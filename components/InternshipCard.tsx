@@ -78,7 +78,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   const { id, title, hiringOrganization, deadline } = internship;
-  console.log("internship trending:", (internship as any).is_trending);
+  
 
   const currentStatus = getStatus(id, "internship");
   const isBookmarked = !!currentStatus;

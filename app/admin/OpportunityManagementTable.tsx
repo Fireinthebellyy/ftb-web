@@ -332,10 +332,16 @@ export default function OpportunityManagementTable() {
               className="border rounded px-2 py-1 text-sm w-[80px]"
               onBlur={async (e) => {
                 const raw = e.target.value;
-                await axios.patch(`/api/admin/opportunities/${opportunity.id}`, {
-                  featuredHomeIndex: raw === "" ? null : Number(raw),
-                });
-                queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
+                try {
+                  await axios.patch(`/api/admin/opportunities/${opportunity.id}`, {
+                    featuredHomeIndex: raw === "" ? null : Number(raw),
+                  });
+                  toast.success("Featured index updated");
+                } catch {
+                  toast.error("Failed to update featured index");
+                } finally {
+                  queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
+                }
               }}
             />
           );

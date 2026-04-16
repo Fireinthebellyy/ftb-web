@@ -482,6 +482,7 @@ export default function InternshipManagementTable({
               onInternshipCreated={() => {
                 setOpen(false);
                 queryClient.invalidateQueries({ queryKey: ["admin-internship-management"] });
+                queryClient.invalidateQueries({ queryKey: ["internships"] });
               }}
             />
           </DialogContent>

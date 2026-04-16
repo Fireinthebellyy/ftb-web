@@ -77,7 +77,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
   const { addToTracker, getStatus, removeFromTracker } = useTracker();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
-  const { id, title, hiringOrganization, deadline } = internship;
+  const { id, title, hiringOrganization, deadline, is_trending } = internship;
   
 
   const currentStatus = getStatus(id, "internship");
@@ -177,7 +177,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
         onKeyDown={handleCardKeyDown}
       >
 
-        {(internship as any).is_trending && (
+        {is_trending && (
           <div className="absolute -top-0.5 right-0 z-20">
             <Badge className="bg-orange-500 text-white rounded-tl-none rounded-br-none px-2 py-1 text-[9px] font-medium">
               <Flame className="h-2.5 w-2.5 mr-0.5 inline" />Trending

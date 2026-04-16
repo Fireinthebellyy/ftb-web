@@ -75,13 +75,15 @@ const EMPTY_INTERNSHIPS: Internship[] = [];
 function OrangeCheckbox({
   checked,
   onChange,
+  label,
 }: {
   checked: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  label: string;
 }) {
   return (
     <label className="relative inline-flex cursor-pointer">
-      <input type="checkbox" checked={checked} className="sr-only" onChange={onChange} />
+      <input type="checkbox" checked={checked} className="sr-only" onChange={onChange} aria-label={label} />
       <span
         className={cn(
           "flex h-5 w-5 items-center justify-center rounded border-2 transition-colors",

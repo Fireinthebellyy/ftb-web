@@ -144,7 +144,7 @@ export default function InternshipManagementTable({
     queryFn: fetchAllInternships,
   });
 
-  const internships = (data ?? EMPTY_INTERNSHIPS).sort((a, b) => {
+  const internships = [...(data ?? EMPTY_INTERNSHIPS)].sort(...)
     const aTrending = a.trending_index ?? 9999;
     const bTrending = b.trending_index ?? 9999;
 

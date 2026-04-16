@@ -98,7 +98,7 @@ export const opportunities = pgTable("opportunities", {
   trending: boolean("is_trending").default(false),
   displayIndex: integer("display_index"), 
   trendingIndex: integer("trending_index"),     
-featuredHomeIndex: integer("featured_home_index"), 
+  featuredHomeIndex: integer("featured_home_index"), 
   isVerified: boolean("is_verified").default(false),
   isActive: boolean("is_active").default(true),
   upvoterIds: text("upvoter_ids").array().default([]),

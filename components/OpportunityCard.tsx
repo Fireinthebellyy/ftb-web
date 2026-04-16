@@ -22,6 +22,7 @@ import { OpportunityActions } from "./opportunity/OpportunityActions";
 import NewOpportunityForm from "./opportunity/NewOpportunityForm";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 import { formatTypeName } from "@/app/opportunities/constants";
+import { Flame } from "lucide-react";
 
 const isValidUUID = (uuid: string): boolean => {
   const uuidRegex =
@@ -135,6 +136,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
   return (
     <article className="relative mb-3 w-full rounded-lg border bg-white shadow-sm sm:mb-4">
+      {/* Type badge - top right */}
       {primaryType && (
         <div className="absolute -top-0.5 right-0 z-20">
           <Badge
@@ -143,6 +145,15 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
             )} rounded-tl-none rounded-br-none px-2 py-1 text-[10px] font-medium sm:text-xs`}
           >
             {formatTypeName(primaryType)}
+          </Badge>
+        </div>
+      )}
+
+      {/* Trending badge - below type badge on right */}
+      {opportunity.trending && (
+        <div className="absolute top-6 right-0 z-20">
+          <Badge className="bg-orange-500 text-white rounded-tl-none rounded-br-none px-2 py-1 text-[10px] font-medium sm:text-xs">
+           <Flame className="h-2.5 w-2.5 mr-0.5 inline" />Trending
           </Badge>
         </div>
       )}

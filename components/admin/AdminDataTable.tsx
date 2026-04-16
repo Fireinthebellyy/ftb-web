@@ -11,6 +11,7 @@ import {
   getSortedRowModel,
   SortingState,
   useReactTable,
+  FilterFn,
 } from "@tanstack/react-table";
 import {
   ArrowDown,
@@ -44,6 +45,7 @@ interface AdminDataTableProps<TData, TValue> {
   data: TData[];
   emptyMessage: string;
   filterColumnId?: string;
+  filterFields?: string[];
   filterPlaceholder?: string;
   toolbarActions?: ReactNode;
   pageSize?: number;
@@ -69,11 +71,21 @@ export function AdminDataTable<TData, TValue>({
   emptyMessage,
   filterColumnId,
   filterPlaceholder = "Search...",
+  filterFields,
   toolbarActions,
   pageSize = 10,
   tableId,
   stickyColumnIds = [],
 }: AdminDataTableProps<TData, TValue>) {
+  const [globalFilter, setGlobalFilter] = useState("");
+
+  const multiFieldFilter: FilterFn<any> = (row, _columnId, value) => {
+    const search = value.toLowerCase();
+    return (filterFields ?? []).some((field) => {
+      const val = String((row.original as any)[field] ?? "").toLowerCase();
+      return val.includes(search);
+    });
+  };
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -142,7 +154,10 @@ export function AdminDataTable<TData, TValue>({
       sorting,
       columnFilters,
       columnVisibility,
+      globalFilter,
     },
+    globalFilterFn: multiFieldFilter,
+    onGlobalFilterChange: setGlobalFilter,
     onColumnVisibilityChange: setColumnVisibility,
   });
 
@@ -165,17 +180,19 @@ export function AdminDataTable<TData, TValue>({
   return (
     <div className="space-y-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        {filterColumnId ? (
+        {filterColumnId || filterFields ? (
           <Input
             placeholder={filterPlaceholder}
-            value={String(
-              table.getColumn(filterColumnId)?.getFilterValue() ?? ""
+            value={filterFields ? globalFilter : String(
+              table.getColumn(filterColumnId!)?.getFilterValue() ?? ""
             )}
-            onChange={(event) =>
-              table
-                .getColumn(filterColumnId)
-                ?.setFilterValue(event.target.value)
-            }
+            onChange={(event) => {
+              if (filterFields) {
+                setGlobalFilter(event.target.value);
+              } else {
+                table.getColumn(filterColumnId!)?.setFilterValue(event.target.value);
+              }
+            }}
             className="w-full sm:max-w-sm"
           />
         ) : (

@@ -92,7 +92,7 @@ export async function PUT(
       );
     }
 
-    // ✅ FIX: ADMIN CAN EDIT
+
     if (
       existingOpportunity[0].userId !== user.currentUser.id &&
       user.currentUser.role !== "admin" &&
@@ -208,7 +208,7 @@ export async function DELETE(
       );
     }
 
-    // ✅ FIX: ADMIN CAN DELETE
+    
     if (
       existingOpportunity[0].userId !== user.currentUser.id &&
       user.currentUser.role !== "admin" &&
@@ -220,7 +220,6 @@ export async function DELETE(
       );
     }
 
-    // ✅ SOFT DELETE
     await db
       .update(opportunities)
       .set({

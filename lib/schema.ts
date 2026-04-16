@@ -94,6 +94,11 @@ export const opportunities = pgTable("opportunities", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   deletedAt: timestamp("deleted_at"), // Soft delete
+  featuredHome: boolean("is_featured_home").default(false),
+  trending: boolean("is_trending").default(false),
+  displayIndex: integer("display_index"), 
+  trendingIndex: integer("trending_index"),     
+featuredHomeIndex: integer("featured_home_index"), 
   isVerified: boolean("is_verified").default(false),
   isActive: boolean("is_active").default(true),
   upvoterIds: text("upvoter_ids").array().default([]),
@@ -127,6 +132,11 @@ export const internships = pgTable("internships", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
+  is_trending: boolean("is_trending").default(false),
+  is_featured_home: boolean("is_featured_home").default(false),
+  display_index: integer("display_index"),
+  trending_index: integer("trending_index"),         
+  featured_home_index: integer("featured_home_index"),
 });
 
 export const internshipSearchTerms = pgTable(
@@ -377,6 +387,10 @@ export const toolkits = pgTable("toolkits", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
+  is_trending: boolean("is_trending").default(false),
+  is_featured_home: boolean("is_featured_home").default(false),
+  trending_index: integer("trending_index"),          
+  featured_home_index: integer("featured_home_index"), 
 });
 
 export const toolkitContentItemTypeEnum = pgEnum("toolkit_content_item_type", [
@@ -413,6 +427,7 @@ export const coupons = pgTable("coupons", {
   id: uuid("id").primaryKey().defaultRandom(),
   code: text("code").notNull().unique(), // e.g., "SAVE100"
   discountAmount: integer("discount_amount").notNull(), // Fixed amount in rupees
+  discountType: text("discount_type").notNull().default("fixed"), // "fixed" or "percentage"
   maxUses: integer("max_uses"), // Total usage limit (null = unlimited)
   maxUsesPerUser: integer("max_uses_per_user").default(1), // Per-user limit
   currentUses: integer("current_uses").default(0),
@@ -497,6 +512,10 @@ export const ungatekeepPosts = pgTable("ungatekeep_posts", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
+  is_trending: boolean("is_trending").default(false),
+  is_featured_home: boolean("is_featured_home").default(false),
+  trending_index: integer("trending_index"),          
+  featured_home_index: integer("featured_home_index"),
 });
 
 export const ungatekeepBookmarks = pgTable(

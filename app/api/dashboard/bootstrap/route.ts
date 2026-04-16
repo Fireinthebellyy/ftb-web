@@ -179,6 +179,8 @@ export async function GET(req: NextRequest) {
             isActive: opportunities.isActive,
             upvoteCount: opportunities.upvoteCount,
             upvoterIds: opportunities.upvoterIds,
+            trending: opportunities.trending,
+            featuredHome: opportunities.featuredHome,
             userId: opportunities.userId,
             user: {
               id: user.id,
@@ -190,7 +192,14 @@ export async function GET(req: NextRequest) {
           .from(opportunities)
           .leftJoin(user, eq(opportunities.userId, user.id))
           .where(filters)
-          .orderBy(desc(opportunities.createdAt))
+          .orderBy(
+            sql`COALESCE("opportunities"."trending_index", 999)`,
+            sql`CASE 
+              WHEN COALESCE("opportunities"."end_date", ("opportunities"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+              ELSE 0 
+            END`,
+            desc(opportunities.createdAt)
+          )
           .limit(limit + 1)
           .offset(offset);
       }
@@ -219,6 +228,9 @@ export async function GET(req: NextRequest) {
           isActive: opportunities.isActive,
           upvoteCount: opportunities.upvoteCount,
           upvoterIds: opportunities.upvoterIds,
+          trending: opportunities.trending,
+          featuredHome: opportunities.featuredHome,
+          displayIndex: opportunities.displayIndex,
           userId: opportunities.userId,
           user: {
             id: user.id,
@@ -230,7 +242,14 @@ export async function GET(req: NextRequest) {
         .from(opportunities)
         .leftJoin(user, eq(opportunities.userId, user.id))
         .where(filters)
-        .orderBy(desc(opportunities.createdAt))
+        .orderBy(
+          sql`COALESCE("opportunities"."trending_index", 999)`,
+          sql`CASE 
+            WHEN COALESCE("opportunities"."end_date", ("opportunities"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END`,
+          desc(opportunities.createdAt)
+        )
         .limit(limit + 1)
         .offset(offset);
     };

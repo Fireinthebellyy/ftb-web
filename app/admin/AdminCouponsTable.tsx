@@ -23,11 +23,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Coupon {
   id: string;
   code: string;
   discountAmount: number;
+  discountType?: "fixed" | "percentage";
   maxUses: number | null;
   maxUsesPerUser: number;
   currentUses: number;
@@ -39,6 +47,7 @@ interface Coupon {
 const couponFormSchema = z.object({
   code: z.string().min(1).max(50),
   discountAmount: z.number().int().positive(),
+  discountType: z.enum(["fixed", "percentage"]).default("fixed"),
   maxUses: z.number().int().positive().nullable().optional(),
   maxUsesPerUser: z.number().int().positive().default(1),
   isActive: z.boolean().default(true),
@@ -72,6 +81,7 @@ export default function AdminCouponsTable() {
     defaultValues: {
       code: "",
       discountAmount: 0,
+      discountType: "fixed",
       maxUses: null,
       maxUsesPerUser: 1,
       isActive: true,
@@ -104,7 +114,7 @@ export default function AdminCouponsTable() {
     },
     onError: (error) => {
       if ((error as any).isAxiosError) {
-        toast.error((error as any).response?.data?.error || "Failed to delete coupon");
+        toast.error((error as any).response?.data?.error || "Failed to save coupon");
       } else {
         toast.error("Failed to save coupon");
       }
@@ -121,7 +131,7 @@ export default function AdminCouponsTable() {
     },
     onError: (error) => {
       if ((error as any).isAxiosError) {
-        toast.error((error as any).response?.data?.error || "Failed to save coupon");
+        toast.error((error as any).response?.data?.error || "Failed to delete coupon");
       } else {
         toast.error("Failed to delete coupon");
       }
@@ -134,6 +144,7 @@ export default function AdminCouponsTable() {
       form.reset({
         code: coupon.code,
         discountAmount: coupon.discountAmount,
+        discountType: coupon.discountType ?? "fixed",
         maxUses: coupon.maxUses ?? null,
         maxUsesPerUser: coupon.maxUsesPerUser,
         isActive: coupon.isActive,
@@ -151,6 +162,7 @@ export default function AdminCouponsTable() {
     form.reset({
       code: "",
       discountAmount: 0,
+      discountType: "fixed",
       maxUses: null,
       maxUsesPerUser: 1,
       isActive: true,
@@ -171,7 +183,38 @@ export default function AdminCouponsTable() {
       {
         accessorKey: "discountAmount",
         header: "Discount",
-        cell: ({ row }) => `₹${row.original.discountAmount}`,
+        cell: ({ row }) => {
+          const [type, setType] = useState<"fixed" | "percentage">(
+            row.original.discountType ?? "fixed"
+          );
+
+          const handleTypeChange = async (value: "fixed" | "percentage") => {
+            setType(value);
+            await axios.patch(`/api/admin/coupons/${row.original.id}`, {
+              discountType: value,
+            });
+            queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
+          };
+
+          return (
+            <div className="flex items-center gap-1">
+              <span>
+                {type === "percentage"
+                  ? `${row.original.discountAmount}%`
+                  : `₹${row.original.discountAmount}`}
+              </span>
+              <Select value={type} onValueChange={handleTypeChange}>
+                <SelectTrigger className="h-6 w-[75px] text-xs px-1 border-none shadow-none">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fixed">₹ Fixed</SelectItem>
+                  <SelectItem value="percentage">% Off</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          );
+        },
       },
       {
         id: "usage",
@@ -204,10 +247,7 @@ export default function AdminCouponsTable() {
         accessorKey: "expiresAt",
         header: "Expires",
         cell: ({ row }) => {
-          if (!row.original.expiresAt) {
-            return "Never";
-          }
-
+          if (!row.original.expiresAt) return "Never";
           return new Date(row.original.expiresAt).toLocaleDateString("en-IN", {
             year: "numeric",
             month: "short",
@@ -221,20 +261,14 @@ export default function AdminCouponsTable() {
         enableSorting: false,
         cell: ({ row }) => (
           <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleEdit(row.original)}
-            >
+            <Button variant="ghost" size="sm" onClick={() => handleEdit(row.original)}>
               <Edit className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => {
-                if (!confirm("Are you sure you want to delete this coupon?")) {
-                  return;
-                }
+                if (!confirm("Are you sure you want to delete this coupon?")) return;
                 deleteCouponMutation.mutate(row.original.id);
               }}
             >
@@ -305,32 +339,48 @@ export default function AdminCouponsTable() {
                   form.setValue("code", event.target.value.toUpperCase())
                 }
               />
-              {form.formState.errors.code ? (
+              {form.formState.errors.code && (
                 <p className="text-destructive text-sm">
                   {form.formState.errors.code.message}
                 </p>
-              ) : null}
+              )}
             </div>
 
+            {/* ✅ Discount Amount + Type dropdown */}
             <div className="space-y-2">
-              <Label htmlFor="discountAmount">Discount Amount (INR)</Label>
-              <Input
-                id="discountAmount"
-                type="number"
-                {...form.register("discountAmount", { valueAsNumber: true })}
-                placeholder="100"
-              />
-              {form.formState.errors.discountAmount ? (
+              <Label>Discount</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="discountAmount"
+                  type="number"
+                  {...form.register("discountAmount", { valueAsNumber: true })}
+                  placeholder="100"
+                  className="flex-1"
+                />
+                <Select
+                  value={form.watch("discountType")}
+                  onValueChange={(value) =>
+                    form.setValue("discountType", value as "fixed" | "percentage")
+                  }
+                >
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixed">₹ Fixed</SelectItem>
+                    <SelectItem value="percentage">% Off</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {form.formState.errors.discountAmount && (
                 <p className="text-destructive text-sm">
                   {form.formState.errors.discountAmount.message}
                 </p>
-              ) : null}
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="maxUses">
-                Max Total Uses (leave empty for unlimited)
-              </Label>
+              <Label htmlFor="maxUses">Max Total Uses (leave empty for unlimited)</Label>
               <Input
                 id="maxUses"
                 type="number"
@@ -340,11 +390,11 @@ export default function AdminCouponsTable() {
                 })}
                 placeholder="100"
               />
-              {form.formState.errors.maxUses ? (
+              {form.formState.errors.maxUses && (
                 <p className="text-destructive text-sm">
                   {form.formState.errors.maxUses.message}
                 </p>
-              ) : null}
+              )}
             </div>
 
             <div className="space-y-2">
@@ -355,11 +405,11 @@ export default function AdminCouponsTable() {
                 {...form.register("maxUsesPerUser", { valueAsNumber: true })}
                 placeholder="1"
               />
-              {form.formState.errors.maxUsesPerUser ? (
+              {form.formState.errors.maxUsesPerUser && (
                 <p className="text-destructive text-sm">
                   {form.formState.errors.maxUsesPerUser.message}
                 </p>
-              ) : null}
+              )}
             </div>
 
             <div className="space-y-2">
@@ -375,19 +425,13 @@ export default function AdminCouponsTable() {
               <Switch
                 id="isActive"
                 checked={form.watch("isActive")}
-                onCheckedChange={(checked) =>
-                  form.setValue("isActive", checked)
-                }
+                onCheckedChange={(checked) => form.setValue("isActive", checked)}
               />
               <Label htmlFor="isActive">Active</Label>
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setDialogOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={saveCouponMutation.isPending}>

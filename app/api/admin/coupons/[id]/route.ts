@@ -9,6 +9,7 @@ import { z } from "zod";
 const updateCouponSchema = z.object({
   code: z.string().min(1).max(50).optional(),
   discountAmount: z.number().int().positive().optional(),
+  discountType: z.enum(["fixed", "percentage"]).optional(), // ✅ ADDED
   maxUses: z.number().int().positive().nullable().optional(),
   maxUsesPerUser: z.number().int().positive().optional(),
   isActive: z.boolean().optional(),
@@ -47,19 +48,15 @@ export async function PATCH(
       const body = await request.json();
       const validatedData = updateCouponSchema.parse(body);
 
-      // Guard clause: reject empty PATCH payloads
       if (Object.keys(validatedData).length === 0) {
         activityStatus = 400;
         activityError = "Empty update payload";
         return NextResponse.json(
-          {
-            error: "Empty update payload. At least one field must be provided.",
-          },
+          { error: "Empty update payload. At least one field must be provided." },
           { status: 400 }
         );
       }
 
-      // Check if coupon exists
       const existingCoupon = await db
         .select()
         .from(coupons)
@@ -69,14 +66,10 @@ export async function PATCH(
       if (existingCoupon.length === 0) {
         activityStatus = 404;
         activityError = "Coupon not found";
-        return NextResponse.json(
-          { error: "Coupon not found" },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: "Coupon not found" }, { status: 404 });
       }
       activityBeforeState = existingCoupon[0];
 
-      // If code is being updated, check for duplicates
       if (validatedData.code) {
         const duplicateCoupon = await db
           .select()
@@ -100,6 +93,9 @@ export async function PATCH(
       }
       if (validatedData.discountAmount !== undefined) {
         updateData.discountAmount = validatedData.discountAmount;
+      }
+      if (validatedData.discountType !== undefined) { // ✅ ADDED
+        updateData.discountType = validatedData.discountType;
       }
       if (validatedData.maxUses !== undefined) {
         updateData.maxUses = validatedData.maxUses;
@@ -126,7 +122,6 @@ export async function PATCH(
       activityStatus = 200;
       return NextResponse.json({ coupon: updatedCoupon[0] });
     } catch (error) {
-      // Handle JSON parsing errors
       if (error instanceof SyntaxError || error instanceof TypeError) {
         activityStatus = 400;
         activityError = "Invalid JSON in request body";
@@ -136,9 +131,7 @@ export async function PATCH(
         );
       }
 
-      // Handle Zod validation errors
       if (error instanceof z.ZodError) {
-        // Format validation errors for frontend display
         const errorMessages = error.errors.map((err) => {
           const field = err.path.join(".");
           return `${field ? `${field}: ` : ""}${err.message}`;
@@ -155,7 +148,6 @@ export async function PATCH(
         );
       }
 
-      // Handle async/database errors
       activityError = error;
       console.error("Error updating coupon:", error);
       activityStatus = 500;
@@ -165,7 +157,6 @@ export async function PATCH(
       );
     }
   } catch (error) {
-    // Handle errors from auth check or params resolution
     activityError = error;
     console.error("Error in PATCH handler:", error);
     activityStatus = 500;
@@ -189,6 +180,7 @@ export async function PATCH(
   }
 }
 
+// DELETE handler unchanged
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -216,7 +208,6 @@ export async function DELETE(
     const couponId = paramsResolved.id;
     activityEntityId = couponId;
 
-    // Check if coupon exists
     const existingCoupon = await db
       .select()
       .from(coupons)

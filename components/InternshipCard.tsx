@@ -14,11 +14,13 @@ import {
   Database,
   Layout,
   Lightbulb,
+  Flame,
 } from "lucide-react";
 import { toast } from "sonner";
 import posthog from "posthog-js";
 import { InternshipPostProps } from "@/types/interfaces";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { toTitleCase, cn } from "@/lib/utils";
 import { ShareDialog } from "./internship/ShareDialog";
 import { useTracker } from "@/components/providers/TrackerProvider";
@@ -76,6 +78,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   const { id, title, hiringOrganization, deadline } = internship;
+  console.log("internship trending:", (internship as any).is_trending);
 
   const currentStatus = getStatus(id, "internship");
   const isBookmarked = !!currentStatus;
@@ -169,10 +172,18 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
       <div
         role="button"
         tabIndex={0}
-        className="group cursor-pointer rounded-xl border border-slate-200 bg-white px-4 py-3 transition-all hover:border-[#ec5b13]/30 hover:bg-orange-50/10 hover:shadow-md"
+        className="relative group cursor-pointer rounded-xl border border-slate-200 bg-white px-4 py-3 transition-all hover:border-[#ec5b13]/30 hover:bg-orange-50/10 hover:shadow-md"
         onClick={handleCardClick}
         onKeyDown={handleCardKeyDown}
       >
+
+        {(internship as any).is_trending && (
+          <div className="absolute -top-0.5 right-0 z-20">
+            <Badge className="bg-orange-500 text-white rounded-tl-none rounded-br-none px-2 py-1 text-[9px] font-medium">
+              <Flame className="h-2.5 w-2.5 mr-0.5 inline" />Trending
+            </Badge>
+          </div>
+        )}
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/50 shadow-sm sm:h-11 sm:w-11">

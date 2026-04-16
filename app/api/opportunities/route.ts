@@ -311,6 +311,7 @@ export async function GET(req: NextRequest) {
     const validLimit = Math.min(Math.max(limit, 1), 50);
     const validOffset = Math.max(offset, 0);
     const idsParam = searchParams.get("ids");
+    const featuredParam = searchParams.get("featured");
     const ids = idsParam
       ? idsParam
           .split(",")
@@ -345,6 +346,10 @@ export async function GET(req: NextRequest) {
 
         if (sessionRole !== "admin" && ids.length === 0) {
         conditions.push(eq(opportunities.isActive, true));
+      }
+
+        if (featuredParam === "true") {
+        conditions.push(eq(opportunities.featuredHome, true));
       }
 
       if (searchTerm) {
@@ -413,6 +418,10 @@ export async function GET(req: NextRequest) {
           isActive: opportunities.isActive,
           upvoteCount: opportunities.upvoteCount,
           upvoterIds: opportunities.upvoterIds,
+          trending: opportunities.trending,
+          featuredHome: opportunities.featuredHome,
+          featuredHomeIndex: opportunities.featuredHomeIndex,
+          displayIndex: opportunities.displayIndex,
           userId: opportunities.userId,
           user: {
             id: user.id,
@@ -425,10 +434,13 @@ export async function GET(req: NextRequest) {
         .leftJoin(user, eq(opportunities.userId, user.id))
         .where(filters)
         .orderBy(
+          featuredParam === "true"
+            ? sql`COALESCE("opportunities"."featured_home_index", 999)`
+            : sql`COALESCE("opportunities"."trending_index", 999)`,
           sql`CASE 
             WHEN COALESCE(${opportunities.endDate}, (${opportunities.createdAt} + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
             ELSE 0 
-          END ASC`,
+          END`,
           desc(opportunities.createdAt)
         )
         .limit(validLimit + 1)

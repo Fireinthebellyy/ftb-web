@@ -9,6 +9,7 @@ import { z } from "zod";
 const createCouponSchema = z.object({
   code: z.string().min(1).max(50),
   discountAmount: z.number().int().positive(),
+  discountType: z.enum(["fixed", "percentage"]).default("fixed"), // ✅ ADDED
   maxUses: z.number().int().positive().nullable().optional(),
   maxUsesPerUser: z.number().int().positive().default(1),
   isActive: z.boolean().default(true),
@@ -83,7 +84,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validatedData = createCouponSchema.parse(body);
 
-    // Check if coupon code already exists
     const existingCoupon = await db
       .select()
       .from(coupons)
@@ -104,6 +104,7 @@ export async function POST(request: Request) {
       .values({
         code: validatedData.code.toUpperCase().trim(),
         discountAmount: validatedData.discountAmount,
+        discountType: validatedData.discountType, // ✅ ADDED
         maxUses: validatedData.maxUses ?? null,
         maxUsesPerUser: validatedData.maxUsesPerUser,
         isActive: validatedData.isActive,

@@ -78,6 +78,11 @@ export async function GET(req: NextRequest) {
           isActive: opportunities.isActive,
           upvoteCount: opportunities.upvoteCount,
           upvoterIds: opportunities.upvoterIds,
+          index: opportunities.displayIndex,
+          isTrending: opportunities.trending,
+          isFeaturedHome: opportunities.featuredHome,
+          trendingIndex: opportunities.trendingIndex,
+          featuredHomeIndex: opportunities.featuredHomeIndex,
           userId: opportunities.userId,
           user: {
             id: user.id,

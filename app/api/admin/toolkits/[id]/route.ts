@@ -53,6 +53,10 @@ const updateToolkitSchema = z.object({
     .optional(),
   isActive: z.boolean().optional(),
   showSaleBadge: z.boolean().optional(),
+  is_trending: z.boolean().optional(),
+  is_featured_home: z.boolean().optional(),
+  trending_index: z.number().nullable().optional(),
+  featured_home_index: z.number().nullable().optional(),
 });
 
 export async function PUT(
@@ -139,6 +143,14 @@ export async function PUT(
       updates.isActive = validatedData.isActive;
     if (validatedData.showSaleBadge !== undefined)
       updates.showSaleBadge = validatedData.showSaleBadge;
+    if (validatedData.is_trending !== undefined)
+      updates.is_trending = validatedData.is_trending;
+    if (validatedData.is_featured_home !== undefined)
+      updates.is_featured_home = validatedData.is_featured_home;
+    if (validatedData.trending_index !== undefined)
+      updates.trending_index = validatedData.trending_index;
+    if (validatedData.featured_home_index !== undefined)
+      updates.featured_home_index = validatedData.featured_home_index;
 
     const updatedToolkit = await db
       .update(toolkits)

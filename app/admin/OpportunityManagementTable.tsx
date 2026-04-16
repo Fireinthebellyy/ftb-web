@@ -5,16 +5,21 @@ import { ColumnDef } from "@tanstack/react-table";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "sonner";
-
+import { Eye, EyeOff, Trash2, CheckCircle, XCircle, SquarePen, Plus } from "lucide-react";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
 import { AdminTableState } from "@/components/admin/AdminTableState";
 import { AdminTabLayout } from "@/components/admin/AdminTabLayout";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
+import { cn } from "@/lib/utils";
 import NewOpportunityForm from "@/components/opportunity/NewOpportunityForm";
 
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import {
   AlertDialog,
@@ -29,37 +34,26 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface Opportunity {
+  index?: number;
   id: string;
   title: string;
   description: string;
   createdAt: string;
   isActive: boolean;
-  tags?: string[];
-  images?: string[];
-  attachments?: string[];
-  location?: string;
-  organiserInfo?: string;
-  startDate?: string;
-  endDate?: string;
-  applyLink?: string | null;
-  publishAt?: string;
-  type:
-    | "competitions_open_calls"
-    | "case_competitions"
-    | "hackathons"
-    | "fellowships"
-    | "ideathon_think_tanks"
-    | "leadership_programs"
-    | "awards_recognition"
-    | "grants_scholarships"
-    | "research_paper_ra_calls"
-    | "upskilling_events";
+  isVerified: boolean;
+  isTrending?: boolean;
+  isFeaturedHome?: boolean;
+  trendingIndex?: number;
+  featuredHomeIndex?: number;
+  type: string;
+  applyLink?: string;
   upvoteCount: number;
   upvoterIds: string[];
   user: {
     id: string;
     name: string;
     image: string;
+    role?: "user" | "member" | "editor" | "admin";
   };
 }
 
@@ -67,72 +61,100 @@ async function fetchAllOpportunities(): Promise<Opportunity[]> {
   const limit = 50;
   let offset = 0;
   let hasMore = true;
-  const allOpportunities: Opportunity[] = [];
+  const all: Opportunity[] = [];
 
   while (hasMore) {
     const response = await axios.get<{
       opportunities: Opportunity[];
-      pagination: {
-        hasMore: boolean;
-      };
+      pagination: { hasMore: boolean };
     }>("/api/admin/opportunities", {
-      params: {
-        scope: "all",
-        limit,
-        offset,
-      },
+      params: { limit, offset, scope: "all" },
     });
 
-    allOpportunities.push(...response.data.opportunities);
-    hasMore = response.data.pagination?.hasMore ?? false;
+    all.push(...response.data.opportunities);
+    hasMore = response.data.pagination.hasMore;
     offset += limit;
   }
 
-  return allOpportunities;
+  return all;
 }
 
-// Stable empty array to prevent unnecessary useMemo recomputation
 const EMPTY_OPPORTUNITIES: Opportunity[] = [];
+
+function OrangeCheckbox({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <label className="relative inline-flex cursor-pointer">
+      <input type="checkbox" checked={checked} className="sr-only" onChange={onChange} />
+      <span
+        className={cn(
+          "flex h-5 w-5 items-center justify-center rounded border-2 transition-colors",
+          checked
+            ? "border-orange-500 bg-orange-500"
+            : "border-gray-300 bg-white hover:border-orange-300"
+        )}
+      >
+        {checked && (
+          <svg className="h-3 w-3 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="1.5,6 4.5,9 10.5,3" />
+          </svg>
+        )}
+      </span>
+    </label>
+  );
+} 
+  
 
 export default function OpportunityManagementTable() {
   const queryClient = useQueryClient();
 
-  const [selectedOpportunity, setSelectedOpportunity] =
-    useState<Opportunity | null>(null);
+  const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
   const [open, setOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [togglingId, setTogglingId] = useState<string | null>(null);
-  const [loadingEditId, setLoadingEditId] = useState<string | null>(null);
+  const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
+  const [createOpen, setCreateOpen] = useState(false);
 
-  const handleEdit = async (opportunity: Opportunity) => {
-    setLoadingEditId(opportunity.id);
-
-    try {
-      const response = await axios.get<{ opportunity: Opportunity }>(
-        `/api/admin/opportunities/${opportunity.id}`
-      );
-
-      setOpen(false);
-      setSelectedOpportunity(null);
-
-      setTimeout(() => {
-        setSelectedOpportunity(response.data.opportunity);
-        setOpen(true);
-      }, 50);
-    } catch {
-      toast.error("Failed to load opportunity details");
-    } finally {
-      setLoadingEditId(null);
-    }
+  const handleEdit = (opportunity: Opportunity) => {
+    setOpen(false);
+    setSelectedOpportunity(null);
+    setTimeout(() => {
+      setSelectedOpportunity(opportunity);
+      setOpen(true);
+    }, 50);
   };
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["admin-opportunity-management"],
     queryFn: fetchAllOpportunities,
   });
-
-  const opportunities = data ?? EMPTY_OPPORTUNITIES;
-
+  const opportunities = (data ?? EMPTY_OPPORTUNITIES).sort((a, b) => {
+    return (a.trendingIndex ?? 9999) - (b.trendingIndex ?? 9999);
+  });
+  const handleApproveReject = async (
+    opportunity: Opportunity,
+    action: "approve" | "reject"
+  ) => {
+    setUpdatingIds((prev) => new Set(prev).add(opportunity.id));
+    try {
+      await axios.patch(`/api/admin/opportunities/${opportunity.id}`, { action });
+      toast.success(action === "approve" ? "Opportunity approved!" : "Opportunity rejected!");
+    } catch {
+      toast.error(`Failed to ${action} opportunity`);
+    } finally {
+      setUpdatingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(opportunity.id);
+        return next;
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
+    }
+  };
+  
   const columns = useMemo<ColumnDef<Opportunity>[]>(() => {
     const allSelected =
       opportunities.length > 0 && selectedIds.length === opportunities.length;
@@ -145,11 +167,8 @@ export default function OpportunityManagementTable() {
             type="checkbox"
             checked={allSelected}
             onChange={(e) => {
-              if (e.target.checked) {
-                setSelectedIds(opportunities.map((o) => o.id));
-              } else {
-                setSelectedIds([]);
-              }
+              if (e.target.checked) setSelectedIds(opportunities.map((o) => o.id));
+              else setSelectedIds([]);
             }}
           />
         ),
@@ -160,11 +179,8 @@ export default function OpportunityManagementTable() {
               type="checkbox"
               checked={selectedIds.includes(id)}
               onChange={(e) => {
-                if (e.target.checked) {
-                  setSelectedIds((prev) => [...prev, id]);
-                } else {
-                  setSelectedIds((prev) => prev.filter((i) => i !== id));
-                }
+                if (e.target.checked) setSelectedIds((prev) => [...prev, id]);
+                else setSelectedIds((prev) => prev.filter((i) => i !== id));
               }}
             />
           );
@@ -173,7 +189,154 @@ export default function OpportunityManagementTable() {
       {
         accessorKey: "title",
         header: "Opportunity",
+        cell: ({ row }) => {
+          const opp = row.original;
+          console.log(opp.title, opp.isVerified, typeof opp.isVerified)
+          return (
+            <div className="max-w-xs space-y-1">
+              <div className="flex items-center gap-2">
+                <p className="truncate font-medium">{opp.title}</p>
+                {opp.isVerified === false && (
+                  <Badge variant="outline" className="text-yellow-600 border-yellow-400 text-xs">
+                    Pending
+                  </Badge>
+                )}
+                {opp.isVerified === true && (
+                  <Badge variant="outline" className="text-green-600 border-green-400 text-xs">
+                    Approved
+                  </Badge>
+                )}
+              </div>
+              <p className="text-muted-foreground truncate text-sm">
+                {opp.description.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")}
+              </p>
+            </div>
+          );
+        },
       },
+      {
+        accessorKey: "applyLink",
+        header: "Apply Link",
+        cell: ({ row }) => {
+          const opportunity = row.original;
+          return (
+            <input
+              key={`applylink-${opportunity.id}-${opportunity.applyLink}`}
+              type="text"
+              defaultValue={opportunity.applyLink || ""}
+              placeholder="Enter link"
+              className="border rounded px-2 py-1 text-sm w-[180px]"
+              onBlur={async (e) => {
+                const value = e.target.value;
+                try {
+                  await axios.patch(`/api/admin/opportunities/${opportunity.id}`, { applyLink: value });
+                  toast.success("Apply link updated");
+                } catch {
+                  toast.error("Failed to update link");
+                } finally {
+                  queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
+                }
+              }}
+            />
+          );
+        },
+      },
+      {
+        accessorKey: "isTrending",
+        header: "Trending",
+        cell: ({ row }) => {
+          const opportunity = row.original;
+          return (
+            <OrangeCheckbox
+              checked={opportunity.isTrending ?? false}
+              onChange={async () => {
+                try {
+                  await axios.patch(`/api/admin/opportunities/${opportunity.id}`, {
+                    isTrending: !opportunity.isTrending,
+                  });
+                  toast.success(!opportunity.isTrending ? "Marked as trending" : "Removed from trending");
+                } catch {
+                  toast.error("Failed to update trending status");
+                } finally {
+                  queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
+                }
+              }}
+            />
+          );
+        },
+      },
+      
+      {
+        accessorKey: "isFeaturedHome",
+        header: "Featured Home",
+        cell: ({ row }) => {
+          const opportunity = row.original;
+          return (
+            <OrangeCheckbox
+              checked={opportunity.isFeaturedHome ?? false}
+              onChange={async () => {
+                try {
+                  await axios.patch(`/api/admin/opportunities/${opportunity.id}`, {
+                    isFeaturedHome: !opportunity.isFeaturedHome,
+                  });
+                  toast.success(!opportunity.isFeaturedHome ? "Featured on home" : "Removed from home");
+                } catch {
+                  toast.error("Failed to update featured status");
+                } finally {
+                  queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
+                }
+              }}
+            />
+          );
+        },
+      },
+
+      {
+        accessorKey: "trendingIndex",
+        header: "Trending Index",
+        cell: ({ row }) => {
+          const opportunity = row.original;
+          return (
+            <input
+              key={`trendingindex-${opportunity.id}-${opportunity.trendingIndex}`}
+              type="number"
+              defaultValue={opportunity.trendingIndex ?? ""}
+              className="border rounded px-2 py-1 text-sm w-[80px]"
+              onBlur={async (e) => {
+                const raw = e.target.value;
+                await axios.patch(`/api/admin/opportunities/${opportunity.id}`, {
+                  trendingIndex: raw === "" ? null : Number(raw),
+                });
+                queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
+              }}
+            />
+          );
+        },
+      },
+      {
+        accessorKey: "featuredHomeIndex",
+        header: "Featured Index",
+        cell: ({ row }) => {
+          const opportunity = row.original;
+          return (
+            <input
+              key={`featuredhomeindex-${opportunity.id}-${opportunity.featuredHomeIndex}`}
+              type="number"
+              defaultValue={opportunity.featuredHomeIndex ?? ""}
+              className="border rounded px-2 py-1 text-sm w-[80px]"
+              onBlur={async (e) => {
+                const raw = e.target.value;
+                await axios.patch(`/api/admin/opportunities/${opportunity.id}`, {
+                  featuredHomeIndex: raw === "" ? null : Number(raw),
+                });
+                queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
+              }}
+            />
+          );
+        },
+      },
+
+      
       {
         id: "user",
         accessorFn: (row) => row.user?.name,
@@ -182,166 +345,170 @@ export default function OpportunityManagementTable() {
       {
         accessorKey: "createdAt",
         header: "Created",
-        cell: ({ row }) =>
-          new Date(row.original.createdAt).toLocaleDateString(),
+        cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString(),
       },
       {
         id: "actions",
         header: "Actions",
         cell: ({ row }) => {
           const opportunity = row.original;
+          const isUpdating = updatingIds.has(opportunity.id);
+          const isPending = !opportunity.isVerified;
+
           return (
             <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                onClick={() => handleEdit(opportunity)}
-                disabled={loadingEditId === opportunity.id}
-              >
-                Edit
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={togglingId === opportunity.id}
-                aria-label={
-                  opportunity.isActive ? "Hide opportunity" : "Show opportunity"
-                }
-                onClick={async () => {
-                  setTogglingId(opportunity.id);
-                  try {
-                    await axios.patch(
-                      `/api/admin/opportunities/${opportunity.id}`,
-                      {
-                        action: "toggle",
+              {isPending ? (
+                <>
+                  <Button
+                    size="sm"
+                    disabled={isUpdating}
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={() => handleApproveReject(opportunity, "approve")}
+                  >
+                    <CheckCircle className="mr-1 h-4 w-4" />
+                    Approve
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    disabled={isUpdating}
+                    onClick={() => handleApproveReject(opportunity, "reject")}
+                  >
+                    <XCircle className="mr-1 h-4 w-4" />
+                    Reject
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleEdit(opportunity)}>
+                    <SquarePen className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button size="sm" variant="outline" onClick={() => handleEdit(opportunity)}>
+                    <SquarePen className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={async () => {
+                      try {
+                        await axios.patch(`/api/admin/opportunities/${opportunity.id}`, { action: "toggle" });
+                        toast.success(opportunity.isActive ? "Opportunity hidden" : "Opportunity is now visible");
+                      } catch {
+                        toast.error("Failed to update visibility.");
+                      } finally {
+                        queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
                       }
-                    );
-                    toast.success(
-                      opportunity.isActive
-                        ? "Opportunity hidden"
-                        : "Opportunity is now visible"
-                    );
-                  } catch {
-                    toast.error("Failed to update visibility.");
-                  } finally {
-                    setTogglingId(null);
-                    queryClient.invalidateQueries({
-                      queryKey: ["admin-opportunity-management"],
-                    });
-                  }
-                }}
-              >
-                {opportunity.isActive ? (
-                  <Eye className="h-4 w-4" />
-                ) : (
-                  <EyeOff className="h-4 w-4" />
-                )}
-              </Button>
+                    }}
+                  >
+                    {opportunity.isActive ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                  </Button>
+                </>
+              )}
             </div>
           );
         },
       },
     ];
-  }, [selectedIds, opportunities, queryClient, togglingId, loadingEditId]);
+  }, [selectedIds, opportunities, queryClient, updatingIds]);
 
   const deleteToolbar =
     selectedIds.length > 0 ? (
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2 border-red-200 text-red-600 hover:bg-red-50"
-          >
-            <Trash2 className="h-4 w-4 text-red-600" />
-            Delete ({selectedIds.length})
-          </Button>
-        </AlertDialogTrigger>
-
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Opportunities</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete selected opportunities?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-600 text-white hover:bg-red-700"
-              onClick={async () => {
-                try {
-                  const results = await Promise.allSettled(
-                    selectedIds.map((id) =>
-                      axios.delete(`/api/admin/opportunities/${id}`)
-                    )
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+         onClick={async () => {
+            const allHidden = selectedIds.every(
+              (id) => !opportunities.find((o) => o.id === id)?.isActive
+            );
+            await Promise.allSettled(
+              selectedIds.map((id) =>
+                axios.patch(`/api/admin/opportunities/${id}`, { action: "toggle" })
+              )
+            );
+            toast.success(allHidden ? `${selectedIds.length} opportunities unhidden` : `${selectedIds.length} opportunities hidden`);
+            setSelectedIds([]);
+            queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
+          }}
+        >
+          <EyeOff className="h-4 w-4" />
+          {selectedIds.every((id) => !opportunities.find((o) => o.id === id)?.isActive)
+            ? `Unhide (${selectedIds.length})`
+            : `Hide (${selectedIds.length})`}
+        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Trash2 className="h-4 w-4" />
+              Delete ({selectedIds.length})
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Opportunities</AlertDialogTitle>
+              <AlertDialogDescription>Are you sure?</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  await Promise.allSettled(
+                    selectedIds.map((id) => axios.delete(`/api/opportunities/${id}`))
                   );
-                  const failed = results.filter(
-                    (r) => r.status === "rejected"
-                  ).length;
-                  if (failed > 0) toast.error(`${failed} deletion(s) failed.`);
-                  else toast.success("Deleted successfully");
-                } finally {
                   setSelectedIds([]);
-                  queryClient.invalidateQueries({
-                    queryKey: ["admin-opportunity-management"],
-                  });
-                }
-              }}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+                  queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
+                }}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     ) : null;
 
   return (
     <>
       <AdminTabLayout
         title="Opportunity Management"
-        description="Search, edit, hide or delete opportunities"
+        actions={
+          <Button onClick={() => setCreateOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add New Opportunity
+          </Button>
+        }
       >
-        <AdminTableState
-          isLoading={isLoading}
-          isError={isError}
-          isEmpty={!opportunities.length}
-          emptyMessage="No opportunities found"
-        >
+        <AdminTableState isLoading={isLoading} isError={isError} isEmpty={!opportunities.length} emptyMessage="No opportunities found">
           <AdminDataTable
-            tableId="opportunity-management"
             columns={columns}
             data={opportunities}
-            filterColumnId="title"
-            filterPlaceholder="Search opportunities by title"
-            emptyMessage="No opportunities found"
             toolbarActions={deleteToolbar}
+            emptyMessage="No opportunities found"
+            filterFields={["title", "createdAt", "trendingIndex", "featuredHomeIndex", "index"]}
+            filterPlaceholder="Search opportunities..."
           />
         </AdminTableState>
       </AdminTabLayout>
 
-      <Dialog
-        open={open}
-        onOpenChange={(val) => {
-          setOpen(val);
-          if (!val) setSelectedOpportunity(null);
-        }}
-      >
+      <Dialog open={open} onOpenChange={setOpen}>
         {selectedOpportunity && (
           <DialogContent>
             <DialogTitle>Edit Opportunity</DialogTitle>
-            <NewOpportunityForm
-              key={selectedOpportunity.id}
-              opportunity={selectedOpportunity}
-              onOpportunityCreated={() => {
-                setOpen(false);
-                queryClient.invalidateQueries({
-                  queryKey: ["admin-opportunity-management"],
-                });
-              }}
-            />
+            <NewOpportunityForm opportunity={selectedOpportunity} onOpportunityCreated={() => { setOpen(false); queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] }); }} />
           </DialogContent>
         )}
+      </Dialog>
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogTitle>Post Opportunity</DialogTitle>
+          <NewOpportunityForm
+            onOpportunityCreated={() => {
+              setCreateOpen(false);
+              queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
+            }}
+            onCancel={() => setCreateOpen(false)}
+          />
+        </DialogContent>
       </Dialog>
     </>
   );

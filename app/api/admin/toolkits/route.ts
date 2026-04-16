@@ -46,6 +46,10 @@ export async function GET(request: Request) {
         updatedAt: toolkits.updatedAt,
         userId: toolkits.userId,
         creatorName: userTable.name,
+        is_trending: toolkits.is_trending,
+        is_featured_home: toolkits.is_featured_home,
+        trending_index: toolkits.trending_index,
+        featured_home_index: toolkits.featured_home_index,
       })
       .from(toolkits)
       .leftJoin(userTable, eq(toolkits.userId, userTable.id))

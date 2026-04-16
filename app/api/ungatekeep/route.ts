@@ -71,6 +71,9 @@ export async function GET(request: Request) {
         publishedAt: ungatekeepPosts.publishedAt,
         createdAt: ungatekeepPosts.createdAt,
         creatorName: userTable.name,
+        is_trending: ungatekeepPosts.is_trending,         
+        is_featured_home: ungatekeepPosts.is_featured_home, 
+        trending_index: ungatekeepPosts.trending_index,
         // Add isSaved field if authenticated
         isSaved: userId
           ? sql<boolean>`EXISTS(SELECT 1 FROM "ungatekeep_bookmarks" WHERE "post_id" = ${ungatekeepPosts.id} AND "user_id" = ${userId})`
@@ -87,7 +90,10 @@ export async function GET(request: Request) {
           )
         )
       )
-      .orderBy(desc(ungatekeepPosts.publishedAt), desc(ungatekeepPosts.id))
+      .orderBy(
+        sql`COALESCE("ungatekeep_posts"."trending_index", 999)`,
+        desc(ungatekeepPosts.createdAt)
+      )
       .limit(isAuthenticated ? limit : FREE_POST_LIMIT)
       .offset(isAuthenticated ? offset : 0);
 

@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import NewUngatekeepForm from "@/components/ungatekeep/NewUngatekeepForm";
-import { stripHtml } from "@/lib/utils";
+import { cn, stripHtml } from "@/lib/utils";
 
 interface UngatekeepPost {
   id: string;
@@ -26,6 +26,10 @@ interface UngatekeepPost {
   tag?: "announcement" | "company_experience" | "resources" | "playbooks" | "college_hacks" | "interview" | "ama_drops" | "ftb_recommends" | null;
   isPinned: boolean;
   isPublished: boolean;
+  is_trending: boolean;
+  is_featured_home: boolean;
+  trending_index?: number;
+  featured_home_index?: number;
   publishedAt?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -36,6 +40,34 @@ interface UngatekeepPost {
 async function fetchPosts(): Promise<UngatekeepPost[]> {
   const response = await axios.get("/api/admin/ungatekeep");
   return (response as any).data;
+}
+
+function OrangeCheckbox({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <label className="relative inline-flex cursor-pointer">
+      <input type="checkbox" checked={checked} className="sr-only" onChange={onChange} />
+      <span
+        className={cn(
+          "flex h-5 w-5 items-center justify-center rounded border-2 transition-colors",
+          checked
+            ? "border-orange-500 bg-orange-500"
+            : "border-gray-300 bg-white hover:border-orange-300"
+        )}
+      >
+        {checked && (
+          <svg className="h-3 w-3 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="1.5,6 4.5,9 10.5,3" />
+          </svg>
+        )}
+      </span>
+    </label>
+  );
 }
 
 export default function AdminUngatekeepTable() {
@@ -63,11 +95,24 @@ export default function AdminUngatekeepTable() {
     }) => {
       await axios.put(`/api/admin/ungatekeep/${id}`, payload);
     },
+    onMutate: async ({ id, payload }) => {
+      await queryClient.cancelQueries({ queryKey: ["admin", "ungatekeep"] });
+      const previous = queryClient.getQueryData<UngatekeepPost[]>(["admin", "ungatekeep"]);
+      queryClient.setQueryData<UngatekeepPost[]>(["admin", "ungatekeep"], (old) =>
+        old?.map((post) =>
+          post.id === id ? { ...post, ...payload } : post
+        ) ?? []
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["admin", "ungatekeep"], context.previous);
+      }
+      toast.error("Failed to update post");
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "ungatekeep"] });
-    },
-    onError: () => {
-      toast.error("Failed to update post");
     },
   });
 
@@ -106,7 +151,6 @@ export default function AdminUngatekeepTable() {
           if (!tag) {
             return <span className="text-muted-foreground text-sm">-</span>;
           }
-
           const variant =
             tag === "announcement"
               ? "default"
@@ -140,7 +184,6 @@ export default function AdminUngatekeepTable() {
               </Badge>
             );
           }
-
           return (
             <Badge
               className={
@@ -187,6 +230,98 @@ export default function AdminUngatekeepTable() {
         ),
       },
       {
+        id: "trending",
+        header: "Trending",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <OrangeCheckbox
+            checked={row.original.is_trending ?? false}
+            onChange={() =>
+              updatePostMutation.mutate({
+                id: row.original.id,
+                payload: { is_trending: !row.original.is_trending },
+              })
+            }
+          />
+        ),
+      },
+      {
+        id: "featuredHome",
+        header: "Featured Home",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <OrangeCheckbox
+            checked={row.original.is_featured_home ?? false}
+            onChange={() =>
+              updatePostMutation.mutate({
+                id: row.original.id,
+                payload: { is_featured_home: !row.original.is_featured_home },
+              })
+            }
+          />
+        ),
+      },
+      {
+        accessorKey: "trending_index",
+        header: "Trending Index",
+        cell: ({ row }) => {
+          const post = row.original;
+          return (
+            <input
+              key={`trending-${post.id}-${post.trending_index}`}
+              type="number"
+              defaultValue={post.trending_index ?? ""}
+              className="border rounded px-2 py-1 text-sm w-[80px]"
+              onBlur={async (e) => {
+                const raw = e.target.value;
+                try {
+                  await axios.put(`/api/admin/ungatekeep/${post.id}`, {
+                    trending_index: raw === "" ? null : Number(raw),
+                  });
+                  toast.success("Trending index updated");
+                } catch {
+                  toast.error("Failed to update trending index");
+                } finally {
+                  queryClient.invalidateQueries({
+                    queryKey: ["admin", "ungatekeep"],
+                  });
+                }
+              }}
+            />
+          );
+        },
+      },
+      {
+        accessorKey: "featured_home_index",
+        header: "Featured Index",
+        cell: ({ row }) => {
+          const post = row.original;
+          return (
+            <input
+              key={`featured-${post.id}-${post.featured_home_index}`}
+              type="number"
+              defaultValue={post.featured_home_index ?? ""}
+              className="border rounded px-2 py-1 text-sm w-[80px]"
+              onBlur={async (e) => {
+                const raw = e.target.value;
+                try {
+                  await axios.put(`/api/admin/ungatekeep/${post.id}`, {
+                    featured_home_index: raw === "" ? null : Number(raw),
+                  });
+                  toast.success("Featured index updated");
+                } catch {
+                  toast.error("Failed to update featured index");
+                } finally {
+                  queryClient.invalidateQueries({
+                    queryKey: ["admin", "ungatekeep"],
+                  });
+                }
+              }}
+            />
+          );
+        },
+      },
+      {
         accessorKey: "createdAt",
         header: "Created",
         cell: ({ row }) =>
@@ -230,9 +365,7 @@ export default function AdminUngatekeepTable() {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  if (
-                    !confirm(`Are you sure you want to delete this post?`)
-                  ) {
+                  if (!confirm(`Are you sure you want to delete this post?`)) {
                     return;
                   }
                   deletePostMutation.mutate(post.id);
@@ -289,10 +422,22 @@ export default function AdminUngatekeepTable() {
         <AdminDataTable
           tableId="ungatekeep"
           columns={columns}
-          data={posts}
+          data={[...posts].sort((a, b) => {
+            const aFeatured = a.featured_home_index ?? 9999;
+            const bFeatured = b.featured_home_index ?? 9999;
+
+            if (aFeatured !== bFeatured) return aFeatured - bFeatured;
+
+            const aTrending = a.trending_index ?? 9999;
+            const bTrending = b.trending_index ?? 9999;
+
+            if (aTrending !== bTrending) return aTrending - bTrending;
+
+            return 0;
+          })}
           emptyMessage="No posts found"
-          filterColumnId="content"
-          filterPlaceholder="Search posts"
+          filterFields={["content", "createdAt", "trending_index", "featured_home_index"]}
+          filterPlaceholder="Search by content, date, or index"
           stickyColumnIds={["actions"]}
         />
       </AdminTableState>

@@ -345,9 +345,9 @@ export async function GET(req: NextRequest) {
       }
 
         if (sessionRole !== "admin" && ids.length === 0) {
-        conditions.push(eq(opportunities.isActive, true));
-      }
-
+          conditions.push(eq(opportunities.isActive, true));
+          conditions.push(eq(opportunities.isVerified, true));
+        }
         if (featuredParam === "true") {
         conditions.push(eq(opportunities.featuredHome, true));
       }

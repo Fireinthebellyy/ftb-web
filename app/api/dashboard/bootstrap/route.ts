@@ -102,6 +102,7 @@ export async function GET(req: NextRequest) {
       const conditions: SQL<unknown>[] = [isNull(opportunities.deletedAt)];
 
       conditions.push(eq(opportunities.isActive, true));
+      conditions.push(eq(opportunities.isVerified, true));
       if (usePublishAt) {
         conditions.push(
           or(

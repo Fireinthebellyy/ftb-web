@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { CalendarDays, MapPin, Building2 } from "lucide-react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
+import { parseDateOnlyToLocalDate } from "@/lib/date-utils";
 import { formatDate } from "@/lib/utils";
 import { OpportunityPostProps } from "@/types/interfaces";
 import { ExpandableDescription } from "./ExpandableDescription";
@@ -59,6 +60,8 @@ export function OpportunityHeader({
     publishAt,
   } = opportunity;
   const displayOrganiserInfo = formatOrganiserInfo(organiserInfo);
+  const parsedStartDate = parseDateOnlyToLocalDate(startDate);
+  const parsedEndDate = parseDateOnlyToLocalDate(endDate);
 
   return (
     <div className="relative px-3 py-2 sm:px-4">
@@ -123,17 +126,19 @@ export function OpportunityHeader({
                 <div className="flex items-baseline gap-1">
                   <CalendarDays className="size-3" />
                   <span className="text-xs">
-                    {startDate && format(new Date(startDate), "MMM dd")}
-                    {startDate && endDate && (
+                    {parsedStartDate && format(parsedStartDate, "MMM dd")}
+                    {parsedStartDate && parsedEndDate && (
                       <>
                         {" - "}
-                        {format(new Date(startDate), "MMM") ===
-                        format(new Date(endDate), "MMM")
-                          ? format(new Date(endDate), "dd")
-                          : format(new Date(endDate), "MMM dd")}
+                        {format(parsedStartDate, "MMM") ===
+                        format(parsedEndDate, "MMM")
+                          ? format(parsedEndDate, "dd")
+                          : format(parsedEndDate, "MMM dd")}
                       </>
                     )}
-                    {!startDate && endDate && format(new Date(endDate), "MMM dd")}
+                    {!parsedStartDate &&
+                      parsedEndDate &&
+                      format(parsedEndDate, "MMM dd")}
                   </span>
                 </div>
               )}

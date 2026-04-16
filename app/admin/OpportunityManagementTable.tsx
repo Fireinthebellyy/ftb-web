@@ -492,7 +492,7 @@ export default function OpportunityManagementTable() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         {selectedOpportunity && (
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto overflow-x-hidden sm:max-w-2xl">
             <DialogTitle>Edit Opportunity</DialogTitle>
             <NewOpportunityForm opportunity={selectedOpportunity} onOpportunityCreated={() => { setOpen(false); queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] }); }} />
           </DialogContent>

@@ -51,6 +51,21 @@ const uuidRegex =
 
 const isUuid = (value: string) => uuidRegex.test(value);
 
+const resolveOpportunityDeadline = (
+  startDate?: string | null,
+  endDate?: string | null
+): string | null => {
+  if (endDate) return endDate;
+  if (!startDate) return null;
+
+  const baseDate = new Date(startDate);
+  if (Number.isNaN(baseDate.getTime())) return null;
+
+  return new Date(baseDate.getTime() + 3 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0];
+};
+
 export async function GET(req: NextRequest) {
   const timer = createApiTimer("GET /api/tracker");
 
@@ -170,7 +185,10 @@ export async function GET(req: NextRequest) {
           const idToDate = new Map(
             dateRows
               .map((row) => {
-                const date = row.startDate || row.endDate;
+                const date = resolveOpportunityDeadline(
+                  row.startDate as string | null | undefined,
+                  row.endDate as string | null | undefined
+                );
                 return date ? [row.id, date as string] : null;
               })
               .filter((row): row is [string, string] => row !== null)

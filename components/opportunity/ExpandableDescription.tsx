@@ -35,17 +35,18 @@ export function ExpandableDescription({
 
   if (!isCardExpanded) {
     return (
-      <div className="mb-2 text-sm leading-[1.2] text-gray-700">
+      <div className="mb-2 text-sm leading-[1.26] text-gray-700">
         <p className="line-clamp-1 text-ellipsis">{plainTextPreview}</p>
       </div>
     );
   }
 
   return (
-    <div className="mb-3 text-sm leading-[1.2] text-gray-700">
+    <div className="mb-3 w-full min-w-0 text-sm leading-[1.26] text-gray-700">
       <div
         ref={ref}
         className={cn(
+          "w-full break-words",
           expanded ? "" : "line-clamp-4 text-ellipsis",
           "[&_ol]:ml-4 [&_ol]:list-decimal [&_p]:mb-1 last:[&_p]:mb-0 [&_ul]:ml-4 [&_ul]:list-disc",
           "[&_*]:break-words [&_*]:whitespace-normal"

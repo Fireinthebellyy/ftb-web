@@ -8,6 +8,7 @@ import {
   deleteStorageObjectClient,
   uploadFileViaSignedUrl,
 } from "@/lib/storage/client";
+import { toDateOnlyLocalValue } from "@/lib/date-utils";
 import { FileItem, Opportunity } from "@/types/interfaces";
 import { FormData } from "../schema";
 
@@ -139,8 +140,8 @@ export function useOpportunitySubmit({
 
       const payload: Record<string, unknown> = {
         ...restData,
-        startDate: dateRange?.from?.toISOString(),
-        endDate: dateRange?.to?.toISOString(),
+        startDate: toDateOnlyLocalValue(dateRange?.from),
+        endDate: toDateOnlyLocalValue(dateRange?.to),
         tags:
           data.tags
             ?.split("|")
@@ -199,7 +200,59 @@ export function useOpportunitySubmit({
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
       onOpportunityCreated();
     } catch (err: unknown) {
-      if (err instanceof Error) {
+      if (axios.isAxiosError(err)) {
+        const responseError = err.response?.data?.error;
+        const responseErrors = err.response?.data?.errors;
+
+        const normalizeValidationMessages = (items: unknown[]): string => {
+          const messages = items
+            .flatMap((item) => {
+              if (typeof item === "string") return [item];
+              if (
+                item &&
+                typeof item === "object" &&
+                "message" in item &&
+                typeof item.message === "string"
+              ) {
+                return [item.message];
+              }
+              return [];
+            })
+            .filter(Boolean);
+
+          return messages.join(", ");
+        };
+
+        const apiMessage = (() => {
+          if (typeof responseError === "string") return responseError;
+
+          if (Array.isArray(responseError)) {
+            const combined = normalizeValidationMessages(responseError);
+            if (combined) return combined;
+          }
+
+          if (responseError && typeof responseError === "object") {
+            const nestedErrors =
+              "errors" in responseError && Array.isArray(responseError.errors)
+                ? responseError.errors
+                : null;
+
+            if (nestedErrors) {
+              const combined = normalizeValidationMessages(nestedErrors);
+              if (combined) return combined;
+            }
+          }
+
+          if (Array.isArray(responseErrors)) {
+            const combined = normalizeValidationMessages(responseErrors);
+            if (combined) return combined;
+          }
+
+          return err.message;
+        })();
+
+        toast.error(apiMessage);
+      } else if (err instanceof Error) {
         toast.error(err.message);
       } else {
         toast.error("Unknown error occurred");

@@ -13,6 +13,19 @@ import { fetchOpportunitiesPaginated } from "@/lib/queries-opportunities";
 import { Internship, Opportunity } from "@/types/interfaces";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
+const resolveOpportunityDeadline = (
+  startDate?: string | null,
+  endDate?: string | null
+): string | undefined => {
+  if (endDate) return endDate;
+  if (!startDate) return undefined;
+  const baseDate = new Date(startDate);
+  if (Number.isNaN(baseDate.getTime())) return undefined;
+  return new Date(baseDate.getTime() + 3 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0];
+};
+
 export interface TrackerItem {
   oppId: number | string;
   status: string; // 'Not Applied' | 'Draft' | 'Applied' | 'Result Awaited' | 'Selected' | 'Rejected'
@@ -388,7 +401,10 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
                 company: fetched.organiserInfo || "Organizer", // Opportunities use organiserInfo
                 location: fetched.location,
                 type: fetched.type,
-                deadline: fetched.startDate || fetched.endDate, // Prefer startDate as deadline
+                deadline: resolveOpportunityDeadline(
+                  fetched.startDate,
+                  fetched.endDate
+                ),
                 logo: getImageUrl(fetched.images?.[0]), // Use first image if available, resolving to URL
               };
             }

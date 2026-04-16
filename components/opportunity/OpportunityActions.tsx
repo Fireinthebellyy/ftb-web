@@ -179,25 +179,25 @@ export function OpportunityActions({
                 onShare={handleShare}
               />
             </Dialog>
-            {opportunity.applyLink && (
-              <Link
-                href={addUtmParams(opportunity.applyLink, "opportunity_card")}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Button
-                  size="sm"
-                  className="h-7 sm:h-8 cursor-pointer rounded-lg border-none bg-orange-100 px-2 sm:px-3 text-[10px] sm:text-xs font-bold text-[#ec5b13] shadow-none transition-all hover:bg-orange-200 active:scale-95"
-                >
-                  Apply
-                </Button>
-              </Link>
-            )}
           </div>
         </div>
 
         <div className="flex items-center gap-2">
+          {opportunity.applyLink && (
+            <Link
+              href={addUtmParams(opportunity.applyLink, "opportunity_card")}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Button
+                size="sm"
+                className="h-7 cursor-pointer rounded-lg border-none bg-orange-600 px-2 text-[10px] font-bold text-white shadow-none transition-all hover:bg-orange-700 active:scale-95 sm:h-8 sm:px-3 sm:text-xs"
+              >
+                Apply
+              </Button>
+            </Link>
+          )}
           <a
               href={`https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
                 `Apply to: ${opportunity.title}`
@@ -206,8 +206,8 @@ export function OpportunityActions({
                 if (opportunity.endDate) {
                   date = new Date(opportunity.endDate);
                 } else {
-                  const baseDate = opportunity.createdAt
-                    ? new Date(opportunity.createdAt)
+                  const baseDate = opportunity.startDate
+                    ? new Date(opportunity.startDate)
                     : new Date();
                   date = new Date(baseDate.getTime() + 3 * 24 * 60 * 60 * 1000);
                 }

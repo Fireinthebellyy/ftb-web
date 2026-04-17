@@ -138,13 +138,22 @@ export function useOpportunitySubmit({
 
       const { dateRange, tags: _tags, ...restData } = data;
 
+      const toUtcMidnightIso = (d?: Date | null) => {
+        if (!d) return undefined;
+        if (Number.isNaN(d.getTime())) return undefined;
+        const y = d.getFullYear();
+        const m = d.getMonth();
+        const day = d.getDate();
+        return new Date(Date.UTC(y, m, day)).toISOString();
+      };
+
       const payload: Record<string, unknown> = {
         ...restData,
-        startDate: toDateOnlyLocalValue(dateRange?.from),
-        endDate: toDateOnlyLocalValue(dateRange?.to),
+        startDate: toUtcMidnightIso(dateRange?.from),
+        endDate: toUtcMidnightIso(dateRange?.to),
         tags:
           data.tags
-            ?.split("|")
+            ?.split(/[,|]/)
             .map((t) => t.trim())
             .filter(Boolean) || [],
         images: opportunity?.id

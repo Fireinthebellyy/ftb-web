@@ -37,6 +37,10 @@ const updatePostSchema = z.object({
   isPinned: z.boolean().optional(),
   isPublished: z.boolean().optional(),
   publishAt: z.string().optional().nullable(),
+  is_trending: z.boolean().optional(),
+  is_featured_home: z.boolean().optional(),
+  trending_index: z.number().nullable().optional(),
+  featured_home_index: z.number().nullable().optional(),
 });
 
 export async function GET(
@@ -152,6 +156,7 @@ export async function PUT(
     const updates: Record<string, unknown> = {
       updatedAt: new Date(),
     };
+
     if (validatedData.content !== undefined)
       updates.content = validatedData.content;
     if (validatedData.attachments !== undefined)
@@ -164,7 +169,8 @@ export async function PUT(
       updates.linkImage = validatedData.linkImage || undefined;
     if (validatedData.videoUrl !== undefined)
       updates.videoUrl = validatedData.videoUrl || undefined;
-    if (validatedData.tag !== undefined) updates.tag = validatedData.tag;
+    if (validatedData.tag !== undefined)
+      updates.tag = validatedData.tag;
     if (validatedData.isPinned !== undefined)
       updates.isPinned = validatedData.isPinned;
     if (validatedData.publishAt !== undefined) {
@@ -174,13 +180,21 @@ export async function PUT(
     }
     if (validatedData.isPublished !== undefined) {
       updates.isPublished = validatedData.isPublished;
-      // Set publishedAt when publishing for the first time if not already set
       if (validatedData.isPublished && !validatedData.publishAt) {
         if (!existingPost?.publishedAt) {
           updates.publishedAt = new Date();
         }
       }
     }
+    
+    if (validatedData.is_trending !== undefined)
+      updates.is_trending = validatedData.is_trending;
+    if (validatedData.is_featured_home !== undefined)
+      updates.is_featured_home = validatedData.is_featured_home;
+    if (validatedData.trending_index !== undefined)
+      updates.trending_index = validatedData.trending_index;
+    if (validatedData.featured_home_index !== undefined)
+      updates.featured_home_index = validatedData.featured_home_index;
 
     const updatedPost = await db
       .update(ungatekeepPosts)

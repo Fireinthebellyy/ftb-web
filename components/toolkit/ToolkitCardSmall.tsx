@@ -27,12 +27,20 @@ export default function ToolkitCardSmall({
 
   return (
     <Card
+    
       className={cn(
-        "group flex cursor-pointer overflow-hidden transition-all duration-200 hover:shadow-md",
+        "relative group flex cursor-pointer overflow-hidden transition-all duration-200 hover:shadow-md",
         className
       )}
       onClick={handleClick}
     >
+      {(toolkit as any).is_trending && (
+        <div className="absolute -top-0.5 right-0 z-20">
+          <Badge className="bg-orange-500 text-white rounded-tl-none rounded-br-none px-1 py-0.5 text-[10px] font-medium">
+             Trending
+          </Badge>
+        </div>
+      )}
       <div className="relative h-24 w-32 flex-shrink-0 overflow-hidden bg-gray-100">
         {toolkit.coverImageUrl ? (
           <Image

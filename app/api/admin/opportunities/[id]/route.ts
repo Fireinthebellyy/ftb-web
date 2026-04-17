@@ -8,7 +8,13 @@ import { and, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 
 const updateOpportunitySchema = z.object({
-  action: z.enum(["approve", "reject", "toggle"]),
+  action: z.enum(["approve", "reject", "toggle"]).optional(),
+  index: z.number().nullable().optional(),
+  applyLink: z.string().optional(),
+  isTrending: z.boolean().optional(),
+  isFeaturedHome: z.boolean().optional(),
+  trendingIndex: z.number().nullable().optional(),
+  featuredHomeIndex: z.number().nullable().optional(),
 });
 
 export async function GET(
@@ -67,6 +73,11 @@ export async function GET(
         upvoteCount: opportunities.upvoteCount,
         upvoterIds: opportunities.upvoterIds,
         userId: opportunities.userId,
+        index: opportunities.displayIndex,
+        isTrending: opportunities.trending,
+        isFeaturedHome: opportunities.featuredHome,
+        trendingIndex: opportunities.trendingIndex,
+        featuredHomeIndex: opportunities.featuredHomeIndex,
         user: {
           id: user.id,
           name: user.name,
@@ -120,7 +131,6 @@ export async function PATCH(
       );
     }
 
-    // Check if admin
     const currentUser = await getCurrentUser();
     activityAdminUserId = currentUser?.currentUser?.id ?? null;
     if (!canAccessAdminTab(currentUser?.currentUser?.role, "opportunities")) {
@@ -175,6 +185,21 @@ export async function PATCH(
       updateData.isActive = !existingOpportunity[0].isActive;
     }
 
+    if (validatedData.index !== undefined)
+      updateData.displayIndex = validatedData.index;
+    if (validatedData.applyLink !== undefined)
+      updateData.applyLink = validatedData.applyLink;
+    if (validatedData.isTrending !== undefined)
+      updateData.trending = validatedData.isTrending;
+    if (validatedData.isFeaturedHome !== undefined)
+      updateData.featuredHome = validatedData.isFeaturedHome;
+    if (validatedData.trendingIndex !== undefined)
+      updateData.trendingIndex = validatedData.trendingIndex;
+
+    if (validatedData.featuredHomeIndex !== undefined)
+      updateData.featuredHomeIndex = validatedData.featuredHomeIndex;
+  
+
     const updatedOpportunity = await db
       .update(opportunities)
       .set(updateData)
@@ -196,10 +221,6 @@ export async function PATCH(
     return NextResponse.json(
       {
         success: true,
-        message:
-          validatedData.action === "approve"
-            ? "Opportunity approved successfully"
-            : "Opportunity rejected successfully",
         opportunity: updatedOpportunity[0],
       },
       { status: 200 }
@@ -249,21 +270,18 @@ export async function DELETE(
     if (!db) {
       activityStatus = 500;
       activityError = "Database connection not available";
-
       return NextResponse.json(
         { error: "Database connection not available" },
         { status: 500 }
       );
     }
 
-    // Check admin
     const currentUser = await getCurrentUser();
     activityAdminUserId = currentUser?.currentUser?.id ?? null;
 
     if (currentUser?.currentUser?.role !== "admin") {
       activityStatus = 403;
       activityError = "Unauthorized";
-
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
@@ -273,7 +291,6 @@ export async function DELETE(
     if (!id) {
       activityStatus = 400;
       activityError = "Opportunity ID is required";
-
       return NextResponse.json(
         { error: "Opportunity ID is required" },
         { status: 400 }
@@ -289,7 +306,6 @@ export async function DELETE(
     if (existingOpportunity.length === 0) {
       activityStatus = 404;
       activityError = "Opportunity not found";
-
       return NextResponse.json(
         { error: "Opportunity not found" },
         { status: 404 }
@@ -309,9 +325,7 @@ export async function DELETE(
   } catch (error) {
     activityError = error;
     activityStatus = 500;
-
     console.error("Error deleting opportunity:", error);
-
     return NextResponse.json(
       { error: "Failed to delete opportunity" },
       { status: 500 }

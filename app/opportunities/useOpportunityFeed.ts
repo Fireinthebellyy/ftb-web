@@ -69,12 +69,15 @@ export function useOpportunityFeed({
     { enabled: shouldEnableInfiniteQuery }
   );
 
-  const allOpportunities = useMemo(
-    () =>
-      opportunitiesQuery.data?.pages?.flatMap((page) => page.opportunities) ||
-      [],
-    [opportunitiesQuery.data]
-  );
+  const allOpportunities = useMemo(() => {
+    const flat = opportunitiesQuery.data?.pages?.flatMap((page) => page.opportunities) || [];
+    const seen = new Set<string>();
+    return flat.filter((opp) => {
+      if (seen.has(opp.id)) return false;
+      seen.add(opp.id);
+      return true;
+    });
+  }, [opportunitiesQuery.data]);
 
   const isLoading =
     (shouldUseBootstrap && bootstrapQuery.isPending) ||

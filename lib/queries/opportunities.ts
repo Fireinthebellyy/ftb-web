@@ -125,8 +125,8 @@ export const useDeleteComment = (opportunityId: string) => {
 };
 
 async function fetchOpportunities(): Promise<Opportunity[]> {
-  const { data } = await axios.get<Opportunity[]>("/api/opportunities");
-  return data;
+  const { data } = await axios.get<{ opportunities: Opportunity[] }>("/api/opportunities");
+  return data.opportunities;
 }
 
 export const useOpportunities = () => {

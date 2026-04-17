@@ -15,6 +15,13 @@ export const InternshipHero: React.FC<InternshipHeroProps> = ({
 }) => {
   const hasStipend =
     internship.stipend !== null && internship.stipend !== undefined;
+  const hasDuration =
+    internship.duration !== null &&
+    internship.duration !== undefined &&
+    String(internship.duration).trim() !== "";
+  const visibleCount = (hasStipend ? 1 : 0) + (hasDuration ? 1 : 0) + 1; // +1 for Type
+  const colsClass =
+    visibleCount === 3 ? "grid-cols-3" : visibleCount === 2 ? "grid-cols-2" : "grid-cols-1";
 
   return (
     <div className="bg-[#f8f9fa] px-5 pt-6 pb-6">
@@ -40,9 +47,7 @@ export const InternshipHero: React.FC<InternshipHeroProps> = ({
         </div>
 
         {/* Info Cards Grid */}
-        <div
-          className={`grid w-full gap-3 ${hasStipend ? "grid-cols-3" : "grid-cols-2"}`}
-        >
+        <div className={`grid w-full gap-3 ${colsClass}`}>
           {hasStipend ? (
             <div className="flex flex-col items-start rounded-xl border border-orange-50 bg-white p-4 text-left shadow-sm">
               <span className="mb-1.5 text-[10px] font-bold tracking-wider text-slate-500 uppercase">
@@ -54,14 +59,16 @@ export const InternshipHero: React.FC<InternshipHeroProps> = ({
             </div>
           ) : null}
 
-          <div className="flex flex-col items-start rounded-xl border border-orange-50 bg-white p-4 text-left shadow-sm">
-            <span className="mb-1.5 text-[10px] font-bold tracking-wider text-slate-500 uppercase">
-              Duration
-            </span>
-            <span className="text-[15px] leading-tight font-extrabold text-[#111827]">
-              {internship.duration ? internship.duration : "6 \nMonths"}
-            </span>
-          </div>
+          {hasDuration ? (
+            <div className="flex flex-col items-start rounded-xl border border-orange-50 bg-white p-4 text-left shadow-sm">
+              <span className="mb-1.5 text-[10px] font-bold tracking-wider text-slate-500 uppercase">
+                Duration
+              </span>
+              <span className="text-[15px] leading-tight font-extrabold text-[#111827]">
+                {internship.duration}
+              </span>
+            </div>
+          ) : null}
 
           <div className="flex flex-col items-start rounded-xl border border-orange-50 bg-white p-4 text-left shadow-sm">
             <span className="mb-1.5 text-[10px] font-bold tracking-wider text-slate-500 uppercase">

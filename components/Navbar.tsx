@@ -15,6 +15,7 @@ import {
   isAbsoluteOrLocalUrl,
   tryGetStoragePublicUrl,
 } from "@/lib/storage/public-url";
+import { supportsAuthOverlay } from "@/lib/auth-overlay-routes";
 
 function useLogout() {
   const router = useRouter();
@@ -184,6 +185,9 @@ export default function Navbar() {
   const avatarImageSrc = user?.user?.image
     ? tryGetStoragePublicUrl("avatar-images", user.user.image)
     : null;
+  const getStartedHref = supportsAuthOverlay(pathname)
+    ? `${pathname}?auth=login`
+    : "/login";
 
   if (pathname === "/onboarding") {
     return null;
@@ -408,7 +412,7 @@ export default function Navbar() {
                   posthog.capture("navbar_signup_clicked");
                 }}
               >
-                <Link href="/login">Get Started</Link>
+                <Link href={getStartedHref}>Get Started</Link>
               </Button>
             </div>
           )}

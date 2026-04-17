@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/next";
 import QueryProvider from "@/components/Providers";
+import AuthOverlay from "@/components/auth/AuthOverlay";
 import ProgressProvider from "./providers";
 import Script from "next/script";
 import ConditionalWidgets from "@/components/ConditionalWidgets";
@@ -52,6 +53,7 @@ export default function RootLayout({
                 <TrackerProvider>
                   <Navbar />
                   <main className="grow pt-16 pb-20 md:pb-0">{children}</main>
+                  <AuthOverlay />
                   <BottomNav />
                   <Footer />
                   <ConditionalWidgets />

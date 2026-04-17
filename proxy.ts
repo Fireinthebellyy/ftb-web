@@ -5,10 +5,13 @@ export async function proxy(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
 
   if (!sessionCookie) {
-    const returnUrl = request.nextUrl.pathname + request.nextUrl.search;
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("returnUrl", returnUrl);
-    return NextResponse.redirect(loginUrl);
+    const guardedUrl = new URL(request.url);
+    const authMode = guardedUrl.searchParams.get("auth");
+
+    if (authMode !== "login" && authMode !== "signup") {
+      guardedUrl.searchParams.set("auth", "login");
+      return NextResponse.redirect(guardedUrl);
+    }
   }
 
   return NextResponse.next();
@@ -20,6 +23,7 @@ export const config = {
     "/featured",
     "/toolkit/:path*",
     "/intern/:path*",
+    "/internships/:path*",
     "/tracker/:path*",
   ],
 };

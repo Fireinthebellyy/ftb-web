@@ -223,7 +223,7 @@ export default function Navbar() {
         <nav className="hidden justify-center gap-4 sm:gap-6 md:flex">
           <Link
             href="/opportunities"
-            className={`relative text-sm text-red-500 font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
+            className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
               pathname === "/opportunities"
                 ? "text-primary after:w-full"
                 : "text-neutral-800 after:w-0"

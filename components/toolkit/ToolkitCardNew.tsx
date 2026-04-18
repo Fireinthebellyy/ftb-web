@@ -5,9 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { cn, stripHtml } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Toolkit } from "@/types/interfaces";
-import { Flame } from "lucide-react";
+import { Check, Flame } from "lucide-react";
 
 interface ToolkitCardNewProps {
   toolkit: Toolkit;
@@ -94,23 +94,17 @@ export default function ToolkitCardNew({
             {toolkit.title.charAt(0).toUpperCase() + toolkit.title.slice(1)}
           </h3>
 
-          <p className="mb-2 line-clamp-2 text-[11px] text-gray-600 sm:text-xs">
-            {stripHtml(toolkit.description)}
-          </p>
-
-          {toolkit.highlights && toolkit.highlights.length > 0 && (
-            <div className="mb-2 hidden flex-wrap gap-1 sm:flex">
-              {toolkit.highlights.slice(0, 1).map((highlight, index) => (
-                <Badge
-                  key={index}
-                  variant="outline"
-                  className="h-5 py-0 text-[10px] text-gray-600"
-                >
-                  {highlight}
-                </Badge>
+          {/* replace description with highlights list (up to 4) */}
+          {toolkit.highlights && toolkit.highlights.length > 0 ? (
+            <ul className="mb-2 space-y-1">
+              {toolkit.highlights.slice(0, 4).map((highlight, index) => (
+                <li key={index} className="flex items-start gap-2 text-[12px] text-gray-700">
+                  <Check className="mt-1 h-5 w-5 text-orange-500" aria-hidden />
+                  <span className="leading-tight">{highlight}</span>
+                </li>
               ))}
-            </div>
-          )}
+            </ul>
+          ) : null}
 
           <div className="flex items-center justify-between">
             <div className="flex items-baseline gap-1.5">

@@ -94,7 +94,7 @@ export default function ToolkitPage() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Toolkits</h1>
           <p className="mt-1 text-gray-600">
-            Expert-crafted resources to help you level up your career
+            Video guides with kickass strategies that actually work ~ go from overlooked to Top 1%
           </p>
         </div>
 

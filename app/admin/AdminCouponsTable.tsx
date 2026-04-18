@@ -278,7 +278,7 @@ export default function AdminCouponsTable() {
         ),
       },
     ];
-  }, [deleteCouponMutation, handleEdit]);
+  }, [deleteCouponMutation, handleEdit, queryClient]);
 
   return (
     <AdminTabLayout

@@ -46,6 +46,7 @@ export default function Tracker() {
     const tabParam = searchParams.get('tab');
     const initialTab = (tabParam === 'opportunity' || tabParam === 'internship') ? tabParam : 'internship';
     const [activeTab, setActiveTab] = useState<'internship' | 'opportunity'>(initialTab);
+    const [isNavigating, setIsNavigating] = useState(false);
 
     // Sync tab to URL when changed
     const handleTabChange = (tab: 'internship' | 'opportunity') => {
@@ -55,11 +56,11 @@ export default function Tracker() {
         router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     };
 
-    const handleNavigation=(path:string)=>{
-        setTimeout(()=>{
-            router.push(path);
-        },500)
-    }
+    const handleNavigation = (path: string) => {
+        if (isNavigating) return;
+        setIsNavigating(true);
+        router.push(path);
+    };
 
     const [detailOpp, setDetailOpp] = useState<TrackerItem | null>(null);
     const [smartApplyOpp, setSmartApplyOpp] = useState<TrackerItem | null>(null);
@@ -215,10 +216,25 @@ export default function Tracker() {
 
             {/* Explore Internship and Explore Opportunity Buttons */}
             <div className="flex flex-col sm:flex-row justify-center font-bold">
-                <button onClick={()=>handleNavigation(activeTab==="internship"?"/internships":"/opportunities")}
-                className='px-3 py-1.5 text-sm border border-orange-300 rounded-md cursor-pointer text-slate-700 flex justify-center items-center gap-2 shadow-lg transition-colors hover:text-orange-600 focus:bg-white focus:text-orange-600 active:scale-95'>
-                    {activeTab==="internship"?"Continue Exploring Internships ":"Continue Exploring Opportunities"}
-                    <span className='text-3xl relative bottom-1'>🐧</span>
+                <button
+                    onClick={() => handleNavigation(activeTab === "internship" ? "/internships" : "/opportunities")}
+                    disabled={isNavigating}
+                    className={cn(
+                        "flex items-center justify-center gap-2",
+                        "px-3 py-1.5",
+                        "rounded-md",
+                        "text-sm font-bold",
+                        "border border-orange-300 text-slate-700",
+                        "shadow-lg transition-colors active:scale-95 hover:text-orange-600 focus:bg-white focus:text-orange-600",
+                        isNavigating && "cursor-not-allowed opacity-70"
+                    )}
+                >
+                    {isNavigating
+                        ? "Opening..."
+                        : activeTab === "internship"
+                            ? "Continue Exploring Internships"
+                            : "Continue Exploring Opportunities"}
+                    <span aria-hidden="true" className="relative bottom-1 text-3xl">🐧</span>
                 </button>
                 
 

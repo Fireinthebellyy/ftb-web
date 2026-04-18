@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Toolkit } from "@/types/interfaces";
-import { Flame } from "lucide-react";
+import { Check, Flame } from "lucide-react";
 
 interface ToolkitCardNewProps {
   toolkit: Toolkit;
@@ -99,9 +99,7 @@ export default function ToolkitCardNew({
             <ul className="mb-2 space-y-1">
               {toolkit.highlights.slice(0, 4).map((highlight, index) => (
                 <li key={index} className="flex items-start gap-2 text-[12px] text-gray-700">
-                  <svg className="mt-1 h-5 w-5 text-orange-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                    <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <Check className="mt-1 h-5 w-5 text-orange-500" aria-hidden />
                   <span className="leading-tight">{highlight}</span>
                 </li>
               ))}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
@@ -119,14 +119,14 @@ export default function OpportunityManagementTable() {
   const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
 
-  const handleEdit = (opportunity: Opportunity) => {
+  const handleEdit = useCallback((opportunity: Opportunity) => {
     setOpen(false);
     setSelectedOpportunity(null);
     setTimeout(() => {
       setSelectedOpportunity(opportunity);
       setOpen(true);
     }, 50);
-  };
+  }, []);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["admin-opportunity-management"],
@@ -135,25 +135,25 @@ export default function OpportunityManagementTable() {
   const opportunities = [...(data ?? EMPTY_OPPORTUNITIES)].sort((a, b) => {
     return (a.trendingIndex ?? 9999) - (b.trendingIndex ?? 9999);
   });
-  const handleApproveReject = async (
-    opportunity: Opportunity,
-    action: "approve" | "reject"
-  ) => {
-    setUpdatingIds((prev) => new Set(prev).add(opportunity.id));
-    try {
-      await axios.patch(`/api/admin/opportunities/${opportunity.id}`, { action });
-      toast.success(action === "approve" ? "Opportunity approved!" : "Opportunity rejected!");
-    } catch {
-      toast.error(`Failed to ${action} opportunity`);
-    } finally {
-      setUpdatingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(opportunity.id);
-        return next;
-      });
-      queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
-    }
-  };
+  const handleApproveReject = useCallback(
+    async (opportunity: Opportunity, action: "approve" | "reject") => {
+      setUpdatingIds((prev) => new Set(prev).add(opportunity.id));
+      try {
+        await axios.patch(`/api/admin/opportunities/${opportunity.id}`, { action });
+        toast.success(action === "approve" ? "Opportunity approved!" : "Opportunity rejected!");
+      } catch {
+        toast.error(`Failed to ${action} opportunity`);
+      } finally {
+        setUpdatingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(opportunity.id);
+          return next;
+        });
+        queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
+      }
+    },
+    [queryClient]
+  );
   
   const columns = useMemo<ColumnDef<Opportunity>[]>(() => {
     const allSelected =
@@ -421,7 +421,14 @@ export default function OpportunityManagementTable() {
         },
       },
     ];
-  }, [selectedIds, opportunities, queryClient, updatingIds]);
+  }, [
+    selectedIds,
+    opportunities,
+    queryClient,
+    updatingIds,
+    handleApproveReject,
+    handleEdit,
+  ]);
 
   const deleteToolbar =
     selectedIds.length > 0 ? (

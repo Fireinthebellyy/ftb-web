@@ -3,7 +3,7 @@ const AUTH_OVERLAY_BASE_ROUTES = [
   "/toolkit",
   "/tracker",
   "/intern",
-  "/internships",
+  "/ungatekeep",
 ] as const;
 
 const normalizePath = (path: string): string => {

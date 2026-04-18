@@ -145,7 +145,7 @@ export default function SavedUngatekeepPage() {
                 </p>
                 {axios.isAxiosError(error) && error.response?.status === 401 ? (
                   <Button asChild>
-                    <Link href="/login?returnUrl=/ungatekeep/saved&interestBg=blur">Login</Link>
+                    <Link href="/ungatekeep/saved?auth=login">Login</Link>
                   </Button>
                 ) : (
                   <Button onClick={() => refetch()}>Retry</Button>
@@ -219,7 +219,7 @@ export default function SavedUngatekeepPage() {
                 </p>
                 {axios.isAxiosError(error) && error.response?.status === 401 ? (
                   <Button asChild size="sm">
-                    <Link href="/login?returnUrl=/ungatekeep/saved&interestBg=blur">Login</Link>
+                    <Link href="/ungatekeep/saved?auth=login">Login</Link>
                   </Button>
                 ) : (
                   <Button onClick={() => refetch()} size="sm">

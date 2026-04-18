@@ -162,7 +162,7 @@ export default function InterestPromptGate() {
           What are you interested in?
         </h2>
 
-        <div className="mt-8 grid grid-cols-2 gap-3">
+        <div className="mt-5 grid grid-cols-2 gap-2">
           {OPTIONS.map(({ id, label, Icon }) => {
             const isOn = selected.has(id);
             return (
@@ -171,16 +171,16 @@ export default function InterestPromptGate() {
                 type="button"
                 onClick={() => toggle(id)}
                 className={cn(
-                  "flex items-center gap-3 rounded-full border px-4 py-3 text-left transition-colors",
+                  "flex cursor-pointer items-center gap-2.5 rounded-full border px-3.5 py-2.5 text-left transition-colors",
                   "border-amber-200/90 bg-white hover:bg-amber-50/50",
                   isOn && "border-primary bg-primary/5 ring-2 ring-primary/30"
                 )}
               >
                 <Icon
-                  className="text-primary size-7 shrink-0"
+                  className="text-primary size-6 shrink-0"
                   strokeWidth={1.75}
                 />
-                <span className="text-sm font-medium text-neutral-600">
+                <span className="text-[13px] font-medium text-neutral-600">
                   {label}
                 </span>
               </button>

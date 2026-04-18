@@ -65,20 +65,26 @@ export default function InterestPromptGate() {
   });
 
   const needsPrompt = Boolean(interestQuery.data?.needsPrompt);
-  const open = Boolean(session?.user) && !skip && needsPrompt && !interestQuery.isPending;
+  /** Full-screen gate only after the interest query has resolved and needsPrompt is true */
+  const showGate =
+    Boolean(session?.user) &&
+    !skip &&
+    !interestQuery.isError &&
+    !interestQuery.isPending &&
+    needsPrompt;
 
   useEffect(() => {
-    if (!open) return;
+    if (!showGate) return;
     setBgVariant(readStoredBgVariant());
-  }, [open]);
+  }, [showGate]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!showGate) return;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [open]);
+  }, [showGate]);
 
   const toggle = (id: InterestAreaId) => {
     setSelected((prev) => {
@@ -124,23 +130,7 @@ export default function InterestPromptGate() {
     return null;
   }
 
-  if (interestQuery.isError) {
-    return null;
-  }
-
-  if (interestQuery.isPending) {
-    return (
-      <div
-        className="bg-background/80 fixed inset-0 z-[100] flex items-center justify-center backdrop-blur-[2px]"
-        aria-busy="true"
-        aria-label="Loading"
-      >
-        <Loader2 className="text-primary size-10 animate-spin" />
-      </div>
-    );
-  }
-
-  if (!needsPrompt) {
+  if (!showGate) {
     return null;
   }
 

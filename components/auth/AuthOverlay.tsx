@@ -53,12 +53,13 @@ export default function AuthOverlay() {
           showCloseButton={false}
         >
           {authMode === "signup" ? (
-            <SignupForm className="w-full" />
+            <SignupForm className="w-full" interestBgVariant="blur" />
           ) : (
             <LoginForm
               className="w-full"
               returnUrlOverride={returnUrl}
               isOverlay={true}
+              interestBgVariant="blur"
             />
           )}
         </DialogContent>

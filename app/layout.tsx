@@ -13,6 +13,7 @@ import ProgressProvider from "./providers";
 import Script from "next/script";
 import ConditionalWidgets from "@/components/ConditionalWidgets";
 import PostOnboardingSurveyWidget from "@/components/PostOnboardingSurveyWidget";
+import InterestPromptGate from "@/components/InterestPromptGate";
 import { TrackerProvider } from "@/components/providers/TrackerProvider";
 import { CSPostHogProvider } from "./providers/posthog-provider";
 
@@ -58,6 +59,7 @@ export default function RootLayout({
                   <Footer />
                   <ConditionalWidgets />
                   <PostOnboardingSurveyWidget />
+                  <InterestPromptGate />
                 </TrackerProvider>
               </CSPostHogProvider>
             </ProgressProvider>

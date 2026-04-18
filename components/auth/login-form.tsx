@@ -25,9 +25,13 @@ import {
 import { z } from "zod";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import {
+  INTEREST_PROMPT_STORAGE_KEY,
+  type InterestPromptBgVariant,
+} from "@/lib/interest-prompt";
 import Link from "next/link";
 
 const formSchema = z.object({
@@ -42,10 +46,12 @@ export function LoginForm({
   className,
   returnUrlOverride,
   isOverlay = false,
+  interestBgVariant,
   ...props
 }: React.ComponentProps<"div"> & {
   returnUrlOverride?: string;
   isOverlay?: boolean;
+  interestBgVariant?: InterestPromptBgVariant;
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProvider, setLoadingProvider] = useState<
@@ -62,6 +68,18 @@ export function LoginForm({
       ? rawReturnUrl
       : "/";
   const returnUrl = returnUrlOverride ?? searchParamReturnUrl;
+  const interestBgParam = searchParams.get("interestBg");
+
+  useEffect(() => {
+    if (interestBgVariant) {
+      sessionStorage.setItem(INTEREST_PROMPT_STORAGE_KEY, interestBgVariant);
+      return;
+    }
+    if (interestBgParam === "white" || interestBgParam === "blur") {
+      sessionStorage.setItem(INTEREST_PROMPT_STORAGE_KEY, interestBgParam);
+    }
+  }, [interestBgVariant, interestBgParam]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -74,6 +92,11 @@ export function LoginForm({
     try {
       setIsLoading(true);
       setLoadingProvider("google");
+      if (interestBgVariant) {
+        sessionStorage.setItem(INTEREST_PROMPT_STORAGE_KEY, interestBgVariant);
+      } else if (interestBgParam === "white" || interestBgParam === "blur") {
+        sessionStorage.setItem(INTEREST_PROMPT_STORAGE_KEY, interestBgParam);
+      }
       await authClient.signIn.social({
         provider: "google",
         callbackURL: returnUrl,
@@ -92,6 +115,11 @@ export function LoginForm({
     try {
       setIsLoading(true);
       setLoadingProvider("linkedin");
+      if (interestBgVariant) {
+        sessionStorage.setItem(INTEREST_PROMPT_STORAGE_KEY, interestBgVariant);
+      } else if (interestBgParam === "white" || interestBgParam === "blur") {
+        sessionStorage.setItem(INTEREST_PROMPT_STORAGE_KEY, interestBgParam);
+      }
       await authClient.signIn.social({
         provider: "linkedin",
         callbackURL: returnUrl,

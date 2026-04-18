@@ -330,7 +330,7 @@ export default function UngatekeepPage() {
                         Login to see all posts and announcements
                       </p>
                       <Button asChild>
-                        <Link href="/login?returnUrl=/ungatekeep">
+                        <Link href="/login?returnUrl=/ungatekeep&interestBg=blur">
                           Login to continue
                         </Link>
                       </Button>
@@ -421,7 +421,7 @@ export default function UngatekeepPage() {
                   </h3>
                   <p className="mb-4 text-xs text-gray-500">Login to see all posts and announcements</p>
                   <Button asChild size="sm">
-                    <Link href="/login?returnUrl=/ungatekeep">Login to continue</Link>
+                    <Link href="/login?returnUrl=/ungatekeep&interestBg=blur">Login to continue</Link>
                   </Button>
                 </div>
               )}

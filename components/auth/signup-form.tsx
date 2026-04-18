@@ -25,9 +25,13 @@ import {
 import { z } from "zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import {
+  INTEREST_PROMPT_STORAGE_KEY,
+  type InterestPromptBgVariant,
+} from "@/lib/interest-prompt";
 import Link from "next/link";
 
 const formSchema = z.object({
@@ -38,11 +42,20 @@ const formSchema = z.object({
 
 export function SignupForm({
   className,
+  interestBgVariant,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div"> & {
+  interestBgVariant?: InterestPromptBgVariant;
+}) {
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
+
+  useEffect(() => {
+    if (interestBgVariant) {
+      sessionStorage.setItem(INTEREST_PROMPT_STORAGE_KEY, interestBgVariant);
+    }
+  }, [interestBgVariant]);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -53,6 +66,9 @@ export function SignupForm({
   });
 
   const signInWithGoogle = async () => {
+    if (interestBgVariant) {
+      sessionStorage.setItem(INTEREST_PROMPT_STORAGE_KEY, interestBgVariant);
+    }
     await authClient.signIn.social({
       provider: "google",
       callbackURL: "/opportunities",
@@ -61,6 +77,9 @@ export function SignupForm({
   };
 
   const signInWithLinkedIn = async () => {
+    if (interestBgVariant) {
+      sessionStorage.setItem(INTEREST_PROMPT_STORAGE_KEY, interestBgVariant);
+    }
     await authClient.signIn.social({
       provider: "linkedin",
       callbackURL: "/opportunities",

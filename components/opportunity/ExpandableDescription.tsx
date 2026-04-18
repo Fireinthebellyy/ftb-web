@@ -53,7 +53,6 @@ export function ExpandableDescription({
     });
 
     return container.innerHTML;
-
   }, [text]);
 
   const plainTextPreview = useMemo(() => stripHtml(text), [text]);

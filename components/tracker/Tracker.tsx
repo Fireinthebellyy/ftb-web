@@ -55,6 +55,11 @@ export default function Tracker() {
         router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     };
 
+    const handleNavigation=(path:string)=>{
+        setTimeout(()=>{
+            router.push(path);
+        },500)
+    }
 
     const [detailOpp, setDetailOpp] = useState<TrackerItem | null>(null);
     const [smartApplyOpp, setSmartApplyOpp] = useState<TrackerItem | null>(null);
@@ -207,6 +212,18 @@ export default function Tracker() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Explore Internship and Explore Opportunity Buttons */}
+            <div className="flex flex-col sm:flex-row justify-center font-bold">
+                <button onClick={()=>handleNavigation(activeTab==="internship"?"/internships":"/opportunities")}
+                className='px-3 py-1.5 text-sm border border-orange-300 rounded-md cursor-pointer text-slate-700 flex justify-center items-center gap-2 shadow-lg transition-colors hover:text-orange-600 focus:bg-white focus:text-orange-600 active:scale-95'>
+                    {activeTab==="internship"?"Continue Exploring Internships ":"Continue Exploring Opportunities"}
+                    <span className='text-3xl relative bottom-1'>🐧</span>
+                </button>
+                
+
+            </div>
+           
 
             {/* View Content */}
             <div className="space-y-8">

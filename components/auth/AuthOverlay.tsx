@@ -44,9 +44,10 @@ export default function AuthOverlay() {
     <>
       <div
         aria-hidden="true"
-        className="pointer-events-auto fixed inset-x-0 top-16 bottom-0 z-40 bg-black/25 backdrop-blur-[3px]"
+        className="pointer-events-auto fixed inset-x-0 top-16 bottom-0 z-40 cursor-pointer bg-black/25 backdrop-blur-[3px]"
+        onClick={() => handleOpenChange(false)}
       />
-      <Dialog open={isOpen} onOpenChange={handleOpenChange} modal={false}>
+      <Dialog open={isOpen} onOpenChange={handleOpenChange} modal>
         <DialogContent
           className="max-h-[calc(100vh-2rem)] overflow-y-auto border-none bg-transparent p-0 shadow-none sm:max-w-sm"
           overlayClassName="hidden"

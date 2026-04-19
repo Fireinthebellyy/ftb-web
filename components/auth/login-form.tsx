@@ -25,9 +25,13 @@ import {
 import { z } from "zod";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import {
+  INTEREST_PROMPT_STORAGE_KEY,
+  type InterestPromptBgVariant,
+} from "@/lib/interest-prompt";
 import Link from "next/link";
 
 const formSchema = z.object({
@@ -40,8 +44,15 @@ const ENABLE_EMAIL_PASSWORD_LOGIN = false;
 
 export function LoginForm({
   className,
+  returnUrlOverride,
+  isOverlay = false,
+  interestBgVariant,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div"> & {
+  returnUrlOverride?: string;
+  isOverlay?: boolean;
+  interestBgVariant?: InterestPromptBgVariant;
+}) {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProvider, setLoadingProvider] = useState<
     "google" | "linkedin" | null
@@ -50,12 +61,25 @@ export function LoginForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   const rawReturnUrl = searchParams.get("returnUrl");
-  const returnUrl =
+  const searchParamReturnUrl =
     rawReturnUrl &&
     rawReturnUrl.startsWith("/") &&
     !rawReturnUrl.startsWith("//")
       ? rawReturnUrl
       : "/";
+  const returnUrl = returnUrlOverride ?? searchParamReturnUrl;
+  const interestBgParam = searchParams.get("interestBg");
+
+  useEffect(() => {
+    if (interestBgVariant) {
+      sessionStorage.setItem(INTEREST_PROMPT_STORAGE_KEY, interestBgVariant);
+      return;
+    }
+    if (interestBgParam === "white" || interestBgParam === "blur") {
+      sessionStorage.setItem(INTEREST_PROMPT_STORAGE_KEY, interestBgParam);
+    }
+  }, [interestBgVariant, interestBgParam]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -68,6 +92,11 @@ export function LoginForm({
     try {
       setIsLoading(true);
       setLoadingProvider("google");
+      if (interestBgVariant) {
+        sessionStorage.setItem(INTEREST_PROMPT_STORAGE_KEY, interestBgVariant);
+      } else if (interestBgParam === "white" || interestBgParam === "blur") {
+        sessionStorage.setItem(INTEREST_PROMPT_STORAGE_KEY, interestBgParam);
+      }
       await authClient.signIn.social({
         provider: "google",
         callbackURL: returnUrl,
@@ -86,6 +115,11 @@ export function LoginForm({
     try {
       setIsLoading(true);
       setLoadingProvider("linkedin");
+      if (interestBgVariant) {
+        sessionStorage.setItem(INTEREST_PROMPT_STORAGE_KEY, interestBgVariant);
+      } else if (interestBgParam === "white" || interestBgParam === "blur") {
+        sessionStorage.setItem(INTEREST_PROMPT_STORAGE_KEY, interestBgParam);
+      }
       await authClient.signIn.social({
         provider: "linkedin",
         callbackURL: returnUrl,
@@ -288,10 +322,33 @@ export function LoginForm({
           </Form>
         </CardContent>
       </Card>
-      <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
+      <div
+        className={cn(
+          "text-center text-xs text-balance",
+          isOverlay
+            ? "text-white/90"
+            : "text-muted-foreground *:[a]:hover:text-primary"
+        )}
+      >
         By clicking continue, you agree to our{" "}
-        <Link href="/terms">Terms of Service</Link> and{" "}
-        <Link href="/privacy">Privacy Policy</Link>.
+        <Link
+          href="/terms"
+          className={cn(
+            "inline-block border-b pb-0.5"
+          )}
+        >
+          Terms of Service
+        </Link>{" "}
+        and{" "}
+        <Link
+          href="/privacy"
+          className={cn(
+            "inline-block border-b pb-0.5",
+          )}
+        >
+          Privacy Policy
+        </Link>
+        .
       </div>
     </div>
   );

@@ -254,7 +254,7 @@ export default function Tracker() {
                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-[10px] md:text-sm font-bold transition-all shadow-sm hover:shadow-orange-200"
                             >
                                 <Zap size={14} className="fill-white" />
-                                <span>10x Chances</span>
+                                <span>Internship Guide</span>
                             </Link>
                         )}
                     </div>

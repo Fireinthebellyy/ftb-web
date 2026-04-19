@@ -168,7 +168,7 @@ export default function ToolkitDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen overflow-x-hidden bg-gray-50">
       <div className="container mx-auto max-w-7xl px-4 py-6">
         <Link
           href="/toolkit"
@@ -179,7 +179,7 @@ export default function ToolkitDetailPage() {
         </Link>
 
         <div className="grid gap-8 xl:grid-cols-3">
-          <div className="xl:col-span-2">
+          <div className="min-w-0 xl:col-span-2">
             <div className="mb-6 overflow-hidden rounded-lg border bg-white">
               <div className="relative aspect-video bg-gray-100">
                 {heroImageUrl ? (

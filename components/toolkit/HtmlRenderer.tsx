@@ -86,8 +86,9 @@ export default function HtmlRenderer({
     <div
       ref={contentRef}
       className={cn(
-        "max-w-none min-w-0 overflow-hidden text-base break-words text-gray-800",
+        "max-w-none min-w-0 overflow-x-auto text-base break-words text-gray-800",
         "[&_*]:leading-relaxed",
+        "[&_*]:max-w-full",
         "[&_p]:mb-3",
         "[&_h1]:mb-4 [&_h1]:text-3xl [&_h1]:font-semibold [&_h1]:text-gray-900",
         "[&_h2]:mb-3 [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:text-gray-900",
@@ -98,8 +99,11 @@ export default function HtmlRenderer({
         "[&_ol]:mb-3 [&_ol]:list-decimal [&_ol]:pl-5",
         "[&_blockquote]:border-l-4 [&_blockquote]:border-orange-500 [&_blockquote]:bg-orange-50 [&_blockquote]:px-4 [&_blockquote]:py-2 [&_blockquote]:text-gray-700 [&_blockquote]:italic",
         "[&_code]:rounded-md [&_code]:bg-orange-50 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-sm [&_code]:text-orange-600",
-        "[&_pre]:mb-3 [&_pre]:rounded-lg [&_pre]:bg-gray-900 [&_pre]:p-4 [&_pre]:text-gray-100 [&_pre_code]:bg-transparent [&_pre_code]:p-0",
-        "[&_img]:rounded-lg [&_img]:shadow-md",
+        "[&_pre]:mb-3 [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-gray-900 [&_pre]:p-4 [&_pre]:text-gray-100 [&_pre_code]:bg-transparent [&_pre_code]:p-0",
+        "[&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg [&_img]:shadow-md",
+        "[&_iframe]:aspect-video [&_iframe]:h-auto [&_iframe]:w-full [&_iframe]:max-w-full",
+        "[&_video]:h-auto [&_video]:w-full [&_video]:max-w-full",
+        "[&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto",
         "[&_div]:break-words [&_p]:break-words [&_span]:break-words",
         "[&_*]:whitespace-normal",
         className

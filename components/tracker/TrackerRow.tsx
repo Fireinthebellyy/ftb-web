@@ -2,7 +2,6 @@ import Image from "next/image";
 import { Clock, Trash2, ChevronDown, Calendar } from "lucide-react";
 import Link from "next/link";
 import clsx from "clsx";
-import { cn } from '@/lib/utils';
 import { TrackerItem } from "@/components/providers/TrackerProvider";
 import { differenceInCalendarDays } from "date-fns";
 import posthog from "posthog-js";

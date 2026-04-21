@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 import { addUtmParams } from "@/lib/utils";
 import { useState } from "react";
-import { opportunities } from "@/lib/schema";
 
 function DeadlineBadge({ deadline }: { deadline: string }) {
   const daysDiff = differenceInCalendarDays(new Date(deadline), new Date());

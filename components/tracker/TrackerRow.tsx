@@ -1,11 +1,16 @@
 import Image from "next/image";
 import { Clock, Trash2, ChevronDown, Calendar } from "lucide-react";
+import Link from "next/link";
 import clsx from "clsx";
+import { cn } from '@/lib/utils';
 import { TrackerItem } from "@/components/providers/TrackerProvider";
 import { differenceInCalendarDays } from "date-fns";
 import posthog from "posthog-js";
 import { toast } from "sonner";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
+import { addUtmParams } from "@/lib/utils";
+import { useState } from "react";
+import { opportunities } from "@/lib/schema";
 
 function DeadlineBadge({ deadline }: { deadline: string }) {
   const daysDiff = differenceInCalendarDays(new Date(deadline), new Date());
@@ -65,6 +70,8 @@ export default function TrackerRow({
   onClick,
   onDelete,
 }: TrackerRowProps) {
+
+const [updatedStatus,setupdatedStatus]=useState(opp.status);
   const handleRowClick = () => {
     posthog.capture("tracker_row_clicked", {
       tracker_id: opp.oppId,
@@ -85,6 +92,7 @@ export default function TrackerRow({
         new_status: newStatus,
       });
       await updateStatus(opp.oppId, newStatus, undefined, opp.kind);
+      setupdatedStatus(newStatus);
       toast.success(`Status updated to ${newStatus}`);
     } catch (error) {
       console.error("Failed to update status:", error);
@@ -152,6 +160,22 @@ export default function TrackerRow({
         </div>
       </div>
 
+      {/* Apply button */}
+      <div className={cn("z-2", 
+      "text-white font-bold bg-[#ec5b13] text-sm",
+       "rounded-xl", "px-3 py-1", 
+       "transition-colors hover:bg-[#d44d0c] hover:text-black active:scale-94",
+        (updatedStatus==="Applied"||updatedStatus==="Selected"||updatedStatus==="Rejected") && "hidden")}
+      >
+      {(opp.applyLink||opp.link) && 
+      <Link href={addUtmParams(opp.applyLink|| opp.link || "","ftb-web")} 
+      target="_blank" 
+      onClick={(e)=>e.stopPropagation()}>
+        Apply Now
+      </Link>} 
+      </div>
+
+
       <div className="mt-2 flex w-full items-center gap-2 md:mt-0 md:w-auto">
         <div className="relative" onClick={(e) => e.stopPropagation()}>
           <select
@@ -197,6 +221,7 @@ export default function TrackerRow({
             />
           </a>
         )}
+
         <button
           onClick={async (e) => {
             e.stopPropagation();

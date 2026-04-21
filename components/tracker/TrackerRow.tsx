@@ -9,7 +9,6 @@ import posthog from "posthog-js";
 import { toast } from "sonner";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 import { addUtmParams } from "@/lib/utils";
-import { useState } from "react";
 
 function DeadlineBadge({ deadline }: { deadline: string }) {
   const daysDiff = differenceInCalendarDays(new Date(deadline), new Date());
@@ -70,7 +69,6 @@ export default function TrackerRow({
   onDelete,
 }: TrackerRowProps) {
 
-const [updatedStatus,setupdatedStatus]=useState(opp.status);
   const handleRowClick = () => {
     posthog.capture("tracker_row_clicked", {
       tracker_id: opp.oppId,
@@ -91,7 +89,6 @@ const [updatedStatus,setupdatedStatus]=useState(opp.status);
         new_status: newStatus,
       });
       await updateStatus(opp.oppId, newStatus, undefined, opp.kind);
-      setupdatedStatus(newStatus);
       toast.success(`Status updated to ${newStatus}`);
     } catch (error) {
       console.error("Failed to update status:", error);
@@ -160,16 +157,13 @@ const [updatedStatus,setupdatedStatus]=useState(opp.status);
       </div>
 
       {/* Apply button */}
-      <div className={cn("z-2", 
-      "text-white font-bold bg-[#ec5b13] text-sm",
-       "rounded-xl", "px-3 py-1", 
-       "transition-colors hover:bg-[#d44d0c] hover:text-black active:scale-94",
-        (updatedStatus==="Applied"||updatedStatus==="Selected"||updatedStatus==="Rejected") && "hidden")}
+      <div className="z-2 text-white text-sm bg-[#ec5b13] font-bold rounded-xl px-3 py-1 transition-colors hover:bg-[#d44d0c] hover:text-black active:scale-94"
       >
       {(opp.applyLink||opp.link) && 
       <Link href={addUtmParams(opp.applyLink|| opp.link || "","ftb-web")} 
       target="_blank" 
-      onClick={(e)=>e.stopPropagation()}>
+      onClick={(e)=>e.stopPropagation()}
+      className="flex items-center justify-center">
         Apply Now
       </Link>} 
       </div>

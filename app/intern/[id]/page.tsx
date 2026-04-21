@@ -48,7 +48,6 @@ export default function InternshipDetailPage() {
       try {
         const response = await fetch(`/api/internships/${id}`);
         const data = await response.json();
-console.log(data.applyLink);
         if (!response.ok || !data.success) {
           setNotFoundError(true);
           setLoading(false);
@@ -114,6 +113,7 @@ console.log(data.applyLink);
             location: internship.location,
             type: internship.type,
             deadline: internship.deadline,
+            link:internship.link,
           },
           "Not Applied",
           "internship"

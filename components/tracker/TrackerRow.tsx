@@ -162,7 +162,6 @@ export default function TrackerRow({
       target="_blank" 
       rel="noopener noreferrer"
       aria-label={`Apply for ${opp.title} at ${opp.company}(Opens in a new tab)`}
-      aria-hidden={true}
       onClick={(e)=>e.stopPropagation()}
       className="flex items-center justify-center z-2 text-white text-sm bg-[#ec5b13] font-bold rounded-xl px-3 py-1 transition-colors hover:bg-[#d44d0c] hover:text-black active:scale-94">
         Apply Now

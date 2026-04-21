@@ -1,3 +1,4 @@
+"use client";
 import Image from "next/image";
 import { Clock, Trash2, ChevronDown, Calendar } from "lucide-react";
 import Link from "next/link";

@@ -240,7 +240,6 @@ export default function Tracker() {
 
             </div>
            
-
             {/* View Content */}
             <div className="space-y-8">
 

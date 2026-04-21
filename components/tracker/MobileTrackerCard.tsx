@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { TrackerItem } from "@/components/providers/TrackerProvider";
 import { differenceInCalendarDays } from "date-fns";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
-import Link from "next/link";
 import { addUtmParams } from "@/lib/utils";
 function DeadlineBadge({ deadline }: { deadline: string }) {
   const daysDiff = differenceInCalendarDays(new Date(deadline), new Date());
@@ -168,15 +167,18 @@ export default function MobileTrackerCard({
           />
         </div>
 
-        <div className="z-2 text-white text-xs bg-[#ec5b13] font-bold  rounded-xl px-3 py-2 transition-colors hover:bg-[#d44d0c] hover:text-black active:scale-94">
+       
           {(opp.applyLink||opp.link) &&(
-             <Link 
+             <a 
              href={addUtmParams(opp.applyLink||opp.link||"","ftb-web")} 
              target="_blank"
+             rel="noopener noreferrer"
+             aria-label={`Apply for ${opp.title} at ${opp.company}`}
+             aria-hidden={true}
              onClick={(e)=>e.stopPropagation()}
-             className="flex items-center justify-center">Apply Now</Link>
+             className="flex items-center justify-center z-2 text-white text-xs bg-[#ec5b13] font-bold  rounded-xl px-3 py-2 transition-colors hover:bg-[#d44d0c] hover:text-black active:scale-94">Apply Now</a>
           )}
-        </div>
+      
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
           {opp.deadline && (

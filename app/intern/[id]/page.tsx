@@ -48,7 +48,7 @@ export default function InternshipDetailPage() {
       try {
         const response = await fetch(`/api/internships/${id}`);
         const data = await response.json();
-
+console.log(data.applyLink);
         if (!response.ok || !data.success) {
           setNotFoundError(true);
           setLoading(false);

@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Filter, Loader2, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams,useRouter } from "next/navigation";
 import InternshipPost from "@/components/InternshipCard";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { useInfiniteInternships } from "@/lib/queries-internships";
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import FeaturedOpportunities from "./opportunity/FeaturedOpportunities";
 import ToolkitBanner from "./internship/ToolkitBanner";
+import { router } from "better-auth/api";
 
 const CalendarWidget = dynamic(() => import("./opportunity/CalendarWidget"));
 const TaskWidget = dynamic(() => import("./opportunity/TaskWidget"));
@@ -186,40 +187,71 @@ function InternshipCardSkeleton() {
 
 export default function InternshipList() {
   const searchParams = useSearchParams();
-
+  const router= useRouter();
   const [isNewInternshipOpen, setIsNewInternshipOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState<string>(
-    () => searchParams.get("search") || ""
-  );
-  const [appliedSearchTerm, setAppliedSearchTerm] = useState<string>(
-    () => searchParams.get("search") || ""
-  );
-  const [location, setLocation] = useState<string>(
-    () => searchParams.get("location") || ""
-  );
-  const [appliedLocation, setAppliedLocation] = useState<string>(() =>
-    normalizeLocationValue(searchParams.get("location") || "")
-  );
-  const [selectedTypes, setSelectedTypes] = useState<string[]>(() => {
-    const raw = searchParams.get("types") || searchParams.get("type") || "";
-    return raw
-      .split(",")
-      .map((value) => value.trim().toLowerCase())
-      .filter(Boolean);
-  });
-  const [appliedTypes, setAppliedTypes] = useState<string[]>(() => {
-    const raw = searchParams.get("types") || searchParams.get("type") || "";
-    return raw
-      .split(",")
-      .map((value) => value.trim().toLowerCase())
-      .filter(Boolean);
-  });
-  const [paidOnly, setPaidOnly] = useState<boolean>(
-    () => searchParams.get("paid") === "true"
-  );
-  const [appliedPaidOnly, setAppliedPaidOnly] = useState<boolean>(
-    () => searchParams.get("paid") === "true"
-  );
+  // const [searchTerm, setSearchTerm] = useState<string>(
+  //   () => searchParams.get("search") || ""
+  // );
+  // const [appliedSearchTerm, setAppliedSearchTerm] = useState<string>(
+  //   () => searchParams.get("search") || ""
+  // );
+  // const [location, setLocation] = useState<string>(
+  //   () => searchParams.get("location") || ""
+  // );
+  // const [appliedLocation, setAppliedLocation] = useState<string>(() =>
+  //   normalizeLocationValue(searchParams.get("location") || "")
+  // );
+  // const [selectedTypes, setSelectedTypes] = useState<string[]>(() => {
+  //   const raw = searchParams.get("types") || searchParams.get("type") || "";
+  //   return raw
+  //     .split(",")
+  //     .map((value) => value.trim().toLowerCase())
+  //     .filter(Boolean);
+  // });
+  // const [appliedTypes, setAppliedTypes] = useState<string[]>(() => {
+  //   const raw = searchParams.get("types") || searchParams.get("type") || "";
+  //   return raw
+  //     .split(",")
+  //     .map((value) => value.trim().toLowerCase())
+  //     .filter(Boolean);
+  // });
+  // const [paidOnly, setPaidOnly] = useState<boolean>(
+  //   () => searchParams.get("paid") === "true"
+  // );
+  // const [appliedPaidOnly, setAppliedPaidOnly] = useState<boolean>(
+  //   () => searchParams.get("paid") === "true"
+  // );
+
+  const initialSearch=searchParams.get("search")||"";
+  const initialLocation=searchParams.get("location")||"";
+  const initialPaidOnly=searchParams.get("paid")==="true";
+  const initialType=searchParams.get("type")?searchParams.get("type")!.split(","):[];
+
+  const [searchTerm,setSearchTerm]=useState(initialSearch);
+  const [location,setLocation]=useState(initialLocation);
+  const [paidOnly,setPaidOnly]=useState(initialPaidOnly);
+  const [selectedTypes,setSelectedTypes]=useState<string[]>(initialType);
+
+  const [appliedSearchTerm,setAppliedSearchTerm]=useState(initialSearch);
+  const [appliedLocation,setAppliedLocation]=useState(initialLocation);
+  const [appliedPaidOnly,setAppliedPaidOnly]=useState(initialPaidOnly);
+  const [appliedTypes,setAppliedTypes]=useState<string[]>(initialType);
+
+  useEffect(()=>{
+    const updatedSearch=searchParams.get("search")||"";
+    const updatedLocation=searchParams.get("location")||"";
+    const updatedPaidOnly=searchParams.get("paid")==="true";
+    const updatedType=searchParams.get("type")?searchParams.get("type")!.split(","):[];
+
+    setSearchTerm(updatedSearch);
+    setAppliedSearchTerm(updatedSearch);
+    setLocation(updatedLocation);
+    setAppliedLocation(updatedLocation);
+    setPaidOnly(updatedPaidOnly);
+    setAppliedPaidOnly(updatedPaidOnly);
+    setSelectedTypes(updatedType);
+    setAppliedTypes(updatedType);
+  },[])
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
@@ -325,10 +357,23 @@ export default function InternshipList() {
     (overrideSearch?: string) => {
       const nextSearch = (overrideSearch ?? searchTerm).trim();
 
+      const newParams=new URLSearchParams();
+      if(nextSearch){
+        newParams.set("search",nextSearch);
+      }
+      if(location.trim()){
+        newParams.set("location",location.trim());
+      }
+      if(paidOnly){
+        newParams.set("paid","true");
+      }
+      if(selectedTypes.length>0){
+        newParams.set("type",selectedTypes.join(","));
+      }
+      router.push(`?${newParams.toString()}`,{scroll:false})
       if (overrideSearch !== undefined) {
         setSearchTerm(overrideSearch);
       }
-
       setAppliedSearchTerm(nextSearch);
       setAppliedLocation(normalizedLocation);
       setAppliedTypes(selectedTypes);

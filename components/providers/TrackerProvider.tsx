@@ -53,6 +53,8 @@ export interface TrackerItem {
   eligibility?: string[];
   skills?: string[];
   tags?: string[];
+  applyLink?:string;
+  link?:string;
   [key: string]: unknown;
 }
 

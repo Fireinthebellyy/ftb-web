@@ -8,6 +8,10 @@ import {
   Calendar,
   CalendarPlus,
   Bookmark,
+  Pencil,
+  Star,
+  TrendingUp,
+  Loader2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +25,11 @@ interface InternshipDesktopHeaderProps {
   handleBookmarkClick: () => void;
   handleCalendarClick: () => void;
   onSmartApplyClick: () => void;
+  onEditClick?: () => void;
+  onToggleTrending?: () => void;
+  onToggleFeatured?: () => void;
+  isTogglingTrending?: boolean;
+  isTogglingFeatured?: boolean;
 }
 
 export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = ({
@@ -30,7 +39,14 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
   handleBookmarkClick,
   handleCalendarClick,
   onSmartApplyClick,
+  onEditClick,
+  onToggleTrending,
+  onToggleFeatured,
+  isTogglingTrending,
+  isTogglingFeatured,
 }) => {
+  const isOwner = session?.user && session.user.id === internship.user?.id;
+  const isModerator = session?.user && (session.user.role === "admin" || session.user.role === "editor");
   return (
     <div className="bg-white rounded-[24px] px-8 py-5 shadow-sm border border-slate-100 relative mb-8">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
@@ -102,6 +118,55 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
               className={cn("w-5 h-5", isBookmarked && "fill-current")}
             />
           </Button>
+          {isModerator && (
+            <Button
+              variant="outline"
+              onClick={onToggleTrending}
+              disabled={isTogglingTrending}
+              className={cn(
+                "w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 transition-all focus:ring-0",
+                internship.is_trending
+                  ? "text-orange-500 border-orange-500 bg-orange-50"
+                  : "text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50"
+              )}
+              aria-label="Toggle trending"
+            >
+              {isTogglingTrending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <TrendingUp className="w-5 h-5" />
+              )}
+            </Button>
+          )}
+          {isModerator && (
+            <Button
+              variant="outline"
+              onClick={onToggleFeatured}
+              disabled={isTogglingFeatured}
+              className={cn(
+                "w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 transition-all focus:ring-0",
+                internship.is_featured_home
+                  ? "text-orange-500 border-orange-500 bg-orange-50"
+                  : "text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50"
+              )}
+              aria-label="Toggle featured"
+            >
+              {isTogglingFeatured ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Star className="w-5 h-5" />
+              )}
+            </Button>
+          )}
+          {(isOwner || isModerator) && (
+            <Button
+              variant="outline"
+              onClick={onEditClick}
+              className="w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50 transition-all focus:ring-0"
+            >
+              <Pencil className="w-5 h-5" />
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={handleCalendarClick}

@@ -1,3 +1,4 @@
+"use client";
 import Image from "next/image";
 import { Clock, Trash2, ChevronDown, Calendar } from "lucide-react";
 import clsx from "clsx";
@@ -6,6 +7,7 @@ import { differenceInCalendarDays } from "date-fns";
 import posthog from "posthog-js";
 import { toast } from "sonner";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
+import { addUtmParams } from "@/lib/utils";
 
 function DeadlineBadge({ deadline }: { deadline: string }) {
   const daysDiff = differenceInCalendarDays(new Date(deadline), new Date());
@@ -65,6 +67,7 @@ export default function TrackerRow({
   onClick,
   onDelete,
 }: TrackerRowProps) {
+
   const handleRowClick = () => {
     posthog.capture("tracker_row_clicked", {
       tracker_id: opp.oppId,
@@ -152,6 +155,20 @@ export default function TrackerRow({
         </div>
       </div>
 
+      {/* Apply button */}
+     
+      {(opp.applyLink||opp.link) && 
+      <a href={addUtmParams(opp.applyLink|| opp.link || "","ftb-web")} 
+      target="_blank" 
+      rel="noopener noreferrer"
+      aria-label={`Apply for ${opp.title} at ${opp.company}(Opens in a new tab)`}
+      onClick={(e)=>e.stopPropagation()}
+      className="flex items-center justify-center z-2 text-white text-sm bg-[#ec5b13] font-bold rounded-xl px-3 py-1 transition-colors hover:bg-[#d44d0c] hover:text-black active:scale-94">
+        Apply Now
+      </a>} 
+
+
+
       <div className="mt-2 flex w-full items-center gap-2 md:mt-0 md:w-auto">
         <div className="relative" onClick={(e) => e.stopPropagation()}>
           <select
@@ -197,6 +214,7 @@ export default function TrackerRow({
             />
           </a>
         )}
+
         <button
           onClick={async (e) => {
             e.stopPropagation();

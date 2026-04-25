@@ -189,38 +189,6 @@ export default function InternshipList() {
   const searchParams = useSearchParams();
   const router= useRouter();
   const [isNewInternshipOpen, setIsNewInternshipOpen] = useState(false);
-  // const [searchTerm, setSearchTerm] = useState<string>(
-  //   () => searchParams.get("search") || ""
-  // );
-  // const [appliedSearchTerm, setAppliedSearchTerm] = useState<string>(
-  //   () => searchParams.get("search") || ""
-  // );
-  // const [location, setLocation] = useState<string>(
-  //   () => searchParams.get("location") || ""
-  // );
-  // const [appliedLocation, setAppliedLocation] = useState<string>(() =>
-  //   normalizeLocationValue(searchParams.get("location") || "")
-  // );
-  // const [selectedTypes, setSelectedTypes] = useState<string[]>(() => {
-  //   const raw = searchParams.get("types") || searchParams.get("type") || "";
-  //   return raw
-  //     .split(",")
-  //     .map((value) => value.trim().toLowerCase())
-  //     .filter(Boolean);
-  // });
-  // const [appliedTypes, setAppliedTypes] = useState<string[]>(() => {
-  //   const raw = searchParams.get("types") || searchParams.get("type") || "";
-  //   return raw
-  //     .split(",")
-  //     .map((value) => value.trim().toLowerCase())
-  //     .filter(Boolean);
-  // });
-  // const [paidOnly, setPaidOnly] = useState<boolean>(
-  //   () => searchParams.get("paid") === "true"
-  // );
-  // const [appliedPaidOnly, setAppliedPaidOnly] = useState<boolean>(
-  //   () => searchParams.get("paid") === "true"
-  // );
 
   const initialSearch=searchParams.get("search")||"";
   const initialLocation=searchParams.get("location")||"";
@@ -251,7 +219,7 @@ export default function InternshipList() {
     setAppliedPaidOnly(updatedPaidOnly);
     setSelectedTypes(updatedType);
     setAppliedTypes(updatedType);
-  },[])
+  },[searchParams])
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
@@ -379,7 +347,7 @@ export default function InternshipList() {
       setAppliedTypes(selectedTypes);
       setAppliedPaidOnly(paidOnly);
     },
-    [searchTerm, normalizedLocation, selectedTypes, paidOnly]
+    [searchTerm, normalizedLocation, selectedTypes, paidOnly,location,router]
   );
 
   // Rotate placeholders every 3 seconds

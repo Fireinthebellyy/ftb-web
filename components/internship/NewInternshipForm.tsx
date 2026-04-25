@@ -13,6 +13,7 @@ import {
   internshipEditFormSchema,
   InternshipFormData,
 } from "./schema";
+// import type used earlier removed; accept flexible shapes instead
 import { TitleField } from "./fields/TitleField";
 import { DescriptionField } from "./fields/DescriptionField";
 import { HiringOrganizationField } from "./fields/HiringOrganizationField";
@@ -22,24 +23,7 @@ import { MetaFields } from "./fields/MetaFields";
 import { TagsField } from "./fields/TagsField";
 import { EligibilityField } from "./fields/EligibilityField";
 
-interface Internship {
-  id: string;
-  title: string;
-  description: string;
-  hiringOrganization?: string;
-  tags?: string[] | string;
-  eligibility?: string[] | string;
-  type?: "onsite" | "remote" | "hybrid";
-  timing?: "full_time" | "part_time";
-  location?: string;
-  stipend?: number;
-  hiringManager?: string;
-  hiringManagerEmail?: string;
-  experience?: string;
-  duration?: string;
-  link?: string;
-  deadline?: string;
-}
+// Use the shared InternshipData type from the project
 
 export default function NewInternshipForm({
   onInternshipCreated,
@@ -48,7 +32,7 @@ export default function NewInternshipForm({
 }: {
   onInternshipCreated: () => void;
   onCancel?: () => void;
-  internship?: Internship;
+  internship?: any;
 }) {
   const isEditing = !!internship;
   const [loading, setLoading] = useState(false);

@@ -26,6 +26,7 @@ import { InternshipDesktopHeader } from "@/components/internship/InternshipDeskt
 import { InternshipSidebar } from "@/components/internship/InternshipSidebar";
 import { InternshipDisclaimer } from "@/components/internship/InternshipDisclaimer";
 import { InternshipStickyFooter } from "@/components/internship/InternshipStickyFooter";
+import NewInternshipForm from "@/components/internship/NewInternshipForm";
 
 export default function InternshipDetailPage() {
   const router = useRouter();
@@ -41,30 +42,36 @@ export default function InternshipDetailPage() {
 
   const isBookmarked = !!getStatus(id || "", "internship");
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!id) return;
+  const fetchData = async () => {
+    if (!id) return;
 
-      try {
-        const response = await fetch(`/api/internships/${id}`);
-        const data = await response.json();
-        if (!response.ok || !data.success) {
-          setNotFoundError(true);
-          setLoading(false);
-          return;
-        }
-
-        setInternship(data.internship as InternshipData);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching internship:", error);
+    try {
+      const response = await fetch(`/api/internships/${id}`);
+      const data = await response.json();
+      if (!response.ok || !data.success) {
         setNotFoundError(true);
         setLoading(false);
+        return;
       }
-    };
 
+      setInternship(data.internship as InternshipData);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching internship:", error);
+      setNotFoundError(true);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
+  const handleOpenEdit = () => setIsEditOpen(true);
+  const handleCloseEdit = () => setIsEditOpen(false);
 
   if (notFoundError) notFound();
 
@@ -193,6 +200,107 @@ export default function InternshipDetailPage() {
     }
   };
 
+  const [isTogglingTrending, setIsTogglingTrending] = useState(false);
+  const [isTogglingFeatured, setIsTogglingFeatured] = useState(false);
+
+  const toggleTrending = async () => {
+    if (!id || !internship || isTogglingTrending) return;
+    const newVal = !internship.is_trending;
+    setIsTogglingTrending(true);
+    // optimistic update
+    setInternship((p) => (p ? { ...p, is_trending: newVal } : p));
+    try {
+      const res = await fetch(`/api/internships/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isTrending: newVal }),
+      });
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch (e) {
+        console.error("Invalid JSON response for toggleTrending", e);
+      }
+
+      if (!res.ok) {
+        console.error("toggleTrending failed", res.status, data);
+        // rollback
+        setInternship((p) => (p ? { ...p, is_trending: !newVal } : p));
+        if (res.status === 401) toast.error("Unauthorized. Please sign in as an admin.");
+        else if (res.status === 403) toast.error("Forbidden. You need moderator permissions.");
+        else toast.error(data?.error || "Failed to update trending status");
+        return;
+      }
+
+      if (!data?.success) {
+        console.error("toggleTrending unexpected response", data);
+        setInternship((p) => (p ? { ...p, is_trending: !newVal } : p));
+        toast.error(data?.error || "Failed to update trending status");
+        return;
+      }
+
+      setInternship(data.internship as InternshipData);
+      toast.success(newVal ? "Marked as trending" : "Removed trending");
+    } catch (err) {
+      console.error(err);
+      setInternship((p) => (p ? { ...p, is_trending: !newVal } : p));
+      toast.error("Failed to update trending status");
+    } finally {
+      setIsTogglingTrending(false);
+    }
+  };
+
+  const toggleFeatured = async () => {
+    if (!id || !internship || isTogglingFeatured) return;
+    const newVal = !internship.is_featured_home;
+    setIsTogglingFeatured(true);
+    setInternship((p) => (p ? { ...p, is_featured_home: newVal } : p));
+    try {
+      const res = await fetch(`/api/internships/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isFeaturedHome: newVal }),
+      });
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch (e) {
+        console.error("Invalid JSON response for toggleFeatured", e);
+      }
+
+      if (!res.ok) {
+        console.error("toggleFeatured failed", res.status, data);
+        setInternship((p) => (p ? { ...p, is_featured_home: !newVal } : p));
+        if (res.status === 401) toast.error("Unauthorized. Please sign in as an admin.");
+        else if (res.status === 403) toast.error("Forbidden. You need moderator permissions.");
+        else toast.error(data?.error || "Failed to update featured status");
+        return;
+      }
+
+      if (!data?.success) {
+        console.error("toggleFeatured unexpected response", data);
+        setInternship((p) => (p ? { ...p, is_featured_home: !newVal } : p));
+        toast.error(data?.error || "Failed to update featured status");
+        return;
+      }
+
+      setInternship(data.internship as InternshipData);
+      toast.success(newVal ? "Marked as featured" : "Removed featured");
+    } catch (err) {
+      console.error(err);
+      setInternship((p) => (p ? { ...p, is_featured_home: !newVal } : p));
+      toast.error("Failed to update featured status");
+    } finally {
+      setIsTogglingFeatured(false);
+    }
+  };
+
+  const handleOnInternshipUpdated = async () => {
+    // Re-fetch the internship after edit
+    await fetchData();
+    handleCloseEdit();
+  };
+
   if (loading || !internship) {
     return (
       <div className="flex min-h-[80vh] w-full flex-col items-center justify-center">
@@ -289,6 +397,11 @@ export default function InternshipDetailPage() {
             handleBookmarkClick={handleBookmarkClick}
             handleCalendarClick={handleCalendarClick}
             onSmartApplyClick={() => setSmartApplyOpen(true)}
+            onEditClick={handleOpenEdit}
+            onToggleTrending={toggleTrending}
+            onToggleFeatured={toggleFeatured}
+            isTogglingTrending={isTogglingTrending}
+            isTogglingFeatured={isTogglingFeatured}
           />
 
           {/* Desktop Main Content Grid */}
@@ -363,6 +476,23 @@ export default function InternshipDetailPage() {
             onCopy={handleCopy}
             onShare={handleShare}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog for admins/owners */}
+      <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) handleCloseEdit(); }}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto max-w-3xl w-[95vw]">
+          <DialogTitle className="sr-only">Edit Internship</DialogTitle>
+          <div className="py-2">
+            {internship && (
+              // Lazy import form handles both create & edit
+              <NewInternshipForm
+                internship={internship}
+                onCancel={handleCloseEdit}
+                onInternshipCreated={handleOnInternshipUpdated}
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 

@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/dialog";
 import FeaturedOpportunities from "./opportunity/FeaturedOpportunities";
 import ToolkitBanner from "./internship/ToolkitBanner";
-import { router } from "better-auth/api";
 
 const CalendarWidget = dynamic(() => import("./opportunity/CalendarWidget"));
 const TaskWidget = dynamic(() => import("./opportunity/TaskWidget"));
@@ -330,7 +329,7 @@ export default function InternshipList() {
         newParams.set("search",nextSearch);
       }
       if(location.trim()){
-        newParams.set("location",location.trim());
+        newParams.set("location",normalizedLocation);
       }
       if(paidOnly){
         newParams.set("paid","true");

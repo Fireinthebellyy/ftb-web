@@ -17,9 +17,14 @@ import { Button } from "@/components/ui/button";
 import { cn, toTitleCase, formatSalary, formatDateLong, addUtmParams } from "@/lib/utils";
 import { InternshipData } from "@/types/interfaces";
 
+interface UserSession {
+  id: string;
+  role?: "user" | "member" | "editor" | "admin";
+}
+
 interface InternshipDesktopHeaderProps {
   internship: InternshipData;
-  session: { user: any } | null;
+  session: { user: UserSession } | null;
   isBookmarked: boolean;
   handleBookmarkClick: () => void;
   handleCalendarClick: () => void;
@@ -41,7 +46,7 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
   isAdminLoading,
 }) => {
   const isOwner = session?.user && session.user.id === internship.user?.id;
-  const isModerator = session?.user && ((session.user as any).role === "admin" || (session.user as any).role === "editor");
+  const isModerator = session?.user && (session.user.role === "admin" || session.user.role === "editor");
   return (
     <div className="bg-white rounded-[24px] px-8 py-5 shadow-sm border border-slate-100 relative mb-8">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">

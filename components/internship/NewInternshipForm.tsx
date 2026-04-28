@@ -24,16 +24,19 @@ import { TagsField } from "./fields/TagsField";
 import { EligibilityField } from "./fields/EligibilityField";
 
 // Use the shared InternshipData type from the project
+import { InternshipData } from "@/types/interfaces";
+
+interface NewInternshipFormProps {
+  onInternshipCreated: () => void;
+  onCancel?: () => void;
+  internship?: InternshipData | any; // Accept both InternshipData and database Internship type
+}
 
 export default function NewInternshipForm({
   onInternshipCreated,
   onCancel,
   internship,
-}: {
-  onInternshipCreated: () => void;
-  onCancel?: () => void;
-  internship?: any;
-}) {
+}: NewInternshipFormProps) {
   const isEditing = !!internship;
   const [loading, setLoading] = useState(false);
   const queryClient = useQueryClient();

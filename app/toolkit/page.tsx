@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios from "axios";
@@ -17,12 +17,9 @@ export default function ToolkitPage() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
-  const tabParam = searchParams?.get("tab");
-  const initialTab = tabParam === "mentorship" ? "mentorship" : "toolkits";
-  const [activeTab, setActiveTab] = useState<"toolkits" | "mentorship">(initialTab);
+  const activeTab = searchParams?.get("tab") === "mentorship" ? "mentorship" : "toolkits";
 
   const handleTabChange = (tab: "toolkits" | "mentorship") => {
-    setActiveTab(tab);
     const params = new URLSearchParams(searchParams?.toString() || "");
     params.set("tab", tab);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });

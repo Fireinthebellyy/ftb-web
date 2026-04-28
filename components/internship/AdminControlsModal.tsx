@@ -52,14 +52,14 @@ export const AdminControlsModal: React.FC<AdminControlsModalProps> = ({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // State for editable fields
-  const [displayIndex, setDisplayIndex] = useState<number>(
-    internship?.display_index ?? 0
+  const [displayIndex, setDisplayIndex] = useState<number | null>(
+    internship?.display_index ?? null
   );
-  const [trendingIndex, setTrendingIndex] = useState<number>(
-    internship?.trending_index ?? 0
+  const [trendingIndex, setTrendingIndex] = useState<number | null>(
+    internship?.trending_index ?? null
   );
-  const [featuredIndex, setFeaturedIndex] = useState<number>(
-    internship?.featured_home_index ?? 0
+  const [featuredIndex, setFeaturedIndex] = useState<number | null>(
+    internship?.featured_home_index ?? null
   );
   const [isTrending, setIsTrending] = useState<boolean>(
     internship?.is_trending ?? false
@@ -74,9 +74,9 @@ export const AdminControlsModal: React.FC<AdminControlsModalProps> = ({
   // Sync state when internship changes
   React.useEffect(() => {
     if (internship) {
-      setDisplayIndex(internship.display_index ?? 0);
-      setTrendingIndex(internship.trending_index ?? 0);
-      setFeaturedIndex(internship.featured_home_index ?? 0);
+      setDisplayIndex(internship.display_index ?? null);
+      setTrendingIndex(internship.trending_index ?? null);
+      setFeaturedIndex(internship.featured_home_index ?? null);
       setIsTrending(internship.is_trending ?? false);
       setIsFeatured(internship.is_featured_home ?? false);
       setIsActive(internship.isActive ?? true);
@@ -89,9 +89,9 @@ export const AdminControlsModal: React.FC<AdminControlsModalProps> = ({
     setIsUpdating(true);
     try {
       const payload: Record<string, unknown> = {
-        display_index: displayIndex,
-        trending_index: trendingIndex,
-        featured_home_index: featuredIndex,
+        display_index: displayIndex === null ? null : displayIndex,
+        trending_index: trendingIndex === null ? null : trendingIndex,
+        featured_home_index: featuredIndex === null ? null : featuredIndex,
         isTrending,
         isFeaturedHome: isFeatured,
         isActive,
@@ -109,7 +109,8 @@ export const AdminControlsModal: React.FC<AdminControlsModalProps> = ({
         throw new Error(data.error || "Failed to update internship");
       }
 
-      onUpdate(data.internship as InternshipData);
+      const mergedInternship = { ...internship, ...data.internship } as InternshipData;
+      onUpdate(mergedInternship);
       toast.success("Internship updated successfully");
       onOpenChange(false);
     } catch (error) {
@@ -233,8 +234,8 @@ export const AdminControlsModal: React.FC<AdminControlsModalProps> = ({
                   <Input
                     id="display-index"
                     type="number"
-                    value={displayIndex}
-                    onChange={(e) => setDisplayIndex(Number(e.target.value))}
+                    value={displayIndex ?? ""}
+                    onChange={(e) => setDisplayIndex(e.target.value === "" ? null : Number(e.target.value))}
                     disabled={isUpdating}
                     className="bg-white"
                   />
@@ -250,8 +251,8 @@ export const AdminControlsModal: React.FC<AdminControlsModalProps> = ({
                   <Input
                     id="trending-index"
                     type="number"
-                    value={trendingIndex}
-                    onChange={(e) => setTrendingIndex(Number(e.target.value))}
+                    value={trendingIndex ?? ""}
+                    onChange={(e) => setTrendingIndex(e.target.value === "" ? null : Number(e.target.value))}
                     disabled={isUpdating}
                     className="bg-white"
                   />
@@ -267,8 +268,8 @@ export const AdminControlsModal: React.FC<AdminControlsModalProps> = ({
                   <Input
                     id="featured-index"
                     type="number"
-                    value={featuredIndex}
-                    onChange={(e) => setFeaturedIndex(Number(e.target.value))}
+                    value={featuredIndex ?? ""}
+                    onChange={(e) => setFeaturedIndex(e.target.value === "" ? null : Number(e.target.value))}
                     disabled={isUpdating}
                     className="bg-white"
                   />
@@ -280,11 +281,11 @@ export const AdminControlsModal: React.FC<AdminControlsModalProps> = ({
             <TabsContent value="danger" className="space-y-6">
               <div className="p-4 bg-red-50 rounded-lg border border-red-200">
                 <h3 className="font-semibold text-red-900 mb-2">
-                  Delete Internship
+                  Archive Internship
                 </h3>
                 <p className="text-sm text-red-700 mb-4">
-                  This action cannot be undone. The internship will be permanently
-                  deleted from the system.
+                  This will archive the internship. It can be restored later via admin tools.
+                  The record is retained for auditing and recovery purposes.
                 </p>
                 <Button
                   variant="destructive"
@@ -293,7 +294,7 @@ export const AdminControlsModal: React.FC<AdminControlsModalProps> = ({
                   className="w-full"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Internship
+                  Archive Internship
                 </Button>
               </div>
             </TabsContent>
@@ -329,10 +330,10 @@ export const AdminControlsModal: React.FC<AdminControlsModalProps> = ({
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Internship?</AlertDialogTitle>
+            <AlertDialogTitle>Archive Internship?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete &quot;{internship.title}&quot; from{" "}
-              {internship.hiringOrganization}? This action cannot be undone.
+              Are you sure you want to archive &quot;{internship.title}&quot; from{" "}
+              {internship.hiringOrganization}? You can restore it later via admin tools.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex justify-end gap-2">
@@ -345,10 +346,10 @@ export const AdminControlsModal: React.FC<AdminControlsModalProps> = ({
               {isDeleting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Deleting...
+                  Archiving...
                 </>
               ) : (
-                "Delete"
+                "Archive"
               )}
             </AlertDialogAction>
           </div>

@@ -17,8 +17,9 @@ The new admin control system provides comprehensive management of internships th
    - **Featured Home Index**: Controls ordering within featured section
 
 ### 3. **Deletion**
-   - **Soft Delete**: Permanently remove internship (with confirmation dialog)
-   - Non-destructive - records are maintained in database for auditing
+   - **Soft Delete**: Archive internship (with confirmation dialog)
+   - Non-destructive - records are maintained in database for auditing and recovery
+   - Available to both admins/editors and the internship owner
 
 ## User Interface
 
@@ -73,8 +74,8 @@ Soft deletes the internship
 - featured_home_index: integer (nullable)
 - is_trending: boolean (default: false)
 - is_featured_home: boolean (default: false)
-- isActive: boolean (default: true)
-- deletedAt: timestamp (nullable, for soft delete)
+- is_active: boolean (default: true)
+- deleted_at: timestamp (nullable, for soft delete)
 ```
 
 ## Implementation Details

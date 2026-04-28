@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Share2, Flag, Loader2 } from "lucide-react";
+import { ArrowLeft, Share2, Flag, Loader2, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import posthog from "posthog-js";
@@ -27,6 +27,7 @@ import { InternshipSidebar } from "@/components/internship/InternshipSidebar";
 import { InternshipDisclaimer } from "@/components/internship/InternshipDisclaimer";
 import { InternshipStickyFooter } from "@/components/internship/InternshipStickyFooter";
 import NewInternshipForm from "@/components/internship/NewInternshipForm";
+import { AdminControlsModal } from "@/components/internship/AdminControlsModal";
 
 export default function InternshipDetailPage() {
   const router = useRouter();
@@ -37,6 +38,8 @@ export default function InternshipDetailPage() {
   const [smartApplyOpen, setSmartApplyOpen] = useState(false);
   const [notFoundError, setNotFoundError] = useState(false);
   const [isFlagging, setIsFlagging] = useState(false);
+  const [adminModalOpen, setAdminModalOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const { data: session } = useSession();
   const { addToTracker, getStatus, removeFromTracker } = useTracker();
 
@@ -67,8 +70,6 @@ export default function InternshipDetailPage() {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
-
-  const [isEditOpen, setIsEditOpen] = useState(false);
 
   const handleOpenEdit = () => setIsEditOpen(true);
   const handleCloseEdit = () => setIsEditOpen(false);
@@ -200,101 +201,6 @@ export default function InternshipDetailPage() {
     }
   };
 
-  const [isTogglingTrending, setIsTogglingTrending] = useState(false);
-  const [isTogglingFeatured, setIsTogglingFeatured] = useState(false);
-
-  const toggleTrending = async () => {
-    if (!id || !internship || isTogglingTrending) return;
-    const newVal = !internship.is_trending;
-    setIsTogglingTrending(true);
-    // optimistic update
-    setInternship((p) => (p ? { ...p, is_trending: newVal } : p));
-    try {
-      const res = await fetch(`/api/internships/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isTrending: newVal }),
-      });
-      let data: any = null;
-      try {
-        data = await res.json();
-      } catch (e) {
-        console.error("Invalid JSON response for toggleTrending", e);
-      }
-
-      if (!res.ok) {
-        console.error("toggleTrending failed", res.status, data);
-        // rollback
-        setInternship((p) => (p ? { ...p, is_trending: !newVal } : p));
-        if (res.status === 401) toast.error("Unauthorized. Please sign in as an admin.");
-        else if (res.status === 403) toast.error("Forbidden. You need moderator permissions.");
-        else toast.error(data?.error || "Failed to update trending status");
-        return;
-      }
-
-      if (!data?.success) {
-        console.error("toggleTrending unexpected response", data);
-        setInternship((p) => (p ? { ...p, is_trending: !newVal } : p));
-        toast.error(data?.error || "Failed to update trending status");
-        return;
-      }
-
-      setInternship(data.internship as InternshipData);
-      toast.success(newVal ? "Marked as trending" : "Removed trending");
-    } catch (err) {
-      console.error(err);
-      setInternship((p) => (p ? { ...p, is_trending: !newVal } : p));
-      toast.error("Failed to update trending status");
-    } finally {
-      setIsTogglingTrending(false);
-    }
-  };
-
-  const toggleFeatured = async () => {
-    if (!id || !internship || isTogglingFeatured) return;
-    const newVal = !internship.is_featured_home;
-    setIsTogglingFeatured(true);
-    setInternship((p) => (p ? { ...p, is_featured_home: newVal } : p));
-    try {
-      const res = await fetch(`/api/internships/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isFeaturedHome: newVal }),
-      });
-      let data: any = null;
-      try {
-        data = await res.json();
-      } catch (e) {
-        console.error("Invalid JSON response for toggleFeatured", e);
-      }
-
-      if (!res.ok) {
-        console.error("toggleFeatured failed", res.status, data);
-        setInternship((p) => (p ? { ...p, is_featured_home: !newVal } : p));
-        if (res.status === 401) toast.error("Unauthorized. Please sign in as an admin.");
-        else if (res.status === 403) toast.error("Forbidden. You need moderator permissions.");
-        else toast.error(data?.error || "Failed to update featured status");
-        return;
-      }
-
-      if (!data?.success) {
-        console.error("toggleFeatured unexpected response", data);
-        setInternship((p) => (p ? { ...p, is_featured_home: !newVal } : p));
-        toast.error(data?.error || "Failed to update featured status");
-        return;
-      }
-
-      setInternship(data.internship as InternshipData);
-      toast.success(newVal ? "Marked as featured" : "Removed featured");
-    } catch (err) {
-      console.error(err);
-      setInternship((p) => (p ? { ...p, is_featured_home: !newVal } : p));
-      toast.error("Failed to update featured status");
-    } finally {
-      setIsTogglingFeatured(false);
-    }
-  };
-
   const handleOnInternshipUpdated = async () => {
     // Re-fetch the internship after edit
     await fetchData();
@@ -327,6 +233,15 @@ export default function InternshipDetailPage() {
             Internship Detail
           </h1>
           <div className="flex items-center justify-end gap-2">
+            {session?.user && ((session.user as any).role === "admin" || (session.user as any).role === "editor") && (
+              <button
+                onClick={() => setAdminModalOpen(true)}
+                className="flex w-8 justify-end p-1 text-slate-800 transition-all active:scale-95 hover:text-[#ec5b13]"
+                aria-label="Admin controls"
+              >
+                <Settings className="h-5 w-5" />
+              </button>
+            )}
             <button
               onClick={handleFlagInternship}
               disabled={isFlagging || internship.isFlagged}
@@ -398,10 +313,7 @@ export default function InternshipDetailPage() {
             handleCalendarClick={handleCalendarClick}
             onSmartApplyClick={() => setSmartApplyOpen(true)}
             onEditClick={handleOpenEdit}
-            onToggleTrending={toggleTrending}
-            onToggleFeatured={toggleFeatured}
-            isTogglingTrending={isTogglingTrending}
-            isTogglingFeatured={isTogglingFeatured}
+            onAdminClick={() => setAdminModalOpen(true)}
           />
 
           {/* Desktop Main Content Grid */}
@@ -503,6 +415,15 @@ export default function InternshipDetailPage() {
         opportunity={
           internship ? mapInternshipToApplyOpportunity(internship) : null
         }
+      />
+
+      {/* Admin Controls Modal */}
+      <AdminControlsModal
+        internship={internship}
+        open={adminModalOpen}
+        onOpenChange={setAdminModalOpen}
+        onUpdate={setInternship}
+        onDeleted={() => router.push("/internships")}
       />
     </div>
   );

@@ -112,10 +112,11 @@ export default function ToolkitPage() {
                 Toolkits
               </button>
               <button
-                onClick={() => handleTabChange("mentorship")}
+                disabled
+                aria-disabled="true"
                 className={cn(
-                  "px-3 py-1.5 rounded-md text-sm font-bold transition-all flex justify-center items-center",
-                  activeTab === "mentorship" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                  "px-3 py-1.5 rounded-md text-sm font-bold transition-all flex justify-center items-center opacity-50 cursor-not-allowed",
+                  activeTab === "mentorship" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
                 )}
               >
                 Mentorship

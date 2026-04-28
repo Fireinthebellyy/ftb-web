@@ -8,9 +8,8 @@ import {
   Calendar,
   CalendarPlus,
   Bookmark,
+  Settings,
   Pencil,
-  Star,
-  TrendingUp,
   Loader2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -26,10 +25,8 @@ interface InternshipDesktopHeaderProps {
   handleCalendarClick: () => void;
   onSmartApplyClick: () => void;
   onEditClick?: () => void;
-  onToggleTrending?: () => void;
-  onToggleFeatured?: () => void;
-  isTogglingTrending?: boolean;
-  isTogglingFeatured?: boolean;
+  onAdminClick?: () => void;
+  isAdminLoading?: boolean;
 }
 
 export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = ({
@@ -40,13 +37,11 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
   handleCalendarClick,
   onSmartApplyClick,
   onEditClick,
-  onToggleTrending,
-  onToggleFeatured,
-  isTogglingTrending,
-  isTogglingFeatured,
+  onAdminClick,
+  isAdminLoading,
 }) => {
   const isOwner = session?.user && session.user.id === internship.user?.id;
-  const isModerator = session?.user && (session.user.role === "admin" || session.user.role === "editor");
+  const isModerator = session?.user && ((session.user as any).role === "admin" || (session.user as any).role === "editor");
   return (
     <div className="bg-white rounded-[24px] px-8 py-5 shadow-sm border border-slate-100 relative mb-8">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
@@ -121,40 +116,17 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
           {isModerator && (
             <Button
               variant="outline"
-              onClick={onToggleTrending}
-              disabled={isTogglingTrending}
+              onClick={onAdminClick}
+              disabled={isAdminLoading}
               className={cn(
-                "w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 transition-all focus:ring-0",
-                internship.is_trending
-                  ? "text-orange-500 border-orange-500 bg-orange-50"
-                  : "text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50"
+                "w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50 transition-all focus:ring-0"
               )}
-              aria-label="Toggle trending"
+              aria-label="Admin controls"
             >
-              {isTogglingTrending ? (
+              {isAdminLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <TrendingUp className="w-5 h-5" />
-              )}
-            </Button>
-          )}
-          {isModerator && (
-            <Button
-              variant="outline"
-              onClick={onToggleFeatured}
-              disabled={isTogglingFeatured}
-              className={cn(
-                "w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 transition-all focus:ring-0",
-                internship.is_featured_home
-                  ? "text-orange-500 border-orange-500 bg-orange-50"
-                  : "text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50"
-              )}
-              aria-label="Toggle featured"
-            >
-              {isTogglingFeatured ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Star className="w-5 h-5" />
+                <Settings className="w-5 h-5" />
               )}
             </Button>
           )}
@@ -163,6 +135,7 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
               variant="outline"
               onClick={onEditClick}
               className="w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50 transition-all focus:ring-0"
+              aria-label="Edit internship"
             >
               <Pencil className="w-5 h-5" />
             </Button>

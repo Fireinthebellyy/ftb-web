@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import dynamic from "next/dynamic";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
 import axios from "axios";
 import { toast } from "sonner";
 import { FileItem } from "@/types/interfaces";
@@ -19,6 +18,7 @@ import {
 } from "@/components/opportunity/images/ImageDropzone";
 import { SchedulePublishPopover } from "@/components/opportunity/fields/MetaPopovers";
 import { toDateTimeLocalValue } from "@/lib/date-utils";
+import { useToolkits } from "@/lib/queries/toolkits";
 
 import {
   Dialog,
@@ -47,61 +47,13 @@ import {
 import { Switch } from "@/components/ui/switch";
 import "react-quill-new/dist/quill.snow.css";
 
+import {
+  quillModules,
+  ungatekeepFormSchema,
+  type UngatekeepFormValues,
+} from "./ungatekeep-form-constants";
+
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
-
-const quillModules = {
-  toolbar: [
-    [{ header: [1, 2, 3, false] }],
-    ["bold", "italic", "underline", "strike"],
-    [{ list: "ordered" }, { list: "bullet" }],
-    ["blockquote", "code-block"],
-    ["link"],
-    ["clean"],
-  ],
-};
-
-const ungatekeepFormSchema = z.object({
-  content: z.string().min(10, {
-    message: "Content must be at least 10 characters.",
-  }),
-  linkUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
-  linkTitle: z.string().optional(),
-  linkImage: z.string().url("Invalid image URL").optional().or(z.literal("")),
-  videoUrl: z
-    .string()
-    .regex(
-      /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/,
-      "Invalid YouTube URL"
-    )
-    .optional()
-    .or(z.literal("")),
-  tag: z.enum([
-    "announcement",
-    "company_experience",
-    "resources",
-    "playbooks",
-    "college_hacks",
-    "interview",
-    "ama_drops",
-    "ftb_recommends",
-  ]).optional(),
-  isPinned: z.boolean().optional(),
-  isPublished: z.boolean().optional(),
-  publishAt: z
-    .string()
-    .optional()
-    .refine(
-      (value) =>
-        !value ||
-        (value.length > 0 && !Number.isNaN(new Date(value).getTime())),
-      {
-        message: "Please provide a valid publish date and time.",
-      }
-    ),
-  attachments: z.array(z.string()).optional(),
-});
-
-type UngatekeepFormValues = z.infer<typeof ungatekeepFormSchema>;
 
 interface NewUngatekeepFormProps {
   children?: React.ReactNode;
@@ -115,6 +67,7 @@ interface NewUngatekeepFormProps {
     linkImage?: string | null;
     videoUrl?: string | null;
     tag?: string | null;
+    toolkitId?: string | null;
     isPinned?: boolean;
     isPublished?: boolean;
     publishedAt?: string | null;
@@ -141,6 +94,21 @@ export default function NewUngatekeepForm({
   ]);
   const [removedFileIds, setRemovedFileIds] = useState<string[]>([]);
   const [scheduleMessage, setScheduleMessage] = useState<string | null>(null);
+  const { data: toolkits = [] } = useToolkits();
+  const [isCustomTag, setIsCustomTag] = useState(
+    post?.tag
+      ? ![
+          "announcement",
+          "company_experience",
+          "resources",
+          "playbooks",
+          "college_hacks",
+          "interview",
+          "ama_drops",
+          "ftb_recommends",
+        ].includes(post.tag)
+      : false
+  );
 
   const maxFiles = 10;
   const maxAttachments = 2;
@@ -153,16 +121,8 @@ export default function NewUngatekeepForm({
       linkTitle: post?.linkTitle || "",
       linkImage: post?.linkImage || "",
       videoUrl: post?.videoUrl || "",
-      tag:
-        (post?.tag as
-          | "announcement"
-          | "company_experience"
-          | "resources"
-          | "playbooks"
-          | "college_hacks"
-          | "interview"
-          | "ama_drops"
-          | "ftb_recommends") || undefined,
+      tag: post?.tag || undefined,
+      toolkitId: post?.toolkitId || undefined,
       isPinned: post?.isPinned || false,
       isPublished: post?.isPublished || false,
       publishAt: post?.publishedAt
@@ -331,6 +291,10 @@ export default function NewUngatekeepForm({
         videoUrl: data.videoUrl || undefined,
         tag: data.tag || undefined,
         publishAt: data.publishAt || undefined,
+        toolkitId:
+          data.toolkitId && data.toolkitId !== "none"
+            ? data.toolkitId
+            : null,
       };
 
       if (isEdit && post) {
@@ -407,34 +371,120 @@ export default function NewUngatekeepForm({
 
           <FormField
             control={form.control}
+            name="toolkitId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Link Toolkit (Recommended)</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value || "none"}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a toolkit to recommend" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {toolkits.map((toolkit) => (
+                      <SelectItem key={toolkit.id} value={toolkit.id}>
+                        {toolkit.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="text-muted-foreground text-[10px]">
+                  Linking a toolkit will show it as a recommendation in this post
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
             name="tag"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Tag</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select tag (optional)" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="announcement">Announcement</SelectItem>
-                    <SelectItem value="company_experience">
-                      Company Experience
-                    </SelectItem>
-                    <SelectItem value="resources">Resources</SelectItem>
-                    <SelectItem value="playbooks">Playbooks</SelectItem>
-                    <SelectItem value="college_hacks">College Hacks</SelectItem>
-                    <SelectItem value="interview">Interview</SelectItem>
-                    <SelectItem value="ama_drops">AMA Drops</SelectItem>
-                    <SelectItem value="ftb_recommends">
-                      FTB Recommends
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex flex-col gap-2">
+                  {!isCustomTag ? (
+                    <Select
+                      onValueChange={(value) => {
+                        if (value === "custom") {
+                          setIsCustomTag(true);
+                          field.onChange("");
+                        } else {
+                          field.onChange(value);
+                        }
+                      }}
+                      value={
+                        [
+                          "announcement",
+                          "company_experience",
+                          "resources",
+                          "playbooks",
+                          "college_hacks",
+                          "interview",
+                          "ama_drops",
+                          "ftb_recommends",
+                        ].includes(field.value || "")
+                          ? field.value
+                          : field.value
+                            ? "custom"
+                            : undefined
+                      }
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select tag (optional)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="announcement">
+                          Announcement
+                        </SelectItem>
+                        <SelectItem value="company_experience">
+                          Company Experience
+                        </SelectItem>
+                        <SelectItem value="resources">Resources</SelectItem>
+                        <SelectItem value="playbooks">Playbooks</SelectItem>
+                        <SelectItem value="college_hacks">
+                          College Hacks
+                        </SelectItem>
+                        <SelectItem value="interview">Interview</SelectItem>
+                        <SelectItem value="ama_drops">AMA Drops</SelectItem>
+                        <SelectItem value="ftb_recommends">
+                          FTB Recommends
+                        </SelectItem>
+                        <SelectItem value="custom" className="font-semibold">
+                          + Add Custom Tag
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <FormControl>
+                        <Input
+                          placeholder="Enter custom tag..."
+                          {...field}
+                          autoFocus
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setIsCustomTag(false);
+                          field.onChange(undefined);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+                </div>
                 <FormMessage />
               </FormItem>
             )}

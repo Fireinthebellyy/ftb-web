@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
-import { ungatekeepPosts, user as userTable } from "@/lib/schema";
+import { ungatekeepPosts, user as userTable, toolkits } from "@/lib/schema";
 import { eq, desc, sql, and, or, isNull, lte } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
@@ -12,6 +12,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     let page = parseInt(searchParams.get("page") || "1", 10);
     let limit = parseInt(searchParams.get("limit") || "10", 10);
+    const tag = searchParams.get("tag");
 
     const MAX_LIMIT = 50;
 
@@ -50,7 +51,8 @@ export async function GET(request: Request) {
           or(
             isNull(ungatekeepPosts.publishedAt),
             lte(ungatekeepPosts.publishedAt, new Date())
-          )
+          ),
+          tag && tag !== "all" ? eq(ungatekeepPosts.tag, tag) : undefined
         )
       );
 
@@ -74,6 +76,15 @@ export async function GET(request: Request) {
         is_trending: ungatekeepPosts.is_trending,         
         is_featured_home: ungatekeepPosts.is_featured_home, 
         trending_index: ungatekeepPosts.trending_index,
+        // Toolkit recommendation
+        toolkitId: ungatekeepPosts.toolkitId,
+        recommendedToolkit: sql<any>`(CASE WHEN ${toolkits.id} IS NOT NULL THEN jsonb_build_object(
+          'id', ${toolkits.id},
+          'title', ${toolkits.title},
+          'price', ${toolkits.price},
+          'originalPrice', ${toolkits.originalPrice},
+          'coverImageUrl', ${toolkits.coverImageUrl}
+        ) ELSE NULL END)`.as("recommendedToolkit"),
         // Add isSaved field if authenticated
         isSaved: userId
           ? sql<boolean>`EXISTS(SELECT 1 FROM "ungatekeep_bookmarks" WHERE "post_id" = ${ungatekeepPosts.id} AND "user_id" = ${userId})`
@@ -81,13 +92,15 @@ export async function GET(request: Request) {
       })
       .from(ungatekeepPosts)
       .leftJoin(userTable, eq(ungatekeepPosts.userId, userTable.id))
+      .leftJoin(toolkits, eq(ungatekeepPosts.toolkitId, toolkits.id))
       .where(
         and(
           eq(ungatekeepPosts.isPublished, true),
           or(
             isNull(ungatekeepPosts.publishedAt),
             lte(ungatekeepPosts.publishedAt, new Date())
-          )
+          ),
+          tag && tag !== "all" ? eq(ungatekeepPosts.tag, tag) : undefined
         )
       )
       .orderBy(

@@ -22,18 +22,8 @@ const updatePostSchema = z.object({
     )
     .optional()
     .or(z.literal("")),
-  tag: z
-    .enum([
-      "announcement",
-      "company_experience",
-      "resources",
-      "playbooks",
-      "college_hacks",
-      "interview",
-      "ama_drops",
-      "ftb_recommends",
-    ])
-    .optional(),
+  tag: z.string().optional(),
+  toolkitId: z.string().uuid().optional().nullable(),
   isPinned: z.boolean().optional(),
   isPublished: z.boolean().optional(),
   publishAt: z.string().optional().nullable(),
@@ -171,6 +161,8 @@ export async function PUT(
       updates.videoUrl = validatedData.videoUrl || undefined;
     if (validatedData.tag !== undefined)
       updates.tag = validatedData.tag;
+    if (validatedData.toolkitId !== undefined)
+      updates.toolkitId = validatedData.toolkitId;
     if (validatedData.isPinned !== undefined)
       updates.isPinned = validatedData.isPinned;
     if (validatedData.publishAt !== undefined) {

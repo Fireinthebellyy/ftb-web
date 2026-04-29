@@ -3,7 +3,8 @@
 import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { Lock, Bookmark, Loader2, Pin } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Lock, Bookmark, Loader2, Pin, Check } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import PageBannerCarousel from "@/components/banner/PageBannerCarousel";
@@ -11,7 +12,7 @@ import FeaturedToolkits from "@/components/toolkit/FeaturedToolkits";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import UngatekeepCard from "@/components/ungatekeep/UngatekeepCard";
-import { stripHtml } from "@/lib/utils";
+import { stripHtml, cn } from "@/lib/utils";
 import { useSession } from "@/hooks/use-session";
 import { motion, useAnimation } from "framer-motion";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
@@ -65,6 +66,27 @@ export default function UngatekeepPage() {
   });
   const savedCount = savedCountData ?? 0;
 
+  const searchParams = useSearchParams();
+  const activeTag = searchParams.get("tag") || "all";
+
+  const setActiveTag = (tag: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (tag === "all") {
+      params.delete("tag");
+    } else {
+      params.set("tag", tag);
+    }
+    const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`;
+    window.history.pushState({}, "", newUrl);
+  };
+
+  const tags = [
+    { label: "All", value: "all" },
+    { label: "College AMAs", value: "college_amas" },
+    { label: "Upskill", value: "upskill" },
+    { label: "Entrance exams", value: "entrance_exams" },
+  ];
+
   const {
     data,
     isLoading,
@@ -75,11 +97,11 @@ export default function UngatekeepPage() {
     isFetchingNextPage,
     refetch,
   } = useInfiniteQuery<UngatekeepResponse>({
-    queryKey: ["ungatekeep", session?.user?.id],
+    queryKey: ["ungatekeep", session?.user?.id, activeTag],
     queryFn: async ({ pageParam = 1 }) => {
       try {
         const response = await axios.get(
-          `/api/ungatekeep?page=${pageParam}&limit=10`
+          `/api/ungatekeep?page=${pageParam}&limit=10&tag=${encodeURIComponent(activeTag)}`
         );
         return response.data;
       } catch (error) {
@@ -259,6 +281,29 @@ export default function UngatekeepPage() {
               </motion.div>
             </div>
 
+            {/* Bubble Filters */}
+            <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              <div className="flex gap-2">
+                {tags.map((tag) => (
+                  <button
+                    key={tag.value}
+                    onClick={() => setActiveTag(tag.value)}
+                    className={cn(
+                      "flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-medium transition-all active:scale-95",
+                      activeTag === tag.value
+                        ? "border-orange-500 bg-orange-500 text-white shadow-sm"
+                        : "border-gray-300 bg-white text-gray-600 hover:bg-orange-500 hover:text-white"
+                    )}
+                  >
+                    {activeTag === tag.value && (
+                      <Check className="h-3 w-3" />
+                    )}
+                    {tag.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Pinned Posts Quick Access */}
             {pinnedPosts.length > 0 && (
               <div className="z-30 mb-2 space-y-2 lg:mb-4">
@@ -378,6 +423,29 @@ export default function UngatekeepPage() {
                 )}
               </Link>
             </motion.div>
+          </div>
+
+          {/* Bubble Filters - Mobile */}
+          <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            <div className="flex gap-2">
+              {tags.map((tag) => (
+                <button
+                  key={tag.value}
+                  onClick={() => setActiveTag(tag.value)}
+                  className={cn(
+                    "flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border px-2 py-1.5 text-xs font-medium transition-all active:scale-95",
+                    activeTag === tag.value
+                      ? "border-orange-500 bg-orange-500 text-white shadow-sm"
+                      : "border-gray-300 bg-white text-black hover:bg-orange-500 hover:text-white"
+                  )}
+                >
+                  {activeTag === tag.value && (
+                    <Check className="h-3 w-3" />
+                  )}
+                  {tag.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {isError && (

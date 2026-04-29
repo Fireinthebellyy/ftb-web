@@ -71,8 +71,28 @@ export async function POST(
     }
 
     const { id: opportunityId } = await params;
-    const body = await req.json();
-    const validatedData = commentSchema.parse(body);
+    let body;
+    try {
+      body = await req.json();
+    } catch (_error) {
+      return NextResponse.json(
+        { error: "Malformed JSON" },
+        { status: 400 }
+      );
+    }
+
+    let validatedData;
+    try {
+      validatedData = commentSchema.parse(body);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: error.errors[0]?.message || "Invalid comment data" },
+          { status: 400 }
+        );
+      }
+      throw error;
+    }
 
     // Sanitize the comment content (basic sanitization)
     const sanitizedContent = validatedData.content
@@ -130,12 +150,6 @@ export async function POST(
     });
   } catch (error) {
     console.error("Error creating comment:", error);
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid comment data", details: error.errors },
-        { status: 400 }
-      );
-    }
     return NextResponse.json(
       { error: "Failed to create comment" },
       { status: 500 }

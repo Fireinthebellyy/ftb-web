@@ -423,7 +423,7 @@ export default function UngatekeepPostPage() {
                   </h3>
                   <div className="bg-orange-50/50 border-orange-200 group relative flex flex-col gap-4 rounded-xl border p-4 transition-all hover:bg-orange-50">
                     <Link
-                      href={`/toolkits/${post.recommendedToolkit.id}`}
+                      href={`/toolkit/${post.recommendedToolkit.id}`}
                       className="flex gap-4"
                     >
                       {post.recommendedToolkit.coverImageUrl && (

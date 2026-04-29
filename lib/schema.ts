@@ -505,7 +505,7 @@ export const ungatekeepPosts = pgTable("ungatekeep_posts", {
   linkTitle: text("link_title"),
   linkImage: text("link_image"),
   videoUrl: text("video_url"),
-  tag: ungatekeepTagEnum("tag"),
+  tag: text("tag"),
   isPinned: boolean("is_pinned").default(false),
   isPublished: boolean("is_published").default(false),
   publishedAt: timestamp("published_at"),
@@ -516,8 +516,24 @@ export const ungatekeepPosts = pgTable("ungatekeep_posts", {
     .references(() => user.id, { onDelete: "cascade" }),
   is_trending: boolean("is_trending").default(false),
   is_featured_home: boolean("is_featured_home").default(false),
-  trending_index: integer("trending_index"),          
+  trending_index: integer("trending_index"),
   featured_home_index: integer("featured_home_index"),
+  toolkitId: uuid("toolkit_id").references(() => toolkits.id, {
+    onDelete: "set null",
+  }),
+});
+
+export const ungatekeepComments = pgTable("ungatekeep_comments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  postId: uuid("post_id")
+    .notNull()
+    .references(() => ungatekeepPosts.id, { onDelete: "cascade" }),
 });
 
 export const ungatekeepBookmarks = pgTable(
@@ -633,6 +649,7 @@ export const schema = {
   userToolkitProgress,
   ungatekeepPosts,
   ungatekeepBookmarks,
+  ungatekeepComments,
   newsletterSubscribers,
   trackerItems,
   trackerEvents,

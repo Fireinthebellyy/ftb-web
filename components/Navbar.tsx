@@ -233,14 +233,14 @@ export default function Navbar() {
           </Link>
 
           <Link
-            href="/tracker"
+            href="/intern"
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
-              pathname === "/tracker"
+              pathname === "/intern"
                 ? "text-primary after:w-full"
                 : "text-neutral-800 after:w-0"
             }`}
           >
-            Tracker
+            Internships
           </Link>
           <Link
             href="/toolkit"
@@ -263,14 +263,14 @@ export default function Navbar() {
             Ungatekeep
           </Link>
           <Link
-            href="/intern"
+            href="/tracker"
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
-              pathname === "/intern"
+              pathname === "/tracker"
                 ? "text-primary after:w-full"
                 : "text-neutral-800 after:w-0"
             }`}
           >
-            Internships
+            Tracker
           </Link>
         </nav>
 

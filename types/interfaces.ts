@@ -132,6 +132,20 @@ export type Comment = {
   };
 };
 
+export type UngatekeepComment = {
+  id: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+  postId: string;
+  user: {
+    id: string;
+    name: string;
+    image: string;
+  };
+};
+
 export type CreateCommentData = {
   content: string;
 };

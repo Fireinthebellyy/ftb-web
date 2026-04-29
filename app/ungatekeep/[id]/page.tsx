@@ -10,7 +10,7 @@ import axios from "axios";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Pin, ExternalLink, FileText } from "lucide-react";
+import { ArrowLeft, Pin, ExternalLink, FileText, Flame } from "lucide-react";
 import { format } from "date-fns";
 import FeaturedToolkits from "@/components/toolkit/FeaturedToolkits";
 import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
@@ -31,6 +31,13 @@ type UngatekeepPost = {
   createdAt: string;
   creatorName?: string | null;
   creatorImage?: string | null;
+  recommendedToolkit?: {
+    id: string;
+    title: string;
+    price: number | null;
+    originalPrice: number | null;
+    coverImageUrl: string | null;
+  } | null;
 };
 
 export default function UngatekeepPostPage() {
@@ -403,6 +410,54 @@ export default function UngatekeepPostPage() {
                       <ExternalLink className="text-muted-foreground h-4 w-4 shrink-0" />
                     </div>
                   </Link>
+                </div>
+              )}
+
+              {post.recommendedToolkit && (
+                <div className="mt-6 border-t pt-6">
+                  <h3 className="mb-4 text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
+                    <div className="bg-orange-100 p-1 rounded-full">
+                      <Flame className="h-4 w-4 text-orange-600" />
+                    </div>
+                    Recommended Toolkit
+                  </h3>
+                  <div className="bg-orange-50/50 border-orange-200 group relative flex flex-col gap-4 rounded-xl border p-4 transition-all hover:bg-orange-50">
+                    <Link
+                      href={`/toolkits/${post.recommendedToolkit.id}`}
+                      className="flex gap-4"
+                    >
+                      {post.recommendedToolkit.coverImageUrl && (
+                        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border shadow-sm sm:h-24 sm:w-24">
+                          <Image
+                            src={post.recommendedToolkit.coverImageUrl}
+                            alt={post.recommendedToolkit.title}
+                            fill
+                            className="object-cover transition-transform duration-300 group-hover:scale-110"
+                          />
+                        </div>
+                      )}
+                      <div className="flex flex-1 flex-col justify-center gap-2">
+                        <h4 className="text-foreground line-clamp-2 text-base font-bold leading-tight transition-colors group-hover:text-orange-600">
+                          {post.recommendedToolkit.title}
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          {post.recommendedToolkit.price !== null && (
+                            <span className="text-lg font-black text-orange-600">
+                              ₹{post.recommendedToolkit.price}
+                            </span>
+                          )}
+                          {post.recommendedToolkit.originalPrice && (
+                            <span className="text-muted-foreground text-xs line-through decoration-muted-foreground/50">
+                              ₹{post.recommendedToolkit.originalPrice}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="bg-orange-600 text-white self-center rounded-full p-2 shadow-md transition-transform group-hover:scale-110 group-active:scale-95">
+                        <ExternalLink className="h-4 w-4" />
+                      </div>
+                    </Link>
+                  </div>
                 </div>
               )}
             </article>

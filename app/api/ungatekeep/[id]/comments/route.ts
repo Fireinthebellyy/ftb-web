@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { ungatekeepComments, user } from "@/lib/schema";
+import { ungatekeepComments, ungatekeepPosts, user } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { eq, desc } from "drizzle-orm";
@@ -8,6 +8,8 @@ import { z } from "zod";
 const commentSchema = z.object({
   content: z.string().min(1, "Comment cannot be empty").max(1000, "Comment too long"),
 });
+
+const uuidSchema = z.string().uuid();
 
 export async function GET(
   req: NextRequest,
@@ -22,6 +24,22 @@ export async function GET(
     }
 
     const { id: postId } = await params;
+
+    // Validate UUID
+    if (!uuidSchema.safeParse(postId).success) {
+      return NextResponse.json({ error: "Invalid post ID" }, { status: 404 });
+    }
+
+    // Verify post exists
+    const postExists = await db
+      .select({ id: ungatekeepPosts.id })
+      .from(ungatekeepPosts)
+      .where(eq(ungatekeepPosts.id, postId))
+      .limit(1);
+
+    if (postExists.length === 0) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
 
     // Fetch comments with user information, ordered by newest first
     const commentsWithUsers = await db
@@ -71,6 +89,23 @@ export async function POST(
     }
 
     const { id: postId } = await params;
+
+    // Validate UUID
+    if (!uuidSchema.safeParse(postId).success) {
+      return NextResponse.json({ error: "Invalid post ID" }, { status: 404 });
+    }
+
+    // Verify post exists
+    const postExists = await db
+      .select({ id: ungatekeepPosts.id })
+      .from(ungatekeepPosts)
+      .where(eq(ungatekeepPosts.id, postId))
+      .limit(1);
+
+    if (postExists.length === 0) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
     const body = await req.json();
     const validatedData = commentSchema.parse(body);
 

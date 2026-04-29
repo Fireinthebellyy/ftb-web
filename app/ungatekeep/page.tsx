@@ -101,7 +101,7 @@ export default function UngatekeepPage() {
     queryFn: async ({ pageParam = 1 }) => {
       try {
         const response = await axios.get(
-          `/api/ungatekeep?page=${pageParam}&limit=10&tag=${activeTag}`
+          `/api/ungatekeep?page=${pageParam}&limit=10&tag=${encodeURIComponent(activeTag)}`
         );
         return response.data;
       } catch (error) {

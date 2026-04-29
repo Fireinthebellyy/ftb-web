@@ -413,7 +413,7 @@ export default function UngatekeepPostPage() {
                 </div>
               )}
 
-              {post.recommendedToolkit && (
+              {post.recommendedToolkit?.id && (
                 <div className="mt-6 border-t pt-6">
                   <h3 className="mb-4 text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
                     <div className="bg-orange-100 p-1 rounded-full">

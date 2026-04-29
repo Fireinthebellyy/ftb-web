@@ -301,7 +301,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
         )}
 
         {/* Recommended Toolkit - Now inside content area, shows when expanded */}
-        {(isExpanded || !hasLongContent) && post.recommendedToolkit && (
+        {(isExpanded || !hasLongContent) && post.recommendedToolkit?.id && (
           <div className="mt-4 mb-2">
             <div className="bg-orange-50/50 border-orange-200 group relative flex flex-col gap-2 rounded-xl border p-2 transition-all hover:bg-orange-50">
               <div className="flex items-center justify-between">

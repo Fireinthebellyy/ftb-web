@@ -42,13 +42,13 @@ export async function GET(
         creatorImage: userTable.image,
         // Toolkit recommendation
         toolkitId: ungatekeepPosts.toolkitId,
-        recommendedToolkit: {
-          id: toolkits.id,
-          title: toolkits.title,
-          price: toolkits.price,
-          originalPrice: toolkits.originalPrice,
-          coverImageUrl: toolkits.coverImageUrl,
-        },
+        recommendedToolkit: sql<any>`(CASE WHEN ${toolkits.id} IS NOT NULL THEN jsonb_build_object(
+          'id', ${toolkits.id},
+          'title', ${toolkits.title},
+          'price', ${toolkits.price},
+          'originalPrice', ${toolkits.originalPrice},
+          'coverImageUrl', ${toolkits.coverImageUrl}
+        ) ELSE NULL END)`.as("recommendedToolkit"),
         // Add isSaved field if authenticated
         isSaved: userId 
           ? sql<boolean>`EXISTS(SELECT 1 FROM "ungatekeep_bookmarks" WHERE "post_id" = ${ungatekeepPosts.id} AND "user_id" = ${userId})`

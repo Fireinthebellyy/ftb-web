@@ -9,10 +9,8 @@ import ToolkitComingSoonCard from "@/components/toolkit/ToolkitComingSoonCard";
 import ToolkitStudentFeedback from "@/components/toolkit/ToolkitStudentFeedback";
 import { Toolkit } from "@/types/interfaces";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useRouter } from "next/navigation";
 
 export default function ToolkitPage() {
-  const router = useRouter();
   const { data: toolkits = [], isLoading } = useQuery<Toolkit[]>({
     queryKey: ["toolkits"],
     queryFn: async () => {

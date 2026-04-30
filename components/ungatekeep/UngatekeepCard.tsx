@@ -11,18 +11,18 @@ import {
   CarouselItem,
   CarouselPrevious,
   CarouselNext,
-  CarouselDots,
 } from "@/components/ui/carousel";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
-  FileText,
   Bookmark,
   ExternalLink,
   Share2,
   Pin,
   Flame,
+  MessageSquare,
 } from "lucide-react";
 import axios from "axios";
+import UngatekeepCommentSection from "./UngatekeepCommentSection";
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg
@@ -37,8 +37,8 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
 
 import { toast } from "sonner";
 import { ShareDialog } from "./ShareDialog";
+import { AttachmentSlide, ImageModal } from "./UngatekeepMediaComponents";
 import { cn, stripHtml } from "@/lib/utils";
-import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 import DOMPurify from "dompurify";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -54,7 +54,7 @@ type UngatekeepPost = {
   linkTitle?: string | null;
   linkImage?: string | null;
   videoUrl?: string | null;
-  tag?: "announcement" | "company_experience" | "resources" | "playbooks" | "college_hacks" | "interview" | "ama_drops" | "ftb_recommends" | null;
+  tag?: string | null;
   isPinned: boolean;
   isSaved?: boolean;
   publishedAt?: string | null;
@@ -62,6 +62,13 @@ type UngatekeepPost = {
   creatorName?: string | null;
   creatorImage?: string | null;
   is_trending?: boolean;
+  recommendedToolkit?: {
+    id: string;
+    title: string;
+    price: number | null;
+    originalPrice: number | null;
+    coverImageUrl: string | null;
+  } | null;
 };
 
 interface UngatekeepCardProps {
@@ -72,172 +79,6 @@ const CONTENT_PREVIEW_LENGTH = 150;
 
 const WHATSAPP_NUMBER = "916377492042";
 
-function AttachmentSlide({
-  imageId,
-  postTitle,
-  idx,
-  onClick,
-}: {
-  imageId: string;
-  postTitle: string;
-  idx?: number;
-  onClick?: () => void;
-}) {
-  const [error, setError] = useState(false);
-  const [isMobile, setIsMobile] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    setIsMobile(
-      typeof window !== "undefined" &&
-        /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-    );
-  }, []);
-
-  const lower = imageId.toLowerCase();
-  const isPdf = lower.endsWith(".pdf");
-  const fileName = `Document ${idx !== undefined ? idx + 1 : ""}`;
-  const displayUrl = tryGetStoragePublicUrl("ungatekeep-images", imageId);
-  const fullUrl = displayUrl;
-
-  if (error) {
-    return (
-      <div className="group bg-muted/50 hover:bg-muted/80 relative flex h-full w-full flex-col items-center justify-center gap-3 p-4 transition-colors">
-        <div className="bg-background relative flex h-16 w-16 items-center justify-center rounded-xl shadow-sm">
-          <FileText className="h-10 w-10 text-blue-500" />
-        </div>
-
-        <div className="flex flex-col items-center gap-1 text-center">
-          <span className="text-foreground line-clamp-2 px-2 text-xs font-semibold">
-            {fileName}
-          </span>
-        </div>
-
-        <a
-          href={fullUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="bg-primary text-primary-foreground hover:bg-primary/90 mt-2 flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[11px] font-medium shadow-sm transition-transform active:scale-95"
-        >
-          <ExternalLink className="h-3 w-3" />
-          View Document
-        </a>
-      </div>
-    );
-  }
-
-  if (isPdf) {
-    // Some mobile browsers don't support embedding PDF in iframe directly.
-    // We use Google Docs Viewer for a consistent experience on mobile.
-    if (isMobile === null) {
-      return (
-        <div className="relative h-full w-full bg-muted animate-pulse" />
-      );
-    }
-
-    const pdfSrc = isMobile
-      ? `https://docs.google.com/viewer?url=${encodeURIComponent(fullUrl)}&embedded=true`
-      : `${fullUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
-
-    return (
-      <div className="relative h-full w-full group overflow-hidden bg-white">
-        {/* PDF content with interaction enabled for scrolling */}
-        <iframe
-          src={pdfSrc}
-          className="h-full w-full border-none"
-          title={fileName}
-        />
-
-        {/* Small "Open Full" button that doesn't block scrolling */}
-        <a
-          href={fullUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="absolute bottom-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-primary shadow-md hover:bg-white transition-colors border sm:h-8 sm:w-8"
-          title="Open full document"
-        >
-          <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-        </a>
-      </div>
-    );
-  }
-
-  return (
-    <button 
-      type="button"
-      className="group relative h-full w-full cursor-pointer overflow-hidden rounded-lg"
-      onClick={onClick}
-      aria-label="Open image viewer"
-    >
-      <Image
-        src={displayUrl}
-        alt={idx !== undefined ? `${postTitle} - Item ${idx + 1}` : postTitle}
-        fill
-        className="object-cover transition-transform duration-300 group-hover:scale-105"
-        unoptimized={true}
-        onError={() => setError(true)}
-      />
-    </button>
-  );
-}
-
-function ImageModal({
-  attachments,
-  postTitle,
-  modalIndex,
-}: {
-  attachments: string[];
-  postTitle: string;
-  modalIndex: number;
-}) {
-  const [carouselApi, setCarouselApi] = useState<any>(null);
-
-  useEffect(() => {
-    if (carouselApi) {
-      setTimeout(() => carouselApi.scrollTo(modalIndex), 0);
-    }
-  }, [modalIndex, carouselApi]);
-
-  const images = attachments.filter(id => !id.toLowerCase().endsWith(".pdf"));
-
-  if (images.length <= 1) {
-    const fileId = images[0] || attachments[modalIndex];
-    return (
-      <div className="flex items-center justify-center p-0">
-        <Image
-          src={tryGetStoragePublicUrl("ungatekeep-images", fileId)}
-          alt={postTitle}
-          className="max-h-[85vh] w-full object-contain"
-          height={1200}
-          width={1200}
-          unoptimized={true}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <Carousel className="w-full" setApi={setCarouselApi}>
-      <CarouselContent>
-        {images.map((fileId, idx) => (
-          <CarouselItem key={idx}>
-            <div className="flex h-full items-center justify-center bg-transparent">
-              <Image
-                src={tryGetStoragePublicUrl("ungatekeep-images", fileId)}
-                alt={`${postTitle} - Image ${idx + 1}`}
-                className="max-h-[85vh] w-full object-contain"
-                height={1200}
-                width={1200}
-                unoptimized={true}
-              />
-            </div>
-          </CarouselItem>
-        ))}
-      </CarouselContent>
-      <CarouselDots className="mt-4" />
-    </Carousel>
-  );
-}
-
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function UngatekeepCard({ post }: UngatekeepCardProps) {
@@ -247,6 +88,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalIndex, setModalIndex] = useState(0);
   const [isSaved, setIsSaved] = useState(post.isSaved || false);
+  const [showComments, setShowComments] = useState(false);
   const [isFlying, setIsFlying] = useState(false);
   const [flyPos, setFlyPos] = useState({ x: 0, y: 0 });
   const cardRef = useRef<HTMLElement>(null);
@@ -342,7 +184,9 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
   )}`;
 
   const getTagBadgeVariant = (tag: string | null | undefined) => {
-    switch (tag) {
+    if (!tag) return "bg-gray-200 text-gray-600";
+    
+    switch (tag.toLowerCase()) {
       case "announcement":
         return "bg-blue-200 text-blue-600";
       case "company_experience":
@@ -355,6 +199,10 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
         return "bg-pink-200 text-pink-600";
       case "interview":
         return "bg-red-200 text-red-600";
+      case "college_amas":
+        return "bg-blue-200 text-blue-600";
+      case "upskill":
+        return "bg-orange-200 text-orange-600";
       case "ama_drops":
         return "bg-indigo-200 text-indigo-600";
       case "ftb_recommends":
@@ -451,6 +299,61 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
             {previewContent}
           </p>
         )}
+
+        {/* Recommended Toolkit - Now inside content area, shows when expanded */}
+        {(isExpanded || !hasLongContent) && post.recommendedToolkit?.id && (
+          <div className="mt-4 mb-2">
+            <div className="bg-orange-50/50 border-orange-200 group relative flex flex-col gap-2 rounded-xl border p-2 transition-all hover:bg-orange-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <div className="bg-orange-100 flex h-5 w-5 items-center justify-center rounded-full">
+                    <Flame className="h-3 w-3 text-orange-600" />
+                  </div>
+                  <span className="text-[9px] font-bold tracking-wider text-orange-600 uppercase">
+                    Recommended Toolkit
+                  </span>
+                </div>
+              </div>
+
+              <Link
+                href={`/toolkit/${post.recommendedToolkit.id}`}
+                className="flex gap-2.5"
+              >
+                {post.recommendedToolkit.coverImageUrl && (
+                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border shadow-sm sm:h-14 sm:w-14">
+                    <Image
+                      src={post.recommendedToolkit.coverImageUrl}
+                      alt={post.recommendedToolkit.title}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-110"
+                    />
+                  </div>
+                )}
+                <div className="flex flex-1 flex-col justify-center gap-0.5">
+                  <h4 className="text-foreground line-clamp-1 text-xs font-bold leading-tight transition-colors group-hover:text-orange-600">
+                    {post.recommendedToolkit.title}
+                  </h4>
+                  <div className="flex items-center gap-2">
+                    {post.recommendedToolkit.price !== null && (
+                      <span className="text-xs font-black text-orange-600">
+                        ₹{post.recommendedToolkit.price}
+                      </span>
+                    )}
+                    {post.recommendedToolkit.originalPrice && (
+                      <span className="text-muted-foreground text-[9px] line-through decoration-muted-foreground/50">
+                        ₹{post.recommendedToolkit.originalPrice}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="bg-orange-600 text-white self-center rounded-full p-1 shadow-md transition-transform group-hover:scale-110 group-active:scale-95">
+                  <ExternalLink className="h-3 w-3" />
+                </div>
+              </Link>
+            </div>
+          </div>
+        )}
+
         {hasLongContent && !isExpanded && (
           <Button
             variant="ghost"
@@ -480,7 +383,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
 
         {/* Media (Images, PDFs, Video) - LinkedIn style below text */}
         {mediaItems.length > 0 && (
-          <div className="mt-3">
+          <div className="mt-3 relative">
             {mediaItems.length === 1 ? (
               <div className="relative aspect-square max-h-[400px] w-full overflow-hidden rounded-lg bg-muted border">
                 {mediaItems[0].type === "attachment" ? (
@@ -560,6 +463,24 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
                 </Carousel>
               </div>
             )}
+            <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+              <button
+                type="button"
+                title="Share"
+                aria-label="Share"
+                onClick={() => setShareDialogOpen(true)}
+                className="absolute bottom-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-black shadow-md hover:bg-white hover:text-orange-500 transition-colors border sm:h-8 sm:w-8 cursor-pointer"
+              >
+                <Share2 className="h-3 w-3 sm:h-4 sm:w-4" />
+              </button>
+              <DialogContent>
+                <ShareDialog
+                  shareUrl={shareUrl}
+                  title={plainTextContent.slice(0, 80)}
+                  onCopy={handleCopy}
+                />
+              </DialogContent>
+            </Dialog>
           </div>
         )}
 
@@ -606,8 +527,8 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
                   </p>
                 </div>
                 <ExternalLink className="text-muted-foreground h-4 w-4 shrink-0" />
-              </div>
-            </Link>
+                </div>
+              </Link>
           </div>
         )}
       </div>
@@ -646,11 +567,11 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
                     </p>
                   </div>
                   <ExternalLink className="text-muted-foreground h-4 w-4 shrink-0" />
-                </div>
-              </Link>
-            </div>
+              </div>
+            </Link>
           </div>
-        )}
+        </div>
+      )}
 
       {/* Action bar - Share, Ask query, Save (LinkedIn style) */}
       <footer className="flex items-center border-t px-3 py-2">
@@ -678,25 +599,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
               </div>
             )}
 
-            <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-              <button
-                type="button"
-                title="Share"
-                aria-label="Share"
-                onClick={() => setShareDialogOpen(true)}
-                className="flex cursor-pointer items-center gap-1 py-1 text-xs text-black transition-colors hover:text-black/70"
-              >
-                <Share2 className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Share</span>
-              </button>
-              <DialogContent>
-                <ShareDialog
-                  shareUrl={shareUrl}
-                  title={plainTextContent.slice(0, 80)}
-                  onCopy={handleCopy}
-                />
-              </DialogContent>
-            </Dialog>
+
 
             <Link
               href={askQueryWhatsAppUrl}
@@ -709,6 +612,22 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
               <WhatsAppIcon className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Ask query</span>
             </Link>
+
+            <button
+              type="button"
+              title="Comments"
+              aria-label="Comments"
+              onClick={() => setShowComments(!showComments)}
+              className={cn(
+                "flex cursor-pointer items-center gap-1 py-1 text-xs text-black transition-colors hover:text-primary",
+                showComments && "text-primary"
+              )}
+            >
+              <MessageSquare
+                className={cn("h-3.5 w-3.5", showComments && "fill-primary")}
+              />
+              <span className="hidden sm:inline">Comment</span>
+            </button>
 
             <button
               type="button"
@@ -752,6 +671,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
           </div>
         </div>
       </footer>
+      {showComments && <UngatekeepCommentSection postId={post.id} />}
     </article>
   );
 }

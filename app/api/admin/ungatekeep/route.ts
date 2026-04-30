@@ -22,18 +22,8 @@ const createPostSchema = z.object({
     )
     .optional()
     .or(z.literal("")),
-  tag: z
-    .enum([
-      "announcement",
-      "company_experience",
-      "resources",
-      "playbooks",
-      "college_hacks",
-      "interview",
-      "ama_drops",
-      "ftb_recommends",
-    ])
-    .optional(),
+  tag: z.string().optional(),
+  toolkitId: z.string().uuid().optional().nullable(),
   isPinned: z.boolean().optional(),
   isPublished: z.boolean().optional(),
   publishAt: z.string().optional().nullable(),
@@ -78,6 +68,7 @@ export async function GET(request: Request) {
         is_featured_home: ungatekeepPosts.is_featured_home,
         trending_index: ungatekeepPosts.trending_index,
         featured_home_index: ungatekeepPosts.featured_home_index,
+        toolkitId: ungatekeepPosts.toolkitId,
       })
       .from(ungatekeepPosts)
       .leftJoin(userTable, eq(ungatekeepPosts.userId, userTable.id))
@@ -148,6 +139,7 @@ export async function POST(request: Request) {
         tag: validatedData.tag || undefined,
         isPinned: validatedData.isPinned || false,
         isPublished: validatedData.isPublished || false,
+        toolkitId: validatedData.toolkitId || undefined,
         publishedAt: validatedData.publishAt
           ? new Date(validatedData.publishAt)
           : validatedData.isPublished

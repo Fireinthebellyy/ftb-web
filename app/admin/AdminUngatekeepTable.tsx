@@ -23,7 +23,7 @@ interface UngatekeepPost {
   linkTitle?: string | null;
   linkImage?: string | null;
   videoUrl?: string | null;
-  tag?: "announcement" | "company_experience" | "resources" | "playbooks" | "college_hacks" | "interview" | "ama_drops" | "ftb_recommends" | null;
+  tag?: string | null;
   isPinned: boolean;
   isPublished: boolean;
   is_trending: boolean;
@@ -35,6 +35,7 @@ interface UngatekeepPost {
   updatedAt: string;
   userId: string;
   creatorName?: string | null;
+  toolkitId?: string | null;
 }
 
 async function fetchPosts(): Promise<UngatekeepPost[]> {
@@ -151,21 +152,38 @@ export default function AdminUngatekeepTable() {
           if (!tag) {
             return <span className="text-muted-foreground text-sm">-</span>;
           }
-          const variant =
-            tag === "announcement"
-              ? "default"
-              : tag === "company_experience"
-                ? "secondary"
-                : tag === "resources"
-                  ? "outline"
-                  : tag === "playbooks"
-                    ? "default"
-                    : tag === "college_hacks"
-                      ? "secondary"
-                      : tag === "interview"
-                        ? "destructive"
-                        : "outline";
-          return <Badge variant={variant}>{tag.replace("_", " ")}</Badge>;
+          
+          const getTagBadgeVariant = (t: string) => {
+            switch (t.toLowerCase()) {
+              case "announcement":
+                return "bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200";
+              case "company_experience":
+                return "bg-orange-100 text-orange-700 hover:bg-orange-100 border-orange-200";
+              case "resources":
+                return "bg-green-100 text-green-700 hover:bg-green-100 border-green-200";
+              case "playbooks":
+                return "bg-purple-100 text-purple-700 hover:bg-purple-100 border-purple-200";
+              case "college_hacks":
+                return "bg-pink-100 text-pink-700 hover:bg-pink-100 border-pink-200";
+              case "interview":
+                return "bg-red-100 text-red-700 hover:bg-red-100 border-red-200";
+              case "ama_drops":
+                return "bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-indigo-200";
+              case "ftb_recommends":
+                return "bg-teal-100 text-teal-700 hover:bg-teal-100 border-teal-200";
+              default:
+                return "bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-yellow-200";
+            }
+          };
+
+          return (
+            <Badge 
+              variant="outline" 
+              className={cn("font-medium", getTagBadgeVariant(tag))}
+            >
+              {tag.replace("_", " ")}
+            </Badge>
+          );
         },
       },
       {
@@ -322,6 +340,19 @@ export default function AdminUngatekeepTable() {
         },
       },
       {
+        accessorKey: "toolkitId",
+        header: "Toolkit",
+        cell: ({ row }) => {
+          const toolkitId = row.original.toolkitId;
+          if (!toolkitId) return <span className="text-muted-foreground text-xs">-</span>;
+          return (
+            <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 text-[10px]">
+              Linked
+            </Badge>
+          );
+        },
+      },
+      {
         accessorKey: "createdAt",
         header: "Created",
         cell: ({ row }) =>
@@ -345,6 +376,7 @@ export default function AdminUngatekeepTable() {
                   linkImage: post.linkImage,
                   videoUrl: post.videoUrl,
                   tag: post.tag,
+                  toolkitId: post.toolkitId,
                   isPinned: post.isPinned,
                   isPublished: post.isPublished,
                   publishedAt: post.publishedAt,

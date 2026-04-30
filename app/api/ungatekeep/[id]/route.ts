@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { ungatekeepPosts, user as userTable } from "@/lib/schema";
+import { ungatekeepPosts, user as userTable, toolkits } from "@/lib/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -40,6 +40,15 @@ export async function GET(
         createdAt: ungatekeepPosts.createdAt,
         creatorName: userTable.name,
         creatorImage: userTable.image,
+        // Toolkit recommendation
+        toolkitId: ungatekeepPosts.toolkitId,
+        recommendedToolkit: sql<any>`(CASE WHEN ${toolkits.id} IS NOT NULL THEN jsonb_build_object(
+          'id', ${toolkits.id},
+          'title', ${toolkits.title},
+          'price', ${toolkits.price},
+          'originalPrice', ${toolkits.originalPrice},
+          'coverImageUrl', ${toolkits.coverImageUrl}
+        ) ELSE NULL END)`.as("recommendedToolkit"),
         // Add isSaved field if authenticated
         isSaved: userId 
           ? sql<boolean>`EXISTS(SELECT 1 FROM "ungatekeep_bookmarks" WHERE "post_id" = ${ungatekeepPosts.id} AND "user_id" = ${userId})`
@@ -47,6 +56,7 @@ export async function GET(
       })
       .from(ungatekeepPosts)
       .leftJoin(userTable, eq(ungatekeepPosts.userId, userTable.id))
+      .leftJoin(toolkits, eq(ungatekeepPosts.toolkitId, toolkits.id))
       .where(
         and(
           eq(ungatekeepPosts.id, postId),

@@ -11,7 +11,7 @@ import { Toolkit } from "@/types/interfaces";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ToolkitPage() {
-  const { data: toolkits = [], isLoading } = useQuery<Toolkit[]>({
+  const { data: toolkits = [], isLoading, isError } = useQuery<Toolkit[]>({
     queryKey: ["toolkits"],
     queryFn: async () => {
       try {
@@ -77,7 +77,12 @@ export default function ToolkitPage() {
           <p className="mt-1 text-gray-600">Video guides with kickass strategies that actually work ~ go from overlooked to Top 1%</p>
         </div>
 
-        {toolkits.length === 0 ? (
+        {isError ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 py-12 text-center">
+            <h3 className="mb-2 text-lg font-semibold text-red-900">Failed to load toolkits</h3>
+            <p className="text-red-700">Something went wrong. Please refresh and try again.</p>
+          </div>
+        ) : toolkits.length === 0 ? (
           <div className="rounded-lg border bg-white py-12 text-center">
             <h3 className="mb-2 text-lg font-semibold text-gray-600">No toolkits found</h3>
             <p className="text-gray-500">Check back soon for new content!</p>

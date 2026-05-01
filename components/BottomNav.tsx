@@ -43,6 +43,12 @@ export default function BottomNav() {
       transition={{ type: "spring", stiffness: 260, damping: 20 }}
       className="fixed right-0 bottom-0 left-0 z-50 border-t border-neutral-200 bg-white backdrop-blur-md md:hidden"
     >
+      {/* 
+        WalkthroughFigma reads client-only state (e.g. localStorage/sessionStorage) during mount 
+        and therefore renders differently between server and client. suppressHydrationWarning is 
+        intentional to avoid spurious warnings. A migration to a client-only pattern (e.g. dynamic 
+        import or useEffect) could replace this in the future.
+      */}
       <div className="relative" suppressHydrationWarning={true}>
         <div className="absolute bottom-[66px] left-0 right-0 z-50 flex justify-center md:hidden pointer-events-none">
           {showWalkthrough && (

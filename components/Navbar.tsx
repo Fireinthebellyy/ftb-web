@@ -190,6 +190,8 @@ export default function Navbar() {
     return null;
   }
 
+  const normalizedPath = pathname === "/" ? "/" : pathname?.replace(/\/+$/, "");
+
   const showWalkthrough = [
     "/",
     "/opportunities",
@@ -197,7 +199,7 @@ export default function Navbar() {
     "/toolkit",
     "/ungatekeep",
     "/tracker",
-  ].some((p) => pathname === p || (p !== "/" && pathname?.startsWith(`${p}/`)));
+  ].some((p) => normalizedPath === p || (p !== "/" && normalizedPath?.startsWith(`${p}/`)));
 
   return (
     <motion.header

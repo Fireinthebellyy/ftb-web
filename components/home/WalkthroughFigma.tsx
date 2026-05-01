@@ -7,9 +7,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, usePathname } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 
+import Image from "next/image";
+
 const outfit = Outfit({ subsets: ["latin"], weight: ["400", "600", "700"] });
 
-const imgVector2 = "https://www.figma.com/api/mcp/asset/4f39ec85-1b73-472e-b637-dd6b6cf499f0";
+const imgVector2 = "/images/walkthrough-pointer.png";
 
 const walkthroughSteps = [
   {
@@ -50,7 +52,11 @@ const walkthroughSteps = [
   }
 ];
 
-export default function WalkthroughFigma({ isDesktop = false }: { isDesktop?: boolean }) {
+export interface WalkthroughFigmaProps {
+  isDesktop?: boolean;
+}
+
+export default function WalkthroughFigma({ isDesktop = false }: WalkthroughFigmaProps) {
   const [isVisible, setIsVisible] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -91,8 +97,11 @@ export default function WalkthroughFigma({ isDesktop = false }: { isDesktop?: bo
   useEffect(() => {
     if (!isDesktop || !containerRef.current) return;
     
-    // Allow DOM to settle before calculating
-    const timeoutId = setTimeout(() => {
+    let intervalId: NodeJS.Timeout;
+    let attempts = 0;
+    const maxAttempts = 20; // Try for up to ~1 second
+
+    const tryCalculatePosition = () => {
       const path = currentData.path;
       let targetEl: Element | null = null;
       if (path === "/") {
@@ -103,18 +112,30 @@ export default function WalkthroughFigma({ isDesktop = false }: { isDesktop?: bo
 
       if (targetEl && containerRef.current) {
         const targetRect = targetEl.getBoundingClientRect();
-        const containerRect = containerRef.current.getBoundingClientRect();
-        const offset = (targetRect.left + targetRect.width / 2) - containerRect.left;
-        // Clamp the offset to keep the pointer within the card visually
-        let clampedOffset = offset - 22;
-        clampedOffset = Math.max(16, Math.min(clampedOffset, containerRect.width - 44 - 16));
-        setDesktopPointerLeft(`${clampedOffset}px`);
-      } else {
-        setDesktopPointerLeft("calc(50% - 22px)");
+        // Only calculate if the element is actually rendered and has dimensions
+        if (targetRect.width > 0) {
+          const containerRect = containerRef.current.getBoundingClientRect();
+          const offset = (targetRect.left + targetRect.width / 2) - containerRect.left;
+          // Clamp the offset to keep the pointer within the card visually
+          let clampedOffset = offset - 22;
+          clampedOffset = Math.max(16, Math.min(clampedOffset, containerRect.width - 44 - 16));
+          setDesktopPointerLeft(`${clampedOffset}px`);
+          clearInterval(intervalId); // Success, stop trying
+          return;
+        }
       }
-    }, 50);
+      
+      attempts++;
+      if (attempts >= maxAttempts) {
+        clearInterval(intervalId);
+        setDesktopPointerLeft("calc(50% - 22px)"); // Fallback
+      }
+    };
 
-    return () => clearTimeout(timeoutId);
+    intervalId = setInterval(tryCalculatePosition, 50);
+    tryCalculatePosition(); // Initial try
+
+    return () => clearInterval(intervalId);
   }, [step, isDesktop, currentData.path, isVisible]);
 
   const [mounted, setMounted] = useState(false);
@@ -160,7 +181,7 @@ export default function WalkthroughFigma({ isDesktop = false }: { isDesktop?: bo
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="absolute -top-5 w-[44px] h-[22px] pointer-events-none drop-shadow-md z-10"
           >
-            <img src={imgVector2} alt="pointer" className="absolute inset-0 h-full w-full object-contain rotate-180" />
+            <Image src={imgVector2} alt="pointer" fill className="object-contain rotate-180" />
           </motion.div>
         )}
 
@@ -224,7 +245,7 @@ export default function WalkthroughFigma({ isDesktop = false }: { isDesktop?: bo
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="absolute -bottom-5 w-[44px] h-[22px] pointer-events-none drop-shadow-md z-10"
           >
-            <img src={imgVector2} alt="pointer" className="absolute inset-0 h-full w-full object-contain" />
+            <Image src={imgVector2} alt="pointer" fill className="object-contain" />
           </motion.div>
         )}
       </div>

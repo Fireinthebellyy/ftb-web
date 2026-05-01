@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Briefcase, Flame, ListVideo, Megaphone, Target } from "lucide-react";
+import WalkthroughFigma from "@/components/home/WalkthroughFigma";
 
 const navItems = [
   { href: "/opportunities", label: "Opportunities", icon: Briefcase },
@@ -26,6 +27,15 @@ export default function BottomNav() {
     return null;
   }
 
+  const showWalkthrough = [
+    "/",
+    "/opportunities",
+    "/intern",
+    "/toolkit",
+    "/tracker",
+    "/ungatekeep"
+  ].some((p) => normalizedPathname === p || (p !== "/" && normalizedPathname.startsWith(`${p}/`)));
+
   return (
     <motion.nav
       initial={{ y: 100 }}
@@ -33,7 +43,16 @@ export default function BottomNav() {
       transition={{ type: "spring", stiffness: 260, damping: 20 }}
       className="fixed right-0 bottom-0 left-0 z-50 border-t border-neutral-200 bg-white backdrop-blur-md md:hidden"
     >
-      <div className="flex h-[56px] items-center justify-around px-1">
+      <div className="relative" suppressHydrationWarning={true}>
+        <div className="absolute bottom-[66px] left-0 right-0 z-50 flex justify-center md:hidden pointer-events-none">
+          {showWalkthrough && (
+            <div className="pointer-events-auto w-full flex justify-center">
+              <WalkthroughFigma />
+            </div>
+          )}
+        </div>
+
+        <div className="flex h-[56px] items-center justify-around px-1 relative z-40 bg-white">
         {navItems.map((item) => {
           const isActive =
             normalizedPathname === item.href ||
@@ -98,6 +117,7 @@ export default function BottomNav() {
             </Link>
           );
         })}
+      </div>
       </div>
     </motion.nav>
   );

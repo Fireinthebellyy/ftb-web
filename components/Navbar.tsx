@@ -15,6 +15,7 @@ import {
   isAbsoluteOrLocalUrl,
   tryGetStoragePublicUrl,
 } from "@/lib/storage/public-url";
+import WalkthroughFigma from "@/components/home/WalkthroughFigma";
 
 function useLogout() {
   const router = useRouter();
@@ -189,6 +190,15 @@ export default function Navbar() {
     return null;
   }
 
+  const showWalkthrough = [
+    "/",
+    "/opportunities",
+    "/intern",
+    "/toolkit",
+    "/ungatekeep",
+    "/tracker",
+  ].some((p) => pathname === p || (p !== "/" && pathname?.startsWith(`${p}/`)));
+
   return (
     <motion.header
       initial={{ opacity: 0, y: -20 }}
@@ -196,6 +206,14 @@ export default function Navbar() {
       transition={{ duration: 0.5 }}
       className="fixed top-0 right-0 left-0 z-50 flex-none border-b border-gray-200/50 bg-neutral-50/80 backdrop-blur-md"
     >
+      {showWalkthrough && (
+        <div className="absolute top-[66px] left-0 right-0 z-50 hidden md:flex justify-center pointer-events-none">
+          <div className="pointer-events-auto">
+            <WalkthroughFigma isDesktop={true} />
+          </div>
+        </div>
+      )}
+
       <div className="relative container mx-auto grid h-16 max-w-7xl grid-cols-[1fr_auto] items-center px-4 md:grid-cols-3 lg:px-4 xl:px-6">
         <div className="flex items-center justify-start pl-2 md:pl-4">
           <Link href="/" className="flex items-center space-x-3">

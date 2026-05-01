@@ -23,6 +23,14 @@ export function AttachmentSlide({
   onClick?: () => void;
 }) {
   const [error, setError] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setIsMobile(
+      typeof window !== "undefined" &&
+        /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+    );
+  }, []);
 
   if (error) {
     return (
@@ -37,9 +45,18 @@ export function AttachmentSlide({
 
   if (isPdf) {
     const fullUrl = displayUrl;
-    // Use a viewer or simple iframe
-    const pdfSrc = `${fullUrl}#toolbar=0&navpanes=0&scrollbar=0`;
+    const pdfSrc = isMobile
+      ? `https://docs.google.com/viewer?url=${encodeURIComponent(
+          fullUrl
+        )}&embedded=true`
+      : `${fullUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
     const fileName = imageId.split("/").pop() || "Document";
+
+    if (isMobile === null) {
+      return (
+        <div className="relative aspect-square max-h-[400px] w-full overflow-hidden rounded-lg border bg-muted animate-pulse" />
+      );
+    }
 
     return (
       <div className="relative h-full w-full group overflow-hidden bg-white">
@@ -55,7 +72,7 @@ export function AttachmentSlide({
           href={fullUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="absolute bottom-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-primary shadow-md hover:bg-white transition-colors border sm:h-8 sm:w-8"
+          className="absolute bottom-2 left-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-primary shadow-md hover:bg-white transition-colors border sm:h-8 sm:w-8"
           title="Open full document"
         >
           <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />

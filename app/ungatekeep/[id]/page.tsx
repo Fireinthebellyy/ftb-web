@@ -287,7 +287,7 @@ export default function UngatekeepPostPage() {
                               href={fullUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="bg-white/90 text-primary absolute bottom-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-full border shadow-md transition-colors hover:bg-white"
+                              className="bg-white/90 text-primary absolute bottom-2 left-2 z-10 flex h-8 w-8 items-center justify-center rounded-full border shadow-md transition-colors hover:bg-white"
                               title="Open full document"
                             >
                               <ExternalLink className="h-4 w-4" />

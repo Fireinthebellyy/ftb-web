@@ -11,7 +11,7 @@ import Image from "next/image";
 
 const outfit = Outfit({ subsets: ["latin"], weight: ["400", "600", "700"] });
 
-const imgVector2 = "/images/walkthrough-pointer.png";
+const imgVector2 = "/images/walkthrough-pointer.svg";
 
 const walkthroughSteps = [
   {

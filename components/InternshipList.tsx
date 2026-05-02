@@ -343,6 +343,16 @@ export default function InternshipList() {
           search_term: nextSearch,
         });
       }
+
+      // Track other filters
+      if (location.trim() || paidOnly || selectedTypes.length > 0) {
+        posthog.capture("internship_filters_applied", {
+          location: normalizedLocation,
+          paid_only: paidOnly,
+          types: selectedTypes,
+        });
+      }
+
       router.push(`?${newParams.toString()}`,{scroll:false})
       if (overrideSearch !== undefined) {
         setSearchTerm(overrideSearch);

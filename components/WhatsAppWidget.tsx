@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import posthog from "posthog-js";
 import {
   Dialog,
   DialogContent,
@@ -64,7 +65,15 @@ export default function WhatsAppWidget() {
 
   return (
     <>
-      <Drawer open={mobileOpen} onOpenChange={setMobileOpen}>
+      <Drawer open={mobileOpen} onOpenChange={(open) => {
+        setMobileOpen(open);
+        if (open) {
+          posthog.capture("whatsapp_widget_opened", {
+            device: "mobile",
+            pathname,
+          });
+        }
+      }}>
         <DrawerTrigger asChild>
           <button
             className={cn(
@@ -93,6 +102,13 @@ export default function WhatsAppWidget() {
                     href={link}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => {
+                      posthog.capture("whatsapp_option_selected", {
+                        option: type,
+                        device: "mobile",
+                        pathname,
+                      });
+                    }}
                     className="block rounded-lg bg-neutral-100 px-4 py-3 text-sm hover:bg-neutral-200 transition"
                   >
                     {type}
@@ -104,7 +120,15 @@ export default function WhatsAppWidget() {
         </DrawerContent>
       </Drawer>
 
-      <Dialog open={desktopOpen} onOpenChange={setDesktopOpen}>
+      <Dialog open={desktopOpen} onOpenChange={(open) => {
+        setDesktopOpen(open);
+        if (open) {
+          posthog.capture("whatsapp_widget_opened", {
+            device: "desktop",
+            pathname,
+          });
+        }
+      }}>
         <DialogTrigger asChild>
           <button
             className={cn(
@@ -131,6 +155,13 @@ export default function WhatsAppWidget() {
                   href={link}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => {
+                    posthog.capture("whatsapp_option_selected", {
+                      option: type,
+                      device: "desktop",
+                      pathname,
+                    });
+                  }}
                   className="block rounded-lg bg-neutral-100 px-4 py-3 text-sm hover:bg-neutral-200 transition"
                 >
                   {type}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { MessageSquareHeart } from "lucide-react";
+import posthog from "posthog-js";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -106,6 +107,11 @@ export function FeedbackWidget({
       }
 
       toast.success("Thanks for your feedback!");
+      posthog.capture("feedback_submitted", {
+        mood,
+        meaning: moods.find((m) => m.value === mood)?.meaning,
+        path: currentPath,
+      });
       setOpen(false);
       setMood(null);
       setComment("");
@@ -130,7 +136,12 @@ export function FeedbackWidget({
           type="button"
           aria-label="Open feedback"
           title="Share feedback"
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            setOpen(true);
+            posthog.capture("feedback_widget_opened", {
+              pathname,
+            });
+          }}
           className={cn(
             "fixed right-6 z-50 flex size-10 cursor-pointer items-center justify-center rounded-full bg-orange-500 text-white shadow-lg transition hover:bg-orange-600 focus:ring-2 focus:ring-orange-400 focus:outline-none md:bottom-20 md:size-12",
             isInternshipDetailPage ? "bottom-[148px]" : "bottom-[124px]"

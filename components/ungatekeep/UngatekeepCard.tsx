@@ -622,6 +622,12 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
               rel="noopener noreferrer"
               title="Ask query on WhatsApp"
               aria-label="Ask query"
+              onClick={() => {
+                posthog.capture("ungatekeep_ask_query_clicked", {
+                  post_id: post.id,
+                  post_tag: post.tag,
+                });
+              }}
               className="flex items-center gap-1 py-1 text-xs text-black transition-colors hover:text-black/70"
             >
               <WhatsAppIcon className="h-3.5 w-3.5" />
@@ -632,7 +638,16 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
               type="button"
               title="Comments"
               aria-label="Comments"
-              onClick={() => setShowComments(!showComments)}
+              onClick={() => {
+                const newState = !showComments;
+                setShowComments(newState);
+                if (newState) {
+                  posthog.capture("ungatekeep_comments_opened", {
+                    post_id: post.id,
+                    post_tag: post.tag,
+                  });
+                }
+              }}
               className={cn(
                 "flex cursor-pointer items-center gap-1 py-1 text-xs text-black transition-colors hover:text-primary",
                 showComments && "text-primary"

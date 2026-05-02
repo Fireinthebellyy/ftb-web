@@ -23,6 +23,7 @@ const updatePostSchema = z.object({
     .optional()
     .or(z.literal("")),
   tag: z.string().optional(),
+  filterTags: z.array(z.string()).optional(),
   toolkitId: z.string().uuid().optional().nullable(),
   isPinned: z.boolean().optional(),
   isPublished: z.boolean().optional(),
@@ -161,6 +162,8 @@ export async function PUT(
       updates.videoUrl = validatedData.videoUrl || undefined;
     if (validatedData.tag !== undefined)
       updates.tag = validatedData.tag;
+    if (validatedData.filterTags !== undefined)
+      updates.filterTags = validatedData.filterTags;
     if (validatedData.toolkitId !== undefined)
       updates.toolkitId = validatedData.toolkitId;
     if (validatedData.isPinned !== undefined)

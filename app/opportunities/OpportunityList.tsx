@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
+import posthog from "posthog-js";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -316,7 +317,12 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
             </div>
             <Button
               size="sm"
-              onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
+              onClick={() => {
+                posthog.capture("opportunity_filter_button_clicked", {
+                  action: isFilterBoxOpen ? "close" : "open",
+                });
+                setIsFilterBoxOpen(!isFilterBoxOpen);
+              }}
               className="shrink-0 cursor-pointer bg-orange-600 text-white"
               aria-label="Toggle filters"
               aria-expanded={isFilterBoxOpen}
@@ -398,13 +404,23 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() =>
+                      posthog.capture("quick_link_clicked", {
+                        link_name: "Connect with us",
+                      })
+                    }
                     className="block text-sm text-gray-600 hover:text-gray-800"
                   >
                     Connect with us
                   </Link>
                   <button
                     type="button"
-                    onClick={() => setFeedbackOpen(true)}
+                    onClick={() => {
+                      posthog.capture("quick_link_clicked", {
+                        link_name: "Testimonial/Feedback",
+                      });
+                      setFeedbackOpen(true);
+                    }}
                     className="block cursor-pointer text-sm text-gray-600 hover:text-gray-800"
                   >
                     Testimonial/Feedback
@@ -412,6 +428,11 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
                   <Link
                     href="/profile"
                     prefetch={false}
+                    onClick={() =>
+                      posthog.capture("quick_link_clicked", {
+                        link_name: "My Profile",
+                      })
+                    }
                     className="block text-sm text-gray-600 hover:text-gray-800"
                   >
                     My Profile
@@ -515,7 +536,12 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
 
             <NewOpportunityButton
               isOpen={isNewOpportunityOpen}
-              onOpenChange={setIsNewOpportunityOpen}
+              onOpenChange={(open) => {
+                if (open) {
+                  posthog.capture("opportunity_post_it_here_clicked");
+                }
+                setIsNewOpportunityOpen(open);
+              }}
               layout="horizontal"
             />
             {isLoading && (
@@ -647,7 +673,12 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
         <div className="lg:hidden">
           <NewOpportunityButton
             isOpen={isNewOpportunityOpen}
-            onOpenChange={setIsNewOpportunityOpen}
+            onOpenChange={(open) => {
+              if (open) {
+                posthog.capture("opportunity_post_it_here_clicked");
+              }
+              setIsNewOpportunityOpen(open);
+            }}
             layout="vertical"
           />
           {isLoading && (

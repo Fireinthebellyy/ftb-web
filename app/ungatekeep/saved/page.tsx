@@ -2,6 +2,7 @@
  
 import React, { useEffect } from "react";
 import Link from "next/link";
+import posthog from "posthog-js";
 import { ArrowLeft, Bookmark } from "lucide-react";
 import UngatekeepCard from "@/components/ungatekeep/UngatekeepCard";
 import FeaturedToolkits from "@/components/toolkit/FeaturedToolkits";
@@ -83,13 +84,23 @@ export default function SavedUngatekeepPage() {
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() =>
+                      posthog.capture("quick_link_clicked", {
+                        link_name: "Connect with us",
+                      })
+                    }
                     className="block text-sm text-gray-600 hover:text-gray-800"
                   >
                     Connect with us
                   </Link>
                   <button
                     type="button"
-                    onClick={() => setFeedbackOpen(true)}
+                    onClick={() => {
+                      posthog.capture("quick_link_clicked", {
+                        link_name: "Testimonial/Feedback",
+                      });
+                      setFeedbackOpen(true);
+                    }}
                     className="block cursor-pointer text-sm text-gray-600 hover:text-gray-800"
                   >
                     Testimonial/Feedback
@@ -97,6 +108,11 @@ export default function SavedUngatekeepPage() {
                   <Link
                     href="/profile"
                     prefetch={false}
+                    onClick={() =>
+                      posthog.capture("quick_link_clicked", {
+                        link_name: "My Profile",
+                      })
+                    }
                     className="block text-sm text-gray-600 hover:text-gray-800"
                   >
                     My Profile

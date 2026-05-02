@@ -2,15 +2,25 @@ import Link from "next/link";
 import { Copy, Facebook, Linkedin, Mail, Twitter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import posthog from "posthog-js";
 
 interface ShareDialogProps {
   shareUrl: string;
   title: string;
   onCopy: () => void;
+  postId?: string;
 }
 
-export function ShareDialog({ shareUrl, title, onCopy }: ShareDialogProps) {
+export function ShareDialog({ shareUrl, title, onCopy, postId }: ShareDialogProps) {
   const utmParams = `${shareUrl}${shareUrl.includes("?") ? "&" : "?"}utm_source=ftb_web&utm_medium=ungatekeep_card&utm_campaign=ungatekeep_share`;
+
+  const trackShare = (method: string) => {
+    posthog.capture("ungatekeep_post_shared", {
+      post_id: postId || "",
+      post_title: title,
+      share_method: method,
+    });
+  };
 
   return (
     <>
@@ -37,6 +47,7 @@ export function ShareDialog({ shareUrl, title, onCopy }: ShareDialogProps) {
           title="Share to Twitter/X"
           aria-label="Share on Twitter/X"
           className="inline-flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-2 text-neutral-600 transition-colors hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-900 sm:p-3"
+          onClick={() => trackShare("twitter")}
         >
           <Twitter className="h-4 w-4 sm:h-5 sm:w-5" />
         </Link>
@@ -47,6 +58,7 @@ export function ShareDialog({ shareUrl, title, onCopy }: ShareDialogProps) {
           title="Share to Facebook"
           aria-label="Share on Facebook"
           className="inline-flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-2 text-neutral-600 transition-colors hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-900 sm:p-3"
+          onClick={() => trackShare("facebook")}
         >
           <Facebook className="h-4 w-4 sm:h-5 sm:w-5" />
         </Link>
@@ -57,6 +69,7 @@ export function ShareDialog({ shareUrl, title, onCopy }: ShareDialogProps) {
           title="Share to LinkedIn"
           aria-label="Share on LinkedIn"
           className="inline-flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-2 text-neutral-600 transition-colors hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-900 sm:p-3"
+          onClick={() => trackShare("linkedin")}
         >
           <Linkedin className="h-4 w-4 sm:h-5 sm:w-5" />
         </Link>
@@ -67,6 +80,7 @@ export function ShareDialog({ shareUrl, title, onCopy }: ShareDialogProps) {
           title="Share to WhatsApp"
           aria-label="Share on WhatsApp"
           className="inline-flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-2 text-neutral-600 transition-colors hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-900 sm:p-3"
+          onClick={() => trackShare("whatsapp")}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -90,6 +104,7 @@ export function ShareDialog({ shareUrl, title, onCopy }: ShareDialogProps) {
           title="Share via Email"
           aria-label="Share via Email"
           className="inline-flex items-center justify-center rounded-lg border border-neutral-200 bg-white p-2 text-neutral-600 transition-colors hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-900 sm:p-3"
+          onClick={() => trackShare("email")}
         >
           <Mail className="h-4 w-4 sm:h-5 sm:w-5" />
         </Link>

@@ -36,6 +36,7 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
 );
 
 import { toast } from "sonner";
+import posthog from "posthog-js";
 import { ShareDialog } from "./ShareDialog";
 import { AttachmentSlide, ImageModal } from "./UngatekeepMediaComponents";
 import { cn, stripHtml } from "@/lib/utils";
@@ -101,6 +102,11 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
     e.stopPropagation();
 
     const buttonElement = e.currentTarget as HTMLElement;
+
+    posthog.capture("ungatekeep_save_button_clicked", {
+      post_id: post.id,
+      action: isSaved ? "unsave" : "save",
+    });
 
     // Optimistic UI update
     const previousSaved = isSaved;
@@ -171,6 +177,11 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
+      posthog.capture("ungatekeep_post_shared", {
+        post_id: post.id,
+        post_title: plainTextContent.slice(0, 80),
+        share_method: "copy_link",
+      });
       toast.success("Link copied to clipboard");
     } catch {
       toast.error("Failed to copy link");
@@ -361,6 +372,9 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
             className="text-primary hover:text-primary mt-0.5 ml-1 inline h-auto p-0 text-xs hover:bg-transparent"
             onClick={(e) => {
               e.stopPropagation();
+              posthog.capture("ungatekeep_read_more_clicked", {
+                post_id: post.id,
+              });
               setIsExpanded(true);
             }}
           >
@@ -478,6 +492,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
                   shareUrl={shareUrl}
                   title={plainTextContent.slice(0, 80)}
                   onCopy={handleCopy}
+                  postId={post.id}
                 />
               </DialogContent>
             </Dialog>

@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable max-lines */
+
 import React, { useState } from "react";
 import dynamic from "next/dynamic";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,6 +20,7 @@ import {
 } from "@/components/opportunity/images/ImageDropzone";
 import { SchedulePublishPopover } from "@/components/opportunity/fields/MetaPopovers";
 import { toDateTimeLocalValue } from "@/lib/date-utils";
+import { cn } from "@/lib/utils";
 import { useToolkits } from "@/lib/queries/toolkits";
 
 import {
@@ -67,6 +70,7 @@ interface NewUngatekeepFormProps {
     linkImage?: string | null;
     videoUrl?: string | null;
     tag?: string | null;
+    filterTags?: string[];
     toolkitId?: string | null;
     isPinned?: boolean;
     isPublished?: boolean;
@@ -122,6 +126,7 @@ export default function NewUngatekeepForm({
       linkImage: post?.linkImage || "",
       videoUrl: post?.videoUrl || "",
       tag: post?.tag || undefined,
+      filterTags: post?.filterTags || [],
       toolkitId: post?.toolkitId || undefined,
       isPinned: post?.isPinned || false,
       isPublished: post?.isPublished || false,
@@ -490,6 +495,56 @@ export default function NewUngatekeepForm({
             )}
           />
 
+          <FormField
+            control={form.control}
+            name="filterTags"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Filter Tags</FormLabel>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { label: "College AMAs", value: "college_amas" },
+                    { label: "Upskill", value: "upskill" },
+                    { label: "Entrance Exams", value: "entrance_exams" },
+                  ].map((filterTag) => {
+                    const isSelected = field.value.includes(filterTag.value);
+                    return (
+                      <label
+                        key={filterTag.value}
+                        className={cn(
+                          "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition-all",
+                          isSelected
+                            ? "border-orange-500 bg-orange-50 text-orange-700 hover:bg-orange-100"
+                            : "hover:bg-muted"
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              field.onChange([...field.value, filterTag.value]);
+                            } else {
+                              field.onChange(
+                                field.value.filter((v) => v !== filterTag.value)
+                              );
+                            }
+                          }}
+                          className="h-4 w-4 rounded border-gray-300"
+                        />
+                        {filterTag.label}
+                      </label>
+                    );
+                  })}
+                </div>
+                <div className="text-muted-foreground text-[10px]">
+                  Select which filter categories this post should appear in
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           {/* Upload Section (LinkedIn style below tags) */}
           <div className="flex flex-col gap-3 border-t pt-4">
             <div className="flex items-center justify-between">
@@ -544,14 +599,15 @@ export default function NewUngatekeepForm({
                 loading={isSubmitting}
               />
             )}
-            <UnifiedFilesPreview
-              files={files}
-              setFiles={setFiles}
-              attachmentFiles={attachmentFiles}
-              setAttachmentFiles={setAttachmentFiles}
-              loading={isSubmitting}
-            />
           </div>
+
+          <UnifiedFilesPreview
+            files={files}
+            setFiles={setFiles}
+            attachmentFiles={attachmentFiles}
+            setAttachmentFiles={setAttachmentFiles}
+            loading={isSubmitting}
+          />
 
           <div className="space-y-4 border-t pt-4">
             <h3 className="text-sm font-medium">Link & Video (Optional)</h3>

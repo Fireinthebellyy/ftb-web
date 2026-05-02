@@ -23,6 +23,7 @@ const createPostSchema = z.object({
     .optional()
     .or(z.literal("")),
   tag: z.string().optional(),
+  filterTags: z.array(z.string()).default([]),
   toolkitId: z.string().uuid().optional().nullable(),
   isPinned: z.boolean().optional(),
   isPublished: z.boolean().optional(),
@@ -57,6 +58,7 @@ export async function GET(request: Request) {
         linkImage: ungatekeepPosts.linkImage,
         videoUrl: ungatekeepPosts.videoUrl,
         tag: ungatekeepPosts.tag,
+        filterTags: ungatekeepPosts.filterTags,
         isPinned: ungatekeepPosts.isPinned,
         isPublished: ungatekeepPosts.isPublished,
         publishedAt: ungatekeepPosts.publishedAt,
@@ -137,6 +139,7 @@ export async function POST(request: Request) {
         linkImage: validatedData.linkImage || undefined,
         videoUrl: validatedData.videoUrl || undefined,
         tag: validatedData.tag || undefined,
+        filterTags: validatedData.filterTags || [],
         isPinned: validatedData.isPinned || false,
         isPublished: validatedData.isPublished || false,
         toolkitId: validatedData.toolkitId || undefined,

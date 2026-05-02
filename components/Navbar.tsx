@@ -223,6 +223,9 @@ export default function Navbar() {
         <nav className="hidden justify-center gap-4 sm:gap-6 md:flex">
           <Link
             href="/opportunities"
+            onClick={() =>
+              posthog.capture("navbar_link_clicked", { label: "Opportunities", href: "/opportunities" })
+            }
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
               pathname === "/opportunities"
                 ? "text-primary after:w-full"
@@ -234,6 +237,9 @@ export default function Navbar() {
 
           <Link
             href="/intern"
+            onClick={() =>
+              posthog.capture("navbar_link_clicked", { label: "Internships", href: "/intern" })
+            }
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
               pathname === "/intern"
                 ? "text-primary after:w-full"
@@ -244,6 +250,9 @@ export default function Navbar() {
           </Link>
           <Link
             href="/toolkit"
+            onClick={() =>
+              posthog.capture("navbar_link_clicked", { label: "Toolkit", href: "/toolkit" })
+            }
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
               pathname === "/toolkit"
                 ? "text-primary after:w-full"
@@ -254,6 +263,9 @@ export default function Navbar() {
           </Link>
           <Link
             href="/ungatekeep"
+            onClick={() =>
+              posthog.capture("navbar_link_clicked", { label: "Ungatekeep", href: "/ungatekeep" })
+            }
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
               pathname === "/ungatekeep"
                 ? "text-primary after:w-full"
@@ -264,6 +276,9 @@ export default function Navbar() {
           </Link>
           <Link
             href="/tracker"
+            onClick={() =>
+              posthog.capture("navbar_link_clicked", { label: "Tracker", href: "/tracker" })
+            }
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
               pathname === "/tracker"
                 ? "text-primary after:w-full"
@@ -537,7 +552,10 @@ export default function Navbar() {
               <li>
                 <Link
                   href="/profile"
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => {
+                    posthog.capture("navbar_link_clicked", { label: "Profile", href: "/profile" });
+                    setIsOpen(false);
+                  }}
                   className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
                     pathname === "/profile"
                       ? "text-primary font-bold after:w-full"

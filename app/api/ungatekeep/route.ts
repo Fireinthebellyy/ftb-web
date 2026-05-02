@@ -12,7 +12,8 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     let page = parseInt(searchParams.get("page") || "1", 10);
     let limit = parseInt(searchParams.get("limit") || "10", 10);
-    const tag = searchParams.get("tag");
+    const tagParam = searchParams.get("tag");
+    const tagList = tagParam && tagParam !== "all" ? tagParam.split(",").filter(Boolean) : [];
 
     const MAX_LIMIT = 50;
 
@@ -52,7 +53,9 @@ export async function GET(request: Request) {
             isNull(ungatekeepPosts.publishedAt),
             lte(ungatekeepPosts.publishedAt, new Date())
           ),
-          tag && tag !== "all" ? eq(ungatekeepPosts.tag, tag) : undefined
+          tagList.length > 0
+            ? or(...tagList.map((t) => sql`${ungatekeepPosts.filterTags}::text[] @> ARRAY[${t}]::text[]`))
+            : undefined
         )
       );
 
@@ -100,7 +103,9 @@ export async function GET(request: Request) {
             isNull(ungatekeepPosts.publishedAt),
             lte(ungatekeepPosts.publishedAt, new Date())
           ),
-          tag && tag !== "all" ? eq(ungatekeepPosts.tag, tag) : undefined
+          tagList.length > 0
+            ? or(...tagList.map((t) => sql`${ungatekeepPosts.filterTags}::text[] @> ARRAY[${t}]::text[]`))
+            : undefined
         )
       )
       .orderBy(

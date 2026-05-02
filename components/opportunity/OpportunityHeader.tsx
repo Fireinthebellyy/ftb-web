@@ -94,7 +94,7 @@ export function OpportunityHeader({
       )}
 
       {description && (
-        <ExpandableDescription text={description} isCardExpanded={isExpanded} />
+        <ExpandableDescription text={description} isCardExpanded={isExpanded} contextId={opportunity.id} />
       )}
 
       {(location || displayOrganiserInfo || startDate || endDate) && (

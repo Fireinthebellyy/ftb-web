@@ -98,6 +98,11 @@ export function OpportunityActions({
             <button
               onClick={() => {
                 if (!toggleUpvote.isPending) {
+                  posthog.capture("opportunity_upvote_clicked", {
+                    opportunity_id: id,
+                    title: opportunity.title,
+                    action: userHasUpvoted ? "downvote" : "upvote",
+                  });
                   toggleUpvote.mutate(undefined, {
                     onSuccess: (data) => {
                       if (data.hasUserUpvoted) {
@@ -188,7 +193,13 @@ export function OpportunityActions({
               href={addUtmParams(opportunity.applyLink, "opportunity_card")}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                posthog.capture("opportunity_apply_clicked", {
+                  opportunity_id: id,
+                  title: opportunity.title,
+                });
+              }}
             >
               <Button
                 size="sm"
@@ -220,7 +231,13 @@ export function OpportunityActions({
               )}`}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              posthog.capture("opportunity_calendar_clicked", {
+                opportunity_id: id,
+                title: opportunity.title,
+              });
+            }}
             title="Add to calendar"
             className="group flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-blue-50"
           >

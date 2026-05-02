@@ -5,6 +5,7 @@ import { TrackerItem } from "@/components/providers/TrackerProvider";
 import { differenceInCalendarDays } from "date-fns";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 import { addUtmParams } from "@/lib/utils";
+import posthog from "posthog-js";
 function DeadlineBadge({ deadline }: { deadline: string }) {
   const daysDiff = differenceInCalendarDays(new Date(deadline), new Date());
   if (daysDiff < 0)
@@ -174,7 +175,16 @@ export default function MobileTrackerCard({
              target="_blank"
              rel="noopener noreferrer"
              aria-label={`Apply for ${opp.title} at ${opp.company}`}
-             onClick={(e)=>e.stopPropagation()}
+             onClick={(e)=>{
+               e.stopPropagation();
+               posthog.capture("tracker_apply_now_clicked", {
+                 tracker_id: opp.oppId,
+                 title: opp.title,
+                 company: opp.company,
+                 kind: opp.kind,
+                 url: opp.applyLink || opp.link,
+               });
+             }}
              className="flex items-center justify-center z-2 text-white text-xs bg-[#ec5b13] font-bold  rounded-xl px-3 py-2 transition-colors hover:bg-[#d44d0c] hover:text-black active:scale-94">Apply Now</a>
           )}
       

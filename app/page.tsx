@@ -16,6 +16,7 @@ import { getYouTubeThumbnailUrl } from "@/lib/youtube";
 import { Toolkit } from "@/types/interfaces";
 import { startToolkitCheckout } from "@/lib/toolkit-checkout";
 
+
 const outfit = Outfit({
   subsets: ["latin"],
   weight: ["400", "500", "700"],
@@ -731,6 +732,7 @@ export default function HomePage() {
       <div className="w-full px-4 md:px-0">
         <HeroSection />
         <TaglineSection />
+
         <InternshipStrip />
         <TrustedSection />
         <ToolkitCarousel />

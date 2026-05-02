@@ -162,7 +162,16 @@ export default function TrackerRow({
       target="_blank" 
       rel="noopener noreferrer"
       aria-label={`Apply for ${opp.title} at ${opp.company}(Opens in a new tab)`}
-      onClick={(e)=>e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        posthog.capture("tracker_apply_now_clicked", {
+          tracker_id: opp.oppId,
+          title: opp.title,
+          company: opp.company,
+          kind: opp.kind,
+          url: opp.applyLink || opp.link,
+        });
+      }}
       className="flex items-center justify-center z-2 text-white text-sm bg-[#ec5b13] font-bold rounded-xl px-3 py-1 transition-colors hover:bg-[#d44d0c] hover:text-black active:scale-94">
         Apply Now
       </a>} 

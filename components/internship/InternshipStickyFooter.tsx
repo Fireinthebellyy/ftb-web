@@ -7,6 +7,7 @@ import { Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn, addUtmParams } from "@/lib/utils";
 import { InternshipData } from "@/types/interfaces";
+import posthog from "posthog-js";
 
 interface InternshipStickyFooterProps {
   internship: InternshipData;
@@ -60,6 +61,14 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
             "ftb_mobile"
           )}
           target="_blank"
+          onClick={() =>
+            posthog.capture("internship_apply_now_clicked", {
+              internship_id: internship.id,
+              title: internship.title,
+              url: internship.applyLink || internship.link,
+              source: "mobile_footer",
+            })
+          }
           className="flex-1"
         >
           <Button className="h-12 w-full rounded-xl border-none bg-orange-50 px-0 font-bold text-[#ec5b13] shadow-none transition-all hover:bg-orange-100 active:scale-95">
@@ -70,7 +79,14 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
 
       {session?.user && (
         <Button
-          onClick={onSmartApplyClick}
+          onClick={() => {
+            posthog.capture("internship_smart_apply_clicked", {
+              internship_id: internship.id,
+              title: internship.title,
+              source: "mobile_footer",
+            });
+            onSmartApplyClick();
+          }}
           className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-none bg-[#ec5b13] px-0 text-[14px] font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:bg-[#d44d0c] active:scale-95"
         >
           Smart Apply

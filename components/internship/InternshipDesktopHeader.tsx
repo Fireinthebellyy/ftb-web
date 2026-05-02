@@ -8,19 +8,31 @@ import {
   Calendar,
   CalendarPlus,
   Bookmark,
+  Settings,
+  Pencil,
+  Loader2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn, toTitleCase, formatSalary, formatDateLong, addUtmParams } from "@/lib/utils";
 import { InternshipData } from "@/types/interfaces";
+import posthog from "posthog-js";
+
+interface UserSession {
+  id: string;
+  role?: "user" | "member" | "editor" | "admin";
+}
 
 interface InternshipDesktopHeaderProps {
   internship: InternshipData;
-  session: { user: any } | null;
+  session: { user: UserSession } | null;
   isBookmarked: boolean;
   handleBookmarkClick: () => void;
   handleCalendarClick: () => void;
   onSmartApplyClick: () => void;
+  onEditClick?: () => void;
+  onAdminClick?: () => void;
+  isAdminLoading?: boolean;
 }
 
 export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = ({
@@ -30,7 +42,12 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
   handleBookmarkClick,
   handleCalendarClick,
   onSmartApplyClick,
+  onEditClick,
+  onAdminClick,
+  isAdminLoading,
 }) => {
+  const isOwner = session?.user && session.user.id === internship.user?.id;
+  const isModerator = session?.user && (session.user.role === "admin" || session.user.role === "editor");
   return (
     <div className="bg-white rounded-[24px] px-8 py-5 shadow-sm border border-slate-100 relative mb-8">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
@@ -102,6 +119,33 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
               className={cn("w-5 h-5", isBookmarked && "fill-current")}
             />
           </Button>
+          {isModerator && (
+            <Button
+              variant="outline"
+              onClick={onAdminClick}
+              disabled={isAdminLoading}
+              className={cn(
+                "w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50 transition-all focus:ring-0"
+              )}
+              aria-label="Admin controls"
+            >
+              {isAdminLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Settings className="w-5 h-5" />
+              )}
+            </Button>
+          )}
+          {(isOwner || isModerator) && (
+            <Button
+              variant="outline"
+              onClick={onEditClick}
+              className="w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50 transition-all focus:ring-0"
+              aria-label="Edit internship"
+            >
+              <Pencil className="w-5 h-5" />
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={handleCalendarClick}
@@ -117,7 +161,14 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
           </Button>
           {session?.user && (
             <Button
-              onClick={onSmartApplyClick}
+              onClick={() => {
+                posthog.capture("internship_smart_apply_clicked", {
+                  internship_id: internship.id,
+                  title: internship.title,
+                  source: "desktop_header",
+                });
+                onSmartApplyClick();
+              }}
               className="h-12 px-6 rounded-xl bg-[#ec5b13] hover:bg-[#d44d0c] text-white font-bold border-none shadow-lg shadow-orange-500/20 flex items-center gap-2 transition-all"
             >
               Smart Apply
@@ -128,6 +179,14 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
               href={addUtmParams(internship.applyLink || internship.link || "", "ftb_web")}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() =>
+                posthog.capture("internship_apply_now_clicked", {
+                  internship_id: internship.id,
+                  title: internship.title,
+                  url: internship.applyLink || internship.link,
+                  source: "desktop_header",
+                })
+              }
             >
               <Button className="h-12 px-8 rounded-xl bg-orange-50 hover:bg-orange-100 text-[#ec5b13] font-bold border-none shadow-none transition-all">
                 Apply Now

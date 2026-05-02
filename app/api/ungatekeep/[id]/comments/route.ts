@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { comments, user } from "@/lib/schema";
+import { ungatekeepComments, ungatekeepPosts, user } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { eq, desc } from "drizzle-orm";
@@ -8,6 +8,8 @@ import { z } from "zod";
 const commentSchema = z.object({
   content: z.string().min(1, "Comment cannot be empty").max(1000, "Comment too long"),
 });
+
+const uuidSchema = z.string().uuid();
 
 export async function GET(
   req: NextRequest,
@@ -21,27 +23,43 @@ export async function GET(
       );
     }
 
-    const { id: opportunityId } = await params;
+    const { id: postId } = await params;
+
+    // Validate UUID
+    if (!uuidSchema.safeParse(postId).success) {
+      return NextResponse.json({ error: "Invalid post ID" }, { status: 404 });
+    }
+
+    // Verify post exists
+    const postExists = await db
+      .select({ id: ungatekeepPosts.id })
+      .from(ungatekeepPosts)
+      .where(eq(ungatekeepPosts.id, postId))
+      .limit(1);
+
+    if (postExists.length === 0) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
 
     // Fetch comments with user information, ordered by newest first
     const commentsWithUsers = await db
       .select({
-        id: comments.id,
-        content: comments.content,
-        createdAt: comments.createdAt,
-        updatedAt: comments.updatedAt,
-        userId: comments.userId,
-        opportunityId: comments.opportunityId,
+        id: ungatekeepComments.id,
+        content: ungatekeepComments.content,
+        createdAt: ungatekeepComments.createdAt,
+        updatedAt: ungatekeepComments.updatedAt,
+        userId: ungatekeepComments.userId,
+        postId: ungatekeepComments.postId,
         user: {
           id: user.id,
           name: user.name,
           image: user.image,
         },
       })
-      .from(comments)
-      .innerJoin(user, eq(comments.userId, user.id))
-      .where(eq(comments.opportunityId, opportunityId))
-      .orderBy(desc(comments.createdAt));
+      .from(ungatekeepComments)
+      .innerJoin(user, eq(ungatekeepComments.userId, user.id))
+      .where(eq(ungatekeepComments.postId, postId))
+      .orderBy(desc(ungatekeepComments.createdAt));
 
     return NextResponse.json({ comments: commentsWithUsers });
   } catch (error) {
@@ -70,7 +88,24 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id: opportunityId } = await params;
+    const { id: postId } = await params;
+
+    // Validate UUID
+    if (!uuidSchema.safeParse(postId).success) {
+      return NextResponse.json({ error: "Invalid post ID" }, { status: 404 });
+    }
+
+    // Verify post exists
+    const postExists = await db
+      .select({ id: ungatekeepPosts.id })
+      .from(ungatekeepPosts)
+      .where(eq(ungatekeepPosts.id, postId))
+      .limit(1);
+
+    if (postExists.length === 0) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
     let body;
     try {
       body = await req.json();
@@ -109,39 +144,39 @@ export async function POST(
 
     // Insert the comment
     const [newComment] = await db
-      .insert(comments)
+      .insert(ungatekeepComments)
       .values({
         content: sanitizedContent,
         userId: currentUser.currentUser.id,
-        opportunityId: opportunityId,
+        postId: postId,
       })
       .returning({
-        id: comments.id,
-        content: comments.content,
-        createdAt: comments.createdAt,
-        updatedAt: comments.updatedAt,
-        userId: comments.userId,
-        opportunityId: comments.opportunityId,
+        id: ungatekeepComments.id,
+        content: ungatekeepComments.content,
+        createdAt: ungatekeepComments.createdAt,
+        updatedAt: ungatekeepComments.updatedAt,
+        userId: ungatekeepComments.userId,
+        postId: ungatekeepComments.postId,
       });
 
     // Fetch the comment with user information
     const commentWithUser = await db
       .select({
-        id: comments.id,
-        content: comments.content,
-        createdAt: comments.createdAt,
-        updatedAt: comments.updatedAt,
-        userId: comments.userId,
-        opportunityId: comments.opportunityId,
+        id: ungatekeepComments.id,
+        content: ungatekeepComments.content,
+        createdAt: ungatekeepComments.createdAt,
+        updatedAt: ungatekeepComments.updatedAt,
+        userId: ungatekeepComments.userId,
+        postId: ungatekeepComments.postId,
         user: {
           id: user.id,
           name: user.name,
           image: user.image,
         },
       })
-      .from(comments)
-      .innerJoin(user, eq(comments.userId, user.id))
-      .where(eq(comments.id, newComment.id))
+      .from(ungatekeepComments)
+      .innerJoin(user, eq(ungatekeepComments.userId, user.id))
+      .where(eq(ungatekeepComments.id, newComment.id))
       .limit(1);
 
     return NextResponse.json({ 

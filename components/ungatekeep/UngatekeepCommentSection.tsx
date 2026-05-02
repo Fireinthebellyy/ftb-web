@@ -2,14 +2,13 @@
 
 import React, { useState } from "react";
 import {
-  useComments,
-  useCreateComment,
-  useDeleteComment,
-} from "@/lib/queries-comments";
-import { Comment } from "@/types/interfaces";
+  useUngatekeepComments,
+  useCreateUngatekeepComment,
+  useDeleteUngatekeepComment,
+} from "@/lib/queries-ungatekeep-comments";
+import { UngatekeepComment } from "@/types/interfaces";
 import { useSession, Session } from "@/hooks/use-session";
 import { toast } from "sonner";
-import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
@@ -18,12 +17,12 @@ import { Loader2, Send, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
 
-interface CommentSectionProps {
-  opportunityId: string;
+interface UngatekeepCommentSectionProps {
+  postId: string;
 }
 
 const CommentItem: React.FC<{
-  comment: Comment;
+  comment: UngatekeepComment;
   currentUserId?: string;
   onDelete: (commentId: string) => void;
   isDeleting: boolean;
@@ -91,11 +90,11 @@ const CommentItem: React.FC<{
 };
 
 const CommentInput: React.FC<{
-  opportunityId: string;
+  postId: string;
   session: Session | null | undefined;
-}> = ({ opportunityId, session }) => {
+}> = ({ postId, session }) => {
   const [content, setContent] = useState("");
-  const createComment = useCreateComment(opportunityId);
+  const createComment = useCreateUngatekeepComment(postId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,10 +116,6 @@ const CommentInput: React.FC<{
 
     try {
       await createComment.mutateAsync({ content: content.trim() });
-      posthog.capture("opportunity_commented", {
-        opportunity_id: opportunityId,
-        comment_length: content.trim().length,
-      });
       setContent("");
       toast.success("Comment posted successfully");
     } catch (_error) {
@@ -198,10 +193,10 @@ const CommentInput: React.FC<{
   );
 };
 
-const CommentSection: React.FC<CommentSectionProps> = ({ opportunityId }) => {
+const UngatekeepCommentSection: React.FC<UngatekeepCommentSectionProps> = ({ postId }) => {
   const { data: session } = useSession();
-  const { data: comments = [], isLoading, error } = useComments(opportunityId);
-  const deleteComment = useDeleteComment(opportunityId);
+  const { data: comments = [], isLoading, error } = useUngatekeepComments(postId);
+  const deleteComment = useDeleteUngatekeepComment(postId);
 
   const handleDelete = async (commentId: string) => {
     try {
@@ -222,7 +217,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ opportunityId }) => {
 
   return (
     <div className="mt-2 border-t border-gray-100">
-      <CommentInput opportunityId={opportunityId} session={session} />
+      <CommentInput postId={postId} session={session} />
 
       <div className="max-h-96 overflow-y-auto">
         {isLoading ? (
@@ -260,4 +255,4 @@ const CommentSection: React.FC<CommentSectionProps> = ({ opportunityId }) => {
   );
 };
 
-export default CommentSection;
+export default UngatekeepCommentSection;

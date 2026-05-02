@@ -48,6 +48,9 @@ export type Internship = {
   isActive?: boolean;
   is_trending?: boolean;
   is_featured_home?: boolean;
+  display_index?: number;
+  trending_index?: number;
+  featured_home_index?: number;
   user: {
     id: string;
     name: string;
@@ -71,6 +74,9 @@ export interface InternshipData extends Omit<
   applyLink?: string | null;
   companyDescription?: string | null;
   website?: string | null;
+  display_index?: number;
+  trending_index?: number;
+  featured_home_index?: number;
   user: {
     id: string;
     name: string;
@@ -125,6 +131,20 @@ export type Comment = {
   updatedAt: string;
   userId: string;
   opportunityId: string;
+  user: {
+    id: string;
+    name: string;
+    image: string;
+  };
+};
+
+export type UngatekeepComment = {
+  id: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+  postId: string;
   user: {
     id: string;
     name: string;

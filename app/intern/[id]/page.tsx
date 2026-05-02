@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Share2, Flag, Loader2 } from "lucide-react";
+import { ArrowLeft, Share2, Flag, Loader2, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import posthog from "posthog-js";
@@ -26,6 +26,8 @@ import { InternshipDesktopHeader } from "@/components/internship/InternshipDeskt
 import { InternshipSidebar } from "@/components/internship/InternshipSidebar";
 import { InternshipDisclaimer } from "@/components/internship/InternshipDisclaimer";
 import { InternshipStickyFooter } from "@/components/internship/InternshipStickyFooter";
+import NewInternshipForm from "@/components/internship/NewInternshipForm";
+import { AdminControlsModal } from "@/components/internship/AdminControlsModal";
 
 export default function InternshipDetailPage() {
   const router = useRouter();
@@ -36,35 +38,41 @@ export default function InternshipDetailPage() {
   const [smartApplyOpen, setSmartApplyOpen] = useState(false);
   const [notFoundError, setNotFoundError] = useState(false);
   const [isFlagging, setIsFlagging] = useState(false);
+  const [adminModalOpen, setAdminModalOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const { data: session } = useSession();
   const { addToTracker, getStatus, removeFromTracker } = useTracker();
 
   const isBookmarked = !!getStatus(id || "", "internship");
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!id) return;
+  const fetchData = async () => {
+    if (!id) return;
 
-      try {
-        const response = await fetch(`/api/internships/${id}`);
-        const data = await response.json();
-        if (!response.ok || !data.success) {
-          setNotFoundError(true);
-          setLoading(false);
-          return;
-        }
-
-        setInternship(data.internship as InternshipData);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching internship:", error);
+    try {
+      const response = await fetch(`/api/internships/${id}`);
+      const data = await response.json();
+      if (!response.ok || !data.success) {
         setNotFoundError(true);
         setLoading(false);
+        return;
       }
-    };
 
+      setInternship(data.internship as InternshipData);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching internship:", error);
+      setNotFoundError(true);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  const handleOpenEdit = () => setIsEditOpen(true);
+  const handleCloseEdit = () => setIsEditOpen(false);
 
   if (notFoundError) notFound();
 
@@ -193,6 +201,12 @@ export default function InternshipDetailPage() {
     }
   };
 
+  const handleOnInternshipUpdated = async () => {
+    // Re-fetch the internship after edit
+    await fetchData();
+    handleCloseEdit();
+  };
+
   if (loading || !internship) {
     return (
       <div className="flex min-h-[80vh] w-full flex-col items-center justify-center">
@@ -219,6 +233,15 @@ export default function InternshipDetailPage() {
             Internship Detail
           </h1>
           <div className="flex items-center justify-end gap-2">
+            {session?.user && ((session.user as any).role === "admin" || (session.user as any).role === "editor") && (
+              <button
+                onClick={() => setAdminModalOpen(true)}
+                className="flex w-8 justify-end p-1 text-slate-800 transition-all active:scale-95 hover:text-[#ec5b13]"
+                aria-label="Admin controls"
+              >
+                <Settings className="h-5 w-5" />
+              </button>
+            )}
             <button
               onClick={handleFlagInternship}
               disabled={isFlagging || internship.isFlagged}
@@ -289,6 +312,8 @@ export default function InternshipDetailPage() {
             handleBookmarkClick={handleBookmarkClick}
             handleCalendarClick={handleCalendarClick}
             onSmartApplyClick={() => setSmartApplyOpen(true)}
+            onEditClick={handleOpenEdit}
+            onAdminClick={() => setAdminModalOpen(true)}
           />
 
           {/* Desktop Main Content Grid */}
@@ -366,6 +391,23 @@ export default function InternshipDetailPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Dialog for admins/owners */}
+      <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) handleCloseEdit(); }}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto max-w-3xl w-[95vw]">
+          <DialogTitle className="sr-only">Edit Internship</DialogTitle>
+          <div className="py-2">
+            {internship && (
+              // Lazy import form handles both create & edit
+              <NewInternshipForm
+                internship={internship}
+                onCancel={handleCloseEdit}
+                onInternshipCreated={handleOnInternshipUpdated}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Smart Apply Modal */}
       <ApplyModal
         isOpen={smartApplyOpen}
@@ -373,6 +415,15 @@ export default function InternshipDetailPage() {
         opportunity={
           internship ? mapInternshipToApplyOpportunity(internship) : null
         }
+      />
+
+      {/* Admin Controls Modal */}
+      <AdminControlsModal
+        internship={internship}
+        open={adminModalOpen}
+        onOpenChange={setAdminModalOpen}
+        onUpdate={setInternship}
+        onDeleted={() => router.push("/internships")}
       />
     </div>
   );

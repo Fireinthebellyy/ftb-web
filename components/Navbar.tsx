@@ -15,6 +15,7 @@ import {
   isAbsoluteOrLocalUrl,
   tryGetStoragePublicUrl,
 } from "@/lib/storage/public-url";
+import WalkthroughFigma from "@/components/home/WalkthroughFigma";
 
 function useLogout() {
   const router = useRouter();
@@ -189,6 +190,17 @@ export default function Navbar() {
     return null;
   }
 
+  const normalizedPath = pathname === "/" ? "/" : pathname?.replace(/\/+$/, "");
+
+  const showWalkthrough = [
+    "/",
+    "/opportunities",
+    "/intern",
+    "/toolkit",
+    "/ungatekeep",
+    "/tracker",
+  ].some((p) => normalizedPath === p || (p !== "/" && normalizedPath?.startsWith(`${p}/`)));
+
   return (
     <motion.header
       initial={{ opacity: 0, y: -20 }}
@@ -196,6 +208,14 @@ export default function Navbar() {
       transition={{ duration: 0.5 }}
       className="fixed top-0 right-0 left-0 z-50 flex-none border-b border-gray-200/50 bg-neutral-50/80 backdrop-blur-md"
     >
+      {showWalkthrough && (
+        <div className="absolute top-[66px] left-0 right-0 z-50 hidden md:flex justify-center pointer-events-none">
+          <div className="pointer-events-auto">
+            <WalkthroughFigma isDesktop={true} />
+          </div>
+        </div>
+      )}
+
       <div className="relative container mx-auto grid h-16 max-w-7xl grid-cols-[1fr_auto] items-center px-4 md:grid-cols-3 lg:px-4 xl:px-6">
         <div className="flex items-center justify-start pl-2 md:pl-4">
           <Link href="/" className="flex items-center space-x-3">
@@ -223,6 +243,9 @@ export default function Navbar() {
         <nav className="hidden justify-center gap-4 sm:gap-6 md:flex">
           <Link
             href="/opportunities"
+            onClick={() =>
+              posthog.capture("navbar_link_clicked", { label: "Opportunities", href: "/opportunities" })
+            }
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
               pathname === "/opportunities"
                 ? "text-primary after:w-full"
@@ -233,17 +256,23 @@ export default function Navbar() {
           </Link>
 
           <Link
-            href="/tracker"
+            href="/intern"
+            onClick={() =>
+              posthog.capture("navbar_link_clicked", { label: "Internships", href: "/intern" })
+            }
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
-              pathname === "/tracker"
+              pathname === "/intern"
                 ? "text-primary after:w-full"
                 : "text-neutral-800 after:w-0"
             }`}
           >
-            Tracker
+            Internships
           </Link>
           <Link
             href="/toolkit"
+            onClick={() =>
+              posthog.capture("navbar_link_clicked", { label: "Toolkit", href: "/toolkit" })
+            }
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
               pathname === "/toolkit"
                 ? "text-primary after:w-full"
@@ -254,6 +283,9 @@ export default function Navbar() {
           </Link>
           <Link
             href="/ungatekeep"
+            onClick={() =>
+              posthog.capture("navbar_link_clicked", { label: "Ungatekeep", href: "/ungatekeep" })
+            }
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
               pathname === "/ungatekeep"
                 ? "text-primary after:w-full"
@@ -263,14 +295,17 @@ export default function Navbar() {
             Ungatekeep
           </Link>
           <Link
-            href="/intern"
+            href="/tracker"
+            onClick={() =>
+              posthog.capture("navbar_link_clicked", { label: "Tracker", href: "/tracker" })
+            }
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
-              pathname === "/intern"
+              pathname === "/tracker"
                 ? "text-primary after:w-full"
                 : "text-neutral-800 after:w-0"
             }`}
           >
-            Internships
+            Tracker
           </Link>
         </nav>
 
@@ -537,7 +572,10 @@ export default function Navbar() {
               <li>
                 <Link
                   href="/profile"
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => {
+                    posthog.capture("navbar_link_clicked", { label: "Profile", href: "/profile" });
+                    setIsOpen(false);
+                  }}
                   className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
                     pathname === "/profile"
                       ? "text-primary font-bold after:w-full"

@@ -22,18 +22,9 @@ const createPostSchema = z.object({
     )
     .optional()
     .or(z.literal("")),
-  tag: z
-    .enum([
-      "announcement",
-      "company_experience",
-      "resources",
-      "playbooks",
-      "college_hacks",
-      "interview",
-      "ama_drops",
-      "ftb_recommends",
-    ])
-    .optional(),
+  tag: z.string().optional(),
+  filterTags: z.array(z.string()).default([]),
+  toolkitId: z.string().uuid().optional().nullable(),
   isPinned: z.boolean().optional(),
   isPublished: z.boolean().optional(),
   publishAt: z.string().optional().nullable(),
@@ -67,6 +58,7 @@ export async function GET(request: Request) {
         linkImage: ungatekeepPosts.linkImage,
         videoUrl: ungatekeepPosts.videoUrl,
         tag: ungatekeepPosts.tag,
+        filterTags: ungatekeepPosts.filterTags,
         isPinned: ungatekeepPosts.isPinned,
         isPublished: ungatekeepPosts.isPublished,
         publishedAt: ungatekeepPosts.publishedAt,
@@ -78,6 +70,7 @@ export async function GET(request: Request) {
         is_featured_home: ungatekeepPosts.is_featured_home,
         trending_index: ungatekeepPosts.trending_index,
         featured_home_index: ungatekeepPosts.featured_home_index,
+        toolkitId: ungatekeepPosts.toolkitId,
       })
       .from(ungatekeepPosts)
       .leftJoin(userTable, eq(ungatekeepPosts.userId, userTable.id))
@@ -146,8 +139,10 @@ export async function POST(request: Request) {
         linkImage: validatedData.linkImage || undefined,
         videoUrl: validatedData.videoUrl || undefined,
         tag: validatedData.tag || undefined,
+        filterTags: validatedData.filterTags || [],
         isPinned: validatedData.isPinned || false,
         isPublished: validatedData.isPublished || false,
+        toolkitId: validatedData.toolkitId || undefined,
         publishedAt: validatedData.publishAt
           ? new Date(validatedData.publishAt)
           : validatedData.isPublished

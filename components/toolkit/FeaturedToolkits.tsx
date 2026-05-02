@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Play } from "lucide-react";
+import posthog from "posthog-js";
 import { useToolkits } from "@/lib/queries/toolkits";
 import { stripHtml } from "@/lib/utils";
 
@@ -37,6 +38,13 @@ export default function FeaturedToolkits() {
           <Link
             key={toolkit.id}
             href={`/toolkit/${toolkit.id}`}
+            onClick={() => {
+              posthog.capture("toolkit_clicked", {
+                toolkit_id: toolkit.id,
+                toolkit_title: toolkit.title,
+                source: "ungatekeep_sidebar",
+              });
+            }}
             className="group block"
           >
             <article className="hover:bg-muted/50 flex gap-3 rounded-lg p-2 transition-colors">

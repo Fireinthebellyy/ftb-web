@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn, toTitleCase, formatSalary, formatDateLong, addUtmParams } from "@/lib/utils";
 import { InternshipData } from "@/types/interfaces";
+import posthog from "posthog-js";
 
 interface UserSession {
   id: string;
@@ -160,7 +161,14 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
           </Button>
           {session?.user && (
             <Button
-              onClick={onSmartApplyClick}
+              onClick={() => {
+                posthog.capture("internship_smart_apply_clicked", {
+                  internship_id: internship.id,
+                  title: internship.title,
+                  source: "desktop_header",
+                });
+                onSmartApplyClick();
+              }}
               className="h-12 px-6 rounded-xl bg-[#ec5b13] hover:bg-[#d44d0c] text-white font-bold border-none shadow-lg shadow-orange-500/20 flex items-center gap-2 transition-all"
             >
               Smart Apply
@@ -171,6 +179,14 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
               href={addUtmParams(internship.applyLink || internship.link || "", "ftb_web")}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() =>
+                posthog.capture("internship_apply_now_clicked", {
+                  internship_id: internship.id,
+                  title: internship.title,
+                  url: internship.applyLink || internship.link,
+                  source: "desktop_header",
+                })
+              }
             >
               <Button className="h-12 px-8 rounded-xl bg-orange-50 hover:bg-orange-100 text-[#ec5b13] font-bold border-none shadow-none transition-all">
                 Apply Now

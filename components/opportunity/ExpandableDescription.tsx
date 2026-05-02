@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect, useMemo } from "react";
 import DOMPurify from "dompurify";
+import posthog from "posthog-js";
 import { cn, stripHtml } from "@/lib/utils";
 
 const CLAMP_LINES = 4;
@@ -9,11 +10,15 @@ const CLAMP_LINES = 4;
 interface ExpandableDescriptionProps {
   text: string;
   isCardExpanded?: boolean;
+  contextId?: string;
+  contextType?: string;
 }
 
 export function ExpandableDescription({
   text,
   isCardExpanded = true,
+  contextId,
+  contextType = "opportunity",
 }: ExpandableDescriptionProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [clamped, setClamped] = useState(false);
@@ -91,7 +96,14 @@ export function ExpandableDescription({
       {clamped && (
         <button
           type="button"
-          onClick={() => setExpanded((prev) => !prev)}
+          onClick={() => {
+            if (!expanded && contextId) {
+              posthog.capture(`${contextType}_read_more_clicked`, {
+                [`${contextType}_id`]: contextId,
+              });
+            }
+            setExpanded((prev) => !prev);
+          }}
           className="mt-0.5 text-xs font-medium text-primary hover:text-primary"
         >
           {expanded ? "Show less" : "Read more"}

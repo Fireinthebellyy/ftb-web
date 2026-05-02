@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { OpportunityPostProps } from "@/types/interfaces";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
+import posthog from "posthog-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTracker } from "@/components/providers/TrackerProvider";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -125,6 +126,11 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
           "opportunity"
         );
         if (addOutcome === "added") {
+          posthog.capture("opportunity_bookmarked", {
+            opportunity_id: id,
+            title: opportunity.title,
+            action: "save",
+          });
           toast.success("Saved to Tracker");
         } else if (addOutcome === "already_exists") {
           toast.info("Already in Tracker");
@@ -137,7 +143,14 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
             trackedItem.oppId as string | number,
             trackedItem.kind ?? "opportunity"
           );
-          if (removed) toast.success("Deleted from Tracker");
+          if (removed) {
+            posthog.capture("opportunity_bookmarked", {
+              opportunity_id: id,
+              title: opportunity.title,
+              action: "unsave",
+            });
+            toast.success("Deleted from Tracker");
+          }
         }
       }
 

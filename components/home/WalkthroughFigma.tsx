@@ -161,6 +161,9 @@ export default function WalkthroughFigma({ isDesktop = false }: WalkthroughFigma
 
   const handleSkip = () => {
     setIsVisible(false);
+    if(user?.user?.id){
+      localStorage.setItem(`ftb_walkthrough_completed_${user.user.id}`,"true");
+    }
     sessionStorage.removeItem("ftb_walkthrough_active");
   };
 

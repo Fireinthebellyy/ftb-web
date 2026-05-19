@@ -127,7 +127,7 @@ export default function UngatekeepPage() {
     queryKey: ["ungatekeep", session?.user?.id, activeTags.join(",") || "all"],
     queryFn: async ({ pageParam = 1 }) => {
       if (!session?.user) {
-        throw new Error("Unauthorized");
+        return { posts: [], totalCount: 0, isLimited: false, hasMore: false };
       }
       try {
         const response = await axios.get(
@@ -187,8 +187,9 @@ export default function UngatekeepPage() {
 
   // Refetch when session changes (login/logout) to ensure correct permissions/isSaved status
   useEffect(() => {
-    refetch();
-  }, [session?.user?.id, refetch]);
+    if (!session?.user || sessionPending) return;
+    void refetch();
+  }, [session?.user?.id, sessionPending, session?.user, refetch]);
 
   const posts = data?.pages.flatMap((page) => page.posts) ?? [];
   const pinnedPosts = posts.filter((post) => post.isPinned);

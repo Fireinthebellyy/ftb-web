@@ -30,16 +30,14 @@ export async function GET(request: Request) {
     const offset = (page - 1) * limit;
 
     // Check if user is authenticated
-    let isAuthenticated = false;
-    let userId: string | null = null;
-    try {
-      const session = await auth.api.getSession({
-        headers: await headers(),
-      });
-      isAuthenticated = !!session?.user;
-      userId = session?.user?.id ?? null;
-    } catch {
-      // Not authenticated
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    const isAuthenticated = !!session?.user;
+    const userId = session?.user?.id ?? null;
+
+    if (!isAuthenticated) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Fetch total count for metadata

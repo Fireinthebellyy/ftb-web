@@ -9,8 +9,21 @@ import ToolkitComingSoonCard from "@/components/toolkit/ToolkitComingSoonCard";
 import ToolkitStudentFeedback from "@/components/toolkit/ToolkitStudentFeedback";
 import { Toolkit } from "@/types/interfaces";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSession } from "@/hooks/use-session";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function ToolkitPage() {
+  const { data: session, isPending: sessionPending } = useSession();
+  const router = useRouter();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!sessionPending && !session) {
+      router.replace(`/login?returnUrl=%2Ftoolkit`);
+    }
+  }, [session, sessionPending, router]);
+
   const { data: toolkits = [], isLoading, isError } = useQuery<Toolkit[]>({
     queryKey: ["toolkits"],
     queryFn: async () => {
@@ -24,9 +37,10 @@ export default function ToolkitPage() {
       }
     },
     staleTime: 1000 * 60 * 10,
+    enabled: !!session?.user,
   });
 
-  if (isLoading) {
+  if (sessionPending || !session || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-6">

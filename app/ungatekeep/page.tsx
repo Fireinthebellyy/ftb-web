@@ -214,7 +214,7 @@ export default function UngatekeepPage() {
 
   const [feedbackOpen, setFeedbackOpen] = React.useState(false);
 
-  if (isLoading) {
+  if (sessionPending || !session || isLoading) {
     return (
       <div className="bg-gray-50">
         <div className="container mx-auto max-w-7xl px-4 pt-2 pb-4 md:py-8">

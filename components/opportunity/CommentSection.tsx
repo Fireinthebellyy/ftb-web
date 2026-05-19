@@ -9,6 +9,7 @@ import {
 import { Comment } from "@/types/interfaces";
 import { useSession, Session } from "@/hooks/use-session";
 import { toast } from "sonner";
+import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
@@ -116,6 +117,10 @@ const CommentInput: React.FC<{
 
     try {
       await createComment.mutateAsync({ content: content.trim() });
+      posthog.capture("opportunity_commented", {
+        opportunity_id: opportunityId,
+        comment_length: content.trim().length,
+      });
       setContent("");
       toast.success("Comment posted successfully");
     } catch (_error) {

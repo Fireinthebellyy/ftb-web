@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import posthog from "posthog-js";
 
 import PageBannerCarousel from "@/components/banner/PageBannerCarousel";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -53,6 +54,13 @@ export default function ToolkitBanner() {
               <Link
                 href={`/toolkit/${toolkit.id}`}
                 key={toolkit.id}
+                onClick={() => {
+                  posthog.capture("internship_toolkit_clicked", {
+                    toolkit_id: toolkit.id,
+                    toolkit_title: toolkit.title,
+                    source: "internship_banner",
+                  });
+                }}
                 className="group relative h-[85px] min-w-[130px] shrink-0 snap-start overflow-hidden rounded-lg sm:h-[95px] sm:min-w-[140px]"
               >
                 {/* Background Image */}

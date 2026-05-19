@@ -3,10 +3,12 @@
 import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { Lock, Bookmark, Loader2, Pin, Check } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
+import posthog from "posthog-js";
 import PageBannerCarousel from "@/components/banner/PageBannerCarousel";
 import FeaturedToolkits from "@/components/toolkit/FeaturedToolkits";
 import { Button } from "@/components/ui/button";
@@ -67,14 +69,29 @@ export default function UngatekeepPage() {
   const savedCount = savedCountData ?? 0;
 
   const searchParams = useSearchParams();
-  const activeTag = searchParams.get("tag") || "all";
+  const activeTags = useMemo(() => {
+    const tagParam = searchParams.get("tag");
+    if (!tagParam || tagParam === "all") return [];
+    return tagParam.split(",").filter(Boolean);
+  }, [searchParams]);
 
-  const setActiveTag = (tag: string) => {
+  const toggleTag = (tagValue: string) => {
+    const tagLabel = tags.find((t) => t.value === tagValue)?.label || tagValue;
+    posthog.capture("ungatekeep_filter_tag_clicked", {
+      tag_name: tagLabel,
+    });
     const params = new URLSearchParams(searchParams.toString());
-    if (tag === "all") {
+    if (tagValue === "all") {
       params.delete("tag");
     } else {
-      params.set("tag", tag);
+      const nextTags = activeTags.includes(tagValue)
+        ? activeTags.filter((t) => t !== tagValue)
+        : [...activeTags, tagValue];
+      if (nextTags.length === 0) {
+        params.delete("tag");
+      } else {
+        params.set("tag", nextTags.join(","));
+      }
     }
     const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`;
     window.history.pushState({}, "", newUrl);
@@ -97,11 +114,11 @@ export default function UngatekeepPage() {
     isFetchingNextPage,
     refetch,
   } = useInfiniteQuery<UngatekeepResponse>({
-    queryKey: ["ungatekeep", session?.user?.id, activeTag],
+    queryKey: ["ungatekeep", session?.user?.id, activeTags.join(",") || "all"],
     queryFn: async ({ pageParam = 1 }) => {
       try {
         const response = await axios.get(
-          `/api/ungatekeep?page=${pageParam}&limit=10&tag=${encodeURIComponent(activeTag)}`
+          `/api/ungatekeep?page=${pageParam}&limit=10&tag=${encodeURIComponent(activeTags.join(",") || "all")}`
         );
         return response.data;
       } catch (error) {
@@ -225,13 +242,23 @@ export default function UngatekeepPage() {
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() =>
+                      posthog.capture("quick_link_clicked", {
+                        link_name: "Connect with us",
+                      })
+                    }
                     className="block text-sm text-gray-600 hover:text-gray-800"
                   >
                     Connect with us
                   </Link>
                   <button
                     type="button"
-                    onClick={() => setFeedbackOpen(true)}
+                    onClick={() => {
+                      posthog.capture("quick_link_clicked", {
+                        link_name: "Testimonial/Feedback",
+                      });
+                      setFeedbackOpen(true);
+                    }}
                     className="block cursor-pointer text-sm text-gray-600 hover:text-gray-800"
                   >
                     Testimonial/Feedback
@@ -239,6 +266,11 @@ export default function UngatekeepPage() {
                   <Link
                     href="/profile"
                     prefetch={false}
+                    onClick={() =>
+                      posthog.capture("quick_link_clicked", {
+                        link_name: "My Profile",
+                      })
+                    }
                     className="block text-sm text-gray-600 hover:text-gray-800"
                   >
                     My Profile
@@ -287,15 +319,15 @@ export default function UngatekeepPage() {
                 {tags.map((tag) => (
                   <button
                     key={tag.value}
-                    onClick={() => setActiveTag(tag.value)}
+                    onClick={() => toggleTag(tag.value)}
                     className={cn(
                       "flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-medium transition-all active:scale-95",
-                      activeTag === tag.value
+                      (tag.value === "all" ? activeTags.length === 0 : activeTags.includes(tag.value))
                         ? "border-orange-500 bg-orange-500 text-white shadow-sm"
                         : "border-gray-300 bg-white text-gray-600 hover:bg-orange-500 hover:text-white"
                     )}
                   >
-                    {activeTag === tag.value && (
+                    {(tag.value === "all" ? activeTags.length === 0 : activeTags.includes(tag.value)) && (
                       <Check className="h-3 w-3" />
                     )}
                     {tag.label}
@@ -431,15 +463,15 @@ export default function UngatekeepPage() {
               {tags.map((tag) => (
                 <button
                   key={tag.value}
-                  onClick={() => setActiveTag(tag.value)}
+                  onClick={() => toggleTag(tag.value)}
                   className={cn(
                     "flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border px-2 py-1.5 text-xs font-medium transition-all active:scale-95",
-                    activeTag === tag.value
+                    (tag.value === "all" ? activeTags.length === 0 : activeTags.includes(tag.value))
                       ? "border-orange-500 bg-orange-500 text-white shadow-sm"
                       : "border-gray-300 bg-white text-black hover:bg-orange-500 hover:text-white"
                   )}
                 >
-                  {activeTag === tag.value && (
+                  {(tag.value === "all" ? activeTags.length === 0 : activeTags.includes(tag.value)) && (
                     <Check className="h-3 w-3" />
                   )}
                   {tag.label}

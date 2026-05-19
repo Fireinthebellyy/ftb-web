@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
+import posthog from "posthog-js";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -337,6 +338,21 @@ export default function InternshipList() {
       if(selectedTypes.length>0){
         newParams.set("type",selectedTypes.join(","));
       }
+      if (nextSearch) {
+        posthog.capture("internship_search_submitted", {
+          search_term: nextSearch,
+        });
+      }
+
+      // Track other filters
+      if (location.trim() || paidOnly || selectedTypes.length > 0) {
+        posthog.capture("internship_filters_applied", {
+          location: normalizedLocation,
+          paid_only: paidOnly,
+          types: selectedTypes,
+        });
+      }
+
       router.push(`?${newParams.toString()}`,{scroll:false})
       if (overrideSearch !== undefined) {
         setSearchTerm(overrideSearch);

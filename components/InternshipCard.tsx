@@ -105,7 +105,14 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
     try {
       if (isBookmarked) {
         const removed = await removeFromTracker(id, "internship");
-        if (removed) toast.success("Deleted from Tracker");
+        if (removed) {
+          posthog.capture("internship_bookmarked", {
+            internship_id: id,
+            title,
+            action: "unsave",
+          });
+          toast.success("Deleted from Tracker");
+        }
       } else {
         const addOutcome = await addToTracker(
           {
@@ -119,6 +126,11 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
           "internship"
         );
         if (addOutcome === "added") {
+          posthog.capture("internship_bookmarked", {
+            internship_id: id,
+            title,
+            action: "save",
+          });
           toast.success("Saved to Tracker");
         } else if (addOutcome === "already_exists") {
           toast.info("Already in Tracker");
@@ -221,7 +233,13 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
               })()}&details=${encodeURIComponent(`Company: ${hiringOrganization || "N/A"}\n\nInternship Link: ${shareUrl}`)}`}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                posthog.capture("internship_calendar_clicked", {
+                  internship_id: id,
+                  title,
+                });
+              }}
               title="Add to calendar"
               className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-blue-50"
             >

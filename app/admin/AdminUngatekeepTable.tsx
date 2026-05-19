@@ -24,6 +24,7 @@ interface UngatekeepPost {
   linkImage?: string | null;
   videoUrl?: string | null;
   tag?: string | null;
+  filterTags: string[];
   isPinned: boolean;
   isPublished: boolean;
   is_trending: boolean;
@@ -376,6 +377,7 @@ export default function AdminUngatekeepTable() {
                   linkImage: post.linkImage,
                   videoUrl: post.videoUrl,
                   tag: post.tag,
+                  filterTags: post.filterTags,
                   toolkitId: post.toolkitId,
                   isPinned: post.isPinned,
                   isPublished: post.isPublished,

@@ -506,6 +506,7 @@ export const ungatekeepPosts = pgTable("ungatekeep_posts", {
   linkImage: text("link_image"),
   videoUrl: text("video_url"),
   tag: text("tag"),
+  filterTags: text("filter_tags").array().default([]), // For frontend filtering: college_amas, upskill, entrance_exams
   isPinned: boolean("is_pinned").default(false),
   isPublished: boolean("is_published").default(false),
   publishedAt: timestamp("published_at"),

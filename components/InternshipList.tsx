@@ -21,6 +21,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import FeaturedOpportunities from "./opportunity/FeaturedOpportunities";
 import ToolkitBanner from "./internship/ToolkitBanner";
 
@@ -498,16 +504,13 @@ export default function InternshipList() {
                 </Button>
               </div>
 
-              {/* Filter Box */}
-              {isFilterBoxOpen && (
-                <div
-                  id="mobile-filter-panel"
-                  className="animate-in slide-in-from-top-2 mt-4 rounded-[20px] border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/40 duration-200"
-                >
-                  <div className="mb-5 flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-slate-900">
+              {/* Bottom-to-Top Filter Drawer */}
+              <Drawer open={isFilterBoxOpen} onOpenChange={setIsFilterBoxOpen}>
+                <DrawerContent className="p-6 pb-8">
+                  <DrawerHeader className="px-0 pt-0 flex flex-row items-center justify-between text-left group-data-[vaul-drawer-direction=bottom]/drawer-content:text-left">
+                    <DrawerTitle className="text-lg font-semibold text-slate-900">
                       Filters
-                    </h3>
+                    </DrawerTitle>
                     <button
                       onClick={clearFilters}
                       disabled={!hasActiveFilters}
@@ -520,96 +523,101 @@ export default function InternshipList() {
                     >
                       Reset filters
                     </button>
-                  </div>
+                  </DrawerHeader>
 
-                  {/* Internship Type Filter */}
-                  <div className="mb-6">
-                    <label className="mb-3 block text-xs font-bold tracking-widest text-slate-500 uppercase">
-                      Type
-                    </label>
-                    <div className="flex flex-wrap gap-2.5">
-                      {["onsite", "remote", "hybrid"].map((t) => (
+                  <div className="space-y-6 mt-4">
+                    {/* Internship Type Filter */}
+                    <div>
+                      <label className="mb-3 block text-xs font-bold tracking-widest text-slate-500 uppercase">
+                        Type
+                      </label>
+                      <div className="flex flex-wrap gap-2.5">
+                        {["onsite", "remote", "hybrid"].map((t) => (
+                          <button
+                            key={t}
+                            onClick={() => toggleType(t)}
+                            className={cn(
+                              "rounded-full border px-4 py-2 text-sm font-medium transition-all",
+                              selectedTypes.includes(t)
+                                ? "border-slate-300 bg-slate-50 text-slate-800"
+                                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                            )}
+                          >
+                            {t.charAt(0).toUpperCase() + t.slice(1)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Stipend Filter */}
+                    <div>
+                      <label className="mb-3 block text-xs font-bold tracking-widest text-slate-500 uppercase">
+                        Stipend
+                      </label>
+                      <div className="flex flex-wrap gap-2.5">
                         <button
-                          key={t}
-                          onClick={() => toggleType(t)}
+                          onClick={() => setPaidOnly(true)}
                           className={cn(
                             "rounded-full border px-4 py-2 text-sm font-medium transition-all",
-                            selectedTypes.includes(t)
+                            paidOnly
                               ? "border-slate-300 bg-slate-50 text-slate-800"
                               : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                           )}
                         >
-                          {t.charAt(0).toUpperCase() + t.slice(1)}
+                          Paid
                         </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Stipend Filter */}
-                  <div className="mb-6">
-                    <label className="mb-3 block text-xs font-bold tracking-widest text-slate-500 uppercase">
-                      Stipend
-                    </label>
-                    <div className="flex flex-wrap gap-2.5">
-                      <button
-                        onClick={() => setPaidOnly(true)}
-                        className={cn(
-                          "rounded-full border px-4 py-2 text-sm font-medium transition-all",
-                          paidOnly
-                            ? "border-slate-300 bg-slate-50 text-slate-800"
-                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-                        )}
-                      >
-                        Paid
-                      </button>
-                      <button
-                        onClick={() => setPaidOnly(false)}
-                        className={cn(
-                          "rounded-full border px-4 py-2 text-sm font-medium transition-all",
-                          !paidOnly
-                            ? "border-slate-300 bg-slate-50 text-slate-800"
-                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-                        )}
-                      >
-                        Paid/Unpaid
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Location Filter */}
-                  <div className="mb-2">
-                    <label className="mb-3 block text-xs font-bold tracking-widest text-slate-500 uppercase">
-                      Location
-                    </label>
-                    <div className="group relative">
-                      <Input
-                        placeholder="E.g. Delhi, Mumbai (comma separated)"
-                        value={location}
-                        onChange={(e) => setLocation(e.target.value)}
-                        className="h-11 w-full rounded-[12px] border-slate-200 bg-white pr-10 pl-4 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50"
-                      />
-                      {location && (
                         <button
-                          type="button"
-                          aria-label="Clear location"
-                          onClick={() => setLocation("")}
-                          className="absolute top-1/2 right-3 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200"
+                          onClick={() => setPaidOnly(false)}
+                          className={cn(
+                            "rounded-full border px-4 py-2 text-sm font-medium transition-all",
+                            !paidOnly
+                              ? "border-slate-300 bg-slate-50 text-slate-800"
+                              : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                          )}
                         >
-                          <X className="h-3.5 w-3.5" />
+                          Paid/Unpaid
                         </button>
-                      )}
+                      </div>
+                    </div>
+
+                    {/* Location Filter */}
+                    <div>
+                      <label className="mb-3 block text-xs font-bold tracking-widest text-slate-500 uppercase">
+                        Location
+                      </label>
+                      <div className="group relative">
+                        <Input
+                          placeholder="E.g. Delhi, Mumbai (comma separated)"
+                          value={location}
+                          onChange={(e) => setLocation(e.target.value)}
+                          className="h-11 w-full rounded-[12px] border-slate-200 bg-white pr-10 pl-4 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50"
+                        />
+                        {location && (
+                          <button
+                            type="button"
+                            aria-label="Clear location"
+                            onClick={() => setLocation("")}
+                            className="absolute top-1/2 right-3 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
 
                   <Button
-                    onClick={() => applyFilters()}
+                    onClick={() => {
+                      applyFilters();
+                      setIsFilterBoxOpen(false);
+                    }}
                     disabled={!hasPendingChanges}
-                    className="mt-4 w-full"
+                    className="mt-6 w-full"
                   >
                     Apply filters
                   </Button>
-                </div>
-              )}
+                </DrawerContent>
+              </Drawer>
             </>
           )}
         </div>

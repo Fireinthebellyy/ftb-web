@@ -158,11 +158,16 @@ export async function GET(req: NextRequest) {
     }
 
     if (searchTerm) {
+      const pattern = `%${searchTerm}%`;
+      // Match title or tags (role/skills); not company name or description.
       conditions.push(
         or(
-          ilike(internships.title, `%${searchTerm}%`),
-          ilike(internships.description, `%${searchTerm}%`),
-          ilike(internships.hiringOrganization, `%${searchTerm}%`)
+          ilike(internships.title, pattern),
+          sql`EXISTS (
+            SELECT 1
+            FROM unnest(coalesce(${internships.tags}, '{}'::text[])) AS t(tag_name)
+            WHERE t.tag_name ILIKE ${pattern}
+          )`
         )
       );
     }

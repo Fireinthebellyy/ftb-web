@@ -4,7 +4,7 @@ import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Lock, Bookmark, Loader2, Pin, Check } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
@@ -53,7 +53,17 @@ type UngatekeepResponse = {
 };
 
 export default function UngatekeepPage() {
-  const { data: session } = useSession();
+  const { data: session, isPending: sessionPending } = useSession();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!sessionPending && !session) {
+      router.replace(`/login?returnUrl=%2Fungatekeep`);
+    }
+  }, [session, sessionPending, router]);
+
   const loadMoreRefDesktop = useRef<HTMLDivElement>(null);
   const loadMoreRefMobile = useRef<HTMLDivElement>(null);
   const savedButtonControls = useAnimation();
@@ -68,7 +78,7 @@ export default function UngatekeepPage() {
   });
   const savedCount = savedCountData ?? 0;
 
-  const searchParams = useSearchParams();
+
   const activeTags = useMemo(() => {
     const tagParam = searchParams.get("tag");
     if (!tagParam || tagParam === "all") return [];
@@ -116,12 +126,18 @@ export default function UngatekeepPage() {
   } = useInfiniteQuery<UngatekeepResponse>({
     queryKey: ["ungatekeep", session?.user?.id, activeTags.join(",") || "all"],
     queryFn: async ({ pageParam = 1 }) => {
+      if (!session?.user) {
+        throw new Error("Unauthorized");
+      }
       try {
         const response = await axios.get(
           `/api/ungatekeep?page=${pageParam}&limit=10&tag=${encodeURIComponent(activeTags.join(",") || "all")}`
         );
         return response.data;
       } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          return { posts: [], totalCount: 0, isLimited: false, hasMore: false };
+        }
         console.error("Error fetching ungatekeep posts:", error);
         toast.error("Failed to load posts. Please try again later.");
         throw error;
@@ -135,6 +151,7 @@ export default function UngatekeepPage() {
     },
     initialPageParam: 1,
     staleTime: 1000 * 60 * 5,
+    enabled: !!session?.user && !sessionPending,
   });
 
   useEffect(() => {

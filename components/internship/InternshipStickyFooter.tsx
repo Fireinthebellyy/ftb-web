@@ -12,19 +12,15 @@ import posthog from "posthog-js";
 interface InternshipStickyFooterProps {
   internship: InternshipData;
   isBookmarked: boolean;
-  session: { user: any } | null;
   handleBookmarkClick: () => void;
   handleCalendarClick: () => void;
-  onSmartApplyClick: () => void;
 }
 
 export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
   internship,
   isBookmarked,
-  session,
   handleBookmarkClick,
   handleCalendarClick,
-  onSmartApplyClick,
 }) => {
   return (
     <footer className="pb-safe fixed right-0 bottom-0 left-0 z-[60] flex items-center gap-2.5 border-t border-slate-100 bg-white px-4 py-3">
@@ -77,7 +73,7 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
         </Link>
       )}
 
-      {session?.user && (
+      {/* session?.user && (
         <Button
           onClick={() => {
             posthog.capture("internship_smart_apply_clicked", {
@@ -91,7 +87,7 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
         >
           Smart Apply
         </Button>
-      )}
+      ) */}
     </footer>
   );
 };

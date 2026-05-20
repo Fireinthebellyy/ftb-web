@@ -158,13 +158,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (searchTerm) {
-      conditions.push(
-        or(
-          ilike(internships.title, `%${searchTerm}%`),
-          ilike(internships.description, `%${searchTerm}%`),
-          ilike(internships.hiringOrganization, `%${searchTerm}%`)
-        )
-      );
+      conditions.push(ilike(internships.title, `%${searchTerm}%`));
     }
 
     if (validTypes.length > 0) {

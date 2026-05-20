@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import FeaturedToolkits from "@/components/toolkit/FeaturedToolkits";
 import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
+import { useSession } from "@/hooks/use-session";
 
 type UngatekeepPost = {
   id: string;
@@ -43,7 +44,17 @@ type UngatekeepPost = {
 export default function UngatekeepPostPage() {
   const params = useParams();
   const router = useRouter();
+  const { data: session, isPending: sessionPending } = useSession();
+
   const postId = params.id as string;
+
+  // Redirect to login if not authenticated
+  React.useEffect(() => {
+    if (!sessionPending && !session) {
+      router.replace(`/login?returnUrl=%2Fungatekeep%2F${postId}`);
+    }
+  }, [session, sessionPending, router, postId]);
+
   const [isMobile, setIsMobile] = React.useState<boolean | null>(null);
 
   React.useEffect(() => {
@@ -69,7 +80,7 @@ export default function UngatekeepPostPage() {
         throw error;
       }
     },
-    enabled: !!postId,
+    enabled: !!postId && !!session?.user,
   });
 
   const getTagBadgeVariant = (tag: string | null | undefined) => {
@@ -127,7 +138,7 @@ export default function UngatekeepPostPage() {
     return null;
   };
 
-  if (isLoading) {
+  if (sessionPending || !session || isLoading) {
     return (
       <div className="bg-gray-50">
         <div className="container mx-auto max-w-7xl px-4 pt-2 pb-4 md:py-8">

@@ -15,7 +15,20 @@ import PageBannerCarousel from "@/components/banner/PageBannerCarousel";
 import FeaturedOpportunities from "@/components/opportunity/FeaturedOpportunities";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 
+import { useRouter } from "next/navigation";
+import { useSession } from "@/hooks/use-session";
+
 export default function SavedUngatekeepPage() {
+  const router = useRouter();
+  const { data: session, isPending: sessionPending } = useSession();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!sessionPending && !session) {
+      router.replace(`/login?returnUrl=%2Fungatekeep%2Fsaved`);
+    }
+  }, [session, sessionPending, router]);
+
   const [feedbackOpen, setFeedbackOpen] = React.useState(false);
 
   const { data: savedPosts = [], isLoading, error, refetch } = useQuery({
@@ -31,7 +44,8 @@ export default function SavedUngatekeepPage() {
         }
         throw err;
       }
-    }
+    },
+    enabled: !!session?.user,
   });
 
   useEffect(() => {
@@ -40,7 +54,7 @@ export default function SavedUngatekeepPage() {
     }
   }, [error]);
 
-  if (isLoading) {
+  if (sessionPending || !session || isLoading) {
     return (
       <div className="bg-gray-50">
         <div className="container mx-auto max-w-7xl px-4 pt-2 pb-4 md:py-8">

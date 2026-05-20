@@ -379,6 +379,7 @@ export default function InternshipList() {
       .slice(0, 5);
   }, [searchTerm, searchSuggestions]);
 
+  const [showInternshipSkeleton,setShowInternshipSkeleton]=useState(false);
   const applyFilters = useCallback(
     (overrideSearch?: string) => {
       const nextSearch = (overrideSearch ?? searchTerm).trim();
@@ -418,7 +419,9 @@ export default function InternshipList() {
         });
       }
 
-      router.push(`?${newParams.toString()}`,{scroll:false})
+      setShowInternshipSkeleton(true);
+      setTimeout(()=>{
+        router.push(`?${newParams.toString()}`,{scroll:false})
       if (overrideSearch !== undefined) {
         setSearchTerm(overrideSearch);
       }
@@ -428,6 +431,8 @@ export default function InternshipList() {
       setAppliedStipendFilter(stipendFilter);
       setAppliedMinStipend(stipendFilter === "custom" ? minStipend : undefined);
       setAppliedTags(selectedTags);
+      setShowInternshipSkeleton(false);
+      },1000)
     },
     [searchTerm, normalizedLocation, selectedTypes, selectedTags, stipendFilter, minStipend, location, router]
   );
@@ -1136,6 +1141,19 @@ export default function InternshipList() {
               </div>
             )}
 
+            {/* Loader when filter is applied or internship is searched */}
+            {showInternshipSkeleton && <>
+               <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm animate-in fade-in duration-200">
+                   <div className="flex flex-col items-center gap-4">
+                     <div className="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-[#ec5b13]" />
+                     <p className="text-sm font-semibold text-slate-700 animate-pulse tracking-tight">
+                       Finding the best internships for you...
+                       </p>
+                   </div>
+               </div> 
+               </>
+             }
+
             {!showInitialSkeleton && (
               <>
                 {allInternships.length > 0 ? (
@@ -1256,6 +1274,20 @@ export default function InternshipList() {
               ))}
             </div>
           )}
+
+          {/* Loader when filter is applied or internship is searched */}
+          {showInternshipSkeleton && <>
+               <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm animate-in fade-in duration-200">
+                   <div className="flex flex-col items-center gap-4">
+                     <div className="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-[#ec5b13]" />
+                     <p className="text-sm font-semibold text-slate-700 animate-pulse tracking-tight">
+                       Finding the best internships for you...
+                       </p>
+                   </div>
+               </div> 
+               </>
+             }
+
 
           {!showInitialSkeleton && (
             <>

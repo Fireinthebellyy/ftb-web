@@ -643,15 +643,15 @@ export default function InternshipList() {
                     
                     {/* Left Pane (Tabs sidebar) */}
                     <div className="w-[125px] shrink-0 border-r border-slate-100 bg-slate-50 flex flex-col overflow-y-auto">
-                      {[
+                      {([
                         { id: "type", label: "Type", active: selectedTypes.length > 0 },
                         { id: "stipend", label: "Stipend", active: stipendFilter !== "all" },
                         { id: "location", label: "Location", active: location.trim().length > 0 },
                         // { id: "category", label: "Category", active: selectedTags.length > 0 },
-                      ].map((tab) => (
+                      ] as const).map((tab) => (
                         <button
                           key={tab.id}
-                          onClick={() => setActiveTab(tab.id as any)}
+                          onClick={() => setActiveTab(tab.id)}
                           className={cn(
                             "py-4 px-4 text-[13px] font-bold tracking-wide transition-all text-left relative flex items-center justify-between border-b border-slate-100/50",
                             activeTab === tab.id
@@ -712,16 +712,16 @@ export default function InternshipList() {
                           <span className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1 px-1">
                             Stipend Option
                           </span>
-                          {[
+                          {([
                             { value: "all", label: "Paid/Unpaid (All)" },
                             { value: "paid", label: "Paid Only" },
-                          ].map((option) => {
+                          ] as const).map((option) => {
                             const isSelected = stipendFilter === option.value;
                             return (
                               <button
                                 key={option.value}
                                 onClick={() => {
-                                  setStipendFilter(option.value as any);
+                                  setStipendFilter(option.value);
                                   if (option.value === "all") {
                                     setMinStipend(0);
                                   } else {
@@ -975,16 +975,16 @@ export default function InternshipList() {
                         Stipend
                       </label>
                       <div className="space-y-3">
-                        {[
+                        {([
                           { value: "all", label: "Paid/Unpaid (All)" },
                           { value: "paid", label: "Paid Only" },
-                        ].map((option) => {
+                        ] as const).map((option) => {
                           const isSelected = stipendFilter === option.value;
                           return (
                             <button
                               key={option.value}
                               onClick={() => {
-                                  setStipendFilter(option.value as any);
+                                  setStipendFilter(option.value);
                                   if (option.value === "all") {
                                     setMinStipend(0);
                                   } else {

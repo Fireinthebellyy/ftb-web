@@ -293,10 +293,8 @@ export default function InternshipDetailPage() {
         <InternshipStickyFooter
           internship={internship}
           isBookmarked={isBookmarked}
-          _session={session}
           handleBookmarkClick={handleBookmarkClick}
           handleCalendarClick={handleCalendarClick}
-          _onSmartApplyClick={() => {}}
         />
       </div>
 
@@ -311,7 +309,6 @@ export default function InternshipDetailPage() {
             isBookmarked={isBookmarked}
             handleBookmarkClick={handleBookmarkClick}
             handleCalendarClick={handleCalendarClick}
-            _onSmartApplyClick={() => {}}
             onEditClick={handleOpenEdit}
             onAdminClick={() => setAdminModalOpen(true)}
           />

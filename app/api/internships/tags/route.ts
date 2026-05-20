@@ -10,9 +10,12 @@ export async function GET(_req: NextRequest) {
       WHERE deleted_at IS NULL AND is_active = true
       ORDER BY tag ASC
     `);
-    
+    const isRowWithTag = (x: unknown): x is { tag: unknown } => 
+      typeof x === "object" && x !== null && "tag" in x;
+
     const tagList = res.rows
-      .map((r: any) => r.tag)
+      .filter(isRowWithTag)
+      .map((r) => r.tag)
       .filter((t): t is string => typeof t === "string" && t.trim().length > 0);
 
     return NextResponse.json({ success: true, tags: tagList });

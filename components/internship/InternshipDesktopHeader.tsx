@@ -29,7 +29,6 @@ interface InternshipDesktopHeaderProps {
   isBookmarked: boolean;
   handleBookmarkClick: () => void;
   handleCalendarClick: () => void;
-  _onSmartApplyClick: () => void;
   onEditClick?: () => void;
   onAdminClick?: () => void;
   isAdminLoading?: boolean;
@@ -41,7 +40,6 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
   isBookmarked,
   handleBookmarkClick,
   handleCalendarClick,
-  _onSmartApplyClick,
   onEditClick,
   onAdminClick,
   isAdminLoading,

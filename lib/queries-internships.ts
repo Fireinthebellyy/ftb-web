@@ -104,3 +104,16 @@ export function useInternship(id: string) {
     staleTime: 1000 * 30,
   });
 }
+
+export function useInternshipTags() {
+  return useQuery<string[]>({
+    queryKey: ["internship-tags"],
+    queryFn: async () => {
+      const { data } = await axios.get<{ tags: string[] }>(
+        "/api/internships/tags"
+      );
+      return data.tags || [];
+    },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+}

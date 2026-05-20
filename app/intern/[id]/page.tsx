@@ -16,8 +16,8 @@ import { toTitleCase } from "@/lib/utils";
 import { ShareDialog } from "@/components/internship/ShareDialog";
 import { useSession } from "@/hooks/use-session";
 import { type InternshipData } from "@/types/interfaces";
-import { mapInternshipToApplyOpportunity } from "@/lib/internship-utils";
-import ApplyModal from "@/components/tracker/ApplyModal";
+// import { mapInternshipToApplyOpportunity } from "@/lib/internship-utils";
+// import ApplyModal from "@/components/tracker/ApplyModal";
 import { useTracker } from "@/components/providers/TrackerProvider";
 
 import { InternshipHero } from "@/components/internship/InternshipHero";
@@ -35,7 +35,7 @@ export default function InternshipDetailPage() {
   const [internship, setInternship] = useState<InternshipData | null>(null);
   const [loading, setLoading] = useState(true);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [smartApplyOpen, setSmartApplyOpen] = useState(false);
+  // const [_smartApplyOpen, setSmartApplyOpen] = useState(false);
   const [notFoundError, setNotFoundError] = useState(false);
   const [isFlagging, setIsFlagging] = useState(false);
   const [adminModalOpen, setAdminModalOpen] = useState(false);
@@ -293,10 +293,10 @@ export default function InternshipDetailPage() {
         <InternshipStickyFooter
           internship={internship}
           isBookmarked={isBookmarked}
-          session={session}
+          _session={session}
           handleBookmarkClick={handleBookmarkClick}
           handleCalendarClick={handleCalendarClick}
-          onSmartApplyClick={() => setSmartApplyOpen(true)}
+          _onSmartApplyClick={() => {}}
         />
       </div>
 
@@ -311,7 +311,7 @@ export default function InternshipDetailPage() {
             isBookmarked={isBookmarked}
             handleBookmarkClick={handleBookmarkClick}
             handleCalendarClick={handleCalendarClick}
-            onSmartApplyClick={() => setSmartApplyOpen(true)}
+            _onSmartApplyClick={() => {}}
             onEditClick={handleOpenEdit}
             onAdminClick={() => setAdminModalOpen(true)}
           />
@@ -408,14 +408,7 @@ export default function InternshipDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Smart Apply Modal */}
-      <ApplyModal
-        isOpen={smartApplyOpen}
-        onClose={() => setSmartApplyOpen(false)}
-        opportunity={
-          internship ? mapInternshipToApplyOpportunity(internship) : null
-        }
-      />
+      {/* Smart Apply Modal has been commented out/disabled */}
 
       {/* Admin Controls Modal */}
       <AdminControlsModal

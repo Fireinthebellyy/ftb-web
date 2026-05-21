@@ -29,7 +29,7 @@ export const InternshipTabContent: React.FC<InternshipTabContentProps> = ({
           </div>
           
           <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
-            <div className="text-slate-600 leading-relaxed text-[15px] space-y-5">
+            <div className="text-slate-600 leading-relaxed text-[15px] space-y-5 break-words w-full overflow-hidden">
               {typeof internship.description === "string" ? (
                 <div className="whitespace-pre-wrap">
                   {internship.description}

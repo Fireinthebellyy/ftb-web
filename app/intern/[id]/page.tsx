@@ -16,8 +16,8 @@ import { toTitleCase } from "@/lib/utils";
 import { ShareDialog } from "@/components/internship/ShareDialog";
 import { useSession } from "@/hooks/use-session";
 import { type InternshipData } from "@/types/interfaces";
-import { mapInternshipToApplyOpportunity } from "@/lib/internship-utils";
-import ApplyModal from "@/components/tracker/ApplyModal";
+import { LinkifyText } from "@/components/LinkifyText";
+
 import { useTracker } from "@/components/providers/TrackerProvider";
 
 import { InternshipHero } from "@/components/internship/InternshipHero";
@@ -35,7 +35,7 @@ export default function InternshipDetailPage() {
   const [internship, setInternship] = useState<InternshipData | null>(null);
   const [loading, setLoading] = useState(true);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [smartApplyOpen, setSmartApplyOpen] = useState(false);
+
   const [notFoundError, setNotFoundError] = useState(false);
   const [isFlagging, setIsFlagging] = useState(false);
   const [adminModalOpen, setAdminModalOpen] = useState(false);
@@ -293,10 +293,8 @@ export default function InternshipDetailPage() {
         <InternshipStickyFooter
           internship={internship}
           isBookmarked={isBookmarked}
-          session={session}
           handleBookmarkClick={handleBookmarkClick}
           handleCalendarClick={handleCalendarClick}
-          onSmartApplyClick={() => setSmartApplyOpen(true)}
         />
       </div>
 
@@ -311,7 +309,6 @@ export default function InternshipDetailPage() {
             isBookmarked={isBookmarked}
             handleBookmarkClick={handleBookmarkClick}
             handleCalendarClick={handleCalendarClick}
-            onSmartApplyClick={() => setSmartApplyOpen(true)}
             onEditClick={handleOpenEdit}
             onAdminClick={() => setAdminModalOpen(true)}
           />
@@ -320,11 +317,9 @@ export default function InternshipDetailPage() {
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
             {/* Left: Description */}
             <div className="lg:col-span-2">
-              <div className="max-w-[650px] space-y-4 text-[15px] leading-relaxed text-slate-600">
+              <div className="max-w-[650px] space-y-4 text-[15px] leading-relaxed text-slate-600 break-words w-full overflow-hidden">
                 {typeof internship.description === "string" ? (
-                  <p className="whitespace-pre-wrap">
-                    {internship.description}
-                  </p>
+                  <LinkifyText text={internship.description} />
                 ) : (
                   internship.description || <p>No description provided.</p>
                 )}
@@ -408,14 +403,7 @@ export default function InternshipDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Smart Apply Modal */}
-      <ApplyModal
-        isOpen={smartApplyOpen}
-        onClose={() => setSmartApplyOpen(false)}
-        opportunity={
-          internship ? mapInternshipToApplyOpportunity(internship) : null
-        }
-      />
+
 
       {/* Admin Controls Modal */}
       <AdminControlsModal

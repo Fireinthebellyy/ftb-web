@@ -29,7 +29,6 @@ interface InternshipDesktopHeaderProps {
   isBookmarked: boolean;
   handleBookmarkClick: () => void;
   handleCalendarClick: () => void;
-  onSmartApplyClick: () => void;
   onEditClick?: () => void;
   onAdminClick?: () => void;
   isAdminLoading?: boolean;
@@ -41,7 +40,6 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
   isBookmarked,
   handleBookmarkClick,
   handleCalendarClick,
-  onSmartApplyClick,
   onEditClick,
   onAdminClick,
   isAdminLoading,
@@ -159,21 +157,6 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
               className="w-5 h-5 object-contain"
             />
           </Button>
-          {session?.user && (
-            <Button
-              onClick={() => {
-                posthog.capture("internship_smart_apply_clicked", {
-                  internship_id: internship.id,
-                  title: internship.title,
-                  source: "desktop_header",
-                });
-                onSmartApplyClick();
-              }}
-              className="h-12 px-6 rounded-xl bg-[#ec5b13] hover:bg-[#d44d0c] text-white font-bold border-none shadow-lg shadow-orange-500/20 flex items-center gap-2 transition-all"
-            >
-              Smart Apply
-            </Button>
-          )}
           {(internship.applyLink || internship.link) && (
             <Link
               href={addUtmParams(internship.applyLink || internship.link || "", "ftb_web")}
@@ -188,7 +171,7 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
                 })
               }
             >
-              <Button className="h-12 px-8 rounded-xl bg-orange-50 hover:bg-orange-100 text-[#ec5b13] font-bold border-none shadow-none transition-all">
+              <Button className="h-12 px-8 rounded-xl bg-[#ec5b13] hover:bg-[#d44d0c] text-white font-bold border-none shadow-lg shadow-orange-500/20 transition-all">
                 Apply Now
               </Button>
             </Link>

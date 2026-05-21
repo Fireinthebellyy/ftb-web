@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { formatSalary, toTitleCase } from "@/lib/utils";
 import { InternshipData } from "@/types/interfaces";
+import { LinkifyText } from "@/components/LinkifyText";
 
 interface InternshipTabContentProps {
   activeTab: string;
@@ -29,11 +30,9 @@ export const InternshipTabContent: React.FC<InternshipTabContentProps> = ({
           </div>
           
           <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
-            <div className="text-slate-600 leading-relaxed text-[15px] space-y-5">
+            <div className="text-slate-600 leading-relaxed text-[15px] space-y-5 break-words w-full overflow-hidden">
               {typeof internship.description === "string" ? (
-                <div className="whitespace-pre-wrap">
-                  {internship.description}
-                </div>
+                <LinkifyText text={internship.description} />
               ) : React.isValidElement(internship.description) || Array.isArray(internship.description) ? (
                 <div>{internship.description as React.ReactNode}</div>
               ) : typeof internship.description === "object" && internship.description !== null ? (

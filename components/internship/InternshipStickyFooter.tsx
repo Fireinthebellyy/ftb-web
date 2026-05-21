@@ -12,19 +12,15 @@ import posthog from "posthog-js";
 interface InternshipStickyFooterProps {
   internship: InternshipData;
   isBookmarked: boolean;
-  session: { user: any } | null;
   handleBookmarkClick: () => void;
   handleCalendarClick: () => void;
-  onSmartApplyClick: () => void;
 }
 
 export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
   internship,
   isBookmarked,
-  session,
   handleBookmarkClick,
   handleCalendarClick,
-  onSmartApplyClick,
 }) => {
   return (
     <footer className="pb-safe fixed right-0 bottom-0 left-0 z-[60] flex items-center gap-2.5 border-t border-slate-100 bg-white px-4 py-3">
@@ -71,26 +67,10 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
           }
           className="flex-1"
         >
-          <Button className="h-12 w-full rounded-xl border-none bg-orange-50 px-0 font-bold text-[#ec5b13] shadow-none transition-all hover:bg-orange-100 active:scale-95">
+          <Button className="h-12 w-full rounded-xl border-none bg-[#ec5b13] px-0 font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:bg-[#d44d0c] active:scale-95">
             Apply Now
           </Button>
         </Link>
-      )}
-
-      {session?.user && (
-        <Button
-          onClick={() => {
-            posthog.capture("internship_smart_apply_clicked", {
-              internship_id: internship.id,
-              title: internship.title,
-              source: "mobile_footer",
-            });
-            onSmartApplyClick();
-          }}
-          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-none bg-[#ec5b13] px-0 text-[14px] font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:bg-[#d44d0c] active:scale-95"
-        >
-          Smart Apply
-        </Button>
       )}
     </footer>
   );

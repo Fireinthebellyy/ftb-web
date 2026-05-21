@@ -16,6 +16,7 @@ import { toTitleCase } from "@/lib/utils";
 import { ShareDialog } from "@/components/internship/ShareDialog";
 import { useSession } from "@/hooks/use-session";
 import { type InternshipData } from "@/types/interfaces";
+import { LinkifyText } from "@/components/LinkifyText";
 
 import { useTracker } from "@/components/providers/TrackerProvider";
 
@@ -318,9 +319,7 @@ export default function InternshipDetailPage() {
             <div className="lg:col-span-2">
               <div className="max-w-[650px] space-y-4 text-[15px] leading-relaxed text-slate-600 break-words w-full overflow-hidden">
                 {typeof internship.description === "string" ? (
-                  <p className="whitespace-pre-wrap">
-                    {internship.description}
-                  </p>
+                  <LinkifyText text={internship.description} />
                 ) : (
                   internship.description || <p>No description provided.</p>
                 )}

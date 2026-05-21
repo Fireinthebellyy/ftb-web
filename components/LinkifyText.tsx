@@ -3,21 +3,26 @@
 import React from "react";
 
 interface LinkifyTextProps {
-  text: string;
+  text?: string | null;
 }
 
 export function LinkifyText({ text }: LinkifyTextProps) {
   if (!text) return null;
 
-  // Regex matching standard URLs starting with http://, https://, or www.
-  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+  // Regex matching standard URLs starting with http://, https://, or www., excluding trailing punctuation
+  const urlRegex = /(https?:\/\/[^\s]+?|www\.[^\s]+?)(?=[.,;:)\]!?]*(?:\s|$))/g;
 
   const parts = text.split(urlRegex);
 
   return (
     <span className="whitespace-pre-wrap">
       {parts.map((part, i) => {
-        if (urlRegex.test(part)) {
+        const isUrl =
+          part.startsWith("http://") ||
+          part.startsWith("https://") ||
+          part.startsWith("www.");
+
+        if (isUrl) {
           const href = part.startsWith("www.") ? `https://${part}` : part;
           return (
             <a

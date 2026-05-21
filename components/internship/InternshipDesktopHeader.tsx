@@ -29,6 +29,7 @@ interface InternshipDesktopHeaderProps {
   isBookmarked: boolean;
   handleBookmarkClick: () => void;
   handleCalendarClick: () => void;
+  onSmartApplyClick: () => void;
   onEditClick?: () => void;
   onAdminClick?: () => void;
   isAdminLoading?: boolean;
@@ -40,6 +41,7 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
   isBookmarked,
   handleBookmarkClick,
   handleCalendarClick,
+  onSmartApplyClick,
   onEditClick,
   onAdminClick,
   isAdminLoading,
@@ -157,7 +159,7 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
               className="w-5 h-5 object-contain"
             />
           </Button>
-          {/* session?.user && (
+          {session?.user && (
             <Button
               onClick={() => {
                 posthog.capture("internship_smart_apply_clicked", {
@@ -171,7 +173,7 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
             >
               Smart Apply
             </Button>
-          ) */}
+          )}
           {(internship.applyLink || internship.link) && (
             <Link
               href={addUtmParams(internship.applyLink || internship.link || "", "ftb_web")}

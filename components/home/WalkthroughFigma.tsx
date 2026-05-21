@@ -146,18 +146,20 @@ export default function WalkthroughFigma({ isDesktop = false }: WalkthroughFigma
   if (isPending || !user) return null;
   if (!isVisible || currentStepIndex === -1) return null;
 
-  const removeWalkthrough = () => {
+  const removeWalkthrough=()=>{
     setIsVisible(false);
-    try {
-      if (user?.user?.id) {
-        localStorage.setItem(`ftb_walkthrough_completed_${user.user.id}`, "true");
+    try{
+      if(user?.user?.id){
+        localStorage.setItem(`ftb_walkthrough_completed_${user.user.id}`,"true");
       }
-    } catch (err) {
-      console.error("Error in removing walkthrough: ", err);
-    } finally {
+    }
+    catch(err){
+      console.error("Error in removing walkthrough: ",err);
+    }
+    finally{
       sessionStorage.removeItem("ftb_walkthrough_active");
     }
-  };
+  }
 
   const handleNext = () => {
     if (step < walkthroughSteps.length - 1) {

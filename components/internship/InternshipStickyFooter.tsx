@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { MessageSquare, Mail, ExternalLink } from "lucide-react";
+import { Mail, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { addUtmParams } from "@/lib/utils";
 import { InternshipData } from "@/types/interfaces";
@@ -63,7 +64,13 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
           }
         >
           <Button className="h-11 w-full rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold border border-sky-100 shadow-sm transition-all active:scale-95 text-[11px] px-1 flex items-center justify-center gap-1">
-            <MessageSquare className="h-3.5 w-3.5" />
+            <Image
+              src="/images/linkedin.svg"
+              alt="LinkedIn"
+              width={14}
+              height={14}
+              className="h-3.5 w-3.5 object-contain"
+            />
             <span>Cold DM</span>
           </Button>
         </Link>

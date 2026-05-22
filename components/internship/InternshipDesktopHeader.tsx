@@ -11,7 +11,6 @@ import {
   Settings,
   Pencil,
   Loader2,
-  MessageSquare,
   Mail,
   ExternalLink,
 } from "lucide-react";
@@ -202,7 +201,13 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
             }
           >
             <Button className="h-12 px-5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold border border-sky-100 shadow-sm transition-all active:scale-95 duration-200 flex items-center gap-2">
-              <MessageSquare className="w-4 h-4" />
+              <Image
+                src="/images/linkedin.svg"
+                alt="LinkedIn"
+                width={16}
+                height={16}
+                className="w-4 h-4 object-contain"
+              />
               Cold DM
             </Button>
           </Link>

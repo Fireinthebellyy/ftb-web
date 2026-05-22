@@ -105,6 +105,7 @@ export async function GET(req: NextRequest) {
     const limitParam = Number.parseInt(searchParams.get("limit") ?? "", 10);
     const offsetParam = Number.parseInt(searchParams.get("offset") ?? "", 10);
     const idsParam = searchParams.get("ids");
+    const fieldsParam = searchParams.get("fields") ?? searchParams.get("field");
 
     const searchTerm = searchParam ? searchParam.trim() : "";
     const rawTypes = typesParam
@@ -147,6 +148,13 @@ export async function GET(req: NextRequest) {
           .filter(Boolean)
       : [];
 
+    const rawFields = fieldsParam
+      ? fieldsParam
+          .split(",")
+          .map((value) => value.trim().toLowerCase())
+          .filter(Boolean)
+      : [];
+
     const conditions: SQL<unknown>[] = [isNull(internships.deletedAt)];
 
     if (!isAdmin) {
@@ -178,6 +186,10 @@ export async function GET(req: NextRequest) {
       conditions.push(
         tagConditions.length === 1 ? tagConditions[0] : or(...tagConditions)
       );
+    }
+
+    if (rawFields.length > 0) {
+      conditions.push(inArray(internships.field, rawFields));
     }
 
     if (rawLocations.length > 0) {
@@ -237,6 +249,9 @@ export async function GET(req: NextRequest) {
         deadline: internships.deadline,
         hiringOrganization: internships.hiringOrganization,
         hiringManager: internships.hiringManager,
+        hiringManagerEmail: internships.hiringManagerEmail,
+        hiringManagerLinkedin: internships.hiringManagerLinkedin,
+        field: internships.field,
         createdAt: internships.createdAt,
         updatedAt: internships.updatedAt,
         isVerified: internships.isVerified,

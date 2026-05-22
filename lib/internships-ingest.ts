@@ -72,6 +72,21 @@ export const internshipIngestRecordSchema = z.object({
     .max(100, "Hiring manager must be at most 100 characters")
     .optional()
     .nullable(),
+  hiringManagerEmail: z
+    .string()
+    .max(120, "Hiring manager email must be at most 120 characters")
+    .optional()
+    .nullable(),
+  hiringManagerLinkedin: z
+    .string()
+    .max(1000, "Hiring manager linkedin must be at most 1000 characters")
+    .optional()
+    .nullable(),
+  field: z
+    .string()
+    .max(80, "Field must be at most 80 characters")
+    .optional()
+    .nullable(),
   isVerified: z.boolean().optional(),
   isActive: z.boolean().optional(),
   rawText: z
@@ -305,6 +320,9 @@ export function buildInternshipInsertValues(
       tags: normalizeTags(record.tags),
       hiringOrganization: record.hiringOrganization.trim(),
       hiringManager: record.hiringManager?.trim() || null,
+      hiringManagerEmail: record.hiringManagerEmail?.trim() || null,
+      hiringManagerLinkedin: record.hiringManagerLinkedin?.trim() || null,
+      field: record.field?.trim() || null,
       isVerified: record.isVerified ?? false,
       isActive: record.isActive ?? true,
       userId: ingestUserId,

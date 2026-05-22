@@ -20,8 +20,11 @@ const internshipUpdateSchema = z.object({
     .min(1, "Hiring organization is required")
     .optional(),
   hiringManager: z.string().optional().nullable(),
+  hiringManagerEmail: z.string().optional().nullable(),
+  hiringManagerLinkedin: z.string().optional().nullable(),
   experience: z.string().optional().nullable(),
   duration: z.string().optional().nullable(),
+  field: z.string().optional().nullable(),
   isVerified: z.boolean().optional(),
   isActive: z.boolean().optional(),
 });
@@ -57,8 +60,11 @@ export async function GET(
         stipend: internships.stipend,
         hiringOrganization: internships.hiringOrganization,
         hiringManager: internships.hiringManager,
+        hiringManagerEmail: internships.hiringManagerEmail,
+        hiringManagerLinkedin: internships.hiringManagerLinkedin,
         experience: internships.experience,
         duration: internships.duration,
+        field: internships.field,
         createdAt: internships.createdAt,
         updatedAt: internships.updatedAt,
         isVerified: internships.isVerified,
@@ -275,6 +281,15 @@ export async function PUT(
     }
     if (validatedData.hiringManager !== undefined) {
       updateData.hiringManager = validatedData.hiringManager?.trim() || null;
+    }
+    if (validatedData.hiringManagerEmail !== undefined) {
+      updateData.hiringManagerEmail = validatedData.hiringManagerEmail?.trim() || null;
+    }
+    if (validatedData.hiringManagerLinkedin !== undefined) {
+      updateData.hiringManagerLinkedin = validatedData.hiringManagerLinkedin?.trim() || null;
+    }
+    if (validatedData.field !== undefined) {
+      updateData.field = validatedData.field?.trim() || null;
     }
     if (validatedData.experience !== undefined) {
       updateData.experience = validatedData.experience?.trim() || null;

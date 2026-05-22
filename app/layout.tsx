@@ -16,6 +16,7 @@ import PostOnboardingSurveyWidget from "@/components/PostOnboardingSurveyWidget"
 import InterestPromptGate from "@/components/InterestPromptGate";
 import { TrackerProvider } from "@/components/providers/TrackerProvider";
 import { CSPostHogProvider } from "./providers/posthog-provider";
+import ThemeProvider from "@/components/ThemeProvider";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   weight: ["400", "700"], // or ["400", "700"] if multiple
@@ -42,7 +43,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
         <Script
           id="razorpay-checkout-js"
@@ -56,22 +57,24 @@ export default function RootLayout({
       >
         <Suspense fallback={<div>Loading ..</div>}>
           <QueryProvider>
-            <ProgressProvider>
-              <CSPostHogProvider>
-                <TrackerProvider>
-                  <Navbar />
-                  <main className="grow pt-16 pb-20 md:pb-0">{children}</main>
-                  <AuthOverlay />
-                  <BottomNav />
-                  <Footer />
-                  <ConditionalWidgets />
-                  <PostOnboardingSurveyWidget />
-                  <InterestPromptGate />
-                </TrackerProvider>
-              </CSPostHogProvider>
-            </ProgressProvider>
-            <Toaster />
-            <Analytics />
+            <ThemeProvider attribute="class" defaultTheme="light" enableSystem={true}>
+              <ProgressProvider>
+                <CSPostHogProvider>
+                  <TrackerProvider>
+                    <Navbar />
+                    <main className="grow pt-16 pb-20 md:pb-0">{children}</main>
+                    <AuthOverlay />
+                    <BottomNav />
+                    <Footer />
+                    <ConditionalWidgets />
+                    <PostOnboardingSurveyWidget />
+                    <InterestPromptGate />
+                  </TrackerProvider>
+                </CSPostHogProvider>
+              </ProgressProvider>
+              <Toaster />
+              <Analytics />
+            </ThemeProvider>
           </QueryProvider>
         </Suspense>
       </body>

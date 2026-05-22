@@ -22,6 +22,7 @@ import { TimingSelector } from "./fields/TimingSelector";
 import { MetaFields } from "./fields/MetaFields";
 import { TagsField } from "./fields/TagsField";
 import { EligibilityField } from "./fields/EligibilityField";
+import { FieldSelector } from "./fields/FieldSelector";
 
 // Use the shared InternshipData type from the project
 import { InternshipData } from "@/types/interfaces";
@@ -59,10 +60,12 @@ export default function NewInternshipForm({
       stipend: undefined,
       hiringManager: "",
       hiringManagerEmail: "",
+      hiringManagerLinkedin: "",
       experience: "",
       duration: "",
       link: "",
       deadline: "",
+      field: "",
     },
   });
 
@@ -89,10 +92,12 @@ export default function NewInternshipForm({
         stipend: internship.stipend ?? undefined,
         hiringManager: internship.hiringManager ?? "",
         hiringManagerEmail: internship.hiringManagerEmail ?? "",
+        hiringManagerLinkedin: internship.hiringManagerLinkedin ?? "",
         experience: internship.experience ?? "",
         duration: internship.duration ?? "",
         link: internship.link ?? "",
         deadline: internship.deadline ?? "",
+        field: internship.field ?? "",
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -126,11 +131,13 @@ export default function NewInternshipForm({
         link: data.link,
         hiringManager: data.hiringManager || undefined,
         hiringManagerEmail: data.hiringManagerEmail || undefined,
+        hiringManagerLinkedin: data.hiringManagerLinkedin || undefined,
         experience: data.experience || undefined,
         duration: data.duration || undefined,
         eligibility: data.eligibility || undefined,
         timing: data.timing || undefined,
         type: data.type || undefined,
+        field: data.field || undefined,
       };
 
       if (isEditing) {
@@ -205,6 +212,13 @@ export default function NewInternshipForm({
             value={watchedTiming}
             onChange={handleTimingChange}
             isRequired={!isEditing}
+          />
+
+          <FieldSelector
+            control={form.control}
+            value={form.watch("field")}
+            onChange={(v) => form.setValue("field", v, { shouldValidate: true, shouldTouch: true })}
+            isRequired={false}
           />
 
           <MetaFields control={form.control} />

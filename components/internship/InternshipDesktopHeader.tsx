@@ -11,6 +11,9 @@ import {
   Settings,
   Pencil,
   Loader2,
+  MessageSquare,
+  Mail,
+  ExternalLink,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,6 +49,14 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
 }) => {
   const isOwner = session?.user && session.user.id === internship.user?.id;
   const isModerator = session?.user && (session.user.role === "admin" || session.user.role === "editor");
+
+  const dmKeywords = (internship.hiringManager ? `${internship.hiringManager} ` : "") + internship.hiringOrganization;
+  const dmUrl = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(dmKeywords)}`;
+
+  const emailSubject = `Applying for ${internship.title} role at ${internship.hiringOrganization}`;
+  const emailBody = `Hi ${internship.hiringManager || "Hiring Manager"},\n\nI hope you are doing well.\n\nI am writing to express my interest in the ${internship.title} internship role at ${internship.hiringOrganization}.\n\n[Add a brief 2-3 sentence introduction about your background, key skills, and why you are interested in this role]\n\nI would love the opportunity to discuss how my skills align with your team's needs. I have attached my resume for your review.\n\nBest regards,\n[Your Name]\n[Your Contact Information]\n[Your LinkedIn Profile]`;
+  const mailUrl = `mailto:${internship.hiringManagerEmail || ""}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+
   return (
     <div className="bg-white rounded-[24px] px-8 py-5 shadow-sm border border-slate-100 relative mb-8">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
@@ -163,7 +174,7 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
               target="_blank"
               rel="noopener noreferrer"
               onClick={() =>
-                posthog.capture("internship_apply_now_clicked", {
+                posthog.capture("internship_apply_forms_clicked", {
                   internship_id: internship.id,
                   title: internship.title,
                   url: internship.applyLink || internship.link,
@@ -171,11 +182,47 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
                 })
               }
             >
-              <Button className="h-12 px-8 rounded-xl bg-[#ec5b13] hover:bg-[#d44d0c] text-white font-bold border-none shadow-lg shadow-orange-500/20 transition-all">
-                Apply Now
+              <Button className="h-12 px-5 rounded-xl bg-gradient-to-r from-[#ec5b13] to-[#ff7d3b] hover:from-[#d44d0c] hover:to-[#ec5b13] text-white font-bold border-none shadow-md shadow-orange-500/10 transition-all active:scale-95 duration-200 flex items-center gap-2">
+                <ExternalLink className="w-4 h-4" />
+                Apply Via Forms
               </Button>
             </Link>
           )}
+
+          <Link
+            href={dmUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() =>
+              posthog.capture("internship_cold_dm_clicked", {
+                internship_id: internship.id,
+                title: internship.title,
+                source: "desktop_header",
+              })
+            }
+          >
+            <Button className="h-12 px-5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold border border-sky-100 shadow-sm transition-all active:scale-95 duration-200 flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" />
+              Cold DM
+            </Button>
+          </Link>
+
+          <Link
+            href={mailUrl}
+            target="_blank"
+            onClick={() =>
+              posthog.capture("internship_cold_mail_clicked", {
+                internship_id: internship.id,
+                title: internship.title,
+                source: "desktop_header",
+              })
+            }
+          >
+            <Button className="h-12 px-5 rounded-xl bg-orange-50/50 hover:bg-orange-50 text-[#ec5b13] font-bold border border-orange-100 shadow-sm transition-all active:scale-95 duration-200 flex items-center gap-2">
+              <Mail className="w-4 h-4" />
+              Cold Mail
+            </Button>
+          </Link>
         </div>
       </div>
 

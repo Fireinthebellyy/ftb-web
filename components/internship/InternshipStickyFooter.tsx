@@ -1,26 +1,19 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { Bookmark, MessageSquare, Mail, ExternalLink } from "lucide-react";
+import { MessageSquare, Mail, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn, addUtmParams } from "@/lib/utils";
+import { addUtmParams } from "@/lib/utils";
 import { InternshipData } from "@/types/interfaces";
 import posthog from "posthog-js";
 
 interface InternshipStickyFooterProps {
   internship: InternshipData;
-  isBookmarked: boolean;
-  handleBookmarkClick: () => void;
-  handleCalendarClick: () => void;
 }
 
 export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
   internship,
-  isBookmarked,
-  handleBookmarkClick,
-  handleCalendarClick,
 }) => {
   const dmKeywords = (internship.hiringManager ? `${internship.hiringManager} ` : "") + internship.hiringOrganization;
   const dmUrl = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(dmKeywords)}`;
@@ -30,8 +23,8 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
   const mailUrl = `mailto:${internship.hiringManagerEmail || ""}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
 
   return (
-    <footer className="pb-safe fixed right-0 bottom-0 left-0 z-[60] flex flex-col gap-3 border-t border-slate-100 bg-white px-4 py-3 shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
-      {/* Top Row: The 3 Action Buttons */}
+    <footer className="pb-safe fixed right-0 bottom-0 left-0 z-[60] border-t border-slate-100 bg-white px-4 py-3 shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
+      {/* 3 Action Buttons */}
       <div className="grid grid-cols-3 gap-2 w-full">
         {(internship.applyLink || internship.link) && (
           <Link
@@ -91,38 +84,6 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
             <span>Cold Mail</span>
           </Button>
         </Link>
-      </div>
-
-      {/* Bottom Row: Utilities (Bookmark & Calendar) */}
-      <div className="flex items-center justify-between w-full border-t border-slate-50 pt-2">
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Save & Plan</span>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleBookmarkClick}
-            className={cn(
-              "flex h-9 px-3 items-center gap-1.5 rounded-xl border bg-white shadow-sm transition-all active:scale-95 text-xs font-semibold",
-              isBookmarked
-                ? "border-[#ea580c] text-[#ea580c]"
-                : "border-slate-200 text-slate-600 hover:text-[#ea580c]"
-            )}
-          >
-            <Bookmark className={cn("h-3.5 w-3.5", isBookmarked && "fill-current")} />
-            <span>{isBookmarked ? "Saved" : "Save"}</span>
-          </button>
-          <button
-            className="flex h-9 px-3 items-center gap-1.5 rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:text-[#ea580c] active:scale-95 text-xs font-semibold"
-            onClick={handleCalendarClick}
-          >
-            <Image
-              src="/images/google-calendar.webp"
-              alt="Add to Google Calendar"
-              width={14}
-              height={14}
-              className="h-3.5 w-3.5 object-contain"
-            />
-            <span>Calendar</span>
-          </button>
-        </div>
       </div>
     </footer>
   );

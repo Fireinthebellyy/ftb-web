@@ -8,11 +8,12 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Share2, Flag, Loader2, Settings } from "lucide-react";
+import { ArrowLeft, Share2, Flag, Loader2, Settings, Bookmark } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import posthog from "posthog-js";
-import { toTitleCase } from "@/lib/utils";
+import Image from "next/image";
+import { cn, toTitleCase } from "@/lib/utils";
 import { ShareDialog } from "@/components/internship/ShareDialog";
 import { useSession } from "@/hooks/use-session";
 import { type InternshipData } from "@/types/interfaces";
@@ -267,6 +268,35 @@ export default function InternshipDetailPage() {
 
         <InternshipHero internship={internship} />
 
+        {/* Premium Save & Plan Actions */}
+        <div className="px-5 pb-4 -mt-2 grid grid-cols-2 gap-3">
+          <button
+            onClick={handleBookmarkClick}
+            className={cn(
+              "flex h-11 items-center justify-center gap-2 rounded-xl border bg-white shadow-sm transition-all active:scale-95 text-[13px] font-bold",
+              isBookmarked
+                ? "border-orange-200 bg-orange-50/50 text-[#ec5b13]"
+                : "border-slate-200 text-slate-600 hover:text-[#ec5b13]"
+            )}
+          >
+            <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-current")} />
+            <span>{isBookmarked ? "Saved to Tracker" : "Save to Tracker"}</span>
+          </button>
+          <button
+            className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition-all hover:text-[#ec5b13] active:scale-95 text-[13px] font-bold"
+            onClick={handleCalendarClick}
+          >
+            <Image
+              src="/images/google-calendar.webp"
+              alt="Add to Google Calendar"
+              width={16}
+              height={16}
+              className="h-4 w-4 object-contain"
+            />
+            <span>Add to Calendar</span>
+          </button>
+        </div>
+
         <div className="-mt-2 px-5 pb-2">
           <InternshipTabContent
             activeTab="description"
@@ -292,9 +322,6 @@ export default function InternshipDetailPage() {
 
         <InternshipStickyFooter
           internship={internship}
-          isBookmarked={isBookmarked}
-          handleBookmarkClick={handleBookmarkClick}
-          handleCalendarClick={handleCalendarClick}
         />
       </div>
 

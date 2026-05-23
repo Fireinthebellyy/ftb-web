@@ -90,6 +90,17 @@ export function OpportunityActions({
     }
   };
 
+  const resolveOpportunityDeadline=():Date |null=>{
+    const {startDate,endDate}=opportunity;
+    if(endDate) return new Date(endDate);
+    if(!startDate) return null;
+    const baseDate= new Date(startDate);
+    return (new Date(baseDate.getTime()+3*24*60*60*1000));
+    
+  }
+  const currentDate=new Date();
+  const deadlineDate=resolveOpportunityDeadline();
+  const val=currentDate > deadlineDate? true:false;
   return (
     <>
       <footer className="flex items-center justify-between border-t border-gray-100 pt-1">
@@ -184,6 +195,11 @@ export function OpportunityActions({
                 onShare={handleShare}
               />
             </Dialog>
+            {val &&(          
+              <div className="rounded-full border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-bold text-red-600">
+                Closed
+                </div>
+            )}
           </div>
         </div>
 

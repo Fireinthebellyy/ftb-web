@@ -43,29 +43,6 @@ export const InternshipTabContent: React.FC<InternshipTabContentProps> = ({
                 internship.description || <p>No description provided.</p>
               )}
             </div>
-
-            {internship.tags && internship.tags.length > 0 && (
-              <div className="mt-8 pt-5 border-t border-slate-100">
-                <h4 className="font-bold text-slate-900 mb-3 text-[15px]">
-                  Skills & Tags
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {internship.tags
-                    .filter(
-                      (tag) =>
-                        !["remote", "onsite", "hybrid"].includes(tag.toLowerCase())
-                    )
-                    .map((tag, i) => (
-                      <span
-                        key={i}
-                        className="bg-slate-50 text-slate-600 border border-slate-100 px-3.5 py-1.5 rounded-full text-[13px] font-bold"
-                      >
-                        {toTitleCase(tag)}
-                      </span>
-                    ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}

@@ -72,7 +72,10 @@ const getDomainIcon = (
   return <Briefcase className={className} />;
 };
 
-const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
+const InternshipPost: React.FC<InternshipPostProps> = ({
+  internship,
+  hideActions = false,
+}) => {
   const router = useRouter();
   const { addToTracker, getStatus, removeFromTracker } = useTracker();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -88,6 +91,16 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
       internship_id: id,
       title,
     });
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        "last_interacted_internship",
+        JSON.stringify({
+          id,
+          field: internship.field || null,
+          title,
+        })
+      );
+    }
     router.push(`/intern/${id}`);
   };
 
@@ -131,6 +144,16 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
             title,
             action: "save",
           });
+          if (typeof window !== "undefined") {
+            localStorage.setItem(
+              "last_interacted_internship",
+              JSON.stringify({
+                id,
+                field: internship.field || null,
+                title,
+              })
+            );
+          }
           toast.success("Saved to Tracker");
         } else if (addOutcome === "already_exists") {
           toast.info("Already in Tracker");
@@ -221,65 +244,75 @@ const InternshipPost: React.FC<InternshipPostProps> = ({ internship }) => {
           </div>
 
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-            <a
-              href={`https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Apply to: ${title}`)}&dates=${(() => {
-                const date = deadline
-                  ? new Date(deadline)
-                  : new Date(Date.now() + 24 * 60 * 60 * 1000);
-                const formatted = date
-                  .toISOString()
-                  .replace(/[-:]|\.\d{3}/g, "");
-                return `${formatted}/${formatted}`;
-              })()}&details=${encodeURIComponent(`Company: ${hiringOrganization || "N/A"}\n\nInternship Link: ${shareUrl}`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => {
-                e.stopPropagation();
-                posthog.capture("internship_calendar_clicked", {
-                  internship_id: id,
-                  title,
-                });
-              }}
-              title="Add to calendar"
-              className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-blue-50"
-            >
-              <Image
-                src="/images/google-calendar.webp"
-                alt="Google Calendar"
-                width={16}
-                height={16}
-                className="h-4 w-4 object-contain"
-              />
-            </a>
+            {hideActions ? (
+              <span
+                className="inline-flex h-8 items-center justify-center rounded-[39px] bg-black px-3.5 text-[12px] font-semibold tracking-[-0.25px] text-white transition-colors group-hover:bg-slate-800"
+              >
+                Explore
+              </span>
+            ) : (
+              <>
+                <a
+                  href={`https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Apply to: ${title}`)}&dates=${(() => {
+                    const date = deadline
+                      ? new Date(deadline)
+                      : new Date(Date.now() + 24 * 60 * 60 * 1000);
+                    const formatted = date
+                      .toISOString()
+                      .replace(/[-:]|\.\d{3}/g, "");
+                    return `${formatted}/${formatted}`;
+                  })()}&details=${encodeURIComponent(`Company: ${hiringOrganization || "N/A"}\n\nInternship Link: ${shareUrl}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    posthog.capture("internship_calendar_clicked", {
+                      internship_id: id,
+                      title,
+                    });
+                  }}
+                  title="Add to calendar"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-blue-50"
+                >
+                  <Image
+                    src="/images/google-calendar.webp"
+                    alt="Google Calendar"
+                    width={16}
+                    height={16}
+                    className="h-4 w-4 object-contain"
+                  />
+                </a>
 
-            <button
-              type="button"
-              title="Share"
-              aria-label="Share"
-              onClick={handleShareClick}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-orange-50 hover:text-[#ec5b13]"
-            >
-              <Share2 className="h-4 w-4" />
-            </button>
+                <button
+                  type="button"
+                  title="Share"
+                  aria-label="Share"
+                  onClick={handleShareClick}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-orange-50 hover:text-[#ec5b13]"
+                >
+                  <Share2 className="h-4 w-4" />
+                </button>
 
-            <button
-              type="button"
-              title={isBookmarked ? "Remove from Tracker" : "Save to Tracker"}
-              aria-label={
-                isBookmarked ? "Remove from Tracker" : "Save to Tracker"
-              }
-              onClick={handleSaveClick}
-              className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
-                isBookmarked
-                  ? "bg-orange-100 text-[#ec5b13]"
-                  : "text-slate-400 hover:bg-orange-50 hover:text-[#ec5b13]"
-              )}
-            >
-              <Bookmark
-                className={cn("h-4 w-4", isBookmarked && "fill-current")}
-              />
-            </button>
+                <button
+                  type="button"
+                  title={isBookmarked ? "Remove from Tracker" : "Save to Tracker"}
+                  aria-label={
+                    isBookmarked ? "Remove from Tracker" : "Save to Tracker"
+                  }
+                  onClick={handleSaveClick}
+                  className={cn(
+                    "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
+                    isBookmarked
+                      ? "bg-orange-100 text-[#ec5b13]"
+                      : "text-slate-400 hover:bg-orange-50 hover:text-[#ec5b13]"
+                  )}
+                >
+                  <Bookmark
+                    className={cn("h-4 w-4", isBookmarked && "fill-current")}
+                  />
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

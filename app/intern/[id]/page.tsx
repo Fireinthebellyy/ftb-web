@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import posthog from "posthog-js";
 import Image from "next/image";
-import { cn, toTitleCase } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { ShareDialog } from "@/components/internship/ShareDialog";
 import { useSession } from "@/hooks/use-session";
 import { type InternshipData } from "@/types/interfaces";
@@ -27,6 +27,7 @@ import { InternshipDesktopHeader } from "@/components/internship/InternshipDeskt
 import { InternshipSidebar } from "@/components/internship/InternshipSidebar";
 import { InternshipDisclaimer } from "@/components/internship/InternshipDisclaimer";
 import { InternshipStickyFooter } from "@/components/internship/InternshipStickyFooter";
+import { SimilarInternships } from "@/components/internship/SimilarInternships";
 import NewInternshipForm from "@/components/internship/NewInternshipForm";
 import { AdminControlsModal } from "@/components/internship/AdminControlsModal";
 
@@ -59,6 +60,16 @@ export default function InternshipDetailPage() {
       }
 
       setInternship(data.internship as InternshipData);
+      if (typeof window !== "undefined" && data.internship) {
+        localStorage.setItem(
+          "last_interacted_internship",
+          JSON.stringify({
+            id: (data.internship as any).id,
+            field: (data.internship as any).field || null,
+            title: (data.internship as any).title,
+          })
+        );
+      }
       setLoading(false);
     } catch (error) {
       console.error("Error fetching internship:", error);
@@ -68,6 +79,14 @@ export default function InternshipDetailPage() {
   };
 
   useEffect(() => {
+    setLoading(true);
+    setNotFoundError(false);
+    setIsEditOpen(false);
+    setAdminModalOpen(false);
+    setShareDialogOpen(false);
+    if (typeof window !== "undefined") {
+      window.scrollTo(0, 0);
+    }
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
@@ -128,6 +147,16 @@ export default function InternshipDetailPage() {
           "internship"
         );
         if (addOutcome === "added") {
+          if (typeof window !== "undefined") {
+            localStorage.setItem(
+              "last_interacted_internship",
+              JSON.stringify({
+                id,
+                field: internship.field || null,
+                title: internship.title,
+              })
+            );
+          }
           const trackerTab = "internship";
           toast.success("Saved to Tracker", {
             action: { label: "View", onClick: () => router.push(`/tracker?tab=${trackerTab}`) },
@@ -310,6 +339,14 @@ export default function InternshipDetailPage() {
             handleOpenChat={handleOpenChat}
           />
 
+          {/* Similar Internships */}
+          <SimilarInternships
+            currentId={internship.id}
+            field={internship.field}
+            title={internship.title}
+            exactFieldOnly={true}
+          />
+
           {/* Mobile Disclaimer */}
           <InternshipDisclaimer
             variant="mobile"
@@ -351,31 +388,15 @@ export default function InternshipDetailPage() {
                   internship.description || <p>No description provided.</p>
                 )}
 
-                {internship.tags && internship.tags.length > 0 && (
-                  <div className="mt-8">
-                    <h4 className="mb-4 block font-bold text-slate-800">
-                      Tags:
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {internship.tags
-                        .filter(
-                          (tag) =>
-                            !["remote", "onsite", "hybrid"].includes(
-                              tag.toLowerCase()
-                            )
-                        )
-                        .map((tag, i) => (
-                          <span
-                            key={i}
-                            className="rounded-full bg-slate-100 px-3 py-1.5 text-[13px] font-semibold text-slate-600"
-                          >
-                            {toTitleCase(tag)}
-                          </span>
-                        ))}
-                    </div>
-                  </div>
-                )}
               </div>
+
+              {/* Similar Internships */}
+              <SimilarInternships
+                currentId={internship.id}
+                field={internship.field}
+                title={internship.title}
+                exactFieldOnly={true}
+              />
 
               {/* Desktop Disclaimer */}
               <InternshipDisclaimer

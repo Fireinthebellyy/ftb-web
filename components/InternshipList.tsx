@@ -28,6 +28,7 @@ import {
 import FeaturedOpportunities from "./opportunity/FeaturedOpportunities";
 import ToolkitBanner from "./internship/ToolkitBanner";
 import { internshipFields } from "./internship/constants";
+import { SimilarInternships } from "./internship/SimilarInternships";
 
 const CalendarWidget = dynamic(() => import("./opportunity/CalendarWidget"));
 const TaskWidget = dynamic(() => import("./opportunity/TaskWidget"));
@@ -225,6 +226,24 @@ export default function InternshipList() {
   const [appliedFields,setAppliedFields]=useState<string[]>(initialFields);
 
   const [activeTab, setActiveTab] = useState<"type" | "stipend" | "location" | "fields">("type");
+
+  const [lastInteracted, setLastInteracted] = useState<{ id: string; field: string | null; title: string } | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("last_interacted_internship");
+      if (saved) {
+        try {
+          setLastInteracted(JSON.parse(saved));
+        } catch (e) {
+          console.error("Failed to parse last interacted internship", e);
+          setLastInteracted({ id: "", field: "generalist", title: "" });
+        }
+      } else {
+        setLastInteracted({ id: "", field: "generalist", title: "" });
+      }
+    }
+  }, []);
 
   useEffect(()=>{
     const updatedSearch=searchParams.get("search")||"";
@@ -1188,6 +1207,14 @@ export default function InternshipList() {
 
               </>
             )}
+
+            {lastInteracted && (
+              <SimilarInternships
+                currentId={lastInteracted.id}
+                field={lastInteracted.field}
+                title={lastInteracted.title}
+              />
+            )}
           </main>
 
           <aside className="col-span-3">
@@ -1303,6 +1330,14 @@ export default function InternshipList() {
 
 
             </>
+          )}
+
+          {lastInteracted && (
+            <SimilarInternships
+              currentId={lastInteracted.id}
+              field={lastInteracted.field}
+              title={lastInteracted.title}
+            />
           )}
         </div>
       </div>

@@ -129,15 +129,15 @@ export default function NewInternshipForm({
             .map((t) => t.trim())
             .filter(Boolean) || [],
         link: data.link,
-        hiringManager: data.hiringManager || undefined,
-        hiringManagerEmail: data.hiringManagerEmail || undefined,
-        hiringManagerLinkedin: data.hiringManagerLinkedin || undefined,
-        experience: data.experience || undefined,
-        duration: data.duration || undefined,
+        hiringManager: data.hiringManager || null,
+        hiringManagerEmail: data.hiringManagerEmail || null,
+        hiringManagerLinkedin: data.hiringManagerLinkedin || null,
+        experience: data.experience || null,
+        duration: data.duration || null,
         eligibility: data.eligibility || undefined,
         timing: data.timing || undefined,
         type: data.type || undefined,
-        field: data.field || undefined,
+        field: data.field || null,
       };
 
       if (isEditing) {

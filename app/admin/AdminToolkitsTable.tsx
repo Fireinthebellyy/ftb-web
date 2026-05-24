@@ -35,8 +35,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import NewToolkitModal from "@/components/toolkit/NewToolkitModal";
-import NewBundleModal from "@/components/toolkit/NewBundleModal";
+import NewToolkitModal from "../../components/toolkit/NewToolkitModal";
+import NewBundleModal from "../../components/toolkit/NewBundleModal";
 import {
   deleteStorageObjectClient,
   uploadFileViaSignedUrl,

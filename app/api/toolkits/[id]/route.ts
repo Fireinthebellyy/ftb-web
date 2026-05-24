@@ -42,6 +42,11 @@ export async function GET(
         updatedAt: toolkits.updatedAt,
         userId: toolkits.userId,
         creatorName: user.name,
+        isBundle: toolkits.isBundle,
+        bundleItems: toolkits.bundleItems,
+        is_trending: toolkits.is_trending,
+        isBestSeller: toolkits.isBestSeller,
+        isLimitedSeats: toolkits.isLimitedSeats,
       })
       .from(toolkits)
       .leftJoin(user, eq(toolkits.userId, user.id))

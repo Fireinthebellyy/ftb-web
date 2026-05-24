@@ -40,7 +40,7 @@ interface SearchWidgetProps {
   setIsSearchFocused: (focused: boolean) => void;
   filteredSuggestions: string[];
   placeholder: string;
-  applyFilters: (term?: string) => void;
+  applyFilters: (term?: string,specificFields?:string[]) => void;
 }
 
 const SearchWidget = ({
@@ -53,7 +53,7 @@ const SearchWidget = ({
   applyFilters,
 }: SearchWidgetProps) => {
   const [focusedIndex, setFocusedIndex] = useState(-1);
-
+  const [activeBubble,setActiveBubble] = useState<{id:string,label:string}|null>(null);
   // Reset focusedIndex when suggestions change or list closes
   useEffect(() => {
     if (!isSearchFocused || filteredSuggestions.length === 0) {
@@ -132,32 +132,56 @@ const SearchWidget = ({
           Go
         </button>
       </div>
-      {isSearchFocused && filteredSuggestions.length > 0 && (
-        <ul className="absolute top-[calc(100%+8px)] right-0 left-0 z-50 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
-          {filteredSuggestions.map((suggestion, idx) => (
-            <li key={suggestion}>
-              <button
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  setSearchTerm(suggestion);
-                  applyFilters(suggestion);
-                  setIsSearchFocused(false);
-                }}
-                className={cn(
-                  "flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 focus:bg-slate-50",
-                  idx === focusedIndex &&
-                    "bg-orange-50 font-bold text-[#ec5b13]"
-                )}
-                tabIndex={-1}
-              >
-                <Search className="h-4 w-4 shrink-0 text-slate-400" />
-                <span>{suggestion}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      {isSearchFocused && filteredSuggestions.length > 0 && ( 
+        <> 
+          <div 
+          className="absolute top-[calc(100%+8px)] left-0 right-[-60] z-50 rounded-[16px] border border-slate-700 bg-[rgba(0,0,0,0.95)] max-h-[80vh] shadow-2xl overflow-hidden flex flex-col">
+            <div>
+              <p className="w-full text-slate-200 text-sm font-bold uppercase tracking-widest text-center mt-4">
+                Explore The Popular Fields
+              </p>  
+             
+              <div className="w-full flex justify-center">
+                <div className="grid grid-cols-3 lg:grid-cols-2 gap-2.5 p-4 max-h-[9.5rem] lg:max-h-[12rem] overflow-y-auto scrollbar-none items-stretch">
+                  {internshipFields.map((field, idx) => {
+                    return (
+                      <button
+                        className="w-full h-auto cursor-pointer px-3 py-2 flex items-center justify-center rounded-md border border-slate-700 text-sm lg:text-xs font-bold text-center text-black bg-slate-200 whitespace-wrap hover:border-2 hover:border-[#ec5b13] focus:border-2 focus:border-[#ec5b13]  transition-transform duration-100 ease-out active:scale-95"
+                        key={`${field.id}-${idx}`}
+                        onClick={(e)=>{
+                          e.preventDefault(); 
+                          setActiveBubble({id:field.id,label:field.label});
+                        }}               
+                      >
+                        <span className="w-full block text-center break-words">
+                          {field.label}
+                        </span>
+                      </button>
+                    );
+                  })}   
+                </div>
+              </div>
+            </div> 
+
+            <div className="flex justify-center items-center px-4 py-2">
+                <button className={cn("text-white font-bold h-10 w-full rounded-xl",activeBubble ?"bg-orange-500":"bg-[#555555]")}
+                onClick={()=>{  
+                  if(activeBubble && activeBubble.label){
+                          setSearchTerm(activeBubble.label);                    
+                          applyFilters(activeBubble.label,[activeBubble.id]);
+                          setActiveBubble({id:"",label:""});
+                          setIsSearchFocused(false);
+                  }       
+                  else{
+                    applyFilters(searchTerm,[]);
+                    setIsSearchFocused(false);
+                  }
+                        }}>Search
+                      </button>
+              </div>
+          </div>
+        </>
+        )}
     </form>
   );
 };
@@ -388,9 +412,10 @@ export default function InternshipList() {
 
   const [showInternshipSkeleton,setShowInternshipSkeleton]=useState(false);
   const applyFilters = useCallback(
-    (overrideSearch?: string) => {
+    (overrideSearch?: string,specificFields?:string[]) => {
       const nextSearch = (overrideSearch ?? searchTerm).trim();
 
+      const finalFields=specificFields!==undefined?specificFields:selectedFields;
       const newParams=new URLSearchParams();
       if(nextSearch){
         newParams.set("search",nextSearch);
@@ -409,8 +434,8 @@ export default function InternshipList() {
       if(selectedTags.length>0){
         newParams.set("tags",selectedTags.join(","));
       }
-      if(selectedFields.length>0){
-        newParams.set("fields",selectedFields.join(","));
+      if(finalFields.length>0){
+        newParams.set("fields",finalFields.join(","));
       }
       if (nextSearch) {
         posthog.capture("internship_search_submitted", {
@@ -442,7 +467,10 @@ export default function InternshipList() {
       setAppliedStipendFilter(stipendFilter);
       setAppliedMinStipend(stipendFilter === "custom" ? minStipend : undefined);
       setAppliedTags(selectedTags);
-      setAppliedFields(selectedFields);
+      setAppliedFields(finalFields);
+      if(specificFields!==undefined){
+      setSelectedFields(specificFields);
+      }
       setShowInternshipSkeleton(false);
       },1000)
     },
@@ -645,7 +673,7 @@ export default function InternshipList() {
                         { id: "type", label: "Type", active: selectedTypes.length > 0 },
                         { id: "stipend", label: "Stipend", active: stipendFilter !== "all" },
                         { id: "location", label: "Location", active: location.trim().length > 0 },
-                        { id: "fields", label: "Fields", active: selectedFields.length > 0 },
+                        // { id: "fields", label: "Fields", active: selectedFields.length > 0 },
                       ] as const).map((tab) => (
                         <button
                           key={tab.id}
@@ -805,7 +833,7 @@ export default function InternshipList() {
                       )}
 
                       {/* FIELDS options */}
-                      {activeTab === "fields" && (
+                      {/* {activeTab === "fields" && (
                         <div className="space-y-1">
                           <span className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-2 px-1">
                             Fields
@@ -838,7 +866,7 @@ export default function InternshipList() {
                             );
                           })}
                         </div>
-                      )}
+                      )} */}
 
                     </div>
 
@@ -1157,8 +1185,8 @@ export default function InternshipList() {
                 {allInternships.length > 0 ? (
                   <>
                     <div className="space-y-4">
-                      {allInternships.map((internship) => (
-                        <div key={internship.id}>
+                      {allInternships.map((internship,idx) => (
+                        <div key={`${internship.title}-${internship.id}-${idx}`}>
                           <InternshipPost
                             internship={internship}
                             onBookmarkChange={handleBookmarkChange}

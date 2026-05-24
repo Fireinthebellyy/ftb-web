@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Toolkit } from "@/types/interfaces";
-import { Check, Flame, ArrowRight, Star, Clock } from "lucide-react";
+import { Flame, ArrowRight, Star, Clock } from "lucide-react";
 
 interface ToolkitCardNewProps {
   toolkit: Toolkit;
@@ -31,28 +31,28 @@ export default function ToolkitCardNew({
 
   const getProcessedHighlights = () => {
     if (!toolkit.highlights || toolkit.highlights.length === 0) return [];
-    
+
     const results: string[] = [];
     let currentTotalWords = 0;
-    
+
     for (const h of toolkit.highlights) {
       if (currentTotalWords >= 50) break;
-      
+
       const words = h.trim().split(/\s+/);
       const isOver12 = words.length > 12;
-      
+
       let bulletWords = isOver12 ? words.slice(0, 12) : words;
-      
+
       if (currentTotalWords + bulletWords.length > 50) {
         const remaining = 50 - currentTotalWords;
         bulletWords = bulletWords.slice(0, remaining);
       }
-      
+
       const finalString = bulletWords.join(" ");
       results.push(finalString);
       currentTotalWords += bulletWords.length;
     }
-    
+
     return results;
   };
 

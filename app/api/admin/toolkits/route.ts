@@ -57,7 +57,10 @@ export async function GET(request: Request) {
       })
       .from(toolkits)
       .leftJoin(userTable, eq(toolkits.userId, userTable.id))
-      .orderBy(desc(toolkits.createdAt));
+      .orderBy(
+        sql`CASE WHEN ${toolkits.isBundle} = true THEN 0 ELSE 1 END ASC`,
+        desc(toolkits.createdAt)
+      );
 
     const lessonCounts = await db
       .select({

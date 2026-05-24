@@ -106,8 +106,8 @@ export async function POST(
         toolkitId: childId,
         paymentId: razorpay_payment_id,
         razorpayOrderId: razorpay_order_id,
-        paymentStatus: "completed",
-        amount: 0,
+        paymentStatus: "completed" as const,
+        amountPaid: 0,
       }));
 
       // Insert or ignore if they already have access

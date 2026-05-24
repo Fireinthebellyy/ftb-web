@@ -25,6 +25,7 @@ export const toolkitFormSchema = z.object({
   testimonials: z.array(toolkitTestimonialSchema).optional(),
   isActive: z.boolean().optional(),
   showSaleBadge: z.boolean().optional(),
+  is_trending: z.boolean().optional(),
   isBundle: z.boolean().optional(),
   bundleItems: z.array(z.string()).optional(),
   isBestSeller: z.boolean().optional(),

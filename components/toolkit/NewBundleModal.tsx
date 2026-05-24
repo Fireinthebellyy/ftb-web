@@ -82,6 +82,7 @@ export default function NewBundleModal({
       totalDuration: "",
       highlights: [],
       testimonials: [],
+      is_trending: false,
       isBundle: true,
       bundleItems: [],
     },
@@ -281,6 +282,66 @@ export default function NewBundleModal({
                 </FormItem>
               )}
             />
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <FormField
+                control={form.control}
+                name="is_trending"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        checked={field.value ?? false}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Trending Badge</FormLabel>
+                    </div>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="isBestSeller"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        checked={field.value ?? false}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Bestseller Badge</FormLabel>
+                    </div>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="isLimitedSeats"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        checked={field.value ?? false}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Limited Seats</FormLabel>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">

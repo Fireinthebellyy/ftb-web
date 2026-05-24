@@ -40,6 +40,9 @@ type UngatekeepPost = {
     | null;
   isPinned: boolean;
   isSaved?: boolean;
+  score?: number;
+  userVote?: number;
+  commentCount?: number;
   publishedAt?: string | null;
   createdAt: string;
   creatorName?: string | null;

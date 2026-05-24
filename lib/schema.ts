@@ -185,6 +185,8 @@ export const user = pgTable("user", {
   role: userRoleEnum("role").default("user").notNull(),
   interestPromptCompletedAt: timestamp("interest_prompt_completed_at"),
   interestAreas: text("interest_areas").array().default([]),
+  loginStreak: integer("login_streak").default(0).notNull(),
+  lastLoginDate: date("last_login_date"),
 });
 
 export const adminActivityLogs = pgTable(
@@ -537,6 +539,27 @@ export const ungatekeepComments = pgTable("ungatekeep_comments", {
     .references(() => ungatekeepPosts.id, { onDelete: "cascade" }),
 });
 
+export const ungatekeepPostVotes = pgTable(
+  "ungatekeep_post_votes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    postId: uuid("post_id")
+      .notNull()
+      .references(() => ungatekeepPosts.id, { onDelete: "cascade" }),
+    vote: integer("vote").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("ungatekeep_post_votes_user_post_unique").on(
+      table.userId,
+      table.postId
+    ),
+  ]
+);
+
 export const ungatekeepBookmarks = pgTable(
   "ungatekeep_bookmarks",
   {
@@ -649,6 +672,7 @@ export const schema = {
   userToolkits,
   userToolkitProgress,
   ungatekeepPosts,
+  ungatekeepPostVotes,
   ungatekeepBookmarks,
   ungatekeepComments,
   newsletterSubscribers,

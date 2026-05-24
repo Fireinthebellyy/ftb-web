@@ -10,6 +10,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { Righteous } from "next/font/google";
 import { Shield } from "lucide-react";
+import { LoginStreakBadge } from "@/components/navbar/LoginStreakBadge";
 import posthog from "posthog-js";
 import {
   isAbsoluteOrLocalUrl,
@@ -186,6 +187,9 @@ export default function Navbar() {
     ? tryGetStoragePublicUrl("avatar-images", user.user.image)
     : null;
 
+  // @ts-ignore - role is added via additionalFields in better-auth config
+  const isAdminUser = canAccessAdminPanel(user?.user?.role);
+
   if (pathname === "/onboarding") {
     return null;
   }
@@ -336,17 +340,7 @@ export default function Navbar() {
               <span className="hidden text-sm font-medium sm:inline">
                 Hi, {user?.user?.name?.split(" ")[0] || "User"}!
               </span>
-              {/* @ts-ignore - role is added via additionalFields in better-auth config */}
-              {canAccessAdminPanel(user?.user?.role) && (
-                <Link
-                  href="/admin"
-                  className="flex items-center gap-1 rounded-md bg-orange-100 px-2 py-1 text-xs font-medium text-orange-700 transition-colors hover:bg-orange-200"
-                  title="Admin Dashboard"
-                >
-                  <Shield className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Admin</span>
-                </Link>
-              )}
+              <LoginStreakBadge userId={user?.user?.id} />
               <div className="relative flex items-center">
                 <button
                   ref={triggerRef}
@@ -396,13 +390,26 @@ export default function Navbar() {
                     className="bg-popover text-popover-foreground absolute top-8 right-0 z-50 w-40 rounded-md border p-1 shadow-md"
                     onKeyDown={onMenuKeyDown}
                   >
+                    {isAdminUser ? (
+                      <button
+                        ref={firstItemRef}
+                        role="menuitem"
+                        className="hover:bg-accent focus:bg-accent flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-orange-700 focus:outline-none"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          window.location.href = "/admin";
+                        }}
+                      >
+                        <Shield className="h-3.5 w-3.5 shrink-0" />
+                        Admin
+                      </button>
+                    ) : null}
                     <button
-                      ref={firstItemRef}
+                      ref={isAdminUser ? undefined : firstItemRef}
                       role="menuitem"
                       className="hover:bg-accent focus:bg-accent w-full rounded px-3 py-2 text-left text-sm focus:outline-none"
                       onClick={() => {
                         setMenuOpen(false);
-                        // use client-side navigation to profile
                         window.location.href = "/profile";
                       }}
                     >
@@ -583,6 +590,27 @@ export default function Navbar() {
                   }`}
                 >
                   Profile
+                </Link>
+              </li>
+            ) : null}
+            {!isPending && user && isAdminUser ? (
+              <li>
+                <Link
+                  href="/admin"
+                  onClick={() => {
+                    posthog.capture("navbar_link_clicked", {
+                      label: "Admin",
+                      href: "/admin",
+                    });
+                    setIsOpen(false);
+                  }}
+                  className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${
+                    pathname === "/admin" || pathname?.startsWith("/admin/")
+                      ? "text-primary font-bold after:w-full"
+                      : "hover:text-primary text-gray-700 after:w-0 hover:after:w-full"
+                  }`}
+                >
+                  Admin
                 </Link>
               </li>
             ) : null}

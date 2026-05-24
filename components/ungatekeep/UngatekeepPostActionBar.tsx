@@ -77,6 +77,8 @@ export function UngatekeepPostActionBar({
   const [isVoting, setIsVoting] = useState(false);
   const [upAnimKey, setUpAnimKey] = useState(0);
   const [downAnimKey, setDownAnimKey] = useState(0);
+  const [upParticles, setUpParticles] = useState<{ id: number; left: number; delay: number; size: number }[]>([]);
+  const [downParticles, setDownParticles] = useState<{ id: number; left: number; delay: number; size: number }[]>([]);
 
   useEffect(() => {
     setScore(initialScore);
@@ -90,8 +92,24 @@ export function UngatekeepPostActionBar({
 
     if (direction === "up") {
       setUpAnimKey((k) => k + 1);
+      const newParticles = Array.from({ length: 24 }).map((_, i) => ({
+        id: Date.now() + i,
+        left: Math.random() * 100,
+        delay: Math.random() * 0.6,
+        size: 16 + Math.random() * 24,
+      }));
+      setUpParticles(newParticles);
+      setTimeout(() => setUpParticles([]), 2000);
     } else {
       setDownAnimKey((k) => k + 1);
+      const newParticles = Array.from({ length: 24 }).map((_, i) => ({
+        id: Date.now() + i,
+        left: Math.random() * 100,
+        delay: Math.random() * 0.6,
+        size: 16 + Math.random() * 24,
+      }));
+      setDownParticles(newParticles);
+      setTimeout(() => setDownParticles([]), 2000);
     }
 
     setIsVoting(true);
@@ -185,6 +203,29 @@ export function UngatekeepPostActionBar({
               aria-hidden
             />
           ) : null}
+          <AnimatePresence>
+            {upParticles.map((p) => (
+              <motion.div
+                key={p.id}
+                initial={{ opacity: 0, y: "110vh", x: `${p.left}vw` }}
+                animate={{
+                  opacity: [0, 1, 1, 0],
+                  y: "-10vh",
+                }}
+                transition={{
+                  duration: 1.5,
+                  delay: p.delay,
+                  ease: "easeOut",
+                }}
+                className="pointer-events-none fixed left-0 top-0 z-[9999]"
+              >
+                <Flame
+                  className="fill-orange-500 text-orange-500"
+                  style={{ width: p.size, height: p.size }}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </button>
         <button
           type="button"
@@ -223,6 +264,29 @@ export function UngatekeepPostActionBar({
               aria-hidden
             />
           ) : null}
+          <AnimatePresence>
+            {downParticles.map((p) => (
+              <motion.div
+                key={p.id}
+                initial={{ opacity: 0, y: "-10vh", x: `${p.left}vw` }}
+                animate={{
+                  opacity: [0, 1, 1, 0],
+                  y: "110vh",
+                }}
+                transition={{
+                  duration: 1.5,
+                  delay: p.delay,
+                  ease: "easeIn",
+                }}
+                className="pointer-events-none fixed left-0 top-0 z-[9999]"
+              >
+                <Droplets
+                  className="fill-sky-500 text-sky-500"
+                  style={{ width: p.size, height: p.size }}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </button>
       </div>
 
@@ -238,6 +302,7 @@ export function UngatekeepPostActionBar({
           href={askQueryHref}
           target="_blank"
           rel="noopener noreferrer"
+          aria-label="Ask query"
           onClick={(e) => {
             e.stopPropagation();
             posthog.capture("ungatekeep_ask_query_clicked", {
@@ -258,6 +323,7 @@ export function UngatekeepPostActionBar({
           }}
           className={cn(showComments && "bg-orange-50 text-orange-700")}
           aria-expanded={showComments}
+          aria-label="Comments"
         >
           <MessageSquare
             className={cn("h-3.5 w-3.5", showComments && "fill-orange-500")}
@@ -271,6 +337,7 @@ export function UngatekeepPostActionBar({
           onClick={onSaveClick}
           className={cn("relative", isSaved && "bg-orange-50 text-orange-700")}
           aria-pressed={isSaved}
+          aria-label={isSaved ? "Saved" : "Save post"}
         >
           <Bookmark className={cn("h-3.5 w-3.5", isSaved && "fill-orange-500")} />
           <span className="hidden sm:inline">{isSaved ? "Saved" : "Save"}</span>

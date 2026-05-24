@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { db, dbPool } from "@/lib/db";
 import { ungatekeepPostVotes, ungatekeepPosts } from "@/lib/schema";
 import { and, eq, sql } from "drizzle-orm";
 import { headers } from "next/headers";
@@ -38,7 +38,9 @@ export async function GET(
     const postExists = await db
       .select({ id: ungatekeepPosts.id })
       .from(ungatekeepPosts)
-      .where(eq(ungatekeepPosts.id, postId))
+      .where(
+        and(eq(ungatekeepPosts.id, postId), eq(ungatekeepPosts.isPublished, true))
+      )
       .limit(1);
 
     if (!postExists.length) {
@@ -91,33 +93,36 @@ export async function POST(
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    const existing = await db
-      .select({ id: ungatekeepPostVotes.id, vote: ungatekeepPostVotes.vote })
-      .from(ungatekeepPostVotes)
-      .where(
-        and(
-          eq(ungatekeepPostVotes.postId, postId),
-          eq(ungatekeepPostVotes.userId, session.user.id)
+    await dbPool.transaction(async (tx) => {
+      const existing = await tx
+        .select({ id: ungatekeepPostVotes.id, vote: ungatekeepPostVotes.vote })
+        .from(ungatekeepPostVotes)
+        .where(
+          and(
+            eq(ungatekeepPostVotes.postId, postId),
+            eq(ungatekeepPostVotes.userId, session.user.id)
+          )
         )
-      )
-      .limit(1);
+        .for("update")
+        .limit(1);
 
-    if (existing.length === 0) {
-      await db.insert(ungatekeepPostVotes).values({
-        postId,
-        userId: session.user.id,
-        vote: nextVote,
-      });
-    } else if (existing[0].vote === nextVote) {
-      await db
-        .delete(ungatekeepPostVotes)
-        .where(eq(ungatekeepPostVotes.id, existing[0].id));
-    } else {
-      await db
-        .update(ungatekeepPostVotes)
-        .set({ vote: nextVote })
-        .where(eq(ungatekeepPostVotes.id, existing[0].id));
-    }
+      if (existing.length === 0) {
+        await tx.insert(ungatekeepPostVotes).values({
+          postId,
+          userId: session.user.id,
+          vote: nextVote,
+        });
+      } else if (existing[0].vote === nextVote) {
+        await tx
+          .delete(ungatekeepPostVotes)
+          .where(eq(ungatekeepPostVotes.id, existing[0].id));
+      } else {
+        await tx
+          .update(ungatekeepPostVotes)
+          .set({ vote: nextVote })
+          .where(eq(ungatekeepPostVotes.id, existing[0].id));
+      }
+    });
 
     const summary = await getVoteSummary(postId, session.user.id);
     return NextResponse.json({ success: true, ...summary });

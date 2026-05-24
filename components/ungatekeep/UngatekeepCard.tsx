@@ -268,7 +268,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
         </div>
       )}
 
-      <div className="absolute top-0.1 left-0 z-10 flex items-center gap-2 sm:-top-1">
+      <div className="absolute top-0 left-0 z-10 flex items-center gap-2 sm:-top-1">
         {post.is_trending && (
           <Badge className="bg-orange-500 text-white rounded-tr-none rounded-bl-none px-1.5 py-0.5 text-[9px] font-medium sm:px-2 sm:py-1 sm:text-[10px]">
              <Flame className="h-2.5 w-2.5 mr-0.5 inline" />Trending

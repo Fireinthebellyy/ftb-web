@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Toolkit } from "@/types/interfaces";
-import { Check, Flame } from "lucide-react";
+import { Check, Flame, ArrowRight } from "lucide-react";
 
 interface ToolkitCardNewProps {
   toolkit: Toolkit;
@@ -23,22 +23,46 @@ export default function ToolkitCardNew({
   const hasOriginalPrice =
     toolkit.originalPrice && toolkit.originalPrice > toolkit.price;
 
+  const getProcessedHighlights = () => {
+    if (!toolkit.highlights || toolkit.highlights.length === 0) return [];
+    
+    const results: string[] = [];
+    let currentTotalWords = 0;
+    
+    for (const h of toolkit.highlights) {
+      if (currentTotalWords >= 50) break;
+      
+      const words = h.trim().split(/\s+/);
+      const isOver10 = words.length > 10;
+      
+      // Limit to max 10 words for this bullet
+      let bulletWords = isOver10 ? words.slice(0, 10) : words;
+      
+      // Enforce 50 words total limit
+      if (currentTotalWords + bulletWords.length > 50) {
+        const remaining = 50 - currentTotalWords;
+        bulletWords = bulletWords.slice(0, remaining);
+      }
+      
+      const finalString = bulletWords.join(" ") + (words.length > bulletWords.length ? "..." : "");
+      results.push(finalString);
+      currentTotalWords += bulletWords.length;
+    }
+    
+    return results;
+  };
+
+  const displayHighlights = getProcessedHighlights();
+
   return (
-    <Link href={href} className="block" prefetch>
+    <Link href={href} className="block h-full" prefetch>
       <Card
         className={cn(
-          "relative group flex cursor-pointer flex-row gap-0 overflow-hidden border bg-white py-0 transition-shadow hover:shadow-md sm:flex-col",
+          "relative group flex cursor-pointer flex-col overflow-hidden border bg-white py-0 transition-shadow hover:shadow-md h-full rounded-2xl",
           className
         )}
       >
-        {toolkit.is_trending && (
-          <div className="absolute -top-0.5 right-0 z-20">
-            <Badge className="bg-orange-500 text-white rounded-tl-none rounded-br-none px-1 py-0.5 text-[10px] font-medium">
-              <Flame className="h-2.5 w-2.5 mr-0.5 inline" />Trending
-            </Badge>
-          </div>
-        )}
-        <div className="relative min-h-28 w-28 shrink-0 self-stretch overflow-hidden bg-gray-100 sm:aspect-video sm:h-auto sm:w-full">
+        <div className="relative aspect-[4/3] w-full shrink-0 self-stretch overflow-hidden bg-gray-100">
           {toolkit.coverImageUrl ? (
             <Image
               src={toolkit.coverImageUrl}
@@ -55,38 +79,59 @@ export default function ToolkitCardNew({
             </div>
           )}
 
-          {toolkit.category && (
-            <Badge
-              variant="secondary"
-              className="absolute top-2 left-2 text-[10px] sm:top-3 sm:left-3 sm:text-xs"
-            >
-              {toolkit.category}
-            </Badge>
-          )}
-
-          {hasOriginalPrice && toolkit.showSaleBadge && (
-            <Badge className="absolute top-3 right-3 hidden bg-rose-500 text-xs text-white hover:bg-rose-600 sm:inline-flex">
-              Sale
-            </Badge>
-          )}
-        </div>
-
-        <CardContent className="flex flex-1 flex-col justify-between p-3 sm:block">
-          <p className="mb-1 text-[11px] text-gray-500 sm:text-xs">
-            {toolkit.creatorName && (
-              <span className="font-medium text-gray-700">
-                {toolkit.creatorName}
+          <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
+            {toolkit.category && (
+              <span className="w-fit rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-gray-600 shadow-sm sm:text-xs">
+                {toolkit.category}
               </span>
             )}
-            {toolkit.creatorName && toolkit.lessonCount && (
-              <span className="mx-1">•</span>
+            {toolkit.isBundle && (
+              <span className="w-fit rounded-full bg-purple-100 px-2.5 py-1 text-[10px] font-bold text-purple-700 shadow-sm sm:text-xs">
+                BUNDLE
+              </span>
             )}
-            {toolkit.lessonCount && <span>{toolkit.lessonCount} lessons</span>}
-            {toolkit.totalDuration && (
-              <>
-                <span className="mx-1">•</span>
-                <span>{toolkit.totalDuration}</span>
-              </>
+          </div>
+
+          <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-2">
+            {toolkit.is_trending && (
+              <span className="flex w-fit items-center rounded-full bg-[#ff5e14] px-2 py-0.5 text-[10px] font-medium text-white shadow-sm sm:text-xs">
+                <Flame className="mr-0.5 h-3 w-3" /> Trending
+              </span>
+            )}
+            {toolkit.isBestSeller && (
+              <span className="flex w-fit items-center rounded-full bg-yellow-400 px-2 py-0.5 text-[10px] font-bold text-yellow-900 shadow-sm sm:text-xs">
+                Best Seller
+              </span>
+            )}
+            {toolkit.isLimitedSeats && (
+              <span className="flex w-fit items-center rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm sm:text-xs">
+                Limited Seats
+              </span>
+            )}
+            {hasOriginalPrice && toolkit.showSaleBadge && (
+              <Badge className="w-fit hidden bg-rose-500 text-[10px] text-white hover:bg-rose-600 sm:inline-flex shadow-sm rounded-full px-2 py-0.5 border-none font-bold">
+                Sale
+              </Badge>
+            )}
+          </div>
+
+          {(toolkit.lessonCount || toolkit.totalDuration) && (
+            <div className="absolute bottom-2 right-2 z-10 rounded-full bg-black/60 px-2.5 py-0.5 text-[10px] font-medium text-white sm:text-xs">
+              {toolkit.lessonCount ? `${toolkit.lessonCount} lessons` : ""}
+              {toolkit.lessonCount && toolkit.totalDuration ? " • " : ""}
+              {toolkit.totalDuration ? toolkit.totalDuration : ""}
+            </div>
+          )}
+
+
+        </div>
+
+        <CardContent className="flex flex-1 flex-col p-4">
+          <p className="mb-1 text-[11px] text-gray-500 sm:text-xs">
+            {toolkit.creatorName ? (
+              <span className="text-gray-500">{toolkit.creatorName}</span>
+            ) : (
+              <span className="text-gray-500">Fireinthebelly</span>
             )}
           </p>
 
@@ -94,53 +139,35 @@ export default function ToolkitCardNew({
             {toolkit.title.charAt(0).toUpperCase() + toolkit.title.slice(1)}
           </h3>
 
-          {/* replace description with highlights list (up to 4) */}
-          {toolkit.highlights && toolkit.highlights.length > 0 ? (
-            <ul className="mb-2 space-y-1">
-              {toolkit.highlights.slice(0, 4).map((highlight, index) => (
-                <li key={index} className="flex items-start gap-2 text-[12px] text-gray-700">
-                  <Check className="mt-1 h-5 w-5 text-orange-500" aria-hidden />
-                  <span className="leading-tight">{highlight}</span>
+          {displayHighlights.length > 0 ? (
+            <ul className="mb-5 mt-3 space-y-3 flex-1">
+              {displayHighlights.map((highlight, index) => (
+                <li key={index} className="flex items-start gap-2.5 text-[12px] text-gray-600">
+                  <div className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#ff5e14]" />
+                  <span className="leading-relaxed tracking-wide">{highlight}</span>
                 </li>
               ))}
             </ul>
-          ) : null}
+          ) : <div className="flex-1" />}
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-base font-bold text-gray-900 sm:text-lg">
-                ₹{toolkit.price.toLocaleString("en-IN")}
-              </span>
-              {hasOriginalPrice && (
-                <span className="text-xs text-gray-400 line-through">
-                  ₹{toolkit.originalPrice!.toLocaleString("en-IN")}
+          <div className="mt-auto pt-4 flex flex-col border-t border-transparent">
+            <div className="text-[10px] font-semibold tracking-wider text-gray-400 mb-1">PRICE</div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-lg font-bold text-gray-900 sm:text-xl">
+                  ₹{toolkit.price.toLocaleString("en-IN")}
                 </span>
-              )}
-              {hasOriginalPrice && toolkit.showSaleBadge && (
-                <Badge
-                  variant="outline"
-                  className="border-rose-200 bg-rose-50 text-[10px] text-rose-700 sm:hidden"
-                >
-                  Sale
-                </Badge>
-              )}
-            </div>
+                {hasOriginalPrice && (
+                  <span className="text-xs font-medium text-gray-400 line-through">
+                    ₹{toolkit.originalPrice!.toLocaleString("en-IN")}
+                  </span>
+                )}
+              </div>
 
-            <div className="group-hover:text-primary flex items-center gap-1 text-xs font-medium text-gray-600 transition-colors group-hover:translate-x-1 sm:text-sm">
-              View Details
-              <svg
-                className="h-3.5 w-3.5 sm:h-4 sm:w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
+              <div className="group-hover:text-[#ff5e14] flex items-center gap-1 text-xs font-medium text-[#ff5e14] transition-colors sm:text-sm">
+                View Details
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+              </div>
             </div>
           </div>
         </CardContent>

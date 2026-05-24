@@ -35,6 +35,10 @@ export async function GET() {
         is_featured_home: toolkits.is_featured_home,
         trending_index: toolkits.trending_index,
         featured_home_index: toolkits.featured_home_index,
+        isBundle: toolkits.isBundle,
+        bundleItems: toolkits.bundleItems,
+        isBestSeller: toolkits.isBestSeller,
+        isLimitedSeats: toolkits.isLimitedSeats,
       })
       .from(toolkits)
       .leftJoin(user, eq(toolkits.userId, user.id))
@@ -80,6 +84,10 @@ export async function POST(request: Request) {
       totalDuration,
       lessonCount,
       showSaleBadge,
+      isBundle,
+      bundleItems,
+      isBestSeller,
+      isLimitedSeats,
     } = body;
 
     const missingFields: string[] = [];
@@ -132,6 +140,10 @@ export async function POST(request: Request) {
         lessonCount,
         isActive: false,
         showSaleBadge,
+        isBundle: isBundle ?? false,
+        bundleItems: bundleItems ?? [],
+        isBestSeller: isBestSeller ?? false,
+        isLimitedSeats: isLimitedSeats ?? false,
         userId: user.currentUser.id,
       })
       .returning();

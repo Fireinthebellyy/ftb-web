@@ -139,7 +139,11 @@ export default function ToolkitDetailPage() {
   };
 
   const handleViewContent = () => {
-    router.push(`/toolkit/${toolkit?.id}/content`);
+    if (toolkit?.isBundle) {
+      router.push("/toolkit");
+    } else {
+      router.push(`/toolkit/${toolkit?.id}/content`);
+    }
   };
 
   const videoId = toolkit?.videoUrl

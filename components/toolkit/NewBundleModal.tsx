@@ -4,8 +4,9 @@ import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
 import axios from "axios";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 
 import {
   Dialog,
@@ -27,54 +28,45 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ToolkitImageInput } from "@/components/admin/ToolkitImageInput";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   deleteStorageObjectClient,
   uploadFileViaSignedUrl,
 } from "@/lib/storage/client";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { normalizeRichText } from "@/lib/rich-text";
-import { toolkitFormSchema, ToolkitFormValues } from "@/components/admin/types";
-
-const CATEGORIES = [
-  "1:1 Mentorship",
-  "Recorded toolkits",
-  "digital products",
-  "Career",
-  "Skills",
-  "Interview Prep",
-  "Resume",
-  "Networking",
-];
+import { toolkitFormSchema, ToolkitFormValues, Toolkit } from "@/components/admin/types";
 
 function formatHighlight(highlight: string) {
   const trimmed = highlight.trim();
-
-  if (!trimmed) {
-    return "";
-  }
-
+  if (!trimmed) return "";
   return `${trimmed.charAt(0).toUpperCase()}${trimmed.slice(1)}`;
 }
 
-interface NewToolkitModalProps {
+interface NewBundleModalProps {
   children: React.ReactNode;
   onSuccess?: () => void;
 }
 
-export default function NewToolkitModal({
+export default function NewBundleModal({
   children,
   onSuccess,
-}: NewToolkitModalProps) {
+}: NewBundleModalProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [bannerImageFile, setBannerImageFile] = useState<File | null>(null);
+
+  // Fetch toolkits for the bundle item selector
+  const { data: toolkits = [] } = useQuery({
+    queryKey: ["admin", "toolkits"],
+    queryFn: async () => {
+      const res = await axios.get<Toolkit[]>("/api/admin/toolkits");
+      return res.data;
+    },
+    enabled: open, // Only fetch when modal is open
+  });
+
+  // Filter out existing bundles so we don't nest bundles (optional, but good practice)
+  const availableCourses = toolkits.filter((t) => !t.isBundle);
 
   const form = useForm<ToolkitFormValues>({
     resolver: zodResolver(toolkitFormSchema),
@@ -83,13 +75,15 @@ export default function NewToolkitModal({
       description: "",
       price: 0,
       originalPrice: undefined,
-      category: "",
+      category: "All", // Default category for bundles as per design
       coverImageUrl: "",
       bannerImageUrl: "",
       videoUrl: "",
       totalDuration: "",
       highlights: [],
       testimonials: [],
+      isBundle: true,
+      bundleItems: [],
     },
   });
   const { fields, append, remove } = useFieldArray({
@@ -98,12 +92,8 @@ export default function NewToolkitModal({
   });
 
   async function onSubmit(data: ToolkitFormValues) {
-    const existingCoverUrl = data.coverImageUrl?.trim() ?? "";
-    if (!existingCoverUrl && !coverImageFile) {
-      form.setError("coverImageUrl", {
-        type: "manual",
-        message: "Cover image is required",
-      });
+    if (!data.bundleItems || data.bundleItems.length === 0) {
+      toast.error("Please add at least one course to the bundle.");
       return;
     }
 
@@ -112,7 +102,7 @@ export default function NewToolkitModal({
     try {
       setIsSubmitting(true);
 
-      let coverImageUrl = existingCoverUrl || undefined;
+      let coverImageUrl = data.coverImageUrl?.trim() || undefined;
       let bannerImageUrl = data.bannerImageUrl?.trim() || undefined;
 
       if (coverImageFile) {
@@ -139,8 +129,10 @@ export default function NewToolkitModal({
         coverImageUrl,
         bannerImageUrl,
         videoUrl: data.videoUrl || undefined,
-        category: data.category || undefined,
+        category: data.category || "All",
         totalDuration: data.totalDuration || undefined,
+        isBundle: true,
+        bundleItems: data.bundleItems,
         highlights:
           data.highlights?.map(formatHighlight).filter(Boolean) || undefined,
         testimonials: data.testimonials?.length
@@ -152,10 +144,10 @@ export default function NewToolkitModal({
           : undefined,
       };
 
-      const response = await axios.post("/api/toolkits", cleanedData);
+      const response = await axios.post("/api/admin/toolkits", cleanedData);
 
       if (response.status === 201) {
-        toast.success("Toolkit created successfully!");
+        toast.success("Bundle created successfully!");
         setOpen(false);
         form.reset();
         setCoverImageFile(null);
@@ -168,8 +160,8 @@ export default function NewToolkitModal({
           deleteStorageObjectClient("ungatekeep-images", key).catch(() => null)
         )
       );
-      console.error("Error creating toolkit:", error);
-      toast.error("Failed to create toolkit. Please try again.");
+      console.error("Error creating bundle:", error);
+      toast.error("Failed to create bundle. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -187,9 +179,9 @@ export default function NewToolkitModal({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[700px]">
         <DialogHeader>
-          <DialogTitle>Create New Toolkit</DialogTitle>
+          <DialogTitle>Create New Bundle Offer</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -237,7 +229,7 @@ export default function NewToolkitModal({
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="299"
+                        placeholder="0"
                         {...field}
                         onChange={(e) =>
                           field.onChange(parseFloat(e.target.value) || 0)
@@ -276,93 +268,14 @@ export default function NewToolkitModal({
               />
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {CATEGORIES.map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="totalDuration"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Total Duration</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., 2h 30m" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
             <FormField
               control={form.control}
-              name="coverImageUrl"
+              name="totalDuration"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Cover Image *</FormLabel>
+                  <FormLabel>Total Duration</FormLabel>
                   <FormControl>
-                    <ToolkitImageInput
-                      label="Cover image"
-                      imageUrl={field.value ?? ""}
-                      selectedFile={coverImageFile}
-                      onFileSelect={setCoverImageFile}
-                      onRemove={() => {
-                        setCoverImageFile(null);
-                        field.onChange("");
-                      }}
-                      disabled={isSubmitting}
-                      required
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="bannerImageUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Banner Image (HD, optional)</FormLabel>
-                  <FormControl>
-                    <ToolkitImageInput
-                      label="Banner image"
-                      imageUrl={field.value ?? ""}
-                      selectedFile={bannerImageFile}
-                      onFileSelect={setBannerImageFile}
-                      onRemove={() => {
-                        setBannerImageFile(null);
-                        field.onChange("");
-                      }}
-                      disabled={isSubmitting}
-                    />
+                    <Input placeholder="e.g., 2h 30m" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -491,6 +404,99 @@ export default function NewToolkitModal({
               )}
             />
 
+            {/* Bundle Items section matching the design */}
+            <FormField
+              control={form.control}
+              name="bundleItems"
+              render={({ field }) => (
+                <FormItem className="rounded-lg border p-4 bg-gray-50/50">
+                  <div className="flex items-center justify-between pb-2">
+                    <FormLabel className="text-base font-semibold">Bundle Items</FormLabel>
+                    <select
+                      className="flex h-9 w-48 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        if (selectedId && !field.value?.includes(selectedId)) {
+                          field.onChange([...(field.value || []), selectedId]);
+                        }
+                        // Reset select visually
+                        e.target.value = "";
+                      }}
+                      disabled={isSubmitting}
+                      defaultValue=""
+                    >
+                      <option value="" disabled>+ Add Course to Bundle</option>
+                      {availableCourses
+                        .filter((course) => !field.value?.includes(course.id))
+                        .map((course) => (
+                          <option key={course.id} value={course.id}>
+                            {course.title}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <FormControl>
+                    <div className="space-y-2 mt-2">
+                      {field.value && field.value.length > 0 ? (
+                        field.value.map((toolkitId) => {
+                          const course = availableCourses.find(c => c.id === toolkitId);
+                          return (
+                            <div key={toolkitId} className="flex items-center justify-between bg-white p-2 rounded border text-sm">
+                              <span className="font-medium">{course?.title || 'Unknown Course'}</span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 hover:bg-red-50 hover:text-red-500"
+                                onClick={() => {
+                                  field.onChange(field.value?.filter(id => id !== toolkitId));
+                                }}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className="text-sm text-muted-foreground py-2 text-center border border-dashed rounded bg-white">
+                          No courses added to this bundle yet.
+                        </p>
+                      )}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Optional Banner/Cover image in an expander or just minimal */}
+            <div className="space-y-4 pt-4 border-t">
+              <FormLabel className="text-muted-foreground font-semibold">Images (Optional)</FormLabel>
+              <FormField
+                control={form.control}
+                name="coverImageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cover Image</FormLabel>
+                    <FormControl>
+                      <ToolkitImageInput
+                        label="Cover image"
+                        imageUrl={field.value ?? ""}
+                        selectedFile={coverImageFile}
+                        onFileSelect={setCoverImageFile}
+                        onRemove={() => {
+                          setCoverImageFile(null);
+                          field.onChange("");
+                        }}
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <div className="flex justify-end space-x-2 pt-4">
               <Button
                 type="button"
@@ -500,8 +506,12 @@ export default function NewToolkitModal({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Toolkit"}
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                {isSubmitting ? "Creating..." : "Create Bundle Offer"}
               </Button>
             </div>
           </form>

@@ -392,7 +392,11 @@ export const toolkits = pgTable("toolkits", {
   is_trending: boolean("is_trending").default(false),
   is_featured_home: boolean("is_featured_home").default(false),
   trending_index: integer("trending_index"),          
-  featured_home_index: integer("featured_home_index"), 
+  featured_home_index: integer("featured_home_index"),
+  isBundle: boolean("is_bundle").default(false),
+  bundleItems: text("bundle_items").array().default([]),
+  isBestSeller: boolean("is_best_seller").default(false),
+  isLimitedSeats: boolean("is_limited_seats").default(false),
 });
 
 export const toolkitContentItemTypeEnum = pgEnum("toolkit_content_item_type", [

@@ -394,7 +394,7 @@ export const toolkits = pgTable("toolkits", {
   trending_index: integer("trending_index"),          
   featured_home_index: integer("featured_home_index"),
   isBundle: boolean("is_bundle").default(false),
-  bundleItems: text("bundle_items").array().default([]),
+  bundleItems: jsonb("bundle_items").$type<string[]>().default([]),
   isBestSeller: boolean("is_best_seller").default(false),
   isLimitedSeats: boolean("is_limited_seats").default(false),
 });

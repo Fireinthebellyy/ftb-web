@@ -44,6 +44,7 @@ export async function GET() {
       .leftJoin(user, eq(toolkits.userId, user.id))
       .where(eq(toolkits.isActive, true))
       .orderBy(
+        sql`CASE WHEN ${toolkits.isBundle} = true THEN 0 ELSE 1 END ASC`,
         sql`CASE WHEN ${toolkits.is_featured_home} = true THEN 0 ELSE 1 END ASC`,
         sql`COALESCE(${toolkits.featured_home_index}, 9999) ASC`,
         sql`COALESCE(${toolkits.trending_index}, 9999) ASC`,
@@ -96,15 +97,11 @@ export async function POST(request: Request) {
       missingFields.push("title");
     }
 
-    if (typeof description !== "string" || !description.trim()) {
-      missingFields.push("description");
-    }
-
     if (price === undefined || price === null) {
       missingFields.push("price");
     }
 
-    if (typeof coverImageUrl !== "string" || !coverImageUrl.trim()) {
+    if (!isBundle && (typeof coverImageUrl !== "string" || !coverImageUrl.trim())) {
       missingFields.push("coverImageUrl");
     }
 
@@ -115,7 +112,10 @@ export async function POST(request: Request) {
       });
     }
 
-    if (!hasMeaningfulRichText(description, 10)) {
+    // Normalize description — rich text editor may send empty HTML like <p><br></p>
+    const normalizedDescription = typeof description === "string" ? normalizeRichText(description) : "";
+
+    if (!isBundle && !hasMeaningfulRichText(normalizedDescription, 10)) {
       return badRequest("Description must be at least 10 characters.", {
         code: "INVALID_DESCRIPTION",
         fields: ["description"],
@@ -125,21 +125,21 @@ export async function POST(request: Request) {
     const newToolkit = await db
       .insert(toolkits)
       .values({
-        title,
-        description: normalizeRichText(description),
+        title: title.trim(),
+        description: normalizedDescription || title.trim(), // fallback for bundles with no description
         price,
-        originalPrice,
-        coverImageUrl,
-        bannerImageUrl,
-        videoUrl,
-        contentUrl,
-        category,
-        highlights,
-        testimonials,
-        totalDuration,
-        lessonCount,
+        originalPrice: originalPrice ?? null,
+        coverImageUrl: coverImageUrl || null,
+        bannerImageUrl: bannerImageUrl || null,
+        videoUrl: videoUrl || null,
+        contentUrl: contentUrl || null,
+        category: category || null,
+        highlights: highlights ?? null,
+        testimonials: testimonials ?? null,
+        totalDuration: totalDuration || null,
+        lessonCount: lessonCount ?? 0,
         isActive: false,
-        showSaleBadge,
+        showSaleBadge: showSaleBadge ?? false,
         isBundle: isBundle ?? false,
         bundleItems: bundleItems ?? [],
         isBestSeller: isBestSeller ?? false,
@@ -151,8 +151,9 @@ export async function POST(request: Request) {
     return NextResponse.json(newToolkit[0], { status: 201 });
   } catch (error) {
     console.error("Error creating toolkit:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to create toolkit" },
+      { error: "Failed to create toolkit", details: message },
       { status: 500 }
     );
   }

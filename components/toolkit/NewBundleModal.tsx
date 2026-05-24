@@ -144,7 +144,7 @@ export default function NewBundleModal({
           : undefined,
       };
 
-      const response = await axios.post("/api/admin/toolkits", cleanedData);
+      const response = await axios.post("/api/toolkits", cleanedData);
 
       if (response.status === 201) {
         toast.success("Bundle created successfully!");

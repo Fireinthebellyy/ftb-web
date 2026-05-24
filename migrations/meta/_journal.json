@@ -239,6 +239,13 @@
       "when": 1776315571402,
       "tag": "0033_shallow_toad",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1779650420747,
+      "tag": "0034_freezing_quasar",
+      "breakpoints": true
     }
   ]
 }

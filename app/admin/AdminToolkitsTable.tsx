@@ -195,7 +195,7 @@ export default function AdminToolkitsTable() {
     if (!editingToolkit) return;
 
     const currentCoverImageUrl = data.coverImageUrl?.trim() ?? "";
-    if (!currentCoverImageUrl && !coverImageFile) {
+    if (!editingToolkit.isBundle && !currentCoverImageUrl && !coverImageFile) {
       form.setError("coverImageUrl", {
         type: "manual",
         message: "Cover image is required",

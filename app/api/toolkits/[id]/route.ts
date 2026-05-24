@@ -328,6 +328,30 @@ export async function POST(
         })
         .returning();
 
+      if (toolkit.isBundle && toolkit.bundleItems?.length) {
+        const itemsToInsert = toolkit.bundleItems.map((childId) => ({
+          userId,
+          toolkitId: childId,
+          razorpayOrderId: null,
+          paymentStatus: "completed" as const,
+          amountPaid: 0,
+          couponId: couponId,
+        }));
+
+        for (const item of itemsToInsert) {
+          const existing = await db.query.userToolkits.findFirst({
+            where: and(
+              eq(userToolkits.toolkitId, item.toolkitId),
+              eq(userToolkits.userId, userId),
+              eq(userToolkits.paymentStatus, "completed")
+            )
+          });
+          if (!existing) {
+            await db.insert(userToolkits).values(item);
+          }
+        }
+      }
+
       return NextResponse.json({
         success: true,
         free: true,

@@ -127,7 +127,7 @@ export default function ToolkitPage() {
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredToolkits.map((toolkit) => (
-              <ToolkitCardNew key={toolkit.id} toolkit={toolkit} href={`/toolkit/${toolkit.id}`} />
+              <ToolkitCardNew key={toolkit.id} toolkit={toolkit} allToolkits={toolkits} href={`/toolkit/${toolkit.id}`} />
             ))}
             {filteredToolkits.length === 1 && <ToolkitComingSoonCard />}
           </div>

@@ -187,7 +187,6 @@ export default function Navbar() {
     ? tryGetStoragePublicUrl("avatar-images", user.user.image)
     : null;
 
-  // @ts-ignore - role is added via additionalFields in better-auth config
   const isAdminUser = canAccessAdminPanel(user?.user?.role);
 
   if (pathname === "/onboarding") {

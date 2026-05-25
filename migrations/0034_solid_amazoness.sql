@@ -11,8 +11,9 @@ CREATE TABLE "ungatekeep_post_votes" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" text NOT NULL,
 	"post_id" uuid NOT NULL,
-	"vote" integer NOT NULL,
-	"created_at" timestamp DEFAULT now()
+	"vote" smallint NOT NULL,
+	"created_at" timestamp DEFAULT now(),
+	CONSTRAINT "ungatekeep_post_votes_vote_check" CHECK ("vote" IN (-1, 0, 1))
 );
 --> statement-breakpoint
 ALTER TABLE "ungatekeep_posts" ALTER COLUMN "tag" SET DATA TYPE text;--> statement-breakpoint

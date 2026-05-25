@@ -245,6 +245,15 @@
       "version": "7",
       "when": 1779650420747,
       "tag": "0034_freezing_quasar",
+      "when": 1779628448601,
+      "tag": "0034_solid_amazoness",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1779688320000,
+      "tag": "0046_ungatekeep_post_votes",
       "breakpoints": true
     }
   ]

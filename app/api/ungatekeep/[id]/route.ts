@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { ungatekeepPostEngagementSelect } from "@/lib/ungatekeep-engagement";
 import { ungatekeepPosts, user as userTable, toolkits } from "@/lib/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
@@ -53,6 +54,7 @@ export async function GET(
         isSaved: userId 
           ? sql<boolean>`EXISTS(SELECT 1 FROM "ungatekeep_bookmarks" WHERE "post_id" = ${ungatekeepPosts.id} AND "user_id" = ${userId})`
           : sql<boolean>`false`,
+        ...ungatekeepPostEngagementSelect(userId),
       })
       .from(ungatekeepPosts)
       .leftJoin(userTable, eq(ungatekeepPosts.userId, userTable.id))

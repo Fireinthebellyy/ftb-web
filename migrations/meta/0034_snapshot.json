@@ -1916,34 +1916,6 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": false
-        },
-        "is_bundle": {
-          "name": "is_bundle",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "bundle_items": {
-          "name": "bundle_items",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'{}'"
-        },
-        "is_best_seller": {
-          "name": "is_best_seller",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "is_limited_seats": {
-          "name": "is_limited_seats",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
         }
       },
       "indexes": {},

@@ -50,17 +50,10 @@ export async function GET(request: Request) {
         is_featured_home: toolkits.is_featured_home,
         trending_index: toolkits.trending_index,
         featured_home_index: toolkits.featured_home_index,
-        isBundle: toolkits.isBundle,
-        bundleItems: toolkits.bundleItems,
-        isBestSeller: toolkits.isBestSeller,
-        isLimitedSeats: toolkits.isLimitedSeats,
       })
       .from(toolkits)
       .leftJoin(userTable, eq(toolkits.userId, userTable.id))
-      .orderBy(
-        sql`CASE WHEN ${toolkits.isBundle} = true THEN 0 ELSE 1 END ASC`,
-        desc(toolkits.createdAt)
-      );
+      .orderBy(desc(toolkits.createdAt));
 
     const lessonCounts = await db
       .select({

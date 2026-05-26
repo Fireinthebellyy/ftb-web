@@ -19,15 +19,13 @@ import {
   isAdminTab,
 } from "@/lib/admin-permissions";
 import { Button } from "@/components/ui/button";
-import dynamic from "next/dynamic";
-
-const AdminUsersTable = dynamic(() => import("./AdminUsersTable"), { ssr: false });
-const AdminOpportunitiesTable = dynamic(() => import("./AdminOpportunitiesTable"), { ssr: false });
-const AdminToolkitsTable = dynamic(() => import("./AdminToolkitsTable"), { ssr: false });
-const AdminUngatekeepTable = dynamic(() => import("./AdminUngatekeepTable"), { ssr: false });
-const AdminCouponsTable = dynamic(() => import("./AdminCouponsTable"), { ssr: false });
-const OpportunityManagementTable = dynamic(() => import("./OpportunityManagementTable"), { ssr: false });
-const InternshipManagementTable = dynamic(() => import("./InternshipManagementTable"), { ssr: false });
+import AdminUsersTable from "./AdminUsersTable";
+import AdminOpportunitiesTable from "./AdminOpportunitiesTable";
+import AdminToolkitsTable from "./AdminToolkitsTable";
+import AdminUngatekeepTable from "./AdminUngatekeepTable";
+import AdminCouponsTable from "./AdminCouponsTable";
+import OpportunityManagementTable from "./OpportunityManagementTable";
+import InternshipManagementTable from "./InternshipManagementTable";
 
 const _TAB_VALUES = [
   "opportunities",

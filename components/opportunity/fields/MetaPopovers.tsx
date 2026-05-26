@@ -46,8 +46,7 @@ interface Props {
 }
 
 interface SchedulePublishPopoverProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control: Control<any>;
+  control: Control<FormData>;
   watchedPublishAt?: string;
   onConfirmMessageChange?: (message: string | null) => void;
   showLabel?: boolean;
@@ -425,8 +424,7 @@ export function SchedulePublishPopover({
   compactLabel,
 }: SchedulePublishPopoverProps) {
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { setValue } = useFormContext<any>();
+  const { setValue } = useFormContext<FormData>();
 
   const handleOpenChange = (open: boolean) => {
     setIsScheduleOpen(open);

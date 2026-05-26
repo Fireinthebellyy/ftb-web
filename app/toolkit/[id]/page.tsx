@@ -77,21 +77,9 @@ export default function ToolkitDetailPage() {
   }
 
   const { data: toolkitData, isLoading } = useToolkit(params.id as string);
+  const purchaseMutation = useToolkitPurchase(params.id as string);
+
   const toolkit = toolkitData?.toolkit ?? null;
-
-  const handleViewContent = () => {
-    if (toolkit?.isBundle) {
-      router.push("/toolkit");
-    } else {
-      router.push(`/toolkit/${toolkit?.id}/content`);
-    }
-  };
-
-  const purchaseMutation = useToolkitPurchase(
-    params.id as string,
-    handleViewContent
-  );
-
   const contentItems = toolkitData?.contentItems ?? [];
   const hasPurchased = toolkitData?.hasPurchased ?? false;
   const lessonCount = contentItems.length || toolkit?.lessonCount || 0;
@@ -150,6 +138,9 @@ export default function ToolkitDetailPage() {
     }
   };
 
+  const handleViewContent = () => {
+    router.push(`/toolkit/${toolkit?.id}/content`);
+  };
 
   const videoId = toolkit?.videoUrl
     ? getYouTubeVideoId(toolkit.videoUrl)

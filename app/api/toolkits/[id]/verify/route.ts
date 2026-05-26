@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { badRequest } from "@/lib/api-error";
 import { db } from "@/lib/db";
-import { userToolkits, toolkits } from "@/lib/schema";
+import { userToolkits } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 import { createHmac } from "crypto";
 import { auth } from "@/lib/auth";
@@ -94,36 +94,6 @@ export async function POST(
           eq(userToolkits.userId, userId)
         )
       );
-
-    // If toolkit is a bundle, grant access to its items
-    const purchasedToolkit = await db.query.toolkits.findFirst({
-      where: eq(toolkits.id, toolkitId),
-    });
-
-    if (purchasedToolkit?.isBundle && purchasedToolkit.bundleItems?.length) {
-      const itemsToInsert = purchasedToolkit.bundleItems.map((childId) => ({
-        userId,
-        toolkitId: childId,
-        paymentId: razorpay_payment_id,
-        razorpayOrderId: razorpay_order_id,
-        paymentStatus: "completed" as const,
-        amountPaid: 0,
-      }));
-
-      // Insert or ignore if they already have access
-      for (const item of itemsToInsert) {
-        const existing = await db.query.userToolkits.findFirst({
-          where: and(
-            eq(userToolkits.toolkitId, item.toolkitId),
-            eq(userToolkits.userId, userId),
-            eq(userToolkits.paymentStatus, "completed")
-          )
-        });
-        if (!existing) {
-          await db.insert(userToolkits).values(item);
-        }
-      }
-    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -42,13 +42,12 @@ import { normalizeRichText } from "@/lib/rich-text";
 import { toolkitFormSchema, ToolkitFormValues } from "@/components/admin/types";
 
 const CATEGORIES = [
-  "1:1 Mentorship",
-  "Recorded toolkits",
-  "digital products",
   "Career",
   "Skills",
   "Interview Prep",
   "Resume",
+  "Salary Negotiation",
+  "LinkedIn",
   "Networking",
 ];
 

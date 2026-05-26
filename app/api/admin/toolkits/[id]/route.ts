@@ -57,6 +57,10 @@ const updateToolkitSchema = z.object({
   is_featured_home: z.boolean().optional(),
   trending_index: z.number().nullable().optional(),
   featured_home_index: z.number().nullable().optional(),
+  isBundle: z.boolean().optional(),
+  bundleItems: z.array(z.string()).optional(),
+  isBestSeller: z.boolean().optional(),
+  isLimitedSeats: z.boolean().optional(),
 });
 
 export async function PUT(
@@ -151,6 +155,14 @@ export async function PUT(
       updates.trending_index = validatedData.trending_index;
     if (validatedData.featured_home_index !== undefined)
       updates.featured_home_index = validatedData.featured_home_index;
+    if (validatedData.isBundle !== undefined)
+      updates.isBundle = validatedData.isBundle;
+    if (validatedData.bundleItems !== undefined)
+      updates.bundleItems = validatedData.bundleItems;
+    if (validatedData.isBestSeller !== undefined)
+      updates.isBestSeller = validatedData.isBestSeller;
+    if (validatedData.isLimitedSeats !== undefined)
+      updates.isLimitedSeats = validatedData.isLimitedSeats;
 
     const updatedToolkit = await db
       .update(toolkits)

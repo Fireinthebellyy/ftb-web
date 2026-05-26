@@ -42,6 +42,11 @@ export async function GET(
         updatedAt: toolkits.updatedAt,
         userId: toolkits.userId,
         creatorName: user.name,
+        isBundle: toolkits.isBundle,
+        bundleItems: toolkits.bundleItems,
+        is_trending: toolkits.is_trending,
+        isBestSeller: toolkits.isBestSeller,
+        isLimitedSeats: toolkits.isLimitedSeats,
       })
       .from(toolkits)
       .leftJoin(user, eq(toolkits.userId, user.id))
@@ -327,6 +332,30 @@ export async function POST(
           couponId: couponId,
         })
         .returning();
+
+      if (toolkit.isBundle && toolkit.bundleItems?.length) {
+        const itemsToInsert = toolkit.bundleItems.map((childId) => ({
+          userId,
+          toolkitId: childId,
+          razorpayOrderId: null,
+          paymentStatus: "completed" as const,
+          amountPaid: 0,
+          couponId: couponId,
+        }));
+
+        for (const item of itemsToInsert) {
+          const existing = await db.query.userToolkits.findFirst({
+            where: and(
+              eq(userToolkits.toolkitId, item.toolkitId),
+              eq(userToolkits.userId, userId),
+              eq(userToolkits.paymentStatus, "completed")
+            )
+          });
+          if (!existing) {
+            await db.insert(userToolkits).values(item);
+          }
+        }
+      }
 
       return NextResponse.json({
         success: true,

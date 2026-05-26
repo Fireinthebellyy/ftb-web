@@ -232,6 +232,10 @@ export type Toolkit = {
   testimonials?: ToolkitTestimonial[];
   is_trending?: boolean;
   is_featured_home?: boolean;
+  isBundle?: boolean;
+  bundleItems?: string[];
+  isBestSeller?: boolean;
+  isLimitedSeats?: boolean;
 };
 
 export type ToolkitContentItem = {

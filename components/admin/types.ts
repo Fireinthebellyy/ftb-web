@@ -25,6 +25,11 @@ export const toolkitFormSchema = z.object({
   testimonials: z.array(toolkitTestimonialSchema).optional(),
   isActive: z.boolean().optional(),
   showSaleBadge: z.boolean().optional(),
+  is_trending: z.boolean().optional(),
+  isBundle: z.boolean().optional(),
+  bundleItems: z.array(z.string()).optional(),
+  isBestSeller: z.boolean().optional(),
+  isLimitedSeats: z.boolean().optional(),
 });
 
 export type ToolkitFormValues = z.infer<typeof toolkitFormSchema>;
@@ -56,8 +61,12 @@ export interface Toolkit {
   updatedAt: string;
   userId: string;
   creatorName: string | null;
-  is_trending: boolean;    
-  is_featured_home: boolean; 
+  is_trending?: boolean;
+  is_featured_home?: boolean;
   trending_index?: number;
   featured_home_index?: number;
+  isBundle: boolean;
+  bundleItems: string[] | null;
+  isBestSeller: boolean;
+  isLimitedSeats: boolean;
 }

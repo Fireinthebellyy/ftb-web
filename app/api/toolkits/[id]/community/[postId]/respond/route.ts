@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, count } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { getSessionCached } from "@/lib/auth-session-cache";
@@ -97,7 +97,35 @@ export async function POST(
       selectedOptionIndex,
     });
 
-    return NextResponse.json({ success: true });
+    let optionVoteCounts: number[] | undefined = undefined;
+    let totalVotes: number | undefined = undefined;
+
+    if (post.type === "poll" || post.type === "mcq") {
+      const rows = await db
+        .select({
+          selectedOptionIndex: toolkitCommunityResponses.selectedOptionIndex,
+          c: count(),
+        })
+        .from(toolkitCommunityResponses)
+        .where(eq(toolkitCommunityResponses.postId, postId))
+        .groupBy(toolkitCommunityResponses.selectedOptionIndex);
+
+      const optionCount = options.length;
+      optionVoteCounts = new Array<number>(optionCount).fill(0);
+      for (const row of rows) {
+        if (row.selectedOptionIndex < optionCount) {
+          optionVoteCounts[row.selectedOptionIndex] = Number(row.c);
+        }
+      }
+      totalVotes = optionVoteCounts.reduce((a, b) => a + b, 0);
+    }
+
+    return NextResponse.json({
+      success: true,
+      selectedOptionIndex,
+      optionVoteCounts,
+      totalVotes,
+    });
   } catch (error) {
     console.error("Error responding to community post:", error);
     return NextResponse.json(

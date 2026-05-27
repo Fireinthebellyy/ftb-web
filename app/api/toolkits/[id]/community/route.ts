@@ -99,7 +99,7 @@ export async function GET(
     );
 
     const pollPostIds = visiblePosts
-      .filter((p) => p.type === "poll" && userResponseMap.has(p.id))
+      .filter((p) => (p.type === "poll" || p.type === "mcq") && userResponseMap.has(p.id))
       .map((p) => p.id);
 
     const voteCountsMap = new Map<string, number[]>();
@@ -133,7 +133,7 @@ export async function GET(
       let optionVoteCounts: number[] | undefined = undefined;
       let totalVotes: number | undefined = undefined;
 
-      if (post.type === "poll" && userSelectedIndex !== null) {
+      if ((post.type === "poll" || post.type === "mcq") && userSelectedIndex !== null) {
         optionVoteCounts = voteCountsMap.get(post.id);
         totalVotes = optionVoteCounts?.reduce((a, b) => a + b, 0);
       }

@@ -262,7 +262,7 @@ export type ToolkitContentItem = {
   updatedAt?: string;
 };
 
-export type ToolkitCommunityPostType = "text" | "mcq" | "poll" | "attachment";
+export type ToolkitCommunityPostType = "text" | "mcq" | "poll" | "attachment" | "qna";
 
 export type ToolkitCommunityOption = {
   text: string;
@@ -285,6 +285,14 @@ export type ToolkitCommunityPost = {
   updatedAt?: string;
   /** null = not yet answered; number = index of the option the user selected */
   userSelectedIndex?: number | null;
+  /** For QnA only: the text response the user submitted */
+  userTextResponse?: string | null;
+  /** For QnA only: the attachment URL the user submitted */
+  userAttachmentUrl?: string | null;
+  /** For QnA only: the attachment name the user submitted */
+  userAttachmentName?: string | null;
+  /** For QnA only: the attachment type the user submitted */
+  userAttachmentType?: string | null;
   /** For polls only (after voting): vote count per option index */
   optionVoteCounts?: number[];
   /** For polls only (after voting): total number of votes */

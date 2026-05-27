@@ -186,35 +186,7 @@ export function ToolkitFormFields({
         />
       </div>
 
-      {isDigitalProduct ? (
-        <FormField
-          control={control}
-          name="digitalProductSectionId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Digital Product Section</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select section" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {digitalProductSections.map((section) => (
-                    <SelectItem key={section.id} value={section.id}>
-                      {section.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      ) : null}
+      {/* Digital product section dropdown has been removed based on user request */}
 
       {!isDigitalProduct ? (
         <FormField

@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   BarChart3,
   Loader2,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { uploadFileViaSignedUrl, deleteStorageObjectClient } from "@/lib/storage/client";
@@ -35,10 +36,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ToolkitCommunityPost, ToolkitCommunityOption } from "@/types/interfaces";
 
 interface Props {
   toolkitId: string;
+  toolkitTitle: string;
+  open: boolean;
+  onClose: () => void;
 }
 
 const fetchAdminPosts = async (toolkitId: string) => {
@@ -48,10 +53,11 @@ const fetchAdminPosts = async (toolkitId: string) => {
   return data.posts as ToolkitCommunityPost[];
 };
 
-export default function ToolkitCommunityManager({ toolkitId }: Props) {
+export default function ToolkitCommunityManager({ toolkitId, toolkitTitle, open, onClose }: Props) {
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
   const [editingPost, setEditingPost] = useState<ToolkitCommunityPost | null>(null);
+  const [viewingResponsesPost, setViewingResponsesPost] = useState<ToolkitCommunityPost | null>(null);
 
   const { data: posts = [], isLoading } = useQuery({
     queryKey: ["admin-toolkit-community", toolkitId],
@@ -128,13 +134,17 @@ export default function ToolkitCommunityManager({ toolkitId }: Props) {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Community Feed Manager</h2>
-          <p className="text-gray-500">Manage announcements, polls, and quizzes for this course.</p>
-        </div>
-        {!isCreating && !editingPost && (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[800px]">
+        <DialogHeader>
+          <DialogTitle>Community Feed: {toolkitTitle}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-500">Manage announcements, polls, and QnAs for this course.</p>
+            </div>
+            {!isCreating && !editingPost && (
           <Button onClick={handleCreate} className="gap-2 bg-orange-600 hover:bg-orange-700">
             <MessageSquarePlus className="h-4 w-4" />
             New Post
@@ -195,6 +205,14 @@ export default function ToolkitCommunityManager({ toolkitId }: Props) {
                         {post.options.length} options • {post.totalVotes || 0} responses
                       </div>
                     )}
+                    {post.type === "qna" && (
+                      <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
+                        <Users className="h-4 w-4" />
+                        <button onClick={() => setViewingResponsesPost(post)} className="text-orange-600 hover:underline">
+                          View Responses
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(post)}>
@@ -218,6 +236,77 @@ export default function ToolkitCommunityManager({ toolkitId }: Props) {
           )}
         </div>
       )}
+
+      {/* Responses Dialog */}
+      <Dialog open={!!viewingResponsesPost} onOpenChange={(open) => !open && setViewingResponsesPost(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Q&A Responses</DialogTitle>
+            <DialogDescription>
+              {viewingResponsesPost?.title}
+            </DialogDescription>
+          </DialogHeader>
+          {viewingResponsesPost && <QnAResponsesViewer toolkitId={toolkitId} postId={viewingResponsesPost.id} />}
+        </DialogContent>
+      </Dialog>
+    </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── QnA Responses Viewer ──────────────────────────────────────────────────────
+
+function QnAResponsesViewer({ toolkitId, postId }: { toolkitId: string; postId: string }) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["admin-toolkit-community-responses", toolkitId, postId],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/toolkits/${toolkitId}/community/${postId}/responses`);
+      if (!res.ok) throw new Error("Failed to fetch responses");
+      const data = await res.json();
+      return data.responses as any[];
+    },
+  });
+
+  if (isLoading) return <div className="py-8 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-gray-400" /></div>;
+  if (error) return <div className="text-red-500 text-sm">Error loading responses.</div>;
+  if (!data?.length) return <div className="text-gray-500 text-sm py-4">No responses yet.</div>;
+
+  return (
+    <div className="space-y-4 mt-4">
+      {data.map((r) => (
+        <div key={r.id} className="border rounded-lg p-4 space-y-3">
+          <div className="flex items-center gap-3">
+            {r.user?.image ? (
+              <img src={r.user.image} alt={r.user.name} className="h-8 w-8 rounded-full" />
+            ) : (
+              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600">
+                {r.user?.name?.charAt(0) || "U"}
+              </div>
+            )}
+            <div>
+              <p className="font-medium text-sm text-gray-900">{r.user?.name || "Unknown User"}</p>
+              <p className="text-xs text-gray-500">{new Date(r.createdAt).toLocaleString()}</p>
+            </div>
+          </div>
+          {r.textResponse && (
+            <div className="bg-gray-50 rounded p-3 text-sm text-gray-700 whitespace-pre-wrap">
+              {r.textResponse}
+            </div>
+          )}
+          {r.attachmentUrl && (
+            <a
+              href={r.attachmentUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-orange-600 hover:underline"
+            >
+              {r.attachmentType?.startsWith("image") ? <ImageIcon className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+              {r.attachmentName || "View Attachment"}
+            </a>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
@@ -255,7 +344,7 @@ function PostEditor({ toolkitId, initialData, onCancel, onSave, isSaving }: Post
     }
 
     let finalOptions = options;
-    if (type !== "text") {
+    if (type !== "text" && type !== "qna") {
       finalOptions = options.filter(o => o.text.trim() !== "");
       if (finalOptions.length < 2) {
         toast.error("Polls and MCQs require at least 2 options");
@@ -296,7 +385,7 @@ function PostEditor({ toolkitId, initialData, onCancel, onSave, isSaving }: Post
       body,
       isPublished,
       orderIndex,
-      options: type === "text" ? [] : finalOptions,
+      options: type === "text" || type === "qna" ? [] : finalOptions,
       attachmentUrl: finalAttachmentUrl,
       attachmentName: finalAttachmentName,
       attachmentType: finalAttachmentType,
@@ -312,14 +401,15 @@ function PostEditor({ toolkitId, initialData, onCancel, onSave, isSaving }: Post
         <div className="grid gap-6 md:grid-cols-2">
           <div className="space-y-2">
             <Label>Post Type</Label>
-            <Select value={type} onValueChange={setType}>
+            <Select value={type} onValueChange={(val: any) => setType(val)}>
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="text">Announcement (Text/Image)</SelectItem>
-                <SelectItem value="poll">Poll (Voting)</SelectItem>
-                <SelectItem value="mcq">MCQ (Quiz)</SelectItem>
+                <SelectItem value="text">Text / Announcement</SelectItem>
+                <SelectItem value="poll">Poll</SelectItem>
+                <SelectItem value="mcq">Multiple Choice Question (MCQ)</SelectItem>
+                <SelectItem value="qna">Q&A (Text / File Response)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -354,7 +444,7 @@ function PostEditor({ toolkitId, initialData, onCancel, onSave, isSaving }: Post
           />
         </div>
 
-        {type !== "text" && (
+        {(type === "poll" || type === "mcq") && (
           <div className="space-y-4 rounded-xl border bg-gray-50/50 p-5">
             <div className="flex items-center justify-between">
               <Label>Options</Label>
@@ -426,9 +516,12 @@ function PostEditor({ toolkitId, initialData, onCancel, onSave, isSaving }: Post
               accept="image/*,application/pdf,.doc,.docx"
             />
             {(initialData?.attachmentName || attachmentFile) && (
-              <p className="text-sm text-gray-500">
-                {attachmentFile ? "New file ready to upload" : `Current: ${initialData?.attachmentName}`}
-              </p>
+              <div className="flex items-center gap-2 text-sm text-emerald-600">
+                <CheckCircle2 className="h-4 w-4" />
+                <span className="font-medium">
+                  {attachmentFile ? "File selected and ready to upload" : `Current: ${initialData?.attachmentName}`}
+                </span>
+              </div>
             )}
           </div>
         </div>

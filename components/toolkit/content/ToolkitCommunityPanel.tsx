@@ -14,9 +14,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSubmitCommunityResponse } from "@/lib/queries-toolkits";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { uploadFileViaSignedUrl } from "@/lib/storage/client";
+import { toast } from "sonner";
 import { ToolkitCommunityPost } from "@/types/interfaces";
 import { cn } from "@/lib/utils";
+import { useSubmitCommunityResponse } from "@/lib/queries-toolkits";
 
 interface ToolkitCommunityPanelProps {
   posts: ToolkitCommunityPost[];
@@ -212,7 +217,6 @@ function PollCard({ post, toolkitId }: PollCardProps) {
                   : "border-gray-200 bg-white shadow-sm"
               )}
             >
-              {/* Progress bar fill (shown after voting) */}
               {isVoted && (
                 <span
                   className={cn(
@@ -280,6 +284,141 @@ function PollCard({ post, toolkitId }: PollCardProps) {
             <span>Vote to reveal results</span>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Panel ───────────────────────────────────────────────────────────────
+
+interface QnACardProps {
+  post: ToolkitCommunityPost;
+  toolkitId: string;
+}
+
+function QnACard({ post, toolkitId }: QnACardProps) {
+  const [textResponse, setTextResponse] = useState("");
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const submitResponse = useSubmitCommunityResponse(toolkitId);
+  const isAnswered = post.userTextResponse != null || post.userAttachmentUrl != null;
+
+  const handleSubmit = async () => {
+    if (!textResponse.trim() && !attachmentFile) {
+      toast.error("Please provide a text response or an attachment.");
+      return;
+    }
+
+    setIsUploading(true);
+    let attachmentUrl, attachmentName, attachmentType;
+
+    if (attachmentFile) {
+      try {
+        const uploaded = await uploadFileViaSignedUrl({
+          domain: "ungatekeep-images",
+          file: attachmentFile,
+        });
+        attachmentUrl = uploaded.publicUrl;
+        attachmentName = attachmentFile.name;
+        attachmentType = attachmentFile.type.startsWith("image/") ? "image" : "document";
+      } catch (err) {
+        toast.error("Failed to upload attachment");
+        setIsUploading(false);
+        return;
+      }
+    }
+
+    submitResponse.mutate(
+      {
+        postId: post.id,
+        textResponse: textResponse.trim() || undefined,
+        attachmentUrl,
+        attachmentName,
+        attachmentType,
+      },
+      {
+        onSettled: () => setIsUploading(false),
+        onSuccess: () => toast.success("Response submitted successfully!"),
+      }
+    );
+  };
+
+  if (isAnswered) {
+    return (
+      <div className="space-y-4 rounded-xl border border-emerald-100 bg-emerald-50/50 p-5 mt-4">
+        <div className="flex items-center gap-2 text-emerald-700 font-semibold mb-3">
+          <CheckCircle2 className="h-5 w-5" />
+          <span>You have submitted your response</span>
+        </div>
+        {post.userTextResponse && (
+          <div className="bg-white rounded-lg p-4 border border-emerald-100 shadow-sm text-gray-700 whitespace-pre-wrap">
+            {post.userTextResponse}
+          </div>
+        )}
+        {post.userAttachmentUrl && (
+          <a
+            href={post.userAttachmentUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 text-sm text-orange-600 hover:underline bg-white border border-orange-100 px-4 py-2 rounded-lg"
+          >
+            {post.userAttachmentType?.startsWith("image") ? <ImageIcon className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+            {post.userAttachmentName || "View Attachment"}
+          </a>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 mt-4 bg-gray-50/50 p-5 rounded-2xl border border-gray-100">
+      <div className="space-y-2">
+        <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+          <MessageSquare className="h-4 w-4 text-orange-500" />
+          Your Response
+        </label>
+        <Textarea
+          placeholder="Write your answer here..."
+          value={textResponse}
+          onChange={(e) => setTextResponse(e.target.value)}
+          className="min-h-[120px] bg-white resize-none"
+          disabled={submitResponse.isPending || isUploading}
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+          <FileText className="h-4 w-4 text-orange-500" />
+          Attachment (Optional)
+        </label>
+        <Input
+          type="file"
+          onChange={(e) => setAttachmentFile(e.target.files?.[0] || null)}
+          className="bg-white"
+          accept="image/*,application/pdf,.doc,.docx"
+          disabled={submitResponse.isPending || isUploading}
+        />
+        {attachmentFile && (
+          <div className="flex items-center gap-2 text-sm text-emerald-600 mt-2">
+            <CheckCircle2 className="h-4 w-4" />
+            <span className="font-medium">File '{attachmentFile.name}' ready to upload</span>
+          </div>
+        )}
+        <p className="text-xs text-gray-500 mt-1">Upload images, PDFs, or Word documents</p>
+      </div>
+
+      <div className="pt-2 flex justify-end">
+        <Button
+          onClick={handleSubmit}
+          disabled={submitResponse.isPending || isUploading || (!textResponse.trim() && !attachmentFile)}
+          className="bg-orange-600 hover:bg-orange-700 text-white min-w-[120px]"
+        >
+          {submitResponse.isPending || isUploading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            "Submit Answer"
+          )}
+        </Button>
       </div>
     </div>
   );
@@ -376,6 +515,12 @@ export default function ToolkitCommunityPanel({
               {post.type === "poll" && post.options?.length ? (
                 <div className="mt-6 border-t border-gray-100 pt-6">
                   <PollCard post={post} toolkitId={toolkitId} />
+                </div>
+              ) : null}
+
+              {post.type === "qna" ? (
+                <div className="mt-6 border-t border-gray-100 pt-6">
+                  <QnACard post={post} toolkitId={toolkitId} />
                 </div>
               ) : null}
 

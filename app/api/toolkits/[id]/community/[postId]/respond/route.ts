@@ -17,14 +17,8 @@ export async function POST(
   try {
     const { id: toolkitId, postId } = await params;
     const body = await request.json();
-    const selectedOptionIndex = Number(body.selectedOptionIndex);
-
-    if (isNaN(selectedOptionIndex)) {
-      return NextResponse.json(
-        { error: "Invalid selected option index" },
-        { status: 400 }
-      );
-    }
+    const { selectedOptionIndex: rawIndex, textResponse, attachmentUrl, attachmentName, attachmentType } = body;
+    const selectedOptionIndex = rawIndex !== undefined && rawIndex !== null ? Number(rawIndex) : null;
 
     const session = await getSessionCached(await headers());
     if (!session?.user?.id) {
@@ -68,9 +62,15 @@ export async function POST(
       );
     }
 
-    const options = post.options ?? [];
-    if (selectedOptionIndex < 0 || selectedOptionIndex >= options.length) {
-      return NextResponse.json({ error: "Invalid option" }, { status: 400 });
+    if (post.type === "poll" || post.type === "mcq") {
+      const options = post.options ?? [];
+      if (selectedOptionIndex === null || isNaN(selectedOptionIndex) || selectedOptionIndex < 0 || selectedOptionIndex >= options.length) {
+        return NextResponse.json({ error: "Invalid option" }, { status: 400 });
+      }
+    } else if (post.type === "qna") {
+      if (!textResponse?.trim() && !attachmentUrl) {
+        return NextResponse.json({ error: "Please provide a text response or an attachment" }, { status: 400 });
+      }
     }
 
     const [existingResponse] = await db
@@ -95,6 +95,10 @@ export async function POST(
       postId,
       userId,
       selectedOptionIndex,
+      textResponse,
+      attachmentUrl,
+      attachmentName,
+      attachmentType,
     });
 
     let optionVoteCounts: number[] | undefined = undefined;
@@ -125,11 +129,18 @@ export async function POST(
       selectedOptionIndex,
       optionVoteCounts,
       totalVotes,
+      textResponse,
+      attachmentUrl,
+      attachmentName,
+      attachmentType,
     });
   } catch (error) {
     console.error("Error responding to community post:", error);
+    try {
+      require('fs').appendFileSync('e:/FTBH/ftb-web/error.log', JSON.stringify(error, Object.getOwnPropertyNames(error), 2) + '\\n');
+    } catch (e) {}
     return NextResponse.json(
-      { error: "Failed to submit response" },
+      { error: "Failed to submit response", details: String(error) },
       { status: 500 }
     );
   }

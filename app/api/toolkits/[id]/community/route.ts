@@ -85,6 +85,10 @@ export async function GET(
       .select({
         postId: toolkitCommunityResponses.postId,
         selectedOptionIndex: toolkitCommunityResponses.selectedOptionIndex,
+        textResponse: toolkitCommunityResponses.textResponse,
+        attachmentUrl: toolkitCommunityResponses.attachmentUrl,
+        attachmentName: toolkitCommunityResponses.attachmentName,
+        attachmentType: toolkitCommunityResponses.attachmentType,
       })
       .from(toolkitCommunityResponses)
       .where(
@@ -95,7 +99,7 @@ export async function GET(
       );
 
     const userResponseMap = new Map(
-      userResponses.map((r) => [r.postId, r.selectedOptionIndex])
+      userResponses.map((r) => [r.postId, r])
     );
 
     const pollPostIds = visiblePosts
@@ -129,7 +133,8 @@ export async function GET(
     }
 
     const posts = visiblePosts.map((post) => {
-      const userSelectedIndex = userResponseMap.get(post.id) ?? null;
+      const userResponse = userResponseMap.get(post.id);
+      const userSelectedIndex = userResponse?.selectedOptionIndex ?? null;
       let optionVoteCounts: number[] | undefined = undefined;
       let totalVotes: number | undefined = undefined;
 
@@ -141,6 +146,10 @@ export async function GET(
       return {
         ...post,
         userSelectedIndex,
+        userTextResponse: userResponse?.textResponse ?? null,
+        userAttachmentUrl: userResponse?.attachmentUrl ?? null,
+        userAttachmentName: userResponse?.attachmentName ?? null,
+        userAttachmentType: userResponse?.attachmentType ?? null,
         optionVoteCounts,
         totalVotes,
       };

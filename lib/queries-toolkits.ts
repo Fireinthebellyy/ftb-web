@@ -264,17 +264,29 @@ export function useSubmitCommunityResponse(toolkitId: string) {
     mutationFn: async ({
       postId,
       selectedOptionIndex,
+      textResponse,
+      attachmentUrl,
+      attachmentName,
+      attachmentType,
     }: {
       postId: string;
-      selectedOptionIndex: number;
+      selectedOptionIndex?: number | null;
+      textResponse?: string;
+      attachmentUrl?: string;
+      attachmentName?: string;
+      attachmentType?: string;
     }) => {
       const { data } = await axios.post<{
-        selectedOptionIndex: number;
+        selectedOptionIndex?: number | null;
         optionVoteCounts?: number[];
         totalVotes?: number;
+        textResponse?: string;
+        attachmentUrl?: string;
+        attachmentName?: string;
+        attachmentType?: string;
       }>(
         `/api/toolkits/${toolkitId}/community/${postId}/respond`,
-        { selectedOptionIndex },
+        { selectedOptionIndex, textResponse, attachmentUrl, attachmentName, attachmentType },
         { headers: { "Content-Type": "application/json" } }
       );
       return { postId, ...data };
@@ -291,7 +303,11 @@ export function useSubmitCommunityResponse(toolkitId: string) {
               if (post.id !== result.postId) return post;
               return {
                 ...post,
-                userSelectedIndex: result.selectedOptionIndex,
+                userSelectedIndex: result.selectedOptionIndex ?? null,
+                userTextResponse: result.textResponse ?? null,
+                userAttachmentUrl: result.attachmentUrl ?? null,
+                userAttachmentName: result.attachmentName ?? null,
+                userAttachmentType: result.attachmentType ?? null,
                 ...(result.optionVoteCounts !== undefined && {
                   optionVoteCounts: result.optionVoteCounts,
                   totalVotes: result.totalVotes,

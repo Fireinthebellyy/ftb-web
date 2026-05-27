@@ -483,7 +483,11 @@ export const toolkitCommunityResponses = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    selectedOptionIndex: integer("selected_option_index").notNull(),
+    selectedOptionIndex: integer("selected_option_index"),
+    textResponse: text("text_response"),
+    attachmentUrl: text("attachment_url"),
+    attachmentName: text("attachment_name"),
+    attachmentType: text("attachment_type"),
     createdAt: timestamp("created_at").defaultNow(),
   },
   (table) => [

@@ -61,7 +61,7 @@ export async function POST(
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    if (post.toolkitId !== toolkitId) {
+    if (post.toolkitId.toLowerCase() !== toolkitId.toLowerCase()) {
       return NextResponse.json(
         { error: "Post does not belong to this toolkit" },
         { status: 400 }
@@ -87,7 +87,7 @@ export async function POST(
     if (existingResponse) {
       return NextResponse.json(
         { error: "You have already responded to this post" },
-        { status: 400 }
+        { status: 409 }
       );
     }
 

@@ -18,6 +18,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { uploadFileViaSignedUrl, deleteStorageObjectClient } from "@/lib/storage/client";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -243,7 +245,10 @@ function PostEditor({ toolkitId, initialData, onCancel, onSave, isSaving }: Post
       : [{ text: "", isCorrect: false }, { text: "", isCorrect: false }]
   );
 
-  const handleSave = () => {
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleSave = async () => {
     if (!title.trim()) {
       toast.error("Title is required");
       return;
@@ -262,6 +267,28 @@ function PostEditor({ toolkitId, initialData, onCancel, onSave, isSaving }: Post
       }
     }
 
+    let finalAttachmentUrl = initialData?.attachmentUrl;
+    let finalAttachmentName = initialData?.attachmentName;
+    let finalAttachmentType = initialData?.attachmentType;
+
+    if (attachmentFile) {
+      setIsUploading(true);
+      try {
+        const uploaded = await uploadFileViaSignedUrl({
+          domain: "ungatekeep-images",
+          file: attachmentFile,
+        });
+        finalAttachmentUrl = uploaded.publicUrl;
+        finalAttachmentName = attachmentFile.name;
+        finalAttachmentType = attachmentFile.type.startsWith("image/") ? "image" : "document";
+      } catch (err) {
+        toast.error("Failed to upload attachment");
+        setIsUploading(false);
+        return;
+      }
+      setIsUploading(false);
+    }
+
     onSave({
       toolkitId,
       type,
@@ -270,11 +297,9 @@ function PostEditor({ toolkitId, initialData, onCancel, onSave, isSaving }: Post
       isPublished,
       orderIndex,
       options: type === "text" ? [] : finalOptions,
-      // Attachment fields left out for brevity unless we need full file uploads,
-      // but we can pass existing ones back.
-      attachmentUrl: initialData?.attachmentUrl,
-      attachmentName: initialData?.attachmentName,
-      attachmentType: initialData?.attachmentType,
+      attachmentUrl: finalAttachmentUrl,
+      attachmentName: finalAttachmentName,
+      attachmentType: finalAttachmentType,
     });
   };
 
@@ -391,12 +416,29 @@ function PostEditor({ toolkitId, initialData, onCancel, onSave, isSaving }: Post
           </div>
         )}
 
+        <div className="space-y-2">
+          <Label>Attachment (Image, PDF, Docs)</Label>
+          <div className="flex items-center gap-4">
+            <Input
+              type="file"
+              onChange={(e) => setAttachmentFile(e.target.files?.[0] || null)}
+              className="max-w-md"
+              accept="image/*,application/pdf,.doc,.docx"
+            />
+            {(initialData?.attachmentName || attachmentFile) && (
+              <p className="text-sm text-gray-500">
+                {attachmentFile ? "New file ready to upload" : `Current: ${initialData?.attachmentName}`}
+              </p>
+            )}
+          </div>
+        </div>
+
         <div className="flex justify-end gap-3 border-t pt-6">
           <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isSaving} className="bg-orange-600 hover:bg-orange-700 min-w-[100px]">
-            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Post"}
+          <Button onClick={handleSave} disabled={isSaving || isUploading} className="bg-orange-600 hover:bg-orange-700 min-w-[100px]">
+            {isSaving || isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Post"}
           </Button>
         </div>
       </CardContent>

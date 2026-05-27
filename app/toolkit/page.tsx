@@ -13,6 +13,7 @@ import { useSession } from "@/hooks/use-session";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { Check } from "lucide-react";
 
 export default function ToolkitPage() {
   const { data: session, isPending: sessionPending } = useSession();
@@ -101,22 +102,24 @@ export default function ToolkitPage() {
         </div>
 
         <div className="mb-8 flex flex-wrap gap-3">
-          {["All", "1:1 Mentorship", "Recorded toolkits", "digital products"].map((cat) => (
-            <button
-              key={cat}
-              onClick={() => {
-                setSelectedCategory(cat);
-              }}
-              className={cn(
-                "rounded-full px-5 py-2 text-sm font-medium transition-colors border",
-                selectedCategory === cat
-                  ? "bg-[#ff5e14] text-white border-[#ff5e14]"
-                  : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-              )}
-            >
-              {cat}
-            </button>
-          ))}
+          {["All", "1:1 Mentorship", "Recorded toolkits", "digital products"].map((cat) => {
+            const isActive = selectedCategory === cat;
+            return (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors border shadow-sm",
+                  isActive
+                    ? "bg-[#ff5e14] text-white border-[#ff5e14]"
+                    : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                )}
+              >
+                {isActive && <Check className="h-4 w-4" />}
+                {cat}
+              </button>
+            );
+          })}
         </div>
 
         {isError ? (

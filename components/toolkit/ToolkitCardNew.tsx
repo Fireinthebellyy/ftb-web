@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn, stripHtml } from "@/lib/utils";
 import { Toolkit } from "@/types/interfaces";
 import { Flame, ArrowRight, Star, Clock } from "lucide-react";
 
@@ -57,6 +57,7 @@ export default function ToolkitCardNew({
   };
 
   const displayHighlights = getProcessedHighlights();
+  const isDigitalProduct = toolkit.category === "digital products";
 
   return (
     <Link href={href} className="block h-full" prefetch>
@@ -66,7 +67,96 @@ export default function ToolkitCardNew({
           className
         )}
       >
-        {toolkit.isBundle ? (
+        {isDigitalProduct ? (
+          <CardContent className="flex h-full flex-col p-5">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className="border-orange-200 bg-orange-50 text-orange-700"
+                  >
+                    Digital Product
+                  </Badge>
+                  {toolkit.digitalProductSectionTitle ? (
+                    <Badge variant="secondary">
+                      {toolkit.digitalProductSectionTitle}
+                    </Badge>
+                  ) : null}
+                </div>
+                <p className="mb-1 text-xs text-gray-500 sm:text-[13px]">
+                  {toolkit.creatorName || "Fireinthebelly"}
+                </p>
+                <h3 className="text-xl font-semibold leading-tight text-gray-950 transition-colors group-hover:text-gray-700">
+                  {toolkit.title.charAt(0).toUpperCase() + toolkit.title.slice(1)}
+                </h3>
+              </div>
+
+              <div className="flex flex-col items-end gap-2">
+                {toolkit.is_trending && (
+                  <span className="flex w-fit items-center rounded-full bg-[#ff5e14] px-2 py-0.5 text-[10px] font-medium text-white shadow-sm sm:text-xs">
+                    <Flame className="mr-0.5 h-3 w-3" /> Trending
+                  </span>
+                )}
+                {toolkit.isBestSeller && (
+                  <span className="flex w-fit items-center rounded-full bg-[#ffb000] px-2.5 py-1 text-[10px] font-semibold text-yellow-950 shadow-sm sm:text-[11px]">
+                    <Star className="mr-1 h-3 w-3 fill-yellow-950" /> Best Seller
+                  </span>
+                )}
+                {toolkit.isLimitedSeats && (
+                  <span className="flex w-fit items-center rounded-full bg-[#00aaff] px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm sm:text-[11px]">
+                    <Clock className="mr-1 h-3 w-3" /> Limited Seats
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {toolkit.description ? (
+              <p className="mb-4 line-clamp-3 text-sm leading-6 text-gray-600">
+                {stripHtml(toolkit.description)}
+              </p>
+            ) : null}
+
+            {displayHighlights.length > 0 ? (
+              <ul className="mb-5 grid gap-2 sm:grid-cols-2">
+                {displayHighlights.map((highlight, index) => (
+                  <li
+                    key={index}
+                    className="flex items-start gap-2 text-[13px] text-gray-600"
+                  >
+                    <div className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#ff5e14]" />
+                    <span className="leading-relaxed">{highlight}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="flex-1" />
+            )}
+
+            <div className="mt-auto flex items-end justify-between border-t border-gray-100 pt-4">
+              <div>
+                <div className="mb-1 text-[10px] font-semibold tracking-wider text-gray-400">
+                  PRICE
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-xl font-bold text-gray-900">
+                    â‚¹{toolkit.price.toLocaleString("en-IN")}
+                  </span>
+                  {hasOriginalPrice && (
+                    <span className="text-xs font-medium text-gray-400 line-through">
+                      â‚¹{toolkit.originalPrice!.toLocaleString("en-IN")}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="group-hover:text-[#ff5e14] flex items-center gap-1 text-sm font-medium text-[#ff5e14] transition-colors">
+                View Details
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </div>
+            </div>
+          </CardContent>
+        ) : toolkit.isBundle ? (
           <div className="flex-1 flex flex-col p-4 bg-white relative">
             {/* Badges — top right */}
             <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-2">

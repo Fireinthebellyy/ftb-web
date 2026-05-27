@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { badRequest } from "@/lib/api-error";
 import { db } from "@/lib/db";
-import { toolkits, user } from "@/lib/schema";
+import { digitalProductSections, toolkits, user } from "@/lib/schema";
 import { hasMeaningfulRichText, normalizeRichText } from "@/lib/rich-text";
 import { getCurrentUser } from "@/server/users";
 import { eq, desc, sql } from "drizzle-orm";
@@ -39,9 +39,15 @@ export async function GET() {
         bundleItems: toolkits.bundleItems,
         isBestSeller: toolkits.isBestSeller,
         isLimitedSeats: toolkits.isLimitedSeats,
+        digitalProductSectionId: toolkits.digitalProductSectionId,
+        digitalProductSectionTitle: digitalProductSections.title,
       })
       .from(toolkits)
       .leftJoin(user, eq(toolkits.userId, user.id))
+      .leftJoin(
+        digitalProductSections,
+        eq(toolkits.digitalProductSectionId, digitalProductSections.id)
+      )
       .where(eq(toolkits.isActive, true))
       .orderBy(
         sql`CASE WHEN ${toolkits.isBundle} = true THEN 0 ELSE 1 END ASC`,
@@ -90,6 +96,7 @@ export async function POST(request: Request) {
       bundleItems,
       isBestSeller,
       isLimitedSeats,
+      digitalProductSectionId,
     } = body;
 
     const missingFields: string[] = [];
@@ -102,7 +109,11 @@ export async function POST(request: Request) {
       missingFields.push("price");
     }
 
-    if (!isBundle && (typeof coverImageUrl !== "string" || !coverImageUrl.trim())) {
+    if (
+      !isBundle &&
+      category !== "digital products" &&
+      (typeof coverImageUrl !== "string" || !coverImageUrl.trim())
+    ) {
       missingFields.push("coverImageUrl");
     }
 
@@ -146,6 +157,7 @@ export async function POST(request: Request) {
         bundleItems: bundleItems ?? [],
         isBestSeller: isBestSeller ?? false,
         isLimitedSeats: isLimitedSeats ?? false,
+        digitalProductSectionId: digitalProductSectionId || null,
         userId: user.currentUser.id,
       })
       .returning();

@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { logAdminActivity } from "@/lib/admin-activity";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { db } from "@/lib/db";
-import { toolkitContentItems, toolkits, user as userTable } from "@/lib/schema";
+import {
+  digitalProductSections,
+  toolkitContentItems,
+  toolkits,
+  user as userTable,
+} from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { desc, eq, sql } from "drizzle-orm";
 
@@ -54,9 +59,15 @@ export async function GET(request: Request) {
         bundleItems: toolkits.bundleItems,
         isBestSeller: toolkits.isBestSeller,
         isLimitedSeats: toolkits.isLimitedSeats,
+        digitalProductSectionId: toolkits.digitalProductSectionId,
+        digitalProductSectionTitle: digitalProductSections.title,
       })
       .from(toolkits)
       .leftJoin(userTable, eq(toolkits.userId, userTable.id))
+      .leftJoin(
+        digitalProductSections,
+        eq(toolkits.digitalProductSectionId, digitalProductSections.id)
+      )
       .orderBy(
         sql`CASE WHEN ${toolkits.isBundle} = true THEN 0 ELSE 1 END ASC`,
         desc(toolkits.createdAt)

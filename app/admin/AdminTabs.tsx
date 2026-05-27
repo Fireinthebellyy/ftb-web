@@ -8,6 +8,7 @@ import {
   ArrowUpRight,
   BookOpen,
   CircleCheck,
+  Layers3,
   RadioTower,
   Ticket,
   Users,

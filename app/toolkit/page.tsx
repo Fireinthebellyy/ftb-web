@@ -85,9 +85,12 @@ export default function ToolkitPage() {
     );
   }
 
-  const filteredToolkits = selectedCategory === "All"
-    ? toolkits
-    : toolkits.filter((t) => t.category === selectedCategory);
+  const filteredToolkits =
+    selectedCategory === "All"
+      ? toolkits
+      : toolkits.filter((t) => t.category === selectedCategory);
+  
+  const isViewingDigitalProducts = selectedCategory === "digital products";
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -101,7 +104,9 @@ export default function ToolkitPage() {
           {["All", "1:1 Mentorship", "Recorded toolkits", "digital products"].map((cat) => (
             <button
               key={cat}
-              onClick={() => setSelectedCategory(cat)}
+              onClick={() => {
+                setSelectedCategory(cat);
+              }}
               className={cn(
                 "rounded-full px-5 py-2 text-sm font-medium transition-colors border",
                 selectedCategory === cat
@@ -125,7 +130,14 @@ export default function ToolkitPage() {
             <p className="text-gray-500">Check back soon for new content!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div
+            className={cn(
+              "grid grid-cols-1 gap-6",
+              isViewingDigitalProducts
+                ? "lg:grid-cols-2"
+                : "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            )}
+          >
             {filteredToolkits.map((toolkit) => (
               <ToolkitCardNew key={toolkit.id} toolkit={toolkit} allToolkits={toolkits} href={`/toolkit/${toolkit.id}`} />
             ))}

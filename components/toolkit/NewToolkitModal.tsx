@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import { useFieldArray, useForm } from "react-hook-form";
 import axios from "axios";
 import { Plus, Trash2 } from "lucide-react";
@@ -39,17 +40,16 @@ import {
 } from "@/lib/storage/client";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { normalizeRichText } from "@/lib/rich-text";
-import { toolkitFormSchema, ToolkitFormValues } from "@/components/admin/types";
+import {
+  DigitalProductSection,
+  toolkitFormSchema,
+  ToolkitFormValues,
+} from "@/components/admin/types";
 
 const CATEGORIES = [
   "1:1 Mentorship",
   "Recorded toolkits",
   "digital products",
-  "Career",
-  "Skills",
-  "Interview Prep",
-  "Resume",
-  "Networking",
 ];
 
 function formatHighlight(highlight: string) {
@@ -60,6 +60,13 @@ function formatHighlight(highlight: string) {
   }
 
   return `${trimmed.charAt(0).toUpperCase()}${trimmed.slice(1)}`;
+}
+
+async function fetchDigitalProductSections(): Promise<DigitalProductSection[]> {
+  const response = await axios.get<DigitalProductSection[]>(
+    "/api/digital-product-sections"
+  );
+  return response.data;
 }
 
 interface NewToolkitModalProps {
@@ -75,6 +82,12 @@ export default function NewToolkitModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [bannerImageFile, setBannerImageFile] = useState<File | null>(null);
+  const { data: digitalProductSections = [] } = useQuery({
+    queryKey: ["admin", "digital-product-sections"],
+    queryFn: fetchDigitalProductSections,
+    staleTime: 1000 * 60,
+    enabled: open,
+  });
 
   const form = useForm<ToolkitFormValues>({
     resolver: zodResolver(toolkitFormSchema),
@@ -90,8 +103,10 @@ export default function NewToolkitModal({
       totalDuration: "",
       highlights: [],
       testimonials: [],
+      digitalProductSectionId: "",
     },
   });
+  const selectedCategory = form.watch("category");
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "testimonials",
@@ -99,7 +114,7 @@ export default function NewToolkitModal({
 
   async function onSubmit(data: ToolkitFormValues) {
     const existingCoverUrl = data.coverImageUrl?.trim() ?? "";
-    if (!existingCoverUrl && !coverImageFile) {
+    if (data.category !== "digital products" && !existingCoverUrl && !coverImageFile) {
       form.setError("coverImageUrl", {
         type: "manual",
         message: "Cover image is required",
@@ -140,6 +155,7 @@ export default function NewToolkitModal({
         bannerImageUrl,
         videoUrl: data.videoUrl || undefined,
         category: data.category || undefined,
+        digitalProductSectionId: null,
         totalDuration: data.totalDuration || undefined,
         highlights:
           data.highlights?.map(formatHighlight).filter(Boolean) || undefined,
@@ -320,30 +336,32 @@ export default function NewToolkitModal({
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="coverImageUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Cover Image *</FormLabel>
-                  <FormControl>
-                    <ToolkitImageInput
-                      label="Cover image"
-                      imageUrl={field.value ?? ""}
-                      selectedFile={coverImageFile}
-                      onFileSelect={setCoverImageFile}
-                      onRemove={() => {
-                        setCoverImageFile(null);
-                        field.onChange("");
-                      }}
-                      disabled={isSubmitting}
-                      required
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {selectedCategory !== "digital products" ? (
+              <FormField
+                control={form.control}
+                name="coverImageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cover Image *</FormLabel>
+                    <FormControl>
+                      <ToolkitImageInput
+                        label="Cover image"
+                        imageUrl={field.value ?? ""}
+                        selectedFile={coverImageFile}
+                        onFileSelect={setCoverImageFile}
+                        onRemove={() => {
+                          setCoverImageFile(null);
+                          field.onChange("");
+                        }}
+                        disabled={isSubmitting}
+                        required
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : null}
 
             <FormField
               control={form.control}

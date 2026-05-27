@@ -255,6 +255,27 @@
       "when": 1779688320000,
       "tag": "0046_ungatekeep_post_votes",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1779753600000,
+      "tag": "0047_digital_product_sections",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1779840000000,
+      "tag": "0048_toolkit_community_posts",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1779926400000,
+      "tag": "0049_toolkit_community_responses",
+      "breakpoints": true
     }
   ]
 }

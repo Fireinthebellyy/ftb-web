@@ -61,6 +61,7 @@ const updateToolkitSchema = z.object({
   bundleItems: z.array(z.string()).optional(),
   isBestSeller: z.boolean().optional(),
   isLimitedSeats: z.boolean().optional(),
+  digitalProductSectionId: z.string().uuid().nullable().optional(),
 });
 
 export async function PUT(
@@ -163,6 +164,8 @@ export async function PUT(
       updates.isBestSeller = validatedData.isBestSeller;
     if (validatedData.isLimitedSeats !== undefined)
       updates.isLimitedSeats = validatedData.isLimitedSeats;
+    if (validatedData.digitalProductSectionId !== undefined)
+      updates.digitalProductSectionId = validatedData.digitalProductSectionId;
 
     const updatedToolkit = await db
       .update(toolkits)

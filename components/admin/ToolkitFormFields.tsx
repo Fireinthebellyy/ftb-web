@@ -1,6 +1,6 @@
 "use client";
 
-import { Control, useFieldArray } from "react-hook-form";
+import { Control, useFieldArray, useWatch } from "react-hook-form";
 import { Plus, Trash2 } from "lucide-react";
 import {
   FormField,
@@ -22,17 +22,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToolkitImageInput } from "./ToolkitImageInput";
-import { ToolkitFormValues } from "./types";
+import { DigitalProductSection, ToolkitFormValues } from "./types";
 
 const CATEGORIES = [
   "1:1 Mentorship",
   "Recorded toolkits",
   "digital products",
-  "Career",
-  "Skills",
-  "Interview Prep",
-  "Resume",
-  "Networking",
 ];
 
 interface ToolkitFormFieldsProps {
@@ -43,6 +38,7 @@ interface ToolkitFormFieldsProps {
   onBannerImageFileSelect: (file: File | null) => void;
   onCoverImageRemove: () => void;
   onBannerImageRemove: () => void;
+  digitalProductSections?: DigitalProductSection[];
   isSubmitting?: boolean;
 }
 
@@ -54,12 +50,15 @@ export function ToolkitFormFields({
   onBannerImageFileSelect,
   onCoverImageRemove,
   onBannerImageRemove,
+  digitalProductSections = [],
   isSubmitting = false,
 }: ToolkitFormFieldsProps) {
   const { fields, append, remove } = useFieldArray({
     control,
     name: "testimonials",
   });
+  const selectedCategory = useWatch({ control, name: "category" });
+  const isDigitalProduct = selectedCategory === "digital products";
 
   return (
     <>
@@ -187,27 +186,59 @@ export function ToolkitFormFields({
         />
       </div>
 
-      <FormField
-        control={control}
-        name="coverImageUrl"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Cover Image *</FormLabel>
-            <FormControl>
-              <ToolkitImageInput
-                label="Cover image"
-                imageUrl={field.value ?? ""}
-                selectedFile={coverImageFile}
-                onFileSelect={onCoverImageFileSelect}
-                onRemove={onCoverImageRemove}
-                disabled={isSubmitting}
-                required
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {isDigitalProduct ? (
+        <FormField
+          control={control}
+          name="digitalProductSectionId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Digital Product Section</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select section" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {digitalProductSections.map((section) => (
+                    <SelectItem key={section.id} value={section.id}>
+                      {section.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      ) : null}
+
+      {!isDigitalProduct ? (
+        <FormField
+          control={control}
+          name="coverImageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Cover Image *</FormLabel>
+              <FormControl>
+                <ToolkitImageInput
+                  label="Cover image"
+                  imageUrl={field.value ?? ""}
+                  selectedFile={coverImageFile}
+                  onFileSelect={onCoverImageFileSelect}
+                  onRemove={onCoverImageRemove}
+                  disabled={isSubmitting}
+                  required
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      ) : null}
 
       <FormField
         control={control}

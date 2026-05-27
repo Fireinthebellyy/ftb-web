@@ -30,9 +30,20 @@ export const toolkitFormSchema = z.object({
   bundleItems: z.array(z.string()).optional(),
   isBestSeller: z.boolean().optional(),
   isLimitedSeats: z.boolean().optional(),
+  digitalProductSectionId: z.string().uuid().optional().or(z.literal("")),
 });
 
 export type ToolkitFormValues = z.infer<typeof toolkitFormSchema>;
+
+export interface DigitalProductSection {
+  id: string;
+  title: string;
+  description: string | null;
+  orderIndex: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface Toolkit {
   id: string;
@@ -69,4 +80,6 @@ export interface Toolkit {
   bundleItems: string[] | null;
   isBestSeller: boolean;
   isLimitedSeats: boolean;
+  digitalProductSectionId: string | null;
+  digitalProductSectionTitle?: string | null;
 }

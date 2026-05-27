@@ -298,7 +298,7 @@ export default function ToolkitContentPage() {
               <p className="truncate text-xs text-gray-500">{toolkit.title}</p>
               <h1 className="truncate text-sm font-semibold text-gray-900 sm:text-base">
                 {activeView === "community"
-                  ? "Course Community"
+                  ? "FTB Support"
                   : currentItem?.title || "Select a lesson"}
               </h1>
             </div>

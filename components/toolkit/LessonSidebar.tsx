@@ -153,7 +153,7 @@ export default function LessonNavigation({
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">
-                    Course Community
+                    FTB Support
                   </p>
                   <p className="text-xs text-gray-500">Posts and questions</p>
                 </div>

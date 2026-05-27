@@ -552,7 +552,7 @@ export default function AdminToolkitsTable() {
                   setManagingCommunityToolkit(toolkit);
                   setCommunityManagerOpen(true);
                 }}
-                title="Manage course community"
+                title="Manage FTB Support"
               >
                 <MessageSquare className="h-4 w-4" />
               </Button>

@@ -445,7 +445,7 @@ export default function ToolkitCommunityPanel({
     >
       <div className="mb-8 rounded-3xl bg-gradient-to-br from-orange-50 to-white p-6 shadow-sm ring-1 ring-orange-100/50">
         <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">
-          Course Community
+          FTB Support
         </h2>
         <p className="mt-2 text-base text-gray-600">
           Join the conversation. Complete activities, answer quizzes, and stay updated with announcements from the team.

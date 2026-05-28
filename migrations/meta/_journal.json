@@ -253,6 +253,13 @@
       "when": 1779688320000,
       "tag": "0046_ungatekeep_post_votes",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1779945804979,
+      "tag": "0047_safe_swordsman",
+      "breakpoints": true
     }
   ]
 }

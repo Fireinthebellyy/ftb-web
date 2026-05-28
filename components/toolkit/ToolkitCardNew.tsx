@@ -140,11 +140,11 @@ export default function ToolkitCardNew({
                 </div>
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-xl font-bold text-gray-900">
-                    â‚¹{toolkit.price.toLocaleString("en-IN")}
+                    ₹{toolkit.price.toLocaleString("en-IN")}
                   </span>
                   {hasOriginalPrice && (
                     <span className="text-xs font-medium text-gray-400 line-through">
-                      â‚¹{toolkit.originalPrice!.toLocaleString("en-IN")}
+                      ₹{toolkit.originalPrice!.toLocaleString("en-IN")}
                     </span>
                   )}
                 </div>

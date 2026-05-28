@@ -101,7 +101,7 @@ export default function ToolkitPage() {
           <p className="mt-2 text-gray-600">Video guides with kickass strategies that actually work ~ go from overlooked to Top 1%</p>
         </div>
 
-        <div className="mb-8 flex flex-wrap gap-3">
+        <div className="mb-8 flex overflow-x-auto gap-3 pb-2 sm:flex-wrap sm:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {["All", "1:1 Mentorship", "Recorded toolkits", "digital products"].map((cat) => {
             const isActive = selectedCategory === cat;
             return (
@@ -109,7 +109,7 @@ export default function ToolkitPage() {
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors border shadow-sm",
+                  "flex shrink-0 whitespace-nowrap items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors border shadow-sm",
                   isActive
                     ? "bg-[#ff5e14] text-white border-[#ff5e14]"
                     : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"

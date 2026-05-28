@@ -114,6 +114,7 @@ export async function POST(
         .where(eq(toolkitCommunityResponses.postId, postId))
         .groupBy(toolkitCommunityResponses.selectedOptionIndex);
 
+      const options = (post.options as any[]) ?? [];
       const optionCount = options.length;
       optionVoteCounts = new Array<number>(optionCount).fill(0);
       for (const row of rows) {

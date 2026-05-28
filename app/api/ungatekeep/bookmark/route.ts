@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { db, dbPool } from "@/lib/db";
+import { ungatekeepPostEngagementSelect } from "@/lib/ungatekeep-engagement";
 import { ungatekeepBookmarks, ungatekeepPosts, user as userTable } from "@/lib/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
@@ -32,6 +33,8 @@ export async function GET() {
         createdAt: ungatekeepPosts.createdAt,
         creatorName: userTable.name,
         creatorImage: userTable.image,
+        isSaved: sql<boolean>`true`,
+        ...ungatekeepPostEngagementSelect(userId),
       })
       .from(ungatekeepBookmarks)
       .innerJoin(ungatekeepPosts, eq(ungatekeepBookmarks.postId, ungatekeepPosts.id))

@@ -8,9 +8,10 @@ import { formatDate } from "@/lib/utils";
 import { OpportunityPostProps } from "@/types/interfaces";
 import { ExpandableDescription } from "./ExpandableDescription";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
-
+import { cn } from "@/lib/utils";
 interface OpportunityHeaderProps {
   opportunity: OpportunityPostProps["opportunity"];
+  images?: Array<string>;
   isExpanded?: boolean;
 }
 
@@ -45,6 +46,7 @@ const formatOrganiserInfo = (value?: string): string => {
 
 export function OpportunityHeader({
   opportunity,
+  images,
   isExpanded = true,
 }: OpportunityHeaderProps) {
   const {
@@ -65,7 +67,7 @@ export function OpportunityHeader({
 
   return (
     <div className="relative px-3 py-2 sm:px-4">
-      <h2 className="mb-2 line-clamp-1 truncate text-base leading-tight font-bold text-gray-900 sm:text-lg">
+      <h2 className={cn("mb-2 line-clamp-1 truncate text-base leading-tight font-bold text-gray-900 sm:text-lg",images?.length===0&&"mt-5")}>
         {title}
       </h2>
 

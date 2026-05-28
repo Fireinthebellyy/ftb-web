@@ -11,6 +11,7 @@ import { ArrowLeft, BookOpen, Check, Clock, Cloud } from "lucide-react";
 import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
 import ToolkitSidebar from "@/components/toolkit/ToolkitSidebar";
 import ContentList from "@/components/toolkit/ContentList";
+import MentorshipView from "@/components/toolkit/MentorshipView";
 import ToolkitDetailSkeleton from "@/components/toolkit/ToolkitDetailSkeleton";
 import {
   Autoplay,
@@ -189,93 +190,97 @@ export default function ToolkitDetailPage() {
 
         <div className="grid gap-8 xl:grid-cols-3">
           <div className="min-w-0 xl:col-span-2">
-            <div className="mb-6 overflow-hidden rounded-lg border bg-white">
-              <div className="relative aspect-video bg-gray-100">
-                {heroImageUrl ? (
-                  <Image
-                    src={heroImageUrl}
-                    alt={toolkit.title}
-                    fill
-                    className="object-cover"
-                    priority
-                    sizes="(max-width: 1024px) 100vw, 66vw"
+            {toolkit.category === "1:1 Mentorship" ? (
+              <MentorshipView toolkit={toolkit as any} />
+            ) : (
+              <div className="mb-6 overflow-hidden rounded-lg border bg-white">
+                <div className="relative aspect-video bg-gray-100">
+                  {heroImageUrl ? (
+                    <Image
+                      src={heroImageUrl}
+                      alt={toolkit.title}
+                      fill
+                      className="object-cover"
+                      priority
+                      sizes="(max-width: 1024px) 100vw, 66vw"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center bg-gray-100">
+                      <span className="text-6xl font-bold text-gray-300">
+                        {toolkit.title.charAt(0)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-6">
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    {toolkit.category && (
+                      <Badge variant="secondary">{toolkit.category}</Badge>
+                    )}
+                  </div>
+
+                  <h1 className="mb-3 text-2xl font-bold text-gray-900 md:text-3xl">
+                    {toolkit.title.charAt(0).toUpperCase() +
+                      toolkit.title.slice(1)}
+                  </h1>
+
+                  {toolkit.creatorName && (
+                    <p className="mb-4 text-sm text-gray-600">
+                      Created by{" "}
+                      <span className="font-medium text-gray-900">
+                        {toolkit.creatorName}
+                      </span>
+                    </p>
+                  )}
+
+                  <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                    {lessonCount > 0 && (
+                      <div className="flex items-center gap-1">
+                        <BookOpen className="h-4 w-4" />
+                        {lessonCount} lessons
+                      </div>
+                    )}
+
+                    {toolkit.totalDuration && (
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        {toolkit.totalDuration}
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-1">
+                      <Cloud className="h-4 w-4" />
+                      Lifetime access
+                    </div>
+                  </div>
+
+                  <HtmlRenderer
+                    content={toolkit.description}
+                    className="text-gray-700"
                   />
-                ) : (
-                  <div className="flex h-full items-center justify-center bg-gray-100">
-                    <span className="text-6xl font-bold text-gray-300">
-                      {toolkit.title.charAt(0)}
-                    </span>
-                  </div>
-                )}
-              </div>
 
-              <div className="p-6">
-                <div className="mb-3 flex flex-wrap items-center gap-2">
-                  {toolkit.category && (
-                    <Badge variant="secondary">{toolkit.category}</Badge>
-                  )}
-                </div>
-
-                <h1 className="mb-3 text-2xl font-bold text-gray-900 md:text-3xl">
-                  {toolkit.title.charAt(0).toUpperCase() +
-                    toolkit.title.slice(1)}
-                </h1>
-
-                {toolkit.creatorName && (
-                  <p className="mb-4 text-sm text-gray-600">
-                    Created by{" "}
-                    <span className="font-medium text-gray-900">
-                      {toolkit.creatorName}
-                    </span>
-                  </p>
-                )}
-
-                <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                  {lessonCount > 0 && (
-                    <div className="flex items-center gap-1">
-                      <BookOpen className="h-4 w-4" />
-                      {lessonCount} lessons
+                  {toolkit.highlights && toolkit.highlights.length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="mb-3 font-semibold text-gray-900">
+                        What you&apos;ll learn:
+                      </h3>
+                      <ul className="grid gap-2 sm:grid-cols-2">
+                        {toolkit.highlights.map((highlight, index) => (
+                          <li
+                            key={index}
+                            className="flex items-start gap-2 text-gray-600"
+                          >
+                            <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
+                            {highlight}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
-
-                  {toolkit.totalDuration && (
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      {toolkit.totalDuration}
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-1">
-                    <Cloud className="h-4 w-4" />
-                    Lifetime access
-                  </div>
                 </div>
-
-                <HtmlRenderer
-                  content={toolkit.description}
-                  className="text-gray-700"
-                />
-
-                {toolkit.highlights && toolkit.highlights.length > 0 && (
-                  <div className="mt-6">
-                    <h3 className="mb-3 font-semibold text-gray-900">
-                      What you&apos;ll learn:
-                    </h3>
-                    <ul className="grid gap-2 sm:grid-cols-2">
-                      {toolkit.highlights.map((highlight, index) => (
-                        <li
-                          key={index}
-                          className="flex items-start gap-2 text-gray-600"
-                        >
-                          <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
-                          {highlight}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </div>
-            </div>
+            )}
 
             {contentItems.length > 0 && (
               <div className="rounded-lg border bg-white p-6">

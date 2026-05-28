@@ -29,6 +29,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+
     const allToolkits = await db
       .select({
         id: toolkits.id,
@@ -42,6 +43,7 @@ export async function GET(request: Request) {
         contentUrl: toolkits.contentUrl,
         category: toolkits.category,
         highlights: toolkits.highlights,
+        mentorshipDetails: toolkits.mentorshipDetails,
         testimonials: toolkits.testimonials,
         totalDuration: toolkits.totalDuration,
         lessonCount: toolkits.lessonCount,

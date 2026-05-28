@@ -48,6 +48,7 @@ export async function GET(
         is_trending: toolkits.is_trending,
         isBestSeller: toolkits.isBestSeller,
         isLimitedSeats: toolkits.isLimitedSeats,
+        mentorshipDetails: toolkits.mentorshipDetails,
         digitalProductSectionId: toolkits.digitalProductSectionId,
         digitalProductSectionTitle: digitalProductSections.title,
       })

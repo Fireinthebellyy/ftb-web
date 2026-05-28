@@ -15,6 +15,11 @@ export async function POST() {
 async function handleMigration() {
   try {
     await db.execute(sql`
+      ALTER TABLE toolkits 
+      ADD COLUMN IF NOT EXISTS mentorship_details jsonb;
+    `);
+    
+    await db.execute(sql`
       ALTER TABLE toolkit_community_responses 
       ADD COLUMN IF NOT EXISTS text_response text,
       ADD COLUMN IF NOT EXISTS attachment_url text,

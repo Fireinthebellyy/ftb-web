@@ -22,6 +22,7 @@ export async function GET() {
         contentUrl: toolkits.contentUrl,
         category: toolkits.category,
         highlights: toolkits.highlights,
+        mentorshipDetails: toolkits.mentorshipDetails,
         testimonials: toolkits.testimonials,
         totalDuration: toolkits.totalDuration,
         lessonCount: toolkits.lessonCount,
@@ -97,6 +98,7 @@ export async function POST(request: Request) {
       isBestSeller,
       isLimitedSeats,
       digitalProductSectionId,
+      mentorshipDetails,
     } = body;
 
     const missingFields: string[] = [];
@@ -158,6 +160,7 @@ export async function POST(request: Request) {
         isBestSeller: isBestSeller ?? false,
         isLimitedSeats: isLimitedSeats ?? false,
         digitalProductSectionId: digitalProductSectionId || null,
+        mentorshipDetails: mentorshipDetails || null,
         userId: user.currentUser.id,
       })
       .returning();

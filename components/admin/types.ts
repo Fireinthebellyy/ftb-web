@@ -7,6 +7,25 @@ export const toolkitTestimonialSchema = z.object({
   message: z.string().min(1, "Message is required"),
 });
 
+export const toolkitMentorshipLinkSchema = z.object({
+  title: z.string(),
+  url: z.string().url(),
+});
+
+export const toolkitMentorshipDetailsSchema = z.object({
+  mentorshipPacked: z.string().optional(),
+  formatOfMentorship: z.string().optional(),
+  mentor: z.object({
+    name: z.string().min(1, "Name is required"),
+    imageUrl: z.string().url().optional().or(z.literal("")),
+    linkedinUrl: z.string().url({ message: "Valid LinkedIn URL is required" }).or(z.literal("")),
+    instagramUrl: z.string().url().optional().or(z.literal("")),
+    mailId: z.string().email().optional().or(z.literal("")),
+    phoneNumber: z.string().optional(),
+    otherLinks: z.array(toolkitMentorshipLinkSchema).optional(),
+  }).optional(),
+});
+
 export const toolkitFormSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters." }),
   description: z.string().refine((value) => hasMeaningfulRichText(value, 10), {
@@ -23,6 +42,7 @@ export const toolkitFormSchema = z.object({
   totalDuration: z.string().optional(),
   highlights: z.array(z.string()).optional(),
   testimonials: z.array(toolkitTestimonialSchema).optional(),
+  mentorshipDetails: toolkitMentorshipDetailsSchema.optional(),
   isActive: z.boolean().optional(),
   showSaleBadge: z.boolean().optional(),
   is_trending: z.boolean().optional(),
@@ -64,6 +84,19 @@ export interface Toolkit {
         message: string;
       }[]
     | null;
+  mentorshipDetails?: {
+    mentorshipPacked?: string;
+    formatOfMentorship?: string;
+    mentor?: {
+      name: string;
+      imageUrl?: string;
+      linkedinUrl?: string;
+      instagramUrl?: string;
+      mailId?: string;
+      phoneNumber?: string;
+      otherLinks?: { title: string; url: string }[];
+    };
+  } | null;
   totalDuration: string | null;
   lessonCount: number | null;
   isActive: boolean;

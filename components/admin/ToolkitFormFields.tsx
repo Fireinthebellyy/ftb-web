@@ -38,6 +38,9 @@ interface ToolkitFormFieldsProps {
   onBannerImageFileSelect: (file: File | null) => void;
   onCoverImageRemove: () => void;
   onBannerImageRemove: () => void;
+  mentorImageFile?: File | null;
+  onMentorImageFileSelect?: (file: File | null) => void;
+  onMentorImageRemove?: () => void;
   digitalProductSections?: DigitalProductSection[];
   isSubmitting?: boolean;
 }
@@ -50,6 +53,9 @@ export function ToolkitFormFields({
   onBannerImageFileSelect,
   onCoverImageRemove,
   onBannerImageRemove,
+  mentorImageFile = null,
+  onMentorImageFileSelect,
+  onMentorImageRemove,
   digitalProductSections = [],
   isSubmitting = false,
 }: ToolkitFormFieldsProps) {
@@ -141,7 +147,6 @@ export function ToolkitFormFields({
           )}
         />
       </div>
-
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField
           control={control}
@@ -185,6 +190,144 @@ export function ToolkitFormFields({
           )}
         />
       </div>
+
+      {selectedCategory === "1:1 Mentorship" && (
+        <div className="space-y-4 rounded-lg border p-4 bg-orange-50/50">
+          <h3 className="font-semibold text-lg text-orange-900">1:1 Mentorship Details</h3>
+          
+          <FormField
+            control={control}
+            name="mentorshipDetails.mentorshipPacked"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>What is the mentorship packed with?</FormLabel>
+                <FormControl>
+                  <RichTextEditor
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    placeholder="List the key deliverables..."
+                    className="[&_div.ql-container]:min-h-[120px]"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
+            name="mentorshipDetails.formatOfMentorship"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Format of Mentorship</FormLabel>
+                <FormControl>
+                  <RichTextEditor
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    placeholder="Describe how the sessions will be conducted..."
+                    className="[&_div.ql-container]:min-h-[120px]"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="space-y-4 rounded-lg border bg-white p-4">
+            <h4 className="font-medium text-gray-900">About the Mentor</h4>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={control}
+                name="mentorshipDetails.mentor.name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mentor Name *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="John Doe" {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="mentorshipDetails.mentor.imageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mentor Photo</FormLabel>
+                    <FormControl>
+                      <ToolkitImageInput
+                        label="Mentor photo"
+                        imageUrl={field.value ?? ""}
+                        selectedFile={mentorImageFile}
+                        onFileSelect={onMentorImageFileSelect!}
+                        onRemove={() => {
+                          onMentorImageRemove?.();
+                          field.onChange("");
+                        }}
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="mentorshipDetails.mentor.linkedinUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>LinkedIn URL *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://linkedin.com/in/..." {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="mentorshipDetails.mentor.instagramUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Instagram URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://instagram.com/..." {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="mentorshipDetails.mentor.mailId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email Address</FormLabel>
+                    <FormControl>
+                      <Input placeholder="mentor@example.com" {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="mentorshipDetails.mentor.phoneNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="+1 234 567 8900" {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Digital product section dropdown has been removed based on user request */}
 

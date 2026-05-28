@@ -62,6 +62,31 @@ const updateToolkitSchema = z.object({
   isBestSeller: z.boolean().optional(),
   isLimitedSeats: z.boolean().optional(),
   digitalProductSectionId: z.string().uuid().nullable().optional(),
+  mentorshipDetails: z
+    .object({
+      mentorshipPacked: z.string().optional(),
+      formatOfMentorship: z.string().optional(),
+      mentor: z
+        .object({
+          name: z.string(),
+          imageUrl: z.string().optional(),
+          linkedinUrl: z.string().url().optional(),
+          instagramUrl: z.string().url().optional(),
+          mailId: z.string().email().optional(),
+          phoneNumber: z.string().optional(),
+          otherLinks: z
+            .array(
+              z.object({
+                title: z.string(),
+                url: z.string().url(),
+              })
+            )
+            .optional(),
+        })
+        .optional(),
+    })
+    .nullable()
+    .optional(),
 });
 
 export async function PUT(
@@ -166,6 +191,8 @@ export async function PUT(
       updates.isLimitedSeats = validatedData.isLimitedSeats;
     if (validatedData.digitalProductSectionId !== undefined)
       updates.digitalProductSectionId = validatedData.digitalProductSectionId;
+    if (validatedData.mentorshipDetails !== undefined)
+      updates.mentorshipDetails = validatedData.mentorshipDetails;
 
     const updatedToolkit = await db
       .update(toolkits)

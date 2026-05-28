@@ -373,6 +373,20 @@ export interface ToolkitTestimonial {
   message: string;
 }
 
+export interface ToolkitMentorshipDetails {
+  mentorshipPacked?: string;
+  formatOfMentorship?: string;
+  mentor?: {
+    name: string;
+    imageUrl?: string;
+    linkedinUrl?: string;
+    instagramUrl?: string;
+    mailId?: string;
+    phoneNumber?: string;
+    otherLinks?: { title: string; url: string }[];
+  };
+}
+
 export const digitalProductSections = pgTable("digital_product_sections", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: text("title").notNull(),
@@ -397,6 +411,7 @@ export const toolkits = pgTable("toolkits", {
   category: text("category"), // Category for filtering (e.g., "Career", "Skills")
   highlights: text("highlights").array(), // Bullet points like "10 lessons", "Lifetime access"
   testimonials: jsonb("testimonials").$type<ToolkitTestimonial[]>(),
+  mentorshipDetails: jsonb("mentorship_details").$type<ToolkitMentorshipDetails>(),
   totalDuration: text("total_duration"), // e.g., "2h 30m"
   lessonCount: integer("lesson_count").default(0),
   isActive: boolean("is_active").default(false),

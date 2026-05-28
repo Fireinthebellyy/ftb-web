@@ -27,8 +27,8 @@ import {
 } from "@/components/ui/drawer";
 import FeaturedOpportunities from "./opportunity/FeaturedOpportunities";
 import ToolkitBanner from "./internship/ToolkitBanner";
-import { internshipFields } from "./internship/constants";
-import { SimilarInternships } from "./internship/SimilarInternships";
+// import { internshipFields } from "./internship/constants";
+// import { SimilarInternships } from "./internship/SimilarInternships";
 
 const CalendarWidget = dynamic(() => import("./opportunity/CalendarWidget"));
 const TaskWidget = dynamic(() => import("./opportunity/TaskWidget"));
@@ -53,7 +53,7 @@ const SearchWidget = ({
   applyFilters,
 }: SearchWidgetProps) => {
   const [focusedIndex, setFocusedIndex] = useState(-1);
-  const [activeBubble,setActiveBubble] = useState<{id:string,label:string}|null>(null);
+  // const [activeBubble,setActiveBubble] = useState<{id:string,label:string}|null>(null);
   // Reset focusedIndex when suggestions change or list closes
   useEffect(() => {
     if (!isSearchFocused || filteredSuggestions.length === 0) {
@@ -132,6 +132,33 @@ const SearchWidget = ({
           Go
         </button>
       </div>
+      {isSearchFocused && filteredSuggestions.length > 0 && (
+        <ul className="absolute top-[calc(100%+8px)] right-0 left-0 z-50 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
+          {filteredSuggestions.map((suggestion, idx) => (
+            <li key={suggestion}>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setSearchTerm(suggestion);
+                  applyFilters(suggestion);
+                  setIsSearchFocused(false);
+                }}
+                className={cn(
+                  "flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 focus:bg-slate-50",
+                  idx === focusedIndex &&
+                    "bg-orange-50 font-bold text-[#ec5b13]"
+                )}
+                tabIndex={-1}
+              >
+                <Search className="h-4 w-4 shrink-0 text-slate-400" />
+                <span>{suggestion}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {/* 
       {isSearchFocused && filteredSuggestions.length > 0 && ( 
         <> 
           <div 
@@ -168,7 +195,7 @@ const SearchWidget = ({
                 onClick={()=>{  
                   if(activeBubble && activeBubble.label){
                           setSearchTerm(activeBubble.label);                    
-                          applyFilters(activeBubble.label,[activeBubble.id]);
+                          applyFilters("",[activeBubble.id]);
                           setActiveBubble({id:"",label:""});
                           setIsSearchFocused(false);
                   }       
@@ -182,6 +209,7 @@ const SearchWidget = ({
           </div>
         </>
         )}
+      */}
     </form>
   );
 };
@@ -251,23 +279,23 @@ export default function InternshipList() {
 
   const [activeTab, setActiveTab] = useState<"type" | "stipend" | "location" | "fields">("type");
 
-  const [lastInteracted, setLastInteracted] = useState<{ id: string; field: string | null; title: string } | null>(null);
+  // const [lastInteracted, setLastInteracted] = useState<{ id: string; field: string | null; title: string } | null>(null);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("last_interacted_internship");
-      if (saved) {
-        try {
-          setLastInteracted(JSON.parse(saved));
-        } catch (e) {
-          console.error("Failed to parse last interacted internship", e);
-          setLastInteracted({ id: "", field: "generalist", title: "" });
-        }
-      } else {
-        setLastInteracted({ id: "", field: "generalist", title: "" });
-      }
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (typeof window !== "undefined") {
+  //     const saved = localStorage.getItem("last_interacted_internship");
+  //     if (saved) {
+  //       try {
+  //         setLastInteracted(JSON.parse(saved));
+  //       } catch (e) {
+  //         console.error("Failed to parse last interacted internship", e);
+  //         setLastInteracted({ id: "", field: "generalist", title: "" });
+  //       }
+  //     } else {
+  //       setLastInteracted({ id: "", field: "generalist", title: "" });
+  //     }
+  //   }
+  // }, []);
 
   useEffect(()=>{
     const updatedSearch=searchParams.get("search")||"";
@@ -299,11 +327,11 @@ export default function InternshipList() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const [showSecondaryWidgets, setShowSecondaryWidgets] = useState(false);
-  const [showAllFields, setShowAllFields] = useState(false);
+  // const [showAllFields, setShowAllFields] = useState(false);
 
-  const fieldsList = useMemo(() => {
-    return internshipFields.map((f) => ({ value: f.id, label: f.label }));
-  }, []);
+  // const fieldsList = useMemo(() => {
+  //   return internshipFields.map((f) => ({ value: f.id, label: f.label }));
+  // }, []);
 
   const normalizedLocation = useMemo(
     () => normalizeLocationValue(location),
@@ -488,10 +516,19 @@ export default function InternshipList() {
     return () => clearInterval(interval);
   }, [searchPlaceholders.length]);
 
-  // Flatten all internships from all pages
-  const allInternships = (
+  // Flatten and deduplicate all internships from all pages by ID to prevent duplicate React key warnings
+  const rawInternships = (
     data?.pages?.flatMap((page) => page.internships) || []
   ).filter(Boolean);
+  
+  const seenIds = new Set<string>();
+  const allInternships = rawInternships.filter((internship) => {
+    if (seenIds.has(internship.id)) {
+      return false;
+    }
+    seenIds.add(internship.id);
+    return true;
+  });
 
 
 
@@ -550,13 +587,13 @@ export default function InternshipList() {
     );
   };
 
-  const toggleField = (value: string) => {
-    setSelectedFields((prev) =>
-      prev.includes(value)
-        ? prev.filter((item) => item !== value)
-        : [...prev, value]
-    );
-  };
+  // const toggleField = (value: string) => {
+  //   setSelectedFields((prev) =>
+  //     prev.includes(value)
+  //       ? prev.filter((item) => item !== value)
+  //       : [...prev, value]
+  //   );
+  // };
 
   // const toggleTag = (value: string) => {
   //   setSelectedTags((prev) =>
@@ -1094,6 +1131,7 @@ export default function InternshipList() {
                     </div>
 
                     {/* Fields Filter */}
+                    {/* 
                     <div>
                       <label className="mb-2 block text-[10px] font-extrabold tracking-wider text-slate-700 uppercase">
                         Fields
@@ -1137,6 +1175,7 @@ export default function InternshipList() {
                         )}
                       </div>
                     </div>
+                    */}
 
                     <Button
                       onClick={() => applyFilters()}
@@ -1236,6 +1275,7 @@ export default function InternshipList() {
               </>
             )}
 
+            {/*
             {lastInteracted && (
               <SimilarInternships
                 currentId={lastInteracted.id}
@@ -1243,6 +1283,7 @@ export default function InternshipList() {
                 title={lastInteracted.title}
               />
             )}
+            */}
           </main>
 
           <aside className="col-span-3">
@@ -1360,6 +1401,7 @@ export default function InternshipList() {
             </>
           )}
 
+          {/*
           {lastInteracted && (
             <SimilarInternships
               currentId={lastInteracted.id}
@@ -1367,6 +1409,7 @@ export default function InternshipList() {
               title={lastInteracted.title}
             />
           )}
+          */}
         </div>
       </div>
       <div className="hidden lg:block">

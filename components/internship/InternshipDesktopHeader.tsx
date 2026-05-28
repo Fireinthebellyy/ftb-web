@@ -169,39 +169,39 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
             />
           </Button>
           {hasApply && (
-            <Link
-              href={addUtmParams(internship.applyLink || internship.link || "", "ftb_web")}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() =>
-                posthog.capture("internship_apply_forms_clicked", {
-                  internship_id: internship.id,
-                  title: internship.title,
-                  url: internship.applyLink || internship.link,
-                  source: "desktop_header",
-                })
-              }
-            >
-              <Button className="h-12 px-5 rounded-xl bg-[#ec5b13] hover:bg-[#d44d0c] text-white font-bold border-none shadow-none transition-all active:scale-95 duration-200 flex items-center gap-2">
+            <Button asChild className="h-12 px-5 rounded-xl bg-[#ec5b13] hover:bg-[#d44d0c] text-white font-bold border-none shadow-none transition-all active:scale-95 duration-200 flex items-center gap-2">
+              <Link
+                href={addUtmParams(internship.applyLink || internship.link || "", "ftb_web")}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() =>
+                  posthog.capture("internship_apply_forms_clicked", {
+                    internship_id: internship.id,
+                    title: internship.title,
+                    url: internship.applyLink || internship.link,
+                    source: "desktop_header",
+                  })
+                }
+              >
                 Apply Via Forms
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           )}
 
           {hasDM && (
-            <Link
-              href={dmUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() =>
-                posthog.capture("internship_cold_dm_clicked", {
-                  internship_id: internship.id,
-                  title: internship.title,
-                  source: "desktop_header",
-                })
-              }
-            >
-              <Button className="h-12 px-5 rounded-xl bg-[#0077b5] hover:bg-[#005987] text-white font-bold border-none shadow-none transition-all active:scale-95 duration-200 flex items-center gap-2">
+            <Button asChild className="h-12 px-5 rounded-xl bg-[#0077b5] hover:bg-[#005987] text-white font-bold border-none shadow-none transition-all active:scale-95 duration-200 flex items-center gap-2">
+              <Link
+                href={dmUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() =>
+                  posthog.capture("internship_cold_dm_clicked", {
+                    internship_id: internship.id,
+                    title: internship.title,
+                    source: "desktop_header",
+                  })
+                }
+              >
                 <Image
                   src="/images/linkedin.svg"
                   alt="LinkedIn"
@@ -210,28 +210,28 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
                   className="w-4 h-4 object-contain brightness-0 invert"
                 />
                 Cold DM
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           )}
 
           {hasMail && (
-            <Link
-              href={mailUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() =>
-                posthog.capture("internship_cold_mail_clicked", {
-                  internship_id: internship.id,
-                  title: internship.title,
-                  source: "desktop_header",
-                })
-              }
-            >
-              <Button className="h-12 px-5 rounded-xl bg-black hover:bg-zinc-800 text-white font-bold border-none shadow-none transition-all active:scale-95 duration-200 flex items-center gap-2">
+            <Button asChild className="h-12 px-5 rounded-xl bg-black hover:bg-zinc-800 text-white font-bold border-none shadow-none transition-all active:scale-95 duration-200 flex items-center gap-2">
+              <Link
+                href={mailUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() =>
+                  posthog.capture("internship_cold_mail_clicked", {
+                    internship_id: internship.id,
+                    title: internship.title,
+                    source: "desktop_header",
+                  })
+                }
+              >
                 <Mail className="w-4 h-4" />
                 Cold Mail
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           )}
         </div>
       </div>

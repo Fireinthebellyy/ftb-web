@@ -47,31 +47,36 @@ export default function InternshipDetailPage() {
 
   const isBookmarked = !!getStatus(id || "", "internship");
 
-  const fetchData = async () => {
+  const fetchData = async (signal?: AbortSignal) => {
     if (!id) return;
 
     try {
-      const response = await fetch(`/api/internships/${id}`);
+      const response = await fetch(`/api/internships/${id}`, signal ? { signal } : {});
       const data = await response.json();
+      if (signal?.aborted) return;
       if (!response.ok || !data.success) {
         setNotFoundError(true);
         setLoading(false);
         return;
       }
 
-      setInternship(data.internship as InternshipData);
-      if (typeof window !== "undefined" && data.internship) {
+      const fetchedInternship = data.internship as InternshipData;
+      setInternship(fetchedInternship);
+      if (typeof window !== "undefined" && fetchedInternship) {
         localStorage.setItem(
           "last_interacted_internship",
           JSON.stringify({
-            id: (data.internship as any).id,
-            field: (data.internship as any).field || null,
-            title: (data.internship as any).title,
+            id: fetchedInternship.id,
+            field: fetchedInternship.field || null,
+            title: fetchedInternship.title,
           })
         );
       }
       setLoading(false);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === "AbortError" || signal?.aborted) {
+        return;
+      }
       console.error("Error fetching internship:", error);
       setNotFoundError(true);
       setLoading(false);
@@ -79,6 +84,7 @@ export default function InternshipDetailPage() {
   };
 
   useEffect(() => {
+    const controller = new AbortController();
     setLoading(true);
     setNotFoundError(false);
     setIsEditOpen(false);
@@ -87,7 +93,11 @@ export default function InternshipDetailPage() {
     if (typeof window !== "undefined") {
       window.scrollTo(0, 0);
     }
-    fetchData();
+    fetchData(controller.signal);
+    
+    return () => {
+      controller.abort();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 

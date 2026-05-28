@@ -243,8 +243,11 @@ function InternshipCardSkeleton() {
   );
 }
 
-
-
+const parseFiniteNumberFromSearchParam = (valueStr: string | null): number | undefined => {
+  if (valueStr === null || valueStr === "") return undefined;
+  const value = Number(valueStr);
+  return Number.isFinite(value) ? value : undefined;
+};
 
 export default function InternshipList() {
   const searchParams = useSearchParams();
@@ -254,7 +257,7 @@ export default function InternshipList() {
   const initialSearch=searchParams.get("search")||"";
   const initialLocation=searchParams.get("location")||"";
   const initialPaidOnly=searchParams.get("paid")==="true";
-  const initialMinStipend=searchParams.get("min_stipend") ? Number(searchParams.get("min_stipend")) : undefined;
+  const initialMinStipend=parseFiniteNumberFromSearchParam(searchParams.get("min_stipend"));
   const initialStipendFilter = initialPaidOnly ? "paid" : (initialMinStipend !== undefined ? "custom" : "all");
   const initialType=searchParams.get("type")?searchParams.get("type")!.split(","):[];
   const initialTags=searchParams.get("tags")?searchParams.get("tags")!.split(","):[];
@@ -301,7 +304,7 @@ export default function InternshipList() {
     const updatedSearch=searchParams.get("search")||"";
     const updatedLocation=searchParams.get("location")||"";
     const updatedPaidOnly=searchParams.get("paid")==="true";
-    const updatedMinStipend=searchParams.get("min_stipend") ? Number(searchParams.get("min_stipend")) : undefined;
+    const updatedMinStipend=parseFiniteNumberFromSearchParam(searchParams.get("min_stipend"));
     const updatedStipendFilter = updatedPaidOnly ? "paid" : (updatedMinStipend !== undefined ? "custom" : "all");
     const updatedType=searchParams.get("type")?searchParams.get("type")!.split(","):[];
     const updatedTags=searchParams.get("tags")?searchParams.get("tags")!.split(","):[];

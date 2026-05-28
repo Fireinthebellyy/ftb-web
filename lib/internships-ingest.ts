@@ -75,11 +75,13 @@ export const internshipIngestRecordSchema = z.object({
   hiringManagerEmail: z
     .string()
     .max(120, "Hiring manager email must be at most 120 characters")
+    .regex(/^(?:[^\s@]+@[^\s@]+\.[^\s@]+)?$/, "Invalid email address")
     .optional()
     .nullable(),
   hiringManagerLinkedin: z
     .string()
     .max(1000, "Hiring manager linkedin must be at most 1000 characters")
+    .regex(/^(?:(https?:\/\/)?(www\.)?linkedin\.com\/.*)?$/i, "Invalid LinkedIn URL")
     .optional()
     .nullable(),
   field: z

@@ -368,7 +368,7 @@ export async function GET(req: NextRequest) {
     console.error("Error fetching internships:", error);
     try {
       const logContent = `[${new Date().toISOString()}] Error: ${error instanceof Error ? error.message : String(error)}\nStack: ${error instanceof Error ? error.stack : ""}\n\n`;
-      fs.appendFileSync(path.join(process.cwd(), "error-log.txt"), logContent);
+      await fs.promises.appendFile(path.join(process.cwd(), "error-log.txt"), logContent);
     } catch (e) {
       console.error("Failed to write to local error log file:", e);
     }

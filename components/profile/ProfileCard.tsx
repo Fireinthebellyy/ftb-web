@@ -10,7 +10,7 @@ import { ProfileUser } from "@/types/interfaces";
 
 export default function ProfileCard({ user }: { user: ProfileUser }) {
   const [completeness, setCompleteness] = useState<number>(0);
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -30,11 +30,11 @@ export default function ProfileCard({ user }: { user: ProfileUser }) {
           <CardTitle className="text-2xl">Your Profile</CardTitle>
           {mounted && (
             <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
               className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition-all hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100 shadow-sm active:scale-95 cursor-pointer"
               aria-label="Toggle theme"
             >
-              {theme === "dark" ? (
+              {resolvedTheme === "dark" ? (
                 <Sun className="h-4.5 w-4.5 text-[#ec5b13] transition-all duration-300 rotate-0 hover:rotate-45" />
               ) : (
                 <Moon className="h-4.5 w-4.5 text-slate-700 transition-all duration-300 hover:-rotate-12" />

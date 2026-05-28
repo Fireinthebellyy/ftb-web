@@ -111,39 +111,45 @@ export const opportunities = pgTable("opportunities", {
     .references(() => user.id, { onDelete: "cascade" }),
 });
 
-export const internships = pgTable("internships", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  title: text("title").notNull(),
-  description: text("description"),
-  type: text("type"),
-  timing: text("timing"),
-  link: text("link").notNull(),
-  tags: text("tags").array().default([]),
-  stipend: integer("stipend"),
-  duration: text("duration"),
-  experience: text("experience"),
-  location: text("location"),
-  deadline: date("deadline"),
-  hiringOrganization: text("hiring_organization").notNull(),
-  hiringManager: text("hiring_manager"),
-  hiringManagerLinkedin: text("hiring_manager_linkedin"),
-  hiringManagerEmail: text("hiring_manager_email"),
-  field: text("field"),
-  isVerified: boolean("is_verified").default(false),
-  isFlagged: boolean("is_flagged").default(false),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  deletedAt: timestamp("deleted_at"), // Soft delete
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  is_trending: boolean("is_trending").default(false),
-  is_featured_home: boolean("is_featured_home").default(false),
-  display_index: integer("display_index"),
-  trending_index: integer("trending_index"),         
-  featured_home_index: integer("featured_home_index"),
-});
+export const internships = pgTable(
+  "internships",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    description: text("description"),
+    type: text("type"),
+    timing: text("timing"),
+    link: text("link").notNull(),
+    tags: text("tags").array().default([]),
+    stipend: integer("stipend"),
+    duration: text("duration"),
+    experience: text("experience"),
+    location: text("location"),
+    deadline: date("deadline"),
+    hiringOrganization: text("hiring_organization").notNull(),
+    hiringManager: text("hiring_manager"),
+    hiringManagerLinkedin: text("hiring_manager_linkedin"),
+    hiringManagerEmail: text("hiring_manager_email"),
+    field: text("field"),
+    isVerified: boolean("is_verified").default(false),
+    isFlagged: boolean("is_flagged").default(false),
+    isActive: boolean("is_active").default(true),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+    deletedAt: timestamp("deleted_at"), // Soft delete
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    is_trending: boolean("is_trending").default(false),
+    is_featured_home: boolean("is_featured_home").default(false),
+    display_index: integer("display_index"),
+    trending_index: integer("trending_index"),         
+    featured_home_index: integer("featured_home_index"),
+  },
+  (table) => [
+    index("internships_field_idx").on(table.field),
+  ]
+);
 
 export const internshipSearchTerms = pgTable(
   "internship_search_terms",

@@ -127,7 +127,7 @@ export interface InternshipPostProps {
   internship: Internship;
   onBookmarkChange?: (id: string, isBookmarked: boolean) => void;
   isCardExpanded?: boolean;
-  hideActions?: boolean;
+  isActionsHidden?: boolean;
 }
 
 export type Comment = {

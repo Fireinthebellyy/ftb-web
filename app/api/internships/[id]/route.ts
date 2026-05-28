@@ -20,8 +20,16 @@ const internshipUpdateSchema = z.object({
     .min(1, "Hiring organization is required")
     .optional(),
   hiringManager: z.string().optional().nullable(),
-  hiringManagerEmail: z.string().optional().nullable(),
-  hiringManagerLinkedin: z.string().optional().nullable(),
+  hiringManagerEmail: z
+    .string()
+    .regex(/^(?:[^\s@]+@[^\s@]+\.[^\s@]+)?$/, "Invalid email address")
+    .optional()
+    .nullable(),
+  hiringManagerLinkedin: z
+    .string()
+    .regex(/^(?:(https?:\/\/)?(www\.)?linkedin\.com\/.*)?$/i, "Invalid LinkedIn URL")
+    .optional()
+    .nullable(),
   experience: z.string().optional().nullable(),
   duration: z.string().optional().nullable(),
   field: z.string().optional().nullable(),

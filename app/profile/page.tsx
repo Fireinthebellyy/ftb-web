@@ -54,7 +54,7 @@ export default async function ProfilePage() {
 
     return (
       <div
-        className="relative min-h-[calc(100vh-64px)] w-full bg-neutral-100"
+        className="relative min-h-[calc(100vh-64px)] w-full bg-neutral-100 dark:bg-neutral-950"
         aria-label="Profile background"
       >
         <div className="absolute inset-0 -z-10 bg-black/10" aria-hidden="true" />

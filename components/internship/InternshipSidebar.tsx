@@ -45,11 +45,11 @@ export const InternshipSidebar: React.FC<InternshipSidebarProps> = ({
             </div>
           )}
 
-          {internship.tags && internship.tags.length > 0 && (
+          {internship.field && (
             <div className="flex items-center justify-between gap-4">
-              <span className="text-slate-500 shrink-0">Industry</span>
+              <span className="text-slate-500 shrink-0">Field</span>
               <span className="font-semibold text-slate-900 text-right line-clamp-1">
-                {toTitleCase(internship.tags[0])}
+                {toTitleCase(internship.field.replace(/_/g, " "))}
               </span>
             </div>
           )}

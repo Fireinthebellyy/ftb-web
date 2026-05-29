@@ -21,7 +21,8 @@ export async function fetchInternshipsPaginated(
   location?: string,
   minStipend?: number,
   maxStipend?: number,
-  ids?: string[]
+  ids?: string[],
+  fields: string[] = []
 ): Promise<InternshipsResponse> {
   if (typeof window === "undefined") {
     return { internships: [] };
@@ -37,6 +38,7 @@ export async function fetchInternshipsPaginated(
       minStipend: minStipend !== undefined ? minStipend : undefined,
       maxStipend: maxStipend !== undefined ? maxStipend : undefined,
       ids: ids && ids.length > 0 ? ids.join(",") : undefined,
+      fields: fields.length > 0 ? fields.join(",") : undefined,
     },
   });
   return data;
@@ -49,10 +51,12 @@ export function useInfiniteInternships(
   tags: string[] = [],
   location?: string,
   minStipend?: number,
-  maxStipend?: number
+  maxStipend?: number,
+  fields: string[] = []
 ) {
   const serializedTypes = types.join(",");
   const serializedTags = tags.join(",");
+  const serializedFields = fields.join(",");
 
   return useInfiniteQuery<InternshipsResponse>({
     queryKey: [
@@ -65,6 +69,7 @@ export function useInfiniteInternships(
       location ?? "",
       minStipend ?? "",
       maxStipend ?? "",
+      serializedFields,
     ],
     queryFn: ({ pageParam = 0 }) =>
       fetchInternshipsPaginated(
@@ -75,7 +80,9 @@ export function useInfiniteInternships(
         tags,
         location,
         minStipend,
-        maxStipend
+        maxStipend,
+        undefined,
+        fields
       ),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => {
@@ -102,5 +109,19 @@ export function useInternship(id: string) {
       return data.internship;
     },
     staleTime: 1000 * 30,
+  });
+}
+
+
+export function useInternshipFields() {
+  return useQuery<string[]>({
+    queryKey: ["internship-fields"],
+    queryFn: async () => {
+      const { data } = await axios.get<{ fields: string[] }>(
+        "/api/internships/fields"
+      );
+      return data.fields || [];
+    },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 }

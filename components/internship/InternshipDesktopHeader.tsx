@@ -11,6 +11,7 @@ import {
   Settings,
   Pencil,
   Loader2,
+  Mail,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,16 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
 }) => {
   const isOwner = session?.user && session.user.id === internship.user?.id;
   const isModerator = session?.user && (session.user.role === "admin" || session.user.role === "editor");
+
+  const hasApply = !!(internship.applyLink || internship.link);
+  const hasDM = !!internship.hiringManagerLinkedin;
+  const hasMail = !!internship.hiringManagerEmail;
+
+  const dmUrl = internship.hiringManagerLinkedin || "";
+  const emailSubject = `Applying for ${internship.title} role at ${internship.hiringOrganization}`;
+  const emailBody = `Hi ${internship.hiringManager || "Hiring Manager"},\n\nI hope you are doing well.\n\nI am writing to express my interest in the ${internship.title} internship role at ${internship.hiringOrganization}.\n\n[Add a brief 2-3 sentence introduction about your background, key skills, and why you are interested in this role]\n\nI would love the opportunity to discuss how my skills align with your team's needs. I have attached my resume for your review.\n\nBest regards,\n[Your Name]\n[Your Contact Information]\n[Your LinkedIn Profile]`;
+  const mailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(internship.hiringManagerEmail || "")}&su=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+
   return (
     <div className="bg-white rounded-[24px] px-8 py-5 shadow-sm border border-slate-100 relative mb-8">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
@@ -157,24 +168,70 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
               className="w-5 h-5 object-contain"
             />
           </Button>
-          {(internship.applyLink || internship.link) && (
-            <Link
-              href={addUtmParams(internship.applyLink || internship.link || "", "ftb_web")}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() =>
-                posthog.capture("internship_apply_now_clicked", {
-                  internship_id: internship.id,
-                  title: internship.title,
-                  url: internship.applyLink || internship.link,
-                  source: "desktop_header",
-                })
-              }
-            >
-              <Button className="h-12 px-8 rounded-xl bg-[#ec5b13] hover:bg-[#d44d0c] text-white font-bold border-none shadow-lg shadow-orange-500/20 transition-all">
-                Apply Now
-              </Button>
-            </Link>
+          {hasApply && (
+            <Button asChild className="h-12 px-5 rounded-xl bg-[#ec5b13] hover:bg-[#d44d0c] text-white font-bold border-none shadow-none transition-all active:scale-95 duration-200 flex items-center gap-2">
+              <Link
+                href={addUtmParams(internship.applyLink || internship.link || "", "ftb_web")}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() =>
+                  posthog.capture("internship_apply_forms_clicked", {
+                    internship_id: internship.id,
+                    title: internship.title,
+                    url: internship.applyLink || internship.link,
+                    source: "desktop_header",
+                  })
+                }
+              >
+                Apply Via Forms
+              </Link>
+            </Button>
+          )}
+
+          {hasDM && (
+            <Button asChild className="h-12 px-5 rounded-xl bg-[#0077b5] hover:bg-[#005987] text-white font-bold border-none shadow-none transition-all active:scale-95 duration-200 flex items-center gap-2">
+              <Link
+                href={dmUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() =>
+                  posthog.capture("internship_cold_dm_clicked", {
+                    internship_id: internship.id,
+                    title: internship.title,
+                    source: "desktop_header",
+                  })
+                }
+              >
+                <Image
+                  src="/images/linkedin.svg"
+                  alt="LinkedIn"
+                  width={16}
+                  height={16}
+                  className="w-4 h-4 object-contain brightness-0 invert"
+                />
+                Cold DM
+              </Link>
+            </Button>
+          )}
+
+          {hasMail && (
+            <Button asChild className="h-12 px-5 rounded-xl bg-black hover:bg-zinc-800 text-white font-bold border-none shadow-none transition-all active:scale-95 duration-200 flex items-center gap-2">
+              <Link
+                href={mailUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() =>
+                  posthog.capture("internship_cold_mail_clicked", {
+                    internship_id: internship.id,
+                    title: internship.title,
+                    source: "desktop_header",
+                  })
+                }
+              >
+                <Mail className="w-4 h-4" />
+                Cold Mail
+              </Link>
+            </Button>
           )}
         </div>
       </div>

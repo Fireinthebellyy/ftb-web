@@ -8,11 +8,12 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Share2, Flag, Loader2, Settings } from "lucide-react";
+import { ArrowLeft, Share2, Flag, Loader2, Settings, Bookmark } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import posthog from "posthog-js";
-import { toTitleCase } from "@/lib/utils";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
 import { ShareDialog } from "@/components/internship/ShareDialog";
 import { useSession } from "@/hooks/use-session";
 import { type InternshipData } from "@/types/interfaces";
@@ -26,6 +27,7 @@ import { InternshipDesktopHeader } from "@/components/internship/InternshipDeskt
 import { InternshipSidebar } from "@/components/internship/InternshipSidebar";
 import { InternshipDisclaimer } from "@/components/internship/InternshipDisclaimer";
 import { InternshipStickyFooter } from "@/components/internship/InternshipStickyFooter";
+// import { SimilarInternships } from "@/components/internship/SimilarInternships";
 import NewInternshipForm from "@/components/internship/NewInternshipForm";
 import { AdminControlsModal } from "@/components/internship/AdminControlsModal";
 
@@ -45,21 +47,36 @@ export default function InternshipDetailPage() {
 
   const isBookmarked = !!getStatus(id || "", "internship");
 
-  const fetchData = async () => {
+  const fetchData = async (signal?: AbortSignal) => {
     if (!id) return;
 
     try {
-      const response = await fetch(`/api/internships/${id}`);
+      const response = await fetch(`/api/internships/${id}`, signal ? { signal } : {});
       const data = await response.json();
+      if (signal?.aborted) return;
       if (!response.ok || !data.success) {
         setNotFoundError(true);
         setLoading(false);
         return;
       }
 
-      setInternship(data.internship as InternshipData);
+      const fetchedInternship = data.internship as InternshipData;
+      setInternship(fetchedInternship);
+      if (typeof window !== "undefined" && fetchedInternship) {
+        localStorage.setItem(
+          "last_interacted_internship",
+          JSON.stringify({
+            id: fetchedInternship.id,
+            field: fetchedInternship.field || null,
+            title: fetchedInternship.title,
+          })
+        );
+      }
       setLoading(false);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === "AbortError" || signal?.aborted) {
+        return;
+      }
       console.error("Error fetching internship:", error);
       setNotFoundError(true);
       setLoading(false);
@@ -67,7 +84,20 @@ export default function InternshipDetailPage() {
   };
 
   useEffect(() => {
-    fetchData();
+    const controller = new AbortController();
+    setLoading(true);
+    setNotFoundError(false);
+    setIsEditOpen(false);
+    setAdminModalOpen(false);
+    setShareDialogOpen(false);
+    if (typeof window !== "undefined") {
+      window.scrollTo(0, 0);
+    }
+    fetchData(controller.signal);
+    
+    return () => {
+      controller.abort();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -127,6 +157,16 @@ export default function InternshipDetailPage() {
           "internship"
         );
         if (addOutcome === "added") {
+          if (typeof window !== "undefined") {
+            localStorage.setItem(
+              "last_interacted_internship",
+              JSON.stringify({
+                id,
+                field: internship.field || null,
+                title: internship.title,
+              })
+            );
+          }
           const trackerTab = "internship";
           toast.success("Saved to Tracker", {
             action: { label: "View", onClick: () => router.push(`/tracker?tab=${trackerTab}`) },
@@ -267,6 +307,35 @@ export default function InternshipDetailPage() {
 
         <InternshipHero internship={internship} />
 
+        {/* Premium Save & Plan Actions */}
+        <div className="px-5 pb-4 -mt-2 grid grid-cols-2 gap-3">
+          <button
+            onClick={handleBookmarkClick}
+            className={cn(
+              "flex h-11 items-center justify-center gap-2 rounded-xl border bg-white shadow-sm transition-all active:scale-95 text-[13px] font-bold",
+              isBookmarked
+                ? "border-orange-200 bg-orange-50/50 text-[#ec5b13]"
+                : "border-slate-200 text-slate-600 hover:text-[#ec5b13]"
+            )}
+          >
+            <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-current")} />
+            <span>{isBookmarked ? "Saved to Tracker" : "Save to Tracker"}</span>
+          </button>
+          <button
+            className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition-all hover:text-[#ec5b13] active:scale-95 text-[13px] font-bold"
+            onClick={handleCalendarClick}
+          >
+            <Image
+              src="/images/google-calendar.webp"
+              alt="Add to Google Calendar"
+              width={16}
+              height={16}
+              className="h-4 w-4 object-contain"
+            />
+            <span>Add to Calendar</span>
+          </button>
+        </div>
+
         <div className="-mt-2 px-5 pb-2">
           <InternshipTabContent
             activeTab="description"
@@ -280,6 +349,15 @@ export default function InternshipDetailPage() {
             handleOpenChat={handleOpenChat}
           />
 
+          {/* Similar Internships
+          <SimilarInternships
+            currentId={internship.id}
+            field={internship.field}
+            title={internship.title}
+            exactFieldOnly={true}
+          />
+          */}
+
           {/* Mobile Disclaimer */}
           <InternshipDisclaimer
             variant="mobile"
@@ -292,9 +370,6 @@ export default function InternshipDetailPage() {
 
         <InternshipStickyFooter
           internship={internship}
-          isBookmarked={isBookmarked}
-          handleBookmarkClick={handleBookmarkClick}
-          handleCalendarClick={handleCalendarClick}
         />
       </div>
 
@@ -324,31 +399,16 @@ export default function InternshipDetailPage() {
                   internship.description || <p>No description provided.</p>
                 )}
 
-                {internship.tags && internship.tags.length > 0 && (
-                  <div className="mt-8">
-                    <h4 className="mb-4 block font-bold text-slate-800">
-                      Tags:
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {internship.tags
-                        .filter(
-                          (tag) =>
-                            !["remote", "onsite", "hybrid"].includes(
-                              tag.toLowerCase()
-                            )
-                        )
-                        .map((tag, i) => (
-                          <span
-                            key={i}
-                            className="rounded-full bg-slate-100 px-3 py-1.5 text-[13px] font-semibold text-slate-600"
-                          >
-                            {toTitleCase(tag)}
-                          </span>
-                        ))}
-                    </div>
-                  </div>
-                )}
               </div>
+
+              {/* Similar Internships
+              <SimilarInternships
+                currentId={internship.id}
+                field={internship.field}
+                title={internship.title}
+                exactFieldOnly={true}
+              />
+              */}
 
               {/* Desktop Disclaimer */}
               <InternshipDisclaimer

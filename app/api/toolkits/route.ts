@@ -101,6 +101,8 @@ export async function POST(request: Request) {
       isLimitedSeats,
       digitalProductSectionId,
       mentorshipDetails,
+      rating,
+      subtitle,
     } = body;
 
     const missingFields: string[] = [];

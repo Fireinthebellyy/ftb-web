@@ -35,6 +35,8 @@ export async function GET(
         contentUrl: toolkits.contentUrl,
         category: toolkits.category,
         highlights: toolkits.highlights,
+        rating: toolkits.rating,
+        subtitle: toolkits.subtitle,
         testimonials: toolkits.testimonials,
         totalDuration: toolkits.totalDuration,
         lessonCount: toolkits.lessonCount,

@@ -14,6 +14,7 @@ import {
   Mail,
   Phone,
   Link as LinkIcon,
+  Star,
 } from "lucide-react";
 import {
   Accordion,
@@ -56,15 +57,14 @@ export default function MentorshipView({ toolkit }: MentorshipViewProps) {
           <h1 className="mb-3 text-2xl font-bold text-gray-900 md:text-3xl">
             {toolkit.title.charAt(0).toUpperCase() + toolkit.title.slice(1)}
           </h1>
-          {toolkit.creatorName && (
-            <p className="mb-4 text-sm text-gray-600">
-              Created by{" "}
-              <span className="font-medium text-gray-900">
-                {toolkit.creatorName}
-              </span>
-            </p>
-          )}
           <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-gray-500">
+            {toolkit.rating && (
+              <div className="flex shrink-0 items-center gap-1 rounded-md bg-yellow-50 px-1.5 py-0.5 text-sm font-semibold text-yellow-700 border border-yellow-200/50">
+                <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                {toolkit.rating}
+              </div>
+            )}
+
             {toolkit.totalDuration && (
               <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />

@@ -232,6 +232,8 @@ export type Toolkit = {
   highlights?: string[];
   mentorshipDetails?: any;
   totalDuration?: string;
+  rating?: string;
+  subtitle?: string;
   lessonCount?: number;
   isActive?: boolean;
   showSaleBadge?: boolean;

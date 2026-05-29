@@ -75,7 +75,7 @@ export function ToolkitFormFields({
           <FormItem>
             <FormLabel>Title *</FormLabel>
             <FormControl>
-              <Input placeholder="Enter toolkit title" {...field} />
+              <Input placeholder="Enter toolkit title" {...field} value={field.value ?? ""} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -113,6 +113,7 @@ export function ToolkitFormFields({
                   type="number"
                   placeholder="299"
                   {...field}
+                  value={field.value ?? ""}
                   onChange={(e) =>
                     field.onChange(parseFloat(e.target.value) || 0)
                   }
@@ -183,7 +184,7 @@ export function ToolkitFormFields({
             <FormItem>
               <FormLabel>Total Duration</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., 2h 30m" {...field} />
+                <Input placeholder="e.g., 2h 30m" {...field} value={field.value ?? ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -401,7 +402,35 @@ export function ToolkitFormFields({
           <FormItem>
             <FormLabel>YouTube Promo Video URL</FormLabel>
             <FormControl>
-              <Input placeholder="https://youtube.com/embed/..." {...field} />
+              <Input placeholder="https://youtube.com/embed/..." {...field} value={field.value ?? ""} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="rating"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Rating (e.g. 4.8)</FormLabel>
+            <FormControl>
+              <Input placeholder="4.8" {...field} value={field.value ?? ""} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="subtitle"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Subtitle (e.g. 1 lesson • 15 mins)</FormLabel>
+            <FormControl>
+              <Input placeholder="1 lesson • 15 mins" {...field} value={field.value ?? ""} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -453,7 +482,7 @@ export function ToolkitFormFields({
                   <FormItem>
                     <FormLabel>Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Aditi Sharma" {...field} />
+                      <Input placeholder="Aditi Sharma" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -467,7 +496,7 @@ export function ToolkitFormFields({
                   <FormItem>
                     <FormLabel>Role</FormLabel>
                     <FormControl>
-                      <Input placeholder="Final Year Student" {...field} />
+                      <Input placeholder="Final Year Student" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -17,7 +17,9 @@ async function handleMigration() {
     await db.execute(sql`
       ALTER TABLE toolkits 
       ADD COLUMN IF NOT EXISTS mentorship_details jsonb,
-      ADD COLUMN IF NOT EXISTS summary text[];
+      ADD COLUMN IF NOT EXISTS summary text[],
+      ADD COLUMN IF NOT EXISTS rating text,
+      ADD COLUMN IF NOT EXISTS subtitle text;
     `);
     
     await db.execute(sql`

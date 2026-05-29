@@ -43,6 +43,8 @@ export async function GET(request: Request) {
         contentUrl: toolkits.contentUrl,
         category: toolkits.category,
         highlights: toolkits.highlights,
+        rating: toolkits.rating,
+        subtitle: toolkits.subtitle,
         mentorshipDetails: toolkits.mentorshipDetails,
         testimonials: toolkits.testimonials,
         totalDuration: toolkits.totalDuration,

@@ -43,6 +43,8 @@ export const toolkitFormSchema = z.object({
   bannerImageUrl: z.string().url().optional().or(z.literal("")),
   videoUrl: z.string().url().optional().or(z.literal("")),
   totalDuration: z.string().optional(),
+  rating: z.string().optional(),
+  subtitle: z.string().optional(),
   highlights: z.array(z.string()).optional(),
   testimonials: z.array(toolkitTestimonialSchema).optional(),
   mentorshipDetails: toolkitMentorshipDetailsSchema.optional(),
@@ -102,6 +104,8 @@ export interface Toolkit {
     };
   } | null;
   totalDuration: string | null;
+  rating?: string | null;
+  subtitle?: string | null;
   lessonCount: number | null;
   isActive: boolean;
   showSaleBadge: boolean;

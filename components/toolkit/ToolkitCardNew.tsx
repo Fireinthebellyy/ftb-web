@@ -302,11 +302,17 @@ export default function ToolkitCardNew({
                 )}
               </div>
 
-              {(toolkit.lessonCount || toolkit.totalDuration) && (
+              {(toolkit.subtitle || toolkit.lessonCount || toolkit.totalDuration) && (
                 <div className="absolute bottom-2 right-2 z-10 rounded-full bg-black/60 px-2.5 py-0.5 text-[10px] font-medium text-white sm:text-xs">
-                  {toolkit.lessonCount ? `${toolkit.lessonCount} lessons` : ""}
-                  {toolkit.lessonCount && toolkit.totalDuration ? " • " : ""}
-                  {toolkit.totalDuration ? toolkit.totalDuration : ""}
+                  {toolkit.subtitle ? (
+                    toolkit.subtitle
+                  ) : (
+                    <>
+                      {toolkit.lessonCount ? `${toolkit.lessonCount} lessons` : ""}
+                      {toolkit.lessonCount && toolkit.totalDuration ? " • " : ""}
+                      {toolkit.totalDuration ? toolkit.totalDuration : ""}
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -339,12 +345,20 @@ export default function ToolkitCardNew({
                 <div className="pt-4" />
               )}
 
-              <h3 className="mb-1 line-clamp-1 text-[15px] font-semibold text-gray-900 transition-colors group-hover:text-gray-700 sm:text-base">
-                {toolkit.title.charAt(0).toUpperCase() + toolkit.title.slice(1)}
-              </h3>
+              <div className="mb-1 flex items-start justify-between gap-2">
+                <h3 className="line-clamp-1 text-[15px] font-semibold text-gray-900 transition-colors group-hover:text-gray-700 sm:text-base">
+                  {toolkit.title.charAt(0).toUpperCase() + toolkit.title.slice(1)}
+                </h3>
+                {toolkit.rating && (
+                  <div className="flex shrink-0 items-center gap-1 rounded-md bg-yellow-50 px-1.5 py-0.5 text-xs font-semibold text-yellow-700 border border-yellow-200/50">
+                    <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                    {toolkit.rating}
+                  </div>
+                )}
+              </div>
 
               {displayHighlights.length > 0 ? (
-                <ul className="mb-5 mt-3 space-y-3 flex-1">
+                <ul className="mb-5 mt-3 space-y-1.5 flex-1">
                   {displayHighlights.map((highlight, index) => (
                     <li key={index} className="flex items-start gap-2.5 text-[13px] text-gray-600 sm:text-[14px]">
                       <div className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#ff5e14]" />

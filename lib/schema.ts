@@ -414,6 +414,8 @@ export const toolkits = pgTable("toolkits", {
   testimonials: jsonb("testimonials").$type<ToolkitTestimonial[]>(),
   mentorshipDetails: jsonb("mentorship_details").$type<ToolkitMentorshipDetails>(),
   totalDuration: text("total_duration"), // e.g., "2h 30m"
+  rating: text("rating"), // e.g. "4.8"
+  subtitle: text("subtitle"), // e.g. "1 lesson • 15 mins"
   lessonCount: integer("lesson_count").default(0),
   isActive: boolean("is_active").default(false),
   showSaleBadge: boolean("show_sale_badge").default(false),

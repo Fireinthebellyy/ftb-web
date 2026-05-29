@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, BookOpen, Check, Clock, Cloud } from "lucide-react";
+import { ArrowLeft, BookOpen, Check, Clock, Cloud, Star } from "lucide-react";
 import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
 import ToolkitSidebar from "@/components/toolkit/ToolkitSidebar";
 import ContentList from "@/components/toolkit/ContentList";
@@ -225,16 +225,14 @@ export default function ToolkitDetailPage() {
                       toolkit.title.slice(1)}
                   </h1>
 
-                  {toolkit.creatorName && (
-                    <p className="mb-4 text-sm text-gray-600">
-                      Created by{" "}
-                      <span className="font-medium text-gray-900">
-                        {toolkit.creatorName}
-                      </span>
-                    </p>
-                  )}
-
                   <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                    {toolkit.rating && (
+                      <div className="flex shrink-0 items-center gap-1 rounded-md bg-yellow-50 px-1.5 py-0.5 text-sm font-semibold text-yellow-700 border border-yellow-200/50">
+                        <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                        {toolkit.rating}
+                      </div>
+                    )}
+
                     {lessonCount > 0 && (
                       <div className="flex items-center gap-1">
                         <BookOpen className="h-4 w-4" />
@@ -429,19 +427,19 @@ export default function ToolkitDetailPage() {
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-bold text-gray-900">
                   ₹
-                  {(appliedCoupon?.finalPrice ?? toolkit.price).toLocaleString(
+                  {(appliedCoupon?.finalPrice ?? toolkit.price ?? 0).toLocaleString(
                     "en-IN"
                   )}
                 </span>
                 {toolkit.originalPrice &&
-                  toolkit.originalPrice > toolkit.price && (
+                  toolkit.originalPrice > (toolkit.price ?? 0) && (
                     <span className="text-sm text-gray-400 line-through">
                       ₹{toolkit.originalPrice.toLocaleString("en-IN")}
                     </span>
                   )}
                 {appliedCoupon?.valid && !toolkit.originalPrice && (
                   <span className="text-sm text-gray-400 line-through">
-                    ₹{toolkit.price.toLocaleString("en-IN")}
+                    ₹{(toolkit.price ?? 0).toLocaleString("en-IN")}
                   </span>
                 )}
               </div>

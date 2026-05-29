@@ -36,6 +36,8 @@ const updateToolkitSchema = z.object({
     .or(z.literal("")),
   category: z.string().optional(),
   highlights: z.array(z.string()).optional(),
+  rating: z.string().optional(),
+  subtitle: z.string().optional(),
   testimonials: z
     .array(
       z.object({
@@ -164,6 +166,10 @@ export async function PUT(
       updates.category = validatedData.category;
     if (validatedData.highlights !== undefined)
       updates.highlights = validatedData.highlights;
+    if (validatedData.rating !== undefined)
+      updates.rating = validatedData.rating;
+    if (validatedData.subtitle !== undefined)
+      updates.subtitle = validatedData.subtitle;
     if (validatedData.testimonials !== undefined)
       updates.testimonials = validatedData.testimonials;
     if (validatedData.totalDuration !== undefined)

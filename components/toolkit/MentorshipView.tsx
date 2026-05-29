@@ -166,48 +166,50 @@ export default function MentorshipView({ toolkit }: MentorshipViewProps) {
           </Card>
         )}
 
-        {/* The 3 Cards in a Grid */}
-        <div className="grid gap-6 md:grid-cols-3">
-          {/* 1) Description Card */}
-          <Card className="flex flex-col h-full">
-            <CardHeader>
-              <CardTitle>Description</CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1">
-              <HtmlRenderer content={toolkit.description} className="text-gray-700" />
-            </CardContent>
-          </Card>
+        {/* 1) Description Card (Full width) */}
+        <Card className="flex flex-col">
+          <CardHeader>
+            <CardTitle>Description</CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1">
+            <HtmlRenderer content={toolkit.description} className="text-gray-700" />
+          </CardContent>
+        </Card>
 
-          {/* 2) What is the mentorship packed */}
-          {mentorshipDetails?.mentorshipPacked && (
-            <Card className="flex flex-col h-full">
-              <CardHeader>
-                <CardTitle>What is the mentorship packed?</CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1">
-                <HtmlRenderer
-                  content={mentorshipDetails.mentorshipPacked}
-                  className="text-gray-700"
-                />
-              </CardContent>
-            </Card>
-          )}
+        {/* 2-Column Grid for Packed and Format */}
+        {(mentorshipDetails?.mentorshipPacked || mentorshipDetails?.formatOfMentorship) && (
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* 2) What is the mentorship packed */}
+            {mentorshipDetails?.mentorshipPacked && (
+              <Card className="flex flex-col h-full">
+                <CardHeader>
+                  <CardTitle>What is the mentorship packed?</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-1">
+                  <HtmlRenderer
+                    content={mentorshipDetails.mentorshipPacked}
+                    className="text-gray-700"
+                  />
+                </CardContent>
+              </Card>
+            )}
 
-          {/* 3) Format of mentorship */}
-          {mentorshipDetails?.formatOfMentorship && (
-            <Card className="flex flex-col h-full">
-              <CardHeader>
-                <CardTitle>Format of mentorship</CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1">
-                <HtmlRenderer
-                  content={mentorshipDetails.formatOfMentorship}
-                  className="text-gray-700"
-                />
-              </CardContent>
-            </Card>
-          )}
-        </div>
+            {/* 3) Format of mentorship */}
+            {mentorshipDetails?.formatOfMentorship && (
+              <Card className="flex flex-col h-full">
+                <CardHeader>
+                  <CardTitle>Format of mentorship</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-1">
+                  <HtmlRenderer
+                    content={mentorshipDetails.formatOfMentorship}
+                    className="text-gray-700"
+                  />
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
       </div>
 
       {/* MOBILE LAYOUT (Hidden on desktop) */}

@@ -107,13 +107,7 @@ export default function ToolkitCardNew({
                       )}
                     </div>
                   </div>
-                ) : (
-                  <div className="mb-3">
-                    <p className="mb-1 text-xs text-gray-500 sm:text-[13px]">
-                      {toolkit.creatorName || "Fireinthebelly"}
-                    </p>
-                  </div>
-                )}
+                ) : null}
                 <h3 className="text-xl font-semibold leading-tight text-gray-950 transition-colors group-hover:text-gray-700">
                   {toolkit.title.charAt(0).toUpperCase() + toolkit.title.slice(1)}
                 </h3>
@@ -342,15 +336,7 @@ export default function ToolkitCardNew({
                   </div>
                 </div>
               ) : (
-                <div className="pt-4">
-                  <p className="mb-1 text-xs text-gray-500 sm:text-[13px]">
-                    {toolkit.creatorName ? (
-                      <span className="text-gray-500">{toolkit.creatorName}</span>
-                    ) : (
-                      <span className="text-gray-500">Fireinthebelly</span>
-                    )}
-                  </p>
-                </div>
+                <div className="pt-4" />
               )}
 
               <h3 className="mb-1 line-clamp-1 text-[15px] font-semibold text-gray-900 transition-colors group-hover:text-gray-700 sm:text-base">

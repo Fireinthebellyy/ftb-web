@@ -230,6 +230,7 @@ export type Toolkit = {
   contentUrl?: string;
   category?: string;
   highlights?: string[];
+  mentorshipDetails?: any;
   totalDuration?: string;
   lessonCount?: number;
   isActive?: boolean;

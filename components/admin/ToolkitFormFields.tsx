@@ -238,6 +238,24 @@ export function ToolkitFormFields({
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
                 control={control}
+                name="mentorshipDetails.mentor.description"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>Mentor Description</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Brief background about the mentor..." 
+                        {...field} 
+                        value={field.value ?? ""} 
+                        className="min-h-[100px]" 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
                 name="mentorshipDetails.mentor.name"
                 render={({ field }) => (
                   <FormItem>
@@ -401,7 +419,7 @@ export function ToolkitFormFields({
                 placeholder="Lifetime access, Downloadable resources, Certificate"
                 value={field.value?.join(", ") ?? ""}
                 onChange={(e) => {
-                  field.onChange(e.target.value.split(","));
+                  field.onChange(e.target.value.split(",").map(v => v.trim()).filter(Boolean));
                 }}
               />
             </FormControl>

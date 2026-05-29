@@ -410,6 +410,7 @@ export const toolkits = pgTable("toolkits", {
   contentUrl: text("content_url"), // URL to toolkit content page (legacy)
   category: text("category"), // Category for filtering (e.g., "Career", "Skills")
   highlights: text("highlights").array(), // Bullet points like "10 lessons", "Lifetime access"
+  summary: text("summary").array(), // Summary points for cards
   testimonials: jsonb("testimonials").$type<ToolkitTestimonial[]>(),
   mentorshipDetails: jsonb("mentorship_details").$type<ToolkitMentorshipDetails>(),
   totalDuration: text("total_duration"), // e.g., "2h 30m"

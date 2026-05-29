@@ -17,6 +17,7 @@ export const toolkitMentorshipDetailsSchema = z.object({
   formatOfMentorship: z.string().optional(),
   mentor: z.object({
     name: z.string().min(1, "Name is required"),
+    description: z.string().optional(),
     imageUrl: z.string().url().optional().or(z.literal("")),
     linkedinUrl: z.string().url({ message: "Valid LinkedIn URL is required" }).or(z.literal("")),
     instagramUrl: z.string().url().optional().or(z.literal("")),
@@ -30,6 +31,8 @@ export const toolkitFormSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters." }),
   description: z.string().refine((value) => hasMeaningfulRichText(value, 10), {
     message: "Description must be at least 10 characters.",
+  }).refine((value) => value === undefined || value.split(/\s+/).length <= 150, {
+    message: "Description must not exceed 150 words.",
   }),
   price: z.coerce
     .number()
@@ -89,6 +92,7 @@ export interface Toolkit {
     formatOfMentorship?: string;
     mentor?: {
       name: string;
+      description?: string;
       imageUrl?: string;
       linkedinUrl?: string;
       instagramUrl?: string;

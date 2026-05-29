@@ -32,9 +32,9 @@ export default function MentorshipView({ toolkit }: MentorshipViewProps) {
   const mentor = mentorshipDetails?.mentor;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Small Header Section */}
-      <div className="flex flex-col gap-6 md:flex-row">
+      <div className="flex flex-col gap-4 md:flex-row">
         {heroImageUrl && (
           <div className="relative h-48 w-full shrink-0 overflow-hidden rounded-lg bg-gray-100 md:w-72 md:h-52">
             <Image
@@ -104,6 +104,11 @@ export default function MentorshipView({ toolkit }: MentorshipViewProps) {
                     <h3 className="text-xl font-bold text-gray-900">
                       {mentor.name}
                     </h3>
+                    {mentor.description && (
+                      <p className="mt-2 text-sm text-gray-600">
+                        {mentor.description}
+                      </p>
+                    )}
                   </div>
                   <div className="flex flex-wrap items-center justify-center gap-3 md:justify-start">
                     {mentor.linkedinUrl && (
@@ -170,24 +175,6 @@ export default function MentorshipView({ toolkit }: MentorshipViewProps) {
             </CardHeader>
             <CardContent className="flex-1">
               <HtmlRenderer content={toolkit.description} className="text-gray-700" />
-              {toolkit.highlights && toolkit.highlights.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="mb-3 font-semibold text-gray-900">
-                    What you'll learn:
-                  </h3>
-                  <ul className="grid gap-2">
-                    {toolkit.highlights.map((highlight, index) => (
-                      <li
-                        key={index}
-                        className="flex items-start gap-2 text-gray-600"
-                      >
-                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
-                        {highlight}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </CardContent>
           </Card>
 
@@ -250,6 +237,11 @@ export default function MentorshipView({ toolkit }: MentorshipViewProps) {
                       <h3 className="text-xl font-bold text-gray-900">
                         {mentor.name}
                       </h3>
+                      {mentor.description && (
+                        <p className="mt-2 text-sm text-gray-600">
+                          {mentor.description}
+                        </p>
+                      )}
                     </div>
                     <div className="flex flex-col items-center gap-3">
                       {mentor.linkedinUrl && (
@@ -314,24 +306,6 @@ export default function MentorshipView({ toolkit }: MentorshipViewProps) {
             </AccordionTrigger>
             <AccordionContent className="px-6 pb-4 pt-2 border-t">
               <HtmlRenderer content={toolkit.description} className="text-gray-700" />
-              {toolkit.highlights && toolkit.highlights.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="mb-3 font-semibold text-gray-900">
-                    What you'll learn:
-                  </h3>
-                  <ul className="grid gap-2">
-                    {toolkit.highlights.map((highlight, index) => (
-                      <li
-                        key={index}
-                        className="flex items-start gap-2 text-gray-600"
-                      >
-                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
-                        {highlight}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </AccordionContent>
           </AccordionItem>
 

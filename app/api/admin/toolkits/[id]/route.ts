@@ -69,6 +69,7 @@ const updateToolkitSchema = z.object({
       mentor: z
         .object({
           name: z.string(),
+          description: z.string().optional(),
           imageUrl: z.string().optional(),
           linkedinUrl: z.string().url().optional(),
           instagramUrl: z.string().url().optional(),

@@ -11,6 +11,9 @@ import {
   RadioTower,
   Ticket,
   Users,
+} from "lucide-react";
+import {
+  canAccessAdminTab,
   canCreateInternship,
   getAllowedAdminTabs,
   isAdminTab,

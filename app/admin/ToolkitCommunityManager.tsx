@@ -6,11 +6,7 @@ import {
   MessageSquarePlus,
   Trash2,
   Edit2,
-  GripVertical,
   Plus,
-  Upload,
-  Link as LinkIcon,
-  X,
   FileText,
   Image as ImageIcon,
   CheckCircle2,
@@ -19,16 +15,16 @@ import {
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
-import { uploadFileViaSignedUrl, deleteStorageObjectClient } from "@/lib/storage/client";
+import { uploadFileViaSignedUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import {
   Select,
   SelectContent,
@@ -145,111 +141,111 @@ export default function ToolkitCommunityManager({ toolkitId, toolkitTitle, open,
               <p className="text-gray-500">Manage announcements, polls, and QnAs for this course.</p>
             </div>
             {!isCreating && !editingPost && (
-          <Button onClick={handleCreate} className="gap-2 bg-orange-600 hover:bg-orange-700">
-            <MessageSquarePlus className="h-4 w-4" />
-            New Post
-          </Button>
-        )}
-      </div>
-
-      {(isCreating || editingPost) ? (
-        <PostEditor
-          toolkitId={toolkitId}
-          initialData={editingPost}
-          onCancel={() => {
-            setIsCreating(false);
-            setEditingPost(null);
-          }}
-          onSave={(data) => {
-            if (editingPost) {
-              updateMutation.mutate({ ...data, id: editingPost.id });
-            } else {
-              createMutation.mutate(data);
-            }
-          }}
-          isSaving={createMutation.isPending || updateMutation.isPending}
-        />
-      ) : (
-        <div className="space-y-4">
-          {posts.length === 0 ? (
-            <div className="flex min-h-[300px] flex-col items-center justify-center rounded-2xl border border-dashed bg-gray-50 text-center">
-              <MessageSquarePlus className="mb-4 h-10 w-10 text-gray-300" />
-              <h3 className="text-lg font-semibold text-gray-900">No Community Posts</h3>
-              <p className="mb-4 text-sm text-gray-500">Create the first post to engage your students.</p>
-              <Button onClick={handleCreate} variant="outline" className="gap-2">
-                <Plus className="h-4 w-4" /> Add Post
+              <Button onClick={handleCreate} className="gap-2 bg-orange-600 hover:bg-orange-700">
+                <MessageSquarePlus className="h-4 w-4" />
+                New Post
               </Button>
-            </div>
-          ) : (
-            posts.map((post) => (
-              <Card key={post.id} className={!post.isPublished ? "opacity-60 grayscale-[30%]" : ""}>
-                <CardContent className="flex items-start justify-between p-6">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <Badge variant="outline" className="capitalize">
-                        {post.type}
-                      </Badge>
-                      {!post.isPublished && (
-                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                          Draft
-                        </Badge>
-                      )}
-                      <h3 className="text-lg font-semibold">{post.title}</h3>
-                    </div>
-                    {post.body && (
-                      <p className="line-clamp-2 text-sm text-gray-600">{post.body}</p>
-                    )}
-                    {post.options && post.options.length > 0 && (
-                      <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
-                        <BarChart3 className="h-4 w-4" />
-                        {post.options.length} options • {post.totalVotes || 0} responses
-                      </div>
-                    )}
-                    {post.type === "qna" && (
-                      <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
-                        <Users className="h-4 w-4" />
-                        <button onClick={() => setViewingResponsesPost(post)} className="text-orange-600 hover:underline">
-                          View Responses
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(post)}>
-                      <Edit2 className="h-4 w-4 text-gray-500" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        if (confirm("Delete this post? This cannot be undone.")) {
-                          deleteMutation.mutate(post.id);
-                        }
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
-      )}
+            )}
+          </div>
 
-      {/* Responses Dialog */}
-      <Dialog open={!!viewingResponsesPost} onOpenChange={(open) => !open && setViewingResponsesPost(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Q&A Responses</DialogTitle>
-            <DialogDescription>
-              {viewingResponsesPost?.title}
-            </DialogDescription>
-          </DialogHeader>
-          {viewingResponsesPost && <QnAResponsesViewer toolkitId={toolkitId} postId={viewingResponsesPost.id} />}
-        </DialogContent>
-      </Dialog>
-    </div>
+          {(isCreating || editingPost) ? (
+            <PostEditor
+              toolkitId={toolkitId}
+              initialData={editingPost}
+              onCancel={() => {
+                setIsCreating(false);
+                setEditingPost(null);
+              }}
+              onSave={(data) => {
+                if (editingPost) {
+                  updateMutation.mutate({ ...data, id: editingPost.id });
+                } else {
+                  createMutation.mutate(data);
+                }
+              }}
+              isSaving={createMutation.isPending || updateMutation.isPending}
+            />
+          ) : (
+            <div className="space-y-4">
+              {posts.length === 0 ? (
+                <div className="flex min-h-[300px] flex-col items-center justify-center rounded-2xl border border-dashed bg-gray-50 text-center">
+                  <MessageSquarePlus className="mb-4 h-10 w-10 text-gray-300" />
+                  <h3 className="text-lg font-semibold text-gray-900">No Community Posts</h3>
+                  <p className="mb-4 text-sm text-gray-500">Create the first post to engage your students.</p>
+                  <Button onClick={handleCreate} variant="outline" className="gap-2">
+                    <Plus className="h-4 w-4" /> Add Post
+                  </Button>
+                </div>
+              ) : (
+                posts.map((post) => (
+                  <Card key={post.id} className={!post.isPublished ? "opacity-60 grayscale-[30%]" : ""}>
+                    <CardContent className="flex items-start justify-between p-6">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <Badge variant="outline" className="capitalize">
+                            {post.type}
+                          </Badge>
+                          {!post.isPublished && (
+                            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                              Draft
+                            </Badge>
+                          )}
+                          <h3 className="text-lg font-semibold">{post.title}</h3>
+                        </div>
+                        {post.body && (
+                          <p className="line-clamp-2 text-sm text-gray-600">{post.body}</p>
+                        )}
+                        {post.options && post.options.length > 0 && (
+                          <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
+                            <BarChart3 className="h-4 w-4" />
+                            {post.options.length} options • {post.totalVotes || 0} responses
+                          </div>
+                        )}
+                        {post.type === "qna" && (
+                          <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
+                            <Users className="h-4 w-4" />
+                            <button onClick={() => setViewingResponsesPost(post)} className="text-orange-600 hover:underline">
+                              View Responses
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(post)}>
+                          <Edit2 className="h-4 w-4 text-gray-500" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            if (confirm("Delete this post? This cannot be undone.")) {
+                              deleteMutation.mutate(post.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* Responses Dialog */}
+          <Dialog open={!!viewingResponsesPost} onOpenChange={(open) => !open && setViewingResponsesPost(null)}>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Q&A Responses</DialogTitle>
+                <DialogDescription>
+                  {viewingResponsesPost?.title}
+                </DialogDescription>
+              </DialogHeader>
+              {viewingResponsesPost && <QnAResponsesViewer toolkitId={toolkitId} postId={viewingResponsesPost.id} />}
+            </DialogContent>
+          </Dialog>
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -278,11 +274,14 @@ function QnAResponsesViewer({ toolkitId, postId }: { toolkitId: string; postId: 
         <div key={r.id} className="border rounded-lg p-4 space-y-3">
           <div className="flex items-center gap-3">
             {r.user?.image ? (
-              <img src={r.user.image} alt={r.user.name} className="h-8 w-8 rounded-full" />
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={r.user.image} alt={r.user.name} className="h-8 w-8 rounded-full" />
+              </>
             ) : (
-              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600">
-                {r.user?.name?.charAt(0) || "U"}
-              </div>
+            <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600">
+              {r.user?.name?.charAt(0) || "U"}
+            </div>
             )}
             <div>
               <p className="font-medium text-sm text-gray-900">{r.user?.name || "Unknown User"}</p>
@@ -326,7 +325,7 @@ function PostEditor({ toolkitId, initialData, onCancel, onSave, isSaving }: Post
   const [title, setTitle] = useState(initialData?.title || "");
   const [body, setBody] = useState(initialData?.body || "");
   const [isPublished, setIsPublished] = useState(initialData?.isPublished ?? true);
-  const [orderIndex, setOrderIndex] = useState(initialData?.orderIndex || 0);
+  const [orderIndex] = useState(initialData?.orderIndex || 0);
 
   const [options, setOptions] = useState<ToolkitCommunityOption[]>(
     initialData?.options?.length
@@ -370,7 +369,7 @@ function PostEditor({ toolkitId, initialData, onCancel, onSave, isSaving }: Post
         finalAttachmentUrl = uploaded.publicUrl;
         finalAttachmentName = attachmentFile.name;
         finalAttachmentType = attachmentFile.type.startsWith("image/") ? "image" : "document";
-      } catch (err) {
+      } catch (_err) {
         toast.error("Failed to upload attachment");
         setIsUploading(false);
         return;
@@ -457,7 +456,7 @@ function PostEditor({ toolkitId, initialData, onCancel, onSave, isSaving }: Post
                 <Plus className="h-4 w-4" /> Add Option
               </Button>
             </div>
-            
+
             <div className="space-y-3">
               {options.map((opt, idx) => (
                 <div key={idx} className="flex items-center gap-3">

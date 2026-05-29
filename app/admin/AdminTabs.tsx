@@ -8,13 +8,9 @@ import {
   ArrowUpRight,
   BookOpen,
   CircleCheck,
-  Layers3,
   RadioTower,
   Ticket,
   Users,
-} from "lucide-react";
-import {
-  canAccessAdminTab,
   canCreateInternship,
   getAllowedAdminTabs,
   isAdminTab,

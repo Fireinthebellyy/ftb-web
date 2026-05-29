@@ -6,7 +6,6 @@ import { db } from "@/lib/db";
 import {
   toolkitCommunityPosts,
   toolkitCommunityResponses,
-  toolkits,
   userToolkits,
 } from "@/lib/schema";
 
@@ -138,7 +137,7 @@ export async function POST(
     console.error("Error responding to community post:", error);
     try {
       require('fs').appendFileSync('e:/FTBH/ftb-web/error.log', JSON.stringify(error, Object.getOwnPropertyNames(error), 2) + '\\n');
-    } catch (e) {}
+    } catch (_e) {}
     return NextResponse.json(
       { error: "Failed to submit response", details: String(error) },
       { status: 500 }

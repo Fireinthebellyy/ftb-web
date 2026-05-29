@@ -56,7 +56,7 @@ export function ToolkitFormFields({
   mentorImageFile = null,
   onMentorImageFileSelect,
   onMentorImageRemove,
-  digitalProductSections = [],
+  digitalProductSections: _digitalProductSections = [],
   isSubmitting = false,
 }: ToolkitFormFieldsProps) {
   const { fields, append, remove } = useFieldArray({

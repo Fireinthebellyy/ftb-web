@@ -3,11 +3,10 @@
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { useFieldArray, useForm } from "react-hook-form";
+import { normalizeRichText } from "@/lib/rich-text";
+import { useForm } from "react-hook-form";
 import axios from "axios";
-import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-
 import {
   Dialog,
   DialogContent,
@@ -15,31 +14,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { ToolkitImageInput } from "@/components/admin/ToolkitImageInput";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   deleteStorageObjectClient,
   uploadFileViaSignedUrl,
 } from "@/lib/storage/client";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { normalizeRichText } from "@/lib/rich-text";
 import { ToolkitFormFields } from "@/components/admin/ToolkitFormFields";
 import {
   DigitalProductSection,
@@ -47,11 +27,7 @@ import {
   ToolkitFormValues,
 } from "@/components/admin/types";
 
-const CATEGORIES = [
-  "1:1 Mentorship",
-  "Recorded toolkits",
-  "digital products",
-];
+
 
 function formatHighlight(highlight: string) {
   const trimmed = highlight.trim();

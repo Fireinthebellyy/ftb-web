@@ -321,7 +321,7 @@ function QnACard({ post, toolkitId }: QnACardProps) {
         attachmentUrl = uploaded.publicUrl;
         attachmentName = attachmentFile.name;
         attachmentType = attachmentFile.type.startsWith("image/") ? "image" : "document";
-      } catch (err) {
+      } catch (_err) {
         toast.error("Failed to upload attachment");
         setIsUploading(false);
         return;
@@ -401,7 +401,7 @@ function QnACard({ post, toolkitId }: QnACardProps) {
         {attachmentFile && (
           <div className="flex items-center gap-2 text-sm text-emerald-600 mt-2">
             <CheckCircle2 className="h-4 w-4" />
-            <span className="font-medium">File '{attachmentFile.name}' ready to upload</span>
+            <span className="font-medium">File &apos;{attachmentFile.name}&apos; ready to upload</span>
           </div>
         )}
         <p className="text-xs text-gray-500 mt-1">Upload images, PDFs, or Word documents</p>

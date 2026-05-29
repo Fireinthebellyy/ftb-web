@@ -1,4 +1,4 @@
-import { eq, and, asc, desc, count } from "drizzle-orm";
+import { eq, asc, desc, count } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { getSessionCached } from "@/lib/auth-session-cache";

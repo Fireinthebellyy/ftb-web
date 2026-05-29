@@ -5,10 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Toolkit } from "@/components/admin/types";
 import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
 import {
-  BookOpen,
   Clock,
   Cloud,
-  Check,
   Linkedin,
   Instagram,
   Mail,
@@ -215,7 +213,7 @@ export default function MentorshipView({ toolkit }: MentorshipViewProps) {
       {/* MOBILE LAYOUT (Hidden on desktop) */}
       <div className="block md:hidden">
         <Accordion type="multiple" className="w-full space-y-4">
-          
+
           {/* About the mentor Accordion */}
           {mentor && (
             <AccordionItem value="mentor" className="border rounded-lg bg-card text-card-foreground shadow-sm">

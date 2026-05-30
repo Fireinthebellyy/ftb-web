@@ -243,8 +243,8 @@
     {
       "idx": 34,
       "version": "7",
-      "when": 1779650420747,
-      "tag": "0034_freezing_quasar",
+      "when": 1779628448601,
+      "tag": "0034_solid_amazoness",
       "breakpoints": true
     },
     {
@@ -252,6 +252,20 @@
       "version": "7",
       "when": 1779688320000,
       "tag": "0046_ungatekeep_post_votes",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1779945804979,
+      "tag": "0047_safe_swordsman",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1779947926118,
+      "tag": "0048_misty_amazoness",
       "breakpoints": true
     },
     {
@@ -273,6 +287,13 @@
       "version": "7",
       "when": 1779926400000,
       "tag": "0051_toolkit_community_responses",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1779650420747,
+      "tag": "0052_freezing_quasar",
       "breakpoints": true
     }
   ]

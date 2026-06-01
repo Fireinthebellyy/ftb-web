@@ -7,6 +7,7 @@ import {
   userToolkits,
   userToolkitProgress,
   coupons,
+  digitalProductSections,
 } from "@/lib/schema";
 import { getSessionCached } from "@/lib/auth-session-cache";
 import { eq, and, asc, sql, or, lt, isNull } from "drizzle-orm";
@@ -34,6 +35,8 @@ export async function GET(
         contentUrl: toolkits.contentUrl,
         category: toolkits.category,
         highlights: toolkits.highlights,
+        rating: toolkits.rating,
+        subtitle: toolkits.subtitle,
         testimonials: toolkits.testimonials,
         totalDuration: toolkits.totalDuration,
         lessonCount: toolkits.lessonCount,
@@ -42,9 +45,21 @@ export async function GET(
         updatedAt: toolkits.updatedAt,
         userId: toolkits.userId,
         creatorName: user.name,
+        isBundle: toolkits.isBundle,
+        bundleItems: toolkits.bundleItems,
+        is_trending: toolkits.is_trending,
+        isBestSeller: toolkits.isBestSeller,
+        isLimitedSeats: toolkits.isLimitedSeats,
+        mentorshipDetails: toolkits.mentorshipDetails,
+        digitalProductSectionId: toolkits.digitalProductSectionId,
+        digitalProductSectionTitle: digitalProductSections.title,
       })
       .from(toolkits)
       .leftJoin(user, eq(toolkits.userId, user.id))
+      .leftJoin(
+        digitalProductSections,
+        eq(toolkits.digitalProductSectionId, digitalProductSections.id)
+      )
       .where(eq(toolkits.id, toolkitId))
       .limit(1);
 

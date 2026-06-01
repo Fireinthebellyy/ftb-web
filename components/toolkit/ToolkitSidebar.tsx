@@ -42,11 +42,12 @@ export default function PurchaseSidebar({
   const [appliedCoupon, setAppliedCoupon] =
     useState<CouponValidationResult | null>(null);
 
+  const toolkitPrice = toolkit.price ?? 0;
   const hasOriginalPrice =
-    toolkit.originalPrice && toolkit.originalPrice > toolkit.price;
+    toolkit.originalPrice && toolkit.originalPrice > toolkitPrice;
   const discountPercentage = hasOriginalPrice
     ? Math.round(
-        ((toolkit.originalPrice! - toolkit.price) / toolkit.originalPrice!) *
+        ((toolkit.originalPrice! - toolkitPrice) / toolkit.originalPrice!) *
           100
       )
     : 0;
@@ -95,7 +96,7 @@ export default function PurchaseSidebar({
     setAppliedCoupon(null);
   };
 
-  const displayPrice = appliedCoupon?.finalPrice ?? toolkit.price;
+  const displayPrice = appliedCoupon?.finalPrice ?? toolkit.price ?? 0;
   const showCouponDiscount =
     appliedCoupon?.valid && appliedCoupon.discountAmount;
   const lessonCount = contentItems.length || toolkit.lessonCount || 0;
@@ -117,7 +118,7 @@ export default function PurchaseSidebar({
               ₹
               {(hasOriginalPrice
                 ? toolkit.originalPrice
-                : toolkit.price
+                : (toolkit.price ?? 0)
               )?.toLocaleString("en-IN")}
             </span>
           )}

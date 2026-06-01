@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import {
   pgTable,
   text,
@@ -382,6 +383,30 @@ export interface ToolkitTestimonial {
   message: string;
 }
 
+export interface ToolkitMentorshipDetails {
+  mentorshipPacked?: string;
+  formatOfMentorship?: string;
+  mentor?: {
+    name: string;
+    imageUrl?: string;
+    linkedinUrl?: string;
+    instagramUrl?: string;
+    mailId?: string;
+    phoneNumber?: string;
+    otherLinks?: { title: string; url: string }[];
+  };
+}
+
+export const digitalProductSections = pgTable("digital_product_sections", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  description: text("description"),
+  orderIndex: integer("order_index").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Toolkit tables for monetization
 export const toolkits = pgTable("toolkits", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -395,8 +420,12 @@ export const toolkits = pgTable("toolkits", {
   contentUrl: text("content_url"), // URL to toolkit content page (legacy)
   category: text("category"), // Category for filtering (e.g., "Career", "Skills")
   highlights: text("highlights").array(), // Bullet points like "10 lessons", "Lifetime access"
+  summary: text("summary").array(), // Summary points for cards
   testimonials: jsonb("testimonials").$type<ToolkitTestimonial[]>(),
+  mentorshipDetails: jsonb("mentorship_details").$type<ToolkitMentorshipDetails>(),
   totalDuration: text("total_duration"), // e.g., "2h 30m"
+  rating: text("rating"), // e.g. "4.8"
+  subtitle: text("subtitle"), // e.g. "1 lesson • 15 mins"
   lessonCount: integer("lesson_count").default(0),
   isActive: boolean("is_active").default(false),
   showSaleBadge: boolean("show_sale_badge").default(false),
@@ -407,8 +436,16 @@ export const toolkits = pgTable("toolkits", {
     .references(() => user.id, { onDelete: "cascade" }),
   is_trending: boolean("is_trending").default(false),
   is_featured_home: boolean("is_featured_home").default(false),
-  trending_index: integer("trending_index"),          
-  featured_home_index: integer("featured_home_index"), 
+  trending_index: integer("trending_index"),
+  featured_home_index: integer("featured_home_index"),
+  isBundle: boolean("is_bundle").default(false),
+  bundleItems: jsonb("bundle_items").$type<string[]>().default([]),
+  isBestSeller: boolean("is_best_seller").default(false),
+  isLimitedSeats: boolean("is_limited_seats").default(false),
+  digitalProductSectionId: uuid("digital_product_section_id").references(
+    () => digitalProductSections.id,
+    { onDelete: "set null" }
+  ),
 });
 
 export const toolkitContentItemTypeEnum = pgEnum("toolkit_content_item_type", [
@@ -440,6 +477,55 @@ export const toolkitContentItems = pgTable("toolkit_content_items", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+export interface ToolkitCommunityOption {
+  text: string;
+  isCorrect?: boolean;
+}
+
+export const toolkitCommunityPosts = pgTable("toolkit_community_posts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  toolkitId: uuid("toolkit_id")
+    .notNull()
+    .references(() => toolkits.id, { onDelete: "cascade" }),
+  type: text("type").notNull().default("text"),
+  title: text("title").notNull(),
+  body: text("body"),
+  options: jsonb("options").$type<ToolkitCommunityOption[]>().default([]),
+  attachmentUrl: text("attachment_url"),
+  attachmentName: text("attachment_name"),
+  attachmentType: text("attachment_type"),
+  orderIndex: integer("order_index").notNull().default(0),
+  isPublished: boolean("is_published").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const toolkitCommunityResponses = pgTable(
+  "toolkit_community_responses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    postId: uuid("post_id")
+      .notNull()
+      .references(() => toolkitCommunityPosts.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    selectedOptionIndex: integer("selected_option_index"),
+    textResponse: text("text_response"),
+    attachmentUrl: text("attachment_url"),
+    attachmentName: text("attachment_name"),
+    attachmentType: text("attachment_type"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("toolkit_community_responses_post_user_unique").on(
+      table.postId,
+      table.userId
+    ),
+    index("toolkit_community_responses_post_id_idx").on(table.postId),
+  ]
+);
 
 export const coupons = pgTable("coupons", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -681,7 +767,10 @@ export const schema = {
   onboardingSurveyResponses,
   tags,
   toolkits,
+  digitalProductSections,
   toolkitContentItems,
+  toolkitCommunityPosts,
+  toolkitCommunityResponses,
   coupons,
   banners,
   userToolkits,

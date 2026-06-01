@@ -214,6 +214,16 @@ export type ToolkitTestimonial = {
   message: string;
 };
 
+export type DigitalProductSection = {
+  id: string;
+  title: string;
+  description?: string | null;
+  orderIndex: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type Toolkit = {
   id: string;
   title: string;
@@ -226,7 +236,10 @@ export type Toolkit = {
   contentUrl?: string;
   category?: string;
   highlights?: string[];
+  mentorshipDetails?: any;
   totalDuration?: string;
+  rating?: string;
+  subtitle?: string;
   lessonCount?: number;
   isActive?: boolean;
   showSaleBadge?: boolean;
@@ -238,6 +251,12 @@ export type Toolkit = {
   testimonials?: ToolkitTestimonial[];
   is_trending?: boolean;
   is_featured_home?: boolean;
+  isBundle?: boolean;
+  bundleItems?: string[];
+  isBestSeller?: boolean;
+  isLimitedSeats?: boolean;
+  digitalProductSectionId?: string | null;
+  digitalProductSectionTitle?: string | null;
 };
 
 export type ToolkitContentItem = {
@@ -250,4 +269,41 @@ export type ToolkitContentItem = {
   orderIndex: number;
   createdAt?: string;
   updatedAt?: string;
+};
+
+export type ToolkitCommunityPostType = "text" | "mcq" | "poll" | "attachment" | "qna";
+
+export type ToolkitCommunityOption = {
+  text: string;
+  isCorrect?: boolean;
+};
+
+export type ToolkitCommunityPost = {
+  id: string;
+  toolkitId: string;
+  type: ToolkitCommunityPostType;
+  title: string;
+  body?: string | null;
+  options?: ToolkitCommunityOption[] | null;
+  attachmentUrl?: string | null;
+  attachmentName?: string | null;
+  attachmentType?: string | null;
+  orderIndex: number;
+  isPublished: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  /** null = not yet answered; number = index of the option the user selected */
+  userSelectedIndex?: number | null;
+  /** For QnA only: the text response the user submitted */
+  userTextResponse?: string | null;
+  /** For QnA only: the attachment URL the user submitted */
+  userAttachmentUrl?: string | null;
+  /** For QnA only: the attachment name the user submitted */
+  userAttachmentName?: string | null;
+  /** For QnA only: the attachment type the user submitted */
+  userAttachmentType?: string | null;
+  /** For polls only (after voting): vote count per option index */
+  optionVoteCounts?: number[];
+  /** For polls only (after voting): total number of votes */
+  totalVotes?: number;
 };

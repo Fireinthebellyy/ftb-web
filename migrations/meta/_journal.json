@@ -267,6 +267,34 @@
       "when": 1779947926118,
       "tag": "0048_misty_amazoness",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1779753600000,
+      "tag": "0049_digital_product_sections",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1779840000000,
+      "tag": "0050_toolkit_community_posts",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1779926400000,
+      "tag": "0051_toolkit_community_responses",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1779650420747,
+      "tag": "0052_freezing_quasar",
+      "breakpoints": true
     }
   ]
 }

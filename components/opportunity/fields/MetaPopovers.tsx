@@ -46,7 +46,7 @@ interface Props {
 }
 
 interface SchedulePublishPopoverProps {
-  control: Control<FormData>;
+  control: Control<any>;
   watchedPublishAt?: string;
   onConfirmMessageChange?: (message: string | null) => void;
   showLabel?: boolean;
@@ -424,7 +424,7 @@ export function SchedulePublishPopover({
   compactLabel,
 }: SchedulePublishPopoverProps) {
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
-  const { setValue } = useFormContext<FormData>();
+  const { setValue } = useFormContext<any>();
 
   const handleOpenChange = (open: boolean) => {
     setIsScheduleOpen(open);

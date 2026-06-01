@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { logAdminActivity } from "@/lib/admin-activity";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { db } from "@/lib/db";
-import { toolkitContentItems, toolkits, user as userTable } from "@/lib/schema";
+import {
+  digitalProductSections,
+  toolkitContentItems,
+  toolkits,
+  user as userTable,
+} from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { desc, eq, sql } from "drizzle-orm";
 
@@ -24,6 +29,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+
     const allToolkits = await db
       .select({
         id: toolkits.id,
@@ -37,6 +43,9 @@ export async function GET(request: Request) {
         contentUrl: toolkits.contentUrl,
         category: toolkits.category,
         highlights: toolkits.highlights,
+        rating: toolkits.rating,
+        subtitle: toolkits.subtitle,
+        mentorshipDetails: toolkits.mentorshipDetails,
         testimonials: toolkits.testimonials,
         totalDuration: toolkits.totalDuration,
         lessonCount: toolkits.lessonCount,
@@ -50,10 +59,23 @@ export async function GET(request: Request) {
         is_featured_home: toolkits.is_featured_home,
         trending_index: toolkits.trending_index,
         featured_home_index: toolkits.featured_home_index,
+        isBundle: toolkits.isBundle,
+        bundleItems: toolkits.bundleItems,
+        isBestSeller: toolkits.isBestSeller,
+        isLimitedSeats: toolkits.isLimitedSeats,
+        digitalProductSectionId: toolkits.digitalProductSectionId,
+        digitalProductSectionTitle: digitalProductSections.title,
       })
       .from(toolkits)
       .leftJoin(userTable, eq(toolkits.userId, userTable.id))
-      .orderBy(desc(toolkits.createdAt));
+      .leftJoin(
+        digitalProductSections,
+        eq(toolkits.digitalProductSectionId, digitalProductSections.id)
+      )
+      .orderBy(
+        sql`CASE WHEN ${toolkits.isBundle} = true THEN 0 ELSE 1 END ASC`,
+        desc(toolkits.createdAt)
+      );
 
     const lessonCounts = await db
       .select({

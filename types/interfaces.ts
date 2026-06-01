@@ -40,6 +40,9 @@ export type Internship = {
   stipend?: number | null;
   hiringOrganization: string;
   hiringManager?: string | null;
+  hiringManagerLinkedin?: string | null;
+  hiringManagerEmail?: string | null;
+  field?: string | null;
   experience?: string | null;
   duration?: string | null;
   createdAt?: string;
@@ -68,7 +71,9 @@ export interface InternshipData extends Omit<
   createdAt: string | null;
   poster?: string | null;
   eligibility?: string[];
+  hiringManagerLinkedin?: string | null;
   hiringManagerEmail?: string | null;
+  field?: string | null;
   contactEmail?: string | null;
   postUrl?: string | null;
   applyLink?: string | null;
@@ -122,6 +127,7 @@ export interface InternshipPostProps {
   internship: Internship;
   onBookmarkChange?: (id: string, isBookmarked: boolean) => void;
   isCardExpanded?: boolean;
+  isActionsHidden?: boolean;
 }
 
 export type Comment = {

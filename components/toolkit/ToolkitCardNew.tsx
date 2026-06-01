@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn, stripHtml } from "@/lib/utils";
 import { Toolkit } from "@/types/interfaces";
-import { Flame, ArrowRight, Star, Clock } from "lucide-react";
+import { Flame, Star, Clock, ArrowRight } from "lucide-react";
 
 interface ToolkitCardNewProps {
   toolkit: Toolkit;
@@ -58,12 +58,11 @@ export default function ToolkitCardNew({
 
   const displayHighlights = getProcessedHighlights();
   const isDigitalProduct = toolkit.category === "digital products";
-
   return (
-    <Link href={href} className="block h-full" prefetch>
+    <Link href={href} className="block" prefetch>
       <Card
         className={cn(
-          "relative group flex cursor-pointer flex-col overflow-hidden border bg-white py-0 transition-shadow hover:shadow-md h-full rounded-2xl",
+          "relative group flex cursor-pointer flex-row gap-0 overflow-hidden border bg-white py-0 transition-shadow hover:shadow-md sm:flex-col",
           className
         )}
       >

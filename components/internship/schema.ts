@@ -51,8 +51,15 @@ export const internshipFormSchema = z.object({
     .refine((val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), {
       message: "Please enter a valid email address.",
     }),
+  hiringManagerLinkedin: z
+    .string()
+    .optional()
+    .refine((val) => !val || /^(https?:\/\/)?(www\.)?linkedin\.com\/.*$/i.test(val), {
+      message: "Please enter a valid LinkedIn URL.",
+    }),
   link: z.string().url({ message: "Application link is required." }),
   deadline: z.string().optional(),
+  field: z.string().optional(),
 });
 
 export const internshipEditFormSchema = internshipFormSchema.extend({

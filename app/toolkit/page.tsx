@@ -92,7 +92,6 @@ export default function ToolkitPage() {
       : toolkits.filter((t) => t.category === selectedCategory);
   
   const isViewingDigitalProducts = selectedCategory === "digital products";
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6">
@@ -127,9 +126,9 @@ export default function ToolkitPage() {
             <h3 className="mb-2 text-lg font-semibold text-red-900">Failed to load toolkits</h3>
             <p className="text-red-700">Something went wrong. Please refresh and try again.</p>
           </div>
-        ) : filteredToolkits.length === 0 ? (
+        ) : toolkits.length === 0 ? (
           <div className="rounded-lg border bg-white py-12 text-center">
-            <h3 className="mb-2 text-lg font-semibold text-gray-600">No toolkits found for {selectedCategory}</h3>
+            <h3 className="mb-2 text-lg font-semibold text-gray-600">No toolkits found</h3>
             <p className="text-gray-500">Check back soon for new content!</p>
           </div>
         ) : (
@@ -144,7 +143,7 @@ export default function ToolkitPage() {
             {filteredToolkits.map((toolkit) => (
               <ToolkitCardNew key={toolkit.id} toolkit={toolkit} allToolkits={toolkits} href={`/toolkit/${toolkit.id}`} />
             ))}
-            {filteredToolkits.length === 1 && <ToolkitComingSoonCard />}
+            {toolkits.length === 1 && <ToolkitComingSoonCard />}
           </div>
         )}
 

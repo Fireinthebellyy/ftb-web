@@ -53,7 +53,6 @@ export async function GET() {
       )
       .where(eq(toolkits.isActive, true))
       .orderBy(
-        sql`CASE WHEN ${toolkits.isBundle} = true THEN 0 ELSE 1 END ASC`,
         sql`CASE WHEN ${toolkits.is_featured_home} = true THEN 0 ELSE 1 END ASC`,
         sql`COALESCE(${toolkits.featured_home_index}, 9999) ASC`,
         sql`COALESCE(${toolkits.trending_index}, 9999) ASC`,
@@ -111,6 +110,10 @@ export async function POST(request: Request) {
       missingFields.push("title");
     }
 
+    if (typeof description !== "string" || !description.trim()) {
+      missingFields.push("description");
+    }
+
     if (price === undefined || price === null) {
       missingFields.push("price");
     }
@@ -130,10 +133,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // Normalize description — rich text editor may send empty HTML like <p><br></p>
-    const normalizedDescription = typeof description === "string" ? normalizeRichText(description) : "";
-
-    if (!isBundle && !hasMeaningfulRichText(normalizedDescription, 10)) {
+    if (!hasMeaningfulRichText(description, 10)) {
       return badRequest("Description must be at least 10 characters.", {
         code: "INVALID_DESCRIPTION",
         fields: ["description"],
@@ -143,8 +143,8 @@ export async function POST(request: Request) {
     const newToolkit = await db
       .insert(toolkits)
       .values({
-        title: title.trim(),
-        description: normalizedDescription || title.trim(), // fallback for bundles with no description
+        title,
+        description: normalizeRichText(description),
         price,
         originalPrice: originalPrice ?? null,
         coverImageUrl: coverImageUrl || null,
@@ -174,9 +174,8 @@ export async function POST(request: Request) {
     return NextResponse.json(newToolkit[0], { status: 201 });
   } catch (error) {
     console.error("Error creating toolkit:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to create toolkit", details: message },
+      { error: "Failed to create toolkit" },
       { status: 500 }
     );
   }

@@ -109,6 +109,26 @@ export function MetaFields({ control }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
           control={control}
+          name="hiringManagerLinkedin"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Hiring Manager LinkedIn</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="https://linkedin.com/in/username"
+                  className="focus-visible:ring-1"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          control={control}
           name="experience"
           render={({ field }) => (
             <FormItem>

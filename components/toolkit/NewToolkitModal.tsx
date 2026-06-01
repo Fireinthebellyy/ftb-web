@@ -29,6 +29,7 @@ import {
 
 
 
+
 function formatHighlight(highlight: string) {
   const trimmed = highlight.trim();
 

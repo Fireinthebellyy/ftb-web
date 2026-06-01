@@ -1,0 +1,1 @@
+CREATE INDEX "internships_field_idx" ON "internships" USING btree ("field");

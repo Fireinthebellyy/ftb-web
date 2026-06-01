@@ -1,6 +1,6 @@
 {
-  "id": "8963842d-371d-4c5f-988b-c0ed45610a99",
-  "prevId": "606fa40e-0058-4741-b222-4c51528ba7f2",
+  "id": "ba750ebf-6485-4b06-8fcd-cae4e20df2a0",
+  "prevId": "01929260-dea8-4ce2-9618-998ea9f648d9",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -883,6 +883,24 @@
           "primaryKey": false,
           "notNull": false
         },
+        "hiring_manager_linkedin": {
+          "name": "hiring_manager_linkedin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hiring_manager_email": {
+          "name": "hiring_manager_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "field": {
+          "name": "field",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "is_verified": {
           "name": "is_verified",
           "type": "boolean",
@@ -963,7 +981,23 @@
           "notNull": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "internships_field_idx": {
+          "name": "internships_field_idx",
+          "columns": [
+            {
+              "expression": "field",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "internships_user_id_user_id_fk": {
           "name": "internships_user_id_user_id_fk",
@@ -2370,7 +2404,7 @@
         },
         "vote": {
           "name": "vote",
-          "type": "integer",
+          "type": "smallint",
           "primaryKey": false,
           "notNull": true
         },
@@ -2436,7 +2470,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "vote_check": {
+          "name": "vote_check",
+          "value": "\"ungatekeep_post_votes\".\"vote\" IN (-1, 0, 1)"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.ungatekeep_posts": {
@@ -2746,7 +2785,12 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "login_streak_range": {
+          "name": "login_streak_range",
+          "value": "\"user\".\"login_streak\" BETWEEN 0 AND 30"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.user_onboarding_profiles": {

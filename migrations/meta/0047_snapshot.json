@@ -1,6 +1,6 @@
 {
-  "id": "8963842d-371d-4c5f-988b-c0ed45610a99",
-  "prevId": "606fa40e-0058-4741-b222-4c51528ba7f2",
+  "id": "01929260-dea8-4ce2-9618-998ea9f648d9",
+  "prevId": "8963842d-371d-4c5f-988b-c0ed45610a99",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -879,6 +879,24 @@
         },
         "hiring_manager": {
           "name": "hiring_manager",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hiring_manager_linkedin": {
+          "name": "hiring_manager_linkedin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hiring_manager_email": {
+          "name": "hiring_manager_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "field": {
+          "name": "field",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -2370,7 +2388,7 @@
         },
         "vote": {
           "name": "vote",
-          "type": "integer",
+          "type": "smallint",
           "primaryKey": false,
           "notNull": true
         },
@@ -2436,7 +2454,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "vote_check": {
+          "name": "vote_check",
+          "value": "\"ungatekeep_post_votes\".\"vote\" IN (-1, 0, 1)"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.ungatekeep_posts": {
@@ -2746,7 +2769,12 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "login_streak_range": {
+          "name": "login_streak_range",
+          "value": "\"user\".\"login_streak\" BETWEEN 0 AND 30"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.user_onboarding_profiles": {

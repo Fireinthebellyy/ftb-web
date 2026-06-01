@@ -40,7 +40,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import NewToolkitModal from "@/components/toolkit/NewToolkitModal";
+import NewToolkitModal from "../../components/toolkit/NewToolkitModal";
+import NewBundleModal from "../../components/toolkit/NewBundleModal";
 import {
   deleteStorageObjectClient,
   uploadFileViaSignedUrl,
@@ -302,7 +303,12 @@ export default function AdminToolkitsTable() {
         header: "Title",
         cell: ({ row }) => (
           <div className="max-w-xs">
-            <div className="truncate font-medium">{row.original.title}</div>
+            <div className="truncate font-medium flex items-center gap-2">
+              {row.original.title}
+              {row.original.isBundle && (
+                <Badge variant="secondary" className="bg-purple-100 text-purple-700 hover:bg-purple-100 text-[10px] px-1.5 py-0">Bundle</Badge>
+              )}
+            </div>
             <div className="text-muted-foreground truncate text-sm">
               {stripHtml(row.original.description)}
             </div>
@@ -454,6 +460,38 @@ export default function AdminToolkitsTable() {
         ),
       },
       {
+        id: "bestSeller",
+        header: "Best Seller",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <OrangeCheckbox
+            checked={row.original.isBestSeller ?? false}
+            onChange={() =>
+              updateToolkitMutation.mutate({
+                id: row.original.id,
+                payload: { isBestSeller: !row.original.isBestSeller },
+              })
+            }
+          />
+        ),
+      },
+      {
+        id: "limitedSeats",
+        header: "Limited Seats",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <OrangeCheckbox
+            checked={row.original.isLimitedSeats ?? false}
+            onChange={() =>
+              updateToolkitMutation.mutate({
+                id: row.original.id,
+                payload: { isLimitedSeats: !row.original.isLimitedSeats },
+              })
+            }
+          />
+        ),
+      },
+      {
         id: "featuredHome",
         header: "Featured Home",
         enableSorting: false,
@@ -587,6 +625,16 @@ export default function AdminToolkitsTable() {
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
+          <NewBundleModal
+            onSuccess={() =>
+              queryClient.invalidateQueries({ queryKey: ["admin", "toolkits"] })
+            }
+          >
+            <Button variant="outline" className="gap-2 bg-white">
+              <PlusCircle className="h-4 w-4" />
+              Create Bundle Offer
+            </Button>
+          </NewBundleModal>
           <NewToolkitModal
             onSuccess={() =>
               queryClient.invalidateQueries({ queryKey: ["admin", "toolkits"] })

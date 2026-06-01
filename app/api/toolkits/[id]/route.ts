@@ -10,7 +10,7 @@ import {
   digitalProductSections,
 } from "@/lib/schema";
 import { getSessionCached } from "@/lib/auth-session-cache";
-import { eq, and, asc, sql, or, lt, isNull } from "drizzle-orm";
+import { eq, and, asc, sql, or, lt, isNull, inArray } from "drizzle-orm";
 import { headers } from "next/headers";
 
 // GET specific toolkit by ID
@@ -342,6 +342,36 @@ export async function POST(
           couponId: couponId,
         })
         .returning();
+
+      if (toolkit.isBundle && toolkit.bundleItems?.length) {
+        // Batch-check existing completed purchases
+        const existingPurchases = await db
+          .select({ toolkitId: userToolkits.toolkitId })
+          .from(userToolkits)
+          .where(
+            and(
+              eq(userToolkits.userId, userId),
+              eq(userToolkits.paymentStatus, "completed"),
+              inArray(userToolkits.toolkitId, toolkit.bundleItems)
+            )
+          );
+        const existingSet = new Set(existingPurchases.map((p) => p.toolkitId));
+
+        const itemsToInsert = toolkit.bundleItems
+          .filter((childId) => !existingSet.has(childId))
+          .map((childId) => ({
+            userId,
+            toolkitId: childId,
+            razorpayOrderId: null,
+            paymentStatus: "completed" as const,
+            amountPaid: 0,
+            couponId: couponId,
+          }));
+
+        if (itemsToInsert.length > 0) {
+          await db.insert(userToolkits).values(itemsToInsert);
+        }
+      }
 
       return NextResponse.json({
         success: true,

@@ -95,7 +95,7 @@ export function useToolkitCommunity(toolkitId: string, enabled: boolean) {
   });
 }
 
-export function useToolkitPurchase(toolkitId: string, _onSuccessRedirect?: () => void) {
+export function useToolkitPurchase(toolkitId: string, onSuccessRedirect?: () => void) {
   const qc = useQueryClient();
 
   return useMutation({
@@ -123,13 +123,14 @@ export function useToolkitPurchase(toolkitId: string, _onSuccessRedirect?: () =>
     onSuccess: async (response: any) => {
       // Free purchase (coupon covered full amount) — no payment needed
       if (response.free) {
-        toast.success("Toolkit unlocked for free! Redirecting to content...");
+        toast.success("Toolkit unlocked for free! Redirecting...");
         qc.setQueryData(["toolkit", toolkitId], (old: any) => {
           if (old) {
             return { ...old, hasPurchased: true };
           }
           return old;
         });
+        if (onSuccessRedirect) onSuccessRedirect();
         return;
       }
 
@@ -161,13 +162,14 @@ export function useToolkitPurchase(toolkitId: string, _onSuccessRedirect?: () =>
                 },
               }
             );
-            toast.success("Purchase successful! Redirecting to content...");
+            toast.success("Purchase successful! Redirecting...");
             qc.setQueryData(["toolkit", toolkitId], (old: any) => {
               if (old) {
                 return { ...old, hasPurchased: true };
               }
               return old;
             });
+            if (onSuccessRedirect) onSuccessRedirect();
           } catch (error) {
             console.error("Verification failed:", error);
             toast.error("Payment verification failed. Contact support.");

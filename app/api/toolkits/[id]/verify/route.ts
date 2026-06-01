@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { badRequest } from "@/lib/api-error";
 import { db } from "@/lib/db";
 import { userToolkits, toolkits } from "@/lib/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { createHmac } from "crypto";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -101,27 +101,32 @@ export async function POST(
     });
 
     if (purchasedToolkit?.isBundle && purchasedToolkit.bundleItems?.length) {
-      const itemsToInsert = purchasedToolkit.bundleItems.map((childId) => ({
-        userId,
-        toolkitId: childId,
-        paymentId: razorpay_payment_id,
-        razorpayOrderId: razorpay_order_id,
-        paymentStatus: "completed" as const,
-        amountPaid: 0,
-      }));
-
-      // Insert or ignore if they already have access
-      for (const item of itemsToInsert) {
-        const existing = await db.query.userToolkits.findFirst({
-          where: and(
-            eq(userToolkits.toolkitId, item.toolkitId),
+      // Batch-check existing completed purchases
+      const existingPurchases = await db
+        .select({ toolkitId: userToolkits.toolkitId })
+        .from(userToolkits)
+        .where(
+          and(
             eq(userToolkits.userId, userId),
-            eq(userToolkits.paymentStatus, "completed")
+            eq(userToolkits.paymentStatus, "completed"),
+            inArray(userToolkits.toolkitId, purchasedToolkit.bundleItems)
           )
-        });
-        if (!existing) {
-          await db.insert(userToolkits).values(item);
-        }
+        );
+      const existingSet = new Set(existingPurchases.map((p) => p.toolkitId));
+
+      const itemsToInsert = purchasedToolkit.bundleItems
+        .filter((childId) => !existingSet.has(childId))
+        .map((childId) => ({
+          userId,
+          toolkitId: childId,
+          paymentId: razorpay_payment_id,
+          razorpayOrderId: razorpay_order_id,
+          paymentStatus: "completed" as const,
+          amountPaid: 0,
+        }));
+
+      if (itemsToInsert.length > 0) {
+        await db.insert(userToolkits).values(itemsToInsert);
       }
     }
 

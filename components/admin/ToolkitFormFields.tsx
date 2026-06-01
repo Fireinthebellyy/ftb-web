@@ -157,7 +157,7 @@ export function ToolkitFormFields({
               <FormLabel>Category</FormLabel>
               <Select
                 onValueChange={field.onChange}
-                defaultValue={field.value}
+                value={field.value || undefined}
               >
                 <FormControl>
                   <SelectTrigger>

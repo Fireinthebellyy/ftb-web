@@ -129,7 +129,11 @@ export default function ToolkitPage() {
           </div>
         ) : filteredToolkits.length === 0 ? (
           <div className="rounded-lg border bg-white py-12 text-center">
-            <h3 className="mb-2 text-lg font-semibold text-gray-600">No toolkits found for {selectedCategory}</h3>
+            <h3 className="mb-2 text-lg font-semibold text-gray-600">
+              {selectedCategory === "All"
+                ? "No toolkits found"
+                : `No toolkits found for ${selectedCategory}`}
+            </h3>
             <p className="text-gray-500">Check back soon for new content!</p>
           </div>
         ) : (

@@ -302,6 +302,13 @@
       "when": 1780315200000,
       "tag": "0053_reconcile_toolkit_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1780666543160,
+      "tag": "0054_aspiring_black_tarantula",
+      "breakpoints": true
     }
   ]
 }

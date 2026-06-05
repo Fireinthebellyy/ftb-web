@@ -183,7 +183,7 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
                   })
                 }
               >
-                Apply Now
+                Apply Directly
               </Link>
             </Button>
           )}

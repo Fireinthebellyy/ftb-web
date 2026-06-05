@@ -33,7 +33,7 @@ export type Internship = {
   description?: string | null;
   type?: string | null;
   timing?: string | null;
-  link: string;
+  link?: string | null;
   tags?: string[];
   location?: string | null;
   deadline?: string | null;

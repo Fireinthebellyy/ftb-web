@@ -28,7 +28,7 @@ export const ungatekeepFormSchema = z.object({
     .or(z.literal("")),
   tag: z.string().optional(),
   filterTags: z.array(z.string()).default([]),
-  toolkitId: z.string().uuid().optional().nullable(),
+  toolkitId: z.string().uuid().optional().nullable().or(z.literal("none")),
   isPinned: z.boolean().optional(),
   isPublished: z.boolean().optional(),
   publishAt: z

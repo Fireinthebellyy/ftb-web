@@ -10,7 +10,13 @@ const internshipUpdateSchema = z.object({
   description: z.string().optional().nullable(),
   type: z.enum(["remote", "hybrid", "onsite"]).optional().nullable(),
   timing: z.enum(["full_time", "part_time"]).optional().nullable(),
-  link: z.string().url("Valid application link is required").optional(),
+  link: z
+    .string()
+    .optional()
+    .nullable()
+    .refine((val) => !val || z.string().url().safeParse(val).success, {
+      message: "Valid application link is required",
+    }),
   tags: z.array(z.string()).optional(),
   location: z.string().optional().nullable(),
   deadline: z.string().optional().nullable(),
@@ -274,7 +280,7 @@ export async function PUT(
       updateData.timing = validatedData.timing;
     }
     if (validatedData.link !== undefined) {
-      updateData.link = validatedData.link.trim();
+      updateData.link = validatedData.link ? validatedData.link.trim() : null;
     }
     if (validatedData.tags !== undefined) {
       updateData.tags = validatedData.tags

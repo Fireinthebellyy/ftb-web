@@ -120,7 +120,7 @@ export const internships = pgTable(
     description: text("description"),
     type: text("type"),
     timing: text("timing"),
-    link: text("link").notNull(),
+    link: text("link"),
     tags: text("tags").array().default([]),
     stipend: integer("stipend"),
     duration: text("duration"),

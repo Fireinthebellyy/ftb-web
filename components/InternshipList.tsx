@@ -41,6 +41,7 @@ interface SearchWidgetProps {
   filteredSuggestions: string[];
   placeholder: string;
   applyFilters: (term?: string,specificFields?:string[]) => void;
+  selectedFields: string[];
 }
 
 const SearchWidget = ({
@@ -51,6 +52,7 @@ const SearchWidget = ({
   filteredSuggestions,
   placeholder,
   applyFilters,
+  selectedFields,
 }: SearchWidgetProps) => {
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [activeBubble,setActiveBubble] = useState<{id:string,label:string}|null>(null);
@@ -68,21 +70,17 @@ const SearchWidget = ({
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setFocusedIndex((prev) =>
-        Math.min(prev + 1, filteredSuggestions.length - 1)
+        prev < filteredSuggestions.length - 1 ? prev + 1 : prev
       );
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setFocusedIndex((prev) => Math.max(prev - 1, -1));
+      setFocusedIndex((prev) => (prev > 0 ? prev - 1 : prev));
     } else if (e.key === "Enter") {
+      e.preventDefault();
       if (focusedIndex >= 0 && focusedIndex < filteredSuggestions.length) {
-        e.preventDefault();
-        setSearchTerm(filteredSuggestions[focusedIndex]);
         applyFilters(filteredSuggestions[focusedIndex]);
         setIsSearchFocused(false);
       }
-    } else if (e.key === "Escape") {
-      setIsSearchFocused(false);
-      setFocusedIndex(-1);
     }
   };
 
@@ -90,73 +88,94 @@ const SearchWidget = ({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        applyFilters();
+        applyFilters(searchTerm);
         setIsSearchFocused(false);
       }}
-      onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-          setIsSearchFocused(false);
-        }
-      }}
-      className="group relative flex-1"
+      className="relative flex-1"
     >
-      <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 transform text-slate-400 transition-colors duration-200 group-focus-within:text-[#ec5b13]" />
-      <Input
-        type="search"
-        placeholder={placeholder}
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        onFocus={() => setIsSearchFocused(true)}
-        onKeyDown={handleKeyDown}
-        className="h-10 w-full rounded-lg border-slate-200 bg-white pr-[4.5rem] pl-11 text-sm shadow-sm transition-all focus-visible:border-[#ec5b13] focus-visible:ring-1 focus-visible:ring-orange-500/50 [&::-webkit-search-cancel-button]:hidden"
-      />
-      <div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center gap-1">
+      <div className="relative flex items-center">
+        <Search className="absolute left-3 h-5 w-5 text-gray-400" />
+        <Input
+          type="text"
+          placeholder={placeholder}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onFocus={() => setIsSearchFocused(true)}
+          onKeyDown={handleKeyDown}
+          className="h-10 w-full rounded-lg border border-slate-200 pl-10 pr-4 text-sm focus:border-orange-500 focus:outline-hidden focus:ring-1 focus:ring-orange-500"
+        />
         {searchTerm && (
           <button
             type="button"
-            aria-label="Clear search"
             onClick={() => {
               setSearchTerm("");
               applyFilters("");
             }}
-            className="flex h-6 w-6 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+            className="absolute right-3 text-gray-400 hover:text-gray-600"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-4 w-4" />
           </button>
         )}
-        <button
-          type="submit"
-          className="flex h-7 items-center justify-center rounded-md bg-[#ec5b13] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#d44d0c]"
-          aria-label="Submit search"
-        >
-          Go
-        </button>
       </div>
-      {isSearchFocused && ( 
-        <> 
-          <div 
-          className="absolute top-[calc(100%+8px)] left-0 right-[-60] z-50 rounded-[16px] border border-slate-700 bg-[rgba(0,0,0,0.95)] max-h-[80vh] shadow-2xl overflow-hidden flex flex-col">
-            <div>
-              <p className="w-full text-slate-200 text-sm font-bold uppercase tracking-widest text-center mt-4">
-                Explore The Popular Fields
-              </p>  
-             
-              <div className="w-full flex justify-center">
-                <div className="grid grid-cols-3 lg:grid-cols-2 gap-2.5 p-4 max-h-[9.5rem] lg:max-h-[12rem] overflow-y-auto scrollbar-none items-stretch">
-                  {internshipFields.map((field, idx) => {
+
+      {isSearchFocused && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-transparent"
+            onClick={() => setIsSearchFocused(false)}
+          />
+          <div className="absolute left-0 right-0 z-50 mt-1 max-h-80 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg">
+            {filteredSuggestions.length > 0 && (
+              <div className="border-b border-slate-100 p-2">
+                <div className="px-3 py-1.5 text-xs font-semibold text-gray-400">
+                  SUGGESTIONS
+                </div>
+                {filteredSuggestions.map((suggestion, index) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => {
+                      applyFilters(suggestion);
+                      setIsSearchFocused(false);
+                    }}
+                    className={cn(
+                      "flex w-full items-center px-3 py-2 text-sm text-gray-700 hover:bg-slate-50 rounded-lg",
+                      index === focusedIndex && "bg-slate-50 font-medium text-orange-600"
+                    )}
+                  >
+                    <Search className="mr-2 h-4 w-4 text-gray-400" />
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            <div className="p-2 border-b border-slate-100">
+              <div className="px-3 py-1.5 text-xs font-semibold text-gray-400">
+                POPULAR FIELDS
+              </div>
+              <div className="max-h-[140px] overflow-y-auto scrollbar-thin">
+                <div className="grid grid-cols-2 gap-2 p-1">
+                  {internshipFields.map((field) => {
                     const isSelected = activeBubble?.id === field.id;
                     return (
                       <button
+                        key={field.id}
+                        type="button"
                         className={cn(
-                          "w-full h-auto cursor-pointer px-3 py-2 flex items-center justify-center rounded-md border text-sm lg:text-xs font-bold text-center whitespace-wrap transition-transform duration-100 ease-out active:scale-95",
-                          isSelected
-                            ? "border-[#ec5b13] bg-[#ec5b13] text-white"
-                            : "border-slate-700 bg-slate-200 text-black hover:border-2 hover:border-[#ec5b13] focus:border-2 focus:border-[#ec5b13]"
+                          "flex items-center justify-center p-2 rounded-xl text-xs font-semibold border transition-all h-10 leading-tight select-none cursor-pointer",
+                          isSelected 
+                            ? "bg-orange-50 border-orange-500 text-orange-700 shadow-xs" 
+                            : "bg-white border-slate-100 hover:bg-slate-50 text-slate-600"
                         )}
-                        key={`${field.id}-${idx}`}
-                        onClick={(e)=>{
-                          e.preventDefault(); 
-                          setActiveBubble(isSelected ? null : {id:field.id,label:field.label});
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (isSelected) {
+                            setActiveBubble(null);
+                          } else {
+                            setActiveBubble({ id: field.id, label: field.label });
+                          }
                         }}               
                       >
                         <span className="w-full block text-center break-words">
@@ -179,7 +198,7 @@ const SearchWidget = ({
                           setIsSearchFocused(false);
                   }       
                   else{
-                    applyFilters(searchTerm,[]);
+                    applyFilters(searchTerm,selectedFields);
                     setIsSearchFocused(false);
                   }
                         }}>Search
@@ -267,13 +286,18 @@ export default function InternshipList() {
       const saved = localStorage.getItem("last_interacted_internship");
       if (saved) {
         try {
-          setLastInteracted(JSON.parse(saved));
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.id) {
+            setLastInteracted(parsed);
+          } else {
+            setLastInteracted(null);
+          }
         } catch (e) {
           console.error("Failed to parse last interacted internship", e);
-          setLastInteracted({ id: "", field: "generalist", title: "" });
+          setLastInteracted(null);
         }
       } else {
-        setLastInteracted({ id: "", field: "generalist", title: "" });
+        setLastInteracted(null);
       }
     }
   }, []);
@@ -647,6 +671,7 @@ export default function InternshipList() {
                   filteredSuggestions={filteredSuggestions}
                   placeholder={searchPlaceholders[currentPlaceholderIndex]}
                   applyFilters={applyFilters}
+                  selectedFields={selectedFields}
                 />
                   <Button
                   aria-label="Toggle filters"
@@ -943,6 +968,7 @@ export default function InternshipList() {
                       filteredSuggestions={filteredSuggestions}
                       placeholder={searchPlaceholders[currentPlaceholderIndex]}
                       applyFilters={applyFilters}
+                      selectedFields={selectedFields}
                     />
                     <Button
                       aria-label="Toggle filters"
@@ -1277,7 +1303,7 @@ export default function InternshipList() {
                 <>
                   <CalendarWidget kind="internship" />
                   <TaskWidget />
-                   {lastInteracted && (
+                   {lastInteracted && lastInteracted.id && (
                     <SimilarInternships
                       currentId={lastInteracted.id}
                       field={selectedFields.length > 0 ? selectedFields[0] : lastInteracted.field}
@@ -1393,7 +1419,7 @@ export default function InternshipList() {
             </>
           )}
 
-          {lastInteracted && (
+          {lastInteracted && lastInteracted.id && (
             <SimilarInternships
               currentId={lastInteracted.id}
               field={selectedFields.length > 0 ? selectedFields[0] : lastInteracted.field}

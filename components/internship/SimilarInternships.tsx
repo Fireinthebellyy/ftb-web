@@ -6,6 +6,7 @@ import { fetchInternshipsPaginated } from "@/lib/queries-internships";
 import { toTitleCase } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import InternshipPost from "@/components/InternshipCard";
+import { Internship } from "@/types/interfaces";
 
 interface SimilarInternshipsProps {
   currentId: string;
@@ -168,6 +169,13 @@ export const SimilarInternships: React.FC<SimilarInternshipsProps> = ({
       if (exactFieldOnly) {
         similarFieldsList = [...currentFields];
       } else {
+        // Include all entries from currentFields first
+        currentFields.forEach((f) => {
+          if (!similarFieldsList.includes(f)) {
+            similarFieldsList.push(f);
+          }
+        });
+        // Append mapped related fields from FIELD_SIMILARITY_MAP
         currentFields.forEach((f) => {
           const mapped = FIELD_SIMILARITY_MAP[f] || [];
           mapped.forEach((simField) => {
@@ -185,7 +193,7 @@ export const SimilarInternships: React.FC<SimilarInternshipsProps> = ({
         isFallback = true;
       }
 
-      let results: any[] = [];
+      let results: Internship[] = [];
       try {
         const response = await fetchInternshipsPaginated(
           24, // Generous limit to fetch sufficient results for ranking
@@ -340,7 +348,7 @@ export const SimilarInternships: React.FC<SimilarInternshipsProps> = ({
             key={internship.id}
             className="w-[300px] sm:w-[340px] md:w-[380px] shrink-0 snap-start"
           >
-            <InternshipPost internship={internship} hideActions={true} />
+            <InternshipPost internship={internship} isActionsHidden={true} />
           </div>
         ))}
       </div>

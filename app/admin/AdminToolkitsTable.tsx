@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
@@ -8,6 +9,7 @@ import {
   Edit,
   FolderCog,
   Loader2,
+  MessageSquare,
   PlusCircle,
   RefreshCw,
   Trash2,
@@ -15,12 +17,15 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import ToolkitCommunityManager from "./ToolkitCommunityManager";
 import ToolkitContentManager from "./ToolkitContentManager";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
 import { AdminTableState } from "@/components/admin/AdminTableState";
 import { AdminTabLayout } from "@/components/admin/AdminTabLayout";
+import { OrangeCheckbox } from "@/components/admin/OrangeCheckbox";
 import { ToolkitFormFields } from "@/components/admin/ToolkitFormFields";
 import {
+  DigitalProductSection,
   Toolkit,
   toolkitFormSchema,
   ToolkitFormValues,
@@ -35,13 +40,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import NewToolkitModal from "@/components/toolkit/NewToolkitModal";
+import NewToolkitModal from "../../components/toolkit/NewToolkitModal";
+import NewBundleModal from "../../components/toolkit/NewBundleModal";
 import {
   deleteStorageObjectClient,
   uploadFileViaSignedUrl,
 } from "@/lib/storage/client";
 import { normalizeRichText } from "@/lib/rich-text";
-import { cn, stripHtml } from "@/lib/utils";
+import { stripHtml } from "@/lib/utils";
 
 async function fetchToolkits(): Promise<Toolkit[]> {
   const response = await axios.get<Toolkit[]>("/api/admin/toolkits");
@@ -54,41 +60,17 @@ function formatHighlight(highlight: string) {
   return `${trimmed.charAt(0).toUpperCase()}${trimmed.slice(1)}`;
 }
 
-function OrangeCheckbox({
-  checked,
-  onChange,
-}: {
-  checked: boolean;
-  onChange: () => void;
-}) {
-  return (
-    <label className="relative inline-flex cursor-pointer">
-      <input type="checkbox" checked={checked} className="sr-only" onChange={onChange} />
-      <span
-        className={cn(
-          "flex h-5 w-5 items-center justify-center rounded border-2 transition-colors",
-          checked
-            ? "border-orange-500 bg-orange-500"
-            : "border-gray-300 bg-white hover:border-orange-300"
-        )}
-      >
-        {checked && (
-          <svg className="h-3 w-3 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="1.5,6 4.5,9 10.5,3" />
-          </svg>
-        )}
-      </span>
-    </label>
-  );
-}
-
 export default function AdminToolkitsTable() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingToolkit, setEditingToolkit] = useState<Toolkit | null>(null);
   const [contentManagerOpen, setContentManagerOpen] = useState(false);
+  const [communityManagerOpen, setCommunityManagerOpen] = useState(false);
   const [managingToolkit, setManagingToolkit] = useState<Toolkit | null>(null);
+  const [managingCommunityToolkit, setManagingCommunityToolkit] =
+    useState<Toolkit | null>(null);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [bannerImageFile, setBannerImageFile] = useState<File | null>(null);
+  const [mentorImageFile, setMentorImageFile] = useState<File | null>(null);
   const [updatingActiveToolkitIds, setUpdatingActiveToolkitIds] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
 
@@ -102,6 +84,13 @@ export default function AdminToolkitsTable() {
     queryKey: ["admin", "toolkits"],
     queryFn: fetchToolkits,
     staleTime: 1000 * 30,
+  });
+
+  const { data: digitalProductSections = [] } = useQuery({
+    queryKey: ["admin", "digital-product-sections"],
+    queryFn: async () =>
+      (await axios.get<DigitalProductSection[]>("/api/digital-product-sections")).data,
+    staleTime: 1000 * 60,
   });
 
   const form = useForm<ToolkitFormValues>({
@@ -120,6 +109,7 @@ export default function AdminToolkitsTable() {
       testimonials: [],
       isActive: true,
       showSaleBadge: false,
+      digitalProductSectionId: "",
     },
   });
 
@@ -180,11 +170,14 @@ export default function AdminToolkitsTable() {
         totalDuration: toolkit.totalDuration ?? "",
         highlights: toolkit.highlights ?? [],
         testimonials: toolkit.testimonials ?? [],
+        mentorshipDetails: toolkit.mentorshipDetails ?? undefined,
         isActive: toolkit.isActive,
         showSaleBadge: toolkit.showSaleBadge,
+        digitalProductSectionId: toolkit.digitalProductSectionId ?? "",
       });
       setCoverImageFile(null);
       setBannerImageFile(null);
+      setMentorImageFile(null);
       setEditDialogOpen(true);
     },
     [form]
@@ -194,7 +187,12 @@ export default function AdminToolkitsTable() {
     if (!editingToolkit) return;
 
     const currentCoverImageUrl = data.coverImageUrl?.trim() ?? "";
-    if (!currentCoverImageUrl && !coverImageFile) {
+    if (
+      !editingToolkit.isBundle &&
+      data.category !== "digital products" &&
+      !currentCoverImageUrl &&
+      !coverImageFile
+    ) {
       form.setError("coverImageUrl", {
         type: "manual",
         message: "Cover image is required",
@@ -225,15 +223,36 @@ export default function AdminToolkitsTable() {
         bannerImageUrl = uploadedBanner.publicUrl;
         uploadedKeys.push(uploadedBanner.key);
       }
+      
+      let mentorImageUrl = data.mentorshipDetails?.mentor?.imageUrl;
+      if (mentorImageFile) {
+        const uploadedMentor = await uploadFileViaSignedUrl({
+          domain: "ungatekeep-images",
+          file: mentorImageFile,
+        });
+        mentorImageUrl = uploadedMentor.publicUrl;
+        uploadedKeys.push(uploadedMentor.key);
+      }
 
       const cleanedData = {
         ...data,
         description: normalizeRichText(data.description),
         coverImageUrl,
         bannerImageUrl,
+        mentorshipDetails: data.mentorshipDetails ? {
+          ...data.mentorshipDetails,
+          mentor: data.mentorshipDetails.mentor ? {
+            ...data.mentorshipDetails.mentor,
+            imageUrl: mentorImageUrl,
+          } : undefined
+        } : undefined,
         videoUrl: data.videoUrl || undefined,
         category: data.category || undefined,
         totalDuration: data.totalDuration || undefined,
+        digitalProductSectionId:
+          data.category === "digital products"
+            ? data.digitalProductSectionId || null
+            : null,
         highlights: data.highlights?.map(formatHighlight).filter(Boolean) || undefined,
         testimonials: data.testimonials?.length
           ? data.testimonials.map((item) => ({
@@ -252,6 +271,7 @@ export default function AdminToolkitsTable() {
       toast.success("Toolkit updated successfully");
       setCoverImageFile(null);
       setBannerImageFile(null);
+      setMentorImageFile(null);
       setEditDialogOpen(false);
     } catch (error) {
       await Promise.all(
@@ -272,6 +292,7 @@ export default function AdminToolkitsTable() {
     if (!isOpen) {
       setCoverImageFile(null);
       setBannerImageFile(null);
+      setMentorImageFile(null);
     }
   };
 
@@ -282,7 +303,12 @@ export default function AdminToolkitsTable() {
         header: "Title",
         cell: ({ row }) => (
           <div className="max-w-xs">
-            <div className="truncate font-medium">{row.original.title}</div>
+            <div className="truncate font-medium flex items-center gap-2">
+              {row.original.title}
+              {row.original.isBundle && (
+                <Badge variant="secondary" className="bg-purple-100 text-purple-700 hover:bg-purple-100 text-[10px] px-1.5 py-0">Bundle</Badge>
+              )}
+            </div>
             <div className="text-muted-foreground truncate text-sm">
               {stripHtml(row.original.description)}
             </div>
@@ -294,7 +320,14 @@ export default function AdminToolkitsTable() {
         header: "Category",
         cell: ({ row }) =>
           row.original.category ? (
-            <Badge variant="secondary">{row.original.category}</Badge>
+            <div className="flex flex-col gap-1">
+              <Badge variant="secondary">{row.original.category}</Badge>
+              {row.original.digitalProductSectionTitle ? (
+                <span className="text-muted-foreground text-xs">
+                  {row.original.digitalProductSectionTitle}
+                </span>
+              ) : null}
+            </div>
           ) : (
             <span>-</span>
           ),
@@ -427,6 +460,38 @@ export default function AdminToolkitsTable() {
         ),
       },
       {
+        id: "bestSeller",
+        header: "Best Seller",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <OrangeCheckbox
+            checked={row.original.isBestSeller ?? false}
+            onChange={() =>
+              updateToolkitMutation.mutate({
+                id: row.original.id,
+                payload: { isBestSeller: !row.original.isBestSeller },
+              })
+            }
+          />
+        ),
+      },
+      {
+        id: "limitedSeats",
+        header: "Limited Seats",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <OrangeCheckbox
+            checked={row.original.isLimitedSeats ?? false}
+            onChange={() =>
+              updateToolkitMutation.mutate({
+                id: row.original.id,
+                payload: { isLimitedSeats: !row.original.isLimitedSeats },
+              })
+            }
+          />
+        ),
+      },
+      {
         id: "featuredHome",
         header: "Featured Home",
         enableSorting: false,
@@ -506,6 +571,17 @@ export default function AdminToolkitsTable() {
               <Button
                 variant="ghost"
                 size="sm"
+                onClick={() => {
+                  setManagingCommunityToolkit(toolkit);
+                  setCommunityManagerOpen(true);
+                }}
+                title="Manage FTB Support"
+              >
+                <MessageSquare className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => handleEdit(toolkit)}
                 title="Edit toolkit"
               >
@@ -549,6 +625,16 @@ export default function AdminToolkitsTable() {
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
+          <NewBundleModal
+            onSuccess={() =>
+              queryClient.invalidateQueries({ queryKey: ["admin", "toolkits"] })
+            }
+          >
+            <Button variant="outline" className="gap-2 bg-white">
+              <PlusCircle className="h-4 w-4" />
+              Create Bundle Offer
+            </Button>
+          </NewBundleModal>
           <NewToolkitModal
             onSuccess={() =>
               queryClient.invalidateQueries({ queryKey: ["admin", "toolkits"] })
@@ -618,10 +704,21 @@ export default function AdminToolkitsTable() {
                   setBannerImageFile(null);
                   form.setValue("bannerImageUrl", "");
                 }}
+                mentorImageFile={mentorImageFile}
+                onMentorImageFileSelect={setMentorImageFile}
+                onMentorImageRemove={() => {
+                  setMentorImageFile(null);
+                  form.setValue("mentorshipDetails.mentor.imageUrl", "");
+                }}
+                digitalProductSections={digitalProductSections}
                 isSubmitting={updateToolkitMutation.isPending}
               />
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => handleEditDialogChange(false)}>
+              <div className="mt-6 flex justify-end gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditDialogOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" disabled={updateToolkitMutation.isPending}>
@@ -649,6 +746,14 @@ export default function AdminToolkitsTable() {
           onUpdate={() =>
             queryClient.invalidateQueries({ queryKey: ["admin", "toolkits"] })
           }
+        />
+      ) : null}
+      {managingCommunityToolkit ? (
+        <ToolkitCommunityManager
+          toolkitId={managingCommunityToolkit.id}
+          toolkitTitle={managingCommunityToolkit.title}
+          open={communityManagerOpen}
+          onClose={() => setCommunityManagerOpen(false)}
         />
       ) : null}
     </AdminTabLayout>

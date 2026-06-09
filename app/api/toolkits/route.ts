@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { badRequest } from "@/lib/api-error";
 import { db } from "@/lib/db";
-import { toolkits, user } from "@/lib/schema";
+import { digitalProductSections, toolkits, user } from "@/lib/schema";
 import { hasMeaningfulRichText, normalizeRichText } from "@/lib/rich-text";
 import { getCurrentUser } from "@/server/users";
 import { eq, desc, sql } from "drizzle-orm";
@@ -22,6 +22,9 @@ export async function GET() {
         contentUrl: toolkits.contentUrl,
         category: toolkits.category,
         highlights: toolkits.highlights,
+        rating: toolkits.rating,
+        subtitle: toolkits.subtitle,
+        mentorshipDetails: toolkits.mentorshipDetails,
         testimonials: toolkits.testimonials,
         totalDuration: toolkits.totalDuration,
         lessonCount: toolkits.lessonCount,
@@ -35,11 +38,22 @@ export async function GET() {
         is_featured_home: toolkits.is_featured_home,
         trending_index: toolkits.trending_index,
         featured_home_index: toolkits.featured_home_index,
+        isBundle: toolkits.isBundle,
+        bundleItems: toolkits.bundleItems,
+        isBestSeller: toolkits.isBestSeller,
+        isLimitedSeats: toolkits.isLimitedSeats,
+        digitalProductSectionId: toolkits.digitalProductSectionId,
+        digitalProductSectionTitle: digitalProductSections.title,
       })
       .from(toolkits)
       .leftJoin(user, eq(toolkits.userId, user.id))
+      .leftJoin(
+        digitalProductSections,
+        eq(toolkits.digitalProductSectionId, digitalProductSections.id)
+      )
       .where(eq(toolkits.isActive, true))
       .orderBy(
+        sql`CASE WHEN ${toolkits.isBundle} = true THEN 0 ELSE 1 END ASC`,
         sql`CASE WHEN ${toolkits.is_featured_home} = true THEN 0 ELSE 1 END ASC`,
         sql`COALESCE(${toolkits.featured_home_index}, 9999) ASC`,
         sql`COALESCE(${toolkits.trending_index}, 9999) ASC`,
@@ -80,6 +94,15 @@ export async function POST(request: Request) {
       totalDuration,
       lessonCount,
       showSaleBadge,
+      is_trending,
+      isBundle,
+      bundleItems,
+      isBestSeller,
+      isLimitedSeats,
+      digitalProductSectionId,
+      mentorshipDetails,
+      rating,
+      subtitle,
     } = body;
 
     const missingFields: string[] = [];
@@ -88,15 +111,15 @@ export async function POST(request: Request) {
       missingFields.push("title");
     }
 
-    if (typeof description !== "string" || !description.trim()) {
-      missingFields.push("description");
-    }
-
     if (price === undefined || price === null) {
       missingFields.push("price");
     }
 
-    if (typeof coverImageUrl !== "string" || !coverImageUrl.trim()) {
+    if (
+      !isBundle &&
+      category !== "digital products" &&
+      (typeof coverImageUrl !== "string" || !coverImageUrl.trim())
+    ) {
       missingFields.push("coverImageUrl");
     }
 
@@ -107,7 +130,10 @@ export async function POST(request: Request) {
       });
     }
 
-    if (!hasMeaningfulRichText(description, 10)) {
+    // Normalize description — rich text editor may send empty HTML like <p><br></p>
+    const normalizedDescription = typeof description === "string" ? normalizeRichText(description) : "";
+
+    if (!isBundle && !hasMeaningfulRichText(normalizedDescription, 10)) {
       return badRequest("Description must be at least 10 characters.", {
         code: "INVALID_DESCRIPTION",
         fields: ["description"],
@@ -117,21 +143,30 @@ export async function POST(request: Request) {
     const newToolkit = await db
       .insert(toolkits)
       .values({
-        title,
-        description: normalizeRichText(description),
+        title: title.trim(),
+        description: normalizedDescription || title.trim(), // fallback for bundles with no description
         price,
-        originalPrice,
-        coverImageUrl,
-        bannerImageUrl,
-        videoUrl,
-        contentUrl,
-        category,
-        highlights,
-        testimonials,
-        totalDuration,
-        lessonCount,
+        originalPrice: originalPrice ?? null,
+        coverImageUrl: coverImageUrl || null,
+        bannerImageUrl: bannerImageUrl || null,
+        videoUrl: videoUrl || null,
+        contentUrl: contentUrl || null,
+        category: category || null,
+        highlights: highlights ?? null,
+        rating: rating ?? null,
+        subtitle: subtitle ?? null,
+        testimonials: testimonials ?? null,
+        totalDuration: totalDuration || null,
+        lessonCount: lessonCount ?? 0,
         isActive: false,
-        showSaleBadge,
+        showSaleBadge: showSaleBadge ?? false,
+        is_trending: is_trending ?? false,
+        isBundle: isBundle ?? false,
+        bundleItems: bundleItems ?? [],
+        isBestSeller: isBestSeller ?? false,
+        isLimitedSeats: isLimitedSeats ?? false,
+        digitalProductSectionId: digitalProductSectionId || null,
+        mentorshipDetails: mentorshipDetails || null,
         userId: user.currentUser.id,
       })
       .returning();
@@ -139,8 +174,9 @@ export async function POST(request: Request) {
     return NextResponse.json(newToolkit[0], { status: 201 });
   } catch (error) {
     console.error("Error creating toolkit:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to create toolkit" },
+      { error: "Failed to create toolkit", details: message },
       { status: 500 }
     );
   }

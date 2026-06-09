@@ -10,6 +10,7 @@ export const adminTabValues = [
   "toolkits",
   "coupons",
   "ungatekeep",
+  "digital-products",
 ] as const;
 
 export type AdminTabValue = (typeof adminTabValues)[number];

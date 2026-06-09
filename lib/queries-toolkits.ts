@@ -1,7 +1,11 @@
 import axios from "axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Toolkit, ToolkitContentItem } from "@/types/interfaces";
+import {
+  Toolkit,
+  ToolkitCommunityPost,
+  ToolkitContentItem,
+} from "@/types/interfaces";
 
 export type ToolkitDetailResponse = {
   toolkit: Toolkit;
@@ -18,6 +22,10 @@ export type ToolkitContentResponse = {
 export type ToolkitAccessResponse = {
   hasPurchased: boolean;
   completedItemIds: string[];
+};
+
+export type ToolkitCommunityResponse = {
+  posts: ToolkitCommunityPost[];
 };
 
 async function fetchToolkit(toolkitId: string): Promise<ToolkitDetailResponse> {
@@ -41,6 +49,15 @@ async function fetchToolkitAccess(
 ): Promise<ToolkitAccessResponse> {
   const { data } = await axios.get<ToolkitAccessResponse>(
     `/api/toolkits/${toolkitId}/access`
+  );
+  return data;
+}
+
+async function fetchToolkitCommunity(
+  toolkitId: string
+): Promise<ToolkitCommunityResponse> {
+  const { data } = await axios.get<ToolkitCommunityResponse>(
+    `/api/toolkits/${toolkitId}/community`
   );
   return data;
 }
@@ -69,7 +86,16 @@ export function useToolkitAccess(toolkitId: string) {
   });
 }
 
-export function useToolkitPurchase(toolkitId: string) {
+export function useToolkitCommunity(toolkitId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ["toolkit-community", toolkitId],
+    queryFn: () => fetchToolkitCommunity(toolkitId),
+    staleTime: 1000 * 60,
+    enabled,
+  });
+}
+
+export function useToolkitPurchase(toolkitId: string, onSuccessRedirect?: () => void) {
   const qc = useQueryClient();
 
   return useMutation({
@@ -97,13 +123,14 @@ export function useToolkitPurchase(toolkitId: string) {
     onSuccess: async (response: any) => {
       // Free purchase (coupon covered full amount) — no payment needed
       if (response.free) {
-        toast.success("Toolkit unlocked for free! Redirecting to content...");
+        toast.success("Toolkit unlocked for free! Redirecting...");
         qc.setQueryData(["toolkit", toolkitId], (old: any) => {
           if (old) {
             return { ...old, hasPurchased: true };
           }
           return old;
         });
+        if (onSuccessRedirect) onSuccessRedirect();
         return;
       }
 
@@ -135,13 +162,14 @@ export function useToolkitPurchase(toolkitId: string) {
                 },
               }
             );
-            toast.success("Purchase successful! Redirecting to content...");
+            toast.success("Purchase successful! Redirecting...");
             qc.setQueryData(["toolkit", toolkitId], (old: any) => {
               if (old) {
                 return { ...old, hasPurchased: true };
               }
               return old;
             });
+            if (onSuccessRedirect) onSuccessRedirect();
           } catch (error) {
             console.error("Verification failed:", error);
             toast.error("Payment verification failed. Contact support.");
@@ -224,6 +252,79 @@ export function useMarkContentComplete(toolkitId: string) {
     },
     onError: (error) => {
       console.error("Failed to save progress:", error);
+    },
+  });
+}
+
+export function useSubmitCommunityResponse(toolkitId: string) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationKey: ["community-respond", toolkitId],
+    mutationFn: async ({
+      postId,
+      selectedOptionIndex,
+      textResponse,
+      attachmentUrl,
+      attachmentName,
+      attachmentType,
+    }: {
+      postId: string;
+      selectedOptionIndex?: number | null;
+      textResponse?: string;
+      attachmentUrl?: string;
+      attachmentName?: string;
+      attachmentType?: string;
+    }) => {
+      const { data } = await axios.post<{
+        selectedOptionIndex?: number | null;
+        optionVoteCounts?: number[];
+        totalVotes?: number;
+        textResponse?: string;
+        attachmentUrl?: string;
+        attachmentName?: string;
+        attachmentType?: string;
+      }>(
+        `/api/toolkits/${toolkitId}/community/${postId}/respond`,
+        { selectedOptionIndex, textResponse, attachmentUrl, attachmentName, attachmentType },
+        { headers: { "Content-Type": "application/json" } }
+      );
+      return { postId, ...data };
+    },
+    onSuccess: (result) => {
+      // Update the cached community posts with user's selection and vote counts
+      qc.setQueryData(
+        ["toolkit-community", toolkitId],
+        (old: ToolkitCommunityResponse | undefined) => {
+          if (!old) return old;
+          return {
+            ...old,
+            posts: old.posts.map((post: ToolkitCommunityPost) => {
+              if (post.id !== result.postId) return post;
+              return {
+                ...post,
+                userSelectedIndex: result.selectedOptionIndex ?? null,
+                userTextResponse: result.textResponse ?? null,
+                userAttachmentUrl: result.attachmentUrl ?? null,
+                userAttachmentName: result.attachmentName ?? null,
+                userAttachmentType: result.attachmentType ?? null,
+                ...(result.optionVoteCounts !== undefined && {
+                  optionVoteCounts: result.optionVoteCounts,
+                  totalVotes: result.totalVotes,
+                }),
+              };
+            }),
+          };
+        }
+      );
+    },
+    onError: (error) => {
+      console.error("Failed to submit community response:", error);
+      if (axios.isAxiosError(error) && error.response?.status === 409) {
+        toast.error("You have already answered this");
+      } else {
+        toast.error("Failed to submit. Please try again.");
+      }
     },
   });
 }

@@ -18,8 +18,12 @@ export const internshipIngestRecordSchema = z.object({
     .max(120, "Hiring organization must be at most 120 characters"),
   link: z
     .string()
-    .url("Valid application link is required")
-    .max(2048, "Application link must be at most 2048 characters"),
+    .max(2048, "Application link must be at most 2048 characters")
+    .optional()
+    .nullable()
+    .refine((val) => !val || z.string().url().safeParse(val).success, {
+      message: "Valid application link is required",
+    }),
   description: z
     .string()
     .optional()
@@ -75,11 +79,13 @@ export const internshipIngestRecordSchema = z.object({
   hiringManagerEmail: z
     .string()
     .max(120, "Hiring manager email must be at most 120 characters")
+    .regex(/^(?:[^\s@]+@[^\s@]+\.[^\s@]+)?$/, "Invalid email address")
     .optional()
     .nullable(),
   hiringManagerLinkedin: z
     .string()
     .max(1000, "Hiring manager linkedin must be at most 1000 characters")
+    .regex(/^(?:(https?:\/\/)?(www\.)?linkedin\.com\/.*)?$/i, "Invalid LinkedIn URL")
     .optional()
     .nullable(),
   field: z
@@ -311,7 +317,7 @@ export function buildInternshipInsertValues(
       description: record.description?.trim() || null,
       type: normalizedType,
       timing: normalizedTiming,
-      link: record.link.trim(),
+      link: record.link ? record.link.trim() : null,
       stipend: parsedStipend,
       duration: record.duration?.trim() || null,
       experience: record.experience?.trim() || null,

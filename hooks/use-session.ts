@@ -2,6 +2,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
+import { UserRole } from "@/lib/admin-permissions";
 
 export type Session = {
   user: {
@@ -12,6 +13,7 @@ export type Session = {
     emailVerified: boolean;
     createdAt: Date;
     updatedAt: Date;
+    role?: UserRole;
   };
   session: {
     id: string;

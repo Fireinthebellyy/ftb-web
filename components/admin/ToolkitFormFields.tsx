@@ -1,6 +1,6 @@
 "use client";
 
-import { Control, useFieldArray } from "react-hook-form";
+import { Control, useFieldArray, useWatch } from "react-hook-form";
 import { Plus, Trash2 } from "lucide-react";
 import {
   FormField,
@@ -14,8 +14,21 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ToolkitImageInput } from "./ToolkitImageInput";
-import { ToolkitFormValues } from "./types";
+import { DigitalProductSection, ToolkitFormValues } from "./types";
+
+const CATEGORIES = [
+  "1:1 Mentorship",
+  "Recorded toolkits",
+  "digital products",
+];
 
 interface ToolkitFormFieldsProps {
   control: Control<ToolkitFormValues>;
@@ -25,6 +38,10 @@ interface ToolkitFormFieldsProps {
   onBannerImageFileSelect: (file: File | null) => void;
   onCoverImageRemove: () => void;
   onBannerImageRemove: () => void;
+  mentorImageFile?: File | null;
+  onMentorImageFileSelect?: (file: File | null) => void;
+  onMentorImageRemove?: () => void;
+  digitalProductSections?: DigitalProductSection[];
   isSubmitting?: boolean;
 }
 
@@ -36,12 +53,18 @@ export function ToolkitFormFields({
   onBannerImageFileSelect,
   onCoverImageRemove,
   onBannerImageRemove,
+  mentorImageFile = null,
+  onMentorImageFileSelect,
+  onMentorImageRemove,
+  digitalProductSections: _digitalProductSections = [],
   isSubmitting = false,
 }: ToolkitFormFieldsProps) {
   const { fields, append, remove } = useFieldArray({
     control,
     name: "testimonials",
   });
+  const selectedCategory = useWatch({ control, name: "category" });
+  const isDigitalProduct = selectedCategory === "digital products";
 
   return (
     <>
@@ -52,7 +75,7 @@ export function ToolkitFormFields({
           <FormItem>
             <FormLabel>Title *</FormLabel>
             <FormControl>
-              <Input placeholder="Enter toolkit title" {...field} />
+              <Input placeholder="Enter toolkit title" {...field} value={field.value ?? ""} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -90,6 +113,7 @@ export function ToolkitFormFields({
                   type="number"
                   placeholder="299"
                   {...field}
+                  value={field.value ?? ""}
                   onChange={(e) =>
                     field.onChange(parseFloat(e.target.value) || 0)
                   }
@@ -124,7 +148,6 @@ export function ToolkitFormFields({
           )}
         />
       </div>
-
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField
           control={control}
@@ -132,9 +155,23 @@ export function ToolkitFormFields({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter category" {...field} />
-              </FormControl>
+              <Select
+                onValueChange={field.onChange}
+                value={field.value || undefined}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -147,7 +184,7 @@ export function ToolkitFormFields({
             <FormItem>
               <FormLabel>Total Duration</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., 2h 30m" {...field} />
+                <Input placeholder="e.g., 2h 30m" {...field} value={field.value ?? ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -155,27 +192,187 @@ export function ToolkitFormFields({
         />
       </div>
 
-      <FormField
-        control={control}
-        name="coverImageUrl"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Cover Image *</FormLabel>
-            <FormControl>
-              <ToolkitImageInput
-                label="Cover image"
-                imageUrl={field.value ?? ""}
-                selectedFile={coverImageFile}
-                onFileSelect={onCoverImageFileSelect}
-                onRemove={onCoverImageRemove}
-                disabled={isSubmitting}
-                required
+      {selectedCategory === "1:1 Mentorship" && (
+        <div className="space-y-4 rounded-lg border p-4 bg-orange-50/50">
+          <h3 className="font-semibold text-lg text-orange-900">1:1 Mentorship Details</h3>
+          
+          <FormField
+            control={control}
+            name="mentorshipDetails.mentorshipPacked"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>What is the mentorship packed with?</FormLabel>
+                <FormControl>
+                  <RichTextEditor
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    placeholder="List the key deliverables..."
+                    className="[&_div.ql-container]:min-h-[120px]"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
+            name="mentorshipDetails.formatOfMentorship"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Format of Mentorship</FormLabel>
+                <FormControl>
+                  <RichTextEditor
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    placeholder="Describe how the sessions will be conducted..."
+                    className="[&_div.ql-container]:min-h-[120px]"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="space-y-4 rounded-lg border bg-white p-4">
+            <h4 className="font-medium text-gray-900">About the Mentor</h4>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={control}
+                name="mentorshipDetails.mentor.description"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>Mentor Description</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Brief background about the mentor..." 
+                        {...field} 
+                        value={field.value ?? ""} 
+                        className="min-h-[100px]" 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+              <FormField
+                control={control}
+                name="mentorshipDetails.mentor.name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mentor Name *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="John Doe" {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="mentorshipDetails.mentor.imageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mentor Photo</FormLabel>
+                    <FormControl>
+                      <ToolkitImageInput
+                        label="Mentor photo"
+                        imageUrl={field.value ?? ""}
+                        selectedFile={mentorImageFile}
+                        onFileSelect={onMentorImageFileSelect!}
+                        onRemove={() => {
+                          onMentorImageRemove?.();
+                          field.onChange("");
+                        }}
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="mentorshipDetails.mentor.linkedinUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>LinkedIn URL *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://linkedin.com/in/..." {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="mentorshipDetails.mentor.instagramUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Instagram URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://instagram.com/..." {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="mentorshipDetails.mentor.mailId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email Address</FormLabel>
+                    <FormControl>
+                      <Input placeholder="mentor@example.com" {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="mentorshipDetails.mentor.phoneNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="+1 234 567 8900" {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Digital product section dropdown has been removed based on user request */}
+
+      {!isDigitalProduct ? (
+        <FormField
+          control={control}
+          name="coverImageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Cover Image *</FormLabel>
+              <FormControl>
+                <ToolkitImageInput
+                  label="Cover image"
+                  imageUrl={field.value ?? ""}
+                  selectedFile={coverImageFile}
+                  onFileSelect={onCoverImageFileSelect}
+                  onRemove={onCoverImageRemove}
+                  disabled={isSubmitting}
+                  required
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      ) : null}
 
       <FormField
         control={control}
@@ -205,7 +402,35 @@ export function ToolkitFormFields({
           <FormItem>
             <FormLabel>YouTube Promo Video URL</FormLabel>
             <FormControl>
-              <Input placeholder="https://youtube.com/embed/..." {...field} />
+              <Input placeholder="https://youtube.com/embed/..." {...field} value={field.value ?? ""} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="rating"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Rating (e.g. 4.8)</FormLabel>
+            <FormControl>
+              <Input placeholder="4.8" {...field} value={field.value ?? ""} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="subtitle"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Subtitle (e.g. 1 lesson • 15 mins)</FormLabel>
+            <FormControl>
+              <Input placeholder="1 lesson • 15 mins" {...field} value={field.value ?? ""} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -223,7 +448,7 @@ export function ToolkitFormFields({
                 placeholder="Lifetime access, Downloadable resources, Certificate"
                 value={field.value?.join(", ") ?? ""}
                 onChange={(e) => {
-                  field.onChange(e.target.value.split(","));
+                  field.onChange(e.target.value.split(",").map(v => v.trim()).filter(Boolean));
                 }}
               />
             </FormControl>
@@ -257,7 +482,7 @@ export function ToolkitFormFields({
                   <FormItem>
                     <FormLabel>Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Aditi Sharma" {...field} />
+                      <Input placeholder="Aditi Sharma" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -271,7 +496,7 @@ export function ToolkitFormFields({
                   <FormItem>
                     <FormLabel>Role</FormLabel>
                     <FormControl>
-                      <Input placeholder="Final Year Student" {...field} />
+                      <Input placeholder="Final Year Student" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

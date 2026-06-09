@@ -36,6 +36,8 @@ const updateToolkitSchema = z.object({
     .or(z.literal("")),
   category: z.string().optional(),
   highlights: z.array(z.string()).optional(),
+  rating: z.string().optional(),
+  subtitle: z.string().optional(),
   testimonials: z
     .array(
       z.object({
@@ -57,6 +59,37 @@ const updateToolkitSchema = z.object({
   is_featured_home: z.boolean().optional(),
   trending_index: z.number().nullable().optional(),
   featured_home_index: z.number().nullable().optional(),
+  isBundle: z.boolean().optional(),
+  bundleItems: z.array(z.string()).optional(),
+  isBestSeller: z.boolean().optional(),
+  isLimitedSeats: z.boolean().optional(),
+  digitalProductSectionId: z.string().uuid().nullable().optional(),
+  mentorshipDetails: z
+    .object({
+      mentorshipPacked: z.string().optional(),
+      formatOfMentorship: z.string().optional(),
+      mentor: z
+        .object({
+          name: z.string(),
+          description: z.string().optional(),
+          imageUrl: z.string().optional(),
+          linkedinUrl: z.string().url().optional(),
+          instagramUrl: z.string().url().optional(),
+          mailId: z.string().email().optional(),
+          phoneNumber: z.string().optional(),
+          otherLinks: z
+            .array(
+              z.object({
+                title: z.string(),
+                url: z.string().url(),
+              })
+            )
+            .optional(),
+        })
+        .optional(),
+    })
+    .nullable()
+    .optional(),
 });
 
 export async function PUT(
@@ -133,6 +166,10 @@ export async function PUT(
       updates.category = validatedData.category;
     if (validatedData.highlights !== undefined)
       updates.highlights = validatedData.highlights;
+    if (validatedData.rating !== undefined)
+      updates.rating = validatedData.rating;
+    if (validatedData.subtitle !== undefined)
+      updates.subtitle = validatedData.subtitle;
     if (validatedData.testimonials !== undefined)
       updates.testimonials = validatedData.testimonials;
     if (validatedData.totalDuration !== undefined)
@@ -151,6 +188,18 @@ export async function PUT(
       updates.trending_index = validatedData.trending_index;
     if (validatedData.featured_home_index !== undefined)
       updates.featured_home_index = validatedData.featured_home_index;
+    if (validatedData.isBundle !== undefined)
+      updates.isBundle = validatedData.isBundle;
+    if (validatedData.bundleItems !== undefined)
+      updates.bundleItems = validatedData.bundleItems;
+    if (validatedData.isBestSeller !== undefined)
+      updates.isBestSeller = validatedData.isBestSeller;
+    if (validatedData.isLimitedSeats !== undefined)
+      updates.isLimitedSeats = validatedData.isLimitedSeats;
+    if (validatedData.digitalProductSectionId !== undefined)
+      updates.digitalProductSectionId = validatedData.digitalProductSectionId;
+    if (validatedData.mentorshipDetails !== undefined)
+      updates.mentorshipDetails = validatedData.mentorshipDetails;
 
     const updatedToolkit = await db
       .update(toolkits)

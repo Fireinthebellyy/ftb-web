@@ -26,6 +26,8 @@ import { getSessionCached } from "@/lib/auth-session-cache";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import fs from "fs";
+import path from "path";
 
 export async function POST(req: NextRequest) {
   try {
@@ -67,6 +69,25 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+/*
+const FIELD_KEYWORDS: Record<string, string[]> = {
+  generalist: ["generalist", "strategy", "consulting", "operations", "business", "associate", "management", "founder", "hustle", "chief of staff", "analyst"],
+  tech: ["develop", "software", "engineer", "tech", "frontend", "backend", "fullstack", "programmer", "coding"],
+  design: ["design", "ui", "ux", "visual", "creative", "graphic"],
+  marketing_media: ["market", "seo", "social", "content", "media", "copywrit"],
+  ml_ai: ["machine", "ai", "artificial intelligence", "learning", "deep learning"],
+  data: ["data", "analy", "database", "business intelligence"],
+  finance: ["finance", "account", "audit", "tax", "investment", "banking"],
+  hr_talent: ["hr", "talent", "recruit", "people", "acquisition"],
+  product: ["product", "pm", "manager", "owner"],
+  biz_dev_sales: ["sales", "biz", "business development", "selling", "growth"],
+  legal: ["legal", "law", "attorney", "compliance"],
+  strategy_consulting: ["strategy", "consulting", "consultant", "analyst", "advisory", "strategic"],
+  operations_supply_chain: ["operations", "supply chain", "logistic", "procurement", "inventory", "coordinator", "ops"],
+  research_policy: ["research", "policy", "fellow", "analyst", "academic", "writing", "governance"],
+};
+*/
 
 export async function GET(req: NextRequest) {
   try {
@@ -190,6 +211,28 @@ export async function GET(req: NextRequest) {
 
     if (rawFields.length > 0) {
       conditions.push(inArray(internships.field, rawFields));
+      /*
+      const fieldConditions = rawFields.map((fieldVal) => {
+        const keywords = FIELD_KEYWORDS[fieldVal];
+        if (keywords && keywords.length > 0) {
+          const keywordMatch = or(
+            ...keywords.map((kw) => ilike(internships.title, `%${kw}%`))
+          );
+          return or(
+            eq(internships.field, fieldVal),
+            and(
+              isNull(internships.field),
+              keywordMatch
+            )
+          );
+        }
+        return eq(internships.field, fieldVal);
+      });
+      
+      conditions.push(
+        fieldConditions.length === 1 ? fieldConditions[0] : or(...fieldConditions)
+      );
+      */
     }
 
     if (rawLocations.length > 0) {
@@ -323,6 +366,12 @@ export async function GET(req: NextRequest) {
     );
   } catch (error) {
     console.error("Error fetching internships:", error);
+    try {
+      const logContent = `[${new Date().toISOString()}] Error: ${error instanceof Error ? error.message : String(error)}\nStack: ${error instanceof Error ? error.stack : ""}\n\n`;
+      await fs.promises.appendFile(path.join(process.cwd(), "error-log.txt"), logContent);
+    } catch (e) {
+      console.error("Failed to write to local error log file:", e);
+    }
     return NextResponse.json(
       { error: "Failed to fetch internships" },
       { status: 500 }

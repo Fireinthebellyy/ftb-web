@@ -7,10 +7,11 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, BookOpen, Check, Clock, Cloud } from "lucide-react";
+import { ArrowLeft, BookOpen, Check, Clock, Cloud, Star } from "lucide-react";
 import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
 import ToolkitSidebar from "@/components/toolkit/ToolkitSidebar";
 import ContentList from "@/components/toolkit/ContentList";
+import MentorshipView from "@/components/toolkit/MentorshipView";
 import ToolkitDetailSkeleton from "@/components/toolkit/ToolkitDetailSkeleton";
 import {
   Autoplay,
@@ -77,9 +78,21 @@ export default function ToolkitDetailPage() {
   }
 
   const { data: toolkitData, isLoading } = useToolkit(params.id as string);
-  const purchaseMutation = useToolkitPurchase(params.id as string);
-
   const toolkit = toolkitData?.toolkit ?? null;
+
+  const handleViewContent = () => {
+    if (toolkit?.isBundle) {
+      router.push("/toolkit");
+    } else {
+      router.push(`/toolkit/${toolkit?.id}/content`);
+    }
+  };
+
+  const purchaseMutation = useToolkitPurchase(
+    params.id as string,
+    handleViewContent
+  );
+
   const contentItems = toolkitData?.contentItems ?? [];
   const hasPurchased = toolkitData?.hasPurchased ?? false;
   const lessonCount = contentItems.length || toolkit?.lessonCount || 0;
@@ -138,9 +151,6 @@ export default function ToolkitDetailPage() {
     }
   };
 
-  const handleViewContent = () => {
-    router.push(`/toolkit/${toolkit?.id}/content`);
-  };
 
   const videoId = toolkit?.videoUrl
     ? getYouTubeVideoId(toolkit.videoUrl)
@@ -180,93 +190,95 @@ export default function ToolkitDetailPage() {
 
         <div className="grid gap-8 xl:grid-cols-3">
           <div className="min-w-0 xl:col-span-2">
-            <div className="mb-6 overflow-hidden rounded-lg border bg-white">
-              <div className="relative aspect-video bg-gray-100">
-                {heroImageUrl ? (
-                  <Image
-                    src={heroImageUrl}
-                    alt={toolkit.title}
-                    fill
-                    className="object-cover"
-                    priority
-                    sizes="(max-width: 1024px) 100vw, 66vw"
+            {toolkit.category === "1:1 Mentorship" ? (
+              <MentorshipView toolkit={toolkit as any} />
+            ) : (
+              <div className="mb-6 overflow-hidden rounded-lg border bg-white">
+                <div className="relative aspect-video bg-gray-100">
+                  {heroImageUrl ? (
+                    <Image
+                      src={heroImageUrl}
+                      alt={toolkit.title}
+                      fill
+                      className="object-cover"
+                      priority
+                      sizes="(max-width: 1024px) 100vw, 66vw"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center bg-gray-100">
+                      <span className="text-6xl font-bold text-gray-300">
+                        {toolkit.title.charAt(0)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-6">
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    {toolkit.category && (
+                      <Badge variant="secondary">{toolkit.category}</Badge>
+                    )}
+                  </div>
+
+                  <h1 className="mb-3 text-2xl font-bold text-gray-900 md:text-3xl">
+                    {toolkit.title.charAt(0).toUpperCase() +
+                      toolkit.title.slice(1)}
+                  </h1>
+
+                  <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                    {toolkit.rating && (
+                      <div className="flex shrink-0 items-center gap-1 rounded-md bg-yellow-50 px-1.5 py-0.5 text-sm font-semibold text-yellow-700 border border-yellow-200/50">
+                        <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                        {toolkit.rating}
+                      </div>
+                    )}
+
+                    {lessonCount > 0 && (
+                      <div className="flex items-center gap-1">
+                        <BookOpen className="h-4 w-4" />
+                        {lessonCount} lessons
+                      </div>
+                    )}
+
+                    {toolkit.totalDuration && (
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        {toolkit.totalDuration}
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-1">
+                      <Cloud className="h-4 w-4" />
+                      Lifetime access
+                    </div>
+                  </div>
+
+                  <HtmlRenderer
+                    content={toolkit.description}
+                    className="text-gray-700"
                   />
-                ) : (
-                  <div className="flex h-full items-center justify-center bg-gray-100">
-                    <span className="text-6xl font-bold text-gray-300">
-                      {toolkit.title.charAt(0)}
-                    </span>
-                  </div>
-                )}
-              </div>
 
-              <div className="p-6">
-                <div className="mb-3 flex flex-wrap items-center gap-2">
-                  {toolkit.category && (
-                    <Badge variant="secondary">{toolkit.category}</Badge>
-                  )}
-                </div>
-
-                <h1 className="mb-3 text-2xl font-bold text-gray-900 md:text-3xl">
-                  {toolkit.title.charAt(0).toUpperCase() +
-                    toolkit.title.slice(1)}
-                </h1>
-
-                {toolkit.creatorName && (
-                  <p className="mb-4 text-sm text-gray-600">
-                    Created by{" "}
-                    <span className="font-medium text-gray-900">
-                      {toolkit.creatorName}
-                    </span>
-                  </p>
-                )}
-
-                <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                  {lessonCount > 0 && (
-                    <div className="flex items-center gap-1">
-                      <BookOpen className="h-4 w-4" />
-                      {lessonCount} lessons
+                  {toolkit.highlights && toolkit.highlights.length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="mb-3 font-semibold text-gray-900">
+                        What you&apos;ll learn:
+                      </h3>
+                      <ul className="grid gap-2 sm:grid-cols-2">
+                        {toolkit.highlights.map((highlight, index) => (
+                          <li
+                            key={index}
+                            className="flex items-start gap-2 text-gray-600"
+                          >
+                            <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
+                            {highlight}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
-
-                  {toolkit.totalDuration && (
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      {toolkit.totalDuration}
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-1">
-                    <Cloud className="h-4 w-4" />
-                    Lifetime access
-                  </div>
                 </div>
-
-                <HtmlRenderer
-                  content={toolkit.description}
-                  className="text-gray-700"
-                />
-
-                {toolkit.highlights && toolkit.highlights.length > 0 && (
-                  <div className="mt-6">
-                    <h3 className="mb-3 font-semibold text-gray-900">
-                      What you&apos;ll learn:
-                    </h3>
-                    <ul className="grid gap-2 sm:grid-cols-2">
-                      {toolkit.highlights.map((highlight, index) => (
-                        <li
-                          key={index}
-                          className="flex items-start gap-2 text-gray-600"
-                        >
-                          <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
-                          {highlight}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </div>
-            </div>
+            )}
 
             {contentItems.length > 0 && (
               <div className="rounded-lg border bg-white p-6">
@@ -415,19 +427,19 @@ export default function ToolkitDetailPage() {
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-bold text-gray-900">
                   ₹
-                  {(appliedCoupon?.finalPrice ?? toolkit.price).toLocaleString(
+                  {(appliedCoupon?.finalPrice ?? toolkit.price ?? 0).toLocaleString(
                     "en-IN"
                   )}
                 </span>
                 {toolkit.originalPrice &&
-                  toolkit.originalPrice > toolkit.price && (
+                  toolkit.originalPrice > (toolkit.price ?? 0) && (
                     <span className="text-sm text-gray-400 line-through">
                       ₹{toolkit.originalPrice.toLocaleString("en-IN")}
                     </span>
                   )}
                 {appliedCoupon?.valid && !toolkit.originalPrice && (
                   <span className="text-sm text-gray-400 line-through">
-                    ₹{toolkit.price.toLocaleString("en-IN")}
+                    ₹{(toolkit.price ?? 0).toLocaleString("en-IN")}
                   </span>
                 )}
               </div>

@@ -7,9 +7,10 @@ import {
   userToolkits,
   userToolkitProgress,
   coupons,
+  digitalProductSections,
 } from "@/lib/schema";
 import { getSessionCached } from "@/lib/auth-session-cache";
-import { eq, and, asc, sql, or, lt, isNull } from "drizzle-orm";
+import { eq, and, asc, sql, or, lt, isNull, inArray } from "drizzle-orm";
 import { headers } from "next/headers";
 
 // GET specific toolkit by ID
@@ -34,6 +35,8 @@ export async function GET(
         contentUrl: toolkits.contentUrl,
         category: toolkits.category,
         highlights: toolkits.highlights,
+        rating: toolkits.rating,
+        subtitle: toolkits.subtitle,
         testimonials: toolkits.testimonials,
         totalDuration: toolkits.totalDuration,
         lessonCount: toolkits.lessonCount,
@@ -42,9 +45,21 @@ export async function GET(
         updatedAt: toolkits.updatedAt,
         userId: toolkits.userId,
         creatorName: user.name,
+        isBundle: toolkits.isBundle,
+        bundleItems: toolkits.bundleItems,
+        is_trending: toolkits.is_trending,
+        isBestSeller: toolkits.isBestSeller,
+        isLimitedSeats: toolkits.isLimitedSeats,
+        mentorshipDetails: toolkits.mentorshipDetails,
+        digitalProductSectionId: toolkits.digitalProductSectionId,
+        digitalProductSectionTitle: digitalProductSections.title,
       })
       .from(toolkits)
       .leftJoin(user, eq(toolkits.userId, user.id))
+      .leftJoin(
+        digitalProductSections,
+        eq(toolkits.digitalProductSectionId, digitalProductSections.id)
+      )
       .where(eq(toolkits.id, toolkitId))
       .limit(1);
 
@@ -327,6 +342,36 @@ export async function POST(
           couponId: couponId,
         })
         .returning();
+
+      if (toolkit.isBundle && toolkit.bundleItems?.length) {
+        // Batch-check existing completed purchases
+        const existingPurchases = await db
+          .select({ toolkitId: userToolkits.toolkitId })
+          .from(userToolkits)
+          .where(
+            and(
+              eq(userToolkits.userId, userId),
+              eq(userToolkits.paymentStatus, "completed"),
+              inArray(userToolkits.toolkitId, toolkit.bundleItems)
+            )
+          );
+        const existingSet = new Set(existingPurchases.map((p) => p.toolkitId));
+
+        const itemsToInsert = toolkit.bundleItems
+          .filter((childId) => !existingSet.has(childId))
+          .map((childId) => ({
+            userId,
+            toolkitId: childId,
+            razorpayOrderId: null,
+            paymentStatus: "completed" as const,
+            amountPaid: 0,
+            couponId: couponId,
+          }));
+
+        if (itemsToInsert.length > 0) {
+          await db.insert(userToolkits).values(itemsToInsert);
+        }
+      }
 
       return NextResponse.json({
         success: true,

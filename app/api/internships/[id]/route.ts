@@ -10,7 +10,13 @@ const internshipUpdateSchema = z.object({
   description: z.string().optional().nullable(),
   type: z.enum(["remote", "hybrid", "onsite"]).optional().nullable(),
   timing: z.enum(["full_time", "part_time"]).optional().nullable(),
-  link: z.string().url("Valid application link is required").optional(),
+  link: z
+    .string()
+    .optional()
+    .nullable()
+    .refine((val) => !val || z.string().url().safeParse(val).success, {
+      message: "Valid application link is required",
+    }),
   tags: z.array(z.string()).optional(),
   location: z.string().optional().nullable(),
   deadline: z.string().optional().nullable(),
@@ -20,8 +26,16 @@ const internshipUpdateSchema = z.object({
     .min(1, "Hiring organization is required")
     .optional(),
   hiringManager: z.string().optional().nullable(),
-  hiringManagerEmail: z.string().optional().nullable(),
-  hiringManagerLinkedin: z.string().optional().nullable(),
+  hiringManagerEmail: z
+    .string()
+    .regex(/^(?:[^\s@]+@[^\s@]+\.[^\s@]+)?$/, "Invalid email address")
+    .optional()
+    .nullable(),
+  hiringManagerLinkedin: z
+    .string()
+    .regex(/^(?:(https?:\/\/)?(www\.)?linkedin\.com\/.*)?$/i, "Invalid LinkedIn URL")
+    .optional()
+    .nullable(),
   experience: z.string().optional().nullable(),
   duration: z.string().optional().nullable(),
   field: z.string().optional().nullable(),
@@ -266,7 +280,7 @@ export async function PUT(
       updateData.timing = validatedData.timing;
     }
     if (validatedData.link !== undefined) {
-      updateData.link = validatedData.link.trim();
+      updateData.link = validatedData.link ? validatedData.link.trim() : null;
     }
     if (validatedData.tags !== undefined) {
       updateData.tags = validatedData.tags

@@ -11,7 +11,10 @@ interface ToolkitContentSidebarProps {
   completedItems: string[];
   isAccessLoading: boolean;
   desktopSidebarOpen: boolean;
+  isCommunityActive: boolean;
+  chatUrl: string;
   onItemSelect: (item: ToolkitContentItem) => void;
+  onCommunitySelect: () => void;
 }
 
 function SidebarSkeleton() {
@@ -34,7 +37,10 @@ export default function ToolkitContentSidebar({
   completedItems,
   isAccessLoading,
   desktopSidebarOpen,
+  isCommunityActive,
+  chatUrl,
   onItemSelect,
+  onCommunitySelect,
 }: ToolkitContentSidebarProps) {
   return (
     <aside
@@ -51,6 +57,9 @@ export default function ToolkitContentSidebar({
           currentItemId={currentItemId}
           onItemSelect={onItemSelect}
           completedItems={completedItems}
+          isCommunityActive={isCommunityActive}
+          chatUrl={chatUrl}
+          onCommunitySelect={onCommunitySelect}
         />
       )}
     </aside>

@@ -57,7 +57,12 @@ export const internshipFormSchema = z.object({
     .refine((val) => !val || /^(https?:\/\/)?(www\.)?linkedin\.com\/.*$/i.test(val), {
       message: "Please enter a valid LinkedIn URL.",
     }),
-  link: z.string().url({ message: "Application link is required." }),
+  link: z
+    .string()
+    .optional()
+    .refine((val) => !val || z.string().url().safeParse(val).success, {
+      message: "Please enter a valid URL.",
+    }),
   deadline: z.string().optional(),
   field: z.string().optional(),
 });

@@ -2,11 +2,11 @@
 
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
+import { normalizeRichText } from "@/lib/rich-text";
+import { useForm } from "react-hook-form";
 import axios from "axios";
-import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-
 import {
   Dialog,
   DialogContent,
@@ -14,42 +14,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { ToolkitImageInput } from "@/components/admin/ToolkitImageInput";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   deleteStorageObjectClient,
   uploadFileViaSignedUrl,
 } from "@/lib/storage/client";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { normalizeRichText } from "@/lib/rich-text";
-import { toolkitFormSchema, ToolkitFormValues } from "@/components/admin/types";
+import { ToolkitFormFields } from "@/components/admin/ToolkitFormFields";
+import {
+  DigitalProductSection,
+  toolkitFormSchema,
+  ToolkitFormValues,
+} from "@/components/admin/types";
 
-const CATEGORIES = [
-  "Career",
-  "Skills",
-  "Interview Prep",
-  "Resume",
-  "Salary Negotiation",
-  "LinkedIn",
-  "Networking",
-];
+
+
 
 function formatHighlight(highlight: string) {
   const trimmed = highlight.trim();
@@ -60,6 +39,19 @@ function formatHighlight(highlight: string) {
 
   return `${trimmed.charAt(0).toUpperCase()}${trimmed.slice(1)}`;
 }
+
+async function fetchDigitalProductSections(): Promise<DigitalProductSection[]> {
+  const response = await axios.get<DigitalProductSection[]>(
+    "/api/digital-product-sections"
+  );
+  return response.data;
+}
+
+interface NewToolkitModalProps {
+  children: React.ReactNode;
+  onSuccess?: () => void;
+}
+
 
 interface NewToolkitModalProps {
   children: React.ReactNode;
@@ -74,6 +66,13 @@ export default function NewToolkitModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [bannerImageFile, setBannerImageFile] = useState<File | null>(null);
+  const [mentorImageFile, setMentorImageFile] = useState<File | null>(null);
+  const { data: digitalProductSections = [] } = useQuery({
+    queryKey: ["admin", "digital-product-sections"],
+    queryFn: fetchDigitalProductSections,
+    staleTime: 1000 * 60,
+    enabled: open,
+  });
 
   const form = useForm<ToolkitFormValues>({
     resolver: zodResolver(toolkitFormSchema),
@@ -89,16 +88,14 @@ export default function NewToolkitModal({
       totalDuration: "",
       highlights: [],
       testimonials: [],
+      digitalProductSectionId: "",
+      mentorshipDetails: undefined,
     },
-  });
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "testimonials",
   });
 
   async function onSubmit(data: ToolkitFormValues) {
     const existingCoverUrl = data.coverImageUrl?.trim() ?? "";
-    if (!existingCoverUrl && !coverImageFile) {
+    if (data.category !== "digital products" && !existingCoverUrl && !coverImageFile) {
       form.setError("coverImageUrl", {
         type: "manual",
         message: "Cover image is required",
@@ -132,13 +129,31 @@ export default function NewToolkitModal({
         uploadedKeys.push(uploadedBanner.key);
       }
 
+      let mentorImageUrl = data.mentorshipDetails?.mentor?.imageUrl;
+      if (mentorImageFile) {
+        const uploadedMentor = await uploadFileViaSignedUrl({
+          domain: "ungatekeep-images",
+          file: mentorImageFile,
+        });
+        mentorImageUrl = uploadedMentor.publicUrl;
+        uploadedKeys.push(uploadedMentor.key);
+      }
+
       const cleanedData = {
         ...data,
         description: normalizeRichText(data.description),
         coverImageUrl,
         bannerImageUrl,
+        mentorshipDetails: data.mentorshipDetails ? {
+          ...data.mentorshipDetails,
+          mentor: data.mentorshipDetails.mentor ? {
+            ...data.mentorshipDetails.mentor,
+            imageUrl: mentorImageUrl,
+          } : undefined
+        } : undefined,
         videoUrl: data.videoUrl || undefined,
         category: data.category || undefined,
+        digitalProductSectionId: null,
         totalDuration: data.totalDuration || undefined,
         highlights:
           data.highlights?.map(formatHighlight).filter(Boolean) || undefined,
@@ -159,6 +174,7 @@ export default function NewToolkitModal({
         form.reset();
         setCoverImageFile(null);
         setBannerImageFile(null);
+        setMentorImageFile(null);
         onSuccess?.();
       }
     } catch (error) {
@@ -180,6 +196,7 @@ export default function NewToolkitModal({
       form.reset();
       setCoverImageFile(null);
       setBannerImageFile(null);
+      setMentorImageFile(null);
     }
   };
 
@@ -193,303 +210,29 @@ export default function NewToolkitModal({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
+            <ToolkitFormFields
               control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter toolkit title" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              coverImageFile={coverImageFile}
+              bannerImageFile={bannerImageFile}
+              onCoverImageFileSelect={setCoverImageFile}
+              onBannerImageFileSelect={setBannerImageFile}
+              onCoverImageRemove={() => {
+                setCoverImageFile(null);
+                form.setValue("coverImageUrl", "");
+              }}
+              onBannerImageRemove={() => {
+                setBannerImageFile(null);
+                form.setValue("bannerImageUrl", "");
+              }}
+              mentorImageFile={mentorImageFile}
+              onMentorImageFileSelect={setMentorImageFile}
+              onMentorImageRemove={() => {
+                setMentorImageFile(null);
+                form.setValue("mentorshipDetails.mentor.imageUrl", "");
+              }}
+              digitalProductSections={digitalProductSections}
+              isSubmitting={isSubmitting}
             />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description *</FormLabel>
-                  <FormControl>
-                    <RichTextEditor
-                      value={field.value ?? ""}
-                      onChange={field.onChange}
-                      placeholder="Enter detailed description"
-                      className="[&_div.ql-container]:min-h-[160px] [&_div.ql-editor]:max-h-[28vh] [&_div.ql-editor]:min-h-[160px] [&_div.ql-editor]:overflow-y-auto"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Price (₹) *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="299"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(parseFloat(e.target.value) || 0)
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="originalPrice"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Original Price (₹)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="999"
-                        {...field}
-                        value={field.value ?? ""}
-                        onChange={(e) =>
-                          field.onChange(
-                            e.target.value
-                              ? parseFloat(e.target.value)
-                              : undefined
-                          )
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {CATEGORIES.map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="totalDuration"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Total Duration</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., 2h 30m" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="coverImageUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Cover Image *</FormLabel>
-                  <FormControl>
-                    <ToolkitImageInput
-                      label="Cover image"
-                      imageUrl={field.value ?? ""}
-                      selectedFile={coverImageFile}
-                      onFileSelect={setCoverImageFile}
-                      onRemove={() => {
-                        setCoverImageFile(null);
-                        field.onChange("");
-                      }}
-                      disabled={isSubmitting}
-                      required
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="bannerImageUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Banner Image (HD, optional)</FormLabel>
-                  <FormControl>
-                    <ToolkitImageInput
-                      label="Banner image"
-                      imageUrl={field.value ?? ""}
-                      selectedFile={bannerImageFile}
-                      onFileSelect={setBannerImageFile}
-                      onRemove={() => {
-                        setBannerImageFile(null);
-                        field.onChange("");
-                      }}
-                      disabled={isSubmitting}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <FormLabel>Testimonials</FormLabel>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => append({ name: "", role: "", message: "" })}
-                  disabled={isSubmitting}
-                >
-                  <Plus className="mr-1 h-4 w-4" />
-                  Add testimonial
-                </Button>
-              </div>
-
-              {fields.map((item, index) => (
-                <div key={item.id} className="space-y-3 rounded-lg border p-3">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name={`testimonials.${index}.name`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Aditi Sharma" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name={`testimonials.${index}.role`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Role</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Final Year Student"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name={`testimonials.${index}.message`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Message *</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Share the learner outcome"
-                            className="min-h-[90px]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="flex justify-end">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => remove(index)}
-                      disabled={isSubmitting}
-                    >
-                      <Trash2 className="mr-1 h-4 w-4" />
-                      Remove
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <FormField
-              control={form.control}
-              name="videoUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>YouTube Promo Video URL</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="https://youtube.com/embed/..."
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="highlights"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Highlights (comma-separated)</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Lifetime access, Downloadable resources, Certificate"
-                      {...field}
-                      value={field.value?.join(", ") ?? ""}
-                      onChange={(e) =>
-                        field.onChange(e.target.value.split(","))
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <div className="flex justify-end space-x-2 pt-4">
               <Button
                 type="button"

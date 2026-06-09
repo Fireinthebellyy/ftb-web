@@ -12,19 +12,28 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import LessonSidebar from "@/components/toolkit/LessonSidebar";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { ArrowLeft, PanelLeft, PanelRight } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { ArrowLeft, Menu, PanelLeft, PanelRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ToolkitContentItem } from "@/types/interfaces";
 import ToolkitContentMain from "@/components/toolkit/content/ToolkitContentMain";
 import ToolkitContentPageSkeleton from "@/components/toolkit/content/ToolkitContentPageSkeleton";
 import ToolkitContentSidebar from "@/components/toolkit/content/ToolkitContentSidebar";
+import ToolkitCommunityPanel from "@/components/toolkit/content/ToolkitCommunityPanel";
 import {
   useMarkContentComplete,
   useToolkitAccess,
+  useToolkitCommunity,
   useToolkitContent,
 } from "@/lib/queries-toolkits";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const courseChatUrl = "https://api.whatsapp.com/send/?phone=917014885565";
 
 interface CircularProgressProps {
   progress: number;
@@ -90,6 +99,9 @@ export default function ToolkitContentPage() {
   );
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
+  const [activeView, setActiveView] = useState<"lesson" | "community">(
+    "lesson"
+  );
 
   const { data: contentData, isLoading: isContentLoading } =
     useToolkitContent(toolkitId);
@@ -103,6 +115,12 @@ export default function ToolkitContentPage() {
     [contentData?.contentItems]
   );
   const hasAccess = accessData?.hasPurchased ?? false;
+  // Enable the community query once access data has loaded.
+  // The API itself handles admin bypass, so we just need to avoid firing the
+  // query while we don't yet know the user's purchase status.
+  const communityEnabled = !isAccessLoading;
+  const { data: communityData, isLoading: isCommunityLoading } =
+    useToolkitCommunity(toolkitId, communityEnabled);
   const completedItems = useMemo(
     () => accessData?.completedItemIds ?? [],
     [accessData?.completedItemIds]
@@ -147,6 +165,12 @@ export default function ToolkitContentPage() {
 
   const handleItemSelect = useCallback((item: ToolkitContentItem): void => {
     setCurrentItem(item);
+    setActiveView("lesson");
+    setSidebarOpen(false);
+  }, []);
+
+  const handleCommunitySelect = useCallback((): void => {
+    setActiveView("community");
     setSidebarOpen(false);
   }, []);
 
@@ -258,7 +282,7 @@ export default function ToolkitContentPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-10 border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+      <header className="sticky top-0 z-10 border-b bg-white/95 backdrop-blur supports-backdrop-filter:bg-white/60">
         <div className="flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2 sm:gap-3">
             <Button
@@ -273,23 +297,19 @@ export default function ToolkitContentPage() {
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs text-gray-500">{toolkit.title}</p>
               <h1 className="truncate text-sm font-semibold text-gray-900 sm:text-base">
-                {currentItem?.title || "Select a lesson"}
+                {activeView === "community"
+                  ? "FTB Support"
+                  : currentItem?.title || "Select a lesson"}
               </h1>
             </div>
-          </div>
-
-          <div className="flex items-center gap-1 sm:gap-2">
             <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
               <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0 lg:hidden"
-                >
-                  <PanelRight className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="lg:hidden">
+                  <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-80 p-0">
+                <SheetTitle className="sr-only">Course Menu</SheetTitle>
                 {isAccessLoading ? (
                   <div className="space-y-3 p-4">
                     <Skeleton className="h-6 w-36" />
@@ -306,6 +326,9 @@ export default function ToolkitContentPage() {
                     currentItemId={currentItem?.id || ""}
                     onItemSelect={handleItemSelect}
                     completedItems={completedItems}
+                    isCommunityActive={activeView === "community"}
+                    chatUrl={courseChatUrl}
+                    onCommunitySelect={handleCommunitySelect}
                   />
                 )}
               </SheetContent>
@@ -343,18 +366,27 @@ export default function ToolkitContentPage() {
           className="flex-1 p-4 sm:p-6 lg:min-w-0 lg:overflow-y-auto"
           style={{ width: "100%" }}
         >
-          <ToolkitContentMain
-            currentItem={currentItem}
-            completedItems={completedItems}
-            isAccessLoading={isAccessLoading}
-            isFirst={isFirst}
-            isLast={isLast}
-            desktopSidebarOpen={desktopSidebarOpen}
-            onMarkComplete={handleMarkComplete}
-            onNavigatePrev={handleNavigatePrev}
-            onNavigateNext={handleNavigateNext}
-            onCompleteLast={handleMarkCompleteAndCelebrate}
-          />
+          {activeView === "community" ? (
+            <ToolkitCommunityPanel
+              posts={communityData?.posts ?? []}
+              isLoading={isCommunityLoading || isAccessLoading}
+              desktopSidebarOpen={desktopSidebarOpen}
+              toolkitId={toolkitId}
+            />
+          ) : (
+            <ToolkitContentMain
+              currentItem={currentItem}
+              completedItems={completedItems}
+              isAccessLoading={isAccessLoading}
+              isFirst={isFirst}
+              isLast={isLast}
+              desktopSidebarOpen={desktopSidebarOpen}
+              onMarkComplete={handleMarkComplete}
+              onNavigatePrev={handleNavigatePrev}
+              onNavigateNext={handleNavigateNext}
+              onCompleteLast={handleMarkCompleteAndCelebrate}
+            />
+          )}
         </main>
 
         <ToolkitContentSidebar
@@ -363,7 +395,10 @@ export default function ToolkitContentPage() {
           completedItems={completedItems}
           isAccessLoading={isAccessLoading}
           desktopSidebarOpen={desktopSidebarOpen}
+          isCommunityActive={activeView === "community"}
+          chatUrl={courseChatUrl}
           onItemSelect={handleItemSelect}
+          onCommunitySelect={handleCommunitySelect}
         />
       </div>
     </div>

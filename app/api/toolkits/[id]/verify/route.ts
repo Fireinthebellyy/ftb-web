@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { badRequest } from "@/lib/api-error";
 import { db } from "@/lib/db";
-import { userToolkits } from "@/lib/schema";
-import { eq, and } from "drizzle-orm";
+import { userToolkits, toolkits } from "@/lib/schema";
+import { eq, and, inArray } from "drizzle-orm";
 import { createHmac } from "crypto";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -94,6 +94,41 @@ export async function POST(
           eq(userToolkits.userId, userId)
         )
       );
+
+    // If toolkit is a bundle, grant access to its items
+    const purchasedToolkit = await db.query.toolkits.findFirst({
+      where: eq(toolkits.id, toolkitId),
+    });
+
+    if (purchasedToolkit?.isBundle && purchasedToolkit.bundleItems?.length) {
+      // Batch-check existing completed purchases
+      const existingPurchases = await db
+        .select({ toolkitId: userToolkits.toolkitId })
+        .from(userToolkits)
+        .where(
+          and(
+            eq(userToolkits.userId, userId),
+            eq(userToolkits.paymentStatus, "completed"),
+            inArray(userToolkits.toolkitId, purchasedToolkit.bundleItems)
+          )
+        );
+      const existingSet = new Set(existingPurchases.map((p) => p.toolkitId));
+
+      const itemsToInsert = purchasedToolkit.bundleItems
+        .filter((childId) => !existingSet.has(childId))
+        .map((childId) => ({
+          userId,
+          toolkitId: childId,
+          paymentId: razorpay_payment_id,
+          razorpayOrderId: razorpay_order_id,
+          paymentStatus: "completed" as const,
+          amountPaid: 0,
+        }));
+
+      if (itemsToInsert.length > 0) {
+        await db.insert(userToolkits).values(itemsToInsert);
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

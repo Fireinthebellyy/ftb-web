@@ -74,7 +74,7 @@ const getDomainIcon = (
 
 const InternshipPost: React.FC<InternshipPostProps> = ({
   internship,
-  hideActions = false,
+  isActionsHidden = false,
 }) => {
   const router = useRouter();
   const { addToTracker, getStatus, removeFromTracker } = useTracker();
@@ -244,7 +244,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
           </div>
 
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-            {hideActions ? (
+            {isActionsHidden ? (
               <span
                 className="inline-flex h-8 items-center justify-center rounded-[39px] bg-black px-3.5 text-[12px] font-semibold tracking-[-0.25px] text-white transition-colors group-hover:bg-slate-800"
               >

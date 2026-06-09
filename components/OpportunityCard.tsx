@@ -67,7 +67,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 }) => {
   const { id, images, title, type } = opportunity;
   const primaryType = Array.isArray(type) ? type[0] : type;
-
+  
   const { items, addToTracker, removeFromTracker } = useTracker();
   const trackedItem = items.find(
     (i) => i.kind === "opportunity" && String(i.oppId) === String(id)
@@ -166,11 +166,11 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
   return (
     <article className="relative mb-3 w-full overflow-hidden rounded-lg border bg-white shadow-sm sm:mb-4">
       {primaryType && (
-        <div className="absolute -top-0.5 right-0 z-20">
+        <div className="absolute -top-0.5 left-0 z-20">
           <Badge
             className={`${getTypeBadgeColor(
               primaryType
-            )} rounded-tl-none rounded-br-none px-2 py-1 text-[10px] font-medium sm:text-xs`}
+            )} rounded-tl-none rounded-bl-none px-2 py-1 text-[10px] font-medium sm:text-xs`}
           >
             {formatTypeName(primaryType)}
           </Badge>
@@ -179,23 +179,24 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
 
       {/* Trending badge - below type badge on right */}
       {opportunity.trending && (
-        <div className="absolute top-6 right-0 z-20">
+        <div className="absolute top-0 right-0 z-20">
           <Badge className="bg-orange-500 text-white rounded-tl-none rounded-br-none px-2 py-1 text-[10px] font-medium sm:text-xs">
            <Flame className="h-2.5 w-2.5 mr-0.5 inline" />Trending
           </Badge>
         </div>
       )}
 
-      <OpportunityImageGallery
-        images={images}
-        title={title}
-        onOpenModal={(index) => {
-          setModalIndex(index);
-          setModalOpen(true);
-        }}
-      />
+       <OpportunityImageGallery
+       images={images}
+       title={title}
+       onOpenModal={(index) => {
+         setModalIndex(index);
+         setModalOpen(true);
+       }}
+     />
+      
 
-      <OpportunityHeader opportunity={opportunity} />
+      <OpportunityHeader opportunity={opportunity} images={images} />
 
       <OpportunityAttachments attachments={opportunity.attachments} />
 

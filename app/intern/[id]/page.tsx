@@ -27,7 +27,7 @@ import { InternshipDesktopHeader } from "@/components/internship/InternshipDeskt
 import { InternshipSidebar } from "@/components/internship/InternshipSidebar";
 import { InternshipDisclaimer } from "@/components/internship/InternshipDisclaimer";
 import { InternshipStickyFooter } from "@/components/internship/InternshipStickyFooter";
-// import { SimilarInternships } from "@/components/internship/SimilarInternships";
+import { SimilarInternships } from "@/components/internship/SimilarInternships";
 import NewInternshipForm from "@/components/internship/NewInternshipForm";
 import { AdminControlsModal } from "@/components/internship/AdminControlsModal";
 
@@ -349,14 +349,13 @@ export default function InternshipDetailPage() {
             handleOpenChat={handleOpenChat}
           />
 
-          {/* Similar Internships
+          {/* Similar Internships */}
           <SimilarInternships
             currentId={internship.id}
             field={internship.field}
             title={internship.title}
             exactFieldOnly={true}
           />
-          */}
 
           {/* Mobile Disclaimer */}
           <InternshipDisclaimer
@@ -401,14 +400,13 @@ export default function InternshipDetailPage() {
 
               </div>
 
-              {/* Similar Internships
+              {/* Similar Internships */}
               <SimilarInternships
                 currentId={internship.id}
                 field={internship.field}
                 title={internship.title}
                 exactFieldOnly={true}
               />
-              */}
 
               {/* Desktop Disclaimer */}
               <InternshipDisclaimer

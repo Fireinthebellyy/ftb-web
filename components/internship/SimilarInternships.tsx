@@ -13,6 +13,7 @@ interface SimilarInternshipsProps {
   field?: string | null;
   title?: string;
   exactFieldOnly?: boolean;
+  layout?: "horizontal" | "vertical";
 }
 
 const FIELD_SIMILARITY_MAP: Record<string, string[]> = {
@@ -157,6 +158,7 @@ export const SimilarInternships: React.FC<SimilarInternshipsProps> = ({
   field,
   title = "",
   exactFieldOnly = false,
+  layout = "horizontal",
 }) => {
   const { data, isLoading } = useQuery({
     queryKey: ["internships", "similar-recommender", currentId, field, title, exactFieldOnly],
@@ -277,7 +279,10 @@ export const SimilarInternships: React.FC<SimilarInternshipsProps> = ({
       };
     },
     staleTime: 1000 * 60 * 5,
+    enabled: !!currentId,
   });
+
+  if (!currentId) return null;
 
   if (isLoading) {
     return (
@@ -285,11 +290,11 @@ export const SimilarInternships: React.FC<SimilarInternshipsProps> = ({
         <div className="flex items-center gap-2 mb-4">
           <Skeleton className="h-6 w-64 rounded-md" />
         </div>
-        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+        <div className={layout === "vertical" ? "flex flex-col gap-4" : "flex gap-4 overflow-x-auto pb-4 scrollbar-hide"}>
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className="w-[300px] sm:w-[340px] md:w-[380px] shrink-0 rounded-xl border border-slate-200 bg-white px-4 py-3"
+              className={layout === "vertical" ? "w-full rounded-xl border border-slate-200 bg-white px-4 py-3" : "w-[300px] sm:w-[340px] md:w-[380px] shrink-0 rounded-xl border border-slate-200 bg-white px-4 py-3"}
             >
               <div className="flex items-center justify-between gap-4">
                 <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -332,21 +337,21 @@ export const SimilarInternships: React.FC<SimilarInternshipsProps> = ({
   }
 
   return (
-    <div className="mt-10 mb-8 w-full">
-      <div className="flex items-center justify-between mb-4 px-1">
+    <div className="mt-8 mb-6 w-full">
+      <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex flex-col gap-0.5">
-          <h3 className="text-base font-extrabold text-slate-900 md:text-lg tracking-tight">
+          <h3 className={layout === "vertical" ? "text-sm font-extrabold text-slate-900 tracking-tight" : "text-base font-extrabold text-slate-900 md:text-lg tracking-tight"}>
             {label}
           </h3>
           <div className="h-0.5 w-12 rounded-full bg-[#ec5b13]/80" />
         </div>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
+      <div className={layout === "vertical" ? "flex flex-col gap-4" : "flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory"}>
         {similarInternships.map((internship) => (
           <div
             key={internship.id}
-            className="w-[300px] sm:w-[340px] md:w-[380px] shrink-0 snap-start"
+            className={layout === "vertical" ? "w-full" : "w-[300px] sm:w-[340px] md:w-[380px] shrink-0 snap-start"}
           >
             <InternshipPost internship={internship} isActionsHidden={true} />
           </div>

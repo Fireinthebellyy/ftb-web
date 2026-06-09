@@ -124,61 +124,32 @@ const SearchWidget = ({
             className="fixed inset-0 z-40 bg-transparent"
             onClick={() => setIsSearchFocused(false)}
           />
-          <div className="absolute left-0 right-0 z-50 mt-1 max-h-80 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg">
-            {filteredSuggestions.length > 0 && (
-              <div className="border-b border-slate-100 p-2">
-                <div className="px-3 py-1.5 text-xs font-semibold text-gray-400">
-                  SUGGESTIONS
-                </div>
-                {filteredSuggestions.map((suggestion, index) => (
-                  <button
-                    key={suggestion}
-                    type="button"
-                    onClick={() => {
-                      applyFilters(suggestion);
-                      setIsSearchFocused(false);
-                    }}
-                    className={cn(
-                      "flex w-full items-center px-3 py-2 text-sm text-gray-700 hover:bg-slate-50 rounded-lg",
-                      index === focusedIndex && "bg-slate-50 font-medium text-orange-600"
-                    )}
-                  >
-                    <Search className="mr-2 h-4 w-4 text-gray-400" />
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
-            )}
-            
-            <div className="p-2 border-b border-slate-100">
-              <div className="px-3 py-1.5 text-xs font-semibold text-gray-400">
-                POPULAR FIELDS
-              </div>
-              <div className="max-h-[140px] overflow-y-auto scrollbar-thin">
-                <div className="grid grid-cols-2 gap-2 p-1">
-                  {internshipFields.map((field) => {
+          <div className="absolute top-[calc(100%+8px)] left-0 right-[-60] z-50 rounded-[16px] border border-slate-700 bg-[rgba(0,0,0,0.95)] max-h-[80vh] shadow-2xl overflow-hidden flex flex-col">
+
+            <div>
+              <p className="w-full text-slate-200 text-sm font-bold uppercase tracking-widest text-center mt-4">
+                Explore The Popular Fields
+              </p>  
+             
+              <div className="w-full flex justify-center">
+                <div className="grid grid-cols-2 gap-2.5 p-4 max-h-[9.5rem] lg:max-h-[12rem] overflow-y-auto scrollbar-none items-stretch">
+                  {internshipFields.map((field, idx) => {
                     const isSelected = activeBubble?.id === field.id;
                     return (
                       <button
-                        key={field.id}
-                        type="button"
                         className={cn(
-                          "flex items-center justify-center p-2 rounded-xl text-xs font-semibold border transition-all h-10 leading-tight select-none cursor-pointer",
-                          isSelected 
-                            ? "bg-orange-50 border-orange-500 text-orange-700 shadow-xs" 
-                            : "bg-white border-slate-100 hover:bg-slate-50 text-slate-600"
+                          "w-full min-h-10 h-auto cursor-pointer px-2 py-1 flex items-center justify-center rounded-md border text-[11px] lg:text-xs font-bold text-center whitespace-nowrap transition-transform duration-100 ease-out active:scale-95",
+                          isSelected
+                            ? "border-[#ec5b13] bg-[#ec5b13] text-white"
+                            : "border-slate-700 bg-slate-200 text-black hover:border-2 hover:border-[#ec5b13] focus:border-2 focus:border-[#ec5b13]"
                         )}
+                        key={`${field.id}-${idx}`}
                         onClick={(e) => {
                           e.preventDefault();
-                          e.stopPropagation();
-                          if (isSelected) {
-                            setActiveBubble(null);
-                          } else {
-                            setActiveBubble({ id: field.id, label: field.label });
-                          }
+                          setActiveBubble(isSelected ? null : { id: field.id, label: field.label });
                         }}               
                       >
-                        <span className="w-full block text-center break-words">
+                        <span className="w-full text-center">
                           {field.label}
                         </span>
                       </button>
@@ -188,25 +159,29 @@ const SearchWidget = ({
               </div>
             </div> 
 
-            <div className="flex justify-center items-center px-4 py-2">
-                <button className={cn("text-white font-bold h-10 w-full rounded-xl",activeBubble ?"bg-orange-500":"bg-[#555555]")}
-                onClick={()=>{  
-                  if(activeBubble && activeBubble.label){
-                          setSearchTerm(activeBubble.label);                    
-                          applyFilters(activeBubble.label,[activeBubble.id]);
-                          setActiveBubble({id:"",label:""});
-                          setIsSearchFocused(false);
+            <div className="flex justify-center items-center px-4 py-2 border-t border-slate-800 bg-black/40">
+              <button
+                type="button"
+                className={cn("text-white font-bold h-10 w-full rounded-xl transition-all", activeBubble ? "bg-orange-500 hover:bg-orange-600" : "bg-[#555555]")}
+                onClick={() => {  
+                  if (activeBubble && activeBubble.label) {
+                    setSearchTerm(activeBubble.label);                    
+                    applyFilters(activeBubble.label, [activeBubble.id]);
+                    setActiveBubble({ id: "", label: "" });
+                    setIsSearchFocused(false);
                   }       
-                  else{
-                    applyFilters(searchTerm,selectedFields);
+                  else {
+                    applyFilters(searchTerm, selectedFields);
                     setIsSearchFocused(false);
                   }
-                        }}>Search
-                      </button>
-              </div>
+                }}
+              >
+                Search
+              </button>
+            </div>
           </div>
         </>
-        )}
+      )}
     </form>
   );
 };

@@ -40,8 +40,8 @@ function TagsAutosuggest({
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [show, setShow] = useState(false);
-  const [hovering, setHovering] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const isSelectingRef = useRef(false);
 
   const normalizedValue = value || "";
   const allTokens = useMemo(
@@ -227,14 +227,17 @@ function TagsAutosuggest({
           placeholder={committedTokens.length === 0 ? "Add field tags *" : "Add more"}
           className="h-8 min-w-24 flex-1 border-none px-1 shadow-none focus-visible:ring-0"
           onChange={(e) => handleInputChange(e.target.value)}
-          onFocus={() => setShow(suggestions.length > 0)}
+          onFocus={() => {
+            isSelectingRef.current = false;
+            setShow(suggestions.length > 0);
+          }}
           onBlur={() =>
             setTimeout(() => {
-              if (currentToken.trim()) {
-                commitCurrentToken();
+              if (!isSelectingRef.current) {
+                onChange(composeTagsValue(committedTokens));
+                setShow(false);
               }
-              if (!hovering) setShow(false);
-            }, 120)
+            }, 150)
           }
           onKeyDown={handleInputKeyDown}
         />
@@ -242,8 +245,6 @@ function TagsAutosuggest({
       {show && (
         <div
           className="absolute z-50 mt-2 max-h-60 w-full overflow-y-auto rounded-md border bg-white shadow-md"
-          onMouseEnter={() => setHovering(true)}
-          onMouseLeave={() => setHovering(false)}
           onMouseDown={(e) => e.preventDefault()}
           onTouchStart={(e) => e.preventDefault()}
         >
@@ -253,7 +254,10 @@ function TagsAutosuggest({
               <button
                 key={tag}
                 type="button"
-                onMouseDown={(e) => e.preventDefault()}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  isSelectingRef.current = true;
+                }}
                 onClick={() => addTag(tag)}
                 className="w-full px-3 py-2 text-left hover:bg-gray-50 flex flex-col gap-0.5"
               >

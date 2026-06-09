@@ -97,7 +97,7 @@ export default function EditOpportunityForm({
       type: opportunity.type || "",
       title: opportunity.title || "",
       description: opportunity.description || "",
-      tags: opportunity.tags?.join("|") || "",
+      tags: opportunity.tags?.length ? opportunity.tags.join("|") + "|" : "",
       location: opportunity.location || "",
       organiserInfo: opportunity.organiserInfo || "",
       applyLink: opportunity.applyLink || "",

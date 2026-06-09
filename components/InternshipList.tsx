@@ -132,7 +132,7 @@ const SearchWidget = ({
           Go
         </button>
       </div>
-      {isSearchFocused && filteredSuggestions.length > 0 && ( 
+      {isSearchFocused && ( 
         <> 
           <div 
           className="absolute top-[calc(100%+8px)] left-0 right-[-60] z-50 rounded-[16px] border border-slate-700 bg-[rgba(0,0,0,0.95)] max-h-[80vh] shadow-2xl overflow-hidden flex flex-col">
@@ -144,13 +144,19 @@ const SearchWidget = ({
               <div className="w-full flex justify-center">
                 <div className="grid grid-cols-3 lg:grid-cols-2 gap-2.5 p-4 max-h-[9.5rem] lg:max-h-[12rem] overflow-y-auto scrollbar-none items-stretch">
                   {internshipFields.map((field, idx) => {
+                    const isSelected = activeBubble?.id === field.id;
                     return (
                       <button
-                        className="w-full h-auto cursor-pointer px-3 py-2 flex items-center justify-center rounded-md border border-slate-700 text-sm lg:text-xs font-bold text-center text-black bg-slate-200 whitespace-wrap hover:border-2 hover:border-[#ec5b13] focus:border-2 focus:border-[#ec5b13]  transition-transform duration-100 ease-out active:scale-95"
+                        className={cn(
+                          "w-full h-auto cursor-pointer px-3 py-2 flex items-center justify-center rounded-md border text-sm lg:text-xs font-bold text-center whitespace-wrap transition-transform duration-100 ease-out active:scale-95",
+                          isSelected
+                            ? "border-[#ec5b13] bg-[#ec5b13] text-white"
+                            : "border-slate-700 bg-slate-200 text-black hover:border-2 hover:border-[#ec5b13] focus:border-2 focus:border-[#ec5b13]"
+                        )}
                         key={`${field.id}-${idx}`}
                         onClick={(e)=>{
                           e.preventDefault(); 
-                          setActiveBubble({id:field.id,label:field.label});
+                          setActiveBubble(isSelected ? null : {id:field.id,label:field.label});
                         }}               
                       >
                         <span className="w-full block text-center break-words">
@@ -282,7 +288,15 @@ export default function InternshipList() {
     const updatedTags=searchParams.get("tags")?searchParams.get("tags")!.split(","):[];
     const updatedFields=searchParams.get("fields")?searchParams.get("fields")!.split(","):[];
 
-    setSearchTerm(updatedSearch);
+    let initialSearchTermVal = updatedSearch;
+    if (!updatedSearch && updatedFields.length > 0) {
+      const fieldItem = internshipFields.find(f => f.id === updatedFields[0]);
+      if (fieldItem) {
+        initialSearchTermVal = fieldItem.label;
+      }
+    }
+
+    setSearchTerm(initialSearchTermVal);
     setAppliedSearchTerm(updatedSearch);
     setLocation(updatedLocation);
     setAppliedLocation(updatedLocation);
@@ -302,11 +316,11 @@ export default function InternshipList() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const [showSecondaryWidgets, setShowSecondaryWidgets] = useState(false);
-  const [showAllFields, setShowAllFields] = useState(false);
+  // const [showAllFields, setShowAllFields] = useState(false);
 
-  const fieldsList = useMemo(() => {
-    return internshipFields.map((f) => ({ value: f.id, label: f.label }));
-  }, []);
+  // const fieldsList = useMemo(() => {
+  //   return internshipFields.map((f) => ({ value: f.id, label: f.label }));
+  // }, []);
 
   const normalizedLocation = useMemo(
     () => normalizeLocationValue(location),
@@ -419,8 +433,13 @@ export default function InternshipList() {
       const nextSearch = (overrideSearch ?? searchTerm).trim();
 
       const finalFields=specificFields!==undefined?specificFields:selectedFields;
+      
+      const isFieldLabel = internshipFields.some(
+        (f) => f.label.toLowerCase() === nextSearch.toLowerCase() && finalFields.includes(f.id)
+      );
+
       const newParams=new URLSearchParams();
-      if(nextSearch){
+      if(nextSearch && !isFieldLabel){
         newParams.set("search",nextSearch);
       }
       if(location.trim()){
@@ -464,7 +483,7 @@ export default function InternshipList() {
       if (overrideSearch !== undefined) {
         setSearchTerm(overrideSearch);
       }
-      setAppliedSearchTerm(nextSearch);
+      setAppliedSearchTerm(isFieldLabel ? "" : nextSearch);
       setAppliedLocation(normalizedLocation);
       setAppliedTypes(selectedTypes);
       setAppliedStipendFilter(stipendFilter);
@@ -561,13 +580,13 @@ export default function InternshipList() {
     );
   };
 
-  const toggleField = (value: string) => {
-    setSelectedFields((prev) =>
-      prev.includes(value)
-        ? prev.filter((item) => item !== value)
-        : [...prev, value]
-    );
-  };
+  // const toggleField = (value: string) => {
+  //   setSelectedFields((prev) =>
+  //     prev.includes(value)
+  //       ? prev.filter((item) => item !== value)
+  //       : [...prev, value]
+  //   );
+  // };
 
   // const toggleTag = (value: string) => {
   //   setSelectedTags((prev) =>
@@ -1105,6 +1124,7 @@ export default function InternshipList() {
                     </div>
 
                     {/* Fields Filter */}
+                    {/* 
                     <div>
                       <label className="mb-2 block text-[10px] font-extrabold tracking-wider text-slate-700 uppercase">
                         Fields
@@ -1148,6 +1168,7 @@ export default function InternshipList() {
                         )}
                       </div>
                     </div>
+                    */}
 
                     <Button
                       onClick={() => applyFilters()}
@@ -1247,13 +1268,6 @@ export default function InternshipList() {
               </>
             )}
 
-            {lastInteracted && (
-              <SimilarInternships
-                currentId={lastInteracted.id}
-                field={lastInteracted.field}
-                title={lastInteracted.title}
-              />
-            )}
           </main>
 
           <aside className="col-span-3">
@@ -1263,6 +1277,14 @@ export default function InternshipList() {
                 <>
                   <CalendarWidget kind="internship" />
                   <TaskWidget />
+                   {lastInteracted && (
+                    <SimilarInternships
+                      currentId={lastInteracted.id}
+                      field={selectedFields.length > 0 ? selectedFields[0] : lastInteracted.field}
+                      title={selectedFields.length > 0 ? "" : lastInteracted.title}
+                      layout="vertical"
+                    />
+                  )}
                 </>
               ) : (
                 <>
@@ -1319,7 +1341,7 @@ export default function InternshipList() {
             <>
               {allInternships.length > 0 ? (
                 <>
-                  <div className="space-y-3 sm:space-y-4">
+                  <div className="space-y-3 sm:space-y-4 max-h-[50vh] sm:max-h-[60vh] overflow-y-auto scrollbar-thin border border-slate-100 rounded-xl p-2 bg-slate-50/50">
                     {allInternships.map((internship) => (
                       <div key={internship.id}>
                         <InternshipPost
@@ -1328,24 +1350,24 @@ export default function InternshipList() {
                         />
                       </div>
                     ))}
-                  </div>
 
-                  {/* Load more trigger and indicator for mobile */}
-                  <div
-                    ref={loadMoreMobileRef}
-                    className="flex justify-center py-8"
-                  >
-                    {isFetchingNextPage && (
-                      <div className="flex items-center space-x-2 text-gray-600">
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        <span>Loading more internships...</span>
-                      </div>
-                    )}
-                    {!hasNextPage && allInternships.length > 0 && (
-                      <div className="text-sm text-gray-500">
-                        You&apos;ve reached the end of internships
-                      </div>
-                    )}
+                    {/* Load more trigger and indicator for mobile */}
+                    <div
+                      ref={loadMoreMobileRef}
+                      className="flex justify-center py-6 animate-in fade-in"
+                    >
+                      {isFetchingNextPage && (
+                        <div className="flex items-center space-x-2 text-gray-600">
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                          <span>Loading more...</span>
+                        </div>
+                      )}
+                      {!hasNextPage && allInternships.length > 0 && (
+                        <div className="text-xs text-gray-400 font-semibold tracking-tight">
+                          You&apos;ve reached the end
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </>
               ) : (
@@ -1374,8 +1396,9 @@ export default function InternshipList() {
           {lastInteracted && (
             <SimilarInternships
               currentId={lastInteracted.id}
-              field={lastInteracted.field}
-              title={lastInteracted.title}
+              field={selectedFields.length > 0 ? selectedFields[0] : lastInteracted.field}
+              title={selectedFields.length > 0 ? "" : lastInteracted.title}
+              layout="vertical"
             />
           )}
         </div>

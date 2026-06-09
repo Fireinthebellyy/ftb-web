@@ -70,7 +70,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-/*
 const FIELD_KEYWORDS: Record<string, string[]> = {
   generalist: ["generalist", "strategy", "consulting", "operations", "business", "associate", "management", "founder", "hustle", "chief of staff", "analyst"],
   tech: ["develop", "software", "engineer", "tech", "frontend", "backend", "fullstack", "programmer", "coding"],
@@ -87,7 +86,6 @@ const FIELD_KEYWORDS: Record<string, string[]> = {
   operations_supply_chain: ["operations", "supply chain", "logistic", "procurement", "inventory", "coordinator", "ops"],
   research_policy: ["research", "policy", "fellow", "analyst", "academic", "writing", "governance"],
 };
-*/
 
 export async function GET(req: NextRequest) {
   try {
@@ -210,8 +208,6 @@ export async function GET(req: NextRequest) {
     }
 
     if (rawFields.length > 0) {
-      conditions.push(inArray(internships.field, rawFields));
-      /*
       const fieldConditions = rawFields.map((fieldVal) => {
         const keywords = FIELD_KEYWORDS[fieldVal];
         if (keywords && keywords.length > 0) {
@@ -232,7 +228,6 @@ export async function GET(req: NextRequest) {
       conditions.push(
         fieldConditions.length === 1 ? fieldConditions[0] : or(...fieldConditions)
       );
-      */
     }
 
     if (rawLocations.length > 0) {

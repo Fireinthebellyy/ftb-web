@@ -49,7 +49,7 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
                 })
               }
             >
-              <span>Apply Forms</span>
+              <span>Apply Directly</span>
             </Link>
           </Button>
         )}

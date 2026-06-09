@@ -152,7 +152,7 @@ export function useOpportunitySubmit({
         endDate: toUtcMidnightIso(dateRange?.to),
         tags:
           data.tags
-            ?.split(/[,|]/)
+            ?.split("|")
             .map((t) => t.trim())
             .filter(Boolean) || [],
         images: opportunity?.id

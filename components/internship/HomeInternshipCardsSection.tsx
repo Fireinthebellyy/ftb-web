@@ -104,7 +104,14 @@ export default function HomeInternshipCardsSection({
   });
 
   const internships = data?.internships ?? [];
-  const featuredInternships = internships.filter((i: Internship) => i.is_featured_home);
+  const featuredInternships = internships.filter((i: Internship) => {
+    const expiryDate = i.trending_featured_expiry ? new Date(i.trending_featured_expiry) : null;
+    if (expiryDate) {
+      expiryDate.setHours(23, 59, 59, 999);
+    }
+    const isExpired = expiryDate ? new Date() > expiryDate : false;
+    return i.is_featured_home && !isExpired;
+  });
   const displayInternships = featuredInternships.length > 0 ? featuredInternships : internships;
 
   return (

@@ -87,6 +87,13 @@ export const AdminControlsModal: React.FC<AdminControlsModalProps> = ({
     }
   }, [internship, open]);
 
+  const handleResetSettings = () => {
+    setIsTrending(false);
+    setIsFeatured(false);
+    setTrendingFeaturedExpiry(null);
+    toast.info("Settings reset. Click Save Changes to apply.");
+  };
+
   const handleSaveChanges = async () => {
     if (!internship?.id) return;
 
@@ -225,13 +232,26 @@ export const AdminControlsModal: React.FC<AdminControlsModalProps> = ({
                 </div>
 
                 <div className="flex flex-col gap-2 p-4 bg-slate-50 rounded-lg">
-                  <div>
-                    <Label className="text-base font-semibold">
-                      Trending/Featured Expiry Date
-                    </Label>
-                    <p className="text-sm text-slate-500">
-                      Date after which this internship is automatically removed from trending and featured sections.
-                    </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-base font-semibold">
+                        Trending/Featured Expiry Date
+                      </Label>
+                      <p className="text-sm text-slate-500">
+                        Date after which this internship is automatically removed from trending and featured sections.
+                      </p>
+                    </div>
+                    {(isTrending || isFeatured || trendingFeaturedExpiry) && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleResetSettings}
+                        className="text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700 font-bold shrink-0 ml-2"
+                      >
+                        Reset Settings
+                      </Button>
+                    )}
                   </div>
                   <Input
                     type="date"

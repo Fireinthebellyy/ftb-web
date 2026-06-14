@@ -5,6 +5,49 @@ import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+async function getFreshInternship(id: string) {
+  const internship = await db
+    .select({
+      id: internships.id,
+      title: internships.title,
+      description: internships.description,
+      type: internships.type,
+      timing: internships.timing,
+      link: internships.link,
+      tags: internships.tags,
+      location: internships.location,
+      deadline: internships.deadline,
+      stipend: internships.stipend,
+      hiringOrganization: internships.hiringOrganization,
+      hiringManager: internships.hiringManager,
+      hiringManagerEmail: internships.hiringManagerEmail,
+      hiringManagerLinkedin: internships.hiringManagerLinkedin,
+      experience: internships.experience,
+      duration: internships.duration,
+      field: internships.field,
+      createdAt: internships.createdAt,
+      updatedAt: internships.updatedAt,
+      isVerified: internships.isVerified,
+      isFlagged: internships.isFlagged,
+      isActive: internships.isActive,
+      userId: internships.userId,
+      user: {
+        id: user.id,
+        name: user.name,
+        image: user.image,
+        role: user.role,
+      },
+      is_trending: sql<boolean>`CASE WHEN ${internships.trendingFeaturedExpiry} IS NOT NULL AND ${internships.trendingFeaturedExpiry} < CURRENT_DATE THEN FALSE ELSE ${internships.is_trending} END`.as("is_trending"),
+      is_featured_home: sql<boolean>`CASE WHEN ${internships.trendingFeaturedExpiry} IS NOT NULL AND ${internships.trendingFeaturedExpiry} < CURRENT_DATE THEN FALSE ELSE ${internships.is_featured_home} END`.as("is_featured_home"),
+      trending_featured_expiry: internships.trendingFeaturedExpiry,
+    })
+    .from(internships)
+    .leftJoin(user, eq(internships.userId, user.id))
+    .where(and(eq(internships.id, id), isNull(internships.deletedAt)))
+    .limit(1);
+  return internship[0] || null;
+}
+
 const internshipUpdateSchema = z.object({
   title: z.string().min(1, "Title is required").optional(),
   description: z.string().optional().nullable(),
@@ -61,47 +104,9 @@ export async function GET(
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
-    const internship = await db
-      .select({
-        id: internships.id,
-        title: internships.title,
-        description: internships.description,
-        type: internships.type,
-        timing: internships.timing,
-        link: internships.link,
-        tags: internships.tags,
-        location: internships.location,
-        deadline: internships.deadline,
-        stipend: internships.stipend,
-        hiringOrganization: internships.hiringOrganization,
-        hiringManager: internships.hiringManager,
-        hiringManagerEmail: internships.hiringManagerEmail,
-        hiringManagerLinkedin: internships.hiringManagerLinkedin,
-        experience: internships.experience,
-        duration: internships.duration,
-        field: internships.field,
-        createdAt: internships.createdAt,
-        updatedAt: internships.updatedAt,
-        isVerified: internships.isVerified,
-        isFlagged: internships.isFlagged,
-        isActive: internships.isActive,
-        userId: internships.userId,
-        user: {
-          id: user.id,
-          name: user.name,
-          image: user.image,
-          role: user.role,
-        },
-        is_trending: sql<boolean>`CASE WHEN ${internships.trendingFeaturedExpiry} IS NOT NULL AND ${internships.trendingFeaturedExpiry} < CURRENT_DATE THEN FALSE ELSE ${internships.is_trending} END`.as("is_trending"),
-        is_featured_home: sql<boolean>`CASE WHEN ${internships.trendingFeaturedExpiry} IS NOT NULL AND ${internships.trendingFeaturedExpiry} < CURRENT_DATE THEN FALSE ELSE ${internships.is_featured_home} END`.as("is_featured_home"),
-        trending_featured_expiry: internships.trendingFeaturedExpiry,
-      })
-      .from(internships)
-      .leftJoin(user, eq(internships.userId, user.id))
-      .where(and(eq(internships.id, id), isNull(internships.deletedAt)))
-      .limit(1);
+    const internship = await getFreshInternship(id);
 
-    if (internship.length === 0) {
+    if (!internship) {
       return NextResponse.json(
         { error: "Internship not found" },
         { status: 404 }
@@ -110,7 +115,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      internship: internship[0],
+      internship,
     });
   } catch (error) {
     console.error("Error fetching internship:", error);
@@ -197,15 +202,16 @@ export async function PATCH(
       }
     }
 
-    const updatedInternship = await db
+    await db
       .update(internships)
       .set(updates)
-      .where(eq(internships.id, id))
-      .returning();
+      .where(eq(internships.id, id));
+
+    const updated = await getFreshInternship(id);
 
     return NextResponse.json({
       success: true,
-      internship: updatedInternship[0],
+      internship: updated,
     });
   } catch (error) {
     console.error("Error updating internship:", error);
@@ -346,15 +352,16 @@ export async function PUT(
       updateData.isActive = validatedData.isActive;
     }
 
-    const updatedInternship = await db
+    await db
       .update(internships)
       .set(updateData)
-      .where(eq(internships.id, id))
-      .returning();
+      .where(eq(internships.id, id));
+
+    const updated = await getFreshInternship(id);
 
     return NextResponse.json({
       success: true,
-      internship: updatedInternship[0],
+      internship: updated,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

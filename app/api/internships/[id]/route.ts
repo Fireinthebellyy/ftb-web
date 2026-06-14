@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { internships, user } from "@/lib/schema";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -41,6 +41,7 @@ const internshipUpdateSchema = z.object({
   field: z.string().optional().nullable(),
   isVerified: z.boolean().optional(),
   isActive: z.boolean().optional(),
+  trendingFeaturedExpiry: z.string().optional().nullable(),
 });
 
 export async function GET(
@@ -91,8 +92,9 @@ export async function GET(
           image: user.image,
           role: user.role,
         },
-        is_trending: internships.is_trending,
-        is_featured_home: internships.is_featured_home,
+        is_trending: sql<boolean>`CASE WHEN ${internships.trendingFeaturedExpiry} IS NOT NULL AND ${internships.trendingFeaturedExpiry} < CURRENT_DATE THEN FALSE ELSE ${internships.is_trending} END`.as("is_trending"),
+        is_featured_home: sql<boolean>`CASE WHEN ${internships.trendingFeaturedExpiry} IS NOT NULL AND ${internships.trendingFeaturedExpiry} < CURRENT_DATE THEN FALSE ELSE ${internships.is_featured_home} END`.as("is_featured_home"),
+        trending_featured_expiry: internships.trendingFeaturedExpiry,
       })
       .from(internships)
       .leftJoin(user, eq(internships.userId, user.id))
@@ -190,6 +192,9 @@ export async function PATCH(
       if (body.isActive !== undefined) updates.isActive = body.isActive;
       if (body.isTrending !== undefined) updates.is_trending = body.isTrending;
       if (body.isFeaturedHome !== undefined) updates.is_featured_home = body.isFeaturedHome;
+      if (body.trendingFeaturedExpiry !== undefined) {
+        updates.trendingFeaturedExpiry = body.trendingFeaturedExpiry;
+      }
     }
 
     const updatedInternship = await db
@@ -319,6 +324,16 @@ export async function PUT(
         }
       } else {
         updateData.deadline = null;
+      }
+    }
+    if (validatedData.trendingFeaturedExpiry !== undefined) {
+      if (validatedData.trendingFeaturedExpiry) {
+        const expiry = new Date(validatedData.trendingFeaturedExpiry);
+        if (!Number.isNaN(expiry.getTime())) {
+          updateData.trendingFeaturedExpiry = expiry.toISOString().split("T")[0];
+        }
+      } else {
+        updateData.trendingFeaturedExpiry = null;
       }
     }
     if (validatedData.stipend !== undefined) {

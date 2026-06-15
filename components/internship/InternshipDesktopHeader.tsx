@@ -12,6 +12,7 @@ import {
   Pencil,
   Loader2,
   Mail,
+  Bell,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ interface InternshipDesktopHeaderProps {
   isBookmarked: boolean;
   handleBookmarkClick: () => void;
   handleCalendarClick: () => void;
+  isCalendarAnimating?: boolean;
   onEditClick?: () => void;
   onAdminClick?: () => void;
   isAdminLoading?: boolean;
@@ -41,6 +43,7 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
   isBookmarked,
   handleBookmarkClick,
   handleCalendarClick,
+  isCalendarAnimating,
   onEditClick,
   onAdminClick,
   isAdminLoading,
@@ -158,15 +161,23 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
           <Button
             variant="outline"
             onClick={handleCalendarClick}
-            className="w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50 transition-all focus:ring-0"
+            className="relative overflow-hidden w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50 transition-all focus:ring-0"
           >
-            <Image
-              src="/images/google-calendar.webp"
-              alt="Add to Google Calendar"
-              width={20}
-              height={20}
-              className="w-5 h-5 object-contain"
-            />
+            {isCalendarAnimating && (
+              <div className="absolute inset-0 bg-white dark:bg-zinc-950 flex items-center justify-center animate-slide-in-bell z-10">
+                <Bell className="w-5 h-5 text-[#ec5b13] animate-ring-bell" />
+              </div>
+            )}
+            <div className="relative w-5 h-5 flex items-center justify-center shrink-0">
+              <Image
+                src="/images/google-calendar.webp"
+                alt="Add to Google Calendar"
+                width={20}
+                height={20}
+                className="absolute inset-0 h-5 w-5 object-contain animate-swap-calendar"
+              />
+              <Bell className="absolute inset-0 h-5 w-5 text-slate-500 animate-swap-bell" />
+            </div>
           </Button>
           {hasApply && (
             <Button asChild className="h-12 px-5 rounded-xl bg-[#ec5b13] hover:bg-[#d44d0c] text-white font-bold border-none shadow-none transition-all active:scale-95 duration-200 flex items-center gap-2">

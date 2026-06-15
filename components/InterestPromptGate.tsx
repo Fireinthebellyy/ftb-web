@@ -20,6 +20,7 @@ import {
   type InterestPromptBgVariant,
 } from "@/lib/interest-prompt";
 import { useSession, useInvalidateSession } from "@/hooks/use-session";
+import posthog from "posthog-js";
 
 type InterestOption = {
   id: InterestAreaId;
@@ -76,7 +77,10 @@ export default function InterestPromptGate() {
   useEffect(() => {
     if (!showGate) return;
     setBgVariant(readStoredBgVariant());
-  }, [showGate]);
+    posthog.capture("interest_prompt_shown", {
+      pathname,
+    });
+  }, [showGate, pathname]);
 
   useEffect(() => {
     if (!showGate) return;
@@ -87,11 +91,19 @@ export default function InterestPromptGate() {
   }, [showGate]);
 
   const toggle = (id: InterestAreaId) => {
+    const wasSelected = selected.has(id);
+    
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
+      if (wasSelected) next.delete(id);
       else next.add(id);
       return next;
+    });
+    
+    posthog.capture("interest_prompt_option_toggled", {
+      pathname,
+      interest_id: id,
+      action: wasSelected ? "deselected" : "selected",
     });
   };
 
@@ -108,12 +120,21 @@ export default function InterestPromptGate() {
       }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (_, areas) => {
       queryClient.invalidateQueries({ queryKey: ["interest-prompt"] });
       invalidateSession();
+      
+      posthog.capture("interest_prompt_submitted", {
+        pathname,
+        interests_selected: areas,
+      });
     },
     onError: (e: Error) => {
       toast.error(e.message || "Could not save your interests");
+      posthog.capture("interest_prompt_submit_error", {
+        pathname,
+        error_category: "save_failed",
+      });
     },
   });
 

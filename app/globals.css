@@ -256,3 +256,85 @@ body,
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+@keyframes slide-in-bell {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes ring-bell {
+  0%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+  15% {
+    transform: rotate(15deg) scale(1.1);
+  }
+  30% {
+    transform: rotate(-15deg) scale(1.1);
+  }
+  45% {
+    transform: rotate(10deg) scale(1.1);
+  }
+  60% {
+    transform: rotate(-10deg) scale(1.1);
+  }
+  75% {
+    transform: rotate(4deg) scale(1.05);
+  }
+  85% {
+    transform: rotate(-4deg) scale(1.05);
+  }
+}
+
+.animate-slide-in-bell {
+  animation: slide-in-bell 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-ring-bell {
+  animation: ring-bell 0.6s ease-in-out infinite;
+}
+
+@keyframes swap-calendar {
+  0%, 45%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50%, 95% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes swap-bell {
+  0%, 45%, 100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50%, 95% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-swap-calendar {
+  animation: swap-calendar 6s ease-in-out infinite;
+}
+
+.animate-swap-bell {
+  animation: swap-bell 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-ring-bell,
+  .animate-swap-calendar,
+  .animate-swap-bell {
+    animation: none !important;
+  }
+}
+
+
+

@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Share2, Flag, Loader2, Settings, Bookmark, Pencil } from "lucide-react";
+import { ArrowLeft, Share2, Flag, Loader2, Settings, Bookmark, Pencil, Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import posthog from "posthog-js";
@@ -42,6 +42,7 @@ export default function InternshipDetailPage() {
   const [isFlagging, setIsFlagging] = useState(false);
   const [adminModalOpen, setAdminModalOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isCalendarAnimating, setIsCalendarAnimating] = useState(false);
   const { data: session } = useSession();
   const { addToTracker, getStatus, removeFromTracker } = useTracker();
 
@@ -187,7 +188,14 @@ export default function InternshipDetailPage() {
   };
 
   const handleCalendarClick = () => {
-    if (!internship) return;
+    if (!internship || isCalendarAnimating) return;
+    
+    // Open a blank window synchronously to prevent browser popup blockers
+    const newWindow = window.open("about:blank", "_blank", "noopener,noreferrer");
+    
+    setIsCalendarAnimating(true);
+    toast.success("adding to calendar, keep hustlemaxxing!");
+
     const date = internship.deadline
       ? new Date(internship.deadline)
       : new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -195,7 +203,13 @@ export default function InternshipDetailPage() {
     const dateEnd = new Date(date.getTime() + 30 * 60 * 1000);
     const formattedEnd = dateEnd.toISOString().replace(/[-:]|\.\d{3}/g, "");
     const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Apply to: ${internship.title}`)}&dates=${formatted}/${formattedEnd}&details=${encodeURIComponent(`Company: ${internship.hiringOrganization || "N/A"}\n\nInternship Link: ${shareUrl}`)}`;
-    window.open(calendarUrl, "_blank");
+    
+    setTimeout(() => {
+      if (newWindow) {
+        newWindow.location.href = calendarUrl;
+      }
+      setIsCalendarAnimating(false);
+    }, 1000);
   };
 
   const handleOpenChat = () => {
@@ -333,19 +347,32 @@ export default function InternshipDetailPage() {
             <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-current")} />
             <span>{isBookmarked ? "Saved to Tracker" : "Save to Tracker"}</span>
           </button>
-          <button
-            className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition-all hover:text-[#ec5b13] active:scale-95 text-[13px] font-bold"
-            onClick={handleCalendarClick}
-          >
-            <Image
-              src="/images/google-calendar.webp"
-              alt="Add to Google Calendar"
-              width={16}
-              height={16}
-              className="h-4 w-4 object-contain"
-            />
-            <span>Add to Calendar</span>
-          </button>
+          <div className="relative">
+            <button
+              className="relative overflow-hidden w-full flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition-all hover:text-[#ec5b13] active:scale-95 text-[13px] font-bold"
+              onClick={handleCalendarClick}
+            >
+              {isCalendarAnimating && (
+                <div className="absolute inset-0 bg-white dark:bg-zinc-950 flex items-center justify-center animate-slide-in-bell z-20">
+                  <Bell className="w-5 h-5 text-[#ec5b13] animate-ring-bell" />
+                </div>
+              )}
+              <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
+                <Image
+                  src="/images/google-calendar.webp"
+                  alt="Add to Google Calendar"
+                  width={16}
+                  height={16}
+                  className="absolute inset-0 h-4 w-4 object-contain animate-swap-calendar"
+                />
+                <Bell className="absolute inset-0 h-4 w-4 text-slate-500 animate-swap-bell" />
+              </div>
+              <span>Add to Calendar</span>
+            </button>
+            <div className="absolute -top-1.5 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#ec5b13] text-white border-2 border-white shadow-md z-30 pointer-events-none">
+              <Bell className="h-2.5 w-2.5" strokeWidth={3} />
+            </div>
+          </div>
         </div>
 
         <div className="-mt-2 px-5 pb-2">
@@ -395,6 +422,7 @@ export default function InternshipDetailPage() {
             isBookmarked={isBookmarked}
             handleBookmarkClick={handleBookmarkClick}
             handleCalendarClick={handleCalendarClick}
+            isCalendarAnimating={isCalendarAnimating}
             onEditClick={handleOpenEdit}
             onAdminClick={() => setAdminModalOpen(true)}
           />

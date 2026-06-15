@@ -189,6 +189,10 @@ export default function InternshipDetailPage() {
 
   const handleCalendarClick = () => {
     if (!internship || isCalendarAnimating) return;
+    
+    // Open a blank window synchronously to prevent browser popup blockers
+    const newWindow = window.open("about:blank", "_blank", "noopener,noreferrer");
+    
     setIsCalendarAnimating(true);
     toast.success("adding to calendar, keep hustlemaxxing!");
 
@@ -201,7 +205,9 @@ export default function InternshipDetailPage() {
     const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Apply to: ${internship.title}`)}&dates=${formatted}/${formattedEnd}&details=${encodeURIComponent(`Company: ${internship.hiringOrganization || "N/A"}\n\nInternship Link: ${shareUrl}`)}`;
     
     setTimeout(() => {
-      window.open(calendarUrl, "_blank");
+      if (newWindow) {
+        newWindow.location.href = calendarUrl;
+      }
       setIsCalendarAnimating(false);
     }, 1000);
   };

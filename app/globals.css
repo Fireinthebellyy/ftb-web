@@ -328,4 +328,13 @@ body,
   animation: swap-bell 6s ease-in-out infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .animate-ring-bell,
+  .animate-swap-calendar,
+  .animate-swap-bell {
+    animation: none !important;
+  }
+}
+
+
 

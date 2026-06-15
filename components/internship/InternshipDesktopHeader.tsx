@@ -162,6 +162,7 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
             <button
               onClick={handleCalendarClick}
               className="relative overflow-hidden w-12 h-12 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50 transition-all focus:ring-0 cursor-pointer"
+              aria-label="Add to calendar"
             >
               {isCalendarAnimating && (
                 <div className="absolute inset-0 bg-white dark:bg-zinc-950 flex items-center justify-center animate-slide-in-bell z-20">

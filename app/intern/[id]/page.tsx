@@ -48,7 +48,7 @@ export default function InternshipDetailPage() {
   const isBookmarked = !!getStatus(id || "", "internship");
 
   const isOwner = session?.user && session.user.id === internship?.user?.id;
-  const isModerator = session?.user && ((session.user as any).role === "admin" || (session.user as any).role === "editor");
+  const isModerator = session?.user && (session.user.role === "admin" || session.user.role === "editor");
 
   const fetchData = async (signal?: AbortSignal) => {
     if (!id) return;

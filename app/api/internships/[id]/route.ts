@@ -84,7 +84,12 @@ const internshipUpdateSchema = z.object({
   field: z.string().optional().nullable(),
   isVerified: z.boolean().optional(),
   isActive: z.boolean().optional(),
-  trendingFeaturedExpiry: z.string().optional().nullable(),
+  trendingFeaturedExpiry: z.string().date("Invalid date format").optional().nullable(),
+  display_index: z.number().optional().nullable(),
+  trending_index: z.number().optional().nullable(),
+  featured_home_index: z.number().optional().nullable(),
+  isTrending: z.boolean().optional(),
+  isFeaturedHome: z.boolean().optional(),
 });
 
 export async function GET(
@@ -177,35 +182,37 @@ export async function PATCH(
     if (Object.keys(body).length === 0) {
       updates.isActive = !internship.isActive;
     } else {
-      if (body.display_index !== undefined) {
-        updates.display_index = body.display_index;
-        if (body.trending_index === undefined) {
-          updates.trending_index = body.display_index;
+      const validatedData = internshipUpdateSchema.parse(body);
+
+      if (validatedData.display_index !== undefined) {
+        updates.display_index = validatedData.display_index;
+        if (validatedData.trending_index === undefined) {
+          updates.trending_index = validatedData.display_index;
         }
       }
 
-      if (body.trending_index !== undefined) {
-        updates.trending_index = body.trending_index;
-        if (body.display_index === undefined) {
-          updates.display_index = body.trending_index;
+      if (validatedData.trending_index !== undefined) {
+        updates.trending_index = validatedData.trending_index;
+        if (validatedData.display_index === undefined) {
+          updates.display_index = validatedData.trending_index;
         }
       }
 
-      if (body.featured_home_index !== undefined) {
-        updates.featured_home_index = body.featured_home_index;
+      if (validatedData.featured_home_index !== undefined) {
+        updates.featured_home_index = validatedData.featured_home_index;
       }
-      if (body.isActive !== undefined) updates.isActive = body.isActive;
-      if (body.isTrending !== undefined) updates.is_trending = body.isTrending;
-      if (body.isFeaturedHome !== undefined) updates.is_featured_home = body.isFeaturedHome;
-      if (body.trendingFeaturedExpiry !== undefined) {
-        updates.trendingFeaturedExpiry = body.trendingFeaturedExpiry;
+      if (validatedData.isActive !== undefined) updates.isActive = validatedData.isActive;
+      if (validatedData.isTrending !== undefined) updates.is_trending = validatedData.isTrending;
+      if (validatedData.isFeaturedHome !== undefined) updates.is_featured_home = validatedData.isFeaturedHome;
+      if (validatedData.trendingFeaturedExpiry !== undefined) {
+        updates.trendingFeaturedExpiry = validatedData.trendingFeaturedExpiry;
       }
     }
 
     await db
       .update(internships)
       .set(updates)
-      .where(eq(internships.id, id));
+      .where(and(eq(internships.id, id), isNull(internships.deletedAt)));
 
     const updated = await getFreshInternship(id);
 
@@ -214,6 +221,9 @@ export async function PATCH(
       internship: updated,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: error.errors }, { status: 400 });
+    }
     console.error("Error updating internship:", error);
     return NextResponse.json(
       { error: "Failed to update internship" },
@@ -355,7 +365,7 @@ export async function PUT(
     await db
       .update(internships)
       .set(updateData)
-      .where(eq(internships.id, id));
+      .where(and(eq(internships.id, id), isNull(internships.deletedAt)));
 
     const updated = await getFreshInternship(id);
 

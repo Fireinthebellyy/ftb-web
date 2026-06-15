@@ -313,6 +313,13 @@ export async function GET(req: NextRequest) {
       .leftJoin(user, eq(internships.userId, user.id))
       .where(filters)
       .orderBy(
+          sql`CASE 
+            WHEN (
+              (${internships.is_trending} = TRUE OR ${internships.is_featured_home} = TRUE)
+              AND (${internships.trendingFeaturedExpiry} IS NULL OR ${internships.trendingFeaturedExpiry} >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END`,
           sql`COALESCE(CASE WHEN ${internships.trendingFeaturedExpiry} IS NOT NULL AND ${internships.trendingFeaturedExpiry} < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999)`,
           sql`CASE 
             WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 

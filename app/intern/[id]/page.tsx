@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Share2, Flag, Loader2, Settings, Bookmark } from "lucide-react";
+import { ArrowLeft, Share2, Flag, Loader2, Settings, Bookmark, Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import posthog from "posthog-js";
@@ -46,6 +46,9 @@ export default function InternshipDetailPage() {
   const { addToTracker, getStatus, removeFromTracker } = useTracker();
 
   const isBookmarked = !!getStatus(id || "", "internship");
+
+  const isOwner = session?.user && session.user.id === internship?.user?.id;
+  const isModerator = session?.user && (session.user.role === "admin" || session.user.role === "editor");
 
   const fetchData = async (signal?: AbortSignal) => {
     if (!id) return;
@@ -273,13 +276,22 @@ export default function InternshipDetailPage() {
             Internship Detail
           </h1>
           <div className="flex items-center justify-end gap-2">
-            {session?.user && ((session.user as any).role === "admin" || (session.user as any).role === "editor") && (
+            {isModerator && (
               <button
                 onClick={() => setAdminModalOpen(true)}
                 className="flex w-8 justify-end p-1 text-slate-800 transition-all active:scale-95 hover:text-[#ec5b13]"
                 aria-label="Admin controls"
               >
                 <Settings className="h-5 w-5" />
+              </button>
+            )}
+            {(isOwner || isModerator) && (
+              <button
+                onClick={handleOpenEdit}
+                className="flex w-8 justify-end p-1 text-slate-800 transition-all active:scale-95 hover:text-[#ec5b13]"
+                aria-label="Edit internship"
+              >
+                <Pencil className="h-5 w-5" />
               </button>
             )}
             <button

@@ -1,9 +1,52 @@
 import { db } from "@/lib/db";
 import { internships, user } from "@/lib/schema";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+
+async function getFreshInternship(id: string) {
+  const internship = await db
+    .select({
+      id: internships.id,
+      title: internships.title,
+      description: internships.description,
+      type: internships.type,
+      timing: internships.timing,
+      link: internships.link,
+      tags: internships.tags,
+      location: internships.location,
+      deadline: internships.deadline,
+      stipend: internships.stipend,
+      hiringOrganization: internships.hiringOrganization,
+      hiringManager: internships.hiringManager,
+      hiringManagerEmail: internships.hiringManagerEmail,
+      hiringManagerLinkedin: internships.hiringManagerLinkedin,
+      experience: internships.experience,
+      duration: internships.duration,
+      field: internships.field,
+      createdAt: internships.createdAt,
+      updatedAt: internships.updatedAt,
+      isVerified: internships.isVerified,
+      isFlagged: internships.isFlagged,
+      isActive: internships.isActive,
+      userId: internships.userId,
+      user: {
+        id: user.id,
+        name: user.name,
+        image: user.image,
+        role: user.role,
+      },
+      is_trending: sql<boolean>`CASE WHEN ${internships.trendingFeaturedExpiry} IS NOT NULL AND ${internships.trendingFeaturedExpiry} < CURRENT_DATE THEN FALSE ELSE ${internships.is_trending} END`.as("is_trending"),
+      is_featured_home: sql<boolean>`CASE WHEN ${internships.trendingFeaturedExpiry} IS NOT NULL AND ${internships.trendingFeaturedExpiry} < CURRENT_DATE THEN FALSE ELSE ${internships.is_featured_home} END`.as("is_featured_home"),
+      trending_featured_expiry: internships.trendingFeaturedExpiry,
+    })
+    .from(internships)
+    .leftJoin(user, eq(internships.userId, user.id))
+    .where(and(eq(internships.id, id), isNull(internships.deletedAt)))
+    .limit(1);
+  return internship[0] || null;
+}
 
 const internshipUpdateSchema = z.object({
   title: z.string().min(1, "Title is required").optional(),
@@ -41,6 +84,12 @@ const internshipUpdateSchema = z.object({
   field: z.string().optional().nullable(),
   isVerified: z.boolean().optional(),
   isActive: z.boolean().optional(),
+  trendingFeaturedExpiry: z.string().date("Invalid date format").optional().nullable(),
+  display_index: z.number().optional().nullable(),
+  trending_index: z.number().optional().nullable(),
+  featured_home_index: z.number().optional().nullable(),
+  isTrending: z.boolean().optional(),
+  isFeaturedHome: z.boolean().optional(),
 });
 
 export async function GET(
@@ -60,46 +109,9 @@ export async function GET(
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
-    const internship = await db
-      .select({
-        id: internships.id,
-        title: internships.title,
-        description: internships.description,
-        type: internships.type,
-        timing: internships.timing,
-        link: internships.link,
-        tags: internships.tags,
-        location: internships.location,
-        deadline: internships.deadline,
-        stipend: internships.stipend,
-        hiringOrganization: internships.hiringOrganization,
-        hiringManager: internships.hiringManager,
-        hiringManagerEmail: internships.hiringManagerEmail,
-        hiringManagerLinkedin: internships.hiringManagerLinkedin,
-        experience: internships.experience,
-        duration: internships.duration,
-        field: internships.field,
-        createdAt: internships.createdAt,
-        updatedAt: internships.updatedAt,
-        isVerified: internships.isVerified,
-        isFlagged: internships.isFlagged,
-        isActive: internships.isActive,
-        userId: internships.userId,
-        user: {
-          id: user.id,
-          name: user.name,
-          image: user.image,
-          role: user.role,
-        },
-        is_trending: internships.is_trending,
-        is_featured_home: internships.is_featured_home,
-      })
-      .from(internships)
-      .leftJoin(user, eq(internships.userId, user.id))
-      .where(and(eq(internships.id, id), isNull(internships.deletedAt)))
-      .limit(1);
+    const internship = await getFreshInternship(id);
 
-    if (internship.length === 0) {
+    if (!internship) {
       return NextResponse.json(
         { error: "Internship not found" },
         { status: 404 }
@@ -108,7 +120,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      internship: internship[0],
+      internship,
     });
   } catch (error) {
     console.error("Error fetching internship:", error);
@@ -170,39 +182,48 @@ export async function PATCH(
     if (Object.keys(body).length === 0) {
       updates.isActive = !internship.isActive;
     } else {
-      if (body.display_index !== undefined) {
-        updates.display_index = body.display_index;
-        if (body.trending_index === undefined) {
-          updates.trending_index = body.display_index;
+      const validatedData = internshipUpdateSchema.parse(body);
+
+      if (validatedData.display_index !== undefined) {
+        updates.display_index = validatedData.display_index;
+        if (validatedData.trending_index === undefined) {
+          updates.trending_index = validatedData.display_index;
         }
       }
 
-      if (body.trending_index !== undefined) {
-        updates.trending_index = body.trending_index;
-        if (body.display_index === undefined) {
-          updates.display_index = body.trending_index;
+      if (validatedData.trending_index !== undefined) {
+        updates.trending_index = validatedData.trending_index;
+        if (validatedData.display_index === undefined) {
+          updates.display_index = validatedData.trending_index;
         }
       }
 
-      if (body.featured_home_index !== undefined) {
-        updates.featured_home_index = body.featured_home_index;
+      if (validatedData.featured_home_index !== undefined) {
+        updates.featured_home_index = validatedData.featured_home_index;
       }
-      if (body.isActive !== undefined) updates.isActive = body.isActive;
-      if (body.isTrending !== undefined) updates.is_trending = body.isTrending;
-      if (body.isFeaturedHome !== undefined) updates.is_featured_home = body.isFeaturedHome;
+      if (validatedData.isActive !== undefined) updates.isActive = validatedData.isActive;
+      if (validatedData.isTrending !== undefined) updates.is_trending = validatedData.isTrending;
+      if (validatedData.isFeaturedHome !== undefined) updates.is_featured_home = validatedData.isFeaturedHome;
+      if (validatedData.trendingFeaturedExpiry !== undefined) {
+        updates.trendingFeaturedExpiry = validatedData.trendingFeaturedExpiry;
+      }
     }
 
-    const updatedInternship = await db
+    await db
       .update(internships)
       .set(updates)
-      .where(eq(internships.id, id))
-      .returning();
+      .where(and(eq(internships.id, id), isNull(internships.deletedAt)));
+
+    const updated = await getFreshInternship(id);
 
     return NextResponse.json({
       success: true,
-      internship: updatedInternship[0],
+      internship: updated,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: error.errors }, { status: 400 });
+    }
     console.error("Error updating internship:", error);
     return NextResponse.json(
       { error: "Failed to update internship" },
@@ -321,6 +342,16 @@ export async function PUT(
         updateData.deadline = null;
       }
     }
+    if (validatedData.trendingFeaturedExpiry !== undefined) {
+      if (validatedData.trendingFeaturedExpiry) {
+        const expiry = new Date(validatedData.trendingFeaturedExpiry);
+        if (!Number.isNaN(expiry.getTime())) {
+          updateData.trendingFeaturedExpiry = expiry.toISOString().split("T")[0];
+        }
+      } else {
+        updateData.trendingFeaturedExpiry = null;
+      }
+    }
     if (validatedData.stipend !== undefined) {
       updateData.stipend = validatedData.stipend;
     }
@@ -331,15 +362,16 @@ export async function PUT(
       updateData.isActive = validatedData.isActive;
     }
 
-    const updatedInternship = await db
+    await db
       .update(internships)
       .set(updateData)
-      .where(eq(internships.id, id))
-      .returning();
+      .where(and(eq(internships.id, id), isNull(internships.deletedAt)));
+
+    const updated = await getFreshInternship(id);
 
     return NextResponse.json({
       success: true,
-      internship: updatedInternship[0],
+      internship: updated,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

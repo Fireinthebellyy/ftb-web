@@ -146,6 +146,7 @@ export const internships = pgTable(
     display_index: integer("display_index"),
     trending_index: integer("trending_index"),         
     featured_home_index: integer("featured_home_index"),
+    trendingFeaturedExpiry: date("trending_featured_expiry"),
   },
   (table) => [
     index("internships_field_idx").on(table.field),

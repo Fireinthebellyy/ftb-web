@@ -70,6 +70,9 @@ export const AdminControlsModal: React.FC<AdminControlsModalProps> = ({
   const [isActive, setIsActive] = useState<boolean>(
     internship?.isActive ?? true
   );
+  const [trendingFeaturedExpiry, setTrendingFeaturedExpiry] = useState<string | null>(
+    internship?.trending_featured_expiry ?? null
+  );
 
   // Sync state when internship changes
   React.useEffect(() => {
@@ -80,8 +83,16 @@ export const AdminControlsModal: React.FC<AdminControlsModalProps> = ({
       setIsTrending(internship.is_trending ?? false);
       setIsFeatured(internship.is_featured_home ?? false);
       setIsActive(internship.isActive ?? true);
+      setTrendingFeaturedExpiry(internship.trending_featured_expiry ?? null);
     }
   }, [internship, open]);
+
+  const handleResetSettings = () => {
+    setIsTrending(false);
+    setIsFeatured(false);
+    setTrendingFeaturedExpiry(null);
+    toast.info("Settings reset. Click Save Changes to apply.");
+  };
 
   const handleSaveChanges = async () => {
     if (!internship?.id) return;
@@ -95,6 +106,7 @@ export const AdminControlsModal: React.FC<AdminControlsModalProps> = ({
         isTrending,
         isFeaturedHome: isFeatured,
         isActive,
+        trendingFeaturedExpiry,
       };
 
       const response = await fetch(`/api/internships/${internship.id}`, {
@@ -216,6 +228,37 @@ export const AdminControlsModal: React.FC<AdminControlsModalProps> = ({
                     checked={isFeatured}
                     onCheckedChange={setIsFeatured}
                     disabled={isUpdating}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2 p-4 bg-slate-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-base font-semibold">
+                        Trending/Featured Expiry Date
+                      </Label>
+                      <p className="text-sm text-slate-500">
+                        Date after which this internship is automatically removed from trending and featured sections.
+                      </p>
+                    </div>
+                    {(isTrending || isFeatured || trendingFeaturedExpiry) && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleResetSettings}
+                        className="text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700 font-bold shrink-0 ml-2"
+                      >
+                        Reset Settings
+                      </Button>
+                    )}
+                  </div>
+                  <Input
+                    type="date"
+                    value={trendingFeaturedExpiry ?? ""}
+                    onChange={(e) => setTrendingFeaturedExpiry(e.target.value === "" ? null : e.target.value)}
+                    disabled={isUpdating}
+                    className="bg-white"
                   />
                 </div>
               </div>

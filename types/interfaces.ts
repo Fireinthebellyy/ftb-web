@@ -54,6 +54,7 @@ export type Internship = {
   display_index?: number;
   trending_index?: number;
   featured_home_index?: number;
+  trending_featured_expiry?: string | null;
   user: {
     id: string;
     name: string;
@@ -82,6 +83,7 @@ export interface InternshipData extends Omit<
   display_index?: number;
   trending_index?: number;
   featured_home_index?: number;
+  trending_featured_expiry?: string | null;
   user: {
     id: string;
     name: string;

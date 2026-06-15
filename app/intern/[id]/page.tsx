@@ -341,27 +341,32 @@ export default function InternshipDetailPage() {
             <Bookmark className={cn("h-4 w-4", isBookmarked && "fill-current")} />
             <span>{isBookmarked ? "Saved to Tracker" : "Save to Tracker"}</span>
           </button>
-          <button
-            className="relative overflow-hidden flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition-all hover:text-[#ec5b13] active:scale-95 text-[13px] font-bold"
-            onClick={handleCalendarClick}
-          >
-            {isCalendarAnimating && (
-              <div className="absolute inset-0 bg-white dark:bg-zinc-950 flex items-center justify-center animate-slide-in-bell z-10">
-                <Bell className="w-5 h-5 text-[#ec5b13] animate-ring-bell" />
+          <div className="relative">
+            <button
+              className="relative overflow-hidden w-full flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition-all hover:text-[#ec5b13] active:scale-95 text-[13px] font-bold"
+              onClick={handleCalendarClick}
+            >
+              {isCalendarAnimating && (
+                <div className="absolute inset-0 bg-white dark:bg-zinc-950 flex items-center justify-center animate-slide-in-bell z-20">
+                  <Bell className="w-5 h-5 text-[#ec5b13] animate-ring-bell" />
+                </div>
+              )}
+              <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
+                <Image
+                  src="/images/google-calendar.webp"
+                  alt="Add to Google Calendar"
+                  width={16}
+                  height={16}
+                  className="absolute inset-0 h-4 w-4 object-contain animate-swap-calendar"
+                />
+                <Bell className="absolute inset-0 h-4 w-4 text-slate-500 animate-swap-bell" />
               </div>
-            )}
-            <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
-              <Image
-                src="/images/google-calendar.webp"
-                alt="Add to Google Calendar"
-                width={16}
-                height={16}
-                className="absolute inset-0 h-4 w-4 object-contain animate-swap-calendar"
-              />
-              <Bell className="absolute inset-0 h-4 w-4 text-slate-500 animate-swap-bell" />
+              <span>Add to Calendar</span>
+            </button>
+            <div className="absolute -top-1.5 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#ec5b13] text-white border-2 border-white shadow-md z-30 pointer-events-none">
+              <Bell className="h-2.5 w-2.5" strokeWidth={3} />
             </div>
-            <span>Add to Calendar</span>
-          </button>
+          </div>
         </div>
 
         <div className="-mt-2 px-5 pb-2">

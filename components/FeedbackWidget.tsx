@@ -151,7 +151,16 @@ export function FeedbackWidget({
         </button>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(newOpen) => {
+        setOpen(newOpen);
+        if (!newOpen) {
+          posthog.capture("feedback_widget_closed", {
+            pathname,
+            mood,
+            has_comment: comment.length > 0,
+          });
+        }
+      }}>
         <DialogContent className="w-[95vw] max-w-md">
           <DialogTitle className="sr-only">Feedback</DialogTitle>
           <div className="space-y-4">
@@ -170,7 +179,14 @@ export function FeedbackWidget({
                 <div key={m.value} className="flex flex-col items-center gap-1">
                   <button
                     type="button"
-                    onClick={() => setMood(m.value)}
+                    onClick={() => {
+                      setMood(m.value);
+                      posthog.capture("feedback_mood_selected", {
+                        mood: m.value,
+                        meaning: m.meaning,
+                        pathname,
+                      });
+                    }}
                     className={cn(
                       "flex h-12 w-12 items-center justify-center rounded-full text-2xl transition",
                       mood === m.value

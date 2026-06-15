@@ -320,6 +320,11 @@ export function UngatekeepPostActionBar({
           onClick={(e) => {
             e.stopPropagation();
             onCommentClick();
+            
+            posthog.capture("ungatekeep_comments_toggled", {
+              post_id: postId,
+              action: showComments ? "hide" : "show",
+            });
           }}
           className={cn(showComments && "bg-orange-50 text-orange-700")}
           aria-expanded={showComments}

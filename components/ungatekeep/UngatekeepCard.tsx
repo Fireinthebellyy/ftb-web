@@ -287,16 +287,16 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
         {isExpanded || !hasLongContent ? (
           <div
             className={cn(
-              "text-muted-foreground w-full text-xs break-words md:text-sm",
+              "text-gray-900 w-full text-xs break-words md:text-sm",
               "[&_ol]:ml-4 [&_ol]:list-decimal [&_p]:mb-2 last:[&_p]:mb-0 [&_ul]:ml-4 [&_ul]:list-disc",
-              "[&_*]:break-words [&_*]:whitespace-normal"
+              "[&_*]:break-words [&_*]:whitespace-normal [&_*]:text-gray-900"
             )}
             dangerouslySetInnerHTML={{ __html: safeHtml }}
           />
         ) : (
           <p
             className={cn(
-              "text-muted-foreground inline w-full text-xs break-words md:text-sm"
+              "text-gray-900 inline w-full text-xs break-words md:text-sm"
             )}
           >
             {previewContent}

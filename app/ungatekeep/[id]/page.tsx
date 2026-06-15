@@ -69,6 +69,7 @@ export default function UngatekeepPostPage() {
   const [modalOpen, setModalOpen] = React.useState(false);
   const [modalIndex, setModalIndex] = React.useState(0);
   const [isSaved, setIsSaved] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
   const [showComments, setShowComments] = React.useState(false);
   const [isFlying, setIsFlying] = React.useState(false);
   const [flyPos, setFlyPos] = React.useState({ x: 0, y: 0 });
@@ -170,8 +171,11 @@ export default function UngatekeepPostPage() {
 
   const toggleSave = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    if (isSaving) return;
 
     const buttonElement = e.currentTarget as HTMLElement;
+    const nextSaved = !isSaved;
 
     posthog.capture("ungatekeep_save_button_clicked", {
       post_id: postId,
@@ -180,12 +184,13 @@ export default function UngatekeepPostPage() {
 
     // Optimistic UI update
     const previousSaved = isSaved;
-    setIsSaved(!previousSaved);
+    setIsSaved(nextSaved);
+    setIsSaving(true);
 
     try {
       const response = await axios.post("/api/ungatekeep/bookmark", {
         postId: postId,
-        bookmarked: !isSaved,
+        bookmarked: nextSaved,
       });
 
       // Nested try-catch to isolate potential errors after successful API call
@@ -233,6 +238,8 @@ export default function UngatekeepPostPage() {
         console.error("Failed to update saved status:", error);
         toast.error("Failed to update saved status");
       }
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -535,7 +542,8 @@ export default function UngatekeepPostPage() {
                           className={cn(
                             "text-gray-900 w-full text-xs break-words md:text-sm",
                             "[&_ol]:ml-4 [&_ol]:list-decimal [&_p]:mb-2 last:[&_p]:mb-0 [&_ul]:ml-4 [&_ul]:list-disc",
-                            "[&_*]:break-words [&_*]:whitespace-normal [&_*]:text-gray-900"
+                            "[&_*]:break-words [&_*]:whitespace-normal",
+                            "[&_a]:text-orange-600 [&_a]:underline-offset-2 hover:[&_a]:underline"
                           )}
                           dangerouslySetInnerHTML={{ __html: safeHtml }}
                         />

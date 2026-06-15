@@ -91,19 +91,19 @@ export default function InterestPromptGate() {
   }, [showGate]);
 
   const toggle = (id: InterestAreaId) => {
+    const wasSelected = selected.has(id);
+    
     setSelected((prev) => {
       const next = new Set(prev);
-      const wasSelected = next.has(id);
       if (wasSelected) next.delete(id);
       else next.add(id);
-      
-      posthog.capture("interest_prompt_option_toggled", {
-        pathname,
-        interest_id: id,
-        action: wasSelected ? "deselected" : "selected",
-      });
-      
       return next;
+    });
+    
+    posthog.capture("interest_prompt_option_toggled", {
+      pathname,
+      interest_id: id,
+      action: wasSelected ? "deselected" : "selected",
     });
   };
 
@@ -133,7 +133,7 @@ export default function InterestPromptGate() {
       toast.error(e.message || "Could not save your interests");
       posthog.capture("interest_prompt_submit_error", {
         pathname,
-        error: e.message,
+        error_category: "save_failed",
       });
     },
   });

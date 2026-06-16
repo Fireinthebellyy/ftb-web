@@ -24,8 +24,7 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
 
   const dmUrl = internship.hiringManagerLinkedin || "";
   const emailSubject = `Applying for ${internship.title} role at ${internship.hiringOrganization}`;
-  const emailBody = `Hi ${internship.hiringManager || "Hiring Manager"},\n\nI hope you are doing well.\n\nI am writing to express my interest in the ${internship.title} internship role at ${internship.hiringOrganization}.\n\n[Add a brief 2-3 sentence introduction about your background, key skills, and why you are interested in this role]\n\nI would love the opportunity to discuss how my skills align with your team's needs. I have attached my resume for your review.\n\nBest regards,\n[Your Name]\n[Your Contact Information]\n[Your LinkedIn Profile]`;
-  const mailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(internship.hiringManagerEmail || "")}&su=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+  const mailUrl = `mailto:${internship.hiringManagerEmail || ""}?subject=${encodeURIComponent(emailSubject)}`;
 
   return (
     <footer className="pb-safe fixed right-0 bottom-0 left-0 z-[60] border-t border-slate-100 bg-white px-4 py-3 shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">

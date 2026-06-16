@@ -55,10 +55,17 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
   const hasDM = !!internship.hiringManagerLinkedin;
   const hasMail = !!internship.hiringManagerEmail;
 
+  const [isMobileDevice, setIsMobileDevice] = React.useState(false);
+  React.useEffect(() => {
+    const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    setIsMobileDevice(isMobileUA);
+  }, []);
+
   const dmUrl = internship.hiringManagerLinkedin || "";
   const emailSubject = `Applying for ${internship.title} role at ${internship.hiringOrganization}`;
-  const emailBody = `Hi ${internship.hiringManager || "Hiring Manager"},\n\nI hope you are doing well.\n\nI am writing to express my interest in the ${internship.title} internship role at ${internship.hiringOrganization}.\n\n[Add a brief 2-3 sentence introduction about your background, key skills, and why you are interested in this role]\n\nI would love the opportunity to discuss how my skills align with your team's needs. I have attached my resume for your review.\n\nBest regards,\n[Your Name]\n[Your Contact Information]\n[Your LinkedIn Profile]`;
-  const mailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(internship.hiringManagerEmail || "")}&su=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+  const mailUrl = isMobileDevice
+    ? `mailto:${internship.hiringManagerEmail || ""}?subject=${encodeURIComponent(emailSubject)}`
+    : `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(internship.hiringManagerEmail || "")}&su=${encodeURIComponent(emailSubject)}`;
 
   return (
     <div className="bg-white rounded-[24px] px-8 py-5 shadow-sm border border-slate-100 relative mb-8">

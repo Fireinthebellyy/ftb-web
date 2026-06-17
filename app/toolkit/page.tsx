@@ -8,6 +8,7 @@ import ToolkitCardNew from "@/components/toolkit/ToolkitCardNew";
 import { MentorshipCarousel } from "@/components/toolkit/MentorshipCarousel";
 import ToolkitComingSoonCard from "@/components/toolkit/ToolkitComingSoonCard";
 import ToolkitStudentFeedback from "@/components/toolkit/ToolkitStudentFeedback";
+import { StackedTestimonials } from "@/components/toolkit/StackedTestimonials";
 import { Toolkit } from "@/types/interfaces";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/hooks/use-session";
@@ -104,6 +105,12 @@ export default function ToolkitPage() {
           <p className="mt-2 text-gray-600">Video guides with kickass strategies that actually work ~ go from overlooked to Top 1%</p>
         </div>
 
+        {mentorId && (
+          <div className="mb-10">
+            <MentorshipCarousel mentorId={mentorId} />
+          </div>
+        )}
+
         <div className="mb-8 flex overflow-x-auto gap-3 pb-2 sm:flex-wrap sm:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {["All", "1:1 Mentorship", "Recorded toolkits", "digital products"].map((cat) => {
             const isActive = selectedCategory === cat;
@@ -140,10 +147,6 @@ export default function ToolkitPage() {
             <p className="text-gray-500">Check back soon for new content!</p>
           </div>
         ) : (
-          <>
-            {selectedCategory === "1:1 Mentorship" && mentorId && (
-              <MentorshipCarousel mentorId={mentorId} />
-            )}
             <div
               className={cn(
                 "grid grid-cols-1 gap-6",
@@ -157,10 +160,20 @@ export default function ToolkitPage() {
               ))}
               {filteredToolkits.length === 1 && <ToolkitComingSoonCard />}
             </div>
-          </>
         )}
 
-        <ToolkitStudentFeedback />
+        <div className="mt-16 space-y-8">
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">What students feel about us</h2>
+            <p className="text-gray-500">Real feedback from students who leveled up their careers with us.</p>
+          </div>
+          
+          <StackedTestimonials />
+          
+          <div className="max-w-2xl mx-auto">
+            <ToolkitStudentFeedback />
+          </div>
+        </div>
       </div>
     </div>
   );

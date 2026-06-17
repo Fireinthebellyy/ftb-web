@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
@@ -30,7 +31,8 @@ import { uploadFileViaSignedUrl } from "@/lib/storage/client";
 const slideFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  imageUrl: z.string().optional(),
+  mobileImageUrl: z.string().optional(),
+  desktopImageUrl: z.string().optional(),
   isActive: z.boolean().default(true),
   orderIndex: z.number().default(0),
 });
@@ -41,7 +43,8 @@ type Slide = {
   id: string;
   title: string;
   description: string | null;
-  imageUrl: string | null;
+  mobileImageUrl: string | null;
+  desktopImageUrl: string | null;
   orderIndex: number;
   isActive: boolean;
 };
@@ -54,7 +57,8 @@ export function MentorshipCarouselManager({
   onClose: () => void;
 }) {
   const [editingSlide, setEditingSlide] = useState<Slide | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [mobileImageFile, setMobileImageFile] = useState<File | null>(null);
+  const [desktopImageFile, setDesktopImageFile] = useState<File | null>(null);
   const queryClient = useQueryClient();
 
   const { data: slides = [], isLoading } = useQuery({
@@ -68,7 +72,8 @@ export function MentorshipCarouselManager({
     defaultValues: {
       title: "",
       description: "",
-      imageUrl: "",
+      mobileImageUrl: "",
+      desktopImageUrl: "",
       isActive: true,
       orderIndex: 0,
     },
@@ -86,7 +91,7 @@ export function MentorshipCarouselManager({
       queryClient.invalidateQueries({ queryKey: ["admin", "mentorship-carousel"] });
       toast.success(`Slide ${editingSlide ? "updated" : "created"}`);
       setEditingSlide(null);
-      form.reset({ title: "", description: "", imageUrl: "", isActive: true, orderIndex: slides.length });
+      form.reset({ title: "", description: "", mobileImageUrl: "", desktopImageUrl: "", isActive: true, orderIndex: slides.length });
     },
     onError: () => {
       toast.error(`Failed to ${editingSlide ? "update" : "create"} slide`);
@@ -114,20 +119,31 @@ export function MentorshipCarouselManager({
 
   const onSubmit = async (data: SlideFormValues) => {
     try {
-      let imageUrl = data.imageUrl;
-      if (imageFile) {
-        const uploaded = await uploadFileViaSignedUrl({
+      let mobileImageUrl = data.mobileImageUrl;
+      if (mobileImageFile) {
+        const uploadedMobile = await uploadFileViaSignedUrl({
           domain: "ungatekeep-images",
-          file: imageFile,
+          file: mobileImageFile,
         });
-        imageUrl = uploaded.publicUrl;
+        mobileImageUrl = uploadedMobile.publicUrl;
+      }
+      
+      let desktopImageUrl = data.desktopImageUrl;
+      if (desktopImageFile) {
+        const uploadedDesktop = await uploadFileViaSignedUrl({
+          domain: "ungatekeep-images",
+          file: desktopImageFile,
+        });
+        desktopImageUrl = uploadedDesktop.publicUrl;
       }
       
       await saveMutation.mutateAsync({
         ...data,
-        imageUrl: imageUrl || undefined,
+        mobileImageUrl: mobileImageUrl || undefined,
+        desktopImageUrl: desktopImageUrl || undefined,
       });
-      setImageFile(null);
+      setMobileImageFile(null);
+      setDesktopImageFile(null);
     } catch (_e) {
       toast.error("Error saving slide");
     }
@@ -138,17 +154,20 @@ export function MentorshipCarouselManager({
     form.reset({
       title: slide.title,
       description: slide.description || "",
-      imageUrl: slide.imageUrl || "",
+      mobileImageUrl: slide.mobileImageUrl || "",
+      desktopImageUrl: slide.desktopImageUrl || "",
       isActive: slide.isActive,
       orderIndex: slide.orderIndex,
     });
-    setImageFile(null);
+    setMobileImageFile(null);
+    setDesktopImageFile(null);
   };
 
   const handleCancelEdit = () => {
     setEditingSlide(null);
-    form.reset({ title: "", description: "", imageUrl: "", isActive: true, orderIndex: slides.length });
-    setImageFile(null);
+    form.reset({ title: "", description: "", mobileImageUrl: "", desktopImageUrl: "", isActive: true, orderIndex: slides.length });
+    setMobileImageFile(null);
+    setDesktopImageFile(null);
   };
 
   return (
@@ -217,18 +236,35 @@ export function MentorshipCarouselManager({
                     </FormItem>
                   )}
                 />
-                <div>
-                  <FormLabel className="mb-2 block">Image</FormLabel>
-                  <ToolkitImageInput
-                    label="image"
-                    selectedFile={imageFile}
-                    onFileSelect={setImageFile}
-                    onRemove={() => {
-                      setImageFile(null);
-                      form.setValue("imageUrl", "");
-                    }}
-                    imageUrl={form.watch("imageUrl")}
-                  />
+                <div className="space-y-4">
+                  <div>
+                    <FormLabel className="mb-2 block">Mobile Image</FormLabel>
+                    <p className="text-xs text-gray-500 mb-2">Recommended: 256 x 171 px (or 512 x 342 px for Retina)</p>
+                    <ToolkitImageInput
+                      label="mobile image"
+                      selectedFile={mobileImageFile}
+                      onFileSelect={setMobileImageFile}
+                      onRemove={() => {
+                        setMobileImageFile(null);
+                        form.setValue("mobileImageUrl", "");
+                      }}
+                      imageUrl={form.watch("mobileImageUrl")}
+                    />
+                  </div>
+                  <div>
+                    <FormLabel className="mb-2 block">Desktop Image</FormLabel>
+                    <p className="text-xs text-gray-500 mb-2">Recommended: Ultra-wide (e.g. 1450 x 130 px)</p>
+                    <ToolkitImageInput
+                      label="desktop image"
+                      selectedFile={desktopImageFile}
+                      onFileSelect={setDesktopImageFile}
+                      onRemove={() => {
+                        setDesktopImageFile(null);
+                        form.setValue("desktopImageUrl", "");
+                      }}
+                      imageUrl={form.watch("desktopImageUrl")}
+                    />
+                  </div>
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
                   {editingSlide && (
@@ -258,8 +294,8 @@ export function MentorshipCarouselManager({
                   <div key={slide.id} className="flex items-center justify-between rounded border p-2 text-sm bg-white hover:bg-gray-50 transition-colors">
                     <div className="flex items-center gap-2 overflow-hidden">
                       <GripVertical className="h-4 w-4 text-gray-400 shrink-0 cursor-grab" />
-                      {slide.imageUrl && (
-                        <img src={slide.imageUrl} alt="" className="h-8 w-8 object-cover rounded shrink-0" />
+                      {(slide.mobileImageUrl || slide.desktopImageUrl) && (
+                        <img src={slide.mobileImageUrl || slide.desktopImageUrl!} alt="" className="h-8 w-8 object-cover rounded shrink-0" />
                       )}
                       <div className="truncate">
                         <p className="font-medium truncate">{slide.title}</p>

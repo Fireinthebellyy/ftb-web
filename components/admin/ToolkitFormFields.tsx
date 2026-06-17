@@ -40,9 +40,6 @@ interface ToolkitFormFieldsProps {
   onBannerImageFileSelect: (file: File | null) => void;
   onCoverImageRemove: () => void;
   onBannerImageRemove: () => void;
-  mentorImageFile?: File | null;
-  onMentorImageFileSelect?: (file: File | null) => void;
-  onMentorImageRemove?: () => void;
   digitalProductSections?: DigitalProductSection[];
   isSubmitting?: boolean;
 }
@@ -55,9 +52,6 @@ export function ToolkitFormFields({
   onBannerImageFileSelect,
   onCoverImageRemove,
   onBannerImageRemove,
-  mentorImageFile = null,
-  onMentorImageFileSelect,
-  onMentorImageRemove,
   digitalProductSections: _digitalProductSections = [],
   isSubmitting = false,
 }: ToolkitFormFieldsProps) {

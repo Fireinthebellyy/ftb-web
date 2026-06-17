@@ -9,7 +9,8 @@ import { z } from "zod";
 const slideSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional().nullable(),
-  imageUrl: z.string().optional().nullable(),
+  mobileImageUrl: z.string().optional().nullable(),
+  desktopImageUrl: z.string().optional().nullable(),
   orderIndex: z.number().default(0),
   isActive: z.boolean().default(true),
 });

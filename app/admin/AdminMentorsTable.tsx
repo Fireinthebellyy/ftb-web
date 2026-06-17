@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
@@ -12,7 +13,6 @@ import { toast } from "sonner";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
 import { AdminTableState } from "@/components/admin/AdminTableState";
 import { AdminTabLayout } from "@/components/admin/AdminTabLayout";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -189,7 +189,7 @@ export default function AdminMentorsTable() {
           file: imageFile,
         });
         mentorImage = uploaded.publicUrl;
-      } catch (e) {
+      } catch (_e) {
         toast.error("Error uploading image");
         return;
       }

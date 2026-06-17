@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { mentorshipCarouselSlides } from "@/lib/schema";
-import { eq, asc } from "drizzle-orm";
+import { asc } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
@@ -9,7 +9,8 @@ import { z } from "zod";
 const slideSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional().nullable(),
-  imageUrl: z.string().optional().nullable(),
+  mobileImageUrl: z.string().optional().nullable(),
+  desktopImageUrl: z.string().optional().nullable(),
   orderIndex: z.number().default(0),
   isActive: z.boolean().default(true),
 });

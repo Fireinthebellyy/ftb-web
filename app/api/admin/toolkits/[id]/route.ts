@@ -66,11 +66,12 @@ const updateToolkitSchema = z.object({
   digitalProductSectionId: z.string().uuid().nullable().optional(),
   mentorshipDetails: z
     .object({
+      mentorId: z.string().optional(),
       mentorshipPacked: z.string().optional(),
       formatOfMentorship: z.string().optional(),
       mentor: z
         .object({
-          name: z.string(),
+          name: z.string().optional(),
           description: z.string().optional(),
           imageUrl: z.string().optional(),
           linkedinUrl: z.string().url().optional(),

@@ -84,30 +84,7 @@ export default function ToolkitCardNew({
                     </Badge>
                   ) : null}
                 </div>
-                {toolkit.mentorshipDetails?.mentor ? (
-                  <div className="mb-4 flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/80 p-3 shadow-sm transition-all group-hover:bg-white group-hover:shadow-md">
-                    {toolkit.mentorshipDetails.mentor.imageUrl && (
-                      <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full border-2 border-white shadow-sm ring-1 ring-gray-900/5">
-                        <Image
-                          src={toolkit.mentorshipDetails.mentor.imageUrl}
-                          alt={toolkit.mentorshipDetails.mentor.name || "Mentor"}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="flex flex-col justify-center">
-                      <p className="text-[13px] font-bold text-gray-900 leading-tight">
-                        {toolkit.mentorshipDetails.mentor.name}
-                      </p>
-                      {toolkit.mentorshipDetails.mentor.description && (
-                        <p className="text-[11px] font-medium text-gray-500 line-clamp-1 mt-0.5">
-                          {toolkit.mentorshipDetails.mentor.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ) : null}
+
                 <h3 className="text-xl font-semibold leading-tight text-gray-950 transition-colors group-hover:text-gray-700">
                   {toolkit.title.charAt(0).toUpperCase() + toolkit.title.slice(1)}
                 </h3>
@@ -318,32 +295,7 @@ export default function ToolkitCardNew({
             </div>
 
             <CardContent className="flex flex-1 flex-col px-4 pb-4 pt-0">
-              {toolkit.mentorshipDetails?.mentor ? (
-                <div className="relative z-20 -mt-6 mb-3 flex items-center gap-3 rounded-xl border border-gray-100/80 bg-white/90 p-3 shadow-sm backdrop-blur-md transition-all group-hover:shadow-md">
-                  {toolkit.mentorshipDetails.mentor.imageUrl && (
-                    <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full border-2 border-white shadow-sm ring-1 ring-gray-900/5">
-                      <Image
-                        src={toolkit.mentorshipDetails.mentor.imageUrl}
-                        alt={toolkit.mentorshipDetails.mentor.name || "Mentor"}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="flex flex-col justify-center">
-                    <p className="text-[13px] font-bold text-gray-900 leading-tight">
-                      {toolkit.mentorshipDetails.mentor.name}
-                    </p>
-                    {toolkit.mentorshipDetails.mentor.description && (
-                      <p className="text-[11px] font-medium text-gray-500 line-clamp-1 mt-0.5">
-                        {toolkit.mentorshipDetails.mentor.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="pt-4" />
-              )}
+              <div className="pt-4" />
 
               <div className="mb-1 flex items-start justify-between gap-2">
                 <h3 className="line-clamp-1 text-[15px] font-semibold text-gray-900 transition-colors group-hover:text-gray-700 sm:text-base">

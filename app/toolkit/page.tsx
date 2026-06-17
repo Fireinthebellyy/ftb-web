@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios from "axios";
 import ToolkitCardNew from "@/components/toolkit/ToolkitCardNew";
+import { MentorshipCarousel } from "@/components/toolkit/MentorshipCarousel";
 import ToolkitComingSoonCard from "@/components/toolkit/ToolkitComingSoonCard";
 import ToolkitStudentFeedback from "@/components/toolkit/ToolkitStudentFeedback";
 import { Toolkit } from "@/types/interfaces";
@@ -92,6 +93,8 @@ export default function ToolkitPage() {
       : toolkits.filter((t) => t.category === selectedCategory);
   
   const isViewingDigitalProducts = selectedCategory === "digital products";
+  const first1on1Mentorship = filteredToolkits.find((t) => t.category === "1:1 Mentorship");
+  const mentorId = first1on1Mentorship?.mentorshipDetails?.mentorId;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -137,19 +140,24 @@ export default function ToolkitPage() {
             <p className="text-gray-500">Check back soon for new content!</p>
           </div>
         ) : (
-          <div
-            className={cn(
-              "grid grid-cols-1 gap-6",
-              isViewingDigitalProducts
-                ? "lg:grid-cols-2"
-                : "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          <>
+            {selectedCategory === "1:1 Mentorship" && mentorId && (
+              <MentorshipCarousel mentorId={mentorId} />
             )}
-          >
-            {filteredToolkits.map((toolkit) => (
-              <ToolkitCardNew key={toolkit.id} toolkit={toolkit} allToolkits={toolkits} href={`/toolkit/${toolkit.id}`} />
-            ))}
-            {filteredToolkits.length === 1 && <ToolkitComingSoonCard />}
-          </div>
+            <div
+              className={cn(
+                "grid grid-cols-1 gap-6",
+                isViewingDigitalProducts
+                  ? "lg:grid-cols-2"
+                  : "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+              )}
+            >
+              {filteredToolkits.map((toolkit) => (
+                <ToolkitCardNew key={toolkit.id} toolkit={toolkit} allToolkits={toolkits} href={`/toolkit/${toolkit.id}`} />
+              ))}
+              {filteredToolkits.length === 1 && <ToolkitComingSoonCard />}
+            </div>
+          </>
         )}
 
         <ToolkitStudentFeedback />

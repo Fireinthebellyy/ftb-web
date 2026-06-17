@@ -258,7 +258,7 @@ export default function ToolkitCardNew({
               </div>
 
               {(toolkit.subtitle || toolkit.lessonCount || toolkit.totalDuration) && (
-                <div className="hidden sm:block absolute bottom-2 right-2 z-10 rounded-full bg-black/60 px-2.5 py-0.5 text-[10px] font-medium text-white sm:text-xs">
+                <div className="absolute bottom-1.5 right-1.5 sm:bottom-2 sm:right-2 z-10 rounded-md sm:rounded-full bg-black/70 px-1.5 py-0.5 sm:px-2.5 text-[9px] font-medium text-white sm:text-xs backdrop-blur-sm sm:backdrop-blur-none shadow-sm">
                   {toolkit.subtitle ? (
                     toolkit.subtitle
                   ) : (
@@ -298,11 +298,12 @@ export default function ToolkitCardNew({
 
             <CardContent className="flex flex-1 flex-col px-3 py-3 sm:px-4 sm:pb-4 sm:pt-4 min-w-0">
               <div className="mb-1 text-[10px] text-gray-500 sm:hidden flex items-center gap-1 flex-wrap pr-16 leading-none">
-                 <span>{toolkit.creatorName || "Fireinthebelly"}</span>
-                 {(toolkit.lessonCount || toolkit.totalDuration) && <span>•</span>}
-                 {toolkit.lessonCount && <span>{toolkit.lessonCount} lessons</span>}
-                 {toolkit.lessonCount && toolkit.totalDuration && <span>•</span>}
-                 {toolkit.totalDuration && <span>{toolkit.totalDuration}</span>}
+                {toolkit.rating && (
+                  <div className="flex shrink-0 items-center gap-1 rounded-md bg-yellow-50 px-1.5 py-0.5 text-[10px] font-semibold text-yellow-700 border border-yellow-200/50">
+                    <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                    {toolkit.rating}
+                  </div>
+                )}
               </div>
 
               <div className="mb-2 sm:mb-1 flex items-start justify-between gap-2 pr-16 sm:pr-0">

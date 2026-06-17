@@ -63,7 +63,7 @@ export default function ToolkitCardNew({
     <Link href={href} className="block h-full" prefetch>
       <Card
         className={cn(
-          "relative group flex cursor-pointer overflow-hidden border bg-white py-0 transition-shadow hover:shadow-md h-full rounded-2xl",
+          "relative group flex gap-1 cursor-pointer overflow-hidden border bg-white py-0 transition-shadow hover:shadow-md h-full rounded-2xl",
           !isDigitalProduct && !toolkit.isBundle ? "flex-row sm:flex-col" : "flex-col",
           className
         )}
@@ -296,7 +296,7 @@ export default function ToolkitCardNew({
               )}
             </div>
 
-            <CardContent className="flex flex-1 flex-col px-3 py-3 sm:px-4 sm:pb-4 sm:pt-4 min-w-0">
+            <CardContent className="flex flex-1 flex-col pl-0.5 pr-3 py-3 sm:px-4 sm:pb-4 sm:pt-4 min-w-0">
               <div className="mb-1 text-[10px] text-gray-500 sm:hidden flex items-center gap-1 flex-wrap pr-16 leading-none">
                 {toolkit.rating && (
                   <div className="flex shrink-0 items-center gap-1 rounded-md bg-yellow-50 px-1.5 py-0.5 text-[10px] font-semibold text-yellow-700 border border-yellow-200/50">

@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import ToolkitCommunityManager from "./ToolkitCommunityManager";
 import ToolkitContentManager from "./ToolkitContentManager";
 import { MentorshipCarouselManager } from "@/components/admin/MentorshipCarouselManager";
+import { TestimonialCarouselManager } from "@/components/admin/TestimonialCarouselManager";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
 import { AdminTableState } from "@/components/admin/AdminTableState";
 import { AdminTabLayout } from "@/components/admin/AdminTabLayout";
@@ -64,6 +65,7 @@ function formatHighlight(highlight: string) {
 export default function AdminToolkitsTable() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [carouselManagerOpen, setCarouselManagerOpen] = useState(false);
+  const [testimonialManagerOpen, setTestimonialManagerOpen] = useState(false);
   const [editingToolkit, setEditingToolkit] = useState<Toolkit | null>(null);
   const [contentManagerOpen, setContentManagerOpen] = useState(false);
   const [communityManagerOpen, setCommunityManagerOpen] = useState(false);
@@ -612,6 +614,9 @@ export default function AdminToolkitsTable() {
           <Button variant="outline" className="gap-2 bg-white" onClick={() => setCarouselManagerOpen(true)}>
             1:1 Mentorship Carousel
           </Button>
+          <Button variant="outline" className="gap-2 bg-white" onClick={() => setTestimonialManagerOpen(true)}>
+            Testimonial Images
+          </Button>
           <NewBundleModal
             onSuccess={() =>
               queryClient.invalidateQueries({ queryKey: ["admin", "toolkits"] })
@@ -740,6 +745,10 @@ export default function AdminToolkitsTable() {
       <MentorshipCarouselManager 
         open={carouselManagerOpen} 
         onClose={() => setCarouselManagerOpen(false)} 
+      />
+      <TestimonialCarouselManager
+        open={testimonialManagerOpen}
+        onClose={() => setTestimonialManagerOpen(false)}
       />
     </AdminTabLayout>
   );

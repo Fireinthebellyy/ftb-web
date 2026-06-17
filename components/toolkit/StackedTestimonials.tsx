@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ImageIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 
 // Placeholder data for the screenshots. 
 // Admins or developers can replace these images later.
@@ -16,7 +18,28 @@ const PLACEHOLDER_CARDS = [
 ];
 
 export function StackedTestimonials() {
-  const [cards, setCards] = useState(PLACEHOLDER_CARDS);
+  const { data: fetchedImages, isLoading } = useQuery({
+    queryKey: ["testimonial-images"],
+    queryFn: async () => {
+      const res = await axios.get("/api/testimonial-images");
+      return res.data as { id: string; imageUrl: string }[];
+    },
+  });
+
+  const [cards, setCards] = useState<any[]>(PLACEHOLDER_CARDS);
+
+  useEffect(() => {
+    if (fetchedImages && fetchedImages.length > 0) {
+      setCards(
+        fetchedImages.map((img, i) => ({
+          id: img.id,
+          src: img.imageUrl,
+          alt: `Screenshot ${i + 1}`,
+          bg: "bg-gray-50",
+        }))
+      );
+    }
+  }, [fetchedImages]);
 
   const moveToEnd = () => {
     setCards((prev) => {
@@ -36,6 +59,12 @@ export function StackedTestimonials() {
 
   return (
     <div className="relative h-72 w-full max-w-4xl mx-auto flex items-center justify-center overflow-hidden py-6">
+      {isLoading ? (
+        <div className="flex items-center justify-center">
+           {/* Simple skeleton or loader could go here, for now it will just show placeholders momentarily until loaded */}
+        </div>
+      ) : null}
+
       {cards.map((card, index) => {
         const isCenter = index === 0;
         const isRight = index === 1;

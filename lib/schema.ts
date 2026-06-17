@@ -422,7 +422,14 @@ export const mentorshipCarouselSlides = pgTable("mentorship_carousel_slides", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-
+export const toolkitTestimonialImages = pgTable("toolkit_testimonial_images", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  imageUrl: text("image_url").notNull(),
+  orderIndex: integer("order_index").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
 // Toolkit tables for monetization
 export const toolkits = pgTable("toolkits", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -785,6 +792,7 @@ export const schema = {
   toolkits,
   digitalProductSections,
   mentorshipCarouselSlides,
+  toolkitTestimonialImages,
   toolkitContentItems,
   toolkitCommunityPosts,
   toolkitCommunityResponses,

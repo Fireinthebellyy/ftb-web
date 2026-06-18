@@ -41,6 +41,7 @@ export function MentorshipCarousel({ mentorId }: { mentorId: string | undefined 
     queryKey: ["mentors"],
     queryFn: async () => (await axios.get("/api/mentors")).data,
     staleTime: 1000 * 60 * 5,
+    enabled: !!mentorId,
   });
 
   const activeMentor = mentors.find(m => m.id === mentorId);

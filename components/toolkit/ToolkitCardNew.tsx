@@ -248,12 +248,6 @@ export default function ToolkitCardNew({
                 {toolkit.category && (
                   <span className="w-fit rounded-full bg-white/95 backdrop-blur-sm px-2 py-0.5 text-[10px] font-medium text-gray-700 shadow-sm sm:px-2.5 sm:py-1 sm:text-xs">
                     {toolkit.category}
-                  </span>
-                )}
-                {toolkit.isBundle && (
-                  <span className="w-fit rounded-full bg-purple-100/95 backdrop-blur-sm px-2 py-0.5 text-[10px] font-bold text-purple-700 shadow-sm sm:px-2.5 sm:py-1 sm:text-xs">
-                    BUNDLE
-                  </span>
                 )}
               </div>
 

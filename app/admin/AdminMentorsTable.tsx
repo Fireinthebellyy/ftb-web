@@ -129,8 +129,8 @@ export default function AdminMentorsTable() {
   });
 
   const toggleAvailabilityMutation = useMutation({
-    mutationFn: async ({ id, availability }: { id: string; availability: boolean }) => {
-      await axios.put(`/api/admin/mentors/${id}`, { availability });
+    mutationFn: async ({ id, mentor, availability }: { id: string; mentor: Mentor; availability: boolean }) => {
+      await axios.put(`/api/admin/mentors/${id}`, { ...mentor, availability });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "mentors"] });
@@ -241,6 +241,7 @@ export default function AdminMentorsTable() {
               onCheckedChange={(val) => {
                 toggleAvailabilityMutation.mutate({
                   id: row.original.id,
+                  mentor: row.original,
                   availability: val,
                 });
               }}

@@ -149,7 +149,12 @@ export function TestimonialCarouselManager({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
+    <Dialog open={open} onOpenChange={(val) => {
+      if (!val) {
+        handleCancelEdit();
+        onClose();
+      }
+    }}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle>What Students Feel About Us Images</DialogTitle>

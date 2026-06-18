@@ -32,6 +32,12 @@ const CATEGORIES = [
   "digital products",
 ];
 
+interface MentorOption {
+  id: string;
+  mentorName: string;
+  mentorEmail?: string;
+}
+
 interface ToolkitFormFieldsProps {
   control: Control<ToolkitFormValues>;
   coverImageFile: File | null;
@@ -64,7 +70,7 @@ export function ToolkitFormFields({
 
   const { data: mentors = [] } = useQuery({
     queryKey: ["admin", "mentors"],
-    queryFn: async () => (await axios.get<any[]>("/api/admin/mentors")).data,
+    queryFn: async () => (await axios.get<MentorOption[]>("/api/admin/mentors")).data,
     enabled: selectedCategory === "1:1 Mentorship",
     staleTime: 1000 * 60,
   });

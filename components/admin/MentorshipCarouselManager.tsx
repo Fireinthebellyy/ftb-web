@@ -171,7 +171,12 @@ export function MentorshipCarouselManager({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
+    <Dialog open={open} onOpenChange={(val) => {
+      if (!val) {
+        handleCancelEdit();
+        onClose();
+      }
+    }}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle>1:1 Mentorship Carousel Slides</DialogTitle>

@@ -65,7 +65,7 @@ export async function POST(req: Request) {
     const [newMentor] = await db
       .insert(mentors)
       .values({
-        ...(parsed.data as any),
+        ...(parsed.data as z.infer<typeof mentorSchema>),
         userId: session.user.id,
       })
       .returning();

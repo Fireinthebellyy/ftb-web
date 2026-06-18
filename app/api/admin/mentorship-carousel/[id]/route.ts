@@ -15,6 +15,15 @@ const slideSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
+const updateSlideSchema = z.object({
+  title: z.string().min(1, "Title is required").optional(),
+  description: z.string().optional().nullable(),
+  mobileImageUrl: z.string().optional().nullable(),
+  desktopImageUrl: z.string().optional().nullable(),
+  orderIndex: z.number().optional(),
+  isActive: z.boolean().optional(),
+});
+
 export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -30,7 +39,7 @@ export async function PUT(
 
     const { id } = await params;
     const json = await req.json();
-    const parsed = slideSchema.safeParse(json);
+    const parsed = updateSlideSchema.safeParse(json);
 
     if (!parsed.success) {
       return NextResponse.json(

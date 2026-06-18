@@ -26,7 +26,6 @@ import AdminUngatekeepTable from "./AdminUngatekeepTable";
 import AdminCouponsTable from "./AdminCouponsTable";
 import OpportunityManagementTable from "./OpportunityManagementTable";
 import InternshipManagementTable from "./InternshipManagementTable";
-import AdminMentorsTable from "./AdminMentorsTable";
 
 const _TAB_VALUES = [
   "opportunities",
@@ -36,7 +35,6 @@ const _TAB_VALUES = [
   "toolkits",
   "coupons",
   "ungatekeep",
-  "mentors",
 ] as const;
 type TabValue = (typeof _TAB_VALUES)[number];
 
@@ -94,12 +92,6 @@ const adminCards: Array<{
     description:
       "Manage announcements, resources, and company experience posts",
     icon: RadioTower,
-  },
-  {
-    key: "mentors",
-    title: "Mentors",
-    description: "Manage mentors and their details",
-    icon: Users,
   },
 ];
 
@@ -173,7 +165,6 @@ export function AdminTabs({
       {activeTab === "toolkits" ? <AdminToolkitsTable /> : null}
       {activeTab === "coupons" ? <AdminCouponsTable /> : null}
       {activeTab === "ungatekeep" ? <AdminUngatekeepTable /> : null}
-      {activeTab === "mentors" ? <AdminMentorsTable /> : null}
     </div>
   );
 }

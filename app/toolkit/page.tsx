@@ -5,10 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios from "axios";
 import ToolkitCardNew from "@/components/toolkit/ToolkitCardNew";
-import { MentorshipCarousel } from "@/components/toolkit/MentorshipCarousel";
 import ToolkitComingSoonCard from "@/components/toolkit/ToolkitComingSoonCard";
 import ToolkitStudentFeedback from "@/components/toolkit/ToolkitStudentFeedback";
-import { StackedTestimonials } from "@/components/toolkit/StackedTestimonials";
 import { Toolkit } from "@/types/interfaces";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/hooks/use-session";
@@ -20,13 +18,7 @@ import { Check } from "lucide-react";
 export default function ToolkitPage() {
   const { data: session, isPending: sessionPending } = useSession();
   const router = useRouter();
-  const [selectedCategory, setSelectedCategory] = useState<string>("Recorded toolkits");
-
-  const TAB_CATEGORIES = [
-    { label: "Recorded Lectures", value: "Recorded toolkits" },
-    { label: "1:1 Mentorship", value: "1:1 Mentorship" },
-    { label: "Digital products", value: "digital products" }
-  ];
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -94,32 +86,28 @@ export default function ToolkitPage() {
     );
   }
 
-  const filteredToolkits = toolkits.filter((t) => t.category === selectedCategory);
+  const filteredToolkits =
+    selectedCategory === "All"
+      ? toolkits
+      : toolkits.filter((t) => t.category === selectedCategory);
   
   const isViewingDigitalProducts = selectedCategory === "digital products";
-  const first1on1Mentorship = filteredToolkits.find((t) => t.category === "1:1 Mentorship");
-  const mentorId = first1on1Mentorship?.mentorshipDetails?.mentorId;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6">
-        <div className="mb-[20px]">
-          <h1 className="text-3xl font-bold text-gray-900">Toolkit & Guide</h1>
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Toolkits</h1>
+          <p className="mt-2 text-gray-600">Video guides with kickass strategies that actually work ~ go from overlooked to Top 1%</p>
         </div>
 
-        {mentorId && (
-          <div className="mb-[25px]">
-            <MentorshipCarousel mentorId={mentorId} />
-          </div>
-        )}
-
-        <div className="mb-[15px] flex overflow-x-auto gap-3 pb-2 sm:flex-wrap sm:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          {TAB_CATEGORIES.map(({ label, value }) => {
-            const isActive = selectedCategory === value;
+        <div className="mb-8 flex overflow-x-auto gap-3 pb-2 sm:flex-wrap sm:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {["All", "1:1 Mentorship", "Recorded toolkits", "digital products"].map((cat) => {
+            const isActive = selectedCategory === cat;
             return (
               <button
-                key={value}
-                onClick={() => setSelectedCategory(value)}
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
                 className={cn(
                   "flex shrink-0 whitespace-nowrap items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors border shadow-sm",
                   isActive
@@ -128,7 +116,7 @@ export default function ToolkitPage() {
                 )}
               >
                 {isActive && <Check className="h-4 w-4" />}
-                {label}
+                {cat}
               </button>
             );
           })}
@@ -142,38 +130,29 @@ export default function ToolkitPage() {
         ) : filteredToolkits.length === 0 ? (
           <div className="rounded-lg border bg-white py-12 text-center">
             <h3 className="mb-2 text-lg font-semibold text-gray-600">
-              No toolkits found for {TAB_CATEGORIES.find(c => c.value === selectedCategory)?.label || selectedCategory}
+              {selectedCategory === "All"
+                ? "No toolkits found"
+                : `No toolkits found for ${selectedCategory}`}
             </h3>
             <p className="text-gray-500">Check back soon for new content!</p>
           </div>
         ) : (
-            <div
-              className={cn(
-                "grid grid-cols-1 gap-6",
-                isViewingDigitalProducts
-                  ? "lg:grid-cols-2"
-                  : "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-              )}
-            >
-              {filteredToolkits.map((toolkit) => (
-                <ToolkitCardNew key={toolkit.id} toolkit={toolkit} allToolkits={toolkits} href={`/toolkit/${toolkit.id}`} />
-              ))}
-              {filteredToolkits.length === 1 && <ToolkitComingSoonCard />}
-            </div>
+          <div
+            className={cn(
+              "grid grid-cols-1 gap-6",
+              isViewingDigitalProducts
+                ? "lg:grid-cols-2"
+                : "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            )}
+          >
+            {filteredToolkits.map((toolkit) => (
+              <ToolkitCardNew key={toolkit.id} toolkit={toolkit} allToolkits={toolkits} href={`/toolkit/${toolkit.id}`} />
+            ))}
+            {filteredToolkits.length === 1 && <ToolkitComingSoonCard />}
+          </div>
         )}
 
-        <div className="mt-16">
-          <div className="text-center space-y-2 mb-[25px]">
-            <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">What students feel about us</h2>
-            <p className="text-gray-500">Real experiences from students who leveled up their careers with us.</p>
-          </div>
-          
-          <StackedTestimonials />
-          
-          <div className="max-w-2xl mx-auto mt-8">
-            <ToolkitStudentFeedback />
-          </div>
-        </div>
+        <ToolkitStudentFeedback />
       </div>
     </div>
   );

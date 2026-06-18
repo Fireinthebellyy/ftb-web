@@ -54,6 +54,10 @@ export async function PUT(
       .where(eq(mentors.id, id))
       .returning();
 
+    if (!updatedMentor) {
+      return NextResponse.json({ error: "Mentor not found" }, { status: 404 });
+    }
+
     return NextResponse.json(updatedMentor);
   } catch (error) {
     console.error("Error updating mentor:", error);

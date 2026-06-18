@@ -65,7 +65,18 @@ export async function POST(req: Request) {
     const [newMentor] = await db
       .insert(mentors)
       .values({
-        ...(parsed.data as z.infer<typeof mentorSchema>),
+        mentorName: parsed.data.mentorName,
+        mentorEmail: parsed.data.mentorEmail,
+        mentorNumber: parsed.data.mentorNumber,
+        mentorImage: parsed.data.mentorImage,
+        description: parsed.data.description,
+        isVerified: parsed.data.isVerified,
+        linkedinLink: parsed.data.linkedinLink,
+        githubLink: parsed.data.githubLink,
+        instaLink: parsed.data.instaLink,
+        customLink: parsed.data.customLink,
+        rating: parsed.data.rating,
+        availability: parsed.data.availability,
         userId: session.user.id,
       })
       .returning();

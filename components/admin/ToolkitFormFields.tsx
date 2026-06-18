@@ -2,8 +2,6 @@
 
 import { Control, useFieldArray, useWatch } from "react-hook-form";
 import { Plus, Trash2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import {
   FormField,
   FormItem,
@@ -32,12 +30,6 @@ const CATEGORIES = [
   "digital products",
 ];
 
-interface MentorOption {
-  id: string;
-  mentorName: string;
-  mentorEmail?: string;
-}
-
 interface ToolkitFormFieldsProps {
   control: Control<ToolkitFormValues>;
   coverImageFile: File | null;
@@ -46,6 +38,9 @@ interface ToolkitFormFieldsProps {
   onBannerImageFileSelect: (file: File | null) => void;
   onCoverImageRemove: () => void;
   onBannerImageRemove: () => void;
+  mentorImageFile?: File | null;
+  onMentorImageFileSelect?: (file: File | null) => void;
+  onMentorImageRemove?: () => void;
   digitalProductSections?: DigitalProductSection[];
   isSubmitting?: boolean;
 }
@@ -58,6 +53,9 @@ export function ToolkitFormFields({
   onBannerImageFileSelect,
   onCoverImageRemove,
   onBannerImageRemove,
+  mentorImageFile = null,
+  onMentorImageFileSelect,
+  onMentorImageRemove,
   digitalProductSections: _digitalProductSections = [],
   isSubmitting = false,
 }: ToolkitFormFieldsProps) {
@@ -67,13 +65,6 @@ export function ToolkitFormFields({
   });
   const selectedCategory = useWatch({ control, name: "category" });
   const isDigitalProduct = selectedCategory === "digital products";
-
-  const { data: mentors = [] } = useQuery({
-    queryKey: ["admin", "mentors"],
-    queryFn: async () => (await axios.get<MentorOption[]>("/api/admin/mentors")).data,
-    enabled: selectedCategory === "1:1 Mentorship",
-    staleTime: 1000 * 60,
-  });
 
   return (
     <>
@@ -245,33 +236,114 @@ export function ToolkitFormFields({
 
           <div className="space-y-4 rounded-lg border bg-white p-4">
             <h4 className="font-medium text-gray-900">About the Mentor</h4>
-            <FormField
-              control={control}
-              name="mentorshipDetails.mentorId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Select Mentor *</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value || undefined}
-                  >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={control}
+                name="mentorshipDetails.mentor.description"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>Mentor Description</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a mentor" />
-                      </SelectTrigger>
+                      <Textarea 
+                        placeholder="Brief background about the mentor..." 
+                        {...field} 
+                        value={field.value ?? ""} 
+                        className="min-h-[100px]" 
+                      />
                     </FormControl>
-                    <SelectContent>
-                      {mentors.map((mentor) => (
-                        <SelectItem key={mentor.id} value={mentor.id}>
-                          {mentor.mentorName} ({mentor.mentorEmail})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="mentorshipDetails.mentor.name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mentor Name *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="John Doe" {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="mentorshipDetails.mentor.imageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mentor Photo</FormLabel>
+                    <FormControl>
+                      <ToolkitImageInput
+                        label="Mentor photo"
+                        imageUrl={field.value ?? ""}
+                        selectedFile={mentorImageFile}
+                        onFileSelect={onMentorImageFileSelect!}
+                        onRemove={() => {
+                          onMentorImageRemove?.();
+                          field.onChange("");
+                        }}
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="mentorshipDetails.mentor.linkedinUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>LinkedIn URL *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://linkedin.com/in/..." {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="mentorshipDetails.mentor.instagramUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Instagram URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://instagram.com/..." {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="mentorshipDetails.mentor.mailId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email Address</FormLabel>
+                    <FormControl>
+                      <Input placeholder="mentor@example.com" {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="mentorshipDetails.mentor.phoneNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="+1 234 567 8900" {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
         </div>
       )}

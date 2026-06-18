@@ -224,6 +224,12 @@ export default function NewToolkitModal({
                 setBannerImageFile(null);
                 form.setValue("bannerImageUrl", "");
               }}
+              mentorImageFile={mentorImageFile}
+              onMentorImageFileSelect={setMentorImageFile}
+              onMentorImageRemove={() => {
+                setMentorImageFile(null);
+                form.setValue("mentorshipDetails.mentor.imageUrl", "");
+              }}
               digitalProductSections={digitalProductSections}
               isSubmitting={isSubmitting}
             />

@@ -43,10 +43,7 @@ export default function ToolkitStudentFeedback() {
 
   return (
     <div className="mt-4 rounded-lg border border-orange-100 bg-white px-4 py-4 sm:px-5">
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-xs font-semibold tracking-wide text-orange-700 uppercase">
-          What students feel about us
-        </p>
+      <div className="flex items-start justify-end gap-2">
         {COUNT > 1 ? (
           <button
             type="button"

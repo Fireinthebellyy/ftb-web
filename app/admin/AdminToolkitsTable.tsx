@@ -19,6 +19,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import ToolkitCommunityManager from "./ToolkitCommunityManager";
 import ToolkitContentManager from "./ToolkitContentManager";
+import { MentorshipCarouselManager } from "@/components/admin/MentorshipCarouselManager";
+import { TestimonialCarouselManager } from "@/components/admin/TestimonialCarouselManager";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
 import { AdminTableState } from "@/components/admin/AdminTableState";
 import { AdminTabLayout } from "@/components/admin/AdminTabLayout";
@@ -62,6 +64,8 @@ function formatHighlight(highlight: string) {
 
 export default function AdminToolkitsTable() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [carouselManagerOpen, setCarouselManagerOpen] = useState(false);
+  const [testimonialManagerOpen, setTestimonialManagerOpen] = useState(false);
   const [editingToolkit, setEditingToolkit] = useState<Toolkit | null>(null);
   const [contentManagerOpen, setContentManagerOpen] = useState(false);
   const [communityManagerOpen, setCommunityManagerOpen] = useState(false);
@@ -70,7 +74,6 @@ export default function AdminToolkitsTable() {
     useState<Toolkit | null>(null);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [bannerImageFile, setBannerImageFile] = useState<File | null>(null);
-  const [mentorImageFile, setMentorImageFile] = useState<File | null>(null);
   const [updatingActiveToolkitIds, setUpdatingActiveToolkitIds] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
 
@@ -177,7 +180,6 @@ export default function AdminToolkitsTable() {
       });
       setCoverImageFile(null);
       setBannerImageFile(null);
-      setMentorImageFile(null);
       setEditDialogOpen(true);
     },
     [form]
@@ -223,16 +225,6 @@ export default function AdminToolkitsTable() {
         bannerImageUrl = uploadedBanner.publicUrl;
         uploadedKeys.push(uploadedBanner.key);
       }
-      
-      let mentorImageUrl = data.mentorshipDetails?.mentor?.imageUrl;
-      if (mentorImageFile) {
-        const uploadedMentor = await uploadFileViaSignedUrl({
-          domain: "ungatekeep-images",
-          file: mentorImageFile,
-        });
-        mentorImageUrl = uploadedMentor.publicUrl;
-        uploadedKeys.push(uploadedMentor.key);
-      }
 
       const cleanedData = {
         ...data,
@@ -241,10 +233,6 @@ export default function AdminToolkitsTable() {
         bannerImageUrl,
         mentorshipDetails: data.mentorshipDetails ? {
           ...data.mentorshipDetails,
-          mentor: data.mentorshipDetails.mentor ? {
-            ...data.mentorshipDetails.mentor,
-            imageUrl: mentorImageUrl,
-          } : undefined
         } : undefined,
         videoUrl: data.videoUrl || undefined,
         category: data.category || undefined,
@@ -271,7 +259,6 @@ export default function AdminToolkitsTable() {
       toast.success("Toolkit updated successfully");
       setCoverImageFile(null);
       setBannerImageFile(null);
-      setMentorImageFile(null);
       setEditDialogOpen(false);
     } catch (error) {
       await Promise.all(
@@ -292,7 +279,6 @@ export default function AdminToolkitsTable() {
     if (!isOpen) {
       setCoverImageFile(null);
       setBannerImageFile(null);
-      setMentorImageFile(null);
     }
   };
 
@@ -625,6 +611,12 @@ export default function AdminToolkitsTable() {
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
+          <Button variant="outline" className="gap-2 bg-white" onClick={() => setCarouselManagerOpen(true)}>
+            1:1 Mentorship Carousel
+          </Button>
+          <Button variant="outline" className="gap-2 bg-white" onClick={() => setTestimonialManagerOpen(true)}>
+            Testimonial Images
+          </Button>
           <NewBundleModal
             onSuccess={() =>
               queryClient.invalidateQueries({ queryKey: ["admin", "toolkits"] })
@@ -704,12 +696,6 @@ export default function AdminToolkitsTable() {
                   setBannerImageFile(null);
                   form.setValue("bannerImageUrl", "");
                 }}
-                mentorImageFile={mentorImageFile}
-                onMentorImageFileSelect={setMentorImageFile}
-                onMentorImageRemove={() => {
-                  setMentorImageFile(null);
-                  form.setValue("mentorshipDetails.mentor.imageUrl", "");
-                }}
                 digitalProductSections={digitalProductSections}
                 isSubmitting={updateToolkitMutation.isPending}
               />
@@ -756,6 +742,14 @@ export default function AdminToolkitsTable() {
           onClose={() => setCommunityManagerOpen(false)}
         />
       ) : null}
+      <MentorshipCarouselManager 
+        open={carouselManagerOpen} 
+        onClose={() => setCarouselManagerOpen(false)} 
+      />
+      <TestimonialCarouselManager
+        open={testimonialManagerOpen}
+        onClose={() => setTestimonialManagerOpen(false)}
+      />
     </AdminTabLayout>
   );
 }

@@ -13,13 +13,14 @@ export const toolkitMentorshipLinkSchema = z.object({
 });
 
 export const toolkitMentorshipDetailsSchema = z.object({
+  mentorId: z.string().optional(),
   mentorshipPacked: z.string().optional(),
   formatOfMentorship: z.string().optional(),
   mentor: z.object({
-    name: z.string().min(1, "Name is required"),
+    name: z.string().optional(),
     description: z.string().optional(),
     imageUrl: z.string().url().optional().or(z.literal("")),
-    linkedinUrl: z.string().url({ message: "Valid LinkedIn URL is required" }).or(z.literal("")),
+    linkedinUrl: z.string().url().optional().or(z.literal("")),
     instagramUrl: z.string().url().optional().or(z.literal("")),
     mailId: z.string().email().optional().or(z.literal("")),
     phoneNumber: z.string().optional(),
@@ -90,6 +91,7 @@ export interface Toolkit {
       }[]
     | null;
   mentorshipDetails?: {
+    mentorId?: string;
     mentorshipPacked?: string;
     formatOfMentorship?: string;
     mentor?: {

@@ -12,6 +12,12 @@ const imageSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
+const updateImageSchema = z.object({
+  imageUrl: z.string().min(1, "Image URL is required").optional(),
+  orderIndex: z.number().optional(),
+  isActive: z.boolean().optional(),
+});
+
 export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -27,7 +33,7 @@ export async function PUT(
 
     const { id } = await params;
     const json = await req.json();
-    const parsed = imageSchema.safeParse(json);
+    const parsed = updateImageSchema.safeParse(json);
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -44,6 +50,10 @@ export async function PUT(
       })
       .where(eq(toolkitTestimonialImages.id, id))
       .returning();
+
+    if (!updatedImage) {
+      return NextResponse.json({ error: "Image not found" }, { status: 404 });
+    }
 
     return NextResponse.json(updatedImage);
   } catch (error) {
@@ -70,7 +80,14 @@ export async function DELETE(
 
     const { id } = await params;
 
-    await db.delete(toolkitTestimonialImages).where(eq(toolkitTestimonialImages.id, id));
+    const [deletedImage] = await db
+      .delete(toolkitTestimonialImages)
+      .where(eq(toolkitTestimonialImages.id, id))
+      .returning();
+
+    if (!deletedImage) {
+      return NextResponse.json({ error: "Image not found" }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

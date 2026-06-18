@@ -57,6 +57,10 @@ export async function PUT(
       .where(eq(mentorshipCarouselSlides.id, id))
       .returning();
 
+    if (!updatedSlide) {
+      return NextResponse.json({ error: "Slide not found" }, { status: 404 });
+    }
+
     return NextResponse.json(updatedSlide);
   } catch (error) {
     console.error("Error updating slide:", error);
@@ -82,7 +86,14 @@ export async function DELETE(
 
     const { id } = await params;
 
-    await db.delete(mentorshipCarouselSlides).where(eq(mentorshipCarouselSlides.id, id));
+    const [deletedSlide] = await db
+      .delete(mentorshipCarouselSlides)
+      .where(eq(mentorshipCarouselSlides.id, id))
+      .returning();
+
+    if (!deletedSlide) {
+      return NextResponse.json({ error: "Slide not found" }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

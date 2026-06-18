@@ -6,11 +6,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
 
-const imageSchema = z.object({
-  imageUrl: z.string().min(1, "Image URL is required"),
-  orderIndex: z.number().default(0),
-  isActive: z.boolean().default(true),
-});
+
 
 const updateImageSchema = z.object({
   imageUrl: z.string().min(1, "Image URL is required").optional(),

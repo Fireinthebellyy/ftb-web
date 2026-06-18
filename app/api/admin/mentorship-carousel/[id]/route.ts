@@ -6,14 +6,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
 
-const slideSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional().nullable(),
-  mobileImageUrl: z.string().optional().nullable(),
-  desktopImageUrl: z.string().optional().nullable(),
-  orderIndex: z.number().default(0),
-  isActive: z.boolean().default(true),
-});
+
 
 const updateSlideSchema = z.object({
   title: z.string().min(1, "Title is required").optional(),

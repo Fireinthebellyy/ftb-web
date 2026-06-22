@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
@@ -36,9 +37,13 @@ const TaskWidget = dynamic(() => import("@/components/opportunity/TaskWidget"));
 
 interface OpportunityListProps {
   initialTags?: string[];
+  highlightId?: string;
 }
 
-export default function OpportunityCardsPage({ initialTags }: OpportunityListProps) {
+export default function OpportunityCardsPage({
+  initialTags,
+  highlightId,
+}: OpportunityListProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -179,7 +184,7 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
     } else if (stateTypes.length < AVAILABLE_TYPES.length) {
       params.set("types", stateTypes.join(","));
     }
-    // Note: If all are selected (stateTypes.length === AVAILABLE_TYPES.length), 
+    // Note: If all are selected (stateTypes.length === AVAILABLE_TYPES.length),
     // we omit the param to restore default behavior.
 
     // Update tags
@@ -224,7 +229,22 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
     debouncedSearchTerm,
     selectedTypes,
     selectedTags,
+    highlightId,
   });
+
+  // Scroll highlighted opportunity into view on mount or when highlightId changes
+  useEffect(() => {
+    if (!highlightId) return;
+
+    const timer = setTimeout(() => {
+      const element = document.querySelector(".highlighted-opportunity-card");
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [highlightId, allOpportunities.length]);
 
   const shouldEnableWidgetQueries = !shouldUseBootstrap || !isBootstrapPending;
 
@@ -271,8 +291,6 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
       }
     };
   }, [handleLoadMore, allOpportunities.length]);
-
-
 
   const toggleType = (type: string) => {
     setSelectedTypes((prev) =>
@@ -333,7 +351,10 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
           </div>
 
           {isFilterBoxOpen && (
-            <div id="filters-panel-mobile" className="grid grid-cols-[1fr_1.3fr] gap-2">
+            <div
+              id="filters-panel-mobile"
+              className="grid grid-cols-[1fr_1.3fr] gap-2"
+            >
               <TagsDropdown
                 selectedTags={selectedTags}
                 onTagsChange={setSelectedTags}
@@ -343,17 +364,25 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
               />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between px-2 py-2 text-xs sm:text-sm">
-                    <span className="truncate">{getTypeDropdownLabel(selectedTypes)}</span>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between px-2 py-2 text-xs sm:text-sm"
+                  >
+                    <span className="truncate">
+                      {getTypeDropdownLabel(selectedTypes)}
+                    </span>
                     <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-[calc(100vw-32px)] sm:w-64" align="end">
+                <DropdownMenuContent
+                  className="w-[calc(100vw-32px)] sm:w-64"
+                  align="end"
+                >
                   <div className="flex items-center justify-between px-2 py-1.5">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 px-2 text-xs font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2 text-xs font-medium text-orange-600 hover:bg-orange-50 hover:text-orange-700"
                       onClick={(e) => {
                         e.preventDefault();
                         selectAllTypes();
@@ -361,10 +390,10 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
                     >
                       Select All
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 px-2 text-xs font-medium text-gray-500 hover:text-gray-600 hover:bg-gray-50"
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-600"
                       onClick={(e) => {
                         e.preventDefault();
                         unselectAllTypes();
@@ -462,7 +491,7 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
                   "shrink-0 transition-all",
                   isFilterBoxOpen
                     ? "border-primary bg-primary text-primary-foreground"
-                    : "bg-orange-600 text-white hover:bg-orange-700 hover:text-white border-gray-400"
+                    : "border-gray-400 bg-orange-600 text-white hover:bg-orange-700 hover:text-white"
                 )}
                 aria-label="Toggle filters"
                 aria-expanded={isFilterBoxOpen}
@@ -473,7 +502,10 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
             </div>
 
             {isFilterBoxOpen && (
-              <div id="filters-panel-desktop" className="mb-4 rounded-lg border bg-white p-4">
+              <div
+                id="filters-panel-desktop"
+                className="mb-4 rounded-lg border bg-white p-4"
+              >
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <TagsDropdown
                     selectedTags={selectedTags}
@@ -494,10 +526,10 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-64" align="end">
                       <div className="flex items-center justify-between px-2 py-1.5">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-8 px-2 text-xs font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-xs font-medium text-orange-600 hover:bg-orange-50 hover:text-orange-700"
                           onClick={(e) => {
                             e.preventDefault();
                             selectAllTypes();
@@ -505,10 +537,10 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
                         >
                           Select All
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-8 px-2 text-xs font-medium text-gray-500 hover:text-gray-600 hover:bg-gray-50"
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-600"
                           onClick={(e) => {
                             e.preventDefault();
                             unselectAllTypes();
@@ -570,17 +602,25 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
                 {allOpportunities.length > 0 ? (
                   <>
                     <div className="space-y-4">
-                      {allOpportunities.map((opportunity, index) => (
-                        <div key={opportunity.id}>
-                          <OpportunityPost
-                            opportunity={opportunity}
-                          />
-                          {index ===
-                            Math.max(0, allOpportunities.length - 3) && (
+                      {allOpportunities.map((opportunity, index) => {
+                        const isHighlighted = opportunity.id === highlightId;
+                        return (
+                          <div
+                            key={opportunity.id}
+                            className={cn(
+                              "transition-all duration-500",
+                              isHighlighted &&
+                                "highlighted-opportunity-card rounded-lg ring-2 ring-orange-500"
+                            )}
+                          >
+                            <OpportunityPost opportunity={opportunity} />
+                            {index ===
+                              Math.max(0, allOpportunities.length - 3) && (
                               <div ref={desktopTriggerRef} className="h-1" />
                             )}
-                        </div>
-                      ))}
+                          </div>
+                        );
+                      })}
                     </div>
 
                     <div ref={loadMoreRef} className="flex justify-center py-8">
@@ -704,16 +744,25 @@ export default function OpportunityCardsPage({ initialTags }: OpportunityListPro
               {allOpportunities.length > 0 ? (
                 <>
                   <div className="space-y-3 sm:space-y-4">
-                    {allOpportunities.map((opportunity, index) => (
-                      <div key={opportunity.id}>
-                        <OpportunityPost
-                          opportunity={opportunity}
-                        />
-                        {index === Math.max(0, allOpportunities.length - 3) && (
-                          <div ref={mobileTriggerRef} className="h-1" />
-                        )}
-                      </div>
-                    ))}
+                    {allOpportunities.map((opportunity, index) => {
+                      const isHighlighted = opportunity.id === highlightId;
+                      return (
+                        <div
+                          key={opportunity.id}
+                          className={cn(
+                            "transition-all duration-500",
+                            isHighlighted &&
+                              "highlighted-opportunity-card rounded-lg ring-2 ring-orange-500"
+                          )}
+                        >
+                          <OpportunityPost opportunity={opportunity} />
+                          {index ===
+                            Math.max(0, allOpportunities.length - 3) && (
+                            <div ref={mobileTriggerRef} className="h-1" />
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
 
                   <div className="flex justify-center py-8">

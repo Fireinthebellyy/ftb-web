@@ -92,6 +92,8 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
       title,
     });
     if (typeof window !== "undefined") {
+      sessionStorage.setItem("internship_list_scroll_pos", window.scrollY.toString());
+      sessionStorage.setItem("last_clicked_internship_id", id);
       localStorage.setItem(
         "last_interacted_internship",
         JSON.stringify({

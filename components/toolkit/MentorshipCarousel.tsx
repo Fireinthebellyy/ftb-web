@@ -65,9 +65,9 @@ export function MentorshipCarousel({ mentorId }: { mentorId: string | undefined 
   if (totalSlides === 0) return null;
 
   return (
-    <div className="-mx-[6px] md:mx-auto md:w-full md:px-4 max-w-[1646px]">
+    <div className="-mx-[6px] md:mx-auto md:w-full md:px-0 max-w-[1450px] mb-[25px]">
       {/* Wrapper */}
-      <div className="bg-[#ff5e14] rounded-2xl py-1 px-2 sm:p-5 shadow-md relative overflow-visible h-[180px] md:h-[166px] w-full mx-auto">
+      <div className="bg-[#ff5e14] rounded-2xl shadow-md relative overflow-visible h-[180px] md:h-[130px] w-full mx-auto">
         <Carousel
           plugins={[plugin.current]}
           className="w-full h-full static [&_.overflow-hidden]:h-full"
@@ -81,7 +81,7 @@ export function MentorshipCarousel({ mentorId }: { mentorId: string | undefined 
                 {/* Left side: Static Mentor Image */}
                 <div className="w-[35%] max-w-[140px] shrink-0 relative z-10 h-full md:w-auto md:max-w-none md:flex md:items-center md:justify-center">
                   {activeMentor?.mentorImage ? (
-                    <div className="h-full w-full rounded-2xl md:h-[134px] md:w-[134px] md:rounded-full overflow-hidden border-2 md:border-4 border-white/20 shadow-md bg-white">
+                    <div className="h-full w-full rounded-2xl md:h-[120px] md:w-[120px] md:rounded-full overflow-hidden border-2 md:border-4 border-white/20 shadow-md bg-white">
                       <img
                         src={activeMentor.mentorImage}
                         alt={activeMentor.mentorName || "Mentor"}
@@ -89,7 +89,7 @@ export function MentorshipCarousel({ mentorId }: { mentorId: string | undefined 
                       />
                     </div>
                   ) : (
-                    <div className="h-full w-full rounded-2xl md:h-[134px] md:w-[134px] md:rounded-full bg-white/10 flex items-center justify-center border-2 md:border-4 border-white/20 shadow-md">
+                    <div className="h-full w-full rounded-2xl md:h-[120px] md:w-[120px] md:rounded-full bg-white/10 flex items-center justify-center border-2 md:border-4 border-white/20 shadow-md">
                       <span className="text-white font-medium text-xs md:text-sm text-center px-1">No Image</span>
                     </div>
                   )}

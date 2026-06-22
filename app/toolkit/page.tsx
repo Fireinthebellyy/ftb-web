@@ -97,7 +97,7 @@ export default function ToolkitPage() {
   const filteredToolkits = toolkits.filter((t) => t.category === selectedCategory);
   
   const isViewingDigitalProducts = selectedCategory === "digital products";
-  const first1on1Mentorship = filteredToolkits.find((t) => t.category === "1:1 Mentorship");
+  const first1on1Mentorship = toolkits.find((t) => t.category === "1:1 Mentorship");
   const mentorId = first1on1Mentorship?.mentorshipDetails?.mentorId;
 
   return (
@@ -107,11 +107,7 @@ export default function ToolkitPage() {
           <h1 className="text-3xl font-bold text-gray-900">Toolkit & Guide</h1>
         </div>
 
-        {mentorId && (
-          <div className="mb-[25px]">
-            <MentorshipCarousel mentorId={mentorId} />
-          </div>
-        )}
+        <MentorshipCarousel mentorId={mentorId} />
 
         <div className="mb-[15px] flex overflow-x-auto gap-3 pb-2 sm:flex-wrap sm:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {TAB_CATEGORIES.map(({ label, value }) => {

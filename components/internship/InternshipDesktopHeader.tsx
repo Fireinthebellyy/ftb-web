@@ -198,8 +198,74 @@ export const InternshipDesktopHeader: React.FC<
           </div>
         </div>
 
-        {/* Desktop Primary Action Buttons on the right */}
-        <div className="flex shrink-0 flex-wrap items-center gap-3">
+        {/* Desktop Action Buttons */}
+        <div className="flex items-center gap-3 shrink-0">
+          <Button
+            variant="outline"
+            onClick={handleBookmarkClick}
+            className={cn(
+              "w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 transition-all focus:ring-0",
+              isBookmarked
+                ? "text-orange-500 border-orange-500 bg-orange-50"
+                : "text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50"
+            )}
+          >
+            <Bookmark
+              className={cn("w-5 h-5", isBookmarked && "fill-current")}
+            />
+          </Button>
+          {isModerator && (
+            <Button
+              variant="outline"
+              onClick={onAdminClick}
+              disabled={isAdminLoading}
+              className={cn(
+                "w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50 transition-all focus:ring-0"
+              )}
+              aria-label="Admin controls"
+            >
+              {isAdminLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Settings className="w-5 h-5" />
+              )}
+            </Button>
+          )}
+          {(isOwner || isModerator) && (
+            <Button
+              variant="outline"
+              onClick={onEditClick}
+              className="w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50 transition-all focus:ring-0"
+              aria-label="Edit internship"
+            >
+              <Pencil className="w-5 h-5" />
+            </Button>
+          )}
+          <div className="relative flex shrink-0">
+            <button
+              onClick={handleCalendarClick}
+              className="relative overflow-hidden w-12 h-12 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50 transition-all focus:ring-0 cursor-pointer"
+              aria-label="Add to calendar"
+            >
+              {isCalendarAnimating && (
+                <div className="absolute inset-0 bg-white dark:bg-zinc-950 flex items-center justify-center animate-slide-in-bell z-20">
+                  <Bell className="w-5 h-5 text-[#ec5b13] animate-ring-bell" />
+                </div>
+              )}
+              <div className="relative w-5 h-5 flex items-center justify-center shrink-0">
+                <Image
+                  src="/images/google-calendar.webp"
+                  alt="Add to Google Calendar"
+                  width={20}
+                  height={20}
+                  className="w-5 h-5 object-contain"
+                />
+              </div>
+            </button>
+            <div className="absolute -top-1.5 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#ec5b13] text-white border-2 border-white shadow-md z-30 pointer-events-none">
+              <Bell className="h-2.5 w-2.5" strokeWidth={3} />
+            </div>
+          </div>
           {hasApply && (
             <Button
               asChild

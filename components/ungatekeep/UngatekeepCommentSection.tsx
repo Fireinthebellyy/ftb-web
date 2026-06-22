@@ -16,6 +16,7 @@ import { formatDate } from "@/lib/utils";
 import { Loader2, Send, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
+import posthog from "posthog-js";
 
 interface UngatekeepCommentSectionProps {
   postId: string;
@@ -118,8 +119,17 @@ const CommentInput: React.FC<{
       await createComment.mutateAsync({ content: content.trim() });
       setContent("");
       toast.success("Comment posted successfully");
+      
+      posthog.capture("ungatekeep_comment_posted", {
+        post_id: postId,
+        comment_length: content.trim().length,
+      });
     } catch (_error) {
       toast.error("Failed to post comment");
+      
+      posthog.capture("ungatekeep_comment_post_error", {
+        post_id: postId,
+      });
     }
   };
 
@@ -202,8 +212,18 @@ const UngatekeepCommentSection: React.FC<UngatekeepCommentSectionProps> = ({ pos
     try {
       await deleteComment.mutateAsync(commentId);
       toast.success("Comment deleted successfully");
+      
+      posthog.capture("ungatekeep_comment_deleted", {
+        post_id: postId,
+        comment_id: commentId,
+      });
     } catch (_error) {
       toast.error("Failed to delete comment");
+      
+      posthog.capture("ungatekeep_comment_delete_error", {
+        post_id: postId,
+        comment_id: commentId,
+      });
     }
   };
 

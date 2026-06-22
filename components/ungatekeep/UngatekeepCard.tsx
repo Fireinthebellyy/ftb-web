@@ -75,6 +75,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalIndex, setModalIndex] = useState(0);
   const [isSaved, setIsSaved] = useState(post.isSaved || false);
+  const [isSaving, setIsSaving] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [isFlying, setIsFlying] = useState(false);
   const [flyPos, setFlyPos] = useState({ x: 0, y: 0 });
@@ -86,8 +87,11 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
 
   const toggleSave = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    if (isSaving) return;
 
     const buttonElement = e.currentTarget as HTMLElement;
+    const nextSaved = !isSaved;
 
     posthog.capture("ungatekeep_save_button_clicked", {
       post_id: post.id,
@@ -96,12 +100,13 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
 
     // Optimistic UI update
     const previousSaved = isSaved;
-    setIsSaved(!previousSaved);
+    setIsSaved(nextSaved);
+    setIsSaving(true);
 
     try {
       const response = await axios.post("/api/ungatekeep/bookmark", {
         postId: post.id,
-        bookmarked: !isSaved,
+        bookmarked: nextSaved,
       });
 
       // Nested try-catch to isolate potential errors after successful API call
@@ -149,6 +154,8 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
         console.error("Failed to update saved status:", error);
         toast.error("Failed to update saved status");
       }
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -287,16 +294,17 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
         {isExpanded || !hasLongContent ? (
           <div
             className={cn(
-              "text-muted-foreground w-full text-xs break-words md:text-sm",
+              "text-gray-900 w-full text-xs break-words md:text-sm",
               "[&_ol]:ml-4 [&_ol]:list-decimal [&_p]:mb-2 last:[&_p]:mb-0 [&_ul]:ml-4 [&_ul]:list-disc",
-              "[&_*]:break-words [&_*]:whitespace-normal"
+              "[&_*]:break-words [&_*]:whitespace-normal",
+              "[&_a]:text-orange-600 [&_a]:underline-offset-2 hover:[&_a]:underline"
             )}
             dangerouslySetInnerHTML={{ __html: safeHtml }}
           />
         ) : (
           <p
             className={cn(
-              "text-muted-foreground inline w-full text-xs break-words md:text-sm"
+              "text-gray-900 inline w-full text-xs break-words md:text-sm"
             )}
           >
             {previewContent}

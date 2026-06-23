@@ -43,40 +43,44 @@ export async function POST(
 
     const originalToolkit = originalToolkitList[0];
 
-    // 2. Clone the toolkit
-    const newToolkitResult = await db
-      .insert(toolkits)
-      .values({
-        ...originalToolkit,
-        id: undefined, // Let db generate a new UUID
-        title: `${originalToolkit.title}-cloned`,
-        isActive: false, // Set false by default for clones
-        createdAt: undefined,
-        updatedAt: undefined,
-        userId: currentUser.currentUser.id,
-      })
-      .returning();
+    const newToolkit = await db.transaction(async (tx) => {
+      // 2. Clone the toolkit
+      const newToolkitResult = await tx
+        .insert(toolkits)
+        .values({
+          ...originalToolkit,
+          id: undefined, // Let db generate a new UUID
+          title: `${originalToolkit.title}-cloned`,
+          isActive: false, // Set false by default for clones
+          createdAt: undefined,
+          updatedAt: undefined,
+          userId: currentUser.currentUser.id,
+        })
+        .returning();
 
-    const newToolkit = newToolkitResult[0];
+      const clonedToolkit = newToolkitResult[0];
 
-    // 3. Fetch original content items
-    const originalContentItems = await db
-      .select()
-      .from(toolkitContentItems)
-      .where(eq(toolkitContentItems.toolkitId, id));
+      // 3. Fetch original content items
+      const originalContentItems = await tx
+        .select()
+        .from(toolkitContentItems)
+        .where(eq(toolkitContentItems.toolkitId, id));
 
-    // 4. Clone content items if any
-    if (originalContentItems.length > 0) {
-      const clonedItems = originalContentItems.map((item) => ({
-        ...item,
-        id: undefined,
-        toolkitId: newToolkit.id,
-        createdAt: undefined,
-        updatedAt: undefined,
-      }));
+      // 4. Clone content items if any
+      if (originalContentItems.length > 0) {
+        const clonedItems = originalContentItems.map((item) => ({
+          ...item,
+          id: undefined,
+          toolkitId: clonedToolkit.id,
+          createdAt: undefined,
+          updatedAt: undefined,
+        }));
 
-      await db.insert(toolkitContentItems).values(clonedItems);
-    }
+        await tx.insert(toolkitContentItems).values(clonedItems);
+      }
+
+      return clonedToolkit;
+    });
 
     activityStatus = 201;
     return NextResponse.json(newToolkit, { status: 201 });

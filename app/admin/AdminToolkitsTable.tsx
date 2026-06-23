@@ -621,6 +621,7 @@ export default function AdminToolkitsTable() {
     handleEdit,
     updateToolkitMutation,
     updatingActiveToolkitIds,
+    cloneToolkitMutation,
   ]);
 
   return (

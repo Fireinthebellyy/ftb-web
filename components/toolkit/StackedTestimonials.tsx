@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ImageIcon } from "lucide-react";
+import { ImageIcon, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
@@ -28,6 +28,7 @@ export function StackedTestimonials() {
   });
 
   const [cards, setCards] = useState<any[]>(PLACEHOLDER_CARDS);
+  const [isPlaying, setIsPlaying] = useState(true);
 
   useEffect(() => {
     if (fetchedImages && fetchedImages.length > 0) {
@@ -51,15 +52,28 @@ export function StackedTestimonials() {
     });
   };
 
+  const moveToStart = () => {
+    setCards((prev) => {
+      const newArray = [...prev];
+      const last = newArray.pop();
+      if (last) newArray.unshift(last);
+      return newArray;
+    });
+  };
+
   useEffect(() => {
-    const timer = setInterval(() => {
-      moveToEnd();
-    }, 4000); // Rotates every 4 seconds
+    let timer: NodeJS.Timeout;
+    if (isPlaying) {
+      timer = setInterval(() => {
+        moveToEnd();
+      }, 4000); // Rotates every 4 seconds
+    }
     return () => clearInterval(timer);
-  }, []);
+  }, [isPlaying]);
 
   return (
-    <div className="relative h-[280px] sm:h-[380px] md:h-[480px] lg:h-[560px] w-full mx-auto flex items-center justify-center overflow-hidden py-6">
+    <div className="flex flex-col items-center w-full">
+      <div className="relative h-[280px] sm:h-[380px] md:h-[480px] lg:h-[560px] w-full mx-auto flex items-center justify-center overflow-hidden py-6">
       {isLoading ? (
         <div className="flex items-center justify-center">
            {/* Simple skeleton or loader could go here, for now it will just show placeholders momentarily until loaded */}
@@ -108,6 +122,31 @@ export function StackedTestimonials() {
           </motion.div>
         );
       })}
+      </div>
+
+      <div className="flex items-center gap-6 mt-4">
+        <button 
+          onClick={moveToStart} 
+          className="p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors"
+          aria-label="Previous testimonial"
+        >
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+        <button 
+          onClick={() => setIsPlaying(!isPlaying)} 
+          className="p-4 rounded-full bg-orange-100 hover:bg-orange-200 transition-colors shadow-sm"
+          aria-label={isPlaying ? "Pause testimonials" : "Play testimonials"}
+        >
+          {isPlaying ? <Pause className="w-5 h-5 text-orange-600" /> : <Play className="w-5 h-5 text-orange-600 ml-0.5" />}
+        </button>
+        <button 
+          onClick={moveToEnd} 
+          className="p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors"
+          aria-label="Next testimonial"
+        >
+          <ChevronRight className="w-6 h-6" />
+        </button>
+      </div>
     </div>
   );
 }

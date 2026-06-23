@@ -190,9 +190,6 @@ export default function InternshipDetailPage() {
   const handleCalendarClick = () => {
     if (!internship || isCalendarAnimating) return;
 
-    setIsCalendarAnimating(true);
-    toast.success("adding to calendar, keep hustlemaxxing!");
-
     const date = internship.deadline
       ? new Date(internship.deadline)
       : new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -201,11 +198,17 @@ export default function InternshipDetailPage() {
     const formattedEnd = dateEnd.toISOString().replace(/[-:]|\.\d{3}/g, "");
     const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Apply to: ${internship.title}`)}&dates=${formatted}/${formattedEnd}&details=${encodeURIComponent(`Company: ${internship.hiringOrganization || "N/A"}\n\nInternship Link: ${shareUrl}`)}`;
     
-    window.open(calendarUrl, "_blank");
+    const newWindow = window.open(calendarUrl, "_blank");
 
-    setTimeout(() => {
-      setIsCalendarAnimating(false);
-    }, 1000);
+    if (newWindow) {
+      setIsCalendarAnimating(true);
+      toast.success("adding to calendar, keep hustlemaxxing!");
+      setTimeout(() => {
+        setIsCalendarAnimating(false);
+      }, 1000);
+    } else {
+      toast.error("Popup blocked! Please allow popups to add to calendar.");
+    }
   };
 
   const handleOpenChat = () => {

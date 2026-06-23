@@ -232,19 +232,38 @@ export default function OpportunityCardsPage({
     highlightId,
   });
 
+  const scrolledHighlightIdRef = useRef<string | null>(null);
+
   // Scroll highlighted opportunity into view on mount or when highlightId changes
   useEffect(() => {
     if (!highlightId) return;
 
-    const timer = setTimeout(() => {
+    if (scrolledHighlightIdRef.current !== highlightId) {
+      scrolledHighlightIdRef.current = null;
+    }
+
+    let attempts = 0;
+    const maxAttempts = 10;
+    let timerId: ReturnType<typeof setTimeout>;
+
+    const tryScroll = () => {
+      if (scrolledHighlightIdRef.current === highlightId) return;
       const element = document.querySelector(".highlighted-opportunity-card");
       if (element) {
         element.scrollIntoView({ behavior: "smooth", block: "center" });
+        scrolledHighlightIdRef.current = highlightId;
+      } else if (attempts < maxAttempts) {
+        attempts++;
+        timerId = setTimeout(tryScroll, 200);
       }
-    }, 600);
+    };
 
-    return () => clearTimeout(timer);
-  }, [highlightId, allOpportunities.length]);
+    tryScroll();
+
+    return () => {
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [highlightId]);
 
   const shouldEnableWidgetQueries = !shouldUseBootstrap || !isBootstrapPending;
 

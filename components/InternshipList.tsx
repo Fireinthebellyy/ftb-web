@@ -527,19 +527,24 @@ export default function InternshipList() {
     if (typeof window !== "undefined" && allInternships.length > 0 && !isLoading) {
       const clickedId = sessionStorage.getItem("last_clicked_internship_id");
       const scrollPos = sessionStorage.getItem("internship_list_scroll_pos");
+      const timeouts: ReturnType<typeof setTimeout>[] = [];
 
       if (clickedId) {
         let attempts = 0;
         const maxAttempts = 20; // Try for up to 1 second
+        const isMobile = window.innerWidth < 1024;
+        const prefix = isMobile ? "mobile-" : "desktop-";
+
         const tryScroll = () => {
-          const element = document.getElementById(`internship-card-${clickedId}`);
+          const element = document.getElementById(`${prefix}internship-card-${clickedId}`);
           if (element) {
             element.scrollIntoView({ block: "center" });
             sessionStorage.removeItem("last_clicked_internship_id");
             sessionStorage.removeItem("internship_list_scroll_pos");
           } else if (attempts < maxAttempts) {
             attempts++;
-            setTimeout(tryScroll, 50);
+            const t = setTimeout(tryScroll, 50);
+            timeouts.push(t);
           } else {
             if (scrollPos) {
               const y = parseInt(scrollPos, 10);
@@ -552,7 +557,7 @@ export default function InternshipList() {
           }
         };
         const timer = setTimeout(tryScroll, 50);
-        return () => clearTimeout(timer);
+        timeouts.push(timer);
       } else if (scrollPos) {
         const y = parseInt(scrollPos, 10);
         if (!isNaN(y)) {
@@ -560,9 +565,13 @@ export default function InternshipList() {
             window.scrollTo(0, y);
             sessionStorage.removeItem("internship_list_scroll_pos");
           }, 50);
-          return () => clearTimeout(timer);
+          timeouts.push(timer);
         }
       }
+
+      return () => {
+        timeouts.forEach(clearTimeout);
+      };
     }
   }, [allInternships.length, isLoading]);
 
@@ -1263,7 +1272,7 @@ export default function InternshipList() {
                   <>
                     <div className="space-y-4">
                       {allInternships.map((internship,idx) => (
-                        <div key={`${internship.title}-${internship.id}-${idx}`} id={`internship-card-${internship.id}`}>
+                        <div key={`${internship.title}-${internship.id}-${idx}`} id={`desktop-internship-card-${internship.id}`}>
                           <InternshipPost
                             internship={internship}
                             onBookmarkChange={handleBookmarkChange}
@@ -1388,7 +1397,7 @@ export default function InternshipList() {
                 <>
                   <div className="space-y-3 sm:space-y-4 max-h-[50vh] sm:max-h-[60vh] overflow-y-auto scrollbar-thin border border-slate-100 rounded-xl p-2 bg-slate-50/50">
                     {allInternships.map((internship) => (
-                      <div key={internship.id} id={`internship-card-${internship.id}`}>
+                      <div key={internship.id} id={`mobile-internship-card-${internship.id}`}>
                         <InternshipPost
                           internship={internship}
                           onBookmarkChange={handleBookmarkChange}

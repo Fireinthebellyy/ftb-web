@@ -127,7 +127,7 @@ export function addUtmParams(url: string, source: string): string {
 }
 
 export function ensureAbsoluteUrl(url: string | null | undefined): string {
-  if (!url) return "";
+  if (!url || !url.trim()) return "";
   const trimmed = url.trim();
   if (/^(https?:\/\/)/i.test(trimmed)) {
     return trimmed;

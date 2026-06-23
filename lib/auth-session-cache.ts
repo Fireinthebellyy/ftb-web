@@ -65,6 +65,9 @@ export async function getSessionCached(requestHeaders: Headers) {
     }
   }
 
+  // Better Auth's default API client types do not natively expose our custom database role field
+  // ("user" | "member" | "editor" | "admin"). We perform a double cast here to safely augment 
+  // the session response with our type-safe database role schema for use across the application.
   const pending = auth.api.getSession({ headers: requestHeaders }) as unknown as Promise<SessionResult>;
   sessionCache.set(key, {
     expiresAt: now + SESSION_TTL_MS,

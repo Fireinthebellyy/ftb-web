@@ -13,6 +13,7 @@ import {
   PlusCircle,
   RefreshCw,
   Trash2,
+  Copy,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -155,6 +156,20 @@ export default function AdminToolkitsTable() {
     },
     onError: () => {
       toast.error("Failed to delete toolkit");
+    },
+  });
+
+  const cloneToolkitMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await axios.post(`/api/admin/toolkits/${id}/clone`);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Toolkit cloned successfully");
+      queryClient.invalidateQueries({ queryKey: ["admin", "toolkits"] });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.error || "Failed to clone toolkit");
     },
   });
 
@@ -572,6 +587,18 @@ export default function AdminToolkitsTable() {
                 title="Edit toolkit"
               >
                 <Edit className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                title="Clone toolkit"
+                disabled={cloneToolkitMutation.isPending}
+                onClick={() => {
+                  if (!confirm(`Are you sure you want to clone "${toolkit.title}"?`)) return;
+                  cloneToolkitMutation.mutate(toolkit.id);
+                }}
+              >
+                <Copy className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"

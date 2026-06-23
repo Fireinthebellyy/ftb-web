@@ -59,7 +59,7 @@ export function StackedTestimonials() {
   }, []);
 
   return (
-    <div className="relative h-72 w-full max-w-4xl mx-auto flex items-center justify-center overflow-hidden py-6">
+    <div className="relative h-[280px] sm:h-[380px] md:h-[480px] lg:h-[560px] w-full mx-auto flex items-center justify-center overflow-hidden py-6">
       {isLoading ? (
         <div className="flex items-center justify-center">
            {/* Simple skeleton or loader could go here, for now it will just show placeholders momentarily until loaded */}
@@ -76,9 +76,9 @@ export function StackedTestimonials() {
         if (isCenter) {
           animateState = { x: "0%", scale: 1, opacity: 1, zIndex: 10 };
         } else if (isRight) {
-          animateState = { x: "65%", scale: 0.85, opacity: 1, zIndex: 5 };
+          animateState = { x: "70%", scale: 0.85, opacity: 1, zIndex: 5 };
         } else if (isLeft) {
-          animateState = { x: "-65%", scale: 0.85, opacity: 1, zIndex: 5 };
+          animateState = { x: "-70%", scale: 0.85, opacity: 1, zIndex: 5 };
         }
 
         return (
@@ -94,7 +94,7 @@ export function StackedTestimonials() {
               mass: 1,
             }}
             onClick={moveToEnd}
-            className={`absolute w-72 h-56 sm:w-80 sm:h-64 rounded-2xl shadow-xl border border-gray-100 flex flex-col items-center justify-center text-center cursor-pointer ${card.bg}`}
+            className={`absolute w-[280px] h-[224px] sm:w-[380px] sm:h-[304px] md:w-[500px] md:h-[400px] lg:w-[600px] lg:h-[480px] rounded-2xl shadow-xl border border-gray-100 flex flex-col items-center justify-center text-center overflow-hidden cursor-pointer ${card.bg}`}
           >
             {card.src ? (
               <img src={card.src} alt={card.alt} className="w-full h-full object-cover" />

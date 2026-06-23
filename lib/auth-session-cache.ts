@@ -1,6 +1,14 @@
 import { auth } from "@/lib/auth";
 
-type SessionResult = Awaited<ReturnType<typeof auth.api.getSession>>;
+type BaseSession = Awaited<ReturnType<typeof auth.api.getSession>>;
+type SessionResult = BaseSession extends null
+  ? null
+  : {
+      user: NonNullable<BaseSession>["user"] & {
+        role?: "user" | "member" | "editor" | "admin";
+      };
+      session: NonNullable<BaseSession>["session"];
+    };
 
 interface CacheEntry {
   expiresAt: number;
@@ -57,7 +65,10 @@ export async function getSessionCached(requestHeaders: Headers) {
     }
   }
 
-  const pending = auth.api.getSession({ headers: requestHeaders });
+  // Better Auth's default API client types do not natively expose our custom database role field
+  // ("user" | "member" | "editor" | "admin"). We perform a double cast here to safely augment 
+  // the session response with our type-safe database role schema for use across the application.
+  const pending = auth.api.getSession({ headers: requestHeaders }) as unknown as Promise<SessionResult>;
   sessionCache.set(key, {
     expiresAt: now + SESSION_TTL_MS,
     promise: pending,

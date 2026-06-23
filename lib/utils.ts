@@ -105,6 +105,32 @@ export function formatDateLong(dateString: string | null | undefined): string {
 
 export function addUtmParams(url: string, source: string): string {
   if (!url) return "";
-  const separator = url.includes("?") ? "&" : "?";
-  return `${url}${separator}utm_source=${source}`;
+  try {
+    // Avoid appending UTM params to LinkedIn URLs since LinkedIn flags unexpected external query params
+    const isLinkedIn = /^(https?:\/\/)?(www\.)?linkedin\.com/i.test(url);
+    if (isLinkedIn) {
+      return url;
+    }
+
+    const hashIndex = url.indexOf("#");
+    let baseUrl = url;
+    let hash = "";
+    if (hashIndex !== -1) {
+      baseUrl = url.substring(0, hashIndex);
+      hash = url.substring(hashIndex);
+    }
+    const separator = baseUrl.includes("?") ? "&" : "?";
+    return `${baseUrl}${separator}utm_source=${source}${hash}`;
+  } catch {
+    return url;
+  }
+}
+
+export function ensureAbsoluteUrl(url: string | null | undefined): string {
+  if (!url || !url.trim()) return "";
+  const trimmed = url.trim();
+  if (/^(https?:\/\/)/i.test(trimmed)) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
 }

@@ -38,6 +38,10 @@ if (process.env.NODE_ENV === "development") {
 }
 
 export const auth = betterAuth({
+  session: {
+    expiresIn: 60 * 60 * 24 * 90, // Sets the absolute maximum lifetime of a session to 90 days (in seconds)
+    updateAge: 60 * 60 * 24, // Session cookie is refreshed daily on activity (1 day in seconds)
+  },
   user: {
     additionalFields: {
       role: {

@@ -42,7 +42,7 @@ export default function ToolkitStudentFeedback() {
   const quote = ITEMS[active] ?? "";
 
   return (
-    <div className="mt-4 rounded-lg border border-orange-100 bg-white px-4 py-4 sm:px-5">
+    <div className="mt-4 rounded-lg border border-orange-100 bg-orange-50 px-4 py-4 sm:px-5">
       <div className="flex items-start justify-end gap-2">
         {COUNT > 1 ? (
           <button

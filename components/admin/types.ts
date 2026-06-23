@@ -32,8 +32,8 @@ export const toolkitFormSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters." }),
   description: z.string().refine((value) => hasMeaningfulRichText(value, 10), {
     message: "Description must be at least 10 characters.",
-  }).refine((value) => value === undefined || value.split(/\s+/).length <= 150, {
-    message: "Description must not exceed 150 words.",
+  }).refine((value) => value === undefined || value.split(/\s+/).length <= 250, {
+    message: "Description must not exceed 250 words.",
   }),
   price: z.coerce
     .number()

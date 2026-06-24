@@ -11,6 +11,7 @@ export const adminTabValues = [
   "coupons",
   "ungatekeep",
   "digital-products",
+  "mentors",
 ] as const;
 
 export type AdminTabValue = (typeof adminTabValues)[number];
@@ -24,6 +25,7 @@ const roleToAdminTabs: Record<UserRole, readonly AdminTabValue[]> = {
     "internships",
     "toolkits",
     "ungatekeep",
+    "mentors",
   ],
   admin: adminTabValues,
 };

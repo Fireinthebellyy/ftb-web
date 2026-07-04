@@ -1,21 +1,27 @@
 "use client";
 
 import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import { useDashboardBootstrap } from "@/lib/queries-dashboard";
 import {
   useInfiniteOpportunities,
+  type OpportunitiesResponse,
 } from "@/lib/queries-opportunities";
 import { AVAILABLE_TYPES } from "./constants";
+
 interface UseOpportunityFeedParams {
   debouncedSearchTerm: string;
   selectedTypes: string[];
   selectedTags: string[];
+  highlightId?: string;
 }
 
 export function useOpportunityFeed({
   debouncedSearchTerm,
   selectedTypes,
   selectedTags,
+  highlightId,
 }: UseOpportunityFeedParams) {
   const normalizedSearchTerm = debouncedSearchTerm.trim();
   
@@ -46,6 +52,24 @@ export function useOpportunityFeed({
   // If no types are selected, we should show nothing (suppress queries)
   const shouldShowNothing = noneSelected;
 
+  const highlightQuery = useQuery({
+    queryKey: ["opportunity-detail", highlightId],
+    queryFn: async () => {
+      if (!highlightId) return null;
+      const { data } = await axios.get<OpportunitiesResponse>(
+        "/api/opportunities",
+        {
+          params: {
+            ids: highlightId,
+          },
+        }
+      );
+      return data.opportunities?.[0] || null;
+    },
+    enabled: Boolean(highlightId),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
   const bootstrapQuery = useDashboardBootstrap(
     {
       limit: 10,
@@ -71,17 +95,29 @@ export function useOpportunityFeed({
 
   const allOpportunities = useMemo(() => {
     const flat = opportunitiesQuery.data?.pages?.flatMap((page) => page.opportunities) || [];
+    
+    // Add the highlighted opportunity to the front of the list if it's not already in there
+    const result = [...flat];
+    const highlightedOpp = highlightQuery.data;
+    if (highlightedOpp) {
+      const exists = result.some((opp) => opp.id === highlightedOpp.id);
+      if (!exists) {
+        result.unshift(highlightedOpp);
+      }
+    }
+
     const seen = new Set<string>();
-    return flat.filter((opp) => {
+    return result.filter((opp) => {
       if (seen.has(opp.id)) return false;
       seen.add(opp.id);
       return true;
     });
-  }, [opportunitiesQuery.data]);
+  }, [opportunitiesQuery.data, highlightQuery.data]);
 
   const isLoading =
     (shouldUseBootstrap && bootstrapQuery.isPending) ||
-    opportunitiesQuery.isLoading;
+    opportunitiesQuery.isLoading ||
+    (Boolean(highlightId) && highlightQuery.isLoading);
 
   return {
     normalizedSearchTerm,

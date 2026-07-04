@@ -4,10 +4,10 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Mail } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { addUtmParams } from "@/lib/utils";
-import { InternshipData } from "@/types/interfaces";
 import posthog from "posthog-js";
+import { Button } from "@/components/ui/button";
+import { addUtmParams, ensureAbsoluteUrl } from "@/lib/utils";
+import { InternshipData } from "@/types/interfaces";
 
 interface InternshipStickyFooterProps {
   internship: InternshipData;
@@ -22,9 +22,9 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
 
   if (!hasApply && !hasDM && !hasMail) return null;
 
-  const dmUrl = internship.hiringManagerLinkedin || "";
+  const dmUrl = ensureAbsoluteUrl(internship.hiringManagerLinkedin);
   const emailSubject = `Applying for ${internship.title} role at ${internship.hiringOrganization}`;
-  const mailUrl = `mailto:${internship.hiringManagerEmail || ""}?subject=${encodeURIComponent(emailSubject)}`;
+  const mailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(internship.hiringManagerEmail || "")}&su=${encodeURIComponent(emailSubject)}`;
 
   return (
     <footer className="pb-safe fixed right-0 bottom-0 left-0 z-[60] border-t border-slate-100 bg-white px-4 py-3 shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
@@ -34,7 +34,7 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
           <Button asChild className="flex-1 h-11 rounded-xl border-none bg-[#ec5b13] hover:bg-[#d44d0c] font-bold text-white shadow-none transition-all active:scale-95 text-[11px] px-1 flex items-center justify-center gap-1">
             <Link
               href={addUtmParams(
-                internship.applyLink || internship.link || "",
+                ensureAbsoluteUrl(internship.applyLink || internship.link),
                 "ftb_mobile"
               )}
               target="_blank"

@@ -238,8 +238,6 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
             <Button asChild className="h-12 px-5 rounded-xl bg-black hover:bg-zinc-800 text-white font-bold border-none shadow-none transition-all active:scale-95 duration-200 flex items-center gap-2">
               <Link
                 href={mailUrl}
-                target="_blank"
-                rel="noopener noreferrer"
                 onClick={() =>
                   posthog.capture("internship_cold_mail_clicked", {
                     internship_id: internship.id,

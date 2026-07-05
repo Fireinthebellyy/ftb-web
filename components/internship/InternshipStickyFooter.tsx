@@ -24,7 +24,7 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
 
   const dmUrl = ensureAbsoluteUrl(internship.hiringManagerLinkedin);
   const emailSubject = `Applying for ${internship.title} role at ${internship.hiringOrganization}`;
-  const mailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(internship.hiringManagerEmail || "")}&su=${encodeURIComponent(emailSubject)}`;
+  const mailUrl = `mailto:${internship.hiringManagerEmail || ""}?subject=${encodeURIComponent(emailSubject)}`;
 
   return (
     <footer className="pb-safe fixed right-0 bottom-0 left-0 z-[60] border-t border-slate-100 bg-white px-4 py-3 shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">

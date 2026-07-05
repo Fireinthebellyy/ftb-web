@@ -55,17 +55,11 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
   const hasDM = !!internship.hiringManagerLinkedin;
   const hasMail = !!internship.hiringManagerEmail;
 
-  const [isMobileDevice, setIsMobileDevice] = React.useState(false);
-  React.useEffect(() => {
-    const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    setIsMobileDevice(isMobileUA);
-  }, []);
+
 
   const dmUrl = internship.hiringManagerLinkedin || "";
   const emailSubject = `Applying for ${internship.title} role at ${internship.hiringOrganization}`;
-  const mailUrl = isMobileDevice
-    ? `mailto:${internship.hiringManagerEmail || ""}?subject=${encodeURIComponent(emailSubject)}`
-    : `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(internship.hiringManagerEmail || "")}&su=${encodeURIComponent(emailSubject)}`;
+  const mailUrl = `mailto:${internship.hiringManagerEmail || ""}?subject=${encodeURIComponent(emailSubject)}`;
 
   return (
     <div className="bg-white rounded-[24px] px-8 py-5 shadow-sm border border-slate-100 relative mb-8">
@@ -244,8 +238,6 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
             <Button asChild className="h-12 px-5 rounded-xl bg-black hover:bg-zinc-800 text-white font-bold border-none shadow-none transition-all active:scale-95 duration-200 flex items-center gap-2">
               <Link
                 href={mailUrl}
-                target="_blank"
-                rel="noopener noreferrer"
                 onClick={() =>
                   posthog.capture("internship_cold_mail_clicked", {
                     internship_id: internship.id,

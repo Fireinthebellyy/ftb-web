@@ -3,6 +3,7 @@ import { internships, user } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { isValid, parse } from "date-fns";
 import { z } from "zod";
+import { ensureAbsoluteUrl } from "@/lib/utils";
 
 export const canonicalTypes = ["remote", "hybrid", "onsite"] as const;
 export const canonicalTimings = ["full_time", "part_time"] as const;
@@ -317,7 +318,7 @@ export function buildInternshipInsertValues(
       description: record.description?.trim() || null,
       type: normalizedType,
       timing: normalizedTiming,
-      link: record.link ? record.link.trim() : null,
+      link: record.link ? ensureAbsoluteUrl(record.link) : null,
       stipend: parsedStipend,
       duration: record.duration?.trim() || null,
       experience: record.experience?.trim() || null,
@@ -327,7 +328,7 @@ export function buildInternshipInsertValues(
       hiringOrganization: record.hiringOrganization.trim(),
       hiringManager: record.hiringManager?.trim() || null,
       hiringManagerEmail: record.hiringManagerEmail?.trim() || null,
-      hiringManagerLinkedin: record.hiringManagerLinkedin?.trim() || null,
+      hiringManagerLinkedin: record.hiringManagerLinkedin ? ensureAbsoluteUrl(record.hiringManagerLinkedin) : null,
       field: record.field?.trim() || null,
       isVerified: record.isVerified ?? false,
       isActive: record.isActive ?? true,

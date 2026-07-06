@@ -18,70 +18,108 @@ const walkthroughSteps = [
     path: "/",
     title: "Welcome",
     subtitle: "Your journey starts here.",
-    description: "Discover everything you need to get ahead. Let's take a quick tour.",
+    description:
+      "Discover everything you need to get ahead. Let's take a quick tour.",
   },
   {
     path: "/opportunities",
     title: "Opportunities",
-    subtitle: "80% of users go through this to understand this platform better.",
-    description: "Curated opportunities like fellowships, scholarships, awards and recognitions, competitions across 40+ fields – all in one place.",
+    subtitle:
+      "80% of users go through this to understand this platform better.",
+    description:
+      "Curated opportunities like fellowships, scholarships, awards and recognitions, competitions across 40+ fields – all in one place.",
   },
   {
     path: "/intern",
     title: "Internships",
     subtitle: "Gain real-world experience.",
-    description: "Find and apply for top internships tailored to your profile. Start building your career today.",
+    description:
+      "Find and apply for top internships tailored to your profile. Start building your career today.",
   },
   {
     path: "/toolkit",
     title: "Toolkit",
     subtitle: "Everything you need to succeed.",
-    description: "Access premium guides, resume templates, and case studies to prepare you for your next big step.",
+    description:
+      "Access premium guides, resume templates, and case studies to prepare you for your next big step.",
   },
   {
     path: "/ungatekeep",
     title: "Ungatekeep",
     subtitle: "Learn from the community.",
-    description: "Read authentic feedback, interview experiences, and insights from peers who have been there.",
+    description:
+      "Read authentic feedback, interview experiences, and insights from peers who have been there.",
   },
   {
     path: "/tracker",
     title: "Tracker",
     subtitle: "Stay organized.",
-    description: "Track your ongoing applications and important deadlines in one manageable dashboard.",
-  }
+    description:
+      "Track your ongoing applications and important deadlines in one manageable dashboard.",
+  },
 ];
 
 export interface WalkthroughFigmaProps {
   isDesktop?: boolean;
 }
 
-export default function WalkthroughFigma({ isDesktop = false }: WalkthroughFigmaProps) {
+export default function WalkthroughFigma({
+  isDesktop = false,
+}: WalkthroughFigmaProps) {
   const [isVisible, setIsVisible] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const { data: user, isPending } = useSession();
-  const [desktopPointerLeft, setDesktopPointerLeft] = useState("calc(50% - 22px)");
+  const [desktopPointerLeft, setDesktopPointerLeft] =
+    useState("calc(50% - 22px)");
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const normalizedPathname = pathname === "/" ? "/" : pathname?.replace(/\/+$/, "");
+  const normalizedPathname =
+    pathname === "/" ? "/" : pathname?.replace(/\/+$/, "");
 
   // Find current step based on route
-  const currentStepIndex = walkthroughSteps.findIndex(s => 
-    normalizedPathname === s.path || (s.path !== "/" && normalizedPathname?.startsWith(`${s.path}/`))
+  const currentStepIndex = walkthroughSteps.findIndex(
+    (s) =>
+      normalizedPathname === s.path ||
+      (s.path !== "/" && normalizedPathname?.startsWith(`${s.path}/`))
   );
   const step = currentStepIndex >= 0 ? currentStepIndex : 0;
   const currentData = walkthroughSteps[step];
 
   useEffect(() => {
     if (!user?.user?.id) return;
-    
+
     // Check if permanently completed for this user
-    const completed = localStorage.getItem(`ftb_walkthrough_completed_${user.user.id}`);
+    const completed = localStorage.getItem(
+      `ftb_walkthrough_completed_${user.user.id}`
+    );
     if (completed === "true") {
       setIsVisible(false);
       return;
     }
+
+    // A user is "new" if they created their account within the last 24 hours
+    const accountAgeMs = Date.now() - new Date(user.user.createdAt).getTime();
+    const isNewUser = accountAgeMs < 24 * 60 * 60 * 1000;
+
+    if (!isNewUser) {
+      // For returning users, mark as completed in localStorage and clean up sessionStorage
+      try {
+        localStorage.setItem(
+          `ftb_walkthrough_completed_${user.user.id}`,
+          "true"
+        );
+        sessionStorage.removeItem("ftb_walkthrough_active");
+      } catch (err) {
+        console.error("Error saving walkthrough status:", err);
+      }
+      setIsVisible(false);
+      return;
+    }
+
+    // Check if walkthrough is already active in this session
+    const isActive =
+      sessionStorage.getItem("ftb_walkthrough_active") === "true";
 
     if (pathname === "/") {
       // Starting or continuing walkthrough from homepage
@@ -89,14 +127,13 @@ export default function WalkthroughFigma({ isDesktop = false }: WalkthroughFigma
       setIsVisible(true);
     } else {
       // Only show on other tabs if walkthrough is already active in this session
-      const isActive = sessionStorage.getItem("ftb_walkthrough_active") === "true";
       setIsVisible(isActive);
     }
-  }, [user?.user?.id, pathname]);
+  }, [user?.user?.id, user?.user?.createdAt, pathname]);
 
   useEffect(() => {
     if (!isDesktop || !containerRef.current) return;
-    
+
     let intervalId: NodeJS.Timeout;
     let attempts = 0;
     const maxAttempts = 20; // Try for up to ~1 second
@@ -115,16 +152,20 @@ export default function WalkthroughFigma({ isDesktop = false }: WalkthroughFigma
         // Only calculate if the element is actually rendered and has dimensions
         if (targetRect.width > 0) {
           const containerRect = containerRef.current.getBoundingClientRect();
-          const offset = (targetRect.left + targetRect.width / 2) - containerRect.left;
+          const offset =
+            targetRect.left + targetRect.width / 2 - containerRect.left;
           // Clamp the offset to keep the pointer within the card visually
           let clampedOffset = offset - 22;
-          clampedOffset = Math.max(16, Math.min(clampedOffset, containerRect.width - 44 - 16));
+          clampedOffset = Math.max(
+            16,
+            Math.min(clampedOffset, containerRect.width - 44 - 16)
+          );
           setDesktopPointerLeft(`${clampedOffset}px`);
           clearInterval(intervalId); // Success, stop trying
           return;
         }
       }
-      
+
       attempts++;
       if (attempts >= maxAttempts) {
         clearInterval(intervalId);
@@ -146,20 +187,21 @@ export default function WalkthroughFigma({ isDesktop = false }: WalkthroughFigma
   if (isPending || !user) return null;
   if (!isVisible || currentStepIndex === -1) return null;
 
-  const removeWalkthrough=()=>{
+  const removeWalkthrough = () => {
     setIsVisible(false);
-    try{
-      if(user?.user?.id){
-        localStorage.setItem(`ftb_walkthrough_completed_${user.user.id}`,"true");
+    try {
+      if (user?.user?.id) {
+        localStorage.setItem(
+          `ftb_walkthrough_completed_${user.user.id}`,
+          "true"
+        );
       }
-    }
-    catch(err){
-      console.error("Error in removing walkthrough: ",err);
-    }
-    finally{
+    } catch (err) {
+      console.error("Error in removing walkthrough: ", err);
+    } finally {
       sessionStorage.removeItem("ftb_walkthrough_active");
     }
-  }
+  };
 
   const handleNext = () => {
     if (step < walkthroughSteps.length - 1) {
@@ -174,73 +216,96 @@ export default function WalkthroughFigma({ isDesktop = false }: WalkthroughFigma
     removeWalkthrough();
   };
 
-  const pointerLeft = isDesktop 
+  const pointerLeft = isDesktop
     ? desktopPointerLeft
-    : `calc(${10 + (step === 0 ? 0 : step - 1) * 20}% - 22px)`; 
+    : `calc(${10 + (step === 0 ? 0 : step - 1) * 20}% - 22px)`;
 
   return (
     <>
-      {mounted && step === 0 && createPortal(
-        <div className="fixed inset-0 z-[40] bg-black/40 backdrop-blur-sm pointer-events-auto" />,
-        document.body
-      )}
-      <div ref={containerRef} className="relative w-full drop-shadow-2xl flex flex-col pointer-events-auto mx-auto max-w-[392px]" style={{touchAction: 'none'}}>
+      {mounted &&
+        step === 0 &&
+        createPortal(
+          <div className="pointer-events-auto fixed inset-0 z-[40] bg-black/40 backdrop-blur-sm" />,
+          document.body
+        )}
+      <div
+        ref={containerRef}
+        className="pointer-events-auto relative mx-auto flex w-full max-w-[392px] flex-col drop-shadow-2xl"
+        style={{ touchAction: "none" }}
+      >
         {isDesktop && step !== 0 && (
-          <motion.div 
+          <motion.div
             animate={{ left: pointerLeft }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="absolute -top-5 w-[44px] h-[22px] pointer-events-none drop-shadow-md z-10"
+            className="pointer-events-none absolute -top-5 z-10 h-[22px] w-[44px] drop-shadow-md"
           >
-            <Image src={imgVector2} alt="pointer" fill className="object-contain rotate-180" />
+            <Image
+              src={imgVector2}
+              alt="pointer"
+              fill
+              className="rotate-180 object-contain"
+            />
           </motion.div>
         )}
 
-        <div className="bg-black rounded-2xl p-[18px] w-[392px] max-w-[calc(100vw-32px)] self-center text-left relative overflow-hidden">
+        <div className="relative w-[392px] max-w-[calc(100vw-32px)] self-center overflow-hidden rounded-2xl bg-black p-[18px] text-left">
           <AnimatePresence mode="wait">
-            <motion.div 
+            <motion.div
               key={step}
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.2 }}
-              className="flex flex-col gap-1 w-full"
+              className="flex w-full flex-col gap-1"
             >
               <div className="flex w-full items-end justify-between">
                 <div className="flex flex-1 flex-col gap-1">
-                  <p className={`${outfit.className} text-[8px] text-[#ff6e00]`}>
+                  <p
+                    className={`${outfit.className} text-[8px] text-[#ff6e00]`}
+                  >
                     {currentData.subtitle}
                   </p>
-                  <p className={`${outfit.className} text-[26px] leading-[1.1] font-semibold text-white mt-1 tracking-tight`}>
+                  <p
+                    className={`${outfit.className} mt-1 text-[26px] leading-[1.1] font-semibold tracking-tight text-white`}
+                  >
                     {currentData.title}
                   </p>
                 </div>
               </div>
 
               <div className="mt-2 w-full">
-                <p className={`${outfit.className} text-[12px] text-white/50 leading-[1.3] pr-4`}>
+                <p
+                  className={`${outfit.className} pr-4 text-[12px] leading-[1.3] text-white/50`}
+                >
                   {currentData.description}
                 </p>
               </div>
-              
-              <div className="mt-4 flex items-center gap-2 rounded-full absolute bottom-[22px] left-[18px]" >
-                  {walkthroughSteps.map((_, i) => (
-                    <motion.span 
-                      key={i}
-                      animate={{
-                        width: i === step ? 16 : 8,
-                        backgroundColor: i === step ? "#ff6e00" : "#d9d9d9"
-                      }}
-                      className="h-2 rounded-full block" 
-                    />
-                  ))}
+
+              <div className="absolute bottom-[22px] left-[18px] mt-4 flex items-center gap-2 rounded-full">
+                {walkthroughSteps.map((_, i) => (
+                  <motion.span
+                    key={i}
+                    animate={{
+                      width: i === step ? 16 : 8,
+                      backgroundColor: i === step ? "#ff6e00" : "#d9d9d9",
+                    }}
+                    className="block h-2 rounded-full"
+                  />
+                ))}
               </div>
 
-              <div className="mt-6 flex w-full justify-end relative z-10">
-                <div className="flex gap-2 items-center">
-                  <button onClick={handleSkip} className="rounded-full px-3 py-2 text-[15px] font-[500] font-sans -tracking-[0.01em] text-white/50 active:text-white/80 cursor-pointer">
+              <div className="relative z-10 mt-6 flex w-full justify-end">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleSkip}
+                    className="cursor-pointer rounded-full px-3 py-2 font-sans text-[15px] font-[500] -tracking-[0.01em] text-white/50 active:text-white/80"
+                  >
                     Skip All
                   </button>
-                  <button onClick={handleNext} className="rounded-full bg-[#ff6e00] px-4 py-[6px] text-[16px] font-[510] font-sans -tracking-[0.01em] text-white active:scale-95 transition-transform cursor-pointer shadow-md">
+                  <button
+                    onClick={handleNext}
+                    className="cursor-pointer rounded-full bg-[#ff6e00] px-4 py-[6px] font-sans text-[16px] font-[510] -tracking-[0.01em] text-white shadow-md transition-transform active:scale-95"
+                  >
                     {step === walkthroughSteps.length - 1 ? "Finish" : "Next"}
                   </button>
                 </div>
@@ -250,12 +315,17 @@ export default function WalkthroughFigma({ isDesktop = false }: WalkthroughFigma
         </div>
 
         {!isDesktop && step !== 0 && (
-          <motion.div 
+          <motion.div
             animate={{ left: pointerLeft }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="absolute -bottom-5 w-[44px] h-[22px] pointer-events-none drop-shadow-md z-10"
+            className="pointer-events-none absolute -bottom-5 z-10 h-[22px] w-[44px] drop-shadow-md"
           >
-            <Image src={imgVector2} alt="pointer" fill className="object-contain" />
+            <Image
+              src={imgVector2}
+              alt="pointer"
+              fill
+              className="object-contain"
+            />
           </motion.div>
         )}
       </div>

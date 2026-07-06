@@ -331,7 +331,8 @@ body,
 @media (prefers-reduced-motion: reduce) {
   .animate-ring-bell,
   .animate-swap-calendar,
-  .animate-swap-bell {
+  .animate-swap-bell,
+  .animate-slide-in-bell {
     animation: none !important;
   }
 }

@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import posthog from "posthog-js";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -122,6 +123,13 @@ export function SignupForm({
         },
         {
           onSuccess: (ctx) => {
+            if (ctx.data?.user) {
+              posthog.identify(ctx.data.user.id, {
+                email: ctx.data.user.email,
+                name: ctx.data.user.name,
+                createdAt: ctx.data.user.createdAt?.toISOString(),
+              });
+            }
             const isNewUser =
               ctx.data?.user?.createdAt === ctx.data?.user?.updatedAt;
 

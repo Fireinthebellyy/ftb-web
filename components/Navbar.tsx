@@ -29,6 +29,7 @@ function useLogout() {
     try {
       await authClient.signOut();
       invalidateSession();
+      posthog.reset(); // Reset PostHog on logout
     } catch {
       // ignore errors; we still route home
     } finally {

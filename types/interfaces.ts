@@ -259,6 +259,11 @@ export type Toolkit = {
   isLimitedSeats?: boolean;
   digitalProductSectionId?: string | null;
   digitalProductSectionTitle?: string | null;
+  isCohort?: boolean;
+  cohortDetails?: {
+    mentorIds?: string[];
+    customQuestions?: { id: string; question: string; type: string }[];
+  } | null;
 };
 
 export type ToolkitContentItem = {

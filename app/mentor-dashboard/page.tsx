@@ -17,6 +17,7 @@ export default function MentorDashboardPage() {
   const [activeTab, setActiveTab] = useState("schedule");
   const [loading, setLoading] = useState(true);
   const [slots, setSlots] = useState<any[]>([]);
+  const [meets, setMeets] = useState<any[]>([]);
   const [newSlotStart, setNewSlotStart] = useState("");
   const [newSlotEnd, setNewSlotEnd] = useState("");
   const [mentees, setMentees] = useState<any[]>([]);
@@ -36,12 +37,16 @@ export default function MentorDashboardPage() {
 
   const fetchSlots = async () => {
     try {
-      const res = await axios.get(`/api/mentor/availability`);
-      setSlots(res.data.slots || []);
-      const menteesRes = await axios.get(`/api/mentor/mentees`);
+      const [availRes, menteesRes, chatsRes, meetsRes] = await Promise.all([
+        axios.get(`/api/mentor/availability`),
+        axios.get(`/api/mentor/mentees`),
+        axios.get(`/api/mentor/chats`),
+        axios.get(`/api/mentor/meets`),
+      ]);
+      setSlots(availRes.data.slots || []);
       setMentees(menteesRes.data.mentees || []);
-      const chatsRes = await axios.get(`/api/mentor/chats`);
       setChats(chatsRes.data.rooms || []);
+      setMeets(meetsRes.data.meets || []);
     } catch (err: any) {
       if (err.response?.status === 400 || err.response?.status === 403) {
         toast.error("You don't have mentor access.");
@@ -105,46 +110,112 @@ export default function MentorDashboardPage() {
 
       <div className="container mx-auto px-4 py-8 flex-1">
         {activeTab === "schedule" && (
-          <div className="grid md:grid-cols-2 gap-8">
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-6">Add Availability Slot</h2>
-              <form onSubmit={handleAddSlot} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
-                  <input 
-                    type="datetime-local" 
-                    value={newSlotStart}
-                    onChange={(e) => setNewSlotStart(e.target.value)}
-                    className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#ff5e14]"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
-                  <input 
-                    type="datetime-local" 
-                    value={newSlotEnd}
-                    onChange={(e) => setNewSlotEnd(e.target.value)}
-                    className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#ff5e14]"
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full">Add Slot</Button>
-              </form>
-            </Card>
+          <div className="space-y-8">
+            {/* Add Slot + Available Slots */}
+            <div className="grid md:grid-cols-2 gap-8">
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-6">Add Availability Slot</h2>
+                <form onSubmit={handleAddSlot} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                    <input 
+                      type="datetime-local" 
+                      value={newSlotStart}
+                      onChange={(e) => setNewSlotStart(e.target.value)}
+                      className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#ff5e14]"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                    <input 
+                      type="datetime-local" 
+                      value={newSlotEnd}
+                      onChange={(e) => setNewSlotEnd(e.target.value)}
+                      className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#ff5e14]"
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full">Add Slot</Button>
+                </form>
+              </Card>
 
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-6">Your Slots</h2>
-              {slots.length === 0 ? (
-                <p className="text-sm text-gray-500">No slots added yet.</p>
-              ) : (
-                <div className="space-y-3">
-                  {slots.map((slot) => (
-                    <div key={slot.id} className="p-3 border rounded-md flex justify-between items-center">
-                      <div>
-                        <p className="text-sm font-medium">{new Date(slot.startTime).toLocaleString()} - {new Date(slot.endTime).toLocaleTimeString()}</p>
-                        <p className="text-xs text-gray-500">{slot.isBooked ? "Booked" : "Available"}</p>
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-6">Your Slots</h2>
+                {slots.length === 0 ? (
+                  <p className="text-sm text-gray-500">No slots added yet.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {slots.map((slot) => (
+                      <div key={slot.id} className="p-3 border rounded-md flex justify-between items-center">
+                        <div>
+                          <p className="text-sm font-medium">
+                            {new Date(slot.startTime).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })}
+                            {" · "}
+                            {new Date(slot.startTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })} — {new Date(slot.endTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                        </div>
+                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${slot.isBooked ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
+                          {slot.isBooked ? "Booked" : "Available"}
+                        </span>
                       </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            </div>
+
+            {/* Booked Sessions */}
+            <Card className="p-6">
+              <h2 className="text-xl font-semibold mb-6">Booked Sessions</h2>
+              {meets.length === 0 ? (
+                <div className="text-center py-8 text-gray-400 text-sm">
+                  <p>No sessions booked by students yet.</p>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {meets.map((meet) => (
+                    <div key={meet.id} className="p-4 border-2 rounded-lg bg-white">
+                      {/* Student info */}
+                      {meet.student && (
+                        <div className="flex items-center gap-3 mb-3 pb-3 border-b">
+                          {meet.student.image ? (
+                            <img src={meet.student.image} alt={meet.student.name} className="h-9 w-9 rounded-full object-cover border" />
+                          ) : (
+                            <div className="h-9 w-9 rounded-full bg-orange-100 flex items-center justify-center text-sm font-bold text-orange-700">
+                              {meet.student.name?.charAt(0).toUpperCase() ?? "S"}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="font-semibold text-sm text-gray-900 truncate">{meet.student.name}</p>
+                            <p className="text-xs text-gray-400 truncate">{meet.student.email}</p>
+                          </div>
+                        </div>
+                      )}
+                      {/* Slot time */}
+                      {meet.slot && (
+                        <p className="text-xs text-gray-500 mb-3">
+                          📅 {new Date(meet.slot.startTime).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
+                          <br />
+                          🕐 {new Date(meet.slot.startTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })} — {new Date(meet.slot.endTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                      )}
+                      {/* Join button */}
+                      {meet.meetLink ? (
+                        <a
+                          href={meet.meetLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-full flex items-center justify-center gap-2 bg-[#ff5e14] text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-[#e04f0d] transition-colors"
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M15.9,14.4l2.5,2.5c0.1,0.1,0.3,0.1,0.4,0l2.1-2.1c0.3-0.3,0.1-0.8-0.3-0.8H16C15.8,14,15.7,14.1,15.9,14.4z"/><path d="M3,7h18v10H3V7z M1,7C1,5.9,1.9,5,3,5h18c1.1,0,2,0.9,2,2v10c0,1.1-0.9,2-2,2H3c-1.1,0-2-0.9-2-2V7z"/></svg>
+                          Join Google Meet
+                        </a>
+                      ) : (
+                        <p className="text-xs text-center text-gray-400 bg-gray-50 rounded-lg py-2">
+                          ⏳ Meet link pending (Google Calendar error)
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>

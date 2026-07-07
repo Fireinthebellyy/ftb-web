@@ -25,7 +25,8 @@ export default function ToolkitPage() {
   const TAB_CATEGORIES = [
     { label: "Recorded Lectures", value: "Recorded toolkits" },
     { label: "1:1 Mentorship", value: "1:1 Mentorship" },
-    { label: "Digital products", value: "digital products" }
+    { label: "Digital products", value: "digital products" },
+    { label: "Cohort", value: "Cohort" }
   ];
 
   // Redirect to login if not authenticated

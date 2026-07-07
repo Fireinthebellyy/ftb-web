@@ -83,6 +83,8 @@ export default function ToolkitDetailPage() {
   const handleViewContent = () => {
     if (toolkit?.isBundle) {
       router.push("/toolkit");
+    } else if (toolkit?.isCohort) {
+      router.push(`/toolkit/${toolkit?.id}/cohort-dashboard`);
     } else {
       router.push(`/toolkit/${toolkit?.id}/content`);
     }

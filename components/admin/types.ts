@@ -57,6 +57,15 @@ export const toolkitFormSchema = z.object({
   isBestSeller: z.boolean().optional(),
   isLimitedSeats: z.boolean().optional(),
   digitalProductSectionId: z.string().uuid().optional().or(z.literal("")),
+  isCohort: z.boolean().optional(),
+  cohortDetails: z.object({
+    mentorIds: z.array(z.string()).optional(),
+    customQuestions: z.array(z.object({
+      id: z.string(),
+      question: z.string(),
+      type: z.string()
+    })).optional(),
+  }).optional(),
 });
 
 export type ToolkitFormValues = z.infer<typeof toolkitFormSchema>;
@@ -125,4 +134,9 @@ export interface Toolkit {
   isLimitedSeats: boolean;
   digitalProductSectionId: string | null;
   digitalProductSectionTitle?: string | null;
+  isCohort?: boolean;
+  cohortDetails?: {
+    mentorIds?: string[];
+    customQuestions?: { id: string; question: string; type: string }[];
+  } | null;
 }

@@ -164,6 +164,7 @@ export default function NewToolkitModal({
               message: item.message.trim(),
             }))
           : undefined,
+        isCohort: data.category === "Cohort",
       };
 
       const response = await axios.post("/api/toolkits", cleanedData);

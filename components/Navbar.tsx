@@ -9,9 +9,11 @@ import { useSession, useInvalidateSession } from "@/hooks/use-session";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { Righteous } from "next/font/google";
-import { Shield } from "lucide-react";
+import { Shield, Users } from "lucide-react";
 import { LoginStreakBadge } from "@/components/navbar/LoginStreakBadge";
 import posthog from "posthog-js";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import {
   isAbsoluteOrLocalUrl,
   tryGetStoragePublicUrl,
@@ -96,6 +98,16 @@ export default function Navbar() {
   const menuId = "nav-avatar-menu";
 
   const handleLogout = useLogout();
+
+  const { data: mentorStatus } = useQuery({
+    queryKey: ["mentorStatus", user?.user?.id],
+    queryFn: async () => {
+      const res = await axios.get("/api/mentor/check");
+      return res.data;
+    },
+    enabled: !!user?.user,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
   useEffect(() => {
     if (!isOpen) return;
@@ -404,6 +416,19 @@ export default function Navbar() {
                         Admin
                       </button>
                     ) : null}
+                    {mentorStatus?.isMentor && (
+                      <button
+                        role="menuitem"
+                        className="hover:bg-accent focus:bg-accent flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-blue-700 focus:outline-none"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          window.location.href = "/mentor-dashboard";
+                        }}
+                      >
+                        <Users className="h-3.5 w-3.5 shrink-0" />
+                        Mentor Portal
+                      </button>
+                    )}
                     <button
                       ref={isAdminUser ? undefined : firstItemRef}
                       role="menuitem"

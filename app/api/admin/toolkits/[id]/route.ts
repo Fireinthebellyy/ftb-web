@@ -91,6 +91,15 @@ const updateToolkitSchema = z.object({
     })
     .nullable()
     .optional(),
+  isCohort: z.boolean().optional(),
+  cohortDetails: z.object({
+    mentorIds: z.array(z.string()).optional(),
+    customQuestions: z.array(z.object({
+      id: z.string(),
+      question: z.string(),
+      type: z.string()
+    })).optional(),
+  }).nullable().optional(),
 });
 
 export async function PUT(
@@ -201,6 +210,10 @@ export async function PUT(
       updates.digitalProductSectionId = validatedData.digitalProductSectionId;
     if (validatedData.mentorshipDetails !== undefined)
       updates.mentorshipDetails = validatedData.mentorshipDetails;
+    if (validatedData.isCohort !== undefined)
+      updates.isCohort = validatedData.isCohort;
+    if (validatedData.cohortDetails !== undefined)
+      updates.cohortDetails = validatedData.cohortDetails;
 
     const updatedToolkit = await db
       .update(toolkits)

@@ -53,6 +53,8 @@ export async function GET(
         mentorshipDetails: toolkits.mentorshipDetails,
         digitalProductSectionId: toolkits.digitalProductSectionId,
         digitalProductSectionTitle: digitalProductSections.title,
+        isCohort: toolkits.isCohort,
+        cohortDetails: toolkits.cohortDetails,
       })
       .from(toolkits)
       .leftJoin(user, eq(toolkits.userId, user.id))

@@ -5,7 +5,7 @@ import { useCallback, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { Edit, Loader2, PlusCircle, RefreshCw, Trash2 } from "lucide-react";
+import { Edit, Loader2, PlusCircle, RefreshCw, Trash2, Check, ChevronsUpDown } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,6 +31,20 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { ToolkitImageInput } from "@/components/admin/ToolkitImageInput";
 import { uploadFileViaSignedUrl } from "@/lib/storage/client";
 
@@ -45,6 +59,7 @@ const mentorFormSchema = z.object({
   instaLink: z.string().optional(),
   customLink: z.string().optional(),
   availability: z.boolean().default(true),
+  userId: z.string().min(1, "User is required"),
 });
 
 type MentorFormValues = z.infer<typeof mentorFormSchema>;
@@ -61,6 +76,7 @@ type Mentor = {
   instaLink?: string;
   customLink?: string;
   availability: boolean;
+  userId?: string;
 };
 
 export default function AdminMentorsTable() {
@@ -81,6 +97,12 @@ export default function AdminMentorsTable() {
     staleTime: 1000 * 30,
   });
 
+  const { data: users = [] } = useQuery({
+    queryKey: ["admin", "users"],
+    queryFn: async () => (await axios.get("/api/admin/users")).data.users as { id: string; name: string; email: string }[],
+    staleTime: 1000 * 60 * 5,
+  });
+
   const form = useForm<MentorFormValues>({
     resolver: zodResolver(mentorFormSchema),
     defaultValues: {
@@ -94,6 +116,7 @@ export default function AdminMentorsTable() {
       instaLink: "",
       customLink: "",
       availability: true,
+      userId: "",
     },
   });
 
@@ -155,6 +178,7 @@ export default function AdminMentorsTable() {
         instaLink: mentor.instaLink || "",
         customLink: mentor.customLink || "",
         availability: mentor.availability,
+        userId: mentor.userId || "",
       });
       setImageFile(null);
       setIsDialogOpen(true);
@@ -175,6 +199,7 @@ export default function AdminMentorsTable() {
       instaLink: "",
       customLink: "",
       availability: true,
+      userId: "",
     });
     setImageFile(null);
     setIsDialogOpen(true);
@@ -342,6 +367,71 @@ export default function AdminMentorsTable() {
                     <FormControl>
                       <Input placeholder="John Doe" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="userId"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Linked User Account *</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                              "w-full justify-between",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value
+                              ? (() => {
+                                  const selectedUser = users.find(
+                                    (u) => u.id === field.value
+                                  );
+                                  return selectedUser
+                                    ? `${selectedUser.name} (${selectedUser.email})`
+                                    : "Select user";
+                                })()
+                              : "Select user"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput placeholder="Search users by name or email..." />
+                          <CommandList>
+                            <CommandEmpty>No user found.</CommandEmpty>
+                            <CommandGroup>
+                              {users.map((u) => (
+                                <CommandItem
+                                  value={`${u.name} ${u.email}`}
+                                  key={u.id}
+                                  onSelect={() => {
+                                    form.setValue("userId", u.id);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      u.id === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {u.name} ({u.email})
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}

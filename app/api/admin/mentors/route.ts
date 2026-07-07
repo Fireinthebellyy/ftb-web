@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { mentors } from "@/lib/schema";
-
+import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
@@ -19,6 +19,7 @@ const mentorSchema = z.object({
   customLink: z.string().optional().nullable(),
   rating: z.number().optional(),
   availability: z.boolean().default(true),
+  userId: z.string().min(1, "User ID is required"),
 });
 
 export async function GET() {
@@ -62,6 +63,17 @@ export async function POST(req: Request) {
       );
     }
 
+    // Guard: prevent duplicate mentor records for the same user
+    const existing = await db.query.mentors.findFirst({
+      where: eq(mentors.userId, parsed.data.userId),
+    });
+    if (existing) {
+      return NextResponse.json(
+        { error: `A mentor record already exists for this user (id: ${existing.id}). Update it instead of creating a new one.` },
+        { status: 409 }
+      );
+    }
+
     const [newMentor] = await db
       .insert(mentors)
       .values({
@@ -77,7 +89,7 @@ export async function POST(req: Request) {
         customLink: parsed.data.customLink,
         rating: parsed.data.rating,
         availability: parsed.data.availability,
-        userId: session.user.id,
+        userId: parsed.data.userId,
       })
       .returning();
 

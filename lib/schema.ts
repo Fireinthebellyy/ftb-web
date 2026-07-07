@@ -470,6 +470,8 @@ export const toolkits = pgTable("toolkits", {
     () => digitalProductSections.id,
     { onDelete: "set null" }
   ),
+  isCohort: boolean("is_cohort").default(false),
+  cohortDetails: jsonb("cohort_details").$type<{ mentorIds?: string[], customQuestions?: { id: string; question: string; type: string }[] }>(),
 });
 
 export const toolkitContentItemTypeEnum = pgEnum("toolkit_content_item_type", [
@@ -772,6 +774,99 @@ export const trackerEvents = pgTable(
   ]
 );
 
+export const cohortOnboardingResponses = pgTable(
+  "cohort_onboarding_responses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    toolkitId: uuid("toolkit_id")
+      .notNull()
+      .references(() => toolkits.id, { onDelete: "cascade" }),
+    stream: text("stream").notNull(),
+    futureOptions: text("future_options").array().default([]),
+    customOptions: text("custom_options"),
+    mentorId: uuid("mentor_id")
+      .notNull()
+      .references(() => mentors.id, { onDelete: "cascade" }),
+    customAnswers: jsonb("custom_answers").$type<Record<string, string>>(),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("cohort_onboarding_user_toolkit_unique").on(
+      table.userId,
+      table.toolkitId
+    ),
+  ]
+);
+
+export const chatRooms = pgTable("chat_rooms", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  toolkitId: uuid("toolkit_id")
+    .notNull()
+    .references(() => toolkits.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  mentorId: uuid("mentor_id")
+    .notNull()
+    .references(() => mentors.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  uniqueIndex("chat_rooms_toolkit_user_mentor_unique").on(
+    table.toolkitId,
+    table.userId,
+    table.mentorId
+  )
+]);
+
+export const chatMessages = pgTable("chat_messages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  roomId: uuid("room_id")
+    .notNull()
+    .references(() => chatRooms.id, { onDelete: "cascade" }),
+  senderId: text("sender_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const mentorAvailability = pgTable("mentor_availability", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  mentorId: uuid("mentor_id")
+    .notNull()
+    .references(() => mentors.id, { onDelete: "cascade" }),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  isBooked: boolean("is_booked").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const mentorMeets = pgTable("mentor_meets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  availabilityId: uuid("availability_id")
+    .notNull()
+    .references(() => mentorAvailability.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  mentorId: uuid("mentor_id")
+    .notNull()
+    .references(() => mentors.id, { onDelete: "cascade" }),
+  toolkitId: uuid("toolkit_id")
+    .notNull()
+    .references(() => toolkits.id, { onDelete: "cascade" }),
+  meetLink: text("meet_link"),
+  status: text("status").default("scheduled"), // scheduled, completed, cancelled
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Export schema object last
 export const schema = {
   user,
@@ -809,4 +904,9 @@ export const schema = {
   trackerItems,
   trackerEvents,
   adminActivityLogs,
+  cohortOnboardingResponses,
+  chatRooms,
+  chatMessages,
+  mentorAvailability,
+  mentorMeets,
 };

@@ -30,6 +30,7 @@ const CATEGORIES = [
   "1:1 Mentorship",
   "Recorded toolkits",
   "digital products",
+  "Cohort",
 ];
 
 interface MentorOption {
@@ -61,17 +62,23 @@ export function ToolkitFormFields({
   digitalProductSections: _digitalProductSections = [],
   isSubmitting = false,
 }: ToolkitFormFieldsProps) {
-  const { fields, append, remove } = useFieldArray({
+  const { fields: testimonialFields, append: appendTestimonial, remove: removeTestimonial } = useFieldArray({
     control,
     name: "testimonials",
   });
+  const { fields: questionFields, append: appendQuestion, remove: removeQuestion } = useFieldArray({
+    control,
+    name: "cohortDetails.customQuestions"
+  });
+  
   const selectedCategory = useWatch({ control, name: "category" });
+  const isCohort = selectedCategory === "Cohort";
   const isDigitalProduct = selectedCategory === "digital products";
 
   const { data: mentors = [] } = useQuery({
     queryKey: ["admin", "mentors"],
     queryFn: async () => (await axios.get<MentorOption[]>("/api/admin/mentors")).data,
-    enabled: selectedCategory === "1:1 Mentorship",
+    enabled: selectedCategory === "1:1 Mentorship" || isCohort,
     staleTime: 1000 * 60,
   });
 
@@ -392,7 +399,7 @@ export function ToolkitFormFields({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => append({ name: "", role: "", message: "" })}
+            onClick={() => appendTestimonial({ name: "", role: "", message: "" })}
             disabled={isSubmitting}
           >
             <Plus className="mr-1 h-4 w-4" />
@@ -400,7 +407,7 @@ export function ToolkitFormFields({
           </Button>
         </div>
 
-        {fields.map((field, index) => (
+        {testimonialFields.map((field, index) => (
           <div key={field.id} className="space-y-3 rounded-lg border p-3">
             <div className="grid gap-3 sm:grid-cols-2">
               <FormField
@@ -455,7 +462,7 @@ export function ToolkitFormFields({
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => remove(index)}
+                onClick={() => removeTestimonial(index)}
                 disabled={isSubmitting}
               >
                 <Trash2 className="mr-1 h-4 w-4" />
@@ -505,6 +512,91 @@ export function ToolkitFormFields({
           )}
         />
       </div>
+      
+      {isCohort && (
+        <div className="space-y-6 rounded-lg border p-4 bg-blue-50/50">
+          <h3 className="font-semibold text-lg text-blue-900">Cohort Settings</h3>
+          
+          <div className="space-y-3">
+            <FormLabel>Select Cohort Mentors</FormLabel>
+            <FormField
+              control={control}
+              name="cohortDetails.mentorIds"
+              render={({ field }) => (
+                <div className="grid sm:grid-cols-2 gap-2">
+                  {mentors.map((mentor) => (
+                    <div key={mentor.id} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`mentor-${mentor.id}`}
+                        checked={field.value?.includes(mentor.id) || false}
+                        onChange={(e) => {
+                          const current = field.value || [];
+                          if (e.target.checked) {
+                            field.onChange([...current, mentor.id]);
+                          } else {
+                            field.onChange(current.filter(id => id !== mentor.id));
+                          }
+                        }}
+                        className="rounded border-gray-300"
+                      />
+                      <label htmlFor={`mentor-${mentor.id}`} className="text-sm">
+                        {mentor.mentorName}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
+            />
+          </div>
+
+          <div className="space-y-3 pt-4 border-t border-blue-100">
+            <div className="flex items-center justify-between">
+              <FormLabel>Custom Onboarding Questions</FormLabel>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => appendQuestion({ id: crypto.randomUUID(), question: "", type: "text" })}
+                disabled={isSubmitting}
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                Add question
+              </Button>
+            </div>
+
+            {questionFields.map((field, index) => (
+              <div key={field.id} className="space-y-3 rounded-lg border border-blue-100 bg-white p-3">
+                <div className="flex justify-between items-start">
+                  <FormField
+                    control={control}
+                    name={`cohortDetails.customQuestions.${index}.question`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1 mr-4">
+                        <FormLabel>Question text</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., What are your goals?" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="mt-6 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => removeQuestion(index)}
+                    disabled={isSubmitting}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </>
   );
 }

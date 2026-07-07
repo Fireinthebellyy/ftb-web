@@ -264,6 +264,7 @@ export default function AdminToolkitsTable() {
               message: item.message.trim(),
             }))
           : undefined,
+        isCohort: data.category === "Cohort",
       };
 
       await updateToolkitMutation.mutateAsync({

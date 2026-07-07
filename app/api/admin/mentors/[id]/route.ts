@@ -19,6 +19,7 @@ const mentorSchema = z.object({
   customLink: z.string().optional().nullable(),
   rating: z.number().optional().nullable(),
   availability: z.boolean().default(true),
+  userId: z.string().min(1, "User ID is required"),
 });
 
 export async function PUT(

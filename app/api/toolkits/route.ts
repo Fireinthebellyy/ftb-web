@@ -44,6 +44,8 @@ export async function GET() {
         isLimitedSeats: toolkits.isLimitedSeats,
         digitalProductSectionId: toolkits.digitalProductSectionId,
         digitalProductSectionTitle: digitalProductSections.title,
+        isCohort: toolkits.isCohort,
+        cohortDetails: toolkits.cohortDetails,
       })
       .from(toolkits)
       .leftJoin(user, eq(toolkits.userId, user.id))
@@ -103,6 +105,8 @@ export async function POST(request: Request) {
       mentorshipDetails,
       rating,
       subtitle,
+      isCohort,
+      cohortDetails,
     } = body;
 
     const missingFields: string[] = [];
@@ -167,6 +171,8 @@ export async function POST(request: Request) {
         isLimitedSeats: isLimitedSeats ?? false,
         digitalProductSectionId: digitalProductSectionId || null,
         mentorshipDetails: mentorshipDetails || null,
+        isCohort: isCohort ?? false,
+        cohortDetails: cohortDetails || null,
         userId: user.currentUser.id,
       })
       .returning();

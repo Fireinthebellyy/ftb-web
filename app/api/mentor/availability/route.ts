@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { mentorAvailability, mentors } from "@/lib/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { eq, gte } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   try {

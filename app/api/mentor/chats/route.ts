@@ -1,5 +1,5 @@
 export const dynamic = "force-dynamic";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { chatRooms, mentors, user } from "@/lib/schema";
 import { auth } from "@/lib/auth";

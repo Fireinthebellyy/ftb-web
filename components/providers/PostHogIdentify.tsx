@@ -17,7 +17,7 @@ export function PostHogIdentify() {
     } else {
       posthog.reset();
     }
-  }, [session?.user?.id]);
+  }, [session]);
 
   return null;
 }

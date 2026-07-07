@@ -1,10 +1,10 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { chatRooms, chatMessages, mentors } from "@/lib/schema";
+import { chatRooms, mentors } from "@/lib/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { eq, and, or, desc } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   try {

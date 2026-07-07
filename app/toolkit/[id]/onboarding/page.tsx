@@ -6,7 +6,6 @@ import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -31,7 +30,6 @@ export default function CohortOnboardingPage() {
   const [selectedFutures, setSelectedFutures] = useState<string[]>([]);
   const [customFuture, setCustomFuture] = useState("");
   const [selectedMentor, setSelectedMentor] = useState("");
-  const [cohortDetails, setCohortDetails] = useState<any>(null);
   const [mentors, setMentors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -48,7 +46,6 @@ export default function CohortOnboardingPage() {
       try {
         // We assume we have an endpoint that returns the toolkit details including mentors
         const res = await axios.get(`/api/toolkits/${toolkitId}`);
-        setCohortDetails(res.data.toolkit);
         
         // Fetch mentor details based on mentorIds in cohortDetails
         if (res.data.toolkit?.cohortDetails?.mentorIds) {
@@ -113,7 +110,7 @@ export default function CohortOnboardingPage() {
         <Card className="p-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Welcome to your Cohort!</h1>
-            <p className="text-gray-500 mt-2">Let's personalize your experience.</p>
+            <p className="text-gray-500 mt-2">Let&apos;s personalize your experience.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">

@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
 import axios from "axios";
-import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
-import { Check, MessageSquare, Calendar, BookOpen } from "lucide-react";
+import { MessageSquare, Calendar, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CohortChat } from "@/components/toolkit/CohortChat";
 
@@ -23,6 +22,19 @@ export default function CohortDashboardPage() {
   const [availableSlots, setAvailableSlots] = useState<any[]>([]);
   const [upcomingMeets, setUpcomingMeets] = useState<any[]>([]);
   const [bookingLoading, setBookingLoading] = useState(false);
+
+  const fetchMeetsAndSlots = useCallback(async (mentorId: string) => {
+    try {
+      const [slotsRes, meetsRes] = await Promise.all([
+        axios.get(`/api/mentor/availability?mentorId=${mentorId}`),
+        axios.get(`/api/mentor/meets?toolkitId=${toolkitId}`)
+      ]);
+      setAvailableSlots(slotsRes.data.slots.filter((s: any) => !s.isBooked));
+      setUpcomingMeets(meetsRes.data.meets);
+    } catch (err) {
+      console.error("Failed to load schedule data", err);
+    }
+  }, [toolkitId]);
 
   useEffect(() => {
     if (!sessionPending && !session) {
@@ -50,20 +62,8 @@ export default function CohortDashboardPage() {
       }
     };
     fetchDashboardData();
-  }, [toolkitId, session, router]);
-  
-  const fetchMeetsAndSlots = async (mentorId: string) => {
-    try {
-      const [slotsRes, meetsRes] = await Promise.all([
-        axios.get(`/api/mentor/availability?mentorId=${mentorId}`),
-        axios.get(`/api/mentor/meets?toolkitId=${toolkitId}`)
-      ]);
-      setAvailableSlots(slotsRes.data.slots.filter((s: any) => !s.isBooked));
-      setUpcomingMeets(meetsRes.data.meets);
-    } catch (err) {
-      console.error("Failed to load schedule data", err);
-    }
-  };
+  }, [toolkitId, session, router, fetchMeetsAndSlots]);
+
 
   const handleBookSlot = async (availabilityId: string) => {
     try {

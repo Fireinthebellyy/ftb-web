@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
 import axios from "axios";
+import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CohortChat } from "@/components/toolkit/CohortChat";
@@ -24,18 +25,7 @@ export default function MentorDashboardPage() {
   const [chats, setChats] = useState<any[]>([]);
   const [selectedChatRoom, setSelectedChatRoom] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!sessionPending && !session) {
-      router.replace(`/login?returnUrl=%2Fmentor-dashboard`);
-    }
-  }, [session, sessionPending, router]);
-
-  useEffect(() => {
-    if (!session?.user) return;
-    fetchSlots();
-  }, [session]);
-
-  const fetchSlots = async () => {
+  const fetchSlots = useCallback(async () => {
     try {
       const [availRes, menteesRes, chatsRes, meetsRes] = await Promise.all([
         axios.get(`/api/mentor/availability`),
@@ -55,7 +45,18 @@ export default function MentorDashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    if (!sessionPending && !session) {
+      router.replace(`/login?returnUrl=%2Fmentor-dashboard`);
+    }
+  }, [session, sessionPending, router]);
+
+  useEffect(() => {
+    if (!session?.user) return;
+    fetchSlots();
+  }, [session, fetchSlots]);
 
   const handleAddSlot = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -180,7 +181,7 @@ export default function MentorDashboardPage() {
                       {meet.student && (
                         <div className="flex items-center gap-3 mb-3 pb-3 border-b">
                           {meet.student.image ? (
-                            <img src={meet.student.image} alt={meet.student.name} className="h-9 w-9 rounded-full object-cover border" />
+                            <Image src={meet.student.image} alt={meet.student.name} width={36} height={36} className="rounded-full object-cover border" unoptimized />
                           ) : (
                             <div className="h-9 w-9 rounded-full bg-orange-100 flex items-center justify-center text-sm font-bold text-orange-700">
                               {meet.student.name?.charAt(0).toUpperCase() ?? "S"}
@@ -242,7 +243,7 @@ export default function MentorDashboardPage() {
                         className={`w-full text-left p-3 rounded-lg flex items-center gap-3 transition-colors ${selectedChatRoom === chat.id ? 'bg-orange-50 border border-orange-200' : 'hover:bg-gray-50 border border-transparent'}`}
                       >
                         {chat.student.image ? (
-                          <img src={chat.student.image} alt={chat.student.name} className="h-10 w-10 rounded-full object-cover border" />
+                          <Image src={chat.student.image} alt={chat.student.name} width={40} height={40} className="rounded-full object-cover border" unoptimized />
                         ) : (
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-100 text-sm font-semibold text-orange-700">
                             {chat.student.name?.charAt(0).toUpperCase() || "S"}
@@ -299,7 +300,7 @@ export default function MentorDashboardPage() {
                   <Card key={mentee.id} className="p-6">
                     <div className="flex items-center gap-4 mb-4">
                       {mentee.user.image ? (
-                        <img src={mentee.user.image} alt={mentee.user.name} className="h-12 w-12 rounded-full object-cover border" />
+                        <Image src={mentee.user.image} alt={mentee.user.name} width={48} height={48} className="rounded-full object-cover border" unoptimized />
                       ) : (
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-lg font-semibold text-orange-700">
                           {mentee.user.name?.charAt(0).toUpperCase() || "S"}

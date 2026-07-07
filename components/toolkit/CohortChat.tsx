@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { io, Socket } from "socket.io-client";
-import { Send, UserCircle2, Check, CheckCheck } from "lucide-react";
+import { Send, UserCircle2, CheckCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Message {

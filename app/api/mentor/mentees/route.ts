@@ -1,12 +1,12 @@
 export const dynamic = "force-dynamic";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cohortOnboardingResponses, mentors, user } from "@/lib/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),

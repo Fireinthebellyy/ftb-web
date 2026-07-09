@@ -418,6 +418,7 @@ export default function Navbar() {
                     ) : null}
                     {mentorStatus?.isMentor && (
                       <button
+                        ref={(!isAdminUser && mentorStatus?.isMentor) ? firstItemRef : undefined}
                         role="menuitem"
                         className="hover:bg-accent focus:bg-accent flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-blue-700 focus:outline-none"
                         onClick={() => {
@@ -430,7 +431,7 @@ export default function Navbar() {
                       </button>
                     )}
                     <button
-                      ref={isAdminUser ? undefined : firstItemRef}
+                      ref={(!isAdminUser && !mentorStatus?.isMentor) ? firstItemRef : undefined}
                       role="menuitem"
                       className="hover:bg-accent focus:bg-accent w-full rounded px-3 py-2 text-left text-sm focus:outline-none"
                       onClick={() => {

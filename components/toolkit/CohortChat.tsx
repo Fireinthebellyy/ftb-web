@@ -64,8 +64,11 @@ export function CohortChat({
   // Robustly join the room when connected and roomId is available
   useEffect(() => {
     if (isConnected && roomId && socketRef.current) {
-      // Leave previous room if any (socket.io handles this gracefully on server side, but good practice to emit a leave if we had one)
       socketRef.current.emit("join_room", roomId);
+
+      return () => {
+        socketRef.current?.emit("leave_room", roomId);
+      };
     }
   }, [isConnected, roomId]);
 
@@ -87,7 +90,7 @@ export function CohortChat({
           const res = await axios.post("/api/chat/rooms", { toolkitId, mentorId });
           room = res.data.room?.id;
         }
-        
+
         if (room) {
           setRoomId(room);
           // join_room is now handled by the robust useEffect above
@@ -100,7 +103,11 @@ export function CohortChat({
         setLoading(false);
       }
     };
-    if (initialRoomId || (toolkitId && mentorId)) initChat();
+    if (initialRoomId || (toolkitId && mentorId)) {
+      initChat();
+    } else {
+      setLoading(false);
+    }
   }, [toolkitId, mentorId, initialRoomId]);
 
   useEffect(() => {

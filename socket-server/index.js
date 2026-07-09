@@ -35,6 +35,11 @@ io.on('connection', (socket) => {
     console.log(`Socket ${socket.id} joined room: ${roomId}`);
   });
 
+  socket.on('leave_room', (roomId) => {
+    socket.leave(roomId);
+    console.log(`Socket ${socket.id} left room: ${roomId}`);
+  });
+
   // Handle incoming messages and broadcast to the room
   socket.on('send_message', ({ roomId, message }) => {
     // We only need to broadcast to others since the sender updates optimistically

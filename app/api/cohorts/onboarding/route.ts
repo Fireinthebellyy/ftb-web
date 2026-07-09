@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       where: eq(toolkits.id, toolkitId)
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       onboarding,
       toolkit
     });

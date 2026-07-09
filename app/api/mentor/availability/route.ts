@@ -69,10 +69,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Start and end times are required" }, { status: 400 });
     }
 
+    const startDate = new Date(startTime);
+    const endDate = new Date(endTime);
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
+    }
+
+    if (endDate <= startDate) {
+      return NextResponse.json({ error: "End time must be after start time" }, { status: 400 });
+    }
+
     const newSlot = await db.insert(mentorAvailability).values({
       mentorId: mentorRecord.id,
-      startTime: new Date(startTime),
-      endTime: new Date(endTime),
+      startTime: startDate,
+      endTime: endDate,
     }).returning();
 
     return NextResponse.json({ slot: newSlot[0] });

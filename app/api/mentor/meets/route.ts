@@ -106,23 +106,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Check if slot is still available
-    const slot = await db.query.mentorAvailability.findFirst({
-      where: and(
-        eq(mentorAvailability.id, availabilityId),
-        eq(mentorAvailability.isBooked, false)
-      ),
-    });
+    // Atomically mark slot as booked if it's available and belongs to the requested mentor
+    const updatedSlots = await db
+      .update(mentorAvailability)
+      .set({ isBooked: true })
+      .where(
+        and(
+          eq(mentorAvailability.id, availabilityId),
+          eq(mentorAvailability.mentorId, mentorId),
+          eq(mentorAvailability.isBooked, false)
+        )
+      )
+      .returning();
 
-    if (!slot) {
+    if (updatedSlots.length === 0) {
       return NextResponse.json({ error: "Slot is no longer available" }, { status: 400 });
     }
 
-    // Mark slot as booked immediately to prevent double-booking
-    await db
-      .update(mentorAvailability)
-      .set({ isBooked: true })
-      .where(eq(mentorAvailability.id, availabilityId));
+    const slot = updatedSlots[0];
 
     // Fetch mentor details to get their email for the calendar invite
     const mentorRecord = await db.query.mentors.findFirst({

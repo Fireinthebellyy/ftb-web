@@ -13,7 +13,21 @@ interface Message {
   createdAt: string;
 }
 
-export function CohortChat({ toolkitId, currentUserId, mentorId, initialRoomId }: { toolkitId?: string, currentUserId: string, mentorId?: string, initialRoomId?: string }) {
+export function CohortChat({ 
+  toolkitId, 
+  currentUserId, 
+  mentorId, 
+  initialRoomId,
+  headerName,
+  headerImage
+}: { 
+  toolkitId?: string, 
+  currentUserId: string, 
+  mentorId?: string, 
+  initialRoomId?: string,
+  headerName?: string,
+  headerImage?: string
+}) {
   const [roomId, setRoomId] = useState<string | null>(initialRoomId || null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -153,14 +167,14 @@ export function CohortChat({ toolkitId, currentUserId, mentorId, initialRoomId }
       {/* WhatsApp-style Header */}
       <div className="flex items-center px-4 py-3 bg-white border-b shadow-sm z-10 sticky top-0">
         <Avatar className="h-10 w-10 mr-3 border-2 border-gray-100">
-          <AvatarImage src={mentorDetails?.mentorImage} alt={mentorDetails?.mentorName || "Mentor"} />
+          <AvatarImage src={headerImage || mentorDetails?.mentorImage} alt={headerName || mentorDetails?.mentorName || "Chat"} />
           <AvatarFallback className="bg-orange-100 text-[#ff5e14]">
-            {mentorDetails?.mentorName?.charAt(0) || <UserCircle2 className="h-6 w-6" />}
+            {(headerName || mentorDetails?.mentorName)?.charAt(0) || <UserCircle2 className="h-6 w-6" />}
           </AvatarFallback>
         </Avatar>
         <div className="flex flex-col">
           <h3 className="font-semibold text-gray-900 leading-tight">
-            {mentorDetails?.mentorName || "Your Mentor"}
+            {headerName || mentorDetails?.mentorName || "Your Mentor"}
           </h3>
           <p className="text-xs font-medium text-gray-500 flex items-center">
             {isConnected ? (

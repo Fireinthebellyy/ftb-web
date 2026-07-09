@@ -24,6 +24,7 @@ export default function MentorDashboardPage() {
   const [mentees, setMentees] = useState<any[]>([]);
   const [chats, setChats] = useState<any[]>([]);
   const [selectedChatRoom, setSelectedChatRoom] = useState<string | null>(null);
+  const [selectedChat, setSelectedChat] = useState<any | null>(null);
 
   const fetchSlots = useCallback(async () => {
     try {
@@ -239,7 +240,10 @@ export default function MentorDashboardPage() {
                     {chats.map((chat) => (
                       <button
                         key={chat.id}
-                        onClick={() => setSelectedChatRoom(chat.id)}
+                        onClick={() => {
+                          setSelectedChatRoom(chat.id);
+                          setSelectedChat(chat);
+                        }}
                         className={`w-full text-left p-3 rounded-lg flex items-center gap-3 transition-colors ${selectedChatRoom === chat.id ? 'bg-orange-50 border border-orange-200' : 'hover:bg-gray-50 border border-transparent'}`}
                       >
                         {chat.student.image ? (
@@ -263,7 +267,10 @@ export default function MentorDashboardPage() {
             {selectedChatRoom ? (
               <Card className="flex-1 flex flex-col overflow-hidden">
                 <div className="p-4 border-b flex items-center gap-3 bg-gray-50">
-                  <button onClick={() => setSelectedChatRoom(null)} className="md:hidden text-gray-500 hover:text-gray-900">
+                  <button onClick={() => {
+                    setSelectedChatRoom(null);
+                    setSelectedChat(null);
+                  }} className="md:hidden text-gray-500 hover:text-gray-900">
                     <ArrowLeft className="w-5 h-5" />
                   </button>
                   <MessageSquare className="w-5 h-5 text-gray-400" />
@@ -273,6 +280,8 @@ export default function MentorDashboardPage() {
                   <CohortChat 
                     currentUserId={session.user.id} 
                     initialRoomId={selectedChatRoom} 
+                    headerName={selectedChat?.student?.name}
+                    headerImage={selectedChat?.student?.image}
                   />
                 </div>
               </Card>

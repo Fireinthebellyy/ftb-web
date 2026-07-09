@@ -93,6 +93,11 @@ export async function GET(req: NextRequest) {
 // POST — Book a slot, create Google Meet link
 // ─────────────────────────────────────────────
 export async function POST(req: NextRequest) {
+  let isSlotUpdated = false;
+  let createdEventId: string | null = null;
+  let oAuthClientUsed: any = null;
+  let slotIdToRevert: string | null = null;
+
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user) {
@@ -123,6 +128,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Slot is no longer available" }, { status: 400 });
     }
 
+    isSlotUpdated = true;
+    slotIdToRevert = availabilityId;
     const slot = updatedSlots[0];
 
     // Fetch mentor details to get their email for the calendar invite
@@ -178,6 +185,8 @@ export async function POST(req: NextRequest) {
           requestBody: event,
         });
 
+        createdEventId = gcalRes.data.id ?? null;
+        oAuthClientUsed = oAuth2Client;
         meetLink = gcalRes.data.hangoutLink ?? null;
         console.log("Google Meet link created:", meetLink);
       } catch (gcalErr) {
@@ -208,6 +217,34 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("Mentor meets POST error:", error);
+
+    // Rollback changes on failure
+    if (isSlotUpdated && slotIdToRevert) {
+      try {
+        console.log(`Reverting slot ${slotIdToRevert} to isBooked=false...`);
+        await db
+          .update(mentorAvailability)
+          .set({ isBooked: false })
+          .where(eq(mentorAvailability.id, slotIdToRevert));
+      } catch (revertErr) {
+        console.error("Failed to revert slot isBooked status:", revertErr);
+      }
+    }
+
+    if (createdEventId && oAuthClientUsed) {
+      try {
+        console.log(`Deleting Google Calendar event ${createdEventId}...`);
+        const calendar = google.calendar({ version: "v3", auth: oAuthClientUsed });
+        await calendar.events.delete({
+          calendarId: "primary",
+          eventId: createdEventId,
+          sendUpdates: "all",
+        });
+      } catch (gcalCancelErr) {
+        console.error("Failed to delete Google Calendar event on failure:", gcalCancelErr);
+      }
+    }
+
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

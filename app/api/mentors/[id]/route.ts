@@ -22,7 +22,21 @@ export async function GET(
       return NextResponse.json({ error: "Mentor not found" }, { status: 404 });
     }
 
-    return NextResponse.json(mentor);
+    const safeMentor = {
+      id: mentor.id,
+      mentorName: mentor.mentorName,
+      mentorImage: mentor.mentorImage,
+      description: mentor.description,
+      tags: mentor.tags,
+      linkedinLink: mentor.linkedinLink,
+      githubLink: mentor.githubLink,
+      instaLink: mentor.instaLink,
+      customLink: mentor.customLink,
+      rating: mentor.rating,
+      availability: mentor.availability,
+    };
+
+    return NextResponse.json(safeMentor);
   } catch (error) {
     console.error("Error fetching mentor:", error);
     return NextResponse.json(

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, notFound } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
 import axios from "axios";
@@ -33,35 +33,46 @@ export default function CohortOnboardingPage() {
   const [mentors, setMentors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [isNotFound, setIsNotFound] = useState(false);
 
   useEffect(() => {
-    if (!sessionPending && !session) {
+    if (sessionPending) return;
+    if (!session) {
       router.replace(`/login?returnUrl=%2Ftoolkit%2F${toolkitId}%2Fonboarding`);
+      return;
     }
-  }, [session, sessionPending, router, toolkitId]);
 
-  useEffect(() => {
-    // Fetch cohort details to get mentors and custom questions
     const fetchCohortDetails = async () => {
       try {
-        // We assume we have an endpoint that returns the toolkit details including mentors
-        const res = await axios.get(`/api/toolkits/${toolkitId}`);
-        
+        // Check if user already onboarding, and load toolkit
+        const onboardingRes = await axios.get(`/api/cohorts/onboarding?toolkitId=${toolkitId}`);
+        if (onboardingRes.data.onboarding) {
+          router.replace(`/toolkit/${toolkitId}/cohort-dashboard`);
+          return;
+        }
+
+        const toolkit = onboardingRes.data.toolkit;
+        if (!toolkit || !toolkit.isCohort) {
+          setIsNotFound(true);
+          return;
+        }
+
         // Fetch mentor details based on mentorIds in cohortDetails
-        if (res.data.toolkit?.cohortDetails?.mentorIds) {
-          const mentorIds = res.data.toolkit.cohortDetails.mentorIds;
+        if (toolkit.cohortDetails?.mentorIds) {
+          const mentorIds = toolkit.cohortDetails.mentorIds;
           const mentorsRes = await axios.get("/api/mentors");
           const filteredMentors = mentorsRes.data.filter((m: any) => mentorIds.includes(m.id));
           setMentors(filteredMentors);
         }
       } catch (error) {
         console.error("Failed to load cohort details", error);
+        setIsNotFound(true);
       } finally {
         setLoading(false);
       }
     };
     fetchCohortDetails();
-  }, [toolkitId]);
+  }, [toolkitId, session, sessionPending, router]);
 
   const toggleFutureOption = (option: string) => {
     setSelectedFutures(prev => 
@@ -100,6 +111,10 @@ export default function CohortOnboardingPage() {
       setSubmitting(false);
     }
   };
+
+  if (isNotFound) {
+    notFound();
+  }
 
   if (loading || sessionPending) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;

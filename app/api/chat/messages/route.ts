@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { chatMessages, chatRooms } from "@/lib/schema";
+import { chatMessages, chatRooms, mentors } from "@/lib/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { eq, asc } from "drizzle-orm";
@@ -30,6 +30,17 @@ export async function GET(req: NextRequest) {
 
     if (!room) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
+    }
+
+    // Check if the current user is the student or the linked mentor
+    const isStudent = room.userId === session.user.id;
+    const mentorRecord = await db.query.mentors.findFirst({
+      where: eq(mentors.userId, session.user.id)
+    });
+    const isMentor = mentorRecord && mentorRecord.id === room.mentorId;
+
+    if (!isStudent && !isMentor) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const messages = await db.query.chatMessages.findMany({
@@ -68,6 +79,17 @@ export async function POST(req: NextRequest) {
 
     if (!room) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
+    }
+
+    // Check if the current user is the student or the linked mentor
+    const isStudent = room.userId === session.user.id;
+    const mentorRecord = await db.query.mentors.findFirst({
+      where: eq(mentors.userId, session.user.id)
+    });
+    const isMentor = mentorRecord && mentorRecord.id === room.mentorId;
+
+    if (!isStudent && !isMentor) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const newMessage = await db.insert(chatMessages).values({

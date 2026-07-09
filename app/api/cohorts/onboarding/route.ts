@@ -92,6 +92,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Load toolkit details and validate it is a cohort and the mentor is assigned
+    const toolkit = await db.query.toolkits.findFirst({
+      where: eq(toolkits.id, toolkitId),
+    });
+
+    if (!toolkit) {
+      return NextResponse.json(
+        { error: "Cohort toolkit not found." },
+        { status: 404 }
+      );
+    }
+
+    if (!toolkit.isCohort) {
+      return NextResponse.json(
+        { error: "This toolkit is not a cohort." },
+        { status: 400 }
+      );
+    }
+
+    const mentorIds = toolkit.cohortDetails?.mentorIds;
+    if (!mentorIds || !mentorIds.includes(mentorId)) {
+      return NextResponse.json(
+        { error: "Selected mentor is not assigned to this cohort." },
+        { status: 400 }
+      );
+    }
+
     // Save onboarding responses
     await db.insert(cohortOnboardingResponses).values({
       userId,

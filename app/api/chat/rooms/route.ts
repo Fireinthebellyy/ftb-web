@@ -88,11 +88,33 @@ export async function POST(req: NextRequest) {
     }
 
     // Create new room
-    const newRoom = await db.insert(chatRooms).values({
-      toolkitId,
-      userId,
-      mentorId,
-    }).returning();
+    let newRoom;
+    try {
+      newRoom = await db.insert(chatRooms).values({
+        toolkitId,
+        userId,
+        mentorId,
+      }).returning();
+    } catch (err: any) {
+      const isDuplicate = 
+        err.code === "23505" || 
+        err.cause?.code === "23505" || 
+        err.constraint === "chat_rooms_toolkit_user_mentor_unique";
+        
+      if (isDuplicate) {
+        const existing = await db.query.chatRooms.findFirst({
+          where: and(
+            eq(chatRooms.toolkitId, toolkitId),
+            eq(chatRooms.userId, userId),
+            eq(chatRooms.mentorId, mentorId)
+          )
+        });
+        if (existing) {
+          return NextResponse.json({ room: existing });
+        }
+      }
+      throw err;
+    }
 
     return NextResponse.json({ room: newRoom[0] });
   } catch (error) {

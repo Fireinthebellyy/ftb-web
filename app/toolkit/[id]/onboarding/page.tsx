@@ -50,8 +50,18 @@ export default function CohortOnboardingPage() {
         // Fetch mentor details based on mentorIds in cohortDetails
         if (res.data.toolkit?.cohortDetails?.mentorIds) {
           const mentorIds = res.data.toolkit.cohortDetails.mentorIds;
-          const mentorsRes = await Promise.all(mentorIds.map((id: string) => axios.get(`/api/mentors/${id}`)));
-          setMentors(mentorsRes.map((m) => m.data));
+          const mentorsRes = await Promise.all(
+            mentorIds.map(async (id: string) => {
+              try {
+                const mRes = await axios.get(`/api/mentors/${id}`);
+                return mRes.data;
+              } catch (err) {
+                console.error(`Failed to fetch mentor ${id}:`, err);
+                return null;
+              }
+            })
+          );
+          setMentors(mentorsRes.filter((m) => m !== null));
         }
       } catch (error) {
         console.error("Failed to load cohort details", error);

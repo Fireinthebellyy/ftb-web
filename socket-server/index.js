@@ -40,11 +40,10 @@ io.on('connection', (socket) => {
     console.log(`Socket ${socket.id} left room: ${roomId}`);
   });
 
-  // Handle incoming messages and broadcast to the room
   socket.on('send_message', ({ roomId, message }) => {
     // We only need to broadcast to others since the sender updates optimistically
     // and stores to DB via REST API
-    console.log(`Message sent to room ${roomId}:`, message);
+    console.log(`Message sent to room ${roomId}`);
     socket.to(roomId).emit('receive_message', message);
   });
 

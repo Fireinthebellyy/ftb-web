@@ -847,25 +847,33 @@ export const mentorAvailability = pgTable("mentor_availability", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const mentorMeets = pgTable("mentor_meets", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  availabilityId: uuid("availability_id")
-    .notNull()
-    .references(() => mentorAvailability.id, { onDelete: "cascade" }),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  mentorId: uuid("mentor_id")
-    .notNull()
-    .references(() => mentors.id, { onDelete: "cascade" }),
-  toolkitId: uuid("toolkit_id")
-    .notNull()
-    .references(() => toolkits.id, { onDelete: "cascade" }),
-  meetLink: text("meet_link"),
-  status: text("status").default("scheduled"), // scheduled, completed, cancelled
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+export const mentorMeets = pgTable(
+  "mentor_meets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    availabilityId: uuid("availability_id")
+      .notNull()
+      .references(() => mentorAvailability.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    mentorId: uuid("mentor_id")
+      .notNull()
+      .references(() => mentors.id, { onDelete: "cascade" }),
+    toolkitId: uuid("toolkit_id")
+      .notNull()
+      .references(() => toolkits.id, { onDelete: "cascade" }),
+    meetLink: text("meet_link"),
+    status: text("status").default("scheduled"), // scheduled, completed, cancelled
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("mentor_meets_active_availability_unique")
+      .on(table.availabilityId)
+      .where(sql`status != 'cancelled'`),
+  ]
+);
 
 // Export schema object last
 export const schema = {

@@ -8,6 +8,8 @@ import {
   userToolkitProgress,
   coupons,
   digitalProductSections,
+  cohorts,
+  cohortOrders,
 } from "@/lib/schema";
 import { getSessionCached } from "@/lib/auth-session-cache";
 import { eq, and, asc, sql, or, lt, isNull, inArray } from "drizzle-orm";
@@ -111,7 +113,27 @@ export async function GET(
         )
         .limit(1);
 
-      if (purchase.length > 0) {
+      let hasPurchasedFlag = purchase.length > 0;
+
+      if (!hasPurchasedFlag) {
+        const cohortPurchase = await db
+          .select({ id: cohorts.id })
+          .from(cohorts)
+          .innerJoin(cohortOrders, eq(cohortOrders.cohortId, cohorts.id))
+          .where(
+            and(
+              eq(cohorts.toolkitId, toolkitId),
+              eq(cohortOrders.userId, session.user.id),
+              eq(cohortOrders.status, "paid")
+            )
+          )
+          .limit(1);
+        if (cohortPurchase.length > 0) {
+          hasPurchasedFlag = true;
+        }
+      }
+
+      if (hasPurchasedFlag) {
         hasPurchased = true;
 
         // Fetch completed content items for this user and toolkit

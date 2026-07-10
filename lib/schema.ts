@@ -772,6 +772,87 @@ export const trackerEvents = pgTable(
   ]
 );
 
+export const cohorts = pgTable("cohorts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  badge1: text("badge1"),
+  badge2: text("badge2"),
+  subtitle: text("subtitle"),
+  coverImageUrl: text("cover_image_url"),
+  mentorsHeading: text("mentors_heading").default("Meet Your Mentors"),
+  mentorsLinkTarget: text("mentors_link_target"),
+  mentorsLimit: integer("mentors_limit").default(4),
+  featuresHeading: text("features_heading").default("What You Get"),
+  investmentLabel: text("investment_label").default("Total Investment"),
+  basePrice: integer("base_price").notNull(),
+  toolkitId: uuid("toolkit_id").references(() => toolkits.id, { onDelete: "set null" }),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const cohortMentors = pgTable("cohort_mentors", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  cohortId: uuid("cohort_id").references(() => cohorts.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  role: text("role").notNull(),
+  imageUrl: text("image_url"),
+  bio: text("bio"),
+  link: text("link"),
+  orderIndex: integer("order_index").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const cohortFeatures = pgTable("cohort_features", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  cohortId: uuid("cohort_id").references(() => cohorts.id, { onDelete: "cascade" }),
+  icon: text("icon").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  orderIndex: integer("order_index").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const cohortTiers = pgTable("cohort_tiers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  cohortId: uuid("cohort_id").references(() => cohorts.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  price: integer("price").notNull(),
+  description: text("description").notNull(),
+  whatIncluded: jsonb("what_included").$type<string[]>().default([]),
+  isDefault: boolean("is_default").default(false),
+  orderIndex: integer("order_index").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const cohortAddOns = pgTable("cohort_addons", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  cohortId: uuid("cohort_id").references(() => cohorts.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  priceDelta: integer("price_delta").notNull(),
+  description: text("description").notNull(),
+  orderIndex: integer("order_index").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const cohortOrders = pgTable("cohort_orders", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  cohortId: uuid("cohort_id").references(() => cohorts.id, { onDelete: "cascade" }),
+  userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+  buyerName: text("buyer_name").notNull(),
+  buyerEmail: text("buyer_email").notNull(),
+  buyerPhone: text("buyer_phone"),
+  selectedTierId: uuid("selected_tier_id").references(() => cohortTiers.id, { onDelete: "set null" }),
+  selectedAddOnIds: jsonb("selected_addon_ids").$type<string[]>().default([]),
+  amountPaid: integer("amount_paid").notNull(),
+  couponId: uuid("coupon_id").references(() => coupons.id, { onDelete: "set null" }),
+  razorpayOrderId: text("razorpay_order_id").notNull(),
+  razorpayPaymentId: text("razorpay_payment_id"),
+  status: text("status").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Export schema object last
 export const schema = {
   user,
@@ -809,4 +890,11 @@ export const schema = {
   trackerItems,
   trackerEvents,
   adminActivityLogs,
+  cohorts,
+  cohortMentors,
+  cohortFeatures,
+  cohortTiers,
+  cohortAddOns,
+  cohortOrders,
 };
+

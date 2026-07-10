@@ -1,0 +1,1223 @@
+/* eslint-disable max-lines */
+"use client";
+
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { toast } from "sonner";
+import {
+  Edit,
+  Trash2,
+  Plus,
+  Loader2,
+  Image as ImageIcon,
+  X,
+  ArrowUp,
+  ArrowDown,
+  Download,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { uploadFileViaSignedUrl } from "@/lib/storage/client";
+
+interface Mentor {
+  id?: string;
+  name: string;
+  role: string;
+  imageUrl: string;
+  bio?: string;
+  link?: string;
+}
+
+interface Feature {
+  id?: string;
+  icon: string;
+  title: string;
+  description: string;
+}
+
+interface Tier {
+  id?: string;
+  name: string;
+  price: number;
+  description: string;
+  whatIncluded: string[] | string;
+  isDefault: boolean;
+}
+
+interface Addon {
+  id?: string;
+  name: string;
+  priceDelta: number;
+  description: string;
+}
+
+interface Cohort {
+  id: string;
+  title: string;
+  slug: string;
+  badge1: string;
+  badge2: string;
+  subtitle: string;
+  coverImageUrl: string;
+  mentorsHeading: string;
+  mentorsLinkTarget: string;
+  mentorsLimit: number;
+  featuresHeading: string;
+  investmentLabel: string;
+  basePrice: number;
+  toolkitId?: string | null;
+  isActive: boolean;
+  mentors?: Mentor[];
+  features?: Feature[];
+  tiers?: Tier[];
+  addons?: Addon[];
+}
+
+interface Order {
+  id: string;
+  buyerName: string;
+  buyerEmail: string;
+  buyerPhone: string | null;
+  amountPaid: number;
+  razorpayOrderId: string;
+  razorpayPaymentId: string | null;
+  status: string;
+  createdAt: string;
+  cohortTitle: string | null;
+  tierName: string | null;
+}
+
+export default function AdminCohortsTable() {
+  const [view, setView] = useState<"cohorts" | "orders">("cohorts");
+  const [cohortsList, setCohortsList] = useState<Cohort[]>([]);
+  const [ordersList, setOrdersList] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Cohort creation state
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [newCohortTitle, setNewCohortTitle] = useState("");
+  const [newCohortSlug, setNewCohortSlug] = useState("");
+  const [newCohortPrice, setNewCohortPrice] = useState(4999);
+
+  // Cohort editing state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingCohort, setEditingCohort] = useState<Cohort | null>(null);
+  const [activeEditTab, setActiveEditTab] = useState<"details" | "mentors" | "features" | "pricing">("details");
+
+  // File upload state
+  const [isUploading, setIsUploading] = useState(false);
+  const [toolkits, setToolkits] = useState<any[]>([]);
+
+  // Load Initial Data
+  useEffect(() => {
+    fetchCohorts();
+    fetchOrders();
+    fetchToolkits();
+  }, []);
+
+  const fetchToolkits = async () => {
+    try {
+      const response = await axios.get("/api/admin/toolkits");
+      setToolkits(response.data);
+    } catch (err) {
+      console.error("Failed to load toolkits list:", err);
+    }
+  };
+
+  const fetchCohorts = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get("/api/admin/cohorts");
+      setCohortsList(response.data);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load cohorts");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchOrders = async () => {
+    try {
+      const response = await axios.get("/api/admin/cohorts/orders");
+      setOrdersList(response.data);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load orders log");
+    }
+  };
+
+  const handleCreateCohort = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCohortTitle || !newCohortSlug) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    try {
+      await axios.post("/api/admin/cohorts", {
+        title: newCohortTitle,
+        slug: newCohortSlug,
+        basePrice: newCohortPrice,
+      });
+      toast.success("Cohort created successfully!");
+      setCreateDialogOpen(false);
+      setNewCohortTitle("");
+      setNewCohortSlug("");
+      setNewCohortPrice(4999);
+      fetchCohorts();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.error || "Failed to create cohort");
+    }
+  };
+
+  const startEditCohort = async (cohortId: string) => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`/api/admin/cohorts/${cohortId}`);
+      setEditingCohort(response.data);
+      setActiveEditTab("details");
+      setEditDialogOpen(true);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load cohort details");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveCohort = async () => {
+    if (!editingCohort) return;
+    setIsLoading(true);
+    try {
+      await axios.put(`/api/admin/cohorts/${editingCohort.id}`, editingCohort);
+      toast.success("Cohort saved successfully!");
+      setEditDialogOpen(false);
+      fetchCohorts();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.error || "Failed to save cohort");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteCohort = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this cohort? This cannot be undone.")) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/admin/cohorts/${id}`);
+      toast.success("Cohort deleted");
+      fetchCohorts();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete cohort");
+    }
+  };
+
+  const handleImageUpload = async (file: File, callback: (url: string) => void) => {
+    setIsUploading(true);
+    try {
+      const { publicUrl } = await uploadFileViaSignedUrl({
+        domain: "opportunity-images",
+        file,
+      });
+      callback(publicUrl);
+      toast.success("Image uploaded successfully!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to upload image");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Export to CSV
+  const exportToCSV = () => {
+    if (ordersList.length === 0) {
+      toast.error("No orders to export");
+      return;
+    }
+
+    const headers = [
+      "Order ID",
+      "Buyer Name",
+      "Buyer Email",
+      "Buyer Phone",
+      "Cohort Title",
+      "Selected Tier",
+      "Amount Paid (INR)",
+      "Razorpay Order ID",
+      "Razorpay Payment ID",
+      "Status",
+      "Date",
+    ];
+
+    const rows = ordersList.map((order) => [
+      order.id,
+      order.buyerName,
+      order.buyerEmail,
+      order.buyerPhone || "",
+      order.cohortTitle || "",
+      order.tierName || "",
+      (order.amountPaid / 100).toFixed(2),
+      order.razorpayOrderId,
+      order.razorpayPaymentId || "",
+      order.status,
+      new Date(order.createdAt).toLocaleString(),
+    ]);
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((e) => e.map((val) => `"${val.replace(/"/g, '""')}"`).join(","))].join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `cohort_orders_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* View Switcher */}
+      <div className="flex border-b">
+        <button
+          onClick={() => setView("cohorts")}
+          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${
+            view === "cohorts"
+              ? "border-[#ff5e14] text-[#ff5e14]"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Cohorts List
+        </button>
+        <button
+          onClick={() => setView("orders")}
+          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${
+            view === "orders"
+              ? "border-[#ff5e14] text-[#ff5e14]"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Orders & Applications Log
+        </button>
+      </div>
+
+      {view === "cohorts" ? (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Active Programs</h2>
+            <Button
+              onClick={() => setCreateDialogOpen(true)}
+              className="bg-[#ff5e14] hover:bg-[#e04f0f] text-white flex gap-1.5 items-center"
+            >
+              <Plus className="w-4 h-4" /> Create Cohort
+            </Button>
+          </div>
+
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-[#ff5e14]" />
+            </div>
+          ) : cohortsList.length === 0 ? (
+            <div className="border bg-white rounded-lg p-12 text-center">
+              <p className="text-gray-500 mb-4">No cohorts built yet.</p>
+              <Button
+                onClick={() => setCreateDialogOpen(true)}
+                variant="outline"
+                className="border-[#ff5e14] text-[#ff5e14] hover:bg-orange-50"
+              >
+                Create your first cohort
+              </Button>
+            </div>
+          ) : (
+            <div className="border bg-white rounded-lg overflow-hidden shadow-sm">
+              <table className="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b">
+                    <th className="p-4 font-semibold text-gray-700">Cohort Title</th>
+                    <th className="p-4 font-semibold text-gray-700">Slug (URL)</th>
+                    <th className="p-4 font-semibold text-gray-700">Base Price</th>
+                    <th className="p-4 font-semibold text-gray-700">Status</th>
+                    <th className="p-4 font-semibold text-gray-700 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {cohortsList.map((c) => (
+                    <tr key={c.id} className="hover:bg-gray-50">
+                      <td className="p-4 font-medium text-gray-900">{c.title}</td>
+                      <td className="p-4 text-gray-500">/toolkit/cohorts/{c.slug}</td>
+                      <td className="p-4 font-semibold text-gray-900">₹{c.basePrice}</td>
+                      <td className="p-4">
+                        <span
+                          className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
+                            c.isActive
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {c.isActive ? "Active" : "Draft"}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => startEditCohort(c.id)}
+                          className="text-gray-600 hover:text-gray-900"
+                        >
+                          <Edit className="w-4 h-4 mr-1" /> Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteCohort(c.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" /> Delete
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Orders Log</h2>
+            <Button
+              onClick={exportToCSV}
+              variant="outline"
+              className="flex gap-1.5 items-center border-gray-300 hover:bg-gray-50 text-gray-700"
+            >
+              <Download className="w-4 h-4" /> Export CSV
+            </Button>
+          </div>
+
+          {ordersList.length === 0 ? (
+            <div className="border bg-white rounded-lg p-12 text-center">
+              <p className="text-gray-500">No applications or purchases recorded yet.</p>
+            </div>
+          ) : (
+            <div className="border bg-white rounded-lg overflow-hidden shadow-sm">
+              <table className="w-full text-left border-collapse text-xs md:text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b">
+                    <th className="p-4 font-semibold text-gray-700">Buyer</th>
+                    <th className="p-4 font-semibold text-gray-700">Cohort & Tier</th>
+                    <th className="p-4 font-semibold text-gray-700">Paid</th>
+                    <th className="p-4 font-semibold text-gray-700">Razorpay Info</th>
+                    <th className="p-4 font-semibold text-gray-700">Status</th>
+                    <th className="p-4 font-semibold text-gray-700">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {ordersList.map((order) => (
+                    <tr key={order.id} className="hover:bg-gray-50">
+                      <td className="p-4">
+                        <div className="font-semibold text-gray-900">{order.buyerName}</div>
+                        <div className="text-xs text-gray-500">{order.buyerEmail}</div>
+                        {order.buyerPhone && <div className="text-xs text-gray-400">{order.buyerPhone}</div>}
+                      </td>
+                      <td className="p-4">
+                        <div className="font-medium text-gray-950">{order.cohortTitle || "Unknown"}</div>
+                        <div className="text-xs text-[#ff5e14]">{order.tierName || "Base price"}</div>
+                      </td>
+                      <td className="p-4 font-semibold text-gray-900">
+                        ₹{(order.amountPaid / 100).toFixed(2)}
+                      </td>
+                      <td className="p-4 text-xs text-gray-500">
+                        <div>Order: {order.razorpayOrderId}</div>
+                        {order.razorpayPaymentId && (
+                          <div className="text-emerald-700 font-medium">Pay ID: {order.razorpayPaymentId}</div>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <span
+                          className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
+                            order.status === "paid"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-amber-100 text-amber-800"
+                          }`}
+                        >
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="p-4 text-xs text-gray-500 whitespace-nowrap">
+                        {new Date(order.createdAt).toLocaleDateString()}{" "}
+                        {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Cohort Creation Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>New Cohort Program</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreateCohort} className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="title">Program Title</Label>
+              <Input
+                id="title"
+                placeholder="e.g. Ivy League Hustle Cohort"
+                value={newCohortTitle}
+                onChange={(e) => {
+                  setNewCohortTitle(e.target.value);
+                  // Auto-generate slug
+                  setNewCohortSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""));
+                }}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="slug">Custom URL Slug</Label>
+              <Input
+                id="slug"
+                placeholder="e.g. ivy-league-hustle"
+                value={newCohortSlug}
+                onChange={(e) => setNewCohortSlug(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="price">Base Price (INR)</Label>
+              <Input
+                id="price"
+                type="number"
+                value={newCohortPrice}
+                onChange={(e) => setNewCohortPrice(Number(e.target.value))}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setCreateDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" className="bg-[#ff5e14] hover:bg-[#e04f0f] text-white">
+                Create
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cohort Editing Sheet / Dialog */}
+      {editingCohort && (
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto p-6">
+            <DialogHeader className="flex flex-row justify-between items-center border-b pb-4 mb-4">
+              <div>
+                <DialogTitle className="text-xl">Configure Program: {editingCohort.title}</DialogTitle>
+                <p className="text-sm text-gray-500">Edit page sections, pricing tiers, and mentors</p>
+              </div>
+            </DialogHeader>
+
+            {/* Modal Tabs */}
+            <div className="flex gap-2 border-b mb-6 overflow-x-auto pb-2">
+              <button
+                onClick={() => setActiveEditTab("details")}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  activeEditTab === "details"
+                    ? "bg-[#ff5e14] text-white"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                }`}
+              >
+                Page Details & Hero
+              </button>
+              <button
+                onClick={() => setActiveEditTab("mentors")}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  activeEditTab === "mentors"
+                    ? "bg-[#ff5e14] text-white"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                }`}
+              >
+                Mentors ({editingCohort.mentors?.length || 0})
+              </button>
+              <button
+                onClick={() => setActiveEditTab("features")}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  activeEditTab === "features"
+                    ? "bg-[#ff5e14] text-white"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                }`}
+              >
+                What You Get ({editingCohort.features?.length || 0})
+              </button>
+              <button
+                onClick={() => setActiveEditTab("pricing")}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  activeEditTab === "pricing"
+                    ? "bg-[#ff5e14] text-white"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                }`}
+              >
+                Pricing, Tiers & Add-ons
+              </button>
+            </div>
+
+            {/* details Tab */}
+            {activeEditTab === "details" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label>Title</Label>
+                    <Input
+                      value={editingCohort.title}
+                      onChange={(e) => setEditingCohort({ ...editingCohort, title: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Slug</Label>
+                    <Input
+                      value={editingCohort.slug}
+                      onChange={(e) => setEditingCohort({ ...editingCohort, slug: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1.5">
+                      <Label>Badge Left (e.g. Cohort Batch)</Label>
+                      <Input
+                        value={editingCohort.badge1}
+                        onChange={(e) => setEditingCohort({ ...editingCohort, badge1: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Badge Right (e.g. Duration)</Label>
+                      <Input
+                        value={editingCohort.badge2}
+                        onChange={(e) => setEditingCohort({ ...editingCohort, badge2: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Description / Subtitle</Label>
+                    <Textarea
+                      rows={3}
+                      value={editingCohort.subtitle}
+                      onChange={(e) => setEditingCohort({ ...editingCohort, subtitle: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Linked Content Toolkit</Label>
+                    <select
+                      value={editingCohort.toolkitId || ""}
+                      onChange={(e) => setEditingCohort({ ...editingCohort, toolkitId: e.target.value || null })}
+                      className="w-full px-3 py-2 border rounded-lg text-sm bg-white"
+                    >
+                      <option value="">-- None (No toolkit content linked) --</option>
+                      {toolkits.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.title} ({t.category || "No Category"})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-4 border-l pl-4">
+                  <div className="space-y-1.5">
+                    <Label>Hero Banner Image</Label>
+                    {editingCohort.coverImageUrl && (
+                      <img
+                        src={editingCohort.coverImageUrl}
+                        alt="Hero preview"
+                        className="w-full h-32 object-cover rounded-lg border mb-2"
+                      />
+                    )}
+                    <div className="flex gap-2">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleImageUpload(file, (url) =>
+                              setEditingCohort({ ...editingCohort, coverImageUrl: url })
+                            );
+                          }
+                        }}
+                      />
+                      {isUploading && <Loader2 className="w-5 h-5 animate-spin" />}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label>Mentors Section Heading</Label>
+                    <Input
+                      value={editingCohort.mentorsHeading}
+                      onChange={(e) => setEditingCohort({ ...editingCohort, mentorsHeading: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1.5">
+                      <Label>Mentors Show Limit</Label>
+                      <Input
+                        type="number"
+                        value={editingCohort.mentorsLimit}
+                        onChange={(e) => setEditingCohort({ ...editingCohort, mentorsLimit: Number(e.target.value) })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Mentors View All Link</Label>
+                      <Input
+                        value={editingCohort.mentorsLinkTarget || ""}
+                        onChange={(e) => setEditingCohort({ ...editingCohort, mentorsLinkTarget: e.target.value })}
+                        placeholder="/mentors or #all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label>Features Section Heading</Label>
+                    <Input
+                      value={editingCohort.featuresHeading}
+                      onChange={(e) => setEditingCohort({ ...editingCohort, featuresHeading: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="flex gap-6 items-center pt-2">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="cohort-active"
+                        checked={editingCohort.isActive}
+                        onCheckedChange={(val) => setEditingCohort({ ...editingCohort, isActive: val })}
+                      />
+                      <Label htmlFor="cohort-active">Active (Visible to public)</Label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* mentors Tab */}
+            {activeEditTab === "mentors" && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-md font-semibold">Cohort Mentors</h3>
+                  <Button
+                    onClick={() => {
+                      const currentMentors = editingCohort.mentors || [];
+                      setEditingCohort({
+                        ...editingCohort,
+                        mentors: [
+                          ...currentMentors,
+                          { name: "", role: "", imageUrl: "", bio: "", link: "" },
+                        ],
+                      });
+                    }}
+                    className="bg-gray-100 text-gray-700 hover:bg-gray-200 border text-xs"
+                    size="sm"
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1" /> Add Mentor Card
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  {(editingCohort.mentors || []).map((mentor, index) => (
+                    <div key={index} className="border p-4 rounded-lg bg-gray-50 flex flex-col md:flex-row gap-4 relative">
+                      <button
+                        onClick={() => {
+                          const currentMentors = [...(editingCohort.mentors || [])];
+                          currentMentors.splice(index, 1);
+                          setEditingCohort({ ...editingCohort, mentors: currentMentors });
+                        }}
+                        className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+
+                      <div className="flex flex-col items-center gap-2">
+                        {mentor.imageUrl ? (
+                          <img
+                            src={mentor.imageUrl}
+                            alt="Mentor preview"
+                            className="w-16 h-16 rounded-full object-cover border"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
+                            <ImageIcon className="w-6 h-6 text-gray-400" />
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="w-28 text-xs cursor-pointer"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleImageUpload(file, (url) => {
+                                const currentMentors = [...(editingCohort.mentors || [])];
+                                currentMentors[index] = { ...currentMentors[index], imageUrl: url };
+                                setEditingCohort({ ...editingCohort, mentors: currentMentors });
+                              });
+                            }
+                          }}
+                        />
+                      </div>
+
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Mentor Name</Label>
+                          <Input
+                            value={mentor.name}
+                            onChange={(e) => {
+                              const currentMentors = [...(editingCohort.mentors || [])];
+                              currentMentors[index] = { ...currentMentors[index], name: e.target.value };
+                              setEditingCohort({ ...editingCohort, mentors: currentMentors });
+                            }}
+                            placeholder="e.g. John Doe"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Title / Role</Label>
+                          <Input
+                            value={mentor.role}
+                            onChange={(e) => {
+                              const currentMentors = [...(editingCohort.mentors || [])];
+                              currentMentors[index] = { ...currentMentors[index], role: e.target.value };
+                              setEditingCohort({ ...editingCohort, mentors: currentMentors });
+                            }}
+                            placeholder="e.g. Ex-Google PM, Stanford Alum"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Linkedin URL</Label>
+                          <Input
+                            value={mentor.link || ""}
+                            onChange={(e) => {
+                              const currentMentors = [...(editingCohort.mentors || [])];
+                              currentMentors[index] = { ...currentMentors[index], link: e.target.value };
+                              setEditingCohort({ ...editingCohort, mentors: currentMentors });
+                            }}
+                            placeholder="https://linkedin.com/in/..."
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Bio Details</Label>
+                          <Input
+                            value={mentor.bio || ""}
+                            onChange={(e) => {
+                              const currentMentors = [...(editingCohort.mentors || [])];
+                              currentMentors[index] = { ...currentMentors[index], bio: e.target.value };
+                              setEditingCohort({ ...editingCohort, mentors: currentMentors });
+                            }}
+                            placeholder="Short summary description"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Reorder Buttons */}
+                      <div className="flex md:flex-col justify-center gap-1">
+                        <button
+                          disabled={index === 0}
+                          onClick={() => {
+                            const currentMentors = [...(editingCohort.mentors || [])];
+                            const temp = currentMentors[index];
+                            currentMentors[index] = currentMentors[index - 1];
+                            currentMentors[index - 1] = temp;
+                            setEditingCohort({ ...editingCohort, mentors: currentMentors });
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded disabled:opacity-50"
+                        >
+                          <ArrowUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          disabled={index === (editingCohort.mentors || []).length - 1}
+                          onClick={() => {
+                            const currentMentors = [...(editingCohort.mentors || [])];
+                            const temp = currentMentors[index];
+                            currentMentors[index] = currentMentors[index + 1];
+                            currentMentors[index + 1] = temp;
+                            setEditingCohort({ ...editingCohort, mentors: currentMentors });
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded disabled:opacity-50"
+                        >
+                          <ArrowDown className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* features Tab */}
+            {activeEditTab === "features" && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-md font-semibold">&quot;What You Get&quot; Features Rows</h3>
+                  <Button
+                    onClick={() => {
+                      const currentFeatures = editingCohort.features || [];
+                      setEditingCohort({
+                        ...editingCohort,
+                        features: [
+                          ...currentFeatures,
+                          { icon: "Check", title: "", description: "" },
+                        ],
+                      });
+                    }}
+                    className="bg-gray-100 text-gray-700 hover:bg-gray-200 border text-xs"
+                    size="sm"
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1" /> Add Feature Row
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3">
+                  {(editingCohort.features || []).map((feature, index) => (
+                    <div key={index} className="border p-4 rounded-lg bg-gray-50 flex gap-3 relative items-start">
+                      <button
+                        onClick={() => {
+                          const currentFeatures = [...(editingCohort.features || [])];
+                          currentFeatures.splice(index, 1);
+                          setEditingCohort({ ...editingCohort, features: currentFeatures });
+                        }}
+                        className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+
+                      <div className="space-y-1 w-24">
+                        <Label className="text-xs">Icon Name</Label>
+                        <Input
+                          value={feature.icon}
+                          onChange={(e) => {
+                            const currentFeatures = [...(editingCohort.features || [])];
+                            currentFeatures[index] = { ...currentFeatures[index], icon: e.target.value };
+                            setEditingCohort({ ...editingCohort, features: currentFeatures });
+                          }}
+                          placeholder="e.g. Check"
+                        />
+                      </div>
+
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Feature Title</Label>
+                          <Input
+                            value={feature.title}
+                            onChange={(e) => {
+                              const currentFeatures = [...(editingCohort.features || [])];
+                              currentFeatures[index] = { ...currentFeatures[index], title: e.target.value };
+                              setEditingCohort({ ...editingCohort, features: currentFeatures });
+                            }}
+                            placeholder="e.g. 10+ Live Templates"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Feature Description</Label>
+                          <Input
+                            value={feature.description}
+                            onChange={(e) => {
+                              const currentFeatures = [...(editingCohort.features || [])];
+                              currentFeatures[index] = { ...currentFeatures[index], description: e.target.value };
+                              setEditingCohort({ ...editingCohort, features: currentFeatures });
+                            }}
+                            placeholder="Brief detail explaining the benefit"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Reorder Buttons */}
+                      <div className="flex flex-col gap-1 self-center">
+                        <button
+                          disabled={index === 0}
+                          onClick={() => {
+                            const currentFeatures = [...(editingCohort.features || [])];
+                            const temp = currentFeatures[index];
+                            currentFeatures[index] = currentFeatures[index - 1];
+                            currentFeatures[index - 1] = temp;
+                            setEditingCohort({ ...editingCohort, features: currentFeatures });
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded disabled:opacity-50"
+                        >
+                          <ArrowUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          disabled={index === (editingCohort.features || []).length - 1}
+                          onClick={() => {
+                            const currentFeatures = [...(editingCohort.features || [])];
+                            const temp = currentFeatures[index];
+                            currentFeatures[index] = currentFeatures[index + 1];
+                            currentFeatures[index + 1] = temp;
+                            setEditingCohort({ ...editingCohort, features: currentFeatures });
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded disabled:opacity-50"
+                        >
+                          <ArrowDown className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* pricing Tab */}
+            {activeEditTab === "pricing" && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4 border-b pb-4">
+                  <div className="space-y-1.5">
+                    <Label>Total Investment Label</Label>
+                    <Input
+                      value={editingCohort.investmentLabel}
+                      onChange={(e) => setEditingCohort({ ...editingCohort, investmentLabel: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Cohort Base Price (INR)</Label>
+                    <Input
+                      type="number"
+                      value={editingCohort.basePrice}
+                      onChange={(e) => setEditingCohort({ ...editingCohort, basePrice: Number(e.target.value) })}
+                    />
+                  </div>
+                </div>
+
+                {/* Tiers / Bundles */}
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h4 className="font-semibold text-sm">Offer Tiers (Upsell Bundles)</h4>
+                      <p className="text-xs text-gray-500">Show packages shown upon clicking &apos;Apply Now&apos;</p>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        const currentTiers = editingCohort.tiers || [];
+                        setEditingCohort({
+                          ...editingCohort,
+                          tiers: [
+                            ...currentTiers,
+                            { name: "", price: 4999, description: "", whatIncluded: [], isDefault: false },
+                          ],
+                        });
+                      }}
+                      className="bg-gray-100 text-gray-700 hover:bg-gray-200 border text-xs"
+                      size="sm"
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1" /> Add Tier
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3">
+                    {(editingCohort.tiers || []).map((tier, index) => (
+                      <div key={index} className="border p-4 rounded-lg bg-gray-50 flex flex-col gap-3 relative">
+                        <button
+                          onClick={() => {
+                            const currentTiers = [...(editingCohort.tiers || [])];
+                            currentTiers.splice(index, 1);
+                            setEditingCohort({ ...editingCohort, tiers: currentTiers });
+                          }}
+                          className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Tier Name</Label>
+                            <Input
+                              value={tier.name}
+                              onChange={(e) => {
+                                const currentTiers = [...(editingCohort.tiers || [])];
+                                currentTiers[index] = { ...currentTiers[index], name: e.target.value };
+                                setEditingCohort({ ...editingCohort, tiers: currentTiers });
+                              }}
+                              placeholder="e.g. VIP Mentorship Bundle"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Price (INR)</Label>
+                            <Input
+                              type="number"
+                              value={tier.price}
+                              onChange={(e) => {
+                                const currentTiers = [...(editingCohort.tiers || [])];
+                                currentTiers[index] = { ...currentTiers[index], price: Number(e.target.value) };
+                                setEditingCohort({ ...editingCohort, tiers: currentTiers });
+                              }}
+                            />
+                          </div>
+                          <div className="flex items-center gap-2 pt-5">
+                            <input
+                              id={`tier-default-${index}`}
+                              type="checkbox"
+                              checked={tier.isDefault}
+                              onChange={(e) => {
+                                const currentTiers = (editingCohort.tiers || []).map((t, idx) => ({
+                                  ...t,
+                                  isDefault: idx === index ? e.target.checked : false,
+                                }));
+                                setEditingCohort({ ...editingCohort, tiers: currentTiers });
+                              }}
+                              className="rounded border-gray-300 text-[#ff5e14] focus:ring-[#ff5e14] h-4 w-4"
+                            />
+                            <Label htmlFor={`tier-default-${index}`} className="text-xs cursor-pointer">
+                              Pre-selected Default
+                            </Label>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Description</Label>
+                            <Input
+                              value={tier.description}
+                              onChange={(e) => {
+                                const currentTiers = [...(editingCohort.tiers || [])];
+                                currentTiers[index] = { ...currentTiers[index], description: e.target.value };
+                                setEditingCohort({ ...editingCohort, tiers: currentTiers });
+                              }}
+                              placeholder="e.g. Cohort plus weekly 1:1 sessions"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">What&apos;s Included (comma separated)</Label>
+                            <Input
+                              value={
+                                Array.isArray(tier.whatIncluded)
+                                  ? tier.whatIncluded.join(", ")
+                                  : (tier.whatIncluded as string) || ""
+                              }
+                              onChange={(e) => {
+                                const currentTiers = [...(editingCohort.tiers || [])];
+                                currentTiers[index] = { ...currentTiers[index], whatIncluded: e.target.value };
+                                setEditingCohort({ ...editingCohort, tiers: currentTiers });
+                              }}
+                              placeholder="1:1 review, Certificate, Resume templates"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Add-ons */}
+                <div className="space-y-4 border-t pt-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h4 className="font-semibold text-sm">Standalone Add-ons</h4>
+                      <p className="text-xs text-gray-500">Optional checkboxes users can toggle separately</p>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        const currentAddons = editingCohort.addons || [];
+                        setEditingCohort({
+                          ...editingCohort,
+                          addons: [
+                            ...currentAddons,
+                            { name: "", priceDelta: 999, description: "" },
+                          ],
+                        });
+                      }}
+                      className="bg-gray-100 text-gray-700 hover:bg-gray-200 border text-xs"
+                      size="sm"
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1" /> Add Add-on
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3">
+                    {(editingCohort.addons || []).map((addon, index) => (
+                      <div key={index} className="border p-4 rounded-lg bg-gray-50 flex flex-col gap-3 relative">
+                        <button
+                          onClick={() => {
+                            const currentAddons = [...(editingCohort.addons || [])];
+                            currentAddons.splice(index, 1);
+                            setEditingCohort({ ...editingCohort, addons: currentAddons });
+                          }}
+                          className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Add-on Name</Label>
+                            <Input
+                              value={addon.name}
+                              onChange={(e) => {
+                                const currentAddons = [...(editingCohort.addons || [])];
+                                currentAddons[index] = { ...currentAddons[index], name: e.target.value };
+                                setEditingCohort({ ...editingCohort, addons: currentAddons });
+                              }}
+                              placeholder="e.g. Resume Polish Review"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Price Delta (INR)</Label>
+                            <Input
+                              type="number"
+                              value={addon.priceDelta}
+                              onChange={(e) => {
+                                const currentAddons = [...(editingCohort.addons || [])];
+                                currentAddons[index] = { ...currentAddons[index], priceDelta: Number(e.target.value) };
+                                setEditingCohort({ ...editingCohort, addons: currentAddons });
+                              }}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Description</Label>
+                            <Input
+                              value={addon.description}
+                              onChange={(e) => {
+                                const currentAddons = [...(editingCohort.addons || [])];
+                                currentAddons[index] = { ...currentAddons[index], description: e.target.value };
+                                setEditingCohort({ ...editingCohort, addons: currentAddons });
+                              }}
+                              placeholder="Short explanation"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="border-t pt-4 mt-6 gap-2 sm:gap-0">
+              <Button variant="ghost" onClick={() => setEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveCohort}
+                disabled={isLoading}
+                className="bg-[#ff5e14] hover:bg-[#e04f0f] text-white flex gap-1.5 items-center"
+              >
+                {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+}

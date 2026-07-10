@@ -27,6 +27,7 @@ import AdminCouponsTable from "./AdminCouponsTable";
 import OpportunityManagementTable from "./OpportunityManagementTable";
 import InternshipManagementTable from "./InternshipManagementTable";
 import AdminMentorsTable from "./AdminMentorsTable";
+import AdminCohortsTable from "./AdminCohortsTable";
 
 const _TAB_VALUES = [
   "opportunities",
@@ -37,6 +38,7 @@ const _TAB_VALUES = [
   "coupons",
   "ungatekeep",
   "mentors",
+  "cohorts",
 ] as const;
 type TabValue = (typeof _TAB_VALUES)[number];
 
@@ -100,6 +102,12 @@ const adminCards: Array<{
     title: "Mentors",
     description: "Manage mentors and their details",
     icon: Users,
+  },
+  {
+    key: "cohorts",
+    title: "Cohort Management",
+    description: "Create and configure cohort landing pages, benefits, packages and select mentors",
+    icon: BookOpen,
   },
 ];
 
@@ -174,6 +182,7 @@ export function AdminTabs({
       {activeTab === "coupons" ? <AdminCouponsTable /> : null}
       {activeTab === "ungatekeep" ? <AdminUngatekeepTable /> : null}
       {activeTab === "mentors" ? <AdminMentorsTable /> : null}
+      {activeTab === "cohorts" ? <AdminCohortsTable /> : null}
     </div>
   );
 }

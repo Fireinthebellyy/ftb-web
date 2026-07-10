@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { getSessionCached } from "@/lib/auth-session-cache";
 import { db } from "@/lib/db";
-import { toolkits, userToolkitProgress, userToolkits } from "@/lib/schema";
+import { toolkits, userToolkitProgress, userToolkits, cohorts, cohortOrders } from "@/lib/schema";
 
 export async function GET(
   _request: Request,
@@ -40,7 +40,27 @@ export async function GET(
       )
       .limit(1);
 
-    if (purchase.length === 0) {
+    let hasPurchased = purchase.length > 0;
+
+    if (!hasPurchased) {
+      const cohortPurchase = await db
+        .select({ id: cohorts.id })
+        .from(cohorts)
+        .innerJoin(cohortOrders, eq(cohortOrders.cohortId, cohorts.id))
+        .where(
+          and(
+            eq(cohorts.toolkitId, toolkitId),
+            eq(cohortOrders.userId, session.user.id),
+            eq(cohortOrders.status, "paid")
+          )
+        )
+        .limit(1);
+      if (cohortPurchase.length > 0) {
+        hasPurchased = true;
+      }
+    }
+
+    if (!hasPurchased) {
       return NextResponse.json({ hasPurchased: false, completedItemIds: [] });
     }
 

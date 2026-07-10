@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
+import Link from "next/link";
 
 export default function ToolkitPage() {
   const { data: session, isPending: sessionPending } = useSession();
@@ -25,7 +26,8 @@ export default function ToolkitPage() {
   const TAB_CATEGORIES = [
     { label: "Recorded Lectures", value: "Recorded toolkits" },
     { label: "1:1 Mentorship", value: "1:1 Mentorship" },
-    { label: "Digital products", value: "digital products" }
+    { label: "Digital products", value: "digital products" },
+    { label: "Live Cohorts", value: "cohorts" }
   ];
 
   // Redirect to login if not authenticated
@@ -51,7 +53,22 @@ export default function ToolkitPage() {
     enabled: !!session?.user,
   });
 
-  if (sessionPending || !session || isLoading) {
+  const { data: cohortsData = [], isLoading: cohortsLoading } = useQuery<any[]>({
+    queryKey: ["cohorts"],
+    queryFn: async () => {
+      try {
+        const response = await axios.get("/api/cohorts");
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching cohorts:", error);
+        return [];
+      }
+    },
+    staleTime: 1000 * 60 * 10,
+    enabled: !!session?.user,
+  });
+
+  if (sessionPending || !session || isLoading || cohortsLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-6">
@@ -135,6 +152,72 @@ export default function ToolkitPage() {
             <h3 className="mb-2 text-lg font-semibold text-red-900">Failed to load toolkits</h3>
             <p className="text-red-700">Something went wrong. Please refresh and try again.</p>
           </div>
+        ) : selectedCategory === "cohorts" ? (
+          cohortsData.length === 0 ? (
+            <div className="rounded-lg border bg-white py-12 text-center">
+              <h3 className="mb-2 text-lg font-semibold text-gray-600">No live cohorts found</h3>
+              <p className="text-gray-500">Check back soon for new live cohort programs!</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {cohortsData.map((cohort) => (
+                <div
+                  key={cohort.id}
+                  className="overflow-hidden rounded-xl border bg-white shadow-sm flex flex-col justify-between hover:shadow-md transition duration-200"
+                >
+                  <div>
+                    {cohort.coverImageUrl ? (
+                      <img
+                        src={cohort.coverImageUrl}
+                        alt={cohort.title}
+                        className="w-full aspect-[16/10] object-cover border-b"
+                      />
+                    ) : (
+                      <div className="w-full aspect-[16/10] bg-orange-50 flex items-center justify-center border-b">
+                        <span className="text-[#ff5e14] font-bold text-lg">Live Cohort</span>
+                      </div>
+                    )}
+                    <div className="p-4 space-y-2">
+                      <div className="flex gap-2">
+                        {cohort.badge1 && (
+                          <span className="bg-orange-50 text-[#ff5e14] text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-orange-100">
+                            {cohort.badge1}
+                          </span>
+                        )}
+                        {cohort.badge2 && (
+                          <span className="bg-gray-100 text-gray-600 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
+                            {cohort.badge2}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="font-bold text-gray-900 text-base leading-snug line-clamp-2">
+                        {cohort.title}
+                      </h3>
+                      <p className="text-gray-500 text-xs line-clamp-2">
+                        {cohort.subtitle}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="p-4 pt-3 flex justify-between items-center border-t border-gray-50 bg-gray-50/50">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">
+                        Investment
+                      </span>
+                      <span className="font-bold text-gray-900 text-base">
+                        ₹{cohort.basePrice}
+                      </span>
+                    </div>
+                    <Link
+                      href={`/toolkit/cohorts/${cohort.id}`}
+                      className="bg-black hover:bg-neutral-800 text-white text-xs font-semibold px-4 py-2 rounded-lg transition duration-200 shadow-sm"
+                    >
+                      View Program
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
         ) : filteredToolkits.length === 0 ? (
           <div className="rounded-lg border bg-white py-12 text-center">
             <h3 className="mb-2 text-lg font-semibold text-gray-600">

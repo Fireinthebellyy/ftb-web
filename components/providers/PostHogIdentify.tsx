@@ -14,8 +14,6 @@ export function PostHogIdentify() {
         name: session.user.name,
         createdAt: session.user.createdAt.toISOString(),
       });
-    } else {
-      posthog.reset();
     }
   }, [session?.user?.id]);
 

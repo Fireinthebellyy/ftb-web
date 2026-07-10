@@ -54,10 +54,13 @@ export const mentors = pgTable("mentors", {
   mentorNumber: text("mentor_number"),
   mentorImage: text("mentor_image"),
   description: text("description"),
-  mentorEmail: text("mentor_email").notNull(),
+  mentorEmail: text("mentor_email"),
   isVerified: boolean("is_verified").default(false),
   tags: text("tags").array().default([]),
-  calLink: text("cal_link"),
+  linkedinLink: text("linkedin_link"),
+  githubLink: text("github_link"),
+  instaLink: text("insta_link"),
+  customLink: text("custom_link"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   rating: integer("rating"),
@@ -408,6 +411,26 @@ export const digitalProductSections = pgTable("digital_product_sections", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const mentorshipCarouselSlides = pgTable("mentorship_carousel_slides", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  description: text("description"),
+  mobileImageUrl: text("mobile_image_url"),
+  desktopImageUrl: text("desktop_image_url"),
+  orderIndex: integer("order_index").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const toolkitTestimonialImages = pgTable("toolkit_testimonial_images", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  imageUrl: text("image_url").notNull(),
+  orderIndex: integer("order_index").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
 // Toolkit tables for monetization
 export const toolkits = pgTable("toolkits", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -769,6 +792,8 @@ export const schema = {
   tags,
   toolkits,
   digitalProductSections,
+  mentorshipCarouselSlides,
+  toolkitTestimonialImages,
   toolkitContentItems,
   toolkitCommunityPosts,
   toolkitCommunityResponses,

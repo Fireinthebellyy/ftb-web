@@ -55,15 +55,16 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
   const hasDM = !!internship.hiringManagerLinkedin;
   const hasMail = !!internship.hiringManagerEmail;
 
+
+
   const dmUrl = internship.hiringManagerLinkedin || "";
   const emailSubject = `Applying for ${internship.title} role at ${internship.hiringOrganization}`;
-  const emailBody = `Hi ${internship.hiringManager || "Hiring Manager"},\n\nI hope you are doing well.\n\nI am writing to express my interest in the ${internship.title} internship role at ${internship.hiringOrganization}.\n\n[Add a brief 2-3 sentence introduction about your background, key skills, and why you are interested in this role]\n\nI would love the opportunity to discuss how my skills align with your team's needs. I have attached my resume for your review.\n\nBest regards,\n[Your Name]\n[Your Contact Information]\n[Your LinkedIn Profile]`;
-  const mailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(internship.hiringManagerEmail || "")}&su=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+  const mailUrl = `mailto:${internship.hiringManagerEmail || ""}?subject=${encodeURIComponent(emailSubject)}`;
 
   return (
     <div className="bg-white rounded-[24px] px-8 py-5 shadow-sm border border-slate-100 relative mb-8">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-        <div>
+        <div className="min-w-0 flex-1">
           {/* Badges */}
           <div className="flex flex-wrap gap-2.5 mb-5">
             {internship.type && (
@@ -113,76 +114,80 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
               </div>
             )}
           </div>
+
+          {/* Utilities Row (Bookmark, Calendar, Edit, Admin) */}
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={handleBookmarkClick}
+              className={cn(
+                "flex h-10 w-10 items-center justify-center rounded-xl border-slate-200 p-0 transition-all focus:ring-0",
+                isBookmarked
+                  ? "border-orange-500 bg-orange-50 text-orange-500"
+                  : "text-slate-500 hover:border-[#ec5b13] hover:bg-orange-50 hover:text-[#ec5b13]"
+              )}
+            >
+              <Bookmark
+                className={cn("h-4 w-4", isBookmarked && "fill-current")}
+              />
+            </Button>
+            {isModerator && (
+              <Button
+                variant="outline"
+                onClick={onAdminClick}
+                disabled={isAdminLoading}
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-xl border-slate-200 p-0 text-slate-500 transition-all hover:border-[#ec5b13] hover:bg-orange-50 hover:text-[#ec5b13] focus:ring-0"
+                )}
+                aria-label="Admin controls"
+              >
+                {isAdminLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Settings className="h-4.5 w-4.5" />
+                )}
+              </Button>
+            )}
+            {(isOwner || isModerator) && (
+              <Button
+                variant="outline"
+                onClick={onEditClick}
+                className="flex h-10 w-10 items-center justify-center rounded-xl border-slate-200 p-0 text-slate-500 transition-all hover:border-[#ec5b13] hover:bg-orange-50 hover:text-[#ec5b13] focus:ring-0"
+                aria-label="Edit internship"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+            <div className="relative flex shrink-0">
+              <button
+                onClick={handleCalendarClick}
+                className="relative flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white text-slate-500 transition-all hover:border-[#ec5b13] hover:bg-orange-50 hover:text-[#ec5b13] focus:ring-0"
+                aria-label="Add to calendar"
+              >
+                {isCalendarAnimating && (
+                  <div className="animate-slide-in-bell absolute inset-0 z-20 flex items-center justify-center bg-white dark:bg-zinc-950">
+                    <Bell className="animate-ring-bell h-4 w-4 text-[#ec5b13]" />
+                  </div>
+                )}
+                <div className="relative flex h-4.5 w-4.5 shrink-0 items-center justify-center">
+                  <Image
+                    src="/images/google-calendar.webp"
+                    alt="Add to Google Calendar"
+                    width={18}
+                    height={18}
+                    className="h-4.5 w-4.5 object-contain"
+                  />
+                </div>
+              </button>
+              <div className="pointer-events-none absolute -top-1 -right-1 z-30 flex h-4 w-4 items-center justify-center rounded-full border border-white bg-[#ec5b13] text-white shadow-sm">
+                <Bell className="h-2 w-2" strokeWidth={3} />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Desktop Action Buttons */}
-        <div className="flex items-center gap-3 shrink-0">
-          <Button
-            variant="outline"
-            onClick={handleBookmarkClick}
-            className={cn(
-              "w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 transition-all focus:ring-0",
-              isBookmarked
-                ? "text-orange-500 border-orange-500 bg-orange-50"
-                : "text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50"
-            )}
-          >
-            <Bookmark
-              className={cn("w-5 h-5", isBookmarked && "fill-current")}
-            />
-          </Button>
-          {isModerator && (
-            <Button
-              variant="outline"
-              onClick={onAdminClick}
-              disabled={isAdminLoading}
-              className={cn(
-                "w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50 transition-all focus:ring-0"
-              )}
-              aria-label="Admin controls"
-            >
-              {isAdminLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Settings className="w-5 h-5" />
-              )}
-            </Button>
-          )}
-          {(isOwner || isModerator) && (
-            <Button
-              variant="outline"
-              onClick={onEditClick}
-              className="w-12 h-12 p-0 flex items-center justify-center rounded-xl border-slate-200 text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50 transition-all focus:ring-0"
-              aria-label="Edit internship"
-            >
-              <Pencil className="w-5 h-5" />
-            </Button>
-          )}
-          <div className="relative flex shrink-0">
-            <button
-              onClick={handleCalendarClick}
-              className="relative overflow-hidden w-12 h-12 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:text-[#ec5b13] hover:border-[#ec5b13] hover:bg-orange-50 transition-all focus:ring-0 cursor-pointer"
-              aria-label="Add to calendar"
-            >
-              {isCalendarAnimating && (
-                <div className="absolute inset-0 bg-white dark:bg-zinc-950 flex items-center justify-center animate-slide-in-bell z-20">
-                  <Bell className="w-5 h-5 text-[#ec5b13] animate-ring-bell" />
-                </div>
-              )}
-              <div className="relative w-5 h-5 flex items-center justify-center shrink-0">
-                <Image
-                  src="/images/google-calendar.webp"
-                  alt="Add to Google Calendar"
-                  width={20}
-                  height={20}
-                  className="w-5 h-5 object-contain"
-                />
-              </div>
-            </button>
-            <div className="absolute -top-1.5 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#ec5b13] text-white border-2 border-white shadow-md z-30 pointer-events-none">
-              <Bell className="h-2.5 w-2.5" strokeWidth={3} />
-            </div>
-          </div>
+        <div className="flex items-center gap-3 shrink-0 md:mt-2">
           {hasApply && (
             <Button asChild className="h-12 px-5 rounded-xl bg-[#ec5b13] hover:bg-[#d44d0c] text-white font-bold border-none shadow-none transition-all active:scale-95 duration-200 flex items-center gap-2">
               <Link
@@ -233,8 +238,6 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
             <Button asChild className="h-12 px-5 rounded-xl bg-black hover:bg-zinc-800 text-white font-bold border-none shadow-none transition-all active:scale-95 duration-200 flex items-center gap-2">
               <Link
                 href={mailUrl}
-                target="_blank"
-                rel="noopener noreferrer"
                 onClick={() =>
                   posthog.capture("internship_cold_mail_clicked", {
                     internship_id: internship.id,

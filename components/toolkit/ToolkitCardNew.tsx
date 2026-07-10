@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn, stripHtml } from "@/lib/utils";
 import { Toolkit } from "@/types/interfaces";
-import { Flame, ArrowRight, Star, Clock } from "lucide-react";
+import { Flame, ArrowRight, Star, Clock, Check } from "lucide-react";
 
 interface ToolkitCardNewProps {
   toolkit: Toolkit;
@@ -63,7 +63,8 @@ export default function ToolkitCardNew({
     <Link href={href} className="block h-full" prefetch>
       <Card
         className={cn(
-          "relative group flex cursor-pointer flex-col overflow-hidden border bg-white py-0 transition-shadow hover:shadow-md h-full rounded-2xl",
+          "relative group flex gap-1 cursor-pointer overflow-hidden border bg-white py-0 transition-shadow hover:shadow-md h-full rounded-2xl",
+          !isDigitalProduct && !toolkit.isBundle ? "flex-row sm:flex-col" : "flex-col",
           className
         )}
       >
@@ -84,30 +85,7 @@ export default function ToolkitCardNew({
                     </Badge>
                   ) : null}
                 </div>
-                {toolkit.mentorshipDetails?.mentor ? (
-                  <div className="mb-4 flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/80 p-3 shadow-sm transition-all group-hover:bg-white group-hover:shadow-md">
-                    {toolkit.mentorshipDetails.mentor.imageUrl && (
-                      <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full border-2 border-white shadow-sm ring-1 ring-gray-900/5">
-                        <Image
-                          src={toolkit.mentorshipDetails.mentor.imageUrl}
-                          alt={toolkit.mentorshipDetails.mentor.name || "Mentor"}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="flex flex-col justify-center">
-                      <p className="text-[13px] font-bold text-gray-900 leading-tight">
-                        {toolkit.mentorshipDetails.mentor.name}
-                      </p>
-                      {toolkit.mentorshipDetails.mentor.description && (
-                        <p className="text-[11px] font-medium text-gray-500 line-clamp-1 mt-0.5">
-                          {toolkit.mentorshipDetails.mentor.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ) : null}
+
                 <h3 className="text-xl font-semibold leading-tight text-gray-950 transition-colors group-hover:text-gray-700">
                   {toolkit.title.charAt(0).toUpperCase() + toolkit.title.slice(1)}
                 </h3>
@@ -249,14 +227,14 @@ export default function ToolkitCardNew({
           </div>
         ) : (
           <>
-            <div className="relative aspect-[4/3] w-full shrink-0 self-stretch overflow-hidden bg-gray-100">
+            <div className="relative w-[140px] shrink-0 sm:w-full sm:aspect-[4/3] overflow-hidden bg-gray-100 border-r sm:border-r-0 border-gray-50">
               {toolkit.coverImageUrl ? (
                 <Image
                   src={toolkit.coverImageUrl}
                   alt={toolkit.title}
                   fill
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  sizes="(max-width: 640px) 112px, (max-width: 1024px) 50vw, 25vw"
+                  sizes="(max-width: 640px) 140px, (max-width: 1024px) 50vw, 25vw"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center bg-gray-100">
@@ -266,44 +244,16 @@ export default function ToolkitCardNew({
                 </div>
               )}
 
-              <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
+              <div className="absolute top-2 left-2 z-10 flex flex-col gap-1 sm:top-3 sm:left-3 sm:gap-2">
                 {toolkit.category && (
-                  <span className="w-fit rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-gray-600 shadow-sm sm:text-xs">
+                  <span className="w-fit rounded-full bg-white/95 backdrop-blur-sm px-2 py-0.5 text-[10px] font-medium text-gray-700 shadow-sm sm:px-2.5 sm:py-1 sm:text-xs">
                     {toolkit.category}
                   </span>
-                )}
-                {toolkit.isBundle && (
-                  <span className="w-fit rounded-full bg-purple-100 px-2.5 py-1 text-[10px] font-bold text-purple-700 shadow-sm sm:text-xs">
-                    BUNDLE
-                  </span>
-                )}
-              </div>
-
-              <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-2">
-                {toolkit.is_trending && (
-                  <span className="flex w-fit items-center rounded-full bg-[#ff5e14] px-2 py-0.5 text-[10px] font-medium text-white shadow-sm sm:text-xs">
-                    <Flame className="mr-0.5 h-3 w-3" /> Trending
-                  </span>
-                )}
-                {toolkit.isBestSeller && (
-                  <span className="flex w-fit items-center rounded-full bg-[#ffb000] px-2.5 py-1 text-[10px] font-semibold text-yellow-950 shadow-sm sm:text-[11px]">
-                    <Star className="mr-1 h-3 w-3 fill-yellow-950" /> Best Seller
-                  </span>
-                )}
-                {toolkit.isLimitedSeats && (
-                  <span className="flex w-fit items-center rounded-full bg-[#00aaff] px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm sm:text-[11px]">
-                    <Clock className="mr-1 h-3 w-3" /> Limited Seats
-                  </span>
-                )}
-                {hasOriginalPrice && toolkit.showSaleBadge && (
-                  <Badge className="w-fit hidden bg-rose-500 text-[10px] text-white hover:bg-rose-600 sm:inline-flex shadow-sm rounded-full px-2 py-0.5 border-none font-bold">
-                    Sale
-                  </Badge>
                 )}
               </div>
 
               {(toolkit.subtitle || toolkit.lessonCount || toolkit.totalDuration) && (
-                <div className="absolute bottom-2 right-2 z-10 rounded-full bg-black/60 px-2.5 py-0.5 text-[10px] font-medium text-white sm:text-xs">
+                <div className="absolute bottom-1.5 right-1.5 sm:bottom-2 sm:right-2 z-10 rounded-md sm:rounded-full bg-black/70 px-1.5 py-0.5 sm:px-2.5 text-[9px] font-medium text-white sm:text-xs backdrop-blur-sm sm:backdrop-blur-none shadow-sm">
                   {toolkit.subtitle ? (
                     toolkit.subtitle
                   ) : (
@@ -317,40 +267,46 @@ export default function ToolkitCardNew({
               )}
             </div>
 
-            <CardContent className="flex flex-1 flex-col px-4 pb-4 pt-0">
-              {toolkit.mentorshipDetails?.mentor ? (
-                <div className="relative z-20 -mt-6 mb-3 flex items-center gap-3 rounded-xl border border-gray-100/80 bg-white/90 p-3 shadow-sm backdrop-blur-md transition-all group-hover:shadow-md">
-                  {toolkit.mentorshipDetails.mentor.imageUrl && (
-                    <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full border-2 border-white shadow-sm ring-1 ring-gray-900/5">
-                      <Image
-                        src={toolkit.mentorshipDetails.mentor.imageUrl}
-                        alt={toolkit.mentorshipDetails.mentor.name || "Mentor"}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="flex flex-col justify-center">
-                    <p className="text-[13px] font-bold text-gray-900 leading-tight">
-                      {toolkit.mentorshipDetails.mentor.name}
-                    </p>
-                    {toolkit.mentorshipDetails.mentor.description && (
-                      <p className="text-[11px] font-medium text-gray-500 line-clamp-1 mt-0.5">
-                        {toolkit.mentorshipDetails.mentor.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="pt-4" />
+            {/* Top Right Badges (Floating on the card corner) */}
+            <div className="absolute top-0 right-0 z-20 flex flex-col items-end">
+              {toolkit.is_trending && (
+                <span className="flex w-fit items-center rounded-bl-lg bg-[#ff5e14] px-2 py-1 text-[10px] font-medium text-white shadow-sm sm:px-2.5 sm:text-xs">
+                  <Flame className="mr-0.5 h-3 w-3" /> Trending
+                </span>
               )}
+              {toolkit.isBestSeller && !toolkit.is_trending && (
+                <span className="flex w-fit items-center rounded-bl-lg bg-[#ffb000] px-2.5 py-1 text-[10px] font-semibold text-yellow-950 shadow-sm sm:text-[11px]">
+                  <Star className="mr-1 h-3 w-3 fill-yellow-950" /> Best Seller
+                </span>
+              )}
+              {toolkit.isLimitedSeats && !toolkit.is_trending && !toolkit.isBestSeller && (
+                <span className="flex w-fit items-center rounded-bl-lg bg-[#00aaff] px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm sm:text-[11px]">
+                  <Clock className="mr-1 h-3 w-3" /> Limited Seats
+                </span>
+              )}
+              {hasOriginalPrice && toolkit.showSaleBadge && (
+                <Badge className="w-fit hidden bg-rose-500 text-[10px] text-white hover:bg-rose-600 sm:inline-flex shadow-sm rounded-bl-lg px-2 py-0.5 border-none font-bold">
+                  Sale
+                </Badge>
+              )}
+            </div>
 
-              <div className="mb-1 flex items-start justify-between gap-2">
-                <h3 className="line-clamp-1 text-[15px] font-semibold text-gray-900 transition-colors group-hover:text-gray-700 sm:text-base">
+            <CardContent className="flex flex-1 flex-col pl-0.5 pr-3 py-3 sm:px-4 sm:pb-4 sm:pt-4 min-w-0">
+              <div className="mb-1 text-[10px] text-gray-500 sm:hidden flex items-center gap-1 flex-wrap pr-16 leading-none">
+                {toolkit.rating && (
+                  <div className="flex shrink-0 items-center gap-1 rounded-md bg-yellow-50 px-1.5 py-0.5 text-[10px] font-semibold text-yellow-700 border border-yellow-200/50">
+                    <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                    {toolkit.rating}
+                  </div>
+                )}
+              </div>
+
+              <div className="mb-2 sm:mb-1 flex items-start justify-between gap-2 pr-16 sm:pr-0">
+                <h3 className="text-[14px] sm:text-[15px] line-clamp-2 sm:line-clamp-1 font-bold text-gray-900 transition-colors group-hover:text-gray-700 leading-snug">
                   {toolkit.title.charAt(0).toUpperCase() + toolkit.title.slice(1)}
                 </h3>
                 {toolkit.rating && (
-                  <div className="flex shrink-0 items-center gap-1 rounded-md bg-yellow-50 px-1.5 py-0.5 text-xs font-semibold text-yellow-700 border border-yellow-200/50">
+                  <div className="hidden sm:flex shrink-0 items-center gap-1 rounded-md bg-yellow-50 px-1.5 py-0.5 text-xs font-semibold text-yellow-700 border border-yellow-200/50">
                     <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
                     {toolkit.rating}
                   </div>
@@ -358,11 +314,11 @@ export default function ToolkitCardNew({
               </div>
 
               {displayHighlights.length > 0 ? (
-                <ul className="mb-5 mt-3 space-y-1.5 flex-1">
+                <ul className="mb-3 sm:mb-5 sm:mt-2 space-y-1.5 sm:space-y-1.5 flex-1">
                   {displayHighlights.map((highlight, index) => (
-                    <li key={index} className="flex items-start gap-2.5 text-[13px] text-gray-600 sm:text-[14px]">
-                      <div className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#ff5e14]" />
-                      <span className="leading-relaxed tracking-wide">{highlight}</span>
+                    <li key={index} className="flex items-start gap-1.5 sm:gap-2.5 text-[11px] sm:text-[13px] text-gray-600">
+                      <Check className="mt-[2px] sm:mt-0.5 h-3.5 w-3.5 shrink-0 text-[#ff5e14]" strokeWidth={3} />
+                      <span className="leading-tight sm:leading-relaxed tracking-wide line-clamp-2 sm:line-clamp-none">{highlight}</span>
                     </li>
                   ))}
                 </ul>
@@ -370,23 +326,23 @@ export default function ToolkitCardNew({
                 <div className="flex-1" />
               )}
 
-              <div className="mt-auto pt-4 flex flex-col border-t border-transparent">
-                <div className="text-[10px] font-semibold tracking-wider text-gray-400 mb-1">PRICE</div>
+              <div className="mt-auto pt-2 sm:pt-4 flex flex-col sm:border-t border-transparent sm:border-gray-100">
+                <div className="hidden sm:block text-[10px] font-semibold tracking-wider text-gray-400 mb-1">PRICE</div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-lg font-bold text-gray-900 sm:text-xl">
+                    <span className="text-sm sm:text-lg font-bold text-gray-900">
                       ₹{toolkit.price.toLocaleString("en-IN")}
                     </span>
                     {hasOriginalPrice && (
-                      <span className="text-xs font-medium text-gray-400 line-through">
+                      <span className="text-[10px] sm:text-xs font-medium text-gray-400 line-through">
                         ₹{toolkit.originalPrice!.toLocaleString("en-IN")}
                       </span>
                     )}
                   </div>
 
-                  <div className="group-hover:text-[#ff5e14] flex items-center gap-1 text-xs font-medium text-[#ff5e14] transition-colors sm:text-sm">
+                  <div className="group-hover:text-[#ff5e14] flex items-center gap-0.5 sm:gap-1 text-[11px] sm:text-sm font-medium text-gray-500 sm:text-[#ff5e14] transition-colors">
                     View Details
-                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:translate-x-1" />
                   </div>
                 </div>
               </div>

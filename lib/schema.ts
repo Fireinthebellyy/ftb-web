@@ -786,6 +786,7 @@ export const cohorts = pgTable("cohorts", {
   featuresHeading: text("features_heading").default("What You Get"),
   investmentLabel: text("investment_label").default("Total Investment"),
   basePrice: integer("base_price").notNull(),
+  originalPrice: integer("original_price"), // for displaying strikethrough discount price
   toolkitId: uuid("toolkit_id").references(() => toolkits.id, { onDelete: "set null" }),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
@@ -819,6 +820,7 @@ export const cohortTiers = pgTable("cohort_tiers", {
   cohortId: uuid("cohort_id").references(() => cohorts.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   price: integer("price").notNull(),
+  originalPrice: integer("original_price"), // for displaying strikethrough discount price
   description: text("description").notNull(),
   whatIncluded: jsonb("what_included").$type<string[]>().default([]),
   isDefault: boolean("is_default").default(false),
@@ -845,6 +847,7 @@ export const cohortOrders = pgTable("cohort_orders", {
   buyerPhone: text("buyer_phone"),
   selectedTierId: uuid("selected_tier_id").references(() => cohortTiers.id, { onDelete: "set null" }),
   selectedAddOnIds: jsonb("selected_addon_ids").$type<string[]>().default([]),
+  selectedToolkitIds: jsonb("selected_toolkit_ids").$type<string[]>().default([]),
   amountPaid: integer("amount_paid").notNull(),
   couponId: uuid("coupon_id").references(() => coupons.id, { onDelete: "set null" }),
   razorpayOrderId: text("razorpay_order_id").notNull(),

@@ -15,7 +15,7 @@ import { useSession } from "@/hooks/use-session";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
+import { Check, Share2 } from "lucide-react";
 import Link from "next/link";
 
 export default function ToolkitPage() {
@@ -198,21 +198,33 @@ export default function ToolkitPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="p-4 pt-3 flex justify-between items-center border-t border-gray-50 bg-gray-50/50">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">
-                        Investment
-                      </span>
-                      <span className="font-bold text-gray-900 text-base">
-                        ₹{cohort.basePrice}
-                      </span>
-                    </div>
+                  <div className="p-4 pt-3 flex gap-2 justify-between items-center border-t border-gray-50 bg-gray-50/50">
+                    <a
+                      href={`https://wa.me/916377492042?text=Hi!%20I'd%20like%20to%20enquire%20about%20the%20cohort%20program:%20${encodeURIComponent(cohort.title)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 text-center bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-2 px-2.5 rounded-lg transition duration-200 shadow-sm"
+                    >
+                      Enquire Now
+                    </a>
                     <Link
                       href={`/toolkit/cohorts/${cohort.id}`}
-                      className="bg-black hover:bg-neutral-800 text-white text-xs font-semibold px-4 py-2 rounded-lg transition duration-200 shadow-sm"
+                      className="flex-1 text-center bg-black hover:bg-neutral-800 text-white text-xs font-semibold py-2 px-2.5 rounded-lg transition duration-200 shadow-sm"
                     >
-                      View Program
+                      Explore
                     </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = `${window.location.origin}/toolkit/cohorts/${cohort.id}`;
+                        navigator.clipboard.writeText(url);
+                        toast.success("Cohort link copied to clipboard!");
+                      }}
+                      className="p-2 border border-gray-250 hover:bg-gray-100 text-gray-500 hover:text-gray-900 rounded-lg transition duration-200 shadow-sm shrink-0 flex items-center justify-center"
+                      title="Share Cohort"
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               ))}

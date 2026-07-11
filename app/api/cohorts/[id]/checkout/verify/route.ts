@@ -102,6 +102,27 @@ export async function POST(
       }
     }
 
+    // Grant access to selected toolkit add-ons
+    if (existingOrder.selectedToolkitIds && Array.isArray(existingOrder.selectedToolkitIds)) {
+      for (const tkId of existingOrder.selectedToolkitIds as string[]) {
+        const existingUserToolkit = await db.query.userToolkits.findFirst({
+          where: and(
+            eq(userToolkits.userId, userId),
+            eq(userToolkits.toolkitId, tkId)
+          ),
+        });
+
+        if (!existingUserToolkit) {
+          await db.insert(userToolkits).values({
+            userId,
+            toolkitId: tkId,
+            paymentStatus: "completed",
+            amountPaid: 0, // Price was paid as part of the overall transaction
+          });
+        }
+      }
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error verifying payment signature:", error);

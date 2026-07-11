@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { coupons, toolkits, userToolkits, cohorts, cohortOrders } from "@/lib/schema";
-import { getCurrentUser } from "@/server/users";
+import { getCurrentUserOptional } from "@/server/users";
 import { eq, and, sql } from "drizzle-orm";
 
 export async function POST(request: Request) {
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
     }
 
     // Check per-user limit
-    const userSession = await getCurrentUser();
+    const userSession = await getCurrentUserOptional();
     if (userSession && userSession.currentUser?.id) {
       let usesCount = 0;
       if (toolkitId) {

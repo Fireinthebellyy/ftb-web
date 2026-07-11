@@ -49,6 +49,7 @@ interface Tier {
   id?: string;
   name: string;
   price: number;
+  originalPrice?: number | null;
   description: string;
   whatIncluded: string[] | string;
   isDefault: boolean;
@@ -75,6 +76,7 @@ interface Cohort {
   featuresHeading: string;
   investmentLabel: string;
   basePrice: number;
+  originalPrice?: number | null;
   toolkitId?: string | null;
   isActive: boolean;
   mentors?: Mentor[];
@@ -347,8 +349,9 @@ export default function AdminCohortsTable() {
               </Button>
             </div>
           ) : (
-            <div className="border bg-white rounded-lg overflow-hidden shadow-sm">
-              <table className="w-full text-left border-collapse text-sm">
+            <div className="border bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="overflow-x-auto w-full">
+                <table className="w-full text-left border-collapse text-sm min-w-[600px]">
                 <thead>
                   <tr className="bg-gray-50 border-b">
                     <th className="p-4 font-semibold text-gray-700">Cohort Title</th>
@@ -396,7 +399,8 @@ export default function AdminCohortsTable() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+                </table>
+              </div>
             </div>
           )}
         </div>
@@ -418,8 +422,9 @@ export default function AdminCohortsTable() {
               <p className="text-gray-500">No applications or purchases recorded yet.</p>
             </div>
           ) : (
-            <div className="border bg-white rounded-lg overflow-hidden shadow-sm">
-              <table className="w-full text-left border-collapse text-xs md:text-sm">
+            <div className="border bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="overflow-x-auto w-full">
+                <table className="w-full text-left border-collapse text-xs md:text-sm min-w-[800px]">
                 <thead>
                   <tr className="bg-gray-50 border-b">
                     <th className="p-4 font-semibold text-gray-700">Buyer</th>
@@ -469,7 +474,8 @@ export default function AdminCohortsTable() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+                </table>
+              </div>
             </div>
           )}
         </div>
@@ -528,7 +534,7 @@ export default function AdminCohortsTable() {
       {/* Cohort Editing Sheet / Dialog */}
       {editingCohort && (
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto p-6">
+          <DialogContent className="max-w-[95vw] md:max-w-4xl max-h-[90vh] overflow-y-auto p-4 md:p-6">
             <DialogHeader className="flex flex-row justify-between items-center border-b pb-4 mb-4">
               <div>
                 <DialogTitle className="text-xl">Configure Program: {editingCohort.title}</DialogTitle>
@@ -639,7 +645,7 @@ export default function AdminCohortsTable() {
                   </div>
                 </div>
 
-                <div className="space-y-4 border-l pl-4">
+                <div className="space-y-4 border-t pt-4 md:border-t-0 md:pt-0 md:border-l md:pl-4">
                   <div className="space-y-1.5">
                     <Label>Hero Banner Image</Label>
                     {editingCohort.coverImageUrl && (
@@ -981,9 +987,9 @@ export default function AdminCohortsTable() {
             {/* pricing Tab */}
             {activeEditTab === "pricing" && (
               <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4 border-b pb-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-b pb-4">
                   <div className="space-y-1.5">
-                    <Label>Total Investment Label</Label>
+                    <Label>Total Price Label</Label>
                     <Input
                       value={editingCohort.investmentLabel}
                       onChange={(e) => setEditingCohort({ ...editingCohort, investmentLabel: e.target.value })}
@@ -995,6 +1001,15 @@ export default function AdminCohortsTable() {
                       type="number"
                       value={editingCohort.basePrice}
                       onChange={(e) => setEditingCohort({ ...editingCohort, basePrice: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Cohort Original Price (INR, Optional)</Label>
+                    <Input
+                      type="number"
+                      placeholder="e.g. 9999"
+                      value={editingCohort.originalPrice || ""}
+                      onChange={(e) => setEditingCohort({ ...editingCohort, originalPrice: e.target.value ? Number(e.target.value) : null })}
                     />
                   </div>
                 </div>
@@ -1013,7 +1028,7 @@ export default function AdminCohortsTable() {
                           ...editingCohort,
                           tiers: [
                             ...currentTiers,
-                            { name: "", price: 4999, description: "", whatIncluded: [], isDefault: false },
+                            { name: "", price: 4999, originalPrice: null, description: "", whatIncluded: [], isDefault: false },
                           ],
                         });
                       }}
@@ -1038,7 +1053,7 @@ export default function AdminCohortsTable() {
                           <X className="w-4 h-4" />
                         </button>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                           <div className="space-y-1">
                             <Label className="text-xs">Tier Name</Label>
                             <Input
@@ -1059,6 +1074,19 @@ export default function AdminCohortsTable() {
                               onChange={(e) => {
                                 const currentTiers = [...(editingCohort.tiers || [])];
                                 currentTiers[index] = { ...currentTiers[index], price: Number(e.target.value) };
+                                setEditingCohort({ ...editingCohort, tiers: currentTiers });
+                              }}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Original Price (Optional)</Label>
+                            <Input
+                              type="number"
+                              placeholder="Strikethrough price"
+                              value={tier.originalPrice || ""}
+                              onChange={(e) => {
+                                const currentTiers = [...(editingCohort.tiers || [])];
+                                currentTiers[index] = { ...currentTiers[index], originalPrice: e.target.value ? Number(e.target.value) : null };
                                 setEditingCohort({ ...editingCohort, tiers: currentTiers });
                               }}
                             />

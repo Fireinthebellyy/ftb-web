@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cohorts, cohortTiers, cohortAddOns, cohortOrders, coupons, userToolkits } from "@/lib/schema";
+import { cohorts, cohortTiers, cohortAddOns, cohortOrders, coupons, userToolkits, toolkits } from "@/lib/schema";
 import { eq, and, inArray, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -25,11 +25,33 @@ export async function POST(
 
     const userId = session.user.id;
     const body = await request.json();
-    const { selectedTierId, selectedAddOnIds = [], buyerName, buyerEmail, buyerPhone, couponCode } = body;
+    const {
+      selectedTierId,
+      selectedAddOnIds = [],
+      selectedToolkitIds = [],
+      buyerName,
+      buyerEmail,
+      buyerPhone,
+      couponCode,
+    } = body;
 
-    if (!selectedTierId || !buyerName || !buyerEmail) {
+    if (!buyerName || !buyerEmail) {
       return NextResponse.json(
-        { error: "Tier ID, buyer name, and buyer email are required" },
+        { error: "Buyer name and email are required" },
+        { status: 400 }
+      );
+    }
+
+    if (!selectedTierId && selectedAddOnIds.length === 0 && selectedToolkitIds.length === 0) {
+      return NextResponse.json(
+        { error: "Please select either a bundle tier, individual sessions, or toolkit add-ons" },
+        { status: 400 }
+      );
+    }
+
+    if (selectedTierId && selectedAddOnIds.length > 0) {
+      return NextResponse.json(
+        { error: "Cannot select both a bundle tier and individual sessions simultaneously" },
         { status: 400 }
       );
     }
@@ -43,19 +65,23 @@ export async function POST(
       return NextResponse.json({ error: "Cohort not found" }, { status: 404 });
     }
 
-    // 2. Fetch Tier
-    const tier = await db.query.cohortTiers.findFirst({
-      where: and(
-        eq(cohortTiers.id, selectedTierId),
-        eq(cohortTiers.cohortId, cohortId)
-      ),
-    });
+    // 2. Fetch Tier if selected
+    let tierPrice = 0;
+    if (selectedTierId) {
+      const tier = await db.query.cohortTiers.findFirst({
+        where: and(
+          eq(cohortTiers.id, selectedTierId),
+          eq(cohortTiers.cohortId, cohortId)
+        ),
+      });
 
-    if (!tier) {
-      return NextResponse.json({ error: "Selected tier not found" }, { status: 400 });
+      if (!tier) {
+        return NextResponse.json({ error: "Selected tier not found" }, { status: 400 });
+      }
+      tierPrice = tier.price;
     }
 
-    // 3. Fetch Add-ons
+    // 3. Fetch Add-ons (sessions)
     let addonsTotal = 0;
     if (selectedAddOnIds.length > 0) {
       const addons = await db
@@ -70,6 +96,24 @@ export async function POST(
       
       addons.forEach((addon) => {
         addonsTotal += addon.priceDelta;
+      });
+    }
+
+    // Fetch Toolkit Add-ons
+    let toolkitsTotal = 0;
+    if (selectedToolkitIds.length > 0) {
+      const dbToolkits = await db
+        .select()
+        .from(toolkits)
+        .where(
+          and(
+            eq(toolkits.isActive, true),
+            inArray(toolkits.id, selectedToolkitIds)
+          )
+        );
+      
+      dbToolkits.forEach((tk) => {
+        toolkitsTotal += tk.price;
       });
     }
 
@@ -121,7 +165,7 @@ export async function POST(
     }
 
     // 5. Compute Total price (in rupees)
-    const subtotal = tier.price + addonsTotal;
+    const subtotal = tierPrice + addonsTotal + toolkitsTotal;
     const finalPriceRupees = Math.max(0, subtotal - discountAmount);
     const finalPricePaisa = finalPriceRupees * 100; // Razorpay needs amount in paisa
 
@@ -135,8 +179,9 @@ export async function POST(
           buyerName,
           buyerEmail,
           buyerPhone: buyerPhone || null,
-          selectedTierId,
+          selectedTierId: selectedTierId || null,
           selectedAddOnIds,
+          selectedToolkitIds,
           amountPaid: 0,
           razorpayOrderId: "free_cohort_" + Date.now().toString().slice(-6),
           couponId,
@@ -157,6 +202,25 @@ export async function POST(
           await db.insert(userToolkits).values({
             userId,
             toolkitId: cohort.toolkitId,
+            paymentStatus: "completed",
+            amountPaid: 0,
+          });
+        }
+      }
+
+      // Also grant access to any selected toolkit add-ons!
+      for (const tkId of selectedToolkitIds) {
+        const existingUserToolkit = await db.query.userToolkits.findFirst({
+          where: and(
+            eq(userToolkits.userId, userId),
+            eq(userToolkits.toolkitId, tkId)
+          ),
+        });
+        
+        if (!existingUserToolkit) {
+          await db.insert(userToolkits).values({
+            userId,
+            toolkitId: tkId,
             paymentStatus: "completed",
             amountPaid: 0,
           });
@@ -187,8 +251,9 @@ export async function POST(
         buyerName,
         buyerEmail,
         buyerPhone: buyerPhone || null,
-        selectedTierId,
+        selectedTierId: selectedTierId || null,
         selectedAddOnIds,
+        selectedToolkitIds,
         amountPaid: Number(order.amount), // in paise
         razorpayOrderId: order.id,
         couponId,

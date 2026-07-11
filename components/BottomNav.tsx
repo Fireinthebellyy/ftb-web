@@ -27,6 +27,10 @@ export default function BottomNav() {
     return null;
   }
 
+  if (normalizedPathname.startsWith("/toolkit/cohorts/")) {
+    return null;
+  }
+
   const showWalkthrough = [
     "/",
     "/opportunities",

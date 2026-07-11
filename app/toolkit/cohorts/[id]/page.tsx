@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -7,15 +8,28 @@ import { useParams, useRouter } from "next/navigation";
 import {
   Check,
   ChevronRight,
+  ChevronLeft,
   ArrowRight,
   Loader2,
   Linkedin,
   CheckCircle,
   X,
+  Gift,
+  Copy,
 } from "lucide-react";
 import { Drawer } from "vaul";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/use-session";
+import { extractRichTextPlainText } from "@/lib/rich-text";
+import { motion } from "framer-motion";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { StackedTestimonials } from "@/components/toolkit/StackedTestimonials";
 
 interface Mentor {
   id: string;
@@ -79,7 +93,6 @@ export default function CohortLandingPage() {
 
   const [cohort, setCohort] = useState<CohortData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showAllMentors, setShowAllMentors] = useState(false);
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
 
   // Promo Code / Discounting state
@@ -91,17 +104,58 @@ export default function CohortLandingPage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedTierId, setSelectedTierId] = useState<string>("");
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
+  const [selectedToolkitIds, setSelectedToolkitIds] = useState<string[]>([]);
+  const [liveToolkits, setLiveToolkits] = useState<any[]>([]);
   const [buyerName, setBuyerName] = useState("");
   const [buyerEmail, setBuyerEmail] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("");
 
-  // Load Cohort details
+  // Buddy Program states
+  const [isBuddyDialogOpen, setIsBuddyDialogOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLink = () => {
+    if (typeof window !== "undefined") {
+      navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      toast.success("Cohort link copied to clipboard!");
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  // Mentors stacked animation states
+  const [mentorCards, setMentorCards] = useState<Mentor[]>([]);
+
+  const rotateMentorsForward = () => {
+    setMentorCards((prev) => {
+      if (prev.length === 0) return prev;
+      const newArray = [...prev];
+      const first = newArray.shift();
+      if (first) newArray.push(first);
+      return newArray;
+    });
+  };
+
+  const rotateMentorsBackward = () => {
+    setMentorCards((prev) => {
+      if (prev.length === 0) return prev;
+      const newArray = [...prev];
+      const last = newArray.pop();
+      if (last) newArray.unshift(last);
+      return newArray;
+    });
+  };
+
+  // Load Cohort details and live toolkits
   useEffect(() => {
     const fetchCohortDetails = async () => {
       try {
         const response = await axios.get(`/api/cohorts/${cohortId}`);
         const data = response.data;
         setCohort(data);
+        if (data.mentors && data.mentors.length > 0) {
+          setMentorCards(data.mentors);
+        }
         
         // Auto-select default tier
         const defaultTier = data.tiers?.find((t: Tier) => t.isDefault) || data.tiers?.[0];
@@ -115,7 +169,18 @@ export default function CohortLandingPage() {
         setIsLoading(false);
       }
     };
+
+    const fetchLiveToolkits = async () => {
+      try {
+        const response = await axios.get("/api/toolkits");
+        setLiveToolkits(response.data);
+      } catch (err) {
+        console.error("Failed to load toolkits", err);
+      }
+    };
+
     fetchCohortDetails();
+    fetchLiveToolkits();
   }, [cohortId]);
 
   // Sync buyer info with session once loaded
@@ -175,7 +240,7 @@ export default function CohortLandingPage() {
     return (
       <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center p-4">
         <div className="text-center space-y-4 max-w-md">
-          <h2 className="text-2xl font-bold font-serif text-gray-900">Program Not Found</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Program Not Found</h2>
           <p className="text-gray-600">The cohort program you&apos;re trying to view might have ended or is no longer available.</p>
           <button
             onClick={() => router.push("/toolkit")}
@@ -190,23 +255,29 @@ export default function CohortLandingPage() {
 
   // Calculate prices dynamically
   const activeTier = cohort.tiers?.find((t) => t.id === selectedTierId);
-  const basePrice = activeTier ? activeTier.price : cohort.basePrice;
-  const addonsTotal = cohort.addons
+  const basePrice = activeTier ? activeTier.price : 0;
+  const sessionsTotal = cohort.addons
     ?.filter((a) => selectedAddonIds.includes(a.id))
     .reduce((acc, current) => acc + current.priceDelta, 0) || 0;
-  const subtotal = basePrice + addonsTotal;
+  const toolkitsTotal = liveToolkits
+    ?.filter((t) => selectedToolkitIds.includes(t.id))
+    .reduce((acc, current) => acc + current.price, 0) || 0;
+  const subtotal = basePrice + sessionsTotal + toolkitsTotal;
   const discount = appliedCoupon?.valid ? appliedCoupon.discountAmount : 0;
   const runningTotal = Math.max(0, subtotal - discount);
 
-  // Render mentors showing up to limit
-  const visibleMentors = showAllMentors
-    ? cohort.mentors
-    : cohort.mentors?.slice(0, cohort.mentorsLimit || 4);
 
   const toggleAddon = (addonId: string) => {
-    setSelectedAddonIds((prev) =>
-      prev.includes(addonId) ? prev.filter((id) => id !== addonId) : [...prev, addonId]
-    );
+    setSelectedAddonIds((prev) => {
+      const isSelected = prev.includes(addonId);
+      if (!isSelected) {
+        // Clear bundle tier (VIP/Default plans) when choosing individual sessions
+        setSelectedTierId("");
+        return [...prev, addonId];
+      } else {
+        return prev.filter((id) => id !== addonId);
+      }
+    });
   };
 
   // Razorpay Checkout handler
@@ -227,8 +298,9 @@ export default function CohortLandingPage() {
     try {
       // 1. Call backend to create order or verify free access
       const response = await axios.post(`/api/cohorts/${cohort.id}/checkout`, {
-        selectedTierId,
+        selectedTierId: selectedTierId || null,
         selectedAddOnIds: selectedAddonIds,
+        selectedToolkitIds: selectedToolkitIds,
         buyerName,
         buyerEmail,
         buyerPhone,
@@ -355,7 +427,7 @@ export default function CohortLandingPage() {
             )}
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-black font-serif tracking-tight leading-tight">
+          <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight">
             {cohort.title}
           </h1>
 
@@ -371,66 +443,154 @@ export default function CohortLandingPage() {
         {cohort.mentors && cohort.mentors.length > 0 && (
           <section className="space-y-6">
             <div className="flex justify-between items-baseline">
-              <h2 className="text-xl md:text-2xl font-black font-serif tracking-tight text-gray-900 border-b-2 border-black pb-1">
+              <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-b-2 border-black pb-1">
                 {cohort.mentorsHeading || "Meet Your Mentors"}
               </h2>
-              {cohort.mentors.length > (cohort.mentorsLimit || 4) && !showAllMentors && (
-                <button
-                  onClick={() => setShowAllMentors(true)}
-                  className="text-xs md:text-sm font-bold text-[#ff5e14] hover:underline flex items-center gap-0.5"
-                >
-                  View All <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              )}
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {visibleMentors?.map((mentor) => (
-                <div
-                  key={mentor.id}
-                  className="bg-white rounded-xl border border-gray-150 p-4 text-center hover:shadow-sm transition flex flex-col justify-between items-center"
-                >
-                  <div className="flex flex-col items-center space-y-3">
-                    {mentor.imageUrl ? (
-                      <img
-                        src={mentor.imageUrl}
-                        alt={mentor.name}
-                        className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-2 border-gray-100"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-100 flex items-center justify-center text-gray-300">
-                        <Linkedin className="w-6 h-6" />
-                      </div>
-                    )}
-                    <div>
-                      <h3 className="font-bold text-gray-900 text-sm md:text-base leading-tight">
-                        {mentor.name}
-                      </h3>
-                      <p className="text-[10px] md:text-xs text-[#ff5e14] font-semibold uppercase tracking-wider mt-0.5">
-                        {mentor.role}
-                      </p>
-                    </div>
-                  </div>
-                  {mentor.link && (
-                    <a
-                      href={mentor.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-gray-400 hover:text-gray-700 text-xs mt-3 flex items-center gap-0.5 font-medium border-t border-gray-100 w-full justify-center pt-2"
-                    >
-                      <Linkedin className="w-3.5 h-3.5 text-blue-700" /> profile
-                    </a>
-                  )}
+            {mentorCards.length >= 3 ? (
+              <div className="flex flex-col items-center w-full">
+                <div className="relative h-[280px] sm:h-[320px] w-full mx-auto flex items-center justify-center overflow-hidden py-4">
+                  {mentorCards.map((mentor, index) => {
+                    const isCenter = index === 0;
+                    const isRight = index === 1;
+                    const isLeft = index === mentorCards.length - 1;
+
+                    let animateState = { x: "0%", scale: 0.7, opacity: 0, zIndex: 0 };
+
+                    if (isCenter) {
+                      animateState = { x: "0%", scale: 1, opacity: 1, zIndex: 10 };
+                    } else if (isRight) {
+                      animateState = { x: "55%", scale: 0.85, opacity: 0.85, zIndex: 5 };
+                    } else if (isLeft) {
+                      animateState = { x: "-55%", scale: 0.85, opacity: 0.85, zIndex: 5 };
+                    }
+
+                    return (
+                      <motion.div
+                        key={mentor.id}
+                        layout
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={animateState}
+                        transition={{
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 25,
+                        }}
+                        onClick={rotateMentorsForward}
+                        className={cn(
+                          "absolute w-[260px] h-[200px] sm:w-[320px] sm:h-[240px] rounded-2xl shadow-lg border border-gray-100 bg-white p-4 flex flex-col justify-between items-center text-center cursor-pointer transition-shadow hover:shadow-md",
+                          isCenter ? "" : "pointer-events-none md:pointer-events-auto"
+                        )}
+                      >
+                        <div className="flex flex-col items-center space-y-3">
+                          {mentor.imageUrl ? (
+                            <img
+                              src={mentor.imageUrl}
+                              alt={mentor.name}
+                              className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-2 border-gray-100"
+                            />
+                          ) : (
+                            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-100 flex items-center justify-center text-gray-300">
+                              <Linkedin className="w-6 h-6" />
+                            </div>
+                          )}
+                          <div>
+                            <h3 className="font-bold text-gray-900 text-sm md:text-base leading-tight">
+                              {mentor.name}
+                            </h3>
+                            <p className="text-[10px] md:text-xs text-[#ff5e14] font-semibold uppercase tracking-wider mt-0.5">
+                              {mentor.role}
+                            </p>
+                          </div>
+                        </div>
+                        {mentor.link && isCenter && (
+                          <a
+                            href={mentor.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-gray-400 hover:text-gray-700 text-xs mt-3 flex items-center gap-0.5 font-medium border-t border-gray-100 w-full justify-center pt-2"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Linkedin className="w-3.5 h-3.5 text-blue-700" /> profile
+                          </a>
+                        )}
+                      </motion.div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
+
+                {/* Controls */}
+                <div className="flex items-center gap-6 mt-2">
+                  <button
+                    onClick={rotateMentorsBackward}
+                    className="p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors"
+                    aria-label="Previous mentor"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <span className="text-xs text-gray-400 font-medium">
+                    Tap card or use arrows to rotate
+                  </span>
+                  <button
+                    onClick={rotateMentorsForward}
+                    className="p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors"
+                    aria-label="Next mentor"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Fallback Grid for less than 3 mentors */
+              <div className="grid grid-cols-2 gap-4 justify-center max-w-lg mx-auto">
+                {mentorCards.map((mentor) => (
+                  <div
+                    key={mentor.id}
+                    className="bg-white rounded-xl border border-gray-150 p-4 text-center flex flex-col justify-between items-center"
+                  >
+                    <div className="flex flex-col items-center space-y-3">
+                      {mentor.imageUrl ? (
+                        <img
+                          src={mentor.imageUrl}
+                          alt={mentor.name}
+                          className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-2 border-gray-100"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-100 flex items-center justify-center text-gray-300">
+                          <Linkedin className="w-6 h-6" />
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="font-bold text-gray-900 text-sm md:text-base leading-tight">
+                          {mentor.name}
+                        </h3>
+                        <p className="text-[10px] md:text-xs text-[#ff5e14] font-semibold uppercase tracking-wider mt-0.5">
+                          {mentor.role}
+                        </p>
+                      </div>
+                    </div>
+                    {mentor.link && (
+                      <a
+                        href={mentor.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-400 hover:text-gray-700 text-xs mt-3 flex items-center gap-0.5 font-medium border-t border-gray-100 w-full justify-center pt-2"
+                      >
+                        <Linkedin className="w-3.5 h-3.5 text-blue-700" /> profile
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         )}
 
         {/* 3. What You Get Section */}
         {cohort.features && cohort.features.length > 0 && (
           <section className="space-y-6">
-            <h2 className="text-xl md:text-2xl font-black font-serif tracking-tight text-gray-900 border-b-2 border-black pb-1 inline-block">
+            <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-b-2 border-black pb-1 inline-block">
               {cohort.featuresHeading || "What You Get"}
             </h2>
 
@@ -456,19 +616,80 @@ export default function CohortLandingPage() {
             </div>
           </section>
         )}
+
+        {/* Cohort Curriculum / Sessions Section */}
+        {cohort.addons && cohort.addons.length > 0 && (
+          <section className="space-y-6">
+            <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-b-2 border-black pb-1 inline-block">
+              Cohort Sessions & Curriculum
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {cohort.addons.map((session, index) => (
+                <div
+                  key={session.id}
+                  className="bg-white rounded-xl border border-gray-100 p-4 flex gap-4 items-start shadow-sm hover:shadow transition"
+                >
+                  <div className="bg-orange-50 text-[#ff5e14] px-3 py-1.5 rounded-lg shrink-0 font-bold text-xs md:text-sm whitespace-nowrap">
+                    Session {index + 1}
+                  </div>
+                  <div className="space-y-1.5 flex-1">
+                    <div className="flex justify-between items-start gap-2">
+                      <h3 className="font-bold text-gray-900 text-sm md:text-base leading-snug">
+                        {session.name}
+                      </h3>
+                    </div>
+                    <p className="text-xs md:text-sm text-gray-500 leading-relaxed">
+                      {session.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Buddy Program Referral Card */}
+        <section className="bg-gradient-to-r from-orange-500 to-[#ff5e14] rounded-2xl p-6 md:p-8 text-white shadow-lg flex flex-col md:flex-row justify-between items-center gap-6 mt-8">
+          <div className="space-y-2 text-center md:text-left">
+            <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider">
+              <Gift className="w-3.5 h-3.5" /> Buddy Program
+            </div>
+            <h2 className="text-xl md:text-2xl font-black tracking-tight leading-tight">
+              Refer your buddy & enjoy together!
+            </h2>
+            <p className="text-xs md:text-sm text-orange-50/95 max-w-md leading-relaxed">
+              Learn, build, and level up with your friends. Share the access and experience the cohort together.
+            </p>
+          </div>
+          <button
+            onClick={() => setIsBuddyDialogOpen(true)}
+            className="w-full md:w-auto bg-white hover:bg-neutral-100 text-[#ff5e14] font-bold text-xs md:text-sm py-3 px-6 rounded-xl transition shadow-md whitespace-nowrap shrink-0 flex items-center justify-center gap-2"
+          >
+            Invite Buddy Now
+          </button>
+        </section>
+
+        {/* Testimonials Section */}
+        <section className="space-y-6 pt-6">
+          <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-b-2 border-black pb-1 inline-block">
+            What Members Say About Our Ecosystem
+          </h2>
+          <StackedTestimonials />
+        </section>
       </main>
 
       {/* 4. Sticky Bottom Bar */}
       <footer className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 py-3.5 px-4 shadow-xl z-30">
-        <div className="max-w-md md:max-w-lg mx-auto flex items-center justify-between">
-          <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-              {cohort.investmentLabel || "Total Investment"}
-            </span>
-            <span className="font-black text-gray-900 text-xl md:text-2xl">
-              ₹{cohort.basePrice}
-            </span>
-          </div>
+        <div className="max-w-md md:max-w-lg mx-auto flex gap-3 items-center justify-between">
+          <a
+            href={`https://wa.me/916377492042?text=Hi!%20I'd%20like%20to%20enquire%20about%20the%20cohort%20program:%20${encodeURIComponent(cohort.title)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm md:text-base py-3 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-1.5"
+          >
+            Enquire Now
+          </a>
 
           {cohort.hasAccess ? (
             <button
@@ -479,14 +700,14 @@ export default function CohortLandingPage() {
                   toast.success("You are registered! Check your dashboard for schedules.");
                 }
               }}
-              className="bg-green-600 hover:bg-green-750 text-white font-bold text-sm md:text-base py-3 px-6 rounded-xl transition shadow-lg flex items-center gap-1.5"
+              className="flex-1 bg-green-600 hover:bg-green-750 text-white font-bold text-sm md:text-base py-3 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-1.5"
             >
               Access Content <ChevronRight className="w-4 h-4" />
             </button>
           ) : (
             <button
               onClick={() => setIsDrawerOpen(true)}
-              className="bg-[#ff5e14] hover:bg-[#e04f0f] text-white font-bold text-sm md:text-base py-3 px-6 rounded-xl transition shadow-lg shadow-orange-500/10 flex items-center gap-1.5"
+              className="flex-1 bg-[#ff5e14] hover:bg-[#e04f0f] text-white font-bold text-sm md:text-base py-3 px-4 rounded-xl transition shadow-lg shadow-orange-500/10 flex items-center justify-center gap-1.5"
             >
               Apply Now <ChevronRight className="w-4 h-4" />
             </button>
@@ -501,7 +722,7 @@ export default function CohortLandingPage() {
           <Drawer.Content className="bg-white flex flex-col rounded-t-[20px] h-[85vh] fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto overflow-hidden">
             <div className="p-4 bg-gray-50 border-b flex justify-between items-center shrink-0">
               <div>
-                <Drawer.Title className="text-base font-bold font-serif">Select Your Cohort Plan</Drawer.Title>
+                <Drawer.Title className="text-base font-bold">Select Your Cohort Plan</Drawer.Title>
                 <Drawer.Description className="text-xs text-gray-500">Pick packages & optional career add-ons</Drawer.Description>
               </div>
               <button
@@ -523,7 +744,10 @@ export default function CohortLandingPage() {
                       return (
                         <div
                           key={tier.id}
-                          onClick={() => setSelectedTierId(tier.id)}
+                          onClick={() => {
+                            setSelectedTierId(tier.id);
+                            setSelectedAddonIds([]);
+                          }}
                           className={cn(
                             "border-2 rounded-xl p-4 cursor-pointer transition flex justify-between items-start",
                             isSelected
@@ -551,7 +775,12 @@ export default function CohortLandingPage() {
                               </ul>
                             )}
                           </div>
-                          <span className="font-bold text-sm text-[#ff5e14]">₹{tier.price}</span>
+                          <div className="flex flex-col items-end">
+                            <span className="font-bold text-sm text-[#ff5e14]">₹{tier.price}</span>
+                            {(tier as any).originalPrice && (tier as any).originalPrice > tier.price && (
+                              <span className="line-through text-gray-400 text-xs mt-0.5">₹{(tier as any).originalPrice}</span>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
@@ -559,10 +788,13 @@ export default function CohortLandingPage() {
                 </div>
               )}
 
-              {/* Add-ons Selection */}
+              {/* Add-ons Selection (Individual Sessions) */}
               {cohort.addons && cohort.addons.length > 0 && (
                 <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Enhance Your Experience (Add-ons)</h4>
+                  <div className="flex flex-col gap-0.5">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Select Individual Sessions</h4>
+                    <p className="text-[10px] text-gray-500">Choosing an individual session will deselect the bundle tier.</p>
+                  </div>
                   <div className="space-y-2">
                     {cohort.addons.map((addon) => {
                       const isSelected = selectedAddonIds.includes(addon.id);
@@ -590,6 +822,53 @@ export default function CohortLandingPage() {
                             </div>
                           </div>
                           <span className="font-bold text-xs text-[#ff5e14] whitespace-nowrap">+ ₹{addon.priceDelta}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Toolkit Add-ons Selection */}
+              {liveToolkits && liveToolkits.filter(t => t.id !== cohort.toolkitId).length > 0 && (
+                <div className="space-y-3 border-t pt-4">
+                  <div className="flex flex-col gap-0.5">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Add Toolkits (Optional Add-ons)</h4>
+                    <p className="text-[10px] text-gray-500">Get additional live toolkits to enhance your career toolkit library.</p>
+                  </div>
+                  <div className="space-y-2">
+                    {liveToolkits.filter(t => t.id !== cohort.toolkitId).map((tk) => {
+                      const isSelected = selectedToolkitIds.includes(tk.id);
+                      return (
+                        <div
+                          key={tk.id}
+                          onClick={() => {
+                            setSelectedToolkitIds(prev =>
+                              prev.includes(tk.id) ? prev.filter(id => id !== tk.id) : [...prev, tk.id]
+                            );
+                          }}
+                          className={cn(
+                            "border-2 rounded-xl p-3.5 cursor-pointer transition flex items-center justify-between",
+                            isSelected
+                              ? "border-[#ff5e14] bg-orange-50/10"
+                              : "border-gray-200 hover:border-gray-300 bg-white"
+                          )}
+                        >
+                          <div className="flex gap-3 items-start">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => {}} // toggled by parent div
+                              className="rounded border-gray-300 text-[#ff5e14] focus:ring-[#ff5e14] mt-0.5 h-4 w-4"
+                            />
+                            <div>
+                              <h5 className="font-bold text-xs text-gray-900">{tk.title}</h5>
+                              <p className="text-[10px] text-gray-500 leading-snug line-clamp-2">
+                                {extractRichTextPlainText(tk.description || tk.subtitle)}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="font-bold text-xs text-[#ff5e14] whitespace-nowrap">+ ₹{tk.price}</span>
                         </div>
                       );
                     })}
@@ -707,6 +986,71 @@ export default function CohortLandingPage() {
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>
+
+      {/* Buddy Program Dialog */}
+      <Dialog open={isBuddyDialogOpen} onOpenChange={setIsBuddyDialogOpen}>
+        <DialogContent className="max-w-md p-6 bg-white rounded-2xl shadow-xl border border-gray-100">
+          <DialogHeader className="space-y-2 text-center flex flex-col items-center">
+            <div className="bg-orange-100 text-[#ff5e14] p-3 rounded-full w-fit">
+              <Gift className="w-6 h-6" />
+            </div>
+            <DialogTitle className="text-lg font-bold text-gray-900">
+              Experience this Cohort with a Friend!
+            </DialogTitle>
+            <DialogDescription className="text-xs text-gray-500 text-center">
+              Share the experience, collaborate on cohort assignments, and build together.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                Cohort Share Link
+              </label>
+              <div className="flex gap-2 bg-gray-50 border rounded-xl p-2.5 items-center">
+                <span className="text-xs text-gray-600 truncate flex-1 select-all select-none pr-2">
+                  {typeof window !== "undefined" ? window.location.href : ""}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  className="bg-black hover:bg-neutral-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition shrink-0 flex items-center gap-1"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" /> Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" /> Copy
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setIsBuddyDialogOpen(false)}
+              className="flex-1 border hover:bg-gray-50 text-gray-700 font-bold text-xs py-3 rounded-xl transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsBuddyDialogOpen(false);
+                setIsDrawerOpen(true);
+              }}
+              className="flex-1 bg-[#ff5e14] hover:bg-[#e04f0f] text-white font-bold text-xs py-3 rounded-xl transition shadow"
+            >
+              Apply Now
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

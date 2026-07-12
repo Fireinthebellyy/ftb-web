@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cohorts, cohortTiers, cohortAddOns, cohortOrders, coupons, userToolkits, toolkits, cohortSessions } from "@/lib/schema";
+import { cohorts, cohortTiers, cohortOrders, coupons, userToolkits, toolkits, cohortSessions } from "@/lib/schema";
 import { eq, and, inArray, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";

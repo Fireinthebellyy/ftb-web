@@ -6,6 +6,7 @@ import {
   cohortFeatures,
   cohortTiers,
   cohortAddOns,
+  cohortSessions,
 } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
@@ -60,12 +61,19 @@ export async function GET(
       .where(eq(cohortAddOns.cohortId, id))
       .orderBy(cohortAddOns.orderIndex);
 
+    const sessionsList = await db
+      .select()
+      .from(cohortSessions)
+      .where(eq(cohortSessions.cohortId, id))
+      .orderBy(cohortSessions.orderIndex);
+
     return NextResponse.json({
       ...cohort,
       mentors: mentorsList,
       features: featuresList,
       tiers: tiersList,
       addons: addonsList,
+      sessions: sessionsList,
     });
   } catch (error) {
     console.error("Error fetching admin cohort details:", error);
@@ -117,6 +125,7 @@ export async function PUT(
       features: incomingFeatures = [],
       tiers: incomingTiers = [],
       addons: incomingAddons = [],
+      sessions: incomingSessions = [],
     } = body;
 
     // Run transaction
@@ -331,6 +340,47 @@ export async function PUT(
             name: a.name,
             priceDelta: Number(a.priceDelta),
             description: a.description,
+            orderIndex: i,
+          });
+        }
+      }
+      // 6. Sync Sessions
+      const incomingSessionIds = incomingSessions
+        .map((s: any) => s.id)
+        .filter(Boolean);
+      if (incomingSessionIds.length > 0) {
+        await tx
+          .delete(cohortSessions)
+          .where(
+            and(
+              eq(cohortSessions.cohortId, cohortId),
+              notInArray(cohortSessions.id, incomingSessionIds)
+            )
+          );
+      } else {
+        await tx
+          .delete(cohortSessions)
+          .where(eq(cohortSessions.cohortId, cohortId));
+      }
+
+      for (let i = 0; i < incomingSessions.length; i++) {
+        const s = incomingSessions[i];
+        if (s.id) {
+          await tx
+            .update(cohortSessions)
+            .set({
+              title: s.title,
+              description: s.description,
+              priceDelta: s.priceDelta ? Number(s.priceDelta) : 0,
+              orderIndex: i,
+            })
+            .where(eq(cohortSessions.id, s.id));
+        } else {
+          await tx.insert(cohortSessions).values({
+            cohortId,
+            title: s.title,
+            description: s.description,
+            priceDelta: s.priceDelta ? Number(s.priceDelta) : 0,
             orderIndex: i,
           });
         }

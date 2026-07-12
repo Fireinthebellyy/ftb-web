@@ -28,6 +28,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { StackedTestimonials } from "@/components/toolkit/StackedTestimonials";
 
@@ -63,6 +65,13 @@ interface Addon {
   description: string;
 }
 
+interface Session {
+  id: string;
+  title: string;
+  description: string;
+  priceDelta?: number | null;
+}
+
 interface CohortData {
   id: string;
   title: string;
@@ -86,6 +95,7 @@ interface CohortData {
   features: Feature[];
   tiers: Tier[];
   addons: Addon[];
+  sessions: Session[];
 }
 
 export default function CohortLandingPage() {
@@ -96,6 +106,7 @@ export default function CohortLandingPage() {
 
   const [cohort, setCohort] = useState<CohortData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showSeatsPop, setShowSeatsPop] = useState(false);
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
 
   // Promo Code / Discounting state
@@ -186,6 +197,13 @@ export default function CohortLandingPage() {
     fetchLiveToolkits();
   }, [cohortId]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSeatsPop(true);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Sync buyer info with session once loaded
   useEffect(() => {
     if (session?.user) {
@@ -259,9 +277,9 @@ export default function CohortLandingPage() {
   // Calculate prices dynamically
   const activeTier = cohort.tiers?.find((t) => t.id === selectedTierId);
   const basePrice = activeTier ? activeTier.price : 0;
-  const sessionsTotal = cohort.addons
-    ?.filter((a) => selectedAddonIds.includes(a.id))
-    .reduce((acc, current) => acc + current.priceDelta, 0) || 0;
+  const sessionsTotal = cohort.sessions
+    ?.filter((s) => s.priceDelta && selectedAddonIds.includes(s.id))
+    .reduce((acc, current) => acc + (current.priceDelta || 0), 0) || 0;
   const toolkitsTotal = liveToolkits
     ?.filter((t) => selectedToolkitIds.includes(t.id))
     .reduce((acc, current) => acc + current.price, 0) || 0;
@@ -631,25 +649,27 @@ export default function CohortLandingPage() {
         )}
 
         {/* Cohort Curriculum / Sessions Section */}
-        {cohort.addons && cohort.addons.length > 0 && (
+        {cohort.sessions && cohort.sessions.length > 0 && (
           <section className="space-y-6">
             <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-b-2 border-black pb-1 inline-block">
               Cohort Sessions & Curriculum
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {cohort.addons.map((session, index) => (
+              {cohort.sessions.map((session, index) => (
                 <div
                   key={session.id}
-                  className="bg-white rounded-xl border border-gray-100 p-4 flex gap-4 items-start shadow-sm hover:shadow transition"
+                  className="relative overflow-hidden bg-white rounded-xl border border-gray-100 p-5 pt-7 flex gap-4 items-start shadow-sm hover:shadow transition"
                 >
-                  <div className="bg-orange-50 text-[#ff5e14] px-3 py-1.5 rounded-lg shrink-0 font-bold text-xs md:text-sm whitespace-nowrap">
-                    Session {index + 1}
+                  <div className="absolute top-0 right-0 z-10">
+                    <span className="bg-[#ff5e14] text-white rounded-tr-none rounded-bl-xl px-3 py-1 text-[10px] font-bold uppercase tracking-wider">
+                      Session {index + 1}
+                    </span>
                   </div>
                   <div className="space-y-1.5 flex-1">
                     <div className="flex justify-between items-start gap-2">
-                      <h3 className="font-bold text-gray-900 text-sm md:text-base leading-snug">
-                        {session.name}
+                      <h3 className="font-bold text-gray-900 text-sm md:text-base leading-snug pr-16">
+                        {session.title}
                       </h3>
                     </div>
                     <p className="text-xs md:text-sm text-gray-500 leading-relaxed">
@@ -675,12 +695,96 @@ export default function CohortLandingPage() {
               Learn, build, and level up with your friends. Share the access and experience the cohort together.
             </p>
           </div>
-          <button
-            onClick={() => setIsBuddyDialogOpen(true)}
-            className="w-full md:w-auto bg-white hover:bg-neutral-100 text-[#ff5e14] font-bold text-xs md:text-sm py-3 px-6 rounded-xl transition shadow-md whitespace-nowrap shrink-0 flex items-center justify-center gap-2"
-          >
-            Invite Buddy Now
-          </button>
+          <Dialog open={isBuddyDialogOpen} onOpenChange={setIsBuddyDialogOpen}>
+            <DialogTrigger asChild>
+              <button
+                className="w-full md:w-auto bg-white hover:bg-neutral-100 text-[#ff5e14] font-bold text-xs md:text-sm py-3 px-6 rounded-xl transition shadow-md whitespace-nowrap shrink-0 flex items-center justify-center gap-2"
+              >
+                Invite Buddy Now
+              </button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md p-6 bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-full blur-3xl -z-10 translate-x-8 -translate-y-8" />
+              
+              <DialogHeader className="space-y-3 text-center flex flex-col items-center">
+                <span className="bg-orange-50 text-[#ff5e14] text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-orange-100">
+                  Buddy Benefit
+                </span>
+                <div className="bg-gradient-to-br from-orange-100 to-orange-200 text-[#ff5e14] p-3.5 rounded-2xl w-fit shadow-inner">
+                  <Gift className="w-6 h-6 animate-bounce" />
+                </div>
+                <DialogTitle className="text-xl font-extrabold text-gray-900 leading-tight">
+                  Enjoy Cohort with a Friend!
+                </DialogTitle>
+                <DialogDescription className="text-xs text-gray-500 max-w-sm leading-relaxed text-center">
+                  Share the experience, collaborate on cohort assignments, and build together. Copy the link below or send it directly via WhatsApp.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">
+                    Cohort Share Link
+                  </label>
+                  <div className="flex gap-2 bg-gray-50 border border-gray-200 rounded-2xl p-2 items-center focus-within:ring-2 focus-within:ring-[#ff5e14]/20 transition-all">
+                    <span className="text-xs text-gray-600 truncate flex-1 pl-2 font-medium select-all">
+                      {typeof window !== "undefined" ? window.location.href : ""}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleCopyLink}
+                      className="bg-black hover:bg-neutral-800 text-white text-xs font-bold px-4 py-2 rounded-xl transition duration-200 shrink-0 flex items-center gap-1.5 shadow"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-400" /> Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5 text-gray-300" /> Copy Link
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Quick Share to WhatsApp */}
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(`Hey! I was checking out this amazing cohort program: "${cohort?.title}". Let's apply and do it together! Check it out here: ${typeof window !== "undefined" ? window.location.href : ""}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-3.5 px-4 rounded-2xl transition duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+                >
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.965C16.588 1.978 14.12 .952 11.998.951 6.559.951 2.134 5.325 2.13 10.756c-.001 1.674.444 3.308 1.292 4.773L2.4 20.803l5.35-1.393c.001-.001.002-.001.003-.002z" />
+                  </svg>
+                  Share via WhatsApp
+                </a>
+              </div>
+
+              <div className="flex gap-2 pt-2 border-t border-gray-100">
+                <DialogClose asChild>
+                  <button
+                    type="button"
+                    className="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-xs py-3 rounded-2xl transition duration-200"
+                  >
+                    Cancel
+                  </button>
+                </DialogClose>
+                <DialogClose asChild>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsDrawerOpen(true);
+                    }}
+                    className="flex-1 bg-gradient-to-r from-[#ff5e14] to-[#ff7a3d] hover:from-[#e04f0f] hover:to-[#ff5e14] text-white font-bold text-xs py-3 rounded-2xl transition duration-200 shadow-md hover:shadow-lg transform active:scale-95"
+                  >
+                    Apply Now
+                  </button>
+                </DialogClose>
+              </div>
+            </DialogContent>
+          </Dialog>
         </section>
 
         {/* Testimonials Section */}
@@ -802,19 +906,19 @@ export default function CohortLandingPage() {
               )}
 
               {/* Add-ons Selection (Individual Sessions) */}
-              {cohort.addons && cohort.addons.length > 0 && (
+              {cohort.sessions && cohort.sessions.filter(s => s.priceDelta && s.priceDelta > 0).length > 0 && (
                 <div className="space-y-3">
                   <div className="flex flex-col gap-0.5">
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Select Individual Sessions</h4>
                     <p className="text-[10px] text-gray-500">Choosing an individual session will deselect the bundle tier.</p>
                   </div>
                   <div className="space-y-2">
-                    {cohort.addons.map((addon) => {
-                      const isSelected = selectedAddonIds.includes(addon.id);
+                    {cohort.sessions.filter(s => s.priceDelta && s.priceDelta > 0).map((session, index) => {
+                      const isSelected = selectedAddonIds.includes(session.id);
                       return (
                         <div
-                          key={addon.id}
-                          onClick={() => toggleAddon(addon.id)}
+                          key={session.id}
+                          onClick={() => toggleAddon(session.id)}
                           className={cn(
                             "border-2 rounded-xl p-3.5 cursor-pointer transition flex items-center justify-between",
                             isSelected
@@ -830,11 +934,11 @@ export default function CohortLandingPage() {
                               className="rounded border-gray-300 text-[#ff5e14] focus:ring-[#ff5e14] mt-0.5 h-4 w-4"
                             />
                             <div>
-                              <h5 className="font-bold text-xs text-gray-900">{addon.name}</h5>
-                              <p className="text-[10px] text-gray-500">{addon.description}</p>
+                              <h5 className="font-bold text-xs text-gray-900">Session {index + 1}: {session.title}</h5>
+                              <p className="text-[10px] text-gray-500">{session.description}</p>
                             </div>
                           </div>
-                          <span className="font-bold text-xs text-[#ff5e14] whitespace-nowrap">+ ₹{addon.priceDelta}</span>
+                          <span className="font-bold text-xs text-[#ff5e14] whitespace-nowrap">+ ₹{session.priceDelta}</span>
                         </div>
                       );
                     })}
@@ -1000,88 +1104,23 @@ export default function CohortLandingPage() {
         </Drawer.Portal>
       </Drawer.Root>
 
-      {/* Buddy Program Dialog */}
-      <Dialog open={isBuddyDialogOpen} onOpenChange={setIsBuddyDialogOpen}>
-        <DialogContent className="max-w-md p-6 bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-full blur-3xl -z-10 translate-x-8 -translate-y-8" />
-          
-          <DialogHeader className="space-y-3 text-center flex flex-col items-center">
-            <span className="bg-orange-50 text-[#ff5e14] text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-orange-100">
-              Buddy Benefit
-            </span>
-            <div className="bg-gradient-to-br from-orange-100 to-orange-200 text-[#ff5e14] p-3.5 rounded-2xl w-fit shadow-inner">
-              <Gift className="w-6 h-6 animate-bounce" />
-            </div>
-            <DialogTitle className="text-xl font-extrabold text-gray-900 leading-tight">
-              Enjoy Cohort with a Friend!
-            </DialogTitle>
-            <DialogDescription className="text-xs text-gray-500 max-w-sm leading-relaxed text-center">
-              Share the experience, collaborate on cohort assignments, and build together. Copy the link below or send it directly via WhatsApp.
-            </DialogDescription>
-          </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">
-                Cohort Share Link
-              </label>
-              <div className="flex gap-2 bg-gray-50 border border-gray-200 rounded-2xl p-2 items-center focus-within:ring-2 focus-within:ring-[#ff5e14]/20 transition-all">
-                <span className="text-xs text-gray-600 truncate flex-1 pl-2 font-medium select-all">
-                  {typeof window !== "undefined" ? window.location.href : ""}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleCopyLink}
-                  className="bg-black hover:bg-neutral-800 text-white text-xs font-bold px-4 py-2 rounded-xl transition duration-200 shrink-0 flex items-center gap-1.5 shadow"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-400" /> Copied!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-gray-300" /> Copy Link
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
 
-            {/* Quick Share to WhatsApp */}
-            <a
-              href={`https://wa.me/?text=${encodeURIComponent(`Hey! I was checking out this amazing cohort program: "${cohort?.title}". Let's apply and do it together! Check it out here: ${typeof window !== "undefined" ? window.location.href : ""}`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-3.5 px-4 rounded-2xl transition duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
-            >
-              <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.965C16.588 1.978 14.12 .952 11.998.951 6.559.951 2.134 5.325 2.13 10.756c-.001 1.674.444 3.308 1.292 4.773L2.4 20.803l5.35-1.393c.001-.001.002-.001.003-.002z" />
-              </svg>
-              Share via WhatsApp
-            </a>
+      {/* Floating Limited Seats Notification */}
+      {showSeatsPop && (
+        <div className="fixed top-4 right-4 z-50 max-w-xs bg-gradient-to-r from-[#ff5e14] to-orange-600 text-white rounded-xl shadow-2xl p-3.5 border border-orange-400/30 flex items-center justify-between gap-3 animate-in slide-in-from-top-5 duration-300">
+          <div>
+            <p className="text-[9px] uppercase font-bold tracking-widest text-orange-200 leading-none mb-1">Attention</p>
+            <h4 className="font-extrabold text-xs md:text-sm leading-snug">Limited Seats! Cohort is Live</h4>
           </div>
-
-          <div className="flex gap-2 pt-2 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={() => setIsBuddyDialogOpen(false)}
-              className="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-xs py-3 rounded-2xl transition duration-200"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsBuddyDialogOpen(false);
-                setIsDrawerOpen(true);
-              }}
-              className="flex-1 bg-gradient-to-r from-[#ff5e14] to-[#ff7a3d] hover:from-[#e04f0f] hover:to-[#ff5e14] text-white font-bold text-xs py-3 rounded-2xl transition duration-200 shadow-md hover:shadow-lg transform active:scale-95"
-            >
-              Apply Now
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+          <button 
+            onClick={() => setShowSeatsPop(false)}
+            className="hover:bg-white/20 p-1 rounded-full transition-colors shrink-0"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

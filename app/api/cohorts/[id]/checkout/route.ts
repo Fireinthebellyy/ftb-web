@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cohorts, cohortTiers, cohortAddOns, cohortOrders, coupons, userToolkits, toolkits } from "@/lib/schema";
+import { cohorts, cohortTiers, cohortAddOns, cohortOrders, coupons, userToolkits, toolkits, cohortSessions } from "@/lib/schema";
 import { eq, and, inArray, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -86,16 +86,16 @@ export async function POST(
     if (selectedAddOnIds.length > 0) {
       const addons = await db
         .select()
-        .from(cohortAddOns)
+        .from(cohortSessions)
         .where(
           and(
-            eq(cohortAddOns.cohortId, cohortId),
-            inArray(cohortAddOns.id, selectedAddOnIds)
+            eq(cohortSessions.cohortId, cohortId),
+            inArray(cohortSessions.id, selectedAddOnIds)
           )
         );
       
       addons.forEach((addon) => {
-        addonsTotal += addon.priceDelta;
+        addonsTotal += addon.priceDelta || 0;
       });
     }
 

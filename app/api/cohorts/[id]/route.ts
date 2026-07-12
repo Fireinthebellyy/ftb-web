@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cohorts, cohortMentors, cohortFeatures, cohortTiers, cohortAddOns, cohortOrders } from "@/lib/schema";
+import { cohorts, cohortMentors, cohortFeatures, cohortTiers, cohortAddOns, cohortOrders, cohortSessions } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -54,6 +54,12 @@ export async function GET(
       .where(eq(cohortAddOns.cohortId, cohort.id))
       .orderBy(cohortAddOns.orderIndex);
 
+    const sessionsList = await db
+      .select()
+      .from(cohortSessions)
+      .where(eq(cohortSessions.cohortId, cohort.id))
+      .orderBy(cohortSessions.orderIndex);
+
     // Check purchase status
     let hasAccess = false;
     try {
@@ -82,6 +88,7 @@ export async function GET(
       features: featuresList,
       tiers: tiersList,
       addons: addonsList,
+      sessions: sessionsList,
       hasAccess,
     });
   } catch (error) {

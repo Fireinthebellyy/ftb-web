@@ -62,6 +62,13 @@ interface Addon {
   description: string;
 }
 
+interface Session {
+  id?: string;
+  title: string;
+  description: string;
+  priceDelta?: number;
+}
+
 interface Cohort {
   id: string;
   title: string;
@@ -86,6 +93,7 @@ interface Cohort {
   features?: Feature[];
   tiers?: Tier[];
   addons?: Addon[];
+  sessions?: Session[];
 }
 
 interface Order {
@@ -117,7 +125,7 @@ export default function AdminCohortsTable() {
   // Cohort editing state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingCohort, setEditingCohort] = useState<Cohort | null>(null);
-  const [activeEditTab, setActiveEditTab] = useState<"details" | "mentors" | "features" | "pricing">("details");
+  const [activeEditTab, setActiveEditTab] = useState<"details" | "mentors" | "features" | "pricing" | "curriculum">("details");
 
   // File upload state
   const [isUploading, setIsUploading] = useState(false);
@@ -586,6 +594,16 @@ export default function AdminCohortsTable() {
                 }`}
               >
                 Pricing, Tiers & Add-ons
+              </button>
+              <button
+                onClick={() => setActiveEditTab("curriculum")}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  activeEditTab === "curriculum"
+                    ? "bg-[#ff5e14] text-white"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                }`}
+              >
+                Curriculum ({editingCohort.sessions?.length || 0})
               </button>
             </div>
 
@@ -1222,87 +1240,123 @@ export default function AdminCohortsTable() {
                     ))}
                   </div>
                 </div>
-
-                {/* Add-ons */}
-                <div className="space-y-4 border-t pt-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h4 className="font-semibold text-sm">Standalone Add-ons</h4>
-                      <p className="text-xs text-gray-500">Optional checkboxes users can toggle separately</p>
-                    </div>
-                    <Button
-                      onClick={() => {
-                        const currentAddons = editingCohort.addons || [];
-                        setEditingCohort({
-                          ...editingCohort,
-                          addons: [
-                            ...currentAddons,
-                            { name: "", priceDelta: 999, description: "" },
-                          ],
-                        });
-                      }}
-                      className="bg-gray-100 text-gray-700 hover:bg-gray-200 border text-xs"
-                      size="sm"
-                    >
-                      <Plus className="w-3.5 h-3.5 mr-1" /> Add Add-on
-                    </Button>
+              </div>
+            )}
+            {activeEditTab === "curriculum" && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-md font-semibold">Cohort Sessions & Curriculum</h3>
+                    <p className="text-xs text-gray-500">Add sessions to outline what is covered week-by-week</p>
                   </div>
+                  <Button
+                    onClick={() => {
+                      const currentSessions = editingCohort.sessions || [];
+                      setEditingCohort({
+                        ...editingCohort,
+                        sessions: [
+                          ...currentSessions,
+                          { title: "", description: "", priceDelta: 0 },
+                        ],
+                      });
+                    }}
+                    className="bg-gray-100 text-gray-700 hover:bg-gray-200 border text-xs"
+                    size="sm"
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1" /> Add Session
+                  </Button>
+                </div>
 
-                  <div className="grid grid-cols-1 gap-3">
-                    {(editingCohort.addons || []).map((addon, index) => (
-                      <div key={index} className="border p-4 rounded-lg bg-gray-50 flex flex-col gap-3 relative">
-                        <button
-                          onClick={() => {
-                            const currentAddons = [...(editingCohort.addons || [])];
-                            currentAddons.splice(index, 1);
-                            setEditingCohort({ ...editingCohort, addons: currentAddons });
-                          }}
-                          className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+                <div className="grid grid-cols-1 gap-3">
+                  {(editingCohort.sessions || []).map((session, index) => (
+                    <div key={index} className="border p-4 rounded-lg bg-gray-50 flex gap-3 relative items-start">
+                      <button
+                        onClick={() => {
+                          const currentSessions = [...(editingCohort.sessions || [])];
+                          currentSessions.splice(index, 1);
+                          setEditingCohort({ ...editingCohort, sessions: currentSessions });
+                        }}
+                        className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div className="space-y-1">
-                            <Label className="text-xs">Add-on Name</Label>
-                            <Input
-                              value={addon.name}
-                              onChange={(e) => {
-                                const currentAddons = [...(editingCohort.addons || [])];
-                                currentAddons[index] = { ...currentAddons[index], name: e.target.value };
-                                setEditingCohort({ ...editingCohort, addons: currentAddons });
-                              }}
-                              placeholder="e.g. Resume Polish Review"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">Price Delta (INR)</Label>
-                            <Input
-                              type="number"
-                              value={addon.priceDelta}
-                              onChange={(e) => {
-                                const currentAddons = [...(editingCohort.addons || [])];
-                                currentAddons[index] = { ...currentAddons[index], priceDelta: Number(e.target.value) };
-                                setEditingCohort({ ...editingCohort, addons: currentAddons });
-                              }}
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">Description</Label>
-                            <Input
-                              value={addon.description}
-                              onChange={(e) => {
-                                const currentAddons = [...(editingCohort.addons || [])];
-                                currentAddons[index] = { ...currentAddons[index], description: e.target.value };
-                                setEditingCohort({ ...editingCohort, addons: currentAddons });
-                              }}
-                              placeholder="Short explanation"
-                            />
-                          </div>
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Session Title</Label>
+                          <Input
+                            value={session.title}
+                            onChange={(e) => {
+                              const currentSessions = [...(editingCohort.sessions || [])];
+                              currentSessions[index] = { ...currentSessions[index], title: e.target.value };
+                              setEditingCohort({ ...editingCohort, sessions: currentSessions });
+                            }}
+                            placeholder="e.g. Session 1: Resume Deep-dive"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Session Description</Label>
+                          <Input
+                            value={session.description}
+                            onChange={(e) => {
+                              const currentSessions = [...(editingCohort.sessions || [])];
+                              currentSessions[index] = { ...currentSessions[index], description: e.target.value };
+                              setEditingCohort({ ...editingCohort, sessions: currentSessions });
+                            }}
+                            placeholder="Brief detail explaining the session agenda"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Price Delta (INR, Optional)</Label>
+                          <Input
+                            type="number"
+                            value={session.priceDelta || ""}
+                            onChange={(e) => {
+                              const currentSessions = [...(editingCohort.sessions || [])];
+                              currentSessions[index] = { ...currentSessions[index], priceDelta: e.target.value ? Number(e.target.value) : 0 };
+                              setEditingCohort({ ...editingCohort, sessions: currentSessions });
+                            }}
+                            placeholder="Price if sold individually"
+                          />
                         </div>
                       </div>
-                    ))}
-                  </div>
+
+                      {/* Reorder Buttons */}
+                      <div className="flex flex-col gap-1 self-center">
+                        <button
+                          disabled={index === 0}
+                          onClick={() => {
+                            const currentSessions = [...(editingCohort.sessions || [])];
+                            const temp = currentSessions[index];
+                            currentSessions[index] = currentSessions[index - 1];
+                            currentSessions[index - 1] = temp;
+                            setEditingCohort({ ...editingCohort, sessions: currentSessions });
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded disabled:opacity-50"
+                        >
+                          <ArrowUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          disabled={index === (editingCohort.sessions || []).length - 1}
+                          onClick={() => {
+                            const currentSessions = [...(editingCohort.sessions || [])];
+                            const temp = currentSessions[index];
+                            currentSessions[index] = currentSessions[index + 1];
+                            currentSessions[index + 1] = temp;
+                            setEditingCohort({ ...editingCohort, sessions: currentSessions });
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded disabled:opacity-50"
+                        >
+                          <ArrowDown className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {(editingCohort.sessions || []).length === 0 && (
+                    <div className="text-center py-6 text-sm text-gray-500 border border-dashed rounded-lg">
+                      No sessions added yet. Click &quot;Add Session&quot; above to create one.
+                    </div>
+                  )}
                 </div>
               </div>
             )}

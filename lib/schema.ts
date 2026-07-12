@@ -780,6 +780,9 @@ export const cohorts = pgTable("cohorts", {
   badge2: text("badge2"),
   subtitle: text("subtitle"),
   coverImageUrl: text("cover_image_url"),
+  cardImageUrl: text("card_image_url"),
+  startDate: text("start_date"),
+  highlights: text("highlights").array(),
   mentorsHeading: text("mentors_heading").default("Meet Your Mentors"),
   mentorsLinkTarget: text("mentors_link_target"),
   mentorsLimit: integer("mentors_limit").default(4),
@@ -834,6 +837,16 @@ export const cohortAddOns = pgTable("cohort_addons", {
   name: text("name").notNull(),
   priceDelta: integer("price_delta").notNull(),
   description: text("description").notNull(),
+  orderIndex: integer("order_index").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const cohortSessions = pgTable("cohort_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  cohortId: uuid("cohort_id").references(() => cohorts.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  priceDelta: integer("price_delta").default(0),
   orderIndex: integer("order_index").default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -898,6 +911,7 @@ export const schema = {
   cohortFeatures,
   cohortTiers,
   cohortAddOns,
+  cohortSessions,
   cohortOrders,
 };
 

@@ -10,100 +10,96 @@ The cohort program is managed using the following database tables (defined in `l
 
 ### `cohorts`
 - Represents the cohort program itself.
-- Contains title, subtitle, startDate, highlights (array), coverImageUrl, and a linked `toolkitId`.
-- **Linked Toolkit**: A cohort is linked to a specific toolkit via `toolkitId`. Accessing the cohort grants the user (and their buddy) access to this toolkit's lessons.
+- Contains:
+  - `title`, `slug`, `startDate`.
+  - `coverImageUrl` (legacy sync cover URL) and `coverImageUrls` (array storing up to 3 banner images for the hero carousel).
+  - `cardImageUrl` (shown on the cohort catalog card).
+  - `highlights` (text array displaying all card features/bullets without limits).
+  - `isBestSeller` and `isFillingFast` (boolean flags to render corner tags on catalog cards).
+  - `mentorsHeading` (custom title for Mentors section).
+  - `featuresHeading` (custom title for "What You Get" section).
+  - `sessionsHeading` (custom title for "Cohort Sessions & Curriculum" section).
+  - `testimonialsHeading` (custom title for "Testimonials" section).
+  - `whoIsThisForHeading` and `whoIsThisForBullets` (heading and custom target audience bullet list for the "Who Is This For?" section).
+  - Linked `toolkitId`.
 
 ### `cohort_sessions`
 - Represents curriculum sessions shown week-by-week.
-- Contains `priceDelta` column.
-- **Linked Add-ons**: If `priceDelta` > 0, the session is treated as an individual purchasable add-on in the checkout apply drawer.
+- Contains `priceDelta` column. If `priceDelta` > 0, the session is treated as an individual purchasable add-on in the checkout apply drawer.
 
 ### `cohort_tiers`
 - Bundle package options (e.g. Basic, VIP). Contains `price` (in INR).
 
 ### `cohort_orders`
 - Stores all purchase history.
-- **Key Columns**:
+- Key Columns:
   - `status`: `"pending"` or `"paid"`.
   - `userId`: Buyer's account identifier.
   - `buddyEmail`: Optional email of a referred friend.
   - `selectedTierId`: Selected package.
-  - `selectedAddOnIds`: Array of selected individual session IDs (`cohort_sessions.id`).
+  - `selectedAddOnIds`: Array of selected individual session IDs.
   - `selectedToolkitIds`: Array of extra toolkits purchased as add-ons.
 
 ---
 
-## 2. Business & Verification Logic
+## 2. Business & Pricing Logic
+
+### Single vs. Duo (Buddy) Pricing Formula
+When a buyer enters a **Buddy Email Address** during checkout, the base prices for the selected bundle tier (and/or individual sessions) are dynamically converted from a single-ticket rate to a discounted Duo rate on-the-fly:
+
+1. **Duo Reference Price** (Strike-through price shown to user):
+   $$\text{Reference} = \text{Math.ceil}\left(\frac{\text{Single Price} \times 2 + 1}{100}\right) \times 100 - 1$$
+   *(e.g., Single price of $499 \times 2 = 998 \rightarrow 999$)*
+
+2. **Duo Final Price** (Actual price charged for 2 people):
+   $$\text{Final} = \text{Math.round}\left(\frac{\text{Reference} \times 0.8}{10}\right) \times 10 - 1$$
+   *(e.g., $999 \times 0.8 = 799.2 \rightarrow \text{rounded to nearest ending in 9} \rightarrow 799$)*
+
+3. **Per-Head Subtext**: Displays estimated rate per head:
+   $$\text{Per Head} = \text{Math.round}\left(\frac{\text{Final}}{2}\right)$$
+   *(e.g., $\approx \text{₹400 per person}$)*
+
+This formula runs dynamically and synchronously on both the client (for real-time updates) and the server (for secure Razorpay order validation).
 
 ### Access Rights (Authorization)
 Access to the cohort page and its linked toolkit contents is granted to a user if:
 1. **Primary Buyer**: They purchased it (`userId` matches logged-in user).
 2. **Buddy Referral**: They were referred by a buyer (`buddyEmail` matches logged-in user's email).
 
-This is validated dynamically across all core API endpoints:
-- Cohort Page GET: `/api/cohorts/[id]`
-- Toolkit Access Checks:
-  - `/api/toolkits/[id]/access`
-  - `/api/toolkits/[id]/content`
-  - `/api/toolkits/[id]/community`
-  - `/api/toolkits/[id]`
+---
 
-### Checkout Validation Rules
-- **Enforced Selection**: A checkout order is rejected if neither a bundle tier (`selectedTierId`) nor at least one individual session (`selectedAddOnIds`) is selected. 
-- **Mutually Exclusive**: A user cannot checkout both a bundle tier and individual sessions simultaneously.
-- **Toolkit Addon Restrictiveness**: Toolkit addons purchased separately during checkout are granted **only** to the primary buyer. The referred buddy only gets access to the cohort and its linked toolkit.
+## 3. UI Layout & Section Sequence
+
+The public cohort details page (`app/toolkit/cohorts/[id]/page.tsx`) renders sections in this exact sequence:
+1. **Hero Banner Carousel**: Animated, auto-playing Framer Motion carousel cycling through up to 3 banner images with manual navigation arrows and dot indicators.
+2. **Mentors**: Customizable header containing active mentors with ordering controls.
+3. **Cohort Sessions & Curriculum**: Customizable header showing week-by-week sessions.
+4. **What You Get (Features)**: Checklist grid showing inclusions.
+5. **Who Is This For?**: Clean responsive grid listing target audiences using numbered custom orange circular tags.
+6. **Buddy Program Referral Banner**: Highlights ungatekeep 20% duo off banner with custom copy.
+7. **Testimonials**: Custom header showing user feedback quotes.
+
+*Note: The floating WhatsApp widget is conditionally hidden on all routes starting with `/toolkit/cohorts/` to keep detail pages clutter-free.*
 
 ---
 
-## 3. Checkout & Payment Flow
+## 4. Admin Management Controls
 
-```mermaid
-sequenceDiagram
-    participant User as User (Client)
-    participant API as Checkout API (/checkout)
-    participant RZP as Razorpay Gateway
-    participant Verify as Verification API (/verify)
-    
-    User->>API: POST /api/cohorts/[id]/checkout (details, buddy email)
-    alt Order Price is 0 (Free)
-        API->>User: Return { free: true } & immediately grant access
-    else Order Price > 0
-        API->>RZP: Generate Razorpay Order ID
-        API->>User: Return Razorpay Order options
-        User->>RZP: Execute payment dialog
-        RZP->>User: Return payment details & signature
-        User->>Verify: POST /api/cohorts/[id]/checkout/verify (payment_id, order_id, signature)
-        Verify->>Verify: Validate signature
-        Verify->>Verify: Set order status = "paid"
-        Verify->>Verify: Grant toolkit access to buyer & buddy (if exists)
-        Verify->>User: Return { success: true }
-    end
-```
-
----
-
-## 4. Admin Cohort Management Tabs
-
-Admins can manage cohorts under `Cohort Management`:
-- **Details Tab**: General details (title, subtitle, cover image, highlights).
-- **Mentors Tab**: Select active mentors for the program.
-- **Features Tab**: Define checklist features (e.g. Resume Polish, Mock Interviews).
-- **Pricing Tab**: Edit pricing tiers.
-- **Curriculum Tab**: Create curriculum sessions. Entering a **Price Delta** here automatically exposes that session as a standalone checkable purchase option in the checkout drawer.
-- **Orders Log Tab**: Lists all cohort orders. Displays buyer info, buddy email address (marked with "Buddy Added"), cohort tier, paid amount, and payment status.
+Admins manage cohort details under the `Cohort Management` board:
+- **General Fields**: General properties (Title, Slug, Start Date description, and Switch toggles for **Best Seller** / **Filling Fast** card tags).
+- **Banner Slots**: Supports 3 explicit slots for cover images. Each slot accepts direct local file uploads (saved to R2 `ungatekeep-images`) or pasting image URLs.
+- **Section Headers**: Editable inputs for Mentors, Features, Curriculum, Testimonials, and target audience headings.
+- **Card Highlights**: Dynamically grows/shrinks; all added features are displayed on catalog cards with no length restrictions.
+- **Orders Log**: Only lists orders with status `"paid"` to keep the log clean and exclude abandoned checkouts.
 
 ---
 
 ## 5. Troubleshooting & Bug Resolution
 
-### Bug: "Cohort fails to load on the Admin Page"
-- **Reason**: The database schema is out of sync or missing fields like `cardImageUrl`, `startDate`, `highlights`, or `price_delta`.
-- **Fix**: Run database migrations to align columns. Make sure the Drizzle schema `cohorts` and `cohortSessions` match the SQL database.
+### Bug: "Banner image fails to upload"
+- **Reason**: The S3/R2 domain was set to `"opportunity-images"`, which may have incorrect bucket configurations or permissions compared to `"ungatekeep-images"`.
+- **Fix**: The upload handler has been updated to use the fully verified `"ungatekeep-images"` domain matching the mentors uploads.
 
-### Bug: "Buddy logs in but has no access"
-- **Reason**: The buddy's email in the login provider (Better Auth) does not match the `buddyEmail` spelling stored in the `cohort_orders` table, or the email was not trimmed/lowercased correctly.
-- **Fix**: Verify the spelling of the buddy email in the admin orders log. Check if the database has it in lowercase.
-
-### Bug: "Razorpay payment completes but access is not granted"
-- **Reason**: Signature validation failed, or network timeout prevented client from calling the `/verify` API.
-- **Fix**: Check `cohort_orders` table. If Razorpay payment is success in dashboard, manually update order status in DB to `"paid"`.
+### Bug: "Cover image order shifts on reload"
+- **Reason**: Incomplete array structures allowed index holes (e.g. `[undefined, "url"]`) which were filtered out by backend saves.
+- **Fix**: The admin editor now guarantees `coverImageUrls` is always initialized with exactly 3 indices.

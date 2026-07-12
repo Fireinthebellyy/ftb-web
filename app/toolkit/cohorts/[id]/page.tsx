@@ -21,17 +21,19 @@ import { Drawer } from "vaul";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/use-session";
 import { extractRichTextPlainText } from "@/lib/rich-text";
-import { motion } from "framer-motion";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogTrigger,
-  DialogClose,
-} from "@/components/ui/dialog";
+import { motion, AnimatePresence } from "framer-motion";
 import { StackedTestimonials } from "@/components/toolkit/StackedTestimonials";
+
+export function getDuoPricing(singlePrice: number) {
+  if (!singlePrice || singlePrice <= 0) {
+    return { reference: 0, final: 0, perHead: 0 };
+  }
+  const raw_duo = singlePrice * 2;
+  const reference = Math.ceil((raw_duo + 1) / 100) * 100 - 1;
+  const final = Math.round((reference * 0.8) / 10) * 10 - 1;
+  const perHead = Math.round(final / 2);
+  return { reference, final, perHead };
+}
 
 interface Mentor {
   id: string;
@@ -80,6 +82,7 @@ interface CohortData {
   badge2: string;
   subtitle: string;
   coverImageUrl: string;
+  coverImageUrls?: string[] | null;
   cardImageUrl?: string | null;
   startDate?: string | null;
   highlights?: string[] | null;
@@ -87,6 +90,10 @@ interface CohortData {
   mentorsLinkTarget: string;
   mentorsLimit: number;
   featuresHeading: string;
+  sessionsHeading?: string | null;
+  testimonialsHeading?: string | null;
+  whoIsThisForHeading?: string | null;
+  whoIsThisForBullets?: string[] | null;
   investmentLabel: string;
   basePrice: number;
   toolkitId?: string | null;
@@ -109,10 +116,7 @@ export default function CohortLandingPage() {
   const [showSeatsPop, setShowSeatsPop] = useState(false);
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
 
-  // Promo Code / Discounting state
-  const [couponCode, setCouponCode] = useState("");
-  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
-  const [appliedCoupon, setAppliedCoupon] = useState<any | null>(null);
+
 
   // Upsell Modal / Bottom Sheet selections
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -127,6 +131,17 @@ export default function CohortLandingPage() {
   // Buddy Program states
   const [isBuddyDialogOpen, setIsBuddyDialogOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Cover Image Carousel states
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    if (!cohort || !cohort.coverImageUrls || cohort.coverImageUrls.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % cohort.coverImageUrls.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [cohort]);
 
   const handleCopyLink = () => {
     if (typeof window !== "undefined") {
@@ -212,46 +227,14 @@ export default function CohortLandingPage() {
     }
   }, [session]);
 
-  const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) {
-      toast.error("Please enter a coupon code");
-      return;
-    }
 
-    setIsValidatingCoupon(true);
-    try {
-      const response = await axios.post("/api/coupons/validate", {
-        code: couponCode.trim(),
-        cohortId: cohort?.id,
-      });
-      const data = response.data;
-      if (data.valid) {
-        setAppliedCoupon(data);
-        toast.success(`Coupon applied! ₹${data.discountAmount} off`);
-      } else {
-        setAppliedCoupon(null);
-        toast.error(data.error || "Invalid coupon code");
-      }
-    } catch (err) {
-      console.error(err);
-      setAppliedCoupon(null);
-      toast.error("Failed to validate coupon");
-    } finally {
-      setIsValidatingCoupon(false);
-    }
-  };
-
-  const handleRemoveCoupon = () => {
-    setCouponCode("");
-    setAppliedCoupon(null);
-  };
 
   if (isLoading || sessionPending) {
     return (
       <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center">
         <div className="text-center space-y-2">
           <Loader2 className="w-8 h-8 animate-spin text-[#ff5e14] mx-auto" />
-          <p className="text-sm font-semibold text-gray-500">Loading cohort experience...</p>
+          <p className="text-sm font-semibold text-gray-500">Saath milke phodoge? Lessgooo...</p>
         </div>
       </div>
     );
@@ -275,17 +258,22 @@ export default function CohortLandingPage() {
   }
 
   // Calculate prices dynamically
+  const isDuoActive = buddyEmail.trim().length > 0;
   const activeTier = cohort.tiers?.find((t) => t.id === selectedTierId);
   const basePrice = activeTier ? activeTier.price : 0;
+  const finalBasePrice = isDuoActive ? getDuoPricing(basePrice).final : basePrice;
+
   const sessionsTotal = cohort.sessions
     ?.filter((s) => s.priceDelta && selectedAddonIds.includes(s.id))
     .reduce((acc, current) => acc + (current.priceDelta || 0), 0) || 0;
+  const finalSessionsTotal = isDuoActive ? getDuoPricing(sessionsTotal).final : sessionsTotal;
+
   const toolkitsTotal = liveToolkits
     ?.filter((t) => selectedToolkitIds.includes(t.id))
     .reduce((acc, current) => acc + current.price, 0) || 0;
-  const subtotal = basePrice + sessionsTotal + toolkitsTotal;
-  const discount = appliedCoupon?.valid ? appliedCoupon.discountAmount : 0;
-  const runningTotal = Math.max(0, subtotal - discount);
+
+  const subtotal = finalBasePrice + finalSessionsTotal + toolkitsTotal;
+  const runningTotal = Math.max(0, subtotal);
 
 
   const toggleAddon = (addonId: string) => {
@@ -326,7 +314,6 @@ export default function CohortLandingPage() {
         buyerEmail,
         buyerPhone: "",
         buddyEmail: buddyEmail || null,
-        couponCode: appliedCoupon?.valid ? couponCode.toUpperCase().trim() : undefined,
       });
 
       if (response.data.free) {
@@ -430,7 +417,68 @@ export default function CohortLandingPage() {
     <div className="min-h-screen bg-[#FAF9F6] text-[#1A1A1A] pb-24 font-sans antialiased">
       {/* 1. Hero Section */}
       <section className="relative w-full aspect-[4/3] md:aspect-[21/9] overflow-hidden flex items-end">
-        {cohort.coverImageUrl ? (
+        {cohort.coverImageUrls && cohort.coverImageUrls.length > 0 ? (
+          <div className="absolute inset-0 w-full h-full">
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={currentSlide}
+                src={cohort.coverImageUrls[currentSlide]}
+                alt={`${cohort.title} slide ${currentSlide + 1}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.7 }}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            </AnimatePresence>
+
+            {/* Carousel navigation arrows */}
+            {cohort.coverImageUrls.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCurrentSlide((prev) =>
+                      prev === 0 ? cohort.coverImageUrls!.length - 1 : prev - 1
+                    )
+                  }
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm transition duration-200"
+                  aria-label="Previous slide"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCurrentSlide((prev) =>
+                      (prev + 1) % cohort.coverImageUrls!.length
+                    )
+                  }
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm transition duration-200"
+                  aria-label="Next slide"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+
+                {/* Dot Indicators */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+                  {cohort.coverImageUrls.map((_, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setCurrentSlide(idx)}
+                      className={cn(
+                        "w-2 h-2 rounded-full transition-all duration-300",
+                        idx === currentSlide ? "bg-white w-4" : "bg-white/50"
+                      )}
+                      aria-label={`Go to slide ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        ) : cohort.coverImageUrl ? (
           <img
             src={cohort.coverImageUrl}
             alt={cohort.title}
@@ -442,27 +490,9 @@ export default function CohortLandingPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
 
         <div className="relative w-full max-w-lg md:max-w-3xl mx-auto px-4 py-8 md:py-16 text-white space-y-4">
-          {/* Badge Pills */}
-          <div className="flex gap-2">
-            {cohort.badge1 && (
-              <span className="bg-[#ff5e14] text-white text-[10px] md:text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-sm">
-                {cohort.badge1}
-              </span>
-            )}
-            {cohort.badge2 && (
-              <span className="bg-white/20 backdrop-blur-sm text-white text-[10px] md:text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border border-white/10">
-                {cohort.badge2}
-              </span>
-            )}
-          </div>
-
           <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight">
             {cohort.title}
           </h1>
-
-          <p className="text-sm md:text-base text-gray-200 font-medium leading-relaxed max-w-xl">
-            {cohort.subtitle}
-          </p>
         </div>
       </section>
 
@@ -626,41 +656,11 @@ export default function CohortLandingPage() {
           </section>
         )}
 
-        {/* 3. What You Get Section */}
-        {cohort.features && cohort.features.length > 0 && (
-          <section className="space-y-6">
-            <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-b-2 border-black pb-1 inline-block">
-              {cohort.featuresHeading || "What You Get"}
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {cohort.features.map((feature) => (
-                <div
-                  key={feature.id}
-                  className="bg-white rounded-xl border border-gray-100 p-4 flex gap-4 items-start shadow-sm hover:shadow transition"
-                >
-                  <div className="bg-orange-50 text-[#ff5e14] p-2.5 rounded-full shrink-0">
-                    <CheckCircle className="w-5 h-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-gray-900 text-sm md:text-base">
-                      {feature.title}
-                    </h3>
-                    <p className="text-xs md:text-sm text-gray-500 leading-relaxed">
-                      {feature.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
         {/* Cohort Curriculum / Sessions Section */}
         {cohort.sessions && cohort.sessions.length > 0 && (
           <section className="space-y-6">
             <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-b-2 border-black pb-1 inline-block">
-              Cohort Sessions & Curriculum
+              {cohort.sessionsHeading || "Cohort Sessions & Curriculum"}
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -690,51 +690,126 @@ export default function CohortLandingPage() {
           </section>
         )}
 
+        {/* What You Get Section */}
+        {cohort.features && cohort.features.length > 0 && (
+          <section className="space-y-6">
+            <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-b-2 border-black pb-1 inline-block">
+              {cohort.featuresHeading || "What You Get"}
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {cohort.features.map((feature) => (
+                <div
+                  key={feature.id}
+                  className="bg-white rounded-xl border border-gray-100 p-4 flex gap-4 items-start shadow-sm hover:shadow transition"
+                >
+                  <div className="bg-orange-50 text-[#ff5e14] p-2.5 rounded-full shrink-0">
+                    <CheckCircle className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="font-bold text-gray-900 text-sm md:text-base">
+                      {feature.title}
+                    </h3>
+                    <p className="text-xs md:text-sm text-gray-500 leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Who Is This For Section */}
+        {cohort.whoIsThisForBullets && cohort.whoIsThisForBullets.length > 0 && (
+          <section className="space-y-6">
+            <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-b-2 border-black pb-1 inline-block">
+              {cohort.whoIsThisForHeading || "Who Is This For?"}
+            </h2>
+
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm">
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {cohort.whoIsThisForBullets.map((bullet, index) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-100 text-[#ff5e14] text-xs font-bold mt-0.5">
+                      {index + 1}
+                    </span>
+                    <span className="text-sm text-gray-650 leading-relaxed text-justify">
+                      {bullet}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
+
         {/* Buddy Program Referral Card */}
         <section className="bg-gradient-to-r from-orange-500 to-[#ff5e14] rounded-2xl p-6 md:p-8 text-white shadow-lg flex flex-col md:flex-row justify-between items-center gap-6 mt-8">
           <div className="space-y-2 text-center md:text-left">
-            <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider">
               <Gift className="w-3.5 h-3.5" /> Buddy Program
             </div>
             <h2 className="text-xl md:text-2xl font-black tracking-tight leading-tight">
-              Refer your buddy & enjoy together!
+              Enjoy Cohort with a friend &lt;3!
             </h2>
             <p className="text-xs md:text-sm text-orange-50/95 max-w-md leading-relaxed">
-              Learn, build, and level up with your friends. Share the access and experience the cohort together.
+              We absolutely love ungatekeepers. So, here is something for you. Enroll with a friend - get straight up 20% off &amp; a partner to level up with (ek teer se do nishaane, lessgoo!)
             </p>
           </div>
-          <Dialog open={isBuddyDialogOpen} onOpenChange={setIsBuddyDialogOpen}>
-            <DialogTrigger asChild>
+          <button
+            type="button"
+            onClick={() => setIsBuddyDialogOpen(true)}
+            className="w-full md:w-auto bg-white hover:bg-neutral-100 text-[#ff5e14] font-bold text-xs md:text-sm py-3 px-6 rounded-xl transition shadow-md whitespace-nowrap shrink-0 flex items-center justify-center gap-2"
+          >
+            <Gift className="w-4 h-4" />
+            Invite Buddy Now
+          </button>
+        </section>
+
+        {/* Buddy Program Modal - rendered outside section to avoid z-index/blur conflicts */}
+        {isBuddyDialogOpen && (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+            onClick={(e) => { if (e.target === e.currentTarget) setIsBuddyDialogOpen(false); }}
+            style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          >
+            <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-md p-6 relative overflow-hidden">
+              {/* Decorative blob */}
+              <div className="absolute top-0 right-0 w-40 h-40 bg-orange-50 rounded-full blur-3xl -z-10 translate-x-10 -translate-y-10 pointer-events-none" />
+
+              {/* Close X button */}
               <button
-                className="w-full md:w-auto bg-white hover:bg-neutral-100 text-[#ff5e14] font-bold text-xs md:text-sm py-3 px-6 rounded-xl transition shadow-md whitespace-nowrap shrink-0 flex items-center justify-center gap-2"
+                type="button"
+                onClick={() => setIsBuddyDialogOpen(false)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-800 transition"
               >
-                Invite Buddy Now
+                <X className="w-4 h-4" />
               </button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md p-6 bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden relative">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-full blur-3xl -z-10 translate-x-8 -translate-y-8" />
-              
-              <DialogHeader className="space-y-3 text-center flex flex-col items-center">
+
+              {/* Header */}
+              <div className="flex flex-col items-center text-center space-y-3 mb-6">
                 <span className="bg-orange-50 text-[#ff5e14] text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-orange-100">
                   Buddy Benefit
                 </span>
                 <div className="bg-gradient-to-br from-orange-100 to-orange-200 text-[#ff5e14] p-3.5 rounded-2xl w-fit shadow-inner">
                   <Gift className="w-6 h-6 animate-bounce" />
                 </div>
-                <DialogTitle className="text-xl font-extrabold text-gray-900 leading-tight">
-                  Enjoy Cohort with a Friend!
-                </DialogTitle>
-                <DialogDescription className="text-xs text-gray-500 max-w-sm leading-relaxed text-center">
-                  Share the experience, collaborate on cohort assignments, and build together. Copy the link below or send it directly via WhatsApp.
-                </DialogDescription>
-              </DialogHeader>
+                <h3 className="text-xl font-extrabold text-gray-900 leading-tight">
+                  Enjoy Cohort with a friend &lt;3!
+                </h3>
+                <p className="text-xs text-gray-500 max-w-sm leading-relaxed">
+                  We absolutely love ungatekeepers. So, here is something for you. Enroll with a friend - get straight up 20% off &amp; a partner to level up with (ek teer se do nishaane, lessgoo!)
+                </p>
+              </div>
 
-              <div className="space-y-4 py-4">
+              {/* Share link */}
+              <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">
                     Cohort Share Link
                   </label>
-                  <div className="flex gap-2 bg-gray-50 border border-gray-200 rounded-2xl p-2 items-center focus-within:ring-2 focus-within:ring-[#ff5e14]/20 transition-all">
+                  <div className="flex gap-2 bg-gray-50 border border-gray-200 rounded-2xl p-2 items-center">
                     <span className="text-xs text-gray-600 truncate flex-1 pl-2 font-medium select-all">
                       {typeof window !== "undefined" ? window.location.href : ""}
                     </span>
@@ -744,61 +819,56 @@ export default function CohortLandingPage() {
                       className="bg-black hover:bg-neutral-800 text-white text-xs font-bold px-4 py-2 rounded-xl transition duration-200 shrink-0 flex items-center gap-1.5 shadow"
                     >
                       {copied ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-emerald-400" /> Copied!
-                        </>
+                        <><Check className="w-3.5 h-3.5 text-emerald-400" /> Copied!</>
                       ) : (
-                        <>
-                          <Copy className="w-3.5 h-3.5 text-gray-300" /> Copy Link
-                        </>
+                        <><Copy className="w-3.5 h-3.5 text-gray-300" /> Copy Link</>
                       )}
                     </button>
                   </div>
                 </div>
 
-                {/* Quick Share to WhatsApp */}
+                {/* WhatsApp Share */}
                 <a
                   href={`https://wa.me/?text=${encodeURIComponent(`Hey! I was checking out this amazing cohort program: "${cohort?.title}". Let's apply and do it together! Check it out here: ${typeof window !== "undefined" ? window.location.href : ""}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-3.5 px-4 rounded-2xl transition duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
                 >
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.965C16.588 1.978 14.12 .952 11.998.951 6.559.951 2.134 5.325 2.13 10.756c-.001 1.674.444 3.308 1.292 4.773L2.4 20.803l5.35-1.393c.001-.001.002-.001.003-.002z" />
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 shrink-0" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 0 0 1.333 4.982L2 22l5.202-1.362a9.923 9.923 0 0 0 4.808 1.236h.005c5.505 0 9.99-4.477 9.99-9.985C22.005 6.478 17.518 2 12.012 2Zm5.845 14.285c-.244.686-1.42 1.328-1.948 1.41-.478.077-1.101.144-3.187-.723-2.667-1.108-4.37-3.816-4.502-3.992-.133-.176-1.077-1.43-1.077-2.729 0-1.298.679-1.937.922-2.202.244-.265.533-.332.71-.332.178 0 .356.006.51.013.162.008.38-.06.593.453.22.532.753 1.836.82 1.968.067.133.11.288.022.465-.088.177-.133.288-.266.443-.133.155-.28.347-.4.493-.133.16-.272.336-.117.6.155.265.686 1.132 1.47 1.831.99.885 1.823 1.157 2.08 1.288.254.133.403.11.553-.066.15-.177.643-.753.815-.996.172-.244.344-.2.58-.112.235.088 1.492.703 1.748.83.256.128.427.194.49.305.061.11.061.643-.183 1.329Z" />
                   </svg>
                   Share via WhatsApp
                 </a>
               </div>
 
-              <div className="flex gap-2 pt-2 border-t border-gray-100">
-                <DialogClose asChild>
-                  <button
-                    type="button"
-                    className="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-xs py-3 rounded-2xl transition duration-200"
-                  >
-                    Cancel
-                  </button>
-                </DialogClose>
-                <DialogClose asChild>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsDrawerOpen(true);
-                    }}
-                    className="flex-1 bg-gradient-to-r from-[#ff5e14] to-[#ff7a3d] hover:from-[#e04f0f] hover:to-[#ff5e14] text-white font-bold text-xs py-3 rounded-2xl transition duration-200 shadow-md hover:shadow-lg transform active:scale-95"
-                  >
-                    Apply Now
-                  </button>
-                </DialogClose>
+              {/* Footer Actions */}
+              <div className="flex gap-2 pt-4 mt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setIsBuddyDialogOpen(false)}
+                  className="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-xs py-3 rounded-2xl transition duration-200"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsBuddyDialogOpen(false);
+                    setIsDrawerOpen(true);
+                  }}
+                  className="flex-1 bg-gradient-to-r from-[#ff5e14] to-[#ff7a3d] hover:from-[#e04f0f] hover:to-[#ff5e14] text-white font-bold text-xs py-3 rounded-2xl transition duration-200 shadow-md hover:shadow-lg"
+                >
+                  Apply Now
+                </button>
               </div>
-            </DialogContent>
-          </Dialog>
-        </section>
+            </div>
+          </div>
+        )}
 
         {/* Testimonials Section */}
         <section className="space-y-6 pt-6">
           <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-b-2 border-black pb-1 inline-block">
-            What Members Say About Our Ecosystem
+            {cohort.testimonialsHeading || "What Members Say About Our Ecosystem"}
           </h2>
           <StackedTestimonials />
         </section>
@@ -813,6 +883,9 @@ export default function CohortLandingPage() {
             rel="noopener noreferrer"
             className="flex-1 text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm md:text-base py-3 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-1.5"
           >
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 shrink-0 md:w-5 md:h-5" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 0 0 1.333 4.982L2 22l5.202-1.362a9.923 9.923 0 0 0 4.808 1.236h.005c5.505 0 9.99-4.477 9.99-9.985C22.005 6.478 17.518 2 12.012 2Zm5.845 14.285c-.244.686-1.42 1.328-1.948 1.41-.478.077-1.101.144-3.187-.723-2.667-1.108-4.37-3.816-4.502-3.992-.133-.176-1.077-1.43-1.077-2.729 0-1.298.679-1.937.922-2.202.244-.265.533-.332.71-.332.178 0 .356.006.51.013.162.008.38-.06.593.453.22.532.753 1.836.82 1.968.067.133.11.288.022.465-.088.177-.133.288-.266.443-.133.155-.28.347-.4.493-.133.16-.272.336-.117.6.155.265.686 1.132 1.47 1.831.99.885 1.823 1.157 2.08 1.288.254.133.403.11.553-.066.15-.177.643-.753.815-.996.172-.244.344-.2.58-.112.235.088 1.492.703 1.748.83.256.128.427.194.49.305.061.11.061.643-.183 1.329Z" />
+            </svg>
             Enquire Now
           </a>
 
@@ -901,9 +974,19 @@ export default function CohortLandingPage() {
                             )}
                           </div>
                           <div className="flex flex-col items-end">
-                            <span className="font-bold text-sm text-[#ff5e14]">₹{tier.price}</span>
-                            {(tier as any).originalPrice && (tier as any).originalPrice > tier.price && (
-                              <span className="line-through text-gray-400 text-xs mt-0.5">₹{(tier as any).originalPrice}</span>
+                            {isDuoActive ? (
+                              <>
+                                <span className="font-bold text-sm text-[#ff5e14]">₹{getDuoPricing(tier.price).final}</span>
+                                <span className="line-through text-gray-405 text-[10px]">₹{getDuoPricing(tier.price).reference}</span>
+                                <span className="text-[9px] text-emerald-600 font-medium whitespace-nowrap">≈ ₹{getDuoPricing(tier.price).perHead}/head</span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="font-bold text-sm text-[#ff5e14]">₹{tier.price}</span>
+                                {(tier as any).originalPrice && (tier as any).originalPrice > tier.price && (
+                                  <span className="line-through text-gray-400 text-xs mt-0.5">₹{(tier as any).originalPrice}</span>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
@@ -946,7 +1029,17 @@ export default function CohortLandingPage() {
                               <p className="text-[10px] text-gray-500">{session.description}</p>
                             </div>
                           </div>
-                          <span className="font-bold text-xs text-[#ff5e14] whitespace-nowrap">+ ₹{session.priceDelta}</span>
+                          <div className="text-right whitespace-nowrap">
+                            {isDuoActive ? (
+                              <>
+                                <span className="font-bold text-xs text-[#ff5e14] block">+ ₹{getDuoPricing(session.priceDelta || 0).final}</span>
+                                <span className="line-through text-gray-400 text-[10px] block">₹{getDuoPricing(session.priceDelta || 0).reference}</span>
+                                <span className="text-[9px] text-emerald-600 font-medium block">≈ ₹{getDuoPricing(session.priceDelta || 0).perHead}/head</span>
+                              </>
+                            ) : (
+                              <span className="font-bold text-xs text-[#ff5e14] block">+ ₹{session.priceDelta}</span>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
@@ -1001,49 +1094,7 @@ export default function CohortLandingPage() {
                 </div>
               )}
 
-              {/* Discount / Coupon System */}
-              <div className="space-y-3 border-t pt-4">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Promo Code</h4>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Enter coupon code"
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !isValidatingCoupon) {
-                        e.preventDefault();
-                        handleApplyCoupon();
-                      }
-                    }}
-                    disabled={isValidatingCoupon || !!appliedCoupon?.valid}
-                    className="flex-1 px-3 py-2 border rounded-lg text-sm uppercase"
-                  />
-                  {appliedCoupon?.valid ? (
-                    <button
-                      type="button"
-                      onClick={handleRemoveCoupon}
-                      className="px-4 py-2 border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-50"
-                    >
-                      Remove
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleApplyCoupon}
-                      disabled={isValidatingCoupon || !couponCode.trim()}
-                      className="px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-lg text-xs font-semibold transition disabled:opacity-50"
-                    >
-                      {isValidatingCoupon ? "..." : "Apply"}
-                    </button>
-                  )}
-                </div>
-                {appliedCoupon?.valid && (
-                  <p className="text-xs font-medium text-green-600">
-                    Coupon applied! Save ₹{appliedCoupon.discountAmount}
-                  </p>
-                )}
-              </div>
+
 
               {/* Buyer Contact info */}
               <div className="space-y-3 border-t pt-4">
@@ -1091,7 +1142,19 @@ export default function CohortLandingPage() {
             <div className="p-4 bg-gray-50 border-t flex items-center justify-between shrink-0">
               <div className="flex flex-col">
                 <span className="text-[9px] text-gray-400 font-bold uppercase">Payable Price</span>
-                <span className="font-black text-gray-900 text-lg">₹{runningTotal}</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-black text-gray-900 text-lg">₹{runningTotal}</span>
+                  {isDuoActive && (selectedTierId || selectedAddonIds.length > 0) && (
+                    <span className="line-through text-xs text-gray-400">₹{
+                      getDuoPricing(selectedTierId ? basePrice : sessionsTotal).reference
+                    }</span>
+                  )}
+                </div>
+                {isDuoActive && (selectedTierId || selectedAddonIds.length > 0) && (
+                  <span className="text-[10px] text-emerald-600 font-semibold mt-0.5">
+                    ≈ ₹{getDuoPricing(selectedTierId ? basePrice : sessionsTotal).perHead} per person (Duo Discount Applied)
+                  </span>
+                )}
                 {!(selectedTierId || selectedAddonIds.length > 0) && (
                   <span className="text-[9px] text-red-500 font-semibold mt-0.5">Please select a tier or session</span>
                 )}

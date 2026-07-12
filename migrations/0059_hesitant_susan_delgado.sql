@@ -1,0 +1,2 @@
+ALTER TABLE "cohorts" ADD COLUMN "sessions_heading" text DEFAULT 'Cohort Sessions & Curriculum';--> statement-breakpoint
+ALTER TABLE "cohorts" ADD COLUMN "testimonials_heading" text DEFAULT 'What Members Say About Our Ecosystem';

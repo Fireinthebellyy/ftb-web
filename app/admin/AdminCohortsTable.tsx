@@ -78,6 +78,7 @@ interface Cohort {
   badge2: string;
   subtitle: string;
   coverImageUrl: string;
+  coverImageUrls?: string[] | null;
   cardImageUrl?: string | null;
   startDate?: string | null;
   highlights?: string[] | null;
@@ -85,11 +86,17 @@ interface Cohort {
   mentorsLinkTarget: string;
   mentorsLimit: number;
   featuresHeading: string;
+  sessionsHeading?: string | null;
+  testimonialsHeading?: string | null;
+  whoIsThisForHeading?: string | null;
+  whoIsThisForBullets?: string[] | null;
   investmentLabel: string;
   basePrice: number;
   originalPrice?: number | null;
   toolkitId?: string | null;
   isActive: boolean;
+  isBestSeller?: boolean | null;
+  isFillingFast?: boolean | null;
   mentors?: Mentor[];
   features?: Feature[];
   tiers?: Tier[];
@@ -201,7 +208,19 @@ export default function AdminCohortsTable() {
     setIsLoading(true);
     try {
       const response = await axios.get(`/api/admin/cohorts/${cohortId}`);
-      setEditingCohort(response.data);
+      const data = response.data;
+      const urls = data.coverImageUrls || [];
+      const coverImageUrls = [
+        urls[0] || data.coverImageUrl || "",
+        urls[1] || "",
+        urls[2] || ""
+      ];
+      setEditingCohort({
+        ...data,
+        coverImageUrls,
+        sessionsHeading: data.sessionsHeading || "Cohort Sessions & Curriculum",
+        testimonialsHeading: data.testimonialsHeading || "What Members Say About Our Ecosystem"
+      });
       setActiveEditTab("details");
       setEditDialogOpen(true);
     } catch (err) {
@@ -247,7 +266,7 @@ export default function AdminCohortsTable() {
     setIsUploading(true);
     try {
       const { publicUrl } = await uploadFileViaSignedUrl({
-        domain: "opportunity-images",
+        domain: "ungatekeep-images",
         file,
       });
       callback(publicUrl);
@@ -647,22 +666,7 @@ export default function AdminCohortsTable() {
                       onChange={(e) => setEditingCohort({ ...editingCohort, slug: e.target.value })}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1.5">
-                      <Label>Badge Left (e.g. Cohort Batch)</Label>
-                      <Input
-                        value={editingCohort.badge1}
-                        onChange={(e) => setEditingCohort({ ...editingCohort, badge1: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Badge Right (e.g. Duration)</Label>
-                      <Input
-                        value={editingCohort.badge2}
-                        onChange={(e) => setEditingCohort({ ...editingCohort, badge2: e.target.value })}
-                      />
-                    </div>
-                  </div>
+
                   <div className="space-y-1.5">
                     <Label>Description / Subtitle</Label>
                     <Textarea
@@ -734,32 +738,229 @@ export default function AdminCohortsTable() {
                       + Add Key Feature
                     </button>
                   </div>
+
+                  <div className="space-y-2 border-t pt-3">
+                    <Label className="text-xs font-semibold">Who Is This For? - Section Heading</Label>
+                    <Input
+                      value={editingCohort.whoIsThisForHeading || ""}
+                      onChange={(e) => setEditingCohort({ ...editingCohort, whoIsThisForHeading: e.target.value })}
+                      placeholder="e.g. Who Is This For?"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold">Who Is This For? - Bullet Points</Label>
+                    <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
+                      {(editingCohort.whoIsThisForBullets || []).map((bullet, idx) => (
+                        <div key={idx} className="flex gap-2 items-center">
+                          <Input
+                            value={bullet}
+                            onChange={(e) => {
+                              const newBullets = [...(editingCohort.whoIsThisForBullets || [])];
+                              newBullets[idx] = e.target.value;
+                              setEditingCohort({ ...editingCohort, whoIsThisForBullets: newBullets });
+                            }}
+                            placeholder={`Point #${idx + 1}`}
+                            className="flex-1 text-sm h-8"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newBullets = (editingCohort.whoIsThisForBullets || []).filter((_, i) => i !== idx);
+                              setEditingCohort({ ...editingCohort, whoIsThisForBullets: newBullets });
+                            }}
+                            className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-md transition shrink-0"
+                            title="Remove"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newBullets = [...(editingCohort.whoIsThisForBullets || []), ""];
+                        setEditingCohort({ ...editingCohort, whoIsThisForBullets: newBullets });
+                      }}
+                      className="text-xs font-bold text-[#ff5e14] hover:underline flex items-center gap-1.5 pt-1"
+                    >
+                      + Add Target Audience Point
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-4 border-t pt-4 md:border-t-0 md:pt-0 md:border-l md:pl-4">
-                  <div className="space-y-1.5">
-                    <Label>Hero Banner Image</Label>
-                    {editingCohort.coverImageUrl && (
-                      <img
-                        src={editingCohort.coverImageUrl}
-                        alt="Hero preview"
-                        className="w-full h-32 object-cover rounded-lg border mb-2"
-                      />
-                    )}
-                    <div className="flex gap-2">
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            handleImageUpload(file, (url) =>
-                              setEditingCohort({ ...editingCohort, coverImageUrl: url })
-                            );
-                          }
-                        }}
-                      />
-                      {isUploading && <Loader2 className="w-5 h-5 animate-spin" />}
+                  <div className="space-y-4">
+                    <Label className="text-sm font-bold text-gray-800 block">Hero Banner Images (Max 3 for Carousel)</Label>
+                    
+                    {/* Banner 1 */}
+                    <div className="border p-3 rounded-xl bg-gray-50/50 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-semibold text-gray-700">1. Hero Banner Image (Primary)</span>
+                        {editingCohort.coverImageUrl && (
+                          <span className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded border border-green-150">Active</span>
+                        )}
+                      </div>
+                      {editingCohort.coverImageUrl && (
+                        <img
+                          src={editingCohort.coverImageUrl}
+                          alt="Primary banner preview"
+                          className="w-full h-20 object-cover rounded-lg border"
+                        />
+                      )}
+                      <div className="space-y-1">
+                        <Label className="text-[10px] text-gray-500 font-bold block uppercase tracking-wider">Upload Image File</Label>
+                        <div className="flex gap-2 items-center">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleImageUpload(file, (url) => {
+                                  const urls = [...(editingCohort.coverImageUrls || [])];
+                                  urls[0] = url;
+                                  setEditingCohort({
+                                    ...editingCohort,
+                                    coverImageUrl: url,
+                                    coverImageUrls: urls
+                                  });
+                                });
+                              }
+                            }}
+                          />
+                          {isUploading && <Loader2 className="w-5 h-5 animate-spin shrink-0" />}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] text-gray-500 font-bold block uppercase tracking-wider">Or Image URL</Label>
+                        <Input
+                          value={editingCohort.coverImageUrl || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const urls = [...(editingCohort.coverImageUrls || [])];
+                            urls[0] = val;
+                            setEditingCohort({
+                              ...editingCohort,
+                              coverImageUrl: val,
+                              coverImageUrls: urls
+                            });
+                          }}
+                          placeholder="https://example.com/banner-primary.jpg"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Banner 2 */}
+                    <div className="border p-3 rounded-xl bg-gray-50/50 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-semibold text-gray-700">2. Hero Banner Image 2 (Optional)</span>
+                        {editingCohort.coverImageUrls?.[1] && (
+                          <span className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded border border-green-150">Active</span>
+                        )}
+                      </div>
+                      {editingCohort.coverImageUrls?.[1] && (
+                        <img
+                          src={editingCohort.coverImageUrls[1]}
+                          alt="Banner 2 preview"
+                          className="w-full h-20 object-cover rounded-lg border"
+                        />
+                      )}
+                      <div className="space-y-1">
+                        <Label className="text-[10px] text-gray-500 font-bold block uppercase tracking-wider">Upload Image File</Label>
+                        <div className="flex gap-2 items-center">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleImageUpload(file, (url) => {
+                                  const urls = [...(editingCohort.coverImageUrls || [])];
+                                  urls[1] = url;
+                                  setEditingCohort({
+                                    ...editingCohort,
+                                    coverImageUrls: urls
+                                  });
+                                });
+                              }
+                            }}
+                          />
+                          {isUploading && <Loader2 className="w-5 h-5 animate-spin shrink-0" />}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] text-gray-500 font-bold block uppercase tracking-wider">Or Image URL</Label>
+                        <Input
+                          value={editingCohort.coverImageUrls?.[1] || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const urls = [...(editingCohort.coverImageUrls || [])];
+                            urls[1] = val;
+                            setEditingCohort({
+                              ...editingCohort,
+                              coverImageUrls: urls
+                            });
+                          }}
+                          placeholder="https://example.com/banner-2.jpg"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Banner 3 */}
+                    <div className="border p-3 rounded-xl bg-gray-50/50 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-semibold text-gray-700">3. Hero Banner Image 3 (Optional)</span>
+                        {editingCohort.coverImageUrls?.[2] && (
+                          <span className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded border border-green-150">Active</span>
+                        )}
+                      </div>
+                      {editingCohort.coverImageUrls?.[2] && (
+                        <img
+                          src={editingCohort.coverImageUrls[2]}
+                          alt="Banner 3 preview"
+                          className="w-full h-20 object-cover rounded-lg border"
+                        />
+                      )}
+                      <div className="space-y-1">
+                        <Label className="text-[10px] text-gray-500 font-bold block uppercase tracking-wider">Upload Image File</Label>
+                        <div className="flex gap-2 items-center">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleImageUpload(file, (url) => {
+                                  const urls = [...(editingCohort.coverImageUrls || [])];
+                                  urls[2] = url;
+                                  setEditingCohort({
+                                    ...editingCohort,
+                                    coverImageUrls: urls
+                                  });
+                                });
+                              }
+                            }}
+                          />
+                          {isUploading && <Loader2 className="w-5 h-5 animate-spin shrink-0" />}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] text-gray-500 font-bold block uppercase tracking-wider">Or Image URL</Label>
+                        <Input
+                          value={editingCohort.coverImageUrls?.[2] || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const urls = [...(editingCohort.coverImageUrls || [])];
+                            urls[2] = val;
+                            setEditingCohort({
+                              ...editingCohort,
+                              coverImageUrls: urls
+                            });
+                          }}
+                          placeholder="https://example.com/banner-3.jpg"
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -815,7 +1016,7 @@ export default function AdminCohortsTable() {
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
+                   <div className="space-y-1.5">
                     <Label>Features Section Heading</Label>
                     <Input
                       value={editingCohort.featuresHeading}
@@ -823,7 +1024,23 @@ export default function AdminCohortsTable() {
                     />
                   </div>
 
-                  <div className="flex gap-6 items-center pt-2">
+                  <div className="space-y-1.5">
+                    <Label>Curriculum / Sessions Section Heading</Label>
+                    <Input
+                      value={editingCohort.sessionsHeading || ""}
+                      onChange={(e) => setEditingCohort({ ...editingCohort, sessionsHeading: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label>Testimonials Section Heading</Label>
+                    <Input
+                      value={editingCohort.testimonialsHeading || ""}
+                      onChange={(e) => setEditingCohort({ ...editingCohort, testimonialsHeading: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-4 pt-2">
                     <div className="flex items-center space-x-2">
                       <Switch
                         id="cohort-active"
@@ -831,6 +1048,24 @@ export default function AdminCohortsTable() {
                         onCheckedChange={(val) => setEditingCohort({ ...editingCohort, isActive: val })}
                       />
                       <Label htmlFor="cohort-active">Active (Visible to public)</Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="cohort-best-seller"
+                        checked={!!editingCohort.isBestSeller}
+                        onCheckedChange={(val) => setEditingCohort({ ...editingCohort, isBestSeller: val })}
+                      />
+                      <Label htmlFor="cohort-best-seller">Best Seller Tag</Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="cohort-filling-fast"
+                        checked={!!editingCohort.isFillingFast}
+                        onCheckedChange={(val) => setEditingCohort({ ...editingCohort, isFillingFast: val })}
+                      />
+                      <Label htmlFor="cohort-filling-fast">Filling Fast Tag</Label>
                     </div>
                   </div>
                 </div>

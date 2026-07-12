@@ -1,10 +1,20 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cohorts, cohortTiers, cohortOrders, coupons, userToolkits, toolkits, cohortSessions, user } from "@/lib/schema";
 import { eq, and, inArray, sql } from "drizzle-orm";
+import { cohorts, cohortTiers, cohortOrders, coupons, userToolkits, toolkits, cohortSessions, user } from "@/lib/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { createOrder } from "@/lib/razorpay";
+export function getDuoPricing(singlePrice: number) {
+  if (!singlePrice || singlePrice <= 0) {
+    return { reference: 0, final: 0, perHead: 0 };
+  }
+  const raw_duo = singlePrice * 2;
+  const reference = Math.ceil((raw_duo + 1) / 100) * 100 - 1;
+  const final = Math.round((reference * 0.8) / 10) * 10 - 1;
+  const perHead = Math.round(final / 2);
+  return { reference, final, perHead };
+}
 
 export async function POST(
   request: Request,
@@ -118,6 +128,7 @@ export async function POST(
       });
     }
 
+    const isDuoActive = buddyEmail && buddyEmail.trim().length > 0;
     // 4. Validate Coupon if provided
     let discountAmount = 0;
     let couponId: string | null = null;
@@ -159,8 +170,10 @@ export async function POST(
         }
         
         if (isValid) {
+          const subtotalForDiscount = (isDuoActive ? getDuoPricing(tierPrice).final : tierPrice) + 
+                                      (isDuoActive ? getDuoPricing(addonsTotal).final : addonsTotal) + 
+                                      toolkitsTotal;
           if (coupon.discountType === "percentage") {
-            const subtotalForDiscount = tierPrice + addonsTotal + toolkitsTotal;
             discountAmount = Math.round((subtotalForDiscount * coupon.discountAmount) / 100);
           } else {
             discountAmount = coupon.discountAmount;
@@ -171,7 +184,10 @@ export async function POST(
     }
 
     // 5. Compute Total price (in rupees)
-    const subtotal = tierPrice + addonsTotal + toolkitsTotal;
+    const finalTierPrice = isDuoActive ? getDuoPricing(tierPrice).final : tierPrice;
+    const finalAddonsTotal = isDuoActive ? getDuoPricing(addonsTotal).final : addonsTotal;
+
+    const subtotal = finalTierPrice + finalAddonsTotal + toolkitsTotal;
     const finalPriceRupees = Math.max(0, subtotal - discountAmount);
     const finalPricePaisa = finalPriceRupees * 100; // Razorpay needs amount in paisa
 

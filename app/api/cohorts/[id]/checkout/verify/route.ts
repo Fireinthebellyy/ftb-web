@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cohortOrders, cohorts, userToolkits, user } from "@/lib/schema";
-import { eq, and } from "drizzle-orm";
-import { createHmac } from "crypto";
+import { cohortOrders, cohorts, coupons, userToolkits, user } from "@/lib/schema";
+import { eq, and, sql } from "drizzle-orm";
+import { createHmac, timingSafeEqual } from "crypto";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { razorpayKeySecret } from "@/lib/razorpay";
@@ -25,13 +25,19 @@ export async function POST(
       );
     }
 
-    // 1. Verify signature
+    // 1. Verify signature (timing-safe to prevent timing attacks)
     const secret = razorpayKeySecret;
     const expectedSignature = createHmac("sha256", secret)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
 
-    if (expectedSignature !== razorpay_signature) {
+    const expectedBuf = Buffer.from(expectedSignature, "hex");
+    const receivedBuf = Buffer.from(razorpay_signature, "hex");
+    const signaturesMatch =
+      expectedBuf.length === receivedBuf.length &&
+      timingSafeEqual(expectedBuf, receivedBuf);
+
+    if (!signaturesMatch) {
       return NextResponse.json({ error: "Invalid payment signature" }, { status: 400 });
     }
 
@@ -65,8 +71,8 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Update order status to paid
-    await db
+    // Update order status to paid — only if currently pending (prevents replay)
+    const updatedOrders = await db
       .update(cohortOrders)
       .set({
         razorpayPaymentId: razorpay_payment_id,
@@ -75,9 +81,25 @@ export async function POST(
       .where(
         and(
           eq(cohortOrders.cohortId, cohortId),
-          eq(cohortOrders.razorpayOrderId, razorpay_order_id)
+          eq(cohortOrders.razorpayOrderId, razorpay_order_id),
+          eq(cohortOrders.status, "pending")
         )
-      );
+      )
+      .returning({ couponId: cohortOrders.couponId });
+
+    if (updatedOrders.length === 0) {
+      // Order already verified or not found in pending state
+      return NextResponse.json({ success: true, alreadyVerified: true });
+    }
+
+    // Increment coupon usage if a coupon was applied
+    const appliedCouponId = updatedOrders[0].couponId;
+    if (appliedCouponId) {
+      await db
+        .update(coupons)
+        .set({ currentUses: sql`${coupons.currentUses} + 1` })
+        .where(eq(coupons.id, appliedCouponId));
+    }
 
     // If cohort is linked to a toolkit, grant content access
     const cohort = await db.query.cohorts.findFirst({

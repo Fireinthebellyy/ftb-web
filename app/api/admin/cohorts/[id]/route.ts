@@ -193,7 +193,7 @@ export async function PUT(
               link: m.link,
               orderIndex: i,
             })
-            .where(eq(cohortMentors.id, m.id));
+            .where(and(eq(cohortMentors.id, m.id), eq(cohortMentors.cohortId, cohortId)));
         } else {
           await tx.insert(cohortMentors).values({
             cohortId,

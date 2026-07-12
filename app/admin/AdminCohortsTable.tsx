@@ -297,9 +297,14 @@ export default function AdminCohortsTable() {
       new Date(order.createdAt).toLocaleString(),
     ]);
 
+    const sanitizeCSV = (val: string): string => {
+      if (/^[=+\-@]/.test(val)) return `\t${val}`;
+      return val;
+    };
+
     const csvContent =
       "data:text/csv;charset=utf-8," +
-      [headers.join(","), ...rows.map((e) => e.map((val) => `"${val.replace(/"/g, '""')}"`).join(","))].join("\n");
+      [headers.join(","), ...rows.map((e) => e.map((val) => `"${sanitizeCSV(String(val)).replace(/"/g, '""')}"`).join(","))].join("\n");
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");

@@ -53,7 +53,9 @@ export async function GET(
             eq(cohortOrders.status, "paid"),
             or(
               eq(cohortOrders.userId, session.user.id),
-              session.user.email ? eq(cohortOrders.buddyEmail, session.user.email.trim().toLowerCase()) : undefined
+              session.user.email && session.user.emailVerified
+                ? eq(cohortOrders.buddyEmail, session.user.email.trim().toLowerCase())
+                : undefined
             )
           )
         )

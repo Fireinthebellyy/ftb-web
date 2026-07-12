@@ -159,7 +159,12 @@ export async function POST(
         }
         
         if (isValid) {
-          discountAmount = coupon.discountAmount;
+          if (coupon.discountType === "percentage") {
+            const subtotalForDiscount = tierPrice + addonsTotal + toolkitsTotal;
+            discountAmount = Math.round((subtotalForDiscount * coupon.discountAmount) / 100);
+          } else {
+            discountAmount = coupon.discountAmount;
+          }
           couponId = coupon.id;
         }
       }
@@ -185,7 +190,7 @@ export async function POST(
           selectedAddOnIds,
           selectedToolkitIds,
           amountPaid: 0,
-          razorpayOrderId: "free_cohort_" + Date.now().toString().slice(-6),
+          razorpayOrderId: "free_cohort_" + crypto.randomUUID(),
           couponId,
           status: "paid",
         })
@@ -254,6 +259,14 @@ export async function POST(
             amountPaid: 0,
           });
         }
+      }
+
+      // Increment coupon usage if a coupon was applied
+      if (couponId) {
+        await db
+          .update(coupons)
+          .set({ currentUses: sql`${coupons.currentUses} + 1` })
+          .where(eq(coupons.id, couponId));
       }
 
       return NextResponse.json({

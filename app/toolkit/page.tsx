@@ -18,6 +18,21 @@ import { cn } from "@/lib/utils";
 import { Check, Share2 } from "lucide-react";
 import Link from "next/link";
 
+interface CohortCard {
+  id: string;
+  title: string;
+  slug: string;
+  subtitle?: string | null;
+  badge1?: string | null;
+  badge2?: string | null;
+  cardImageUrl?: string | null;
+  coverImageUrl?: string | null;
+  startDate?: string | null;
+  basePrice?: number | null;
+  originalPrice?: number | null;
+  highlights?: string[] | null;
+}
+
 export default function ToolkitPage() {
   const { data: session, isPending: sessionPending } = useSession();
   const router = useRouter();
@@ -53,7 +68,7 @@ export default function ToolkitPage() {
     enabled: !!session?.user,
   });
 
-  const { data: cohortsData = [], isLoading: cohortsLoading } = useQuery<any[]>({
+  const { data: cohortsData = [], isLoading: cohortsLoading } = useQuery<CohortCard[]>({
     queryKey: ["cohorts"],
     queryFn: async () => {
       try {
@@ -233,12 +248,16 @@ export default function ToolkitPage() {
                     </Link>
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={async () => {
                         const url = `${window.location.origin}/toolkit/cohorts/${cohort.id}`;
-                        navigator.clipboard.writeText(url);
-                        toast.success("Cohort link copied to clipboard!");
+                        try {
+                          await navigator.clipboard.writeText(url);
+                          toast.success("Cohort link copied to clipboard!");
+                        } catch {
+                          toast.error("Failed to copy link. Please copy the URL manually.");
+                        }
                       }}
-                      className="p-2 border border-gray-250 hover:bg-gray-100 text-gray-500 hover:text-gray-900 rounded-lg transition duration-200 shadow-sm shrink-0 flex items-center justify-center"
+                      className="p-2 border border-gray-200 hover:bg-gray-100 text-gray-500 hover:text-gray-900 rounded-lg transition duration-200 shadow-sm shrink-0 flex items-center justify-center"
                       title="Share Cohort"
                     >
                       <Share2 className="w-4 h-4" />

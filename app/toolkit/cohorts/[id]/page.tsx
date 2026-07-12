@@ -358,9 +358,16 @@ export default function CohortLandingPage() {
 
       const { order } = response.data;
 
+      const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+      if (!razorpayKey) {
+        toast.error("Payment configuration error. Please contact support.");
+        setIsProcessingCheckout(false);
+        return;
+      }
+
       // 3. Open Razorpay Widget
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_Rn3176vtFZ2Fvi",
+        key: razorpayKey,
         amount: order.amount,
         currency: order.currency,
         name: "Fire In The Belly",

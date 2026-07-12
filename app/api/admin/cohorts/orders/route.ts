@@ -22,6 +22,7 @@ export async function GET() {
         buyerName: cohortOrders.buyerName,
         buyerEmail: cohortOrders.buyerEmail,
         buyerPhone: cohortOrders.buyerPhone,
+        buddyEmail: cohortOrders.buddyEmail,
         amountPaid: cohortOrders.amountPaid,
         razorpayOrderId: cohortOrders.razorpayOrderId,
         razorpayPaymentId: cohortOrders.razorpayPaymentId,

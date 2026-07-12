@@ -122,7 +122,7 @@ export default function CohortLandingPage() {
   const [liveToolkits, setLiveToolkits] = useState<any[]>([]);
   const [buyerName, setBuyerName] = useState("");
   const [buyerEmail, setBuyerEmail] = useState("");
-  const [buyerPhone, setBuyerPhone] = useState("");
+  const [buddyEmail, setBuddyEmail] = useState("");
 
   // Buddy Program states
   const [isBuddyDialogOpen, setIsBuddyDialogOpen] = useState(false);
@@ -324,7 +324,8 @@ export default function CohortLandingPage() {
         selectedToolkitIds: selectedToolkitIds,
         buyerName,
         buyerEmail,
-        buyerPhone,
+        buyerPhone: "",
+        buddyEmail: buddyEmail || null,
         couponCode: appliedCoupon?.valid ? couponCode.toUpperCase().trim() : undefined,
       });
 
@@ -396,7 +397,7 @@ export default function CohortLandingPage() {
         prefill: {
           name: buyerName,
           email: buyerEmail,
-          contact: buyerPhone,
+          contact: "",
         },
         theme: {
           color: "#ff5e14",
@@ -1064,13 +1065,15 @@ export default function CohortLandingPage() {
                     />
                   </div>
                   <div className="space-y-1 sm:col-span-2">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase">Mobile Number (WhatsApp Preferred)</label>
+                    <label className="text-[10px] font-bold text-[#ff5e14] uppercase tracking-wider flex items-center gap-1">
+                      <Gift className="w-3 h-3" /> Buddy Email Address (Optional Referral)
+                    </label>
                     <input
-                      type="tel"
-                      value={buyerPhone}
-                      onChange={(e) => setBuyerPhone(e.target.value)}
-                      placeholder="e.g. +91 9999999999"
-                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                      type="email"
+                      value={buddyEmail}
+                      onChange={(e) => setBuddyEmail(e.target.value)}
+                      placeholder="buddy@example.com (they will also get access)"
+                      className="w-full px-3 py-2 border border-orange-100 focus:border-[#ff5e14] focus:ring-1 focus:ring-[#ff5e14] rounded-lg text-sm bg-orange-50/5"
                     />
                   </div>
                 </div>
@@ -1082,12 +1085,15 @@ export default function CohortLandingPage() {
               <div className="flex flex-col">
                 <span className="text-[9px] text-gray-400 font-bold uppercase">Payable Price</span>
                 <span className="font-black text-gray-900 text-lg">₹{runningTotal}</span>
+                {!(selectedTierId || selectedAddonIds.length > 0) && (
+                  <span className="text-[9px] text-red-500 font-semibold mt-0.5">Please select a tier or session</span>
+                )}
               </div>
 
               <button
                 onClick={handleCheckout}
-                disabled={isProcessingCheckout}
-                className="bg-black hover:bg-neutral-800 text-white font-bold text-xs py-3 px-6 rounded-xl transition flex items-center gap-1.5 shadow"
+                disabled={isProcessingCheckout || !(selectedTierId || selectedAddonIds.length > 0)}
+                className="bg-black hover:bg-neutral-800 text-white font-bold text-xs py-3 px-6 rounded-xl transition flex items-center gap-1.5 shadow disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isProcessingCheckout ? (
                   <>

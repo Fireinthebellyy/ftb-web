@@ -858,6 +858,7 @@ export const cohortOrders = pgTable("cohort_orders", {
   buyerName: text("buyer_name").notNull(),
   buyerEmail: text("buyer_email").notNull(),
   buyerPhone: text("buyer_phone"),
+  buddyEmail: text("buddy_email"),
   selectedTierId: uuid("selected_tier_id").references(() => cohortTiers.id, { onDelete: "set null" }),
   selectedAddOnIds: jsonb("selected_addon_ids").$type<string[]>().default([]),
   selectedToolkitIds: jsonb("selected_toolkit_ids").$type<string[]>().default([]),

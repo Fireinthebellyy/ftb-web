@@ -14,6 +14,7 @@ import {
   ArrowUp,
   ArrowDown,
   Download,
+  Gift,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -101,6 +102,7 @@ interface Order {
   buyerName: string;
   buyerEmail: string;
   buyerPhone: string | null;
+  buddyEmail?: string | null;
   amountPaid: number;
   razorpayOrderId: string;
   razorpayPaymentId: string | null;
@@ -270,6 +272,7 @@ export default function AdminCohortsTable() {
       "Buyer Name",
       "Buyer Email",
       "Buyer Phone",
+      "Buddy Email",
       "Cohort Title",
       "Selected Tier",
       "Amount Paid (INR)",
@@ -284,6 +287,7 @@ export default function AdminCohortsTable() {
       order.buyerName,
       order.buyerEmail,
       order.buyerPhone || "",
+      order.buddyEmail || "",
       order.cohortTitle || "",
       order.tierName || "",
       (order.amountPaid / 100).toFixed(2),
@@ -439,6 +443,7 @@ export default function AdminCohortsTable() {
                 <thead>
                   <tr className="bg-gray-50 border-b">
                     <th className="p-4 font-semibold text-gray-700">Buyer</th>
+                    <th className="p-4 font-semibold text-gray-700">Buddy (Referral)</th>
                     <th className="p-4 font-semibold text-gray-700">Cohort & Tier</th>
                     <th className="p-4 font-semibold text-gray-700">Paid</th>
                     <th className="p-4 font-semibold text-gray-700">Razorpay Info</th>
@@ -453,6 +458,18 @@ export default function AdminCohortsTable() {
                         <div className="font-semibold text-gray-900">{order.buyerName}</div>
                         <div className="text-xs text-gray-500">{order.buyerEmail}</div>
                         {order.buyerPhone && <div className="text-xs text-gray-400">{order.buyerPhone}</div>}
+                      </td>
+                      <td className="p-4">
+                        {order.buddyEmail ? (
+                          <div>
+                            <span className="inline-flex items-center gap-1 bg-orange-50 text-[#ff5e14] px-2 py-0.5 text-[10px] font-bold rounded-full border border-orange-100 mb-1">
+                              <Gift className="w-3 h-3" /> Buddy Added
+                            </span>
+                            <div className="text-xs text-gray-600 font-medium select-all">{order.buddyEmail}</div>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400 font-normal italic">-</span>
+                        )}
                       </td>
                       <td className="p-4">
                         <div className="font-medium text-gray-950">{order.cohortTitle || "Unknown"}</div>

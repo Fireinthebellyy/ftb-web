@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cohorts, cohortTiers, cohortOrders, coupons, userToolkits, toolkits, cohortSessions } from "@/lib/schema";
+import { cohorts, cohortTiers, cohortOrders, coupons, userToolkits, toolkits, cohortSessions, user } from "@/lib/schema";
 import { eq, and, inArray, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -32,6 +32,7 @@ export async function POST(
       buyerName,
       buyerEmail,
       buyerPhone,
+      buddyEmail,
       couponCode,
     } = body;
 
@@ -42,9 +43,9 @@ export async function POST(
       );
     }
 
-    if (!selectedTierId && selectedAddOnIds.length === 0 && selectedToolkitIds.length === 0) {
+    if (!selectedTierId && selectedAddOnIds.length === 0) {
       return NextResponse.json(
-        { error: "Please select either a bundle tier, individual sessions, or toolkit add-ons" },
+        { error: "Please select either the bundle tier or at least one individual session to apply." },
         { status: 400 }
       );
     }
@@ -179,6 +180,7 @@ export async function POST(
           buyerName,
           buyerEmail,
           buyerPhone: buyerPhone || null,
+          buddyEmail: buddyEmail ? buddyEmail.trim().toLowerCase() : null,
           selectedTierId: selectedTierId || null,
           selectedAddOnIds,
           selectedToolkitIds,
@@ -188,6 +190,33 @@ export async function POST(
           status: "paid",
         })
         .returning();
+
+      // If buddy email is added, grant them access to the cohort's linked toolkit if their account already exists
+      if (buddyEmail && cohort.toolkitId) {
+        try {
+          const buddyUser = await db.query.user.findFirst({
+            where: eq(user.email, buddyEmail.trim().toLowerCase()),
+          });
+          if (buddyUser) {
+            const existingBuddyToolkit = await db.query.userToolkits.findFirst({
+              where: and(
+                eq(userToolkits.userId, buddyUser.id),
+                eq(userToolkits.toolkitId, cohort.toolkitId)
+              ),
+            });
+            if (!existingBuddyToolkit) {
+              await db.insert(userToolkits).values({
+                userId: buddyUser.id,
+                toolkitId: cohort.toolkitId,
+                paymentStatus: "completed",
+                amountPaid: 0,
+              });
+            }
+          }
+        } catch (e) {
+          console.error("Error granting free cohort access to buddy user:", e);
+        }
+      }
 
       // If cohort is linked to a toolkit, grant content access
       if (cohort.toolkitId) {
@@ -251,6 +280,7 @@ export async function POST(
         buyerName,
         buyerEmail,
         buyerPhone: buyerPhone || null,
+        buddyEmail: buddyEmail ? buddyEmail.trim().toLowerCase() : null,
         selectedTierId: selectedTierId || null,
         selectedAddOnIds,
         selectedToolkitIds,

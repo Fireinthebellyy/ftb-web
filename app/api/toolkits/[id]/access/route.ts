@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { headers } from "next/headers";
 import { getSessionCached } from "@/lib/auth-session-cache";
 import { db } from "@/lib/db";
@@ -50,8 +50,11 @@ export async function GET(
         .where(
           and(
             eq(cohorts.toolkitId, toolkitId),
-            eq(cohortOrders.userId, session.user.id),
-            eq(cohortOrders.status, "paid")
+            eq(cohortOrders.status, "paid"),
+            or(
+              eq(cohortOrders.userId, session.user.id),
+              session.user.email ? eq(cohortOrders.buddyEmail, session.user.email.trim().toLowerCase()) : undefined
+            )
           )
         )
         .limit(1);

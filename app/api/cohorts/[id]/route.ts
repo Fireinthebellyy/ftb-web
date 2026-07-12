@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cohorts, cohortMentors, cohortFeatures, cohortTiers, cohortAddOns, cohortOrders, cohortSessions } from "@/lib/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
@@ -70,8 +70,11 @@ export async function GET(
         const order = await db.query.cohortOrders.findFirst({
           where: and(
             eq(cohortOrders.cohortId, cohort.id),
-            eq(cohortOrders.userId, session.user.id),
-            eq(cohortOrders.status, "paid")
+            eq(cohortOrders.status, "paid"),
+            or(
+              eq(cohortOrders.userId, session.user.id),
+              session.user.email ? eq(cohortOrders.buddyEmail, session.user.email.trim().toLowerCase()) : undefined
+            )
           ),
         });
         if (order) {

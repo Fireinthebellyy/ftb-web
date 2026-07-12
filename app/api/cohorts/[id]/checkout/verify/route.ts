@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cohortOrders, cohorts, userToolkits } from "@/lib/schema";
+import { cohortOrders, cohorts, userToolkits, user } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 import { createHmac } from "crypto";
 import { auth } from "@/lib/auth";
@@ -99,6 +99,33 @@ export async function POST(
           paymentStatus: "completed",
           amountPaid: existingOrder.amountPaid, // In paise
         });
+      }
+
+      // If a buddy email was specified, also grant them access to this toolkit if their user account exists
+      if (existingOrder.buddyEmail) {
+        try {
+          const buddyUser = await db.query.user.findFirst({
+            where: eq(user.email, existingOrder.buddyEmail.trim().toLowerCase()),
+          });
+          if (buddyUser) {
+            const existingBuddyToolkit = await db.query.userToolkits.findFirst({
+              where: and(
+                eq(userToolkits.userId, buddyUser.id),
+                eq(userToolkits.toolkitId, cohort.toolkitId)
+              ),
+            });
+            if (!existingBuddyToolkit) {
+              await db.insert(userToolkits).values({
+                userId: buddyUser.id,
+                toolkitId: cohort.toolkitId,
+                paymentStatus: "completed",
+                amountPaid: 0,
+              });
+            }
+          }
+        } catch (e) {
+          console.error("Error granting cohort toolkit access to buddy:", e);
+        }
       }
     }
 

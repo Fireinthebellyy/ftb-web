@@ -71,6 +71,9 @@ interface CohortData {
   badge2: string;
   subtitle: string;
   coverImageUrl: string;
+  cardImageUrl?: string | null;
+  startDate?: string | null;
+  highlights?: string[] | null;
   mentorsHeading: string;
   mentorsLinkTarget: string;
   mentorsLimit: number;
@@ -450,7 +453,7 @@ export default function CohortLandingPage() {
 
             {mentorCards.length >= 3 ? (
               <div className="flex flex-col items-center w-full">
-                <div className="relative h-[280px] sm:h-[320px] w-full mx-auto flex items-center justify-center overflow-hidden py-4">
+                <div className="relative h-[300px] sm:h-[340px] w-full mx-auto flex items-center justify-center overflow-hidden py-4">
                   {mentorCards.map((mentor, index) => {
                     const isCenter = index === 0;
                     const isRight = index === 1;
@@ -461,9 +464,9 @@ export default function CohortLandingPage() {
                     if (isCenter) {
                       animateState = { x: "0%", scale: 1, opacity: 1, zIndex: 10 };
                     } else if (isRight) {
-                      animateState = { x: "55%", scale: 0.85, opacity: 0.85, zIndex: 5 };
+                      animateState = { x: "68%", scale: 0.85, opacity: 1, zIndex: 5 };
                     } else if (isLeft) {
-                      animateState = { x: "-55%", scale: 0.85, opacity: 0.85, zIndex: 5 };
+                      animateState = { x: "-68%", scale: 0.85, opacity: 1, zIndex: 5 };
                     }
 
                     return (
@@ -495,13 +498,18 @@ export default function CohortLandingPage() {
                               <Linkedin className="w-6 h-6" />
                             </div>
                           )}
-                          <div>
+                          <div className="space-y-1">
                             <h3 className="font-bold text-gray-900 text-sm md:text-base leading-tight">
                               {mentor.name}
                             </h3>
-                            <p className="text-[10px] md:text-xs text-[#ff5e14] font-semibold uppercase tracking-wider mt-0.5">
+                            <p className="text-[10px] md:text-xs text-[#ff5e14] font-semibold uppercase tracking-wider">
                               {mentor.role}
                             </p>
+                            {mentor.bio && (
+                              <p className="text-[11px] md:text-xs text-gray-500 line-clamp-2 leading-relaxed max-w-[240px] mx-auto mt-1">
+                                {mentor.bio}
+                              </p>
+                            )}
                           </div>
                         </div>
                         {mentor.link && isCenter && (
@@ -561,13 +569,18 @@ export default function CohortLandingPage() {
                           <Linkedin className="w-6 h-6" />
                         </div>
                       )}
-                      <div>
+                       <div className="space-y-1">
                         <h3 className="font-bold text-gray-900 text-sm md:text-base leading-tight">
                           {mentor.name}
                         </h3>
-                        <p className="text-[10px] md:text-xs text-[#ff5e14] font-semibold uppercase tracking-wider mt-0.5">
+                        <p className="text-[10px] md:text-xs text-[#ff5e14] font-semibold uppercase tracking-wider">
                           {mentor.role}
                         </p>
+                        {mentor.bio && (
+                          <p className="text-[11px] md:text-xs text-gray-500 line-clamp-2 leading-relaxed max-w-[240px] mx-auto mt-1">
+                            {mentor.bio}
+                          </p>
+                        )}
                       </div>
                     </div>
                     {mentor.link && (
@@ -989,52 +1002,70 @@ export default function CohortLandingPage() {
 
       {/* Buddy Program Dialog */}
       <Dialog open={isBuddyDialogOpen} onOpenChange={setIsBuddyDialogOpen}>
-        <DialogContent className="max-w-md p-6 bg-white rounded-2xl shadow-xl border border-gray-100">
-          <DialogHeader className="space-y-2 text-center flex flex-col items-center">
-            <div className="bg-orange-100 text-[#ff5e14] p-3 rounded-full w-fit">
-              <Gift className="w-6 h-6" />
+        <DialogContent className="max-w-md p-6 bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-full blur-3xl -z-10 translate-x-8 -translate-y-8" />
+          
+          <DialogHeader className="space-y-3 text-center flex flex-col items-center">
+            <span className="bg-orange-50 text-[#ff5e14] text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-orange-100">
+              Buddy Benefit
+            </span>
+            <div className="bg-gradient-to-br from-orange-100 to-orange-200 text-[#ff5e14] p-3.5 rounded-2xl w-fit shadow-inner">
+              <Gift className="w-6 h-6 animate-bounce" />
             </div>
-            <DialogTitle className="text-lg font-bold text-gray-900">
-              Experience this Cohort with a Friend!
+            <DialogTitle className="text-xl font-extrabold text-gray-900 leading-tight">
+              Enjoy Cohort with a Friend!
             </DialogTitle>
-            <DialogDescription className="text-xs text-gray-500 text-center">
-              Share the experience, collaborate on cohort assignments, and build together.
+            <DialogDescription className="text-xs text-gray-500 max-w-sm leading-relaxed text-center">
+              Share the experience, collaborate on cohort assignments, and build together. Copy the link below or send it directly via WhatsApp.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">
                 Cohort Share Link
               </label>
-              <div className="flex gap-2 bg-gray-50 border rounded-xl p-2.5 items-center">
-                <span className="text-xs text-gray-600 truncate flex-1 select-all select-none pr-2">
+              <div className="flex gap-2 bg-gray-50 border border-gray-200 rounded-2xl p-2 items-center focus-within:ring-2 focus-within:ring-[#ff5e14]/20 transition-all">
+                <span className="text-xs text-gray-600 truncate flex-1 pl-2 font-medium select-all">
                   {typeof window !== "undefined" ? window.location.href : ""}
                 </span>
                 <button
                   type="button"
                   onClick={handleCopyLink}
-                  className="bg-black hover:bg-neutral-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition shrink-0 flex items-center gap-1"
+                  className="bg-black hover:bg-neutral-800 text-white text-xs font-bold px-4 py-2 rounded-xl transition duration-200 shrink-0 flex items-center gap-1.5 shadow"
                 >
                   {copied ? (
                     <>
-                      <Check className="w-3.5 h-3.5" /> Copied!
+                      <Check className="w-3.5 h-3.5 text-emerald-400" /> Copied!
                     </>
                   ) : (
                     <>
-                      <Copy className="w-3.5 h-3.5" /> Copy
+                      <Copy className="w-3.5 h-3.5 text-gray-300" /> Copy Link
                     </>
                   )}
                 </button>
               </div>
             </div>
+
+            {/* Quick Share to WhatsApp */}
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(`Hey! I was checking out this amazing cohort program: "${cohort?.title}". Let's apply and do it together! Check it out here: ${typeof window !== "undefined" ? window.location.href : ""}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-3.5 px-4 rounded-2xl transition duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+            >
+              <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.965C16.588 1.978 14.12 .952 11.998.951 6.559.951 2.134 5.325 2.13 10.756c-.001 1.674.444 3.308 1.292 4.773L2.4 20.803l5.35-1.393c.001-.001.002-.001.003-.002z" />
+              </svg>
+              Share via WhatsApp
+            </a>
           </div>
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-2 pt-2 border-t border-gray-100">
             <button
               type="button"
               onClick={() => setIsBuddyDialogOpen(false)}
-              className="flex-1 border hover:bg-gray-50 text-gray-700 font-bold text-xs py-3 rounded-xl transition"
+              className="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-xs py-3 rounded-2xl transition duration-200"
             >
               Cancel
             </button>
@@ -1044,7 +1075,7 @@ export default function CohortLandingPage() {
                 setIsBuddyDialogOpen(false);
                 setIsDrawerOpen(true);
               }}
-              className="flex-1 bg-[#ff5e14] hover:bg-[#e04f0f] text-white font-bold text-xs py-3 rounded-xl transition shadow"
+              className="flex-1 bg-gradient-to-r from-[#ff5e14] to-[#ff7a3d] hover:from-[#e04f0f] hover:to-[#ff5e14] text-white font-bold text-xs py-3 rounded-2xl transition duration-200 shadow-md hover:shadow-lg transform active:scale-95"
             >
               Apply Now
             </button>

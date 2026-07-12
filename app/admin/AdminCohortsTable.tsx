@@ -70,6 +70,9 @@ interface Cohort {
   badge2: string;
   subtitle: string;
   coverImageUrl: string;
+  cardImageUrl?: string | null;
+  startDate?: string | null;
+  highlights?: string[] | null;
   mentorsHeading: string;
   mentorsLinkTarget: string;
   mentorsLimit: number;
@@ -643,6 +646,54 @@ export default function AdminCohortsTable() {
                       ))}
                     </select>
                   </div>
+                  <div className="space-y-1.5">
+                    <Label>Cohort Start Date / Dates</Label>
+                    <Input
+                      value={editingCohort.startDate || ""}
+                      onChange={(e) => setEditingCohort({ ...editingCohort, startDate: e.target.value })}
+                      placeholder="e.g. Starts 15th July • 8 Weeks"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold">Card Highlights / Key Features</Label>
+                    <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
+                      {(editingCohort.highlights || []).map((highlight, idx) => (
+                        <div key={idx} className="flex gap-2 items-center">
+                          <Input
+                            value={highlight}
+                            onChange={(e) => {
+                              const newHighlights = [...(editingCohort.highlights || [])];
+                              newHighlights[idx] = e.target.value;
+                              setEditingCohort({ ...editingCohort, highlights: newHighlights });
+                            }}
+                            placeholder={`Feature #${idx + 1}`}
+                            className="flex-1 text-sm h-8"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newHighlights = (editingCohort.highlights || []).filter((_, i) => i !== idx);
+                              setEditingCohort({ ...editingCohort, highlights: newHighlights });
+                            }}
+                            className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-md transition shrink-0"
+                            title="Remove"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newHighlights = [...(editingCohort.highlights || []), ""];
+                        setEditingCohort({ ...editingCohort, highlights: newHighlights });
+                      }}
+                      className="text-xs font-bold text-[#ff5e14] hover:underline flex items-center gap-1.5 pt-1"
+                    >
+                      + Add Key Feature
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-4 border-t pt-4 md:border-t-0 md:pt-0 md:border-l md:pl-4">
@@ -664,6 +715,32 @@ export default function AdminCohortsTable() {
                           if (file) {
                             handleImageUpload(file, (url) =>
                               setEditingCohort({ ...editingCohort, coverImageUrl: url })
+                            );
+                          }
+                        }}
+                      />
+                      {isUploading && <Loader2 className="w-5 h-5 animate-spin" />}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label>Card Cover Image (Optional - fallback to Hero)</Label>
+                    {editingCohort.cardImageUrl && (
+                      <img
+                        src={editingCohort.cardImageUrl}
+                        alt="Card cover preview"
+                        className="w-full h-32 object-cover rounded-lg border mb-2"
+                      />
+                    )}
+                    <div className="flex gap-2">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleImageUpload(file, (url) =>
+                              setEditingCohort({ ...editingCohort, cardImageUrl: url })
                             );
                           }
                         }}

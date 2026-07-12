@@ -21,13 +21,13 @@ import Link from "next/link";
 export default function ToolkitPage() {
   const { data: session, isPending: sessionPending } = useSession();
   const router = useRouter();
-  const [selectedCategory, setSelectedCategory] = useState<string>("Recorded toolkits");
+  const [selectedCategory, setSelectedCategory] = useState<string>("cohorts");
 
   const TAB_CATEGORIES = [
+    { label: "Live Cohorts", value: "cohorts" },
     { label: "Recorded Lectures", value: "Recorded toolkits" },
     { label: "1:1 Mentorship", value: "1:1 Mentorship" },
-    { label: "Digital products", value: "digital products" },
-    { label: "Live Cohorts", value: "cohorts" }
+    { label: "Digital products", value: "digital products" }
   ];
 
   // Redirect to login if not authenticated
@@ -166,9 +166,9 @@ export default function ToolkitPage() {
                   className="overflow-hidden rounded-xl border bg-white shadow-sm flex flex-col justify-between hover:shadow-md transition duration-200"
                 >
                   <div>
-                    {cohort.coverImageUrl ? (
+                    {cohort.cardImageUrl || cohort.coverImageUrl ? (
                       <img
-                        src={cohort.coverImageUrl}
+                        src={cohort.cardImageUrl || cohort.coverImageUrl}
                         alt={cohort.title}
                         className="w-full aspect-[16/10] object-cover border-b"
                       />
@@ -177,7 +177,7 @@ export default function ToolkitPage() {
                         <span className="text-[#ff5e14] font-bold text-lg">Live Cohort</span>
                       </div>
                     )}
-                    <div className="p-4 space-y-2">
+                    <div className="p-4 space-y-3">
                       <div className="flex gap-2">
                         {cohort.badge1 && (
                           <span className="bg-orange-50 text-[#ff5e14] text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-orange-100">
@@ -196,6 +196,24 @@ export default function ToolkitPage() {
                       <p className="text-gray-500 text-xs line-clamp-2">
                         {cohort.subtitle}
                       </p>
+
+                      {cohort.startDate && (
+                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 uppercase tracking-wider bg-emerald-50 w-fit px-2.5 py-1 rounded-lg border border-emerald-100">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                          {cohort.startDate}
+                        </div>
+                      )}
+
+                      {cohort.highlights && cohort.highlights.length > 0 && (
+                        <ul className="space-y-1.5 mt-3 pt-3 border-t border-gray-100">
+                          {cohort.highlights.slice(0, 4).map((highlight, index) => (
+                            <li key={index} className="flex items-start gap-1.5 text-xs text-gray-600">
+                              <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#ff5e14]" strokeWidth={3} />
+                              <span className="leading-relaxed line-clamp-1">{highlight}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                   </div>
                   <div className="p-4 pt-3 flex gap-2 justify-between items-center border-t border-gray-50 bg-gray-50/50">

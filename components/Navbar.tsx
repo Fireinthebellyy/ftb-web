@@ -194,6 +194,10 @@ export default function Navbar() {
     return null;
   }
 
+  if (/\/toolkit\/cohorts\/[^/]+\/registration$/.test(pathname || "")) {
+    return null;
+  }
+
   const normalizedPath = pathname === "/" ? "/" : pathname?.replace(/\/+$/, "");
 
   const showWalkthrough = [

@@ -2,7 +2,8 @@ export type StorageDomain =
   | "opportunity-images"
   | "ungatekeep-images"
   | "avatar-images"
-  | "opportunity-attachments";
+  | "opportunity-attachments"
+  | "cohort-resources";
 
 export interface GetSignedUploadUrlInput {
   bucket: string;

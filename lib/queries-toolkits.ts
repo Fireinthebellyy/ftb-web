@@ -22,6 +22,8 @@ export type ToolkitContentResponse = {
 export type ToolkitAccessResponse = {
   hasPurchased: boolean;
   completedItemIds: string[];
+  registrationRequired?: boolean;
+  cohortId?: string;
 };
 
 export type ToolkitCommunityResponse = {

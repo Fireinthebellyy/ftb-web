@@ -8,6 +8,7 @@ const storageDomainPublicBaseUrlMap: Record<StorageDomain, string | undefined> =
     "avatar-images": process.env.NEXT_PUBLIC_R2_AVATAR_IMAGES_BASE_URL,
     "opportunity-attachments":
       process.env.NEXT_PUBLIC_R2_OPPORTUNITY_ATTACHMENTS_BASE_URL,
+    "cohort-resources": process.env.NEXT_PUBLIC_R2_COHORT_RESOURCES_BASE_URL,
   };
 
 function normalizeBaseUrl(baseUrl: string): string {

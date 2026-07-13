@@ -1,35 +1,60 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { coupons, toolkits, userToolkits } from "@/lib/schema";
-import { getCurrentUser } from "@/server/users";
+import { coupons, toolkits, userToolkits, cohorts, cohortOrders } from "@/lib/schema";
+import { getCurrentUserOptional } from "@/server/users";
 import { eq, and, sql } from "drizzle-orm";
 
 export async function POST(request: Request) {
   try {
-    const { code, toolkitId } = await request.json();
+    const { code, toolkitId, cohortId } = await request.json();
 
-    if (!code || !toolkitId) {
+    if (!code || (!toolkitId && !cohortId)) {
       return NextResponse.json(
-        { error: "Code and toolkitId are required" },
+        { error: "Code and either toolkitId or cohortId are required" },
         { status: 400 }
       );
     }
 
-    // Fetch toolkit to get base price
-    const toolkitResult = await db
-      .select({ price: toolkits.price })
-      .from(toolkits)
-      .where(eq(toolkits.id, toolkitId))
-      .limit(1);
-
-    if (!toolkitResult || toolkitResult.length === 0) {
+    if (toolkitId && cohortId) {
       return NextResponse.json(
-        { error: "Toolkit not found" },
-        { status: 404 }
+        { error: "Provide either toolkitId or cohortId, not both" },
+        { status: 400 }
       );
     }
 
-    const toolkit = toolkitResult[0];
+    let basePrice = 0;
+
+    if (toolkitId) {
+      // Fetch toolkit to get base price
+      const toolkitResult = await db
+        .select({ price: toolkits.price })
+        .from(toolkits)
+        .where(eq(toolkits.id, toolkitId))
+        .limit(1);
+
+      if (!toolkitResult || toolkitResult.length === 0) {
+        return NextResponse.json(
+          { error: "Toolkit not found" },
+          { status: 404 }
+        );
+      }
+      basePrice = toolkitResult[0].price;
+    } else if (cohortId) {
+      // Fetch cohort to get base price
+      const cohortResult = await db
+        .select({ price: cohorts.basePrice })
+        .from(cohorts)
+        .where(eq(cohorts.id, cohortId))
+        .limit(1);
+
+      if (!cohortResult || cohortResult.length === 0) {
+        return NextResponse.json(
+          { error: "Cohort not found" },
+          { status: 404 }
+        );
+      }
+      basePrice = cohortResult[0].price;
+    }
 
     // Find coupon by code
     const couponResult = await db
@@ -75,20 +100,35 @@ export async function POST(request: Request) {
     }
 
     // Check per-user limit
-    const userSession = await getCurrentUser();
+    const userSession = await getCurrentUserOptional();
     if (userSession && userSession.currentUser?.id) {
-      const userCouponUses = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(userToolkits)
-        .where(
-          and(
-            eq(userToolkits.userId, userSession.currentUser.id),
-            eq(userToolkits.couponId, coupon.id),
-            eq(userToolkits.paymentStatus, "completed")
-          )
-        );
+      let usesCount = 0;
+      if (toolkitId) {
+        const userCouponUses = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(userToolkits)
+          .where(
+            and(
+              eq(userToolkits.userId, userSession.currentUser.id),
+              eq(userToolkits.couponId, coupon.id),
+              eq(userToolkits.paymentStatus, "completed")
+            )
+          );
+        usesCount = Number(userCouponUses[0]?.count || 0);
+      } else if (cohortId) {
+        const userCouponUses = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(cohortOrders)
+          .where(
+            and(
+              eq(cohortOrders.userId, userSession.currentUser.id),
+              eq(cohortOrders.couponId, coupon.id),
+              eq(cohortOrders.status, "paid")
+            )
+          );
+        usesCount = Number(userCouponUses[0]?.count || 0);
+      }
 
-      const usesCount = Number(userCouponUses[0]?.count || 0);
       const maxPerUser =
         coupon.maxUsesPerUser == null
           ? Infinity
@@ -103,7 +143,7 @@ export async function POST(request: Request) {
 
     // Calculate final price
     const discountAmount = coupon.discountAmount;
-    const finalPrice = Math.max(0, toolkit.price - discountAmount);
+    const finalPrice = Math.max(0, basePrice - discountAmount);
 
     return NextResponse.json({
       valid: true,

@@ -1,4 +1,4 @@
-import { eq, and, inArray, asc, desc, count } from "drizzle-orm";
+import { eq, and, or, inArray, asc, desc, count } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { getSessionCached } from "@/lib/auth-session-cache";
@@ -10,6 +10,8 @@ import {
   toolkits,
   user,
   userToolkits,
+  cohorts,
+  cohortOrders,
 } from "@/lib/schema";
 
 export async function GET(
@@ -56,7 +58,30 @@ export async function GET(
       )
       .limit(1);
 
-    if (!purchase && !isAdminPreview) {
+    let hasPurchased = !!purchase;
+
+    if (!hasPurchased) {
+      const cohortPurchase = await db
+        .select({ id: cohorts.id })
+        .from(cohorts)
+        .innerJoin(cohortOrders, eq(cohortOrders.cohortId, cohorts.id))
+        .where(
+          and(
+            eq(cohorts.toolkitId, toolkitId),
+            eq(cohortOrders.status, "paid"),
+            or(
+              eq(cohortOrders.userId, userId),
+              session.user.email ? eq(cohortOrders.buddyEmail, session.user.email.trim().toLowerCase()) : undefined
+            )
+          )
+        )
+        .limit(1);
+      if (cohortPurchase.length > 0) {
+        hasPurchased = true;
+      }
+    }
+
+    if (!hasPurchased && !isAdminPreview) {
       return NextResponse.json(
         { error: "You do not have access to this toolkit" },
         { status: 403 }

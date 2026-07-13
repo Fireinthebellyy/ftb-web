@@ -309,3 +309,78 @@ export type ToolkitCommunityPost = {
   /** For polls only (after voting): total number of votes */
   totalVotes?: number;
 };
+
+// Cohort Types
+export type CohortSession = {
+  id: string;
+  cohortId: string;
+  title: string;
+  description?: string | null;
+  orderIndex: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  queries?: CohortSessionQuery[];
+};
+
+export type CohortSessionContent = {
+  id: string;
+  sessionId: string;
+  sectionType: "live_session" | "meet_mentor" | "resources" | "recording";
+  title: string;
+  content?: string | null;
+  isUnlocked: boolean;
+  lockedMessage?: string | null;
+  orderIndex: number;
+  liveSessionLink?: string | null;
+  videoUrl?: string | null;
+  images?: string[] | null;
+  createdAt: string;
+  updatedAt: string;
+  resources?: CohortSessionResource[];
+  mentors?: CohortSessionMentor[];
+};
+
+export type CohortSessionResource = {
+  id: string;
+  contentId: string;
+  name: string;
+  url: string;
+  type: "file" | "video" | "link" | "image" | "pdf" | "ppt";
+  orderIndex: number;
+  createdAt: string;
+};
+
+export type CohortSessionQuery = {
+  id: string;
+  sessionId: string;
+  userId: string;
+  question: string;
+  answer?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CohortSessionMentor = {
+  id: string;
+  contentId: string;
+  name: string;
+  role?: string | null;
+  imageUrl?: string | null;
+  bio?: string | null;
+  linkedinUrl?: string | null;
+  otherLinks?: { title: string; url: string }[] | null;
+  orderIndex: number;
+  createdAt: string;
+};
+
+export type CohortDetailResponse = {
+  cohort: { id: string; title: string };
+  hasAccess: boolean;
+  sessions: CohortSession[];
+};
+
+export type CohortSessionResponse = {
+  session: CohortSession;
+  contents: CohortSessionContent[];
+};

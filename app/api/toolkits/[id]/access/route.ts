@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { headers } from "next/headers";
 import { getSessionCached } from "@/lib/auth-session-cache";
+import {
+  findPendingCohortRegistration,
+} from "@/lib/cohort-registration";
 import { db } from "@/lib/db";
-import { toolkits, userToolkitProgress, userToolkits } from "@/lib/schema";
+import { toolkits, userToolkitProgress, userToolkits, cohorts, cohortOrders } from "@/lib/schema";
 
 export async function GET(
   _request: Request,
@@ -40,8 +43,47 @@ export async function GET(
       )
       .limit(1);
 
-    if (purchase.length === 0) {
+    let hasPurchased = purchase.length > 0;
+
+    if (!hasPurchased) {
+      const cohortPurchase = await db
+        .select({ id: cohorts.id })
+        .from(cohorts)
+        .innerJoin(cohortOrders, eq(cohortOrders.cohortId, cohorts.id))
+        .where(
+          and(
+            eq(cohorts.toolkitId, toolkitId),
+            eq(cohortOrders.status, "paid"),
+            or(
+              eq(cohortOrders.userId, session.user.id),
+              session.user.email && session.user.emailVerified
+                ? eq(cohortOrders.buddyEmail, session.user.email.trim().toLowerCase())
+                : undefined
+            )
+          )
+        )
+        .limit(1);
+      if (cohortPurchase.length > 0) {
+        hasPurchased = true;
+      }
+    }
+
+    if (!hasPurchased) {
       return NextResponse.json({ hasPurchased: false, completedItemIds: [] });
+    }
+
+    const pendingRegistration = await findPendingCohortRegistration({
+      userId: session.user.id,
+      toolkitId,
+    });
+
+    if (pendingRegistration) {
+      return NextResponse.json({
+        hasPurchased: false,
+        completedItemIds: [],
+        registrationRequired: true,
+        cohortId: pendingRegistration.cohortId,
+      });
     }
 
     const completedProgress = await db

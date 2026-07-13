@@ -123,8 +123,11 @@ export async function GET(
           .where(
             and(
               eq(cohorts.toolkitId, toolkitId),
-              eq(cohortOrders.userId, session.user.id),
-              eq(cohortOrders.status, "paid")
+              eq(cohortOrders.status, "paid"),
+              or(
+                eq(cohortOrders.userId, session.user.id),
+                session.user.email ? eq(cohortOrders.buddyEmail, session.user.email.trim().toLowerCase()) : undefined
+              )
             )
           )
           .limit(1);

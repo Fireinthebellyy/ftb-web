@@ -15,6 +15,13 @@ export async function POST(request: Request) {
       );
     }
 
+    if (toolkitId && cohortId) {
+      return NextResponse.json(
+        { error: "Provide either toolkitId or cohortId, not both" },
+        { status: 400 }
+      );
+    }
+
     let basePrice = 0;
 
     if (toolkitId) {

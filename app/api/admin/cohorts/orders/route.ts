@@ -22,6 +22,7 @@ export async function GET() {
         buyerName: cohortOrders.buyerName,
         buyerEmail: cohortOrders.buyerEmail,
         buyerPhone: cohortOrders.buyerPhone,
+        buddyEmail: cohortOrders.buddyEmail,
         amountPaid: cohortOrders.amountPaid,
         razorpayOrderId: cohortOrders.razorpayOrderId,
         razorpayPaymentId: cohortOrders.razorpayPaymentId,
@@ -33,6 +34,7 @@ export async function GET() {
       .from(cohortOrders)
       .leftJoin(cohorts, eq(cohortOrders.cohortId, cohorts.id))
       .leftJoin(cohortTiers, eq(cohortOrders.selectedTierId, cohortTiers.id))
+      .where(eq(cohortOrders.status, "paid"))
       .orderBy(desc(cohortOrders.createdAt));
 
     return NextResponse.json(orders);

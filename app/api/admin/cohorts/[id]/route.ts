@@ -6,6 +6,7 @@ import {
   cohortFeatures,
   cohortTiers,
   cohortAddOns,
+  cohortSessions,
 } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
@@ -60,12 +61,19 @@ export async function GET(
       .where(eq(cohortAddOns.cohortId, id))
       .orderBy(cohortAddOns.orderIndex);
 
+    const sessionsList = await db
+      .select()
+      .from(cohortSessions)
+      .where(eq(cohortSessions.cohortId, id))
+      .orderBy(cohortSessions.orderIndex);
+
     return NextResponse.json({
       ...cohort,
       mentors: mentorsList,
       features: featuresList,
       tiers: tiersList,
       addons: addonsList,
+      sessions: sessionsList,
     });
   } catch (error) {
     console.error("Error fetching admin cohort details:", error);
@@ -101,6 +109,7 @@ export async function PUT(
       badge2,
       subtitle,
       coverImageUrl,
+      coverImageUrls,
       cardImageUrl,
       startDate,
       highlights,
@@ -108,15 +117,22 @@ export async function PUT(
       mentorsLinkTarget,
       mentorsLimit,
       featuresHeading,
+      sessionsHeading,
+      testimonialsHeading,
+      whoIsThisForHeading,
+      whoIsThisForBullets,
       investmentLabel,
       basePrice,
       originalPrice,
       toolkitId,
       isActive,
+      isBestSeller,
+      isFillingFast,
       mentors: incomingMentors = [],
       features: incomingFeatures = [],
       tiers: incomingTiers = [],
       addons: incomingAddons = [],
+      sessions: incomingSessions = [],
     } = body;
 
     // Run transaction
@@ -131,15 +147,25 @@ export async function PUT(
           badge2,
           subtitle,
           coverImageUrl: coverImageUrl || null,
+          coverImageUrls: coverImageUrls && Array.isArray(coverImageUrls) ? coverImageUrls.filter((url: any) => typeof url === 'string' && url.trim() !== '') : null,
+          cardImageUrl: cardImageUrl || null,
+          startDate: startDate || null,
+          highlights: highlights || null,
           mentorsHeading,
           mentorsLinkTarget,
           mentorsLimit: mentorsLimit ? Number(mentorsLimit) : 4,
           featuresHeading,
+          sessionsHeading: sessionsHeading || null,
+          testimonialsHeading: testimonialsHeading || null,
+          whoIsThisForHeading: whoIsThisForHeading || null,
+          whoIsThisForBullets: whoIsThisForBullets && Array.isArray(whoIsThisForBullets) ? whoIsThisForBullets.filter((b: any) => typeof b === 'string' && b.trim() !== '') : null,
           investmentLabel,
           basePrice: Number(basePrice),
           originalPrice: originalPrice ? Number(originalPrice) : null,
           toolkitId: toolkitId || null,
           isActive: isActive !== undefined ? Boolean(isActive) : true,
+          isBestSeller: isBestSeller !== undefined ? Boolean(isBestSeller) : false,
+          isFillingFast: isFillingFast !== undefined ? Boolean(isFillingFast) : false,
           updatedAt: new Date(),
         })
         .where(eq(cohorts.id, cohortId))
@@ -181,7 +207,7 @@ export async function PUT(
               link: m.link,
               orderIndex: i,
             })
-            .where(eq(cohortMentors.id, m.id));
+            .where(and(eq(cohortMentors.id, m.id), eq(cohortMentors.cohortId, cohortId)));
         } else {
           await tx.insert(cohortMentors).values({
             cohortId,
@@ -328,6 +354,45 @@ export async function PUT(
             name: a.name,
             priceDelta: Number(a.priceDelta),
             description: a.description,
+            orderIndex: i,
+          });
+        }
+      }
+      // 6. Sync Sessions
+      const incomingSessionIds = incomingSessions
+        .map((s: any) => s.id)
+        .filter(Boolean);
+      if (incomingSessionIds.length > 0) {
+        await tx
+          .delete(cohortSessions)
+          .where(
+            and(
+              eq(cohortSessions.cohortId, cohortId),
+              notInArray(cohortSessions.id, incomingSessionIds)
+            )
+          );
+      } else {
+        await tx
+          .delete(cohortSessions)
+          .where(eq(cohortSessions.cohortId, cohortId));
+      }
+
+      for (let i = 0; i < incomingSessions.length; i++) {
+        const s = incomingSessions[i];
+        if (s.id) {
+          await tx
+            .update(cohortSessions)
+            .set({
+              title: s.title,
+              description: s.description,
+              orderIndex: i,
+            })
+            .where(eq(cohortSessions.id, s.id));
+        } else {
+          await tx.insert(cohortSessions).values({
+            cohortId,
+            title: s.title,
+            description: s.description,
             orderIndex: i,
           });
         }

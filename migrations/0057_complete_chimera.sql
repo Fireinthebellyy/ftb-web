@@ -1,0 +1,1 @@
+ALTER TABLE "cohorts" ADD COLUMN "cover_image_urls" text[];

@@ -1,11 +1,21 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cohorts, cohortTiers, cohortAddOns, cohortOrders, coupons, userToolkits, toolkits } from "@/lib/schema";
 import { eq, and, inArray, sql } from "drizzle-orm";
+import { cohorts, cohortTiers, cohortOrders, cohortAddOns, coupons, userToolkits, toolkits, cohortSessions, user } from "@/lib/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { createOrder } from "@/lib/razorpay";
 import { sendCohortPaymentConfirmationEmail } from "@/lib/cohort-payment-email";
+export function getDuoPricing(singlePrice: number) {
+  if (!singlePrice || singlePrice <= 0) {
+    return { reference: 0, final: 0, perHead: 0 };
+  }
+  const raw_duo = singlePrice * 2;
+  const reference = Math.ceil((raw_duo + 1) / 100) * 100 - 1;
+  const final = Math.round((reference * 0.8) / 10) * 10 - 1;
+  const perHead = Math.round(final / 2);
+  return { reference, final, perHead };
+}
 
 export async function POST(
   request: Request,
@@ -33,6 +43,7 @@ export async function POST(
       buyerName,
       buyerEmail,
       buyerPhone,
+      buddyEmail,
       couponCode,
     } = body;
 
@@ -43,9 +54,9 @@ export async function POST(
       );
     }
 
-    if (!selectedTierId && selectedAddOnIds.length === 0 && selectedToolkitIds.length === 0) {
+    if (!selectedTierId && selectedAddOnIds.length === 0) {
       return NextResponse.json(
-        { error: "Please select either a bundle tier, individual sessions, or toolkit add-ons" },
+        { error: "Please select either the bundle tier or at least one individual session to apply." },
         { status: 400 }
       );
     }
@@ -94,9 +105,9 @@ export async function POST(
             inArray(cohortAddOns.id, selectedAddOnIds)
           )
         );
-      
+
       addons.forEach((addon) => {
-        addonsTotal += addon.priceDelta;
+        addonsTotal += addon.priceDelta || 0;
       });
     }
 
@@ -118,6 +129,7 @@ export async function POST(
       });
     }
 
+    const isDuoActive = buddyEmail && buddyEmail.trim().length > 0;
     // 4. Validate Coupon if provided
     let discountAmount = 0;
     let couponId: string | null = null;
@@ -159,14 +171,24 @@ export async function POST(
         }
         
         if (isValid) {
-          discountAmount = coupon.discountAmount;
+          const subtotalForDiscount = (isDuoActive ? getDuoPricing(tierPrice).final : tierPrice) + 
+                                      (isDuoActive ? getDuoPricing(addonsTotal).final : addonsTotal) + 
+                                      toolkitsTotal;
+          if (coupon.discountType === "percentage") {
+            discountAmount = Math.round((subtotalForDiscount * coupon.discountAmount) / 100);
+          } else {
+            discountAmount = coupon.discountAmount;
+          }
           couponId = coupon.id;
         }
       }
     }
 
     // 5. Compute Total price (in rupees)
-    const subtotal = tierPrice + addonsTotal + toolkitsTotal;
+    const finalTierPrice = isDuoActive ? getDuoPricing(tierPrice).final : tierPrice;
+    const finalAddonsTotal = isDuoActive ? getDuoPricing(addonsTotal).final : addonsTotal;
+
+    const subtotal = finalTierPrice + finalAddonsTotal + toolkitsTotal;
     const finalPriceRupees = Math.max(0, subtotal - discountAmount);
     const finalPricePaisa = finalPriceRupees * 100; // Razorpay needs amount in paisa
 
@@ -180,15 +202,43 @@ export async function POST(
           buyerName,
           buyerEmail,
           buyerPhone: buyerPhone || null,
+          buddyEmail: buddyEmail ? buddyEmail.trim().toLowerCase() : null,
           selectedTierId: selectedTierId || null,
           selectedAddOnIds,
           selectedToolkitIds,
           amountPaid: 0,
-          razorpayOrderId: "free_cohort_" + Date.now().toString().slice(-6),
+          razorpayOrderId: "free_cohort_" + crypto.randomUUID(),
           couponId,
           status: "paid",
         })
         .returning();
+
+      // If buddy email is added, grant them access to the cohort's linked toolkit if their account already exists
+      if (buddyEmail && cohort.toolkitId) {
+        try {
+          const buddyUser = await db.query.user.findFirst({
+            where: eq(user.email, buddyEmail.trim().toLowerCase()),
+          });
+          if (buddyUser) {
+            const existingBuddyToolkit = await db.query.userToolkits.findFirst({
+              where: and(
+                eq(userToolkits.userId, buddyUser.id),
+                eq(userToolkits.toolkitId, cohort.toolkitId)
+              ),
+            });
+            if (!existingBuddyToolkit) {
+              await db.insert(userToolkits).values({
+                userId: buddyUser.id,
+                toolkitId: cohort.toolkitId,
+                paymentStatus: "completed",
+                amountPaid: 0,
+              });
+            }
+          }
+        } catch (e) {
+          console.error("Error granting free cohort access to buddy user:", e);
+        }
+      }
 
       // If cohort is linked to a toolkit, grant content access
       if (cohort.toolkitId) {
@@ -231,6 +281,13 @@ export async function POST(
       sendCohortPaymentConfirmationEmail(newOrder.id).catch((emailError) => {
         console.error("Cohort payment confirmation email failed:", emailError);
       });
+      // Increment coupon usage if a coupon was applied
+      if (couponId) {
+        await db
+          .update(coupons)
+          .set({ currentUses: sql`${coupons.currentUses} + 1` })
+          .where(eq(coupons.id, couponId));
+      }
 
       return NextResponse.json({
         success: true,
@@ -256,6 +313,7 @@ export async function POST(
         buyerName,
         buyerEmail,
         buyerPhone: buyerPhone || null,
+        buddyEmail: buddyEmail ? buddyEmail.trim().toLowerCase() : null,
         selectedTierId: selectedTierId || null,
         selectedAddOnIds,
         selectedToolkitIds,

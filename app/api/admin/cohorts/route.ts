@@ -10,7 +10,7 @@ export async function GET() {
     if (
       !currentUser ||
       !currentUser.currentUser?.id ||
-      !canAccessAdminTab(currentUser.currentUser.role, "toolkits")
+      !canAccessAdminTab(currentUser.currentUser.role, "cohorts")
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -36,13 +36,13 @@ export async function POST(request: Request) {
     if (
       !currentUser ||
       !currentUser.currentUser?.id ||
-      !canAccessAdminTab(currentUser.currentUser.role, "toolkits")
+      !canAccessAdminTab(currentUser.currentUser.role, "cohorts")
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
-    const { title, slug, basePrice } = body;
+    const { title, slug, basePrice, badge1, badge2, subtitle, isBestSeller, isFillingFast } = body;
 
     if (!title || !slug || basePrice === undefined) {
       return NextResponse.json(
@@ -51,16 +51,36 @@ export async function POST(request: Request) {
       );
     }
 
+    const sanitizedSlug = String(slug)
+      .toLowerCase()
+      .replace(/[^a-z0-9-_]/g, "");
+    if (!sanitizedSlug) {
+      return NextResponse.json(
+        { error: "Slug is invalid after sanitization" },
+        { status: 400 }
+      );
+    }
+
+    const parsedBasePrice = Number(basePrice);
+    if (!Number.isFinite(parsedBasePrice) || parsedBasePrice < 0) {
+      return NextResponse.json(
+        { error: "basePrice must be a non-negative number" },
+        { status: 400 }
+      );
+    }
+
     const newCohort = await db
       .insert(cohorts)
       .values({
         title,
-        slug: slug.toLowerCase().replace(/[^a-z0-9-_]/g, ""),
-        basePrice: Number(basePrice),
-        badge1: "Summer 2026",
-        badge2: "8 Weeks",
-        subtitle: "A comprehensive cohort program.",
+        slug: sanitizedSlug,
+        basePrice: parsedBasePrice,
+        ...(badge1 ? { badge1 } : {}),
+        ...(badge2 ? { badge2 } : {}),
+        ...(subtitle ? { subtitle } : {}),
         isActive: true,
+        isBestSeller: isBestSeller !== undefined ? Boolean(isBestSeller) : false,
+        isFillingFast: isFillingFast !== undefined ? Boolean(isFillingFast) : false,
       })
       .returning();
 

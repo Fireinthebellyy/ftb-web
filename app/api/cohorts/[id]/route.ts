@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cohorts, cohortMentors, cohortFeatures, cohortTiers, cohortAddOns, cohortOrders } from "@/lib/schema";
-import { eq, and } from "drizzle-orm";
+import { cohorts, cohortMentors, cohortFeatures, cohortTiers, cohortAddOns, cohortOrders, cohortSessions } from "@/lib/schema";
+import { eq, and, or } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { isCohortRegistrationComplete } from "@/lib/cohort-registration";
@@ -55,6 +55,12 @@ export async function GET(
       .where(eq(cohortAddOns.cohortId, cohort.id))
       .orderBy(cohortAddOns.orderIndex);
 
+    const sessionsList = await db
+      .select()
+      .from(cohortSessions)
+      .where(eq(cohortSessions.cohortId, cohort.id))
+      .orderBy(cohortSessions.orderIndex);
+
     // Check purchase status
     let hasAccess = false;
     try {
@@ -65,8 +71,11 @@ export async function GET(
         const order = await db.query.cohortOrders.findFirst({
           where: and(
             eq(cohortOrders.cohortId, cohort.id),
-            eq(cohortOrders.userId, session.user.id),
-            eq(cohortOrders.status, "paid")
+            eq(cohortOrders.status, "paid"),
+            or(
+              eq(cohortOrders.userId, session.user.id),
+              session.user.email ? eq(cohortOrders.buddyEmail, session.user.email.trim().toLowerCase()) : undefined
+            )
           ),
         });
         if (order) {
@@ -83,6 +92,7 @@ export async function GET(
       features: featuresList,
       tiers: tiersList,
       addons: addonsList,
+      sessions: sessionsList,
       hasAccess,
     });
   } catch (error) {

@@ -1231,13 +1231,13 @@ export default function CohortLandingPage() {
                   )}
                   {!cohort.showEarlyBirdCheckout && isDuoActive && (selectedTierId || selectedAddonIds.length > 0) && (
                     <span className="line-through text-xs text-gray-400 font-medium">₹{
-                      selectedTierId ? basePrice + toolkitsTotal : sessionsTotal + toolkitsTotal
+                      selectedTierId ? basePrice * 2 + toolkitsTotal : sessionsTotal * 2 + toolkitsTotal
                     }</span>
                   )}
                 </div>
                 {isDuoActive && (selectedTierId || selectedAddonIds.length > 0) && (
                   <span className="text-[10px] text-emerald-600 font-semibold mt-0.5">
-                    ≈ ₹{Math.round((selectedTierId ? basePrice : sessionsTotal) * 0.8 / 2) + Math.round(toolkitsTotal / 2)} per person (Duo Discount Applied)
+                    ≈ ₹{Math.round((selectedTierId ? finalBasePrice : finalSessionsTotal) / 2) + Math.round(toolkitsTotal / 2)} per person (Duo Discount Applied)
                   </span>
                 )}
                 {!(selectedTierId || selectedAddonIds.length > 0) && (

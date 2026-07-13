@@ -6,20 +6,30 @@ import {
 } from "@/types/interfaces";
 
 async function fetchCohortDetail(cohortId: string): Promise<CohortDetailResponse> {
-  const { data } = await axios.get<CohortDetailResponse>(
-    `/api/cohorts/${cohortId}/dashboard`
-  );
-  return data;
+  try {
+    const { data } = await axios.get<CohortDetailResponse>(
+      `/api/cohorts/${cohortId}/dashboard`
+    );
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch cohort detail:", error);
+    throw error;
+  }
 }
 
 async function fetchCohortSession(
   cohortId: string,
   sessionId: string
 ): Promise<CohortSessionResponse> {
-  const { data } = await axios.get<CohortSessionResponse>(
-    `/api/cohorts/${cohortId}/sessions/${sessionId}`
-  );
-  return data;
+  try {
+    const { data } = await axios.get<CohortSessionResponse>(
+      `/api/cohorts/${cohortId}/sessions/${sessionId}`
+    );
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch cohort session:", error);
+    throw error;
+  }
 }
 
 export function useCohortDetail(cohortId: string) {

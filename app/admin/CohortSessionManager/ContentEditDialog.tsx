@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { useForm } from "react-hook-form";
+import { useForm, ControllerRenderProps } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
@@ -32,12 +32,17 @@ const sessionContentSchema = z.object({
 
 type SessionContentFormValues = z.infer<typeof sessionContentSchema>;
 
+interface EditingContent {
+  videoUrl?: string | null;
+  images?: string[] | null;
+}
+
 interface ContentEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isAdding: boolean;
   defaultValues: SessionContentFormValues;
-  editingContent: any;
+  editingContent: EditingContent | null | undefined;
   onSave: (data: SessionContentFormValues) => void;
 }
 
@@ -54,7 +59,10 @@ export function ContentEditDialog({
     defaultValues,
   });
 
-  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+  const handleVideoUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: ControllerRenderProps<SessionContentFormValues, "videoUrl">
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -80,13 +88,17 @@ export function ContentEditDialog({
 
       const { uploadUrl, publicUrl } = await response.json();
 
-      await fetch(uploadUrl, {
+      const putResponse = await fetch(uploadUrl, {
         method: "PUT",
         body: file,
         headers: {
           "Content-Type": file.type,
         },
       });
+
+      if (!putResponse.ok) {
+        throw new Error(`Upload failed with status ${putResponse.status}`);
+      }
 
       field.onChange(publicUrl);
     } catch (error) {
@@ -95,7 +107,10 @@ export function ContentEditDialog({
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+  const handleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: ControllerRenderProps<SessionContentFormValues, "images">
+  ) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
@@ -122,7 +137,7 @@ export function ContentEditDialog({
 
         const { uploadUrl, publicUrl } = await response.json();
 
-        await fetch(uploadUrl, {
+        const putResponse = await fetch(uploadUrl, {
           method: "PUT",
           body: file,
           headers: {
@@ -130,7 +145,11 @@ export function ContentEditDialog({
           },
         });
 
-        return publicUrl;
+        if (!putResponse.ok) {
+          throw new Error(`Upload failed with status ${putResponse.status}`);
+        }
+
+        return publicUrl as string;
       });
 
       const uploadedImages = await Promise.all(uploadPromises);
@@ -159,7 +178,7 @@ export function ContentEditDialog({
                     <select
                       className="w-full border rounded px-3 py-2 bg-white"
                       value={field.value}
-                      onChange={(e) => field.onChange(e.target.value as any)}
+                      onChange={(e) => field.onChange(e.target.value as SessionContentFormValues["sectionType"])}
                       disabled={!isAdding}
                     >
                       {Object.entries(CONTENT_TYPE_LABELS).map(([key, label]) => (

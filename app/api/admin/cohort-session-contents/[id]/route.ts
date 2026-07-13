@@ -54,7 +54,7 @@ export async function PUT(
     const { title, content, isUnlocked, orderIndex, liveSessionLink, videoUrl, lockedMessage, images } = body;
 
     // Build update object with only provided fields
-    const updateData: any = {
+    const updateData: Partial<typeof cohortSessionContents.$inferInsert> & { updatedAt: Date } = {
       updatedAt: new Date(),
     };
 

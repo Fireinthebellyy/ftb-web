@@ -40,7 +40,7 @@ export async function GET(
       .orderBy(asc(cohortSessions.orderIndex));
 
     // Fetch contents for each session
-    let allContents: any[] = [];
+    let allContents: (typeof cohortSessionContents.$inferSelect)[] = [];
     if (sessions.length > 0) {
       allContents = await db
         .select()
@@ -50,7 +50,7 @@ export async function GET(
     }
 
     // Fetch mentors for all contents
-    let allMentors: any[] = [];
+    let allMentors: (typeof cohortSessionMentors.$inferSelect)[] = [];
     if (allContents.length > 0) {
       allMentors = await db
         .select()
@@ -60,7 +60,7 @@ export async function GET(
     }
 
     // Fetch resources for all contents
-    let allResources: any[] = [];
+    let allResources: (typeof cohortSessionResources.$inferSelect)[] = [];
     if (allContents.length > 0) {
       allResources = await db
         .select()
@@ -97,7 +97,7 @@ export async function GET(
     }
 
     // Fetch queries for all sessions
-    let allQueries: any[] = [];
+    let allQueries: (typeof cohortSessionQueries.$inferSelect)[] = [];
     if (sessions.length > 0) {
       allQueries = await db
         .select()
@@ -193,7 +193,7 @@ export async function POST(
       .insert(cohortSessions)
       .values({
         cohortId,
-        title,
+        title: title.trim(),
         description,
         orderIndex: orderIndex ?? 0,
         isActive: true,

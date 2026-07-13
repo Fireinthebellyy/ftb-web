@@ -2,4 +2,4 @@
 ALTER TABLE cohort_session_contents DROP COLUMN IF EXISTS zoom_link;
 ALTER TABLE cohort_session_contents DROP COLUMN IF EXISTS google_meet_link;
 ALTER TABLE cohort_session_contents DROP COLUMN IF EXISTS whatsapp_community_link;
-ALTER TABLE cohort_session_contents ADD COLUMN live_session_link TEXT;
+ALTER TABLE cohort_session_contents ADD COLUMN IF NOT EXISTS live_session_link TEXT;

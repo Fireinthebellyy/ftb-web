@@ -322,7 +322,7 @@ function CohortSessionMain({
                   )}
                 </div>
               )}
-              {content.images && content.images.length > 0 && (
+              {content.images && content.images.length > 0 && content.sectionType === "live_session" && (
                 <div className="rounded-lg border border-gray-200 bg-white p-6">
                   <ImageCarousel images={content.images} />
                 </div>
@@ -462,7 +462,7 @@ function CohortSessionMain({
                                   rel="noopener noreferrer"
                                   className="flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-700 hover:border-orange-500 hover:text-orange-700"
                                 >
-                                  <span className="text-orange-500">�</span>
+                                  <span className="text-orange-500">🔗</span>
                                   <span>{resource.name}</span>
                                 </a>
                               ))}

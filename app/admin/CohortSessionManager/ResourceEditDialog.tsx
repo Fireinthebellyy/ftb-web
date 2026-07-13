@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useForm } from "react-hook-form";
+import { useForm, ControllerRenderProps } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
@@ -39,7 +39,10 @@ export function ResourceEditDialog({
     defaultValues,
   });
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: ControllerRenderProps<ResourceFormValues, "url">
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -65,13 +68,17 @@ export function ResourceEditDialog({
 
       const { uploadUrl, publicUrl } = await response.json();
 
-      await fetch(uploadUrl, {
+      const putResponse = await fetch(uploadUrl, {
         method: "PUT",
         body: file,
         headers: {
           "Content-Type": file.type,
         },
       });
+
+      if (!putResponse.ok) {
+        throw new Error(`Upload failed with status ${putResponse.status}`);
+      }
 
       field.onChange(publicUrl);
     } catch (error) {
@@ -111,7 +118,7 @@ export function ResourceEditDialog({
                     <select
                       className="w-full border rounded px-3 py-2 bg-white"
                       value={field.value}
-                      onChange={(e) => field.onChange(e.target.value as any)}
+                      onChange={(e) => field.onChange(e.target.value as ResourceFormValues["type"])}
                       disabled={!isAdding}
                     >
                       <option value="file">File</option>

@@ -241,7 +241,7 @@ export default function CohortRegistrationPage() {
                 onChange={(event) => setExpectations(event.target.value)}
                 placeholder="Share your goals, expectations, or questions..."
                 rows={4}
-                className="md:!rows-5"
+                className="md:min-h-[8rem]"
                 required
               />
             </div>

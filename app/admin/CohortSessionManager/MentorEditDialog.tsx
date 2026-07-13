@@ -5,7 +5,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { useForm } from "react-hook-form";
+import { useForm, ControllerRenderProps } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
@@ -43,7 +43,10 @@ export function MentorEditDialog({
     defaultValues,
   });
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+  const handlePhotoUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: ControllerRenderProps<MentorFormValues, "imageUrl">
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -69,13 +72,17 @@ export function MentorEditDialog({
 
       const { uploadUrl, publicUrl } = await response.json();
 
-      await fetch(uploadUrl, {
+      const putResponse = await fetch(uploadUrl, {
         method: "PUT",
         body: file,
         headers: {
           "Content-Type": file.type,
         },
       });
+
+      if (!putResponse.ok) {
+        throw new Error(`Upload failed with status ${putResponse.status}`);
+      }
 
       field.onChange(publicUrl);
     } catch (error) {

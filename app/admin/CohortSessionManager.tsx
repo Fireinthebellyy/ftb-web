@@ -972,13 +972,17 @@ export default function CohortSessionManager({
 
                                   const { uploadUrl, publicUrl } = await response.json();
 
-                                  await fetch(uploadUrl, {
+                                  const putResponse = await fetch(uploadUrl, {
                                     method: "PUT",
                                     body: file,
                                     headers: {
                                       "Content-Type": file.type,
                                     },
                                   });
+
+                                  if (!putResponse.ok) {
+                                    throw new Error(`Upload failed with status ${putResponse.status}`);
+                                  }
 
                                   field.onChange(publicUrl);
                                 } catch (error) {
@@ -1089,7 +1093,7 @@ export default function CohortSessionManager({
 
                                 const { uploadUrl, publicUrl } = await response.json();
 
-                                await fetch(uploadUrl, {
+                                const putResponse = await fetch(uploadUrl, {
                                   method: "PUT",
                                   body: file,
                                   headers: {
@@ -1097,7 +1101,11 @@ export default function CohortSessionManager({
                                   },
                                 });
 
-                                return publicUrl;
+                                if (!putResponse.ok) {
+                                  throw new Error(`Upload failed with status ${putResponse.status}`);
+                                }
+
+                                return publicUrl as string;
                               });
 
                               const uploadedImages = await Promise.all(uploadPromises);
@@ -1227,13 +1235,17 @@ export default function CohortSessionManager({
 
                               const { uploadUrl, publicUrl } = await response.json();
 
-                              await fetch(uploadUrl, {
+                              const putResponse = await fetch(uploadUrl, {
                                 method: "PUT",
                                 body: file,
                                 headers: {
                                   "Content-Type": file.type,
                                 },
                               });
+
+                              if (!putResponse.ok) {
+                                throw new Error(`Upload failed with status ${putResponse.status}`);
+                              }
 
                               field.onChange(publicUrl);
                             } catch (error) {
@@ -1426,13 +1438,17 @@ export default function CohortSessionManager({
 
                                   const { uploadUrl, publicUrl } = await response.json();
 
-                                  await fetch(uploadUrl, {
+                                  const putResponse = await fetch(uploadUrl, {
                                     method: "PUT",
                                     body: file,
                                     headers: {
                                       "Content-Type": file.type,
                                     },
                                   });
+
+                                  if (!putResponse.ok) {
+                                    throw new Error(`Upload failed with status ${putResponse.status}`);
+                                  }
 
                                   return {
                                     name: file.name,

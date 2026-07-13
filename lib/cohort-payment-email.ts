@@ -82,13 +82,16 @@ export async function sendCohortPaymentConfirmationEmail(
     return;
   }
 
-  const { error } = await resend.emails.send({
+  // Send email to buyer
+  const { error: buyerEmailError } = await resend.emails.send({
     from,
     to: order.buyerEmail,
-    subject: `Payment confirmed — ${cohort.title}`,
+    subject: `Payment Successful! Welcome to FTB's Cohort: ${cohort.title}`,
     react: CohortPaymentConfirmationEmail({
       buyerName: order.buyerName,
+      buyerEmail: order.buyerEmail,
       cohortTitle: cohort.title,
+      cohortStartDate: cohort.startDate,
       tierName,
       addonNames,
       toolkitNames,
@@ -99,7 +102,33 @@ export async function sendCohortPaymentConfirmationEmail(
     }),
   });
 
-  if (error) {
-    console.error("Failed to send cohort payment confirmation email:", error);
+  if (buyerEmailError) {
+    console.error("Failed to send cohort payment confirmation email to buyer:", buyerEmailError);
+  }
+
+  // Send email to buddy if provided
+  if (order.buddyEmail) {
+    const { error: buddyEmailError } = await resend.emails.send({
+      from,
+      to: order.buddyEmail,
+      subject: `Payment Successful! Welcome to FTB's Cohort: ${cohort.title} (Buddy Access)`,
+      react: CohortPaymentConfirmationEmail({
+        buyerName: order.buyerName,
+        buyerEmail: order.buddyEmail,
+        cohortTitle: cohort.title,
+        cohortStartDate: cohort.startDate,
+        tierName,
+        addonNames,
+        toolkitNames,
+        amountPaidRupees: Math.round(order.amountPaid / 100),
+        orderId: order.razorpayOrderId,
+        paymentId: order.razorpayPaymentId || undefined,
+        registrationUrl,
+      }),
+    });
+
+    if (buddyEmailError) {
+      console.error("Failed to send cohort payment confirmation email to buddy:", buddyEmailError);
+    }
   }
 }

@@ -128,30 +128,60 @@ export async function POST(
         });
       }
 
-      // If a buddy email was specified, also grant them access to this toolkit if their user account exists
+      // If a buddy email was specified, also grant them access to this toolkit and cohort if their user account exists
       if (existingOrder.buddyEmail) {
         try {
           const buddyUser = await db.query.user.findFirst({
             where: eq(user.email, existingOrder.buddyEmail.trim().toLowerCase()),
           });
           if (buddyUser) {
-            const existingBuddyToolkit = await db.query.userToolkits.findFirst({
+            // Grant toolkit access
+            if (cohort.toolkitId) {
+              const existingBuddyToolkit = await db.query.userToolkits.findFirst({
+                where: and(
+                  eq(userToolkits.userId, buddyUser.id),
+                  eq(userToolkits.toolkitId, cohort.toolkitId)
+                ),
+              });
+              if (!existingBuddyToolkit) {
+                await db.insert(userToolkits).values({
+                  userId: buddyUser.id,
+                  toolkitId: cohort.toolkitId,
+                  paymentStatus: "completed",
+                  amountPaid: 0,
+                });
+              }
+            }
+
+            // Create cohort order record for buddy to grant dashboard access
+            const existingBuddyOrder = await db.query.cohortOrders.findFirst({
               where: and(
-                eq(userToolkits.userId, buddyUser.id),
-                eq(userToolkits.toolkitId, cohort.toolkitId)
+                eq(cohortOrders.userId, buddyUser.id),
+                eq(cohortOrders.cohortId, cohortId),
+                eq(cohortOrders.status, "paid")
               ),
             });
-            if (!existingBuddyToolkit) {
-              await db.insert(userToolkits).values({
+            if (!existingBuddyOrder) {
+              await db.insert(cohortOrders).values({
+                cohortId,
                 userId: buddyUser.id,
-                toolkitId: cohort.toolkitId,
-                paymentStatus: "completed",
+                buyerName: existingOrder.buyerName,
+                buyerEmail: existingOrder.buddyEmail,
+                buyerPhone: null,
+                buddyEmail: null,
+                selectedTierId: existingOrder.selectedTierId,
+                selectedAddOnIds: existingOrder.selectedAddOnIds,
+                selectedToolkitIds: existingOrder.selectedToolkitIds,
                 amountPaid: 0,
+                razorpayOrderId: `buddy_${existingOrder.razorpayOrderId}`,
+                razorpayPaymentId: existingOrder.razorpayPaymentId,
+                couponId: existingOrder.couponId,
+                status: "paid",
               });
             }
           }
         } catch (e) {
-          console.error("Error granting cohort toolkit access to buddy:", e);
+          console.error("Error granting cohort access to buddy:", e);
         }
       }
     }

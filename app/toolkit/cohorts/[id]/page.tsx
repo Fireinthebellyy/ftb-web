@@ -905,7 +905,7 @@ export default function CohortLandingPage() {
               }}
               className="flex-1 bg-green-600 hover:bg-green-750 text-white font-bold text-sm md:text-base py-3 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-1.5"
             >
-              Access Content <ChevronRight className="w-4 h-4" />
+              Join Cohort <ChevronRight className="w-4 h-4" />
             </button>
           ) : (
             <button

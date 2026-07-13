@@ -6,13 +6,13 @@ import { FeedbackWidget } from "@/components/FeedbackWidget";
 export default function ConditionalWidgets() {
   const pathname = usePathname();
   const isHomepage = pathname === "/";
-  const isCohortPage = pathname.startsWith("/toolkit/cohorts/");
+  const isToolkitPage = pathname?.startsWith("/toolkit") || false;
 
   if (isHomepage) return null;
 
   return (
     <>
-      {!isCohortPage && <WhatsAppWidget />}
+      {!isToolkitPage && <WhatsAppWidget />}
       <FeedbackWidget />
     </>
   );

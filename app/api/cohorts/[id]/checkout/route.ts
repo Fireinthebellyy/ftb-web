@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { eq, and, inArray, sql } from "drizzle-orm";
-import { cohorts, cohortTiers, cohortOrders, cohortAddOns, coupons, userToolkits, toolkits, cohortSessions, user } from "@/lib/schema";
+import { cohorts, cohortTiers, cohortOrders, cohortAddOns, coupons, userToolkits, toolkits, user } from "@/lib/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { createOrder } from "@/lib/razorpay";

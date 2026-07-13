@@ -385,6 +385,8 @@ export async function PUT(
             .set({
               title: s.title,
               description: s.description,
+              price: s.price ? Number(s.price) : null,
+              originalPrice: s.originalPrice ? Number(s.originalPrice) : null,
               orderIndex: i,
             })
             .where(eq(cohortSessions.id, s.id));
@@ -393,6 +395,8 @@ export async function PUT(
             cohortId,
             title: s.title,
             description: s.description,
+            price: s.price ? Number(s.price) : null,
+            originalPrice: s.originalPrice ? Number(s.originalPrice) : null,
             orderIndex: i,
           });
         }

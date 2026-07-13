@@ -879,11 +879,14 @@ export const cohortSessions = pgTable("cohort_sessions", {
   cohortId: uuid("cohort_id").notNull().references(() => cohorts.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   description: text("description"),
+  price: integer("price"), // offer/final price for this session when sold individually
+  originalPrice: integer("original_price"), // original/strikethrough price
   orderIndex: integer("order_index").default(0).notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
 
 // Session Content Items (4 sections per session)
 export const cohortSessionContents = pgTable("cohort_session_contents", {

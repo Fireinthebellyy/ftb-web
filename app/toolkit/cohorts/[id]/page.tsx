@@ -71,7 +71,8 @@ interface Session {
   id: string;
   title: string;
   description: string;
-  priceDelta?: number | null;
+  price?: number | null;
+  originalPrice?: number | null;
 }
 
 interface CohortData {
@@ -273,12 +274,12 @@ export default function CohortLandingPage() {
   const isDuoActive = buddyEmail.trim().length > 0;
   const activeTier = cohort.tiers?.find((t) => t.id === selectedTierId);
   const basePrice = activeTier ? activeTier.price : 0;
-  const finalBasePrice = isDuoActive ? getDuoPricing(basePrice).final : basePrice;
+  const finalBasePrice = isDuoActive ? Math.round(basePrice * 0.8) : basePrice;
 
   const sessionsTotal = cohort.sessions
-    ?.filter((s) => s.priceDelta && selectedAddonIds.includes(s.id))
-    .reduce((acc, current) => acc + (current.priceDelta || 0), 0) || 0;
-  const finalSessionsTotal = isDuoActive ? getDuoPricing(sessionsTotal).final : sessionsTotal;
+    ?.filter((s) => s.price && selectedAddonIds.includes(s.id))
+    .reduce((acc, current) => acc + (current.price || 0), 0) || 0;
+  const finalSessionsTotal = isDuoActive ? Math.round(sessionsTotal * 0.8) : sessionsTotal;
 
   const toolkitsTotal = liveToolkits
     ?.filter((t) => selectedToolkitIds.includes(t.id))
@@ -981,9 +982,9 @@ export default function CohortLandingPage() {
                           <div className="flex flex-col items-end">
                             {isDuoActive ? (
                               <>
-                                <span className="font-bold text-sm text-[#ff5e14]">₹{getDuoPricing(tier.price).final}</span>
-                                <span className="line-through text-gray-405 text-[10px]">₹{getDuoPricing(tier.price).reference}</span>
-                                <span className="text-[9px] text-emerald-600 font-medium whitespace-nowrap">≈ ₹{getDuoPricing(tier.price).perHead}/head</span>
+                                <span className="font-bold text-sm text-[#ff5e14]">₹{Math.round(tier.price * 0.8)}</span>
+                                <span className="line-through text-gray-400 text-[10px]">₹{tier.price}</span>
+                                <span className="text-[9px] text-emerald-600 font-medium whitespace-nowrap">≈ ₹{Math.round(tier.price * 0.8 / 2)}/head</span>
                               </>
                             ) : (
                               <>
@@ -1002,14 +1003,14 @@ export default function CohortLandingPage() {
               )}
 
               {/* Add-ons Selection (Individual Sessions) */}
-              {cohort.sessions && cohort.sessions.filter(s => s.priceDelta && s.priceDelta > 0).length > 0 && (
+              {cohort.sessions && cohort.sessions.filter(s => s.price && s.price > 0).length > 0 && (
                 <div className="space-y-3">
                   <div className="flex flex-col gap-0.5">
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Select Individual Sessions</h4>
                     <p className="text-[10px] text-gray-500">Choosing an individual session will deselect the bundle tier.</p>
                   </div>
                   <div className="space-y-2">
-                    {cohort.sessions.filter(s => s.priceDelta && s.priceDelta > 0).map((session, index) => {
+                    {cohort.sessions.filter(s => s.price && s.price > 0).map((session, index) => {
                       const isSelected = selectedAddonIds.includes(session.id);
                       return (
                         <div
@@ -1037,12 +1038,17 @@ export default function CohortLandingPage() {
                           <div className="text-right whitespace-nowrap">
                             {isDuoActive ? (
                               <>
-                                <span className="font-bold text-xs text-[#ff5e14] block">+ ₹{getDuoPricing(session.priceDelta || 0).final}</span>
-                                <span className="line-through text-gray-400 text-[10px] block">₹{getDuoPricing(session.priceDelta || 0).reference}</span>
-                                <span className="text-[9px] text-emerald-600 font-medium block">≈ ₹{getDuoPricing(session.priceDelta || 0).perHead}/head</span>
+                                <span className="font-bold text-xs text-[#ff5e14] block">+ ₹{Math.round((session.price || 0) * 0.8)}</span>
+                                <span className="line-through text-gray-400 text-[10px] block">₹{session.price}</span>
+                                <span className="text-[9px] text-emerald-600 font-medium block">≈ ₹{Math.round((session.price || 0) * 0.8 / 2)}/head</span>
                               </>
                             ) : (
-                              <span className="font-bold text-xs text-[#ff5e14] block">+ ₹{session.priceDelta}</span>
+                              <>
+                                <span className="font-bold text-xs text-[#ff5e14] block">+ ₹{session.price}</span>
+                                {session.originalPrice && session.originalPrice > (session.price || 0) && (
+                                  <span className="line-through text-gray-400 text-[10px] block">₹{session.originalPrice}</span>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
@@ -1151,13 +1157,13 @@ export default function CohortLandingPage() {
                   <span className="font-black text-gray-900 text-lg">₹{runningTotal}</span>
                   {isDuoActive && (selectedTierId || selectedAddonIds.length > 0) && (
                     <span className="line-through text-xs text-gray-400">₹{
-                      getDuoPricing(selectedTierId ? basePrice : sessionsTotal).reference
+                      selectedTierId ? basePrice + toolkitsTotal : sessionsTotal + toolkitsTotal
                     }</span>
                   )}
                 </div>
                 {isDuoActive && (selectedTierId || selectedAddonIds.length > 0) && (
                   <span className="text-[10px] text-emerald-600 font-semibold mt-0.5">
-                    ≈ ₹{getDuoPricing(selectedTierId ? basePrice : sessionsTotal).perHead} per person (Duo Discount Applied)
+                    ≈ ₹{Math.round((selectedTierId ? basePrice : sessionsTotal) * 0.8 / 2) + Math.round(toolkitsTotal / 2)} per person (Duo Discount Applied)
                   </span>
                 )}
                 {!(selectedTierId || selectedAddonIds.length > 0) && (

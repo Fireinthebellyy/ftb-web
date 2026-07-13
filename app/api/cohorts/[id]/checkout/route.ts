@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { eq, and, inArray, sql } from "drizzle-orm";
-import { cohorts, cohortTiers, cohortOrders, cohortAddOns, coupons, userToolkits, toolkits, user } from "@/lib/schema";
+import { cohorts, cohortTiers, cohortOrders, coupons, userToolkits, toolkits, user, cohortSessions } from "@/lib/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { createOrder } from "@/lib/razorpay";
@@ -96,18 +96,18 @@ export async function POST(
     // 3. Fetch Add-ons (sessions)
     let addonsTotal = 0;
     if (selectedAddOnIds.length > 0) {
-      const addons = await db
+      const selectedSessions = await db
         .select()
-        .from(cohortAddOns)
+        .from(cohortSessions)
         .where(
           and(
-            eq(cohortAddOns.cohortId, cohortId),
-            inArray(cohortAddOns.id, selectedAddOnIds)
+            eq(cohortSessions.cohortId, cohortId),
+            inArray(cohortSessions.id, selectedAddOnIds)
           )
         );
 
-      addons.forEach((addon) => {
-        addonsTotal += addon.priceDelta || 0;
+      selectedSessions.forEach((session) => {
+        addonsTotal += session.price || 0;
       });
     }
 
@@ -171,8 +171,8 @@ export async function POST(
         }
         
         if (isValid) {
-          const subtotalForDiscount = (isDuoActive ? getDuoPricing(tierPrice).final : tierPrice) + 
-                                      (isDuoActive ? getDuoPricing(addonsTotal).final : addonsTotal) + 
+          const subtotalForDiscount = (isDuoActive ? Math.round(tierPrice * 0.8) : tierPrice) + 
+                                      (isDuoActive ? Math.round(addonsTotal * 0.8) : addonsTotal) + 
                                       toolkitsTotal;
           if (coupon.discountType === "percentage") {
             discountAmount = Math.round((subtotalForDiscount * coupon.discountAmount) / 100);
@@ -185,8 +185,9 @@ export async function POST(
     }
 
     // 5. Compute Total price (in rupees)
-    const finalTierPrice = isDuoActive ? getDuoPricing(tierPrice).final : tierPrice;
-    const finalAddonsTotal = isDuoActive ? getDuoPricing(addonsTotal).final : addonsTotal;
+    // Buddy discount of 20% applies ONLY to tier price or sessions total, NOT to toolkits
+    const finalTierPrice = isDuoActive ? Math.round(tierPrice * 0.8) : tierPrice;
+    const finalAddonsTotal = isDuoActive ? Math.round(addonsTotal * 0.8) : addonsTotal;
 
     const subtotal = finalTierPrice + finalAddonsTotal + toolkitsTotal;
     const finalPriceRupees = Math.max(0, subtotal - discountAmount);
@@ -213,7 +214,8 @@ export async function POST(
         })
         .returning();
 
-      // If buddy email is added, grant them access to the cohort's linked toolkit if their account already exists
+      // If buddy email is added, grant them access to the cohort's linked toolkit if their account already exists.
+      // Buddy does NOT get access to selectedToolkitIds add-on toolkits.
       if (buddyEmail && cohort.toolkitId) {
         try {
           const buddyUser = await db.query.user.findFirst({

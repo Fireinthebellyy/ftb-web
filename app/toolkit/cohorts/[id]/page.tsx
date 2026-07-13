@@ -1,7 +1,7 @@
 /* eslint-disable max-lines */
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { useParams, useRouter } from "next/navigation";
@@ -113,6 +113,17 @@ export default function CohortLandingPage() {
   const [buyerEmail, setBuyerEmail] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("");
 
+  const redirectToRegistrationIfNeeded = useCallback(async () => {
+    try {
+      const response = await axios.get(`/api/cohorts/${cohortId}/registration`);
+      if (!response.data.completed) {
+        router.replace(`/toolkit/cohorts/${cohortId}/registration`);
+      }
+    } catch {
+      // User has not paid yet — stay on cohort page
+    }
+  }, [cohortId, router]);
+
   // Buddy Program states
   const [isBuddyDialogOpen, setIsBuddyDialogOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -185,6 +196,14 @@ export default function CohortLandingPage() {
     fetchCohortDetails();
     fetchLiveToolkits();
   }, [cohortId]);
+
+  useEffect(() => {
+    if (!session || sessionPending || isLoading) {
+      return;
+    }
+
+    redirectToRegistrationIfNeeded();
+  }, [session, sessionPending, isLoading, redirectToRegistrationIfNeeded]);
 
   // Sync buyer info with session once loaded
   useEffect(() => {
@@ -313,11 +332,7 @@ export default function CohortLandingPage() {
       if (response.data.free) {
         toast.success("Registration Successful! Welcome to the cohort.");
         setIsDrawerOpen(false);
-        if (cohort.toolkitId) {
-          router.push(`/toolkit/${cohort.toolkitId}/content`);
-        } else {
-          router.push("/toolkit");
-        }
+        router.push(`/toolkit/cohorts/${cohortId}/registration`);
         setIsProcessingCheckout(false);
         return;
       }
@@ -360,11 +375,7 @@ export default function CohortLandingPage() {
             if (verifyRes.data.success) {
               toast.success("Registration Successful! Welcome to the cohort.");
               setIsDrawerOpen(false);
-              if (cohort.toolkitId) {
-                router.push(`/toolkit/${cohort.toolkitId}/content`);
-              } else {
-                router.push("/toolkit");
-              }
+              router.push(`/toolkit/cohorts/${cohortId}/registration`);
             } else {
               toast.error("Payment verification failed");
             }
@@ -710,7 +721,8 @@ export default function CohortLandingPage() {
                 if (cohort.toolkitId) {
                   router.push(`/toolkit/${cohort.toolkitId}/content`);
                 } else {
-                  toast.success("You are registered! Check your dashboard for schedules.");
+                  // Redirect to cohort dashboard if no toolkit id
+                  router.push(`/toolkit/cohorts/${cohortId}/dashboard`);
                 }
               }}
               className="flex-1 bg-green-600 hover:bg-green-750 text-white font-bold text-sm md:text-base py-3 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-1.5"

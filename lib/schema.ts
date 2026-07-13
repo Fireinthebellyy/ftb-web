@@ -14,7 +14,7 @@ import {
   uniqueIndex,
   check,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+import { sql, relations } from "drizzle-orm";
 
 export const userRoleEnum = pgEnum("user_role", [
   "user",
@@ -853,8 +853,115 @@ export const cohortOrders = pgTable("cohort_orders", {
   razorpayOrderId: text("razorpay_order_id").notNull(),
   razorpayPaymentId: text("razorpay_payment_id"),
   status: text("status").notNull(),
+  registrationName: text("registration_name"),
+  registrationCollege: text("registration_college"),
+  registrationCourse: text("registration_course"),
+  registrationYear: text("registration_year"),
+  registrationExpectations: text("registration_expectations"),
+  registrationCompletedAt: timestamp("registration_completed_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// Cohort Sessions
+export const cohortSessions = pgTable("cohort_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  cohortId: uuid("cohort_id").notNull().references(() => cohorts.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  orderIndex: integer("order_index").default(0).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Session Content Items (4 sections per session)
+export const cohortSessionContents = pgTable("cohort_session_contents", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sessionId: uuid("session_id").notNull().references(() => cohortSessions.id, { onDelete: "cascade" }),
+  sectionType: text("section_type").notNull(), // "live_session", "meet_mentor", "resources", "recording"
+  title: text("title").notNull(),
+  content: text("content"), // HTML content
+  isUnlocked: boolean("is_unlocked").default(false).notNull(),
+  lockedMessage: text("locked_message"), // Custom message shown when content is locked
+  orderIndex: integer("order_index").default(0).notNull(),
+  liveSessionLink: text("live_session_link"), // Single link for live session
+  videoUrl: text("video_url"),
+  images: jsonb("images"), // Array of image URLs for carousel display
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Session Resources (attached files)
+export const cohortSessionResources = pgTable("cohort_session_resources", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  contentId: uuid("content_id").notNull().references(() => cohortSessionContents.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  url: text("url").notNull(),
+  type: text("type").default("file"), // "file", "video", "link", "image", "pdf", "ppt"
+  orderIndex: integer("order_index").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Session Queries (questions and answers at session level)
+export const cohortSessionQueries = pgTable("cohort_session_queries", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sessionId: uuid("session_id").notNull().references(() => cohortSessions.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull(),
+  question: text("question").notNull(),
+  answer: text("answer"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Session Mentor (for "Meet the Mentor" section)
+export const cohortSessionMentors = pgTable("cohort_session_mentors", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  contentId: uuid("content_id").notNull().references(() => cohortSessionContents.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  role: text("role"),
+  imageUrl: text("image_url"),
+  bio: text("bio"),
+  linkedinUrl: text("linkedin_url"),
+  otherLinks: jsonb("other_links").$type<{ title: string; url: string }[]>().default([]),
+  orderIndex: integer("order_index").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Define relations
+export const cohortSessionsRelations = relations(cohortSessions, ({ many }) => ({
+  contents: many(cohortSessionContents),
+  queries: many(cohortSessionQueries),
+}));
+
+export const cohortSessionContentsRelations = relations(cohortSessionContents, ({ one, many }) => ({
+  session: one(cohortSessions, {
+    fields: [cohortSessionContents.sessionId],
+    references: [cohortSessions.id],
+  }),
+  resources: many(cohortSessionResources),
+  mentors: many(cohortSessionMentors),
+}));
+
+export const cohortSessionResourcesRelations = relations(cohortSessionResources, ({ one }) => ({
+  content: one(cohortSessionContents, {
+    fields: [cohortSessionResources.contentId],
+    references: [cohortSessionContents.id],
+  }),
+}));
+
+export const cohortSessionQueriesRelations = relations(cohortSessionQueries, ({ one }) => ({
+  session: one(cohortSessions, {
+    fields: [cohortSessionQueries.sessionId],
+    references: [cohortSessions.id],
+  }),
+}));
+
+export const cohortSessionMentorsRelations = relations(cohortSessionMentors, ({ one }) => ({
+  content: one(cohortSessionContents, {
+    fields: [cohortSessionMentors.contentId],
+    references: [cohortSessionContents.id],
+  }),
+}));
 
 // Export schema object last
 export const schema = {
@@ -899,5 +1006,10 @@ export const schema = {
   cohortTiers,
   cohortAddOns,
   cohortOrders,
+  cohortSessions,
+  cohortSessionContents,
+  cohortSessionResources,
+  cohortSessionQueries,
+  cohortSessionMentors,
 };
 

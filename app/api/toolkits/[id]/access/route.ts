@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { getSessionCached } from "@/lib/auth-session-cache";
+import {
+  findPendingCohortRegistration,
+} from "@/lib/cohort-registration";
 import { db } from "@/lib/db";
 import { toolkits, userToolkitProgress, userToolkits, cohorts, cohortOrders } from "@/lib/schema";
 
@@ -62,6 +65,20 @@ export async function GET(
 
     if (!hasPurchased) {
       return NextResponse.json({ hasPurchased: false, completedItemIds: [] });
+    }
+
+    const pendingRegistration = await findPendingCohortRegistration({
+      userId: session.user.id,
+      toolkitId,
+    });
+
+    if (pendingRegistration) {
+      return NextResponse.json({
+        hasPurchased: false,
+        completedItemIds: [],
+        registrationRequired: true,
+        cohortId: pendingRegistration.cohortId,
+      });
     }
 
     const completedProgress = await db

@@ -4,6 +4,7 @@ import { cohorts, cohortMentors, cohortFeatures, cohortTiers, cohortAddOns, coho
 import { eq, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { isCohortRegistrationComplete } from "@/lib/cohort-registration";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -69,7 +70,7 @@ export async function GET(
           ),
         });
         if (order) {
-          hasAccess = true;
+          hasAccess = isCohortRegistrationComplete(order);
         }
       }
     } catch (e) {

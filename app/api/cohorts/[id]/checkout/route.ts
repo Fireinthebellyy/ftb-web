@@ -5,6 +5,7 @@ import { eq, and, inArray, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { createOrder } from "@/lib/razorpay";
+import { sendCohortPaymentConfirmationEmail } from "@/lib/cohort-payment-email";
 
 export async function POST(
   request: Request,
@@ -226,6 +227,10 @@ export async function POST(
           });
         }
       }
+
+      sendCohortPaymentConfirmationEmail(newOrder.id).catch((emailError) => {
+        console.error("Cohort payment confirmation email failed:", emailError);
+      });
 
       return NextResponse.json({
         success: true,

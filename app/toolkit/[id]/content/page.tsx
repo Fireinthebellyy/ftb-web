@@ -144,6 +144,17 @@ export default function ToolkitContentPage() {
 
   useEffect(() => {
     if (
+      !isAccessLoading &&
+      accessData?.registrationRequired &&
+      accessData.cohortId &&
+      !didRedirectRef.current
+    ) {
+      didRedirectRef.current = true;
+      router.replace(`/toolkit/cohorts/${accessData.cohortId}/registration`);
+      return;
+    }
+
+    if (
       !isContentLoading &&
       !isAccessLoading &&
       toolkit &&
@@ -155,6 +166,8 @@ export default function ToolkitContentPage() {
       router.push(`/toolkit/${params.id}`);
     }
   }, [
+    accessData?.cohortId,
+    accessData?.registrationRequired,
     isAccessLoading,
     isContentLoading,
     hasAccess,

@@ -1,0 +1,874 @@
+[2026-07-11T09:34:14.036Z] Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-05T18:30:00.000Z,9
+Stack: Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-05T18:30:00.000Z,9
+    at NeonHttpPreparedQuery.queryWithCache (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8612:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8770:24)
+    at async GET (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\[root-of-the-server]__0t0yo_y._.js:2339:44)
+    at async AppRouteRouteModule.do (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40732)
+    at async AppRouteRouteModule.handle (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47861)
+    at async responseGenerator (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17687:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:227216)
+    at async handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17750:32)
+    at async Module.handler (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17801:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:934:17)
+    at async C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:253:21)
+    at async handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:452:24)
+    at async requestHandlerImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:501:13)
+    at async Server.requestListener (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-07-11T09:34:15.956Z] Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and "internships"."id" in ($1)) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 85e9872b-34f2-4e8d-87ab-977b04c18feb,101
+Stack: Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and "internships"."id" in ($1)) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 85e9872b-34f2-4e8d-87ab-977b04c18feb,101
+    at NeonHttpPreparedQuery.queryWithCache (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8612:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8770:24)
+    at async GET (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\[root-of-the-server]__0t0yo_y._.js:2339:44)
+    at async AppRouteRouteModule.do (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40732)
+    at async AppRouteRouteModule.handle (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47861)
+    at async responseGenerator (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17687:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:227216)
+    at async handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17750:32)
+    at async Module.handler (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17801:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:934:17)
+    at async C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:253:21)
+    at async handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:452:24)
+    at async requestHandlerImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:501:13)
+    at async Server.requestListener (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-07-11T09:34:17.027Z] Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-05T18:30:00.000Z,9
+Stack: Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-05T18:30:00.000Z,9
+    at NeonHttpPreparedQuery.queryWithCache (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8612:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8770:24)
+    at async GET (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\[root-of-the-server]__0t0yo_y._.js:2339:44)
+    at async AppRouteRouteModule.do (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40732)
+    at async AppRouteRouteModule.handle (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47861)
+    at async responseGenerator (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17687:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:227216)
+    at async handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17750:32)
+    at async Module.handler (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17801:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:934:17)
+    at async C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:253:21)
+    at async handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:452:24)
+    at async requestHandlerImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:501:13)
+    at async Server.requestListener (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-07-11T09:45:07.495Z] Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-05T18:30:00.000Z,9
+Stack: Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-05T18:30:00.000Z,9
+    at NeonHttpPreparedQuery.queryWithCache (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8612:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8770:24)
+    at async GET (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\[root-of-the-server]__0t0yo_y._.js:2453:44)
+    at async AppRouteRouteModule.do (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40732)
+    at async AppRouteRouteModule.handle (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47861)
+    at async responseGenerator (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17687:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:227216)
+    at async handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17750:32)
+    at async Module.handler (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17801:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:934:17)
+    at async C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:253:21)
+    at async handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:452:24)
+    at async requestHandlerImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:501:13)
+    at async Server.requestListener (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-07-11T09:45:09.684Z] Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-05T18:30:00.000Z,9
+Stack: Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-05T18:30:00.000Z,9
+    at NeonHttpPreparedQuery.queryWithCache (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8612:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8770:24)
+    at async GET (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\[root-of-the-server]__0t0yo_y._.js:2453:44)
+    at async AppRouteRouteModule.do (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40732)
+    at async AppRouteRouteModule.handle (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47861)
+    at async responseGenerator (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17687:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:227216)
+    at async handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17750:32)
+    at async Module.handler (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17801:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:934:17)
+    at async C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:253:21)
+    at async handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:452:24)
+    at async requestHandlerImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:501:13)
+    at async Server.requestListener (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-07-11T09:45:10.071Z] Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and "internships"."id" in ($1)) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 85e9872b-34f2-4e8d-87ab-977b04c18feb,101
+Stack: Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and "internships"."id" in ($1)) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 85e9872b-34f2-4e8d-87ab-977b04c18feb,101
+    at NeonHttpPreparedQuery.queryWithCache (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8612:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8770:24)
+    at async GET (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\[root-of-the-server]__0t0yo_y._.js:2453:44)
+    at async AppRouteRouteModule.do (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40732)
+    at async AppRouteRouteModule.handle (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47861)
+    at async responseGenerator (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17687:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:227216)
+    at async handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17750:32)
+    at async Module.handler (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17801:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:934:17)
+    at async C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:253:21)
+    at async handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:452:24)
+    at async requestHandlerImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:501:13)
+    at async Server.requestListener (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-07-11T10:06:26.874Z] Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-05T18:30:00.000Z,9
+Stack: Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-05T18:30:00.000Z,9
+    at NeonHttpPreparedQuery.queryWithCache (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8612:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8770:24)
+    at async GET (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\[root-of-the-server]__0t0yo_y._.js:2453:44)
+    at async AppRouteRouteModule.do (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40732)
+    at async AppRouteRouteModule.handle (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47861)
+    at async responseGenerator (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17687:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:227216)
+    at async handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17750:32)
+    at async Module.handler (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17801:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:934:17)
+    at async C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:253:21)
+    at async handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:452:24)
+    at async requestHandlerImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:501:13)
+    at async Server.requestListener (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-07-11T10:06:27.983Z] Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and "internships"."id" in ($1)) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 85e9872b-34f2-4e8d-87ab-977b04c18feb,101
+Stack: Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and "internships"."id" in ($1)) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 85e9872b-34f2-4e8d-87ab-977b04c18feb,101
+    at NeonHttpPreparedQuery.queryWithCache (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8612:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8770:24)
+    at async GET (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\[root-of-the-server]__0t0yo_y._.js:2453:44)
+    at async AppRouteRouteModule.do (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40732)
+    at async AppRouteRouteModule.handle (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47861)
+    at async responseGenerator (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17687:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:227216)
+    at async handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17750:32)
+    at async Module.handler (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17801:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:934:17)
+    at async C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:253:21)
+    at async handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:452:24)
+    at async requestHandlerImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:501:13)
+    at async Server.requestListener (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-07-11T10:12:02.589Z] Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-05T18:30:00.000Z,9
+Stack: Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-05T18:30:00.000Z,9
+    at NeonHttpPreparedQuery.queryWithCache (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8612:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8770:24)
+    at async GET (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\[root-of-the-server]__0t0yo_y._.js:2453:44)
+    at async AppRouteRouteModule.do (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40732)
+    at async AppRouteRouteModule.handle (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47861)
+    at async responseGenerator (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17687:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:227216)
+    at async handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17750:32)
+    at async Module.handler (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17801:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:934:17)
+    at async C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:253:21)
+    at async handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:452:24)
+    at async requestHandlerImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:501:13)
+    at async Server.requestListener (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-07-11T10:12:03.361Z] Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and "internships"."id" in ($1)) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 85e9872b-34f2-4e8d-87ab-977b04c18feb,101
+Stack: Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and "internships"."id" in ($1)) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 85e9872b-34f2-4e8d-87ab-977b04c18feb,101
+    at NeonHttpPreparedQuery.queryWithCache (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8612:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8770:24)
+    at async GET (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\[root-of-the-server]__0t0yo_y._.js:2453:44)
+    at async AppRouteRouteModule.do (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40732)
+    at async AppRouteRouteModule.handle (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47861)
+    at async responseGenerator (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17687:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:227216)
+    at async handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17750:32)
+    at async Module.handler (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17801:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:934:17)
+    at async C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:253:21)
+    at async handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:452:24)
+    at async requestHandlerImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:501:13)
+    at async Server.requestListener (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-07-11T10:12:04.790Z] Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-05T18:30:00.000Z,9
+Stack: Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-05T18:30:00.000Z,9
+    at NeonHttpPreparedQuery.queryWithCache (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8612:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8770:24)
+    at async GET (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\[root-of-the-server]__0t0yo_y._.js:2453:44)
+    at async AppRouteRouteModule.do (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40732)
+    at async AppRouteRouteModule.handle (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47861)
+    at async responseGenerator (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17687:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:227216)
+    at async handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17750:32)
+    at async Module.handler (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17801:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:934:17)
+    at async C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:253:21)
+    at async handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:452:24)
+    at async requestHandlerImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:501:13)
+    at async Server.requestListener (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-07-11T10:12:14.559Z] Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-05T18:30:00.000Z,11
+Stack: Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-05T18:30:00.000Z,11
+    at NeonHttpPreparedQuery.queryWithCache (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8612:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8770:24)
+    at async GET (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\[root-of-the-server]__0t0yo_y._.js:2453:44)
+    at async AppRouteRouteModule.do (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40732)
+    at async AppRouteRouteModule.handle (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47861)
+    at async responseGenerator (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17687:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:227216)
+    at async handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17750:32)
+    at async Module.handler (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17801:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:934:17)
+    at async C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:253:21)
+    at async handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:452:24)
+    at async requestHandlerImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:501:13)
+    at async Server.requestListener (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-07-11T10:12:15.957Z] Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-05T18:30:00.000Z,11
+Stack: Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-05T18:30:00.000Z,11
+    at NeonHttpPreparedQuery.queryWithCache (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8612:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8770:24)
+    at async GET (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\[root-of-the-server]__0t0yo_y._.js:2453:44)
+    at async AppRouteRouteModule.do (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40732)
+    at async AppRouteRouteModule.handle (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47861)
+    at async responseGenerator (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17687:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:227216)
+    at async handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17750:32)
+    at async Module.handler (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17801:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:934:17)
+    at async C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:253:21)
+    at async handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:452:24)
+    at async requestHandlerImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:501:13)
+    at async Server.requestListener (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-07-12T05:40:12.829Z] Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and "internships"."is_active" = $1 and ("internships"."created_at" >= $2 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $3
+params: true,2026-07-06T18:30:00.000Z,9
+Stack: Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and "internships"."is_active" = $1 and ("internships"."created_at" >= $2 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $3
+params: true,2026-07-06T18:30:00.000Z,9
+    at NeonHttpPreparedQuery.queryWithCache (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8612:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8770:24)
+    at async GET (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\[root-of-the-server]__0t0yo_y._.js:2459:44)
+    at async AppRouteRouteModule.do (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40732)
+    at async AppRouteRouteModule.handle (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47861)
+    at async responseGenerator (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17687:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:227216)
+    at async handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17750:32)
+    at async Module.handler (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17801:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:934:17)
+    at async C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:253:21)
+    at async handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:452:24)
+    at async requestHandlerImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:501:13)
+    at async Server.requestListener (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-07-12T05:40:14.264Z] Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and "internships"."is_active" = $1 and ("internships"."created_at" >= $2 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $3
+params: true,2026-07-06T18:30:00.000Z,9
+Stack: Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and "internships"."is_active" = $1 and ("internships"."created_at" >= $2 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $3
+params: true,2026-07-06T18:30:00.000Z,9
+    at NeonHttpPreparedQuery.queryWithCache (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8612:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8770:24)
+    at async GET (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\[root-of-the-server]__0t0yo_y._.js:2459:44)
+    at async AppRouteRouteModule.do (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40732)
+    at async AppRouteRouteModule.handle (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47861)
+    at async responseGenerator (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17687:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:227216)
+    at async handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17750:32)
+    at async Module.handler (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17801:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:934:17)
+    at async C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:253:21)
+    at async handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:452:24)
+    at async requestHandlerImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:501:13)
+    at async Server.requestListener (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-07-12T05:40:41.313Z] Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-06T18:30:00.000Z,9
+Stack: Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-06T18:30:00.000Z,9
+    at NeonHttpPreparedQuery.queryWithCache (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8612:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8770:24)
+    at async GET (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\[root-of-the-server]__0t0yo_y._.js:2459:44)
+    at async AppRouteRouteModule.do (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40732)
+    at async AppRouteRouteModule.handle (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47861)
+    at async responseGenerator (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17687:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:227216)
+    at async handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17750:32)
+    at async Module.handler (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17801:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:934:17)
+    at async C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:253:21)
+    at async handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:452:24)
+    at async requestHandlerImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:501:13)
+    at async Server.requestListener (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-07-12T05:40:44.153Z] Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and "internships"."id" in ($1)) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 85e9872b-34f2-4e8d-87ab-977b04c18feb,101
+Stack: Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and "internships"."id" in ($1)) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 85e9872b-34f2-4e8d-87ab-977b04c18feb,101
+    at NeonHttpPreparedQuery.queryWithCache (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8612:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8770:24)
+    at async GET (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\[root-of-the-server]__0t0yo_y._.js:2459:44)
+    at async AppRouteRouteModule.do (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40732)
+    at async AppRouteRouteModule.handle (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47861)
+    at async responseGenerator (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17687:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:227216)
+    at async handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17750:32)
+    at async Module.handler (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17801:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:934:17)
+    at async C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:253:21)
+    at async handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:452:24)
+    at async requestHandlerImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:501:13)
+    at async Server.requestListener (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-07-12T05:56:08.619Z] Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-06T18:30:00.000Z,11
+Stack: Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-06T18:30:00.000Z,11
+    at NeonHttpPreparedQuery.queryWithCache (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8612:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8770:24)
+    at async GET (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\[root-of-the-server]__0t0yo_y._.js:2459:44)
+    at async AppRouteRouteModule.do (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40732)
+    at async AppRouteRouteModule.handle (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47861)
+    at async responseGenerator (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17687:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:227216)
+    at async handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17750:32)
+    at async Module.handler (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17801:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:934:17)
+    at async C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:253:21)
+    at async handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:452:24)
+    at async requestHandlerImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:501:13)
+    at async Server.requestListener (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-07-12T05:56:11.911Z] Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-06T18:30:00.000Z,11
+Stack: Error: Failed query: select "internships"."id", "internships"."title", "internships"."description", "internships"."type", "internships"."timing", "internships"."link", "internships"."tags", "internships"."stipend", "internships"."duration", "internships"."experience", "internships"."location", "internships"."deadline", "internships"."hiring_organization", "internships"."hiring_manager", "internships"."hiring_manager_email", "internships"."hiring_manager_linkedin", "internships"."field", "internships"."created_at", "internships"."updated_at", "internships"."is_verified", "internships"."is_flagged", "internships"."is_active", "internships"."user_id", "user"."id", "user"."name", "user"."image", "user"."role", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_trending" END as "is_trending", CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN FALSE ELSE "internships"."is_featured_home" END as "is_featured_home", "internships"."display_index", "internships"."trending_index", "internships"."featured_home_index", "internships"."trending_featured_expiry" from "internships" left join "user" on "internships"."user_id" = "user"."id" where ("internships"."deleted_at" is null and ("internships"."created_at" >= $1 or ("internships"."deleted_at" is null and "internships"."deadline" > CURRENT_DATE))) order by CASE 
+            WHEN (
+              ("internships"."is_trending" = TRUE OR "internships"."is_featured_home" = TRUE)
+              AND ("internships"."trending_featured_expiry" IS NULL OR "internships"."trending_featured_expiry" >= CURRENT_DATE)
+            ) THEN 0 
+            ELSE 1 
+          END, COALESCE(CASE WHEN "internships"."trending_featured_expiry" IS NOT NULL AND "internships"."trending_featured_expiry" < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999), CASE 
+            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+            ELSE 0 
+          END, "internships"."created_at" desc limit $2
+params: 2026-07-06T18:30:00.000Z,11
+    at NeonHttpPreparedQuery.queryWithCache (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8612:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_drizzle-orm_0ggkxhv._.js:8770:24)
+    at async GET (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\[root-of-the-server]__0t0yo_y._.js:2459:44)
+    at async AppRouteRouteModule.do (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40732)
+    at async AppRouteRouteModule.handle (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47861)
+    at async responseGenerator (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17687:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:227216)
+    at async handleResponse (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17750:32)
+    at async Module.handler (C:\Users\Asus\Desktop\ftb\ftb-web\.next\dev\server\chunks\node_modules_next_10k5-ww._.js:17801:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\base-server.js:934:17)
+    at async C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:253:21)
+    at async handleRequest (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:452:24)
+    at async requestHandlerImpl (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\router-server.js:501:13)
+    at async Server.requestListener (C:\Users\Asus\Desktop\ftb\ftb-web\node_modules\next\dist\server\lib\start-server.js:225:13)
+

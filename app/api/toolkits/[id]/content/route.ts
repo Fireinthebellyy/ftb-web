@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { and, asc, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { getSessionCached } from "@/lib/auth-session-cache";
+import { findPendingCohortRegistration } from "@/lib/cohort-registration";
 import { db } from "@/lib/db";
 import { toolkitContentItems, toolkits, userToolkits, cohorts, cohortOrders } from "@/lib/schema";
 
@@ -53,6 +54,22 @@ export async function GET(
     if (!hasPurchased) {
       return NextResponse.json(
         { error: "You do not have access to this toolkit" },
+        { status: 403 }
+      );
+    }
+
+    const pendingRegistration = await findPendingCohortRegistration({
+      userId: session.user.id,
+      toolkitId,
+    });
+
+    if (pendingRegistration) {
+      return NextResponse.json(
+        {
+          error: "Please complete your cohort registration form first",
+          registrationRequired: true,
+          cohortId: pendingRegistration.cohortId,
+        },
         { status: 403 }
       );
     }

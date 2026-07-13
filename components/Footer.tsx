@@ -11,7 +11,8 @@ const Footer = () => {
   if (
     pathname === "/opportunities" ||
     pathname === "/onboarding" ||
-    pathname === "/intern"
+    pathname === "/intern" ||
+    /\/toolkit\/cohorts\/[^/]+\/registration$/.test(pathname || "")
   )
     return null;
 

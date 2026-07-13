@@ -11,6 +11,7 @@ const signUploadSchema = z.object({
     "ungatekeep-images",
     "avatar-images",
     "opportunity-attachments",
+    "cohort-resources",
   ]),
   fileName: z.string().min(1).max(255),
   contentType: z.string().min(1).max(200),

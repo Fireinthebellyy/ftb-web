@@ -14,6 +14,7 @@ import {
   ArrowUp,
   ArrowDown,
   Download,
+  FolderCog,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { uploadFileViaSignedUrl } from "@/lib/storage/client";
+import CohortSessionManager from "./CohortSessionManager";
 
 interface Mentor {
   id?: string;
@@ -122,6 +124,10 @@ export default function AdminCohortsTable() {
   // File upload state
   const [isUploading, setIsUploading] = useState(false);
   const [toolkits, setToolkits] = useState<any[]>([]);
+
+  // Session manager state
+  const [sessionManagerOpen, setSessionManagerOpen] = useState(false);
+  const [managingCohort, setManagingCohort] = useState<Cohort | null>(null);
 
   // Load Initial Data
   useEffect(() => {
@@ -382,6 +388,17 @@ export default function AdminCohortsTable() {
                         </span>
                       </td>
                       <td className="p-4 text-right flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setManagingCohort(c);
+                            setSessionManagerOpen(true);
+                          }}
+                          className="text-gray-600 hover:text-gray-900"
+                        >
+                          <FolderCog className="w-4 h-4 mr-1" /> Sessions
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -1323,6 +1340,16 @@ export default function AdminCohortsTable() {
           </DialogContent>
         </Dialog>
       )}
+
+      {managingCohort ? (
+        <CohortSessionManager
+          cohortId={managingCohort.id}
+          cohortTitle={managingCohort.title}
+          open={sessionManagerOpen}
+          onClose={() => setSessionManagerOpen(false)}
+          onUpdate={() => fetchCohorts()}
+        />
+      ) : null}
     </div>
   );
 }

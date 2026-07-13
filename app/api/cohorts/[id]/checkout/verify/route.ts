@@ -6,6 +6,7 @@ import { createHmac } from "crypto";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { razorpayKeySecret } from "@/lib/razorpay";
+import { sendCohortPaymentConfirmationEmail } from "@/lib/cohort-payment-email";
 
 export async function POST(
   request: Request,
@@ -65,6 +66,8 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const wasAlreadyPaid = existingOrder.status === "paid";
+
     // Update order status to paid
     await db
       .update(cohortOrders)
@@ -121,6 +124,12 @@ export async function POST(
           });
         }
       }
+    }
+
+    if (!wasAlreadyPaid) {
+      sendCohortPaymentConfirmationEmail(existingOrder.id).catch((emailError) => {
+        console.error("Cohort payment confirmation email failed:", emailError);
+      });
     }
 
     return NextResponse.json({ success: true });

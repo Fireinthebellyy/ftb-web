@@ -279,12 +279,13 @@ export default function CohortLandingPage() {
   const isDuoActive = buddyEmail.trim().length > 0;
   const activeTier = cohort.tiers?.find((t) => t.id === selectedTierId);
   const basePrice = activeTier ? activeTier.price : 0;
-  const finalBasePrice = isDuoActive ? Math.round(basePrice * 0.8) : basePrice;
+  // Duo: double the current price, then apply 20% off the combined total
+  const finalBasePrice = isDuoActive ? Math.round(basePrice * 2 * 0.8) : basePrice;
 
   const sessionsTotal = cohort.sessions
     ?.filter((s) => s.price && selectedAddonIds.includes(s.id))
     .reduce((acc, current) => acc + (current.price || 0), 0) || 0;
-  const finalSessionsTotal = isDuoActive ? Math.round(sessionsTotal * 0.8) : sessionsTotal;
+  const finalSessionsTotal = isDuoActive ? Math.round(sessionsTotal * 2 * 0.8) : sessionsTotal;
 
   const toolkitsTotal = liveToolkits
     ?.filter((t) => selectedToolkitIds.includes(t.id))
@@ -528,6 +529,17 @@ export default function CohortLandingPage() {
           <div className="absolute inset-0 bg-[#EFECE6]" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+
+        {/* Back navigation button */}
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="absolute top-4 left-4 z-20 flex items-center gap-1.5 bg-black/40 hover:bg-black/60 text-white text-xs font-semibold px-3 py-2 rounded-full backdrop-blur-sm transition duration-200 group"
+          aria-label="Go back"
+        >
+          <ChevronLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
+          Back
+        </button>
 
         <div className="relative w-full max-w-lg md:max-w-3xl mx-auto px-4 py-8 md:py-16 text-white space-y-4">
           <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight">

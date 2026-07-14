@@ -416,11 +416,16 @@ export default function CohortLandingPage() {
         modal: {
           ondismiss: function () {
             setIsProcessingCheckout(false);
+            // Re-open the drawer so the user can adjust selections and retry
+            setIsDrawerOpen(true);
             toast.info("Payment cancelled");
           },
         },
       };
 
+      // Close the drawer BEFORE opening Razorpay so its overlay doesn't
+      // block interaction with the payment popup (rage-click fix).
+      setIsDrawerOpen(false);
       const rzp = new (window as any).Razorpay(options);
       rzp.open();
     } catch (err: any) {

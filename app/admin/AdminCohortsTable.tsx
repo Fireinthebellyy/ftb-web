@@ -221,9 +221,13 @@ export default function AdminCohortsTable() {
       setNewCohortSlug("");
       setNewCohortPrice(4999);
       fetchCohorts();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error(err.response?.data?.error || "Failed to create cohort");
+      const errorMessage =
+        axios.isAxiosError(err) && err.response?.data?.error
+          ? err.response.data.error
+          : "Failed to create cohort";
+      toast.error(errorMessage);
     }
   };
 

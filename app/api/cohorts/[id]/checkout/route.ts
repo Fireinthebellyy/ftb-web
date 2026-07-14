@@ -171,8 +171,8 @@ export async function POST(
         }
         
         if (isValid) {
-          const subtotalForDiscount = (isDuoActive ? Math.round(tierPrice * 2 * 0.8) : tierPrice) + 
-                                      (isDuoActive ? Math.round(addonsTotal * 2 * 0.8) : addonsTotal) + 
+          const subtotalForDiscount = (isDuoActive ? getDuoPricing(tierPrice).final : tierPrice) + 
+                                      (isDuoActive ? getDuoPricing(addonsTotal).final : addonsTotal) + 
                                       toolkitsTotal;
           if (coupon.discountType === "percentage") {
             discountAmount = Math.round((subtotalForDiscount * coupon.discountAmount) / 100);
@@ -186,8 +186,8 @@ export async function POST(
 
     // 5. Compute Total price (in rupees)
     // Duo discount: double the price then apply 20% off. Toolkits are not discounted.
-    const finalTierPrice = isDuoActive ? Math.round(tierPrice * 2 * 0.8) : tierPrice;
-    const finalAddonsTotal = isDuoActive ? Math.round(addonsTotal * 2 * 0.8) : addonsTotal;
+    const finalTierPrice = isDuoActive ? getDuoPricing(tierPrice).final : tierPrice;
+    const finalAddonsTotal = isDuoActive ? getDuoPricing(addonsTotal).final : addonsTotal;
 
     const subtotal = finalTierPrice + finalAddonsTotal + toolkitsTotal;
     const finalPriceRupees = Math.max(0, subtotal - discountAmount);

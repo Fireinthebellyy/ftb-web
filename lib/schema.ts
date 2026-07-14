@@ -800,6 +800,7 @@ export const cohorts = pgTable("cohorts", {
   isBestSeller: boolean("is_best_seller").default(false),
   isFillingFast: boolean("is_filling_fast").default(false),
   hasEarlyBird: boolean("has_early_bird").default(false),
+  isVerificationRequired: boolean("is_verification_required").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -871,6 +872,7 @@ export const cohortOrders = pgTable("cohort_orders", {
   registrationYear: text("registration_year"),
   registrationExpectations: text("registration_expectations"),
   registrationCompletedAt: timestamp("registration_completed_at"),
+  isVerified: boolean("is_verified").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

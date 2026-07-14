@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { useSession } from "@/hooks/use-session";
 
 const yearOptions = [
@@ -46,6 +53,7 @@ export default function CohortRegistrationPage() {
   const [course, setCourse] = useState("");
   const [year, setYear] = useState("");
   const [expectations, setExpectations] = useState("");
+  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
 
   const fetchRegistrationStatus = useCallback(async () => {
     setLoadError(null);
@@ -117,7 +125,7 @@ export default function CohortRegistrationPage() {
 
     setIsSubmitting(true);
     try {
-      await axios.post(`/api/cohorts/${cohortId}/registration`, {
+      const response = await axios.post(`/api/cohorts/${cohortId}/registration`, {
         name: name.trim(),
         college: college.trim(),
         course: course.trim(),
@@ -125,8 +133,16 @@ export default function CohortRegistrationPage() {
         expectations: expectations.trim(),
       });
 
-      toast.success("Details saved! Welcome to the cohort.");
-      router.replace(`/toolkit/cohorts/${cohortId}/dashboard`);
+      if (response.data.isVerificationRequired) {
+        setShowVerificationDialog(true);
+      } else {
+        toast.success("Details saved! Welcome to the cohort.");
+        if (response.data.toolkitId) {
+          router.replace(`/toolkit/${response.data.toolkitId}/content`);
+        } else {
+          router.replace(`/toolkit/cohorts/${cohortId}/dashboard`);
+        }
+      }
     } catch (error: unknown) {
       console.error(error);
       const message =
@@ -164,105 +180,128 @@ export default function CohortRegistrationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 px-4 py-10">
-      <div className="mx-auto w-full max-w-xl">
-        <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm md:p-8">
-          <div className="mb-8">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#ff5e14] md:text-xs">
-              One last step
-            </p>
-            <h1 className="mt-2 text-xl font-bold text-neutral-900 md:text-3xl">
-              Tell us about yourself
-            </h1>
-            <p className="mt-2 text-xs text-neutral-600 md:text-base">
-              Payment successful for <strong>{cohortTitle}</strong>. Please complete
-              this form to access your cohort and toolkit.
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5">
-            <div className="space-y-1.5 md:space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="Your full name"
-                required
-              />
+    <>
+      <div className="min-h-screen bg-neutral-50 px-4 py-10">
+        <div className="mx-auto w-full max-w-xl">
+          <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm md:p-8">
+            <div className="mb-8">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#ff5e14] md:text-xs">
+                One last step
+              </p>
+              <h1 className="mt-2 text-xl font-bold text-neutral-900 md:text-3xl">
+                Tell us about yourself
+              </h1>
+              <p className="mt-2 text-xs text-neutral-600 md:text-base">
+                Payment successful for <strong>{cohortTitle}</strong>. Please complete
+                this form to access your cohort and toolkit.
+              </p>
             </div>
 
-            <div className="space-y-1.5 md:space-y-2">
-              <Label htmlFor="college">College</Label>
-              <Input
-                id="college"
-                value={college}
-                onChange={(event) => setCollege(event.target.value)}
-                placeholder="Your college / university"
-                required
-              />
-            </div>
+            <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5">
+              <div className="space-y-1.5 md:space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="Your full name"
+                  required
+                />
+              </div>
 
-            <div className="space-y-1.5 md:space-y-2">
-              <Label htmlFor="course">Course</Label>
-              <Input
-                id="course"
-                value={course}
-                onChange={(event) => setCourse(event.target.value)}
-                placeholder="e.g. B.Tech CSE, BBA, MBA"
-                required
-              />
-            </div>
+              <div className="space-y-1.5 md:space-y-2">
+                <Label htmlFor="college">College</Label>
+                <Input
+                  id="college"
+                  value={college}
+                  onChange={(event) => setCollege(event.target.value)}
+                  placeholder="Your college / university"
+                  required
+                />
+              </div>
 
-            <div className="space-y-1.5 md:space-y-2">
-              <Label htmlFor="year">Year</Label>
-              <Select value={year} onValueChange={setYear} required>
-                <SelectTrigger id="year" className="w-full">
-                  <SelectValue placeholder="Select your year" />
-                </SelectTrigger>
-                <SelectContent>
-                  {yearOptions.map((option) => (
+              <div className="space-y-1.5 md:space-y-2">
+                <Label htmlFor="course">Course</Label>
+                <Input
+                  id="course"
+                  value={course}
+                  onChange={(event) => setCourse(event.target.value)}
+                  placeholder="e.g. B.Tech CSE, BBA, MBA"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5 md:space-y-2">
+                <Label htmlFor="year">Year</Label>
+                <Select value={year} onValueChange={setYear} required>
+                  <SelectTrigger id="year" className="w-full">
+                    <SelectValue placeholder="Select your year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {yearOptions.map((option) => (
                     <SelectItem key={option} value={option}>
                       {option}
                     </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-1.5 md:space-y-2">
-              <Label htmlFor="expectations">
-                What are you expecting from this cohort &amp; sessions (we are all
-                ears &lt;3)?
-              </Label>
-              <Textarea
-                id="expectations"
-                value={expectations}
-                onChange={(event) => setExpectations(event.target.value)}
-                placeholder="Share your goals, expectations, or questions..."
-                rows={4}
-                className="md:min-h-[8rem]"
-                required
-              />
-            </div>
+              <div className="space-y-1.5 md:space-y-2">
+                <Label htmlFor="expectations">
+                  What are you expecting from this cohort &amp; sessions (we are all
+                  ears &lt;3)?
+                </Label>
+                <Textarea
+                  id="expectations"
+                  value={expectations}
+                  onChange={(event) => setExpectations(event.target.value)}
+                  placeholder="Share your goals, expectations, or questions..."
+                  rows={4}
+                  className="md:min-h-[8rem]"
+                  required
+                />
+              </div>
 
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="h-10 w-full bg-neutral-900 text-sm font-semibold hover:bg-neutral-800 md:h-12 md:text-base"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Continue to Cohort"
-              )}
-            </Button>
-          </form>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="h-10 w-full bg-neutral-900 text-sm font-semibold hover:bg-neutral-800 md:h-12 md:text-base"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Continue to Cohort"
+                )}
+              </Button>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
+
+      <Dialog open={showVerificationDialog} onOpenChange={setShowVerificationDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+        <DialogTitle className="flex items-center justify-center gap-2">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
+            <Lock className="h-6 w-6 text-orange-500" />
+          </div>
+        </DialogTitle>
+        <DialogDescription className="text-center text-gray-600 pt-2">
+          It will unlock in a few hours after verification. You will get contacted &amp; get added to a WhatsApp community for access as well.
+        </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center pt-4">
+            <Button
+              onClick={() => router.push("/")} className="w-full max-w-xs">
+              Back to Home
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { title, slug, basePrice, badge1, badge2, subtitle, isBestSeller, isFillingFast } = body;
+    const { title, slug, basePrice, badge1, badge2, subtitle, isBestSeller, isFillingFast, isVerificationRequired } = body;
 
     if (!title || !slug || basePrice === undefined) {
       return NextResponse.json(
@@ -81,6 +81,7 @@ export async function POST(request: Request) {
         isActive: true,
         isBestSeller: isBestSeller !== undefined ? Boolean(isBestSeller) : false,
         isFillingFast: isFillingFast !== undefined ? Boolean(isFillingFast) : false,
+        isVerificationRequired: isVerificationRequired !== undefined ? Boolean(isVerificationRequired) : true,
       })
       .returning();
 

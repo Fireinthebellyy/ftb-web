@@ -87,6 +87,27 @@ export default function CohortDashboardPage() {
     );
   }
 
+  if (cohortData.isLocked) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+        <Card className="w-full max-w-md text-center">
+          <CardContent className="pt-6">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100">
+              <Lock className="h-8 w-8 text-orange-500" />
+            </div>
+            <h2 className="mb-2 text-2xl font-bold text-gray-900">Access Locked</h2>
+            <p className="mb-6 text-sm text-gray-600">
+              It will unlock in a few hours after verification. You will get contacted & get added to a WhatsApp community for access as well.
+            </p>
+            <Button onClick={() => router.push("/")} className="w-full">
+              Back to Home
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 z-10 border-b bg-white/95 backdrop-blur supports-backdrop-filter:bg-white/60">

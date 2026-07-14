@@ -30,6 +30,7 @@ export async function GET() {
         createdAt: cohortOrders.createdAt,
         cohortTitle: cohorts.title,
         tierName: cohortTiers.name,
+        isVerified: cohortOrders.isVerified,
       })
       .from(cohortOrders)
       .leftJoin(cohorts, eq(cohortOrders.cohortId, cohorts.id))

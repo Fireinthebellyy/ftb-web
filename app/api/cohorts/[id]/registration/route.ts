@@ -154,6 +154,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       toolkitId: cohort.toolkitId,
+      isVerificationRequired: cohort.isVerificationRequired,
     });
   } catch (error) {
     console.error("Error submitting cohort registration:", error);

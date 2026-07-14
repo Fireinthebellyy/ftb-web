@@ -16,6 +16,7 @@ The cohort program is managed using the following database tables (defined in `l
   - `cardImageUrl` (shown on the cohort catalog card).
   - `highlights` (text array displaying all card features/bullets without limits).
   - `isBestSeller` and `isFillingFast` (boolean flags to render corner tags on catalog cards).
+  - `hasEarlyBird` (boolean toggle flag to show/hide the continuous scrolling early bird offer marquee banner on cohort detail and checkout screens).
   - `mentorsHeading` (custom title for Mentors section).
   - `featuresHeading` (custom title for "What You Get" section).
   - `sessionsHeading` (custom title for "Cohort Sessions & Curriculum" section).
@@ -97,7 +98,7 @@ Admins manage cohort details under the `Cohort Management` board:
 - **Banner Slots**: Supports 3 explicit slots for cover images. Each slot accepts direct local file uploads (saved to R2 `ungatekeep-images`) or pasting image URLs.
 - **Section Headers**: Editable inputs for Mentors, Features, Curriculum, Testimonials, and target audience headings.
 - **Card Highlights**: Dynamically grows/shrinks; all added features are displayed on catalog cards with no length restrictions.
-- **Curriculum & Pricing**: Allows admins to add sessions, set individual session Offer Prices and Original Prices, and reorder sessions.
+- **Curriculum & Pricing**: Allows admins to add sessions, set individual session Offer Prices and Original Prices, reorder sessions, and toggle the **Early Bird Offer** scrolling marquee.
 - **Orders Log**: Only lists orders with status `"paid"` to keep the log clean and exclude abandoned checkouts.
 
 ---

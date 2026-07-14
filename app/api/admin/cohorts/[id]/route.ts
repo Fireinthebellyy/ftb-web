@@ -128,6 +128,7 @@ export async function PUT(
       isActive,
       isBestSeller,
       isFillingFast,
+      hasEarlyBird,
       mentors: incomingMentors = [],
       features: incomingFeatures = [],
       tiers: incomingTiers = [],
@@ -166,6 +167,7 @@ export async function PUT(
           isActive: isActive !== undefined ? Boolean(isActive) : true,
           isBestSeller: isBestSeller !== undefined ? Boolean(isBestSeller) : false,
           isFillingFast: isFillingFast !== undefined ? Boolean(isFillingFast) : false,
+          hasEarlyBird: hasEarlyBird !== undefined ? Boolean(hasEarlyBird) : false,
           updatedAt: new Date(),
         })
         .where(eq(cohorts.id, cohortId))

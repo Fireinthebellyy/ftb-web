@@ -100,6 +100,7 @@ interface Cohort {
   isActive: boolean;
   isBestSeller?: boolean | null;
   isFillingFast?: boolean | null;
+  hasEarlyBird?: boolean | null;
   mentors?: Mentor[];
   features?: Feature[];
   tiers?: Tier[];
@@ -1382,6 +1383,18 @@ export default function AdminCohortsTable() {
                       onChange={(e) => setEditingCohort({ ...editingCohort, originalPrice: e.target.value ? Number(e.target.value) : null })}
                     />
                   </div>
+                </div>
+
+                {/* Early Bird Offer Toggle */}
+                <div className="flex items-center justify-between border-b pb-4">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-semibold">Enable Early Bird Offer Banner</Label>
+                    <p className="text-xs text-gray-500">Toggles the scrolling &quot;Early Bird Offer!!&quot; marquee at the top of landing & checkout screens.</p>
+                  </div>
+                  <Switch
+                    checked={Boolean(editingCohort.hasEarlyBird)}
+                    onCheckedChange={(checked) => setEditingCohort({ ...editingCohort, hasEarlyBird: checked })}
+                  />
                 </div>
 
                 {/* Tiers / Bundles */}

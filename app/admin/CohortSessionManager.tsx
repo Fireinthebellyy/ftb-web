@@ -334,6 +334,7 @@ export default function CohortSessionManager({
     if (!selectedSessionForContent) return;
     try {
       const payload: any = {
+        sectionType: data.sectionType,
         title: data.title,
         content: data.content || null,
         isUnlocked: data.isUnlocked,

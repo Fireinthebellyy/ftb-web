@@ -69,7 +69,8 @@ interface Session {
   id?: string;
   title: string;
   description: string;
-  priceDelta?: number;
+  price?: number;
+  originalPrice?: number | null;
 }
 
 interface Cohort {
@@ -1530,7 +1531,7 @@ export default function AdminCohortsTable() {
                         ...editingCohort,
                         sessions: [
                           ...currentSessions,
-                          { title: "", description: "", priceDelta: 0 },
+                          { title: "", description: "", price: 0, originalPrice: null },
                         ],
                       });
                     }}
@@ -1581,16 +1582,29 @@ export default function AdminCohortsTable() {
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-xs">Price Delta (INR, Optional)</Label>
+                          <Label className="text-xs">Offer Price (INR, Optional)</Label>
                           <Input
                             type="number"
-                            value={session.priceDelta || ""}
+                            value={session.price || ""}
                             onChange={(e) => {
                               const currentSessions = [...(editingCohort.sessions || [])];
-                              currentSessions[index] = { ...currentSessions[index], priceDelta: e.target.value ? Number(e.target.value) : 0 };
+                              currentSessions[index] = { ...currentSessions[index], price: e.target.value ? Number(e.target.value) : 0 };
                               setEditingCohort({ ...editingCohort, sessions: currentSessions });
                             }}
-                            placeholder="Price if sold individually"
+                            placeholder="Offer price when sold individually"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Original Price (INR, Optional)</Label>
+                          <Input
+                            type="number"
+                            value={session.originalPrice || ""}
+                            onChange={(e) => {
+                              const currentSessions = [...(editingCohort.sessions || [])];
+                              currentSessions[index] = { ...currentSessions[index], originalPrice: e.target.value ? Number(e.target.value) : null };
+                              setEditingCohort({ ...editingCohort, sessions: currentSessions });
+                            }}
+                            placeholder="Strikethrough price"
                           />
                         </div>
                       </div>

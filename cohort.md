@@ -19,16 +19,16 @@ The cohort program is managed using the following database tables (defined in `l
   - `mentorsHeading` (custom title for Mentors section).
   - `featuresHeading` (custom title for "What You Get" section).
   - `sessionsHeading` (custom title for "Cohort Sessions & Curriculum" section).
-  - `testimonialsHeading` (custom title for "Testimonials" section).
+  - `testimonialsHeading` (custom title for "What Members Say About Our Ecosystem" section).
   - `whoIsThisForHeading` and `whoIsThisForBullets` (heading and custom target audience bullet list for the "Who Is This For?" section).
   - Linked `toolkitId`.
 
 ### `cohort_sessions`
 - Represents curriculum sessions shown week-by-week.
-- Contains `priceDelta` column. If `priceDelta` > 0, the session is treated as an individual purchasable add-on in the checkout apply drawer.
+- Contains `price` (final/offer price when sold individually) and `originalPrice` (strikethrough price shown to user) columns. If `price` > 0, the session is treated as an individual purchasable add-on in the checkout apply drawer.
 
 ### `cohort_tiers`
-- Bundle package options (e.g. Basic, VIP). Contains `price` (in INR).
+- Bundle package options (e.g. Basic, VIP). Contains `price` (final/offer price in INR) and `originalPrice` (strikethrough price shown to user).
 
 ### `cohort_orders`
 - Stores all purchase history.
@@ -44,27 +44,34 @@ The cohort program is managed using the following database tables (defined in `l
 
 ## 2. Business & Pricing Logic
 
-### Single vs. Duo (Buddy) Pricing Formula
-When a buyer enters a **Buddy Email Address** during checkout, the base prices for the selected bundle tier (and/or individual sessions) are dynamically converted from a single-ticket rate to a discounted Duo rate on-the-fly:
+The checkout pricing system supports three distinct categories:
+1. **Bundle Offers**: Preset packages mapped from `cohort_tiers`.
+2. **Individual Sessions**: Selected from curriculum sessions (`cohort_sessions`).
+3. **Toolkit Add-ons**: Pulled directly from the toolkit management registry.
 
-1. **Duo Reference Price** (Strike-through price shown to user):
-   $$\text{Reference} = \text{Math.ceil}\left(\frac{\text{Single Price} \times 2 + 1}{100}\right) \times 100 - 1$$
-   *(e.g., Single price of $499 \times 2 = 998 \rightarrow 999$)*
+### Selection Rules & Validation
+- **Bundle Offer vs. Individual Sessions**: A user **must select at least one** category but **cannot select both**. They must choose exactly a Bundle Offer (Tier) OR one or more Individual Sessions.
+- **Toolkits**: Toolkits are completely optional add-ons that can be added to either selection.
 
-2. **Duo Final Price** (Actual price charged for 2 people):
-   $$\text{Final} = \text{Math.round}\left(\frac{\text{Reference} \times 0.8}{10}\right) \times 10 - 1$$
-   *(e.g., $999 \times 0.8 = 799.2 \rightarrow \text{rounded to nearest ending in 9} \rightarrow 799$)*
+### Duo (Buddy) Pricing & Referral Formula
+When a buyer enters a **Buddy Email Address** during checkout, they get a flat 20% discount on the cohort offer price:
 
-3. **Per-Head Subtext**: Displays estimated rate per head:
-   $$\text{Per Head} = \text{Math.round}\left(\frac{\text{Final}}{2}\right)$$
-   *(e.g., $\approx \text{₹400 per person}$)*
+1. **Buddy Discount (20% off)**:
+   - Applied **ONLY** to the selected Bundle Offer (Tier price) or the sum of selected Individual Sessions.
+   - **EXCLUDES** Toolkit Add-ons (toolkits are always paid at full price).
+   - Formulas:
+     - `finalTierPrice = Math.round(tierPrice * 0.8)`
+     - `finalAddonsTotal = Math.round(addonsTotal * 0.8)`
 
-This formula runs dynamically and synchronously on both the client (for real-time updates) and the server (for secure Razorpay order validation).
+2. **Total Payable**:
+   - `payable = finalTierPrice + finalAddonsTotal + toolkitsTotal - couponDiscount`
 
-### Access Rights (Authorization)
-Access to the cohort page and its linked toolkit contents is granted to a user if:
-1. **Primary Buyer**: They purchased it (`userId` matches logged-in user).
-2. **Buddy Referral**: They were referred by a buyer (`buddyEmail` matches logged-in user's email).
+This logic is validated on the client side (for real-time totals) and strictly checked on the server inside `app/api/cohorts/[id]/checkout/route.ts` before creating the Razorpay order.
+
+### Access Rights (Authorization & Buddy Limits)
+- **Primary Buyer**: Gets access to the cohort program, its sessions, and all selected toolkit add-ons.
+- **Buddy Referral**: The referred buddy (`buddyEmail`) gets access **ONLY** to the cohort program and its main linked `toolkitId`.
+- **Buddy Limit**: The buddy **does not** get access to any additional purchased toolkit add-ons (`selectedToolkitIds`).
 
 ---
 
@@ -90,6 +97,7 @@ Admins manage cohort details under the `Cohort Management` board:
 - **Banner Slots**: Supports 3 explicit slots for cover images. Each slot accepts direct local file uploads (saved to R2 `ungatekeep-images`) or pasting image URLs.
 - **Section Headers**: Editable inputs for Mentors, Features, Curriculum, Testimonials, and target audience headings.
 - **Card Highlights**: Dynamically grows/shrinks; all added features are displayed on catalog cards with no length restrictions.
+- **Curriculum & Pricing**: Allows admins to add sessions, set individual session Offer Prices and Original Prices, and reorder sessions.
 - **Orders Log**: Only lists orders with status `"paid"` to keep the log clean and exclude abandoned checkouts.
 
 ---

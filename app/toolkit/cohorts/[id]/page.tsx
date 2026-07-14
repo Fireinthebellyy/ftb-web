@@ -280,12 +280,12 @@ export default function CohortLandingPage() {
   const activeTier = cohort.tiers?.find((t) => t.id === selectedTierId);
   const basePrice = activeTier ? activeTier.price : 0;
   // Duo: double the current price, then apply 20% off the combined total
-  const finalBasePrice = isDuoActive ? Math.round(basePrice * 2 * 0.8) : basePrice;
+  const finalBasePrice = isDuoActive ? getDuoPricing(basePrice).final : basePrice;
 
   const sessionsTotal = cohort.sessions
     ?.filter((s) => s.price && selectedAddonIds.includes(s.id))
     .reduce((acc, current) => acc + (current.price || 0), 0) || 0;
-  const finalSessionsTotal = isDuoActive ? Math.round(sessionsTotal * 2 * 0.8) : sessionsTotal;
+  const finalSessionsTotal = isDuoActive ? getDuoPricing(sessionsTotal).final : sessionsTotal;
 
   const toolkitsTotal = liveToolkits
     ?.filter((t) => selectedToolkitIds.includes(t.id))
@@ -533,7 +533,13 @@ export default function CohortLandingPage() {
         {/* Back navigation button */}
         <button
           type="button"
-          onClick={() => router.back()}
+          onClick={() => {
+            if (typeof window !== "undefined" && window.history.length > 1) {
+              router.back();
+            } else {
+              router.push("/toolkit");
+            }
+          }}
           className="absolute top-4 left-4 z-20 flex items-center gap-1.5 bg-black/40 hover:bg-black/60 text-white text-xs font-semibold px-3 py-2 rounded-full backdrop-blur-sm transition duration-200 group"
           aria-label="Go back"
         >

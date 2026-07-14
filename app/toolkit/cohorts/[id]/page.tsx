@@ -611,7 +611,11 @@ export default function CohortLandingPage() {
                               {mentor.role}
                             </p>
                             {mentor.bio && (
-                              <div className="w-full max-h-[72px] sm:max-h-[100px] overflow-y-auto pr-1 text-center scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+                              <div
+                                className="w-full max-h-[72px] sm:max-h-[100px] overflow-y-auto pr-1 text-center scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent"
+                                onClick={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                              >
                                 <p className="text-[11px] md:text-xs text-gray-600 leading-relaxed max-w-[240px] mx-auto mt-1">
                                   {mentor.bio}
                                 </p>

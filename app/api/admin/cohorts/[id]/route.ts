@@ -170,8 +170,8 @@ export async function PUT(
           isBestSeller: isBestSeller !== undefined ? Boolean(isBestSeller) : false,
           isFillingFast: isFillingFast !== undefined ? Boolean(isFillingFast) : false,
           hasEarlyBird: hasEarlyBird !== undefined ? Boolean(hasEarlyBird) : false,
-          showEarlyBirdCheckout: showEarlyBirdCheckout !== undefined ? Boolean(showEarlyBirdCheckout) : false,
-          showAddonsCheckout: showAddonsCheckout !== undefined ? Boolean(showAddonsCheckout) : true,
+          showEarlyBirdCheckout: Boolean(showEarlyBirdCheckout ?? false),
+          showAddonsCheckout: Boolean(showAddonsCheckout ?? true),
           updatedAt: new Date(),
         })
         .where(eq(cohorts.id, cohortId))

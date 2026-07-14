@@ -312,7 +312,7 @@ export default function ToolkitContentPage() {
               <h1 className="truncate text-sm font-semibold text-gray-900 sm:text-base">
                 {activeView === "community"
                   ? "FTB Support"
-                  : currentItem?.title || "Select a lesson"}
+                  : currentItem?.title || "Select a Lesson"}
               </h1>
             </div>
             <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>

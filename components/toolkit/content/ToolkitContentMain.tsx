@@ -121,7 +121,7 @@ export default function ToolkitContentMain({
       </div>
 
       {!completedItems.includes(currentItem.id) ? null : (
-        <p className="text-sm text-green-700">Completed lesson</p>
+        <p className="text-sm text-green-700">Completed Lesson</p>
       )}
     </div>
   );

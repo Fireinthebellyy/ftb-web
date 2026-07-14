@@ -366,7 +366,7 @@ export default function CohortLandingPage() {
 
       const { order } = response.data;
 
-      const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+      const razorpayKey = response.data.key;
       if (!razorpayKey) {
         toast.error("Payment configuration error. Please contact support.");
         setIsProcessingCheckout(false);

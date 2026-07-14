@@ -149,9 +149,6 @@ export default function CohortLandingPage() {
   const [isBuddyDialogOpen, setIsBuddyDialogOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Session dropdown states
-  const [expandedSessions, setExpandedSessions] = useState<Record<string, boolean>>({});
-
   // Cover Image Carousel states
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -707,54 +704,28 @@ export default function CohortLandingPage() {
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {cohort.sessions.map((session, index) => {
-                const isExpanded = !!expandedSessions[session.id];
-                return (
-                  <div
-                    key={session.id}
-                    onClick={() => {
-                      setExpandedSessions((prev) => ({
-                        ...prev,
-                        [session.id]: !prev[session.id],
-                      }));
-                    }}
-                    className="relative overflow-hidden bg-white rounded-xl border border-gray-100 p-5 pt-7 flex flex-col gap-2 items-stretch shadow-sm hover:shadow transition cursor-pointer select-none"
-                  >
-                    <div className="absolute top-0 right-0 z-10">
-                      <span className="bg-[#ff5e14] text-white rounded-tr-none rounded-bl-xl px-3 py-1 text-[10px] font-bold uppercase tracking-wider">
-                        Session {index + 1}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center w-full gap-2">
+              {cohort.sessions.map((session, index) => (
+                <div
+                  key={session.id}
+                  className="relative overflow-hidden bg-white rounded-xl border border-gray-100 p-5 pt-7 flex gap-4 items-start shadow-sm hover:shadow transition"
+                >
+                  <div className="absolute top-0 right-0 z-10">
+                    <span className="bg-[#ff5e14] text-white rounded-tr-none rounded-bl-xl px-3 py-1 text-[10px] font-bold uppercase tracking-wider">
+                      Session {index + 1}
+                    </span>
+                  </div>
+                  <div className="space-y-1.5 flex-1">
+                    <div className="flex justify-between items-start gap-2">
                       <h3 className="font-bold text-gray-900 text-sm md:text-base leading-snug pr-16">
                         {session.title}
                       </h3>
-                      <motion.span
-                        animate={{ rotate: isExpanded ? 90 : 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="text-gray-400 shrink-0"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </motion.span>
                     </div>
-                    <AnimatePresence initial={false}>
-                      {isExpanded && session.description && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.25, ease: "easeInOut" }}
-                          className="overflow-hidden"
-                        >
-                          <p className="text-xs md:text-sm text-gray-500 leading-relaxed pt-2 border-t border-gray-100">
-                            {session.description}
-                          </p>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                    <p className="text-xs md:text-sm text-gray-500 leading-relaxed">
+                      {session.description}
+                    </p>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           </section>
         )}

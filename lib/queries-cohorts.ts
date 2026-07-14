@@ -45,5 +45,6 @@ export function useCohortSession(cohortId: string, sessionId: string) {
     queryKey: ["cohort-session", cohortId, sessionId],
     queryFn: () => fetchCohortSession(cohortId, sessionId),
     staleTime: 1000 * 60 * 5,
+    enabled: !!sessionId && !!cohortId,
   });
 }

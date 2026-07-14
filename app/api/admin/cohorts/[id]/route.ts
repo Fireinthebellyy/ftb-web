@@ -130,6 +130,8 @@ export async function PUT(
       isFillingFast,
       hasEarlyBird,
       isVerificationRequired,
+      showEarlyBirdCheckout,
+      showAddonsCheckout,
       mentors: incomingMentors = [],
       features: incomingFeatures = [],
       tiers: incomingTiers = [],
@@ -170,6 +172,8 @@ export async function PUT(
           isFillingFast: isFillingFast !== undefined ? Boolean(isFillingFast) : false,
           hasEarlyBird: hasEarlyBird !== undefined ? Boolean(hasEarlyBird) : false,
           isVerificationRequired: isVerificationRequired !== undefined ? Boolean(isVerificationRequired) : true,
+          showEarlyBirdCheckout: Boolean(showEarlyBirdCheckout ?? false),
+          showAddonsCheckout: Boolean(showAddonsCheckout ?? true),
           updatedAt: new Date(),
         })
         .where(eq(cohorts.id, cohortId))

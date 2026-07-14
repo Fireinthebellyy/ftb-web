@@ -514,7 +514,16 @@ export default function CohortLandingPage() {
 
             {mentorCards.length >= 3 ? (
               <div className="flex flex-col items-center w-full">
-                <div className="relative h-[300px] sm:h-[340px] w-full mx-auto flex items-center justify-center overflow-hidden py-4">
+                <div className="relative h-[340px] sm:h-[380px] w-full mx-auto flex items-center justify-center overflow-hidden py-4">
+                  {/* Side Arrows */}
+                  <button
+                    onClick={rotateMentorsBackward}
+                    className="absolute left-2 sm:left-6 md:left-12 z-20 p-2.5 rounded-full bg-white shadow-md border border-gray-200 text-gray-600 hover:text-black hover:shadow-lg transition-all active:scale-95"
+                    aria-label="Previous mentor"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+
                   {mentorCards.map((mentor, index) => {
                     const isCenter = index === 0;
                     const isRight = index === 1;
@@ -525,9 +534,9 @@ export default function CohortLandingPage() {
                     if (isCenter) {
                       animateState = { x: "0%", scale: 1, opacity: 1, zIndex: 10 };
                     } else if (isRight) {
-                      animateState = { x: "68%", scale: 0.85, opacity: 1, zIndex: 5 };
+                      animateState = { x: "68%", scale: 0.85, opacity: 0.9, zIndex: 5 };
                     } else if (isLeft) {
-                      animateState = { x: "-68%", scale: 0.85, opacity: 1, zIndex: 5 };
+                      animateState = { x: "-68%", scale: 0.85, opacity: 0.9, zIndex: 5 };
                     }
 
                     return (
@@ -543,11 +552,11 @@ export default function CohortLandingPage() {
                         }}
                         onClick={rotateMentorsForward}
                         className={cn(
-                          "absolute w-[260px] h-[200px] sm:w-[320px] sm:h-[240px] rounded-2xl shadow-lg border border-gray-100 bg-white p-4 flex flex-col justify-between items-center text-center cursor-pointer transition-shadow hover:shadow-md",
+                          "absolute w-[250px] min-h-[240px] sm:w-[310px] sm:min-h-[280px] rounded-2xl shadow-lg border border-gray-100 bg-white p-5 flex flex-col justify-between items-center text-center cursor-pointer transition-shadow hover:shadow-md",
                           isCenter ? "" : "pointer-events-none md:pointer-events-auto"
                         )}
                       >
-                        <div className="flex flex-col items-center space-y-3">
+                        <div className="flex flex-col items-center space-y-3 w-full">
                           {mentor.imageUrl ? (
                             <img
                               src={mentor.imageUrl}
@@ -559,7 +568,7 @@ export default function CohortLandingPage() {
                               <Linkedin className="w-6 h-6" />
                             </div>
                           )}
-                          <div className="space-y-1">
+                          <div className="space-y-1 w-full">
                             <h3 className="font-bold text-gray-900 text-sm md:text-base leading-tight">
                               {mentor.name}
                             </h3>
@@ -567,7 +576,7 @@ export default function CohortLandingPage() {
                               {mentor.role}
                             </p>
                             {mentor.bio && (
-                              <p className="text-[11px] md:text-xs text-gray-500 line-clamp-2 leading-relaxed max-w-[240px] mx-auto mt-1">
+                              <p className="text-[11px] md:text-xs text-gray-600 leading-relaxed max-w-[240px] mx-auto mt-2">
                                 {mentor.bio}
                               </p>
                             )}
@@ -578,7 +587,7 @@ export default function CohortLandingPage() {
                             href={mentor.link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-gray-400 hover:text-gray-700 text-xs mt-3 flex items-center gap-0.5 font-medium border-t border-gray-100 w-full justify-center pt-2"
+                            className="text-gray-400 hover:text-gray-700 text-xs mt-3 flex items-center gap-0.5 font-medium border-t border-gray-100 w-full justify-center pt-2.5"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <Linkedin className="w-3.5 h-3.5 text-blue-700" /> profile
@@ -587,23 +596,10 @@ export default function CohortLandingPage() {
                       </motion.div>
                     );
                   })}
-                </div>
 
-                {/* Controls */}
-                <div className="flex items-center gap-6 mt-2">
-                  <button
-                    onClick={rotateMentorsBackward}
-                    className="p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors"
-                    aria-label="Previous mentor"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <span className="text-xs text-gray-400 font-medium">
-                    Tap card or use arrows to rotate
-                  </span>
                   <button
                     onClick={rotateMentorsForward}
-                    className="p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors"
+                    className="absolute right-2 sm:right-6 md:right-12 z-20 p-2.5 rounded-full bg-white shadow-md border border-gray-200 text-gray-600 hover:text-black hover:shadow-lg transition-all active:scale-95"
                     aria-label="Next mentor"
                   >
                     <ChevronRight className="w-5 h-5" />

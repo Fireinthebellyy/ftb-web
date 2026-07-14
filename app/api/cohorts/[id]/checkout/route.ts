@@ -363,6 +363,7 @@ export async function POST(
         amount: order.amount,
         currency: order.currency,
       },
+      key: process.env.RAZORPAY_KEY_ID,
       orderRecord: newOrder,
     });
   } catch (error) {

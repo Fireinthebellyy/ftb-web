@@ -113,16 +113,16 @@ export async function sendCohortPaymentConfirmationEmail(
       to: order.buddyEmail,
       subject: `Payment Successful! Welcome to FTB's Cohort: ${cohort.title} (Buddy Access)`,
       react: CohortPaymentConfirmationEmail({
-        buyerName: order.buyerName,
+        buyerName: "Hey there",
         buyerEmail: order.buddyEmail,
         cohortTitle: cohort.title,
         cohortStartDate: cohort.startDate,
         tierName,
         addonNames,
-        toolkitNames,
-        amountPaidRupees: Math.round(order.amountPaid / 100),
-        orderId: order.razorpayOrderId,
-        paymentId: order.razorpayPaymentId || undefined,
+        toolkitNames: [], // Buddy does not get add-on toolkits
+        amountPaidRupees: 0,
+        orderId: `buddy_referral_${order.razorpayOrderId}`,
+        paymentId: undefined,
         registrationUrl,
       }),
     });

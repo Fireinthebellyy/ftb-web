@@ -48,6 +48,17 @@ export async function GET(
       );
     }
 
+    // Check if verification is required and if order is not verified
+    if (cohort.isVerificationRequired && !order.isVerified) {
+      return NextResponse.json({
+        cohort: { id: cohort.id, title: cohort.title },
+        isLocked: true,
+        isVerificationRequired: true,
+        isVerified: false,
+        sessions: [],
+      });
+    }
+
     const sessions = await db.query.cohortSessions.findMany({
       where: and(eq(cohortSessions.cohortId, cohort.id), eq(cohortSessions.isActive, true)),
       orderBy: (cohortSessions, { asc }) => [asc(cohortSessions.orderIndex)],
@@ -56,6 +67,9 @@ export async function GET(
     return NextResponse.json({
       cohort: { id: cohort.id, title: cohort.title },
       hasAccess: true,
+      isLocked: false,
+      isVerificationRequired: cohort.isVerificationRequired,
+      isVerified: order.isVerified,
       sessions,
     });
   } catch (error) {

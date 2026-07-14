@@ -101,6 +101,7 @@ interface Cohort {
   isBestSeller?: boolean | null;
   isFillingFast?: boolean | null;
   hasEarlyBird?: boolean | null;
+  isVerificationRequired: boolean;
   showEarlyBirdCheckout?: boolean | null;
   showAddonsCheckout?: boolean | null;
   mentors?: Mentor[];
@@ -123,6 +124,7 @@ interface Order {
   createdAt: string;
   cohortTitle: string | null;
   tierName: string | null;
+  isVerified: boolean;
 }
 
 export default function AdminCohortsTable() {
@@ -189,6 +191,21 @@ export default function AdminCohortsTable() {
     }
   };
 
+  const handleVerifyOrder = async (orderId: string) => {
+    try {
+      await axios.patch(`/api/admin/cohorts/orders/${orderId}/verify`);
+      toast.success("Order verified!");
+      fetchOrders();
+    } catch (err: unknown) {
+      console.error(err);
+      if (axios.isAxiosError(err)) {
+        toast.error(err.response?.data?.error || "Failed to verify order");
+      } else {
+        toast.error("Failed to verify order");
+      }
+    }
+  };
+
   const handleCreateCohort = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCohortTitle || !newCohortSlug) {
@@ -208,9 +225,13 @@ export default function AdminCohortsTable() {
       setNewCohortSlug("");
       setNewCohortPrice(4999);
       fetchCohorts();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error(err.response?.data?.error || "Failed to create cohort");
+      const errorMessage =
+        axios.isAxiosError(err) && err.response?.data?.error
+          ? err.response.data.error
+          : "Failed to create cohort";
+      toast.error(errorMessage);
     }
   };
 
@@ -493,6 +514,7 @@ export default function AdminCohortsTable() {
                     <th className="p-4 font-semibold text-gray-700">Paid</th>
                     <th className="p-4 font-semibold text-gray-700">Razorpay Info</th>
                     <th className="p-4 font-semibold text-gray-700">Status</th>
+                    <th className="p-4 font-semibold text-gray-700">Verified</th>
                     <th className="p-4 font-semibold text-gray-700">Date</th>
                   </tr>
                 </thead>
@@ -539,6 +561,22 @@ export default function AdminCohortsTable() {
                         >
                           {order.status}
                         </span>
+                      </td>
+                      <td className="p-4">
+                        {order.isVerified ? (
+                          <span className="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                            Verified
+                          </span>
+                        ) : (
+                          <Button
+                            onClick={() => handleVerifyOrder(order.id)}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                          >
+                            Verify
+                          </Button>
+                        )}
                       </td>
                       <td className="p-4 text-xs text-gray-500 whitespace-nowrap">
                         {new Date(order.createdAt).toLocaleDateString()}{" "}
@@ -1087,6 +1125,15 @@ export default function AdminCohortsTable() {
                         onCheckedChange={(val) => setEditingCohort({ ...editingCohort, isFillingFast: val })}
                       />
                       <Label htmlFor="cohort-filling-fast">Filling Fast Tag</Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="cohort-verification-required"
+                        checked={editingCohort.isVerificationRequired}
+                        onCheckedChange={(val) => setEditingCohort({ ...editingCohort, isVerificationRequired: val })}
+                      />
+                      <Label htmlFor="cohort-verification-required">Require Admin Verification Before Access</Label>
                     </div>
                   </div>
                 </div>

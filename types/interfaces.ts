@@ -376,7 +376,10 @@ export type CohortSessionMentor = {
 
 export type CohortDetailResponse = {
   cohort: { id: string; title: string };
-  hasAccess: boolean;
+  hasAccess?: boolean;
+  isLocked: boolean;
+  isVerificationRequired: boolean;
+  isVerified: boolean;
   sessions: CohortSession[];
 };
 

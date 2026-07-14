@@ -56,6 +56,7 @@ interface Tier {
   id: string;
   name: string;
   price: number;
+  originalPrice?: number | null;
   description: string;
   whatIncluded: string[];
   isDefault: boolean;
@@ -99,6 +100,8 @@ interface CohortData {
   investmentLabel: string;
   basePrice: number;
   hasEarlyBird?: boolean;
+  showEarlyBirdCheckout?: boolean;
+  showAddonsCheckout?: boolean;
   toolkitId?: string | null;
   hasAccess?: boolean;
   mentors: Mentor[];
@@ -289,6 +292,12 @@ export default function CohortLandingPage() {
 
   const subtotal = finalBasePrice + finalSessionsTotal + toolkitsTotal;
   const runningTotal = Math.max(0, subtotal);
+
+  const baseOriginalPrice = activeTier ? (activeTier.originalPrice || activeTier.price) : 0;
+  const sessionsOriginalTotal = cohort.sessions
+    ?.filter((s) => s.price && selectedAddonIds.includes(s.id))
+    .reduce((acc, current) => acc + (current.originalPrice || current.price || 0), 0) || 0;
+  const totalOriginalPrice = baseOriginalPrice + sessionsOriginalTotal + toolkitsTotal;
 
 
   const toggleAddon = (addonId: string) => {
@@ -544,7 +553,7 @@ export default function CohortLandingPage() {
                   {/* Side Arrows */}
                   <button
                     onClick={rotateMentorsBackward}
-                    className="absolute left-2 sm:left-6 md:left-12 z-20 p-2.5 rounded-full bg-white shadow-md border border-gray-200 text-gray-600 hover:text-black hover:shadow-lg transition-all active:scale-95"
+                    className="absolute left-2 sm:left-6 md:left-12 z-20 p-2.5 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 shadow-md border border-blue-200 text-blue-600 hover:text-blue-800 hover:shadow-lg transition-all active:scale-95"
                     aria-label="Previous mentor"
                   >
                     <ChevronLeft className="w-5 h-5" />
@@ -602,9 +611,15 @@ export default function CohortLandingPage() {
                               {mentor.role}
                             </p>
                             {mentor.bio && (
-                              <p className="text-[11px] md:text-xs text-gray-600 leading-relaxed max-w-[240px] mx-auto mt-2">
-                                {mentor.bio}
-                              </p>
+                              <div
+                                className="w-full max-h-[72px] sm:max-h-[100px] overflow-y-auto pr-1 text-center scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent"
+                                onClick={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                              >
+                                <p className="text-[11px] md:text-xs text-gray-600 leading-relaxed max-w-[240px] mx-auto mt-1">
+                                  {mentor.bio}
+                                </p>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -625,7 +640,7 @@ export default function CohortLandingPage() {
 
                   <button
                     onClick={rotateMentorsForward}
-                    className="absolute right-2 sm:right-6 md:right-12 z-20 p-2.5 rounded-full bg-white shadow-md border border-gray-200 text-gray-600 hover:text-black hover:shadow-lg transition-all active:scale-95"
+                    className="absolute right-2 sm:right-6 md:right-12 z-20 p-2.5 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 shadow-md border border-blue-200 text-blue-600 hover:text-blue-800 hover:shadow-lg transition-all active:scale-95"
                     aria-label="Next mentor"
                   >
                     <ChevronRight className="w-5 h-5" />
@@ -660,9 +675,11 @@ export default function CohortLandingPage() {
                           {mentor.role}
                         </p>
                         {mentor.bio && (
-                          <p className="text-[11px] md:text-xs text-gray-500 line-clamp-2 leading-relaxed max-w-[240px] mx-auto mt-1">
-                            {mentor.bio}
-                          </p>
+                          <div className="w-full max-h-[60px] sm:max-h-[90px] overflow-y-auto pr-1 text-center scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+                            <p className="text-[11px] md:text-xs text-gray-500 leading-relaxed max-w-[240px] mx-auto mt-1">
+                              {mentor.bio}
+                            </p>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -1108,11 +1125,11 @@ export default function CohortLandingPage() {
               )}
 
               {/* Toolkit Add-ons Selection */}
-              {liveToolkits && liveToolkits.filter(t => t.id !== cohort.toolkitId).length > 0 && (
+              {cohort.showAddonsCheckout !== false && liveToolkits && liveToolkits.filter(t => t.id !== cohort.toolkitId).length > 0 && (
                 <div className="space-y-3 border-t pt-4">
                   <div className="flex flex-col gap-0.5">
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Add Toolkits (Optional Add-ons)</h4>
-                    <p className="text-[10px] text-gray-500">Get additional live toolkits to enhance your career toolkit library.</p>
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Optional Add-Ons</h4>
+                    <p className="text-[10px] text-gray-500">Get additional 1:1 services to level up your cohort experience</p>
                   </div>
                   <div className="space-y-2">
                     {liveToolkits.filter(t => t.id !== cohort.toolkitId).map((tk) => {
@@ -1202,10 +1219,18 @@ export default function CohortLandingPage() {
             <div className="p-4 bg-gray-50 border-t flex items-center justify-between shrink-0">
               <div className="flex flex-col">
                 <span className="text-[9px] text-gray-400 font-bold uppercase">Payable Price</span>
-                <div className="flex items-baseline gap-2">
+                <div className="flex items-baseline gap-2 flex-wrap">
                   <span className="font-black text-gray-900 text-lg">₹{runningTotal}</span>
-                  {isDuoActive && (selectedTierId || selectedAddonIds.length > 0) && (
-                    <span className="line-through text-xs text-gray-400">₹{
+                  {cohort.showEarlyBirdCheckout && totalOriginalPrice > runningTotal && (
+                    <>
+                      <span className="line-through text-xs text-gray-400 font-medium">₹{totalOriginalPrice}</span>
+                      <span className="bg-blue-50 text-blue-600 border border-blue-200 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+                        Early Bird offer
+                      </span>
+                    </>
+                  )}
+                  {!cohort.showEarlyBirdCheckout && isDuoActive && (selectedTierId || selectedAddonIds.length > 0) && (
+                    <span className="line-through text-xs text-gray-400 font-medium">₹{
                       selectedTierId ? basePrice + toolkitsTotal : sessionsTotal + toolkitsTotal
                     }</span>
                   )}

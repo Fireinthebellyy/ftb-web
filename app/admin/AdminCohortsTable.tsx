@@ -101,6 +101,8 @@ interface Cohort {
   isBestSeller?: boolean | null;
   isFillingFast?: boolean | null;
   hasEarlyBird?: boolean | null;
+  showEarlyBirdCheckout?: boolean | null;
+  showAddonsCheckout?: boolean | null;
   mentors?: Mentor[];
   features?: Feature[];
   tiers?: Tier[];
@@ -1385,7 +1387,7 @@ export default function AdminCohortsTable() {
                   </div>
                 </div>
 
-                {/* Early Bird Offer Toggle */}
+                 {/* Early Bird Offer Toggle */}
                 <div className="flex items-center justify-between border-b pb-4">
                   <div className="space-y-0.5">
                     <Label className="text-sm font-semibold">Enable Early Bird Offer Banner</Label>
@@ -1397,6 +1399,29 @@ export default function AdminCohortsTable() {
                   />
                 </div>
 
+                {/* Early Bird Price on Checkout Toggle */}
+                <div className="flex items-center justify-between border-b pb-4">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-semibold">Show Early Bird Price on Checkout</Label>
+                    <p className="text-xs text-gray-500">Displays total original price strikethroughed with an &quot;Early Bird offer&quot; bubble near payable price.</p>
+                  </div>
+                  <Switch
+                    checked={Boolean(editingCohort.showEarlyBirdCheckout)}
+                    onCheckedChange={(checked) => setEditingCohort({ ...editingCohort, showEarlyBirdCheckout: checked })}
+                  />
+                </div>
+
+                {/* Optional Add-ons Section Toggle */}
+                <div className="flex items-center justify-between border-b pb-4">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-semibold">Enable Optional Add-ons in Checkout</Label>
+                    <p className="text-xs text-gray-500">Toggles visibility of the Toolkit Add-ons/Optional Add-ons section on the checkout drawer.</p>
+                  </div>
+                  <Switch
+                    checked={editingCohort.showAddonsCheckout !== false}
+                    onCheckedChange={(checked) => setEditingCohort({ ...editingCohort, showAddonsCheckout: checked })}
+                  />
+                </div>
                 {/* Tiers / Bundles */}
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">

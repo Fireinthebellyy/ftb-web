@@ -23,6 +23,7 @@ import { useSession } from "@/hooks/use-session";
 import { extractRichTextPlainText } from "@/lib/rich-text";
 import { motion, AnimatePresence } from "framer-motion";
 import { StackedTestimonials } from "@/components/toolkit/StackedTestimonials";
+import ToolkitStudentFeedback from "@/components/toolkit/ToolkitStudentFeedback";
 
 export function getDuoPricing(singlePrice: number) {
   if (!singlePrice || singlePrice <= 0) {
@@ -897,6 +898,9 @@ export default function CohortLandingPage() {
             {cohort.testimonialsHeading || "What Members Say About Our Ecosystem"}
           </h2>
           <StackedTestimonials />
+          <div className="max-w-2xl mx-auto">
+            <ToolkitStudentFeedback />
+          </div>
         </section>
       </main>
 

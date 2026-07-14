@@ -420,6 +420,28 @@ export default function CohortLandingPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] text-[#1A1A1A] pb-24 font-sans antialiased">
+      {/* Marquee Banner */}
+      <div className="w-full bg-[#ff5e14] text-white py-2.5 overflow-hidden relative font-extrabold text-[10px] sm:text-xs uppercase tracking-widest border-b border-orange-600/20 shadow-sm select-none shrink-0 z-30">
+        <div className="marquee-container flex">
+          <div className="animate-marquee flex whitespace-nowrap gap-8">
+            {Array(10).fill("Early Bird Offer!! 🔥 Get 20% off with Buddy Referral").map((text, i) => (
+              <span key={i} className="flex items-center gap-4 shrink-0">
+                <span>{text}</span>
+                <span className="text-orange-300 font-black">•</span>
+              </span>
+            ))}
+          </div>
+          <div className="animate-marquee flex whitespace-nowrap gap-8" aria-hidden="true">
+            {Array(10).fill("Early Bird Offer!! 🔥 Get 20% off with Buddy Referral").map((text, i) => (
+              <span key={i} className="flex items-center gap-4 shrink-0">
+                <span>{text}</span>
+                <span className="text-orange-300 font-black">•</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* 1. Hero Section */}
       <section className="relative w-full aspect-[4/3] md:aspect-[21/9] overflow-hidden flex items-end">
         {cohort.coverImageUrls && cohort.coverImageUrls.length > 0 ? (
@@ -920,6 +942,28 @@ export default function CohortLandingPage() {
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 z-40" />
           <Drawer.Content className="bg-white flex flex-col rounded-t-[20px] h-[85vh] fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto overflow-hidden">
+            {/* Drawer Marquee Banner */}
+            <div className="w-full bg-black text-[#ff5e14] py-2 overflow-hidden relative font-extrabold text-[9px] uppercase tracking-widest select-none shrink-0 border-b border-gray-100">
+              <div className="marquee-container flex">
+                <div className="animate-marquee flex whitespace-nowrap gap-8">
+                  {Array(8).fill("Early Bird Offer!! 🔥 Get 20% off with Buddy Referral").map((text, i) => (
+                    <span key={i} className="flex items-center gap-4 shrink-0">
+                      <span>{text}</span>
+                      <span className="text-neutral-800 font-black">•</span>
+                    </span>
+                  ))}
+                </div>
+                <div className="animate-marquee flex whitespace-nowrap gap-8" aria-hidden="true">
+                  {Array(8).fill("Early Bird Offer!! 🔥 Get 20% off with Buddy Referral").map((text, i) => (
+                    <span key={i} className="flex items-center gap-4 shrink-0">
+                      <span>{text}</span>
+                      <span className="text-neutral-800 font-black">•</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <div className="p-4 bg-gray-50 border-b flex justify-between items-center shrink-0">
               <div>
                 <Drawer.Title className="text-base font-bold">Select Your Cohort Plan</Drawer.Title>

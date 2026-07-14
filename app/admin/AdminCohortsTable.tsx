@@ -196,9 +196,13 @@ export default function AdminCohortsTable() {
       await axios.patch(`/api/admin/cohorts/orders/${orderId}/verify`);
       toast.success("Order verified!");
       fetchOrders();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error(err.response?.data?.error || "Failed to verify order");
+      if (axios.isAxiosError(err)) {
+        toast.error(err.response?.data?.error || "Failed to verify order");
+      } else {
+        toast.error("Failed to verify order");
+      }
     }
   };
 

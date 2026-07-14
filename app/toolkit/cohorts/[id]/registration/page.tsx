@@ -289,6 +289,7 @@ export default function CohortRegistrationPage() {
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
             <Lock className="h-6 w-6 text-orange-500" />
           </div>
+          <span>Access Verification</span>
         </DialogTitle>
         <DialogDescription className="text-center text-gray-600 pt-2">
           It will unlock in a few hours after verification. You will get contacted &amp; get added to a WhatsApp community for access as well.

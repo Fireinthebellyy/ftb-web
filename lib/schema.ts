@@ -800,6 +800,8 @@ export const cohorts = pgTable("cohorts", {
   isBestSeller: boolean("is_best_seller").default(false),
   isFillingFast: boolean("is_filling_fast").default(false),
   hasEarlyBird: boolean("has_early_bird").default(false),
+  showEarlyBirdCheckout: boolean("show_early_bird_checkout").default(false),
+  showAddonsCheckout: boolean("show_addons_checkout").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

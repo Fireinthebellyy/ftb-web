@@ -56,6 +56,7 @@ interface Tier {
   id: string;
   name: string;
   price: number;
+  originalPrice?: number | null;
   description: string;
   whatIncluded: string[];
   isDefault: boolean;
@@ -99,6 +100,8 @@ interface CohortData {
   investmentLabel: string;
   basePrice: number;
   hasEarlyBird?: boolean;
+  showEarlyBirdCheckout?: boolean;
+  showAddonsCheckout?: boolean;
   toolkitId?: string | null;
   hasAccess?: boolean;
   mentors: Mentor[];
@@ -145,6 +148,9 @@ export default function CohortLandingPage() {
   // Buddy Program states
   const [isBuddyDialogOpen, setIsBuddyDialogOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Session dropdown states
+  const [expandedSessions, setExpandedSessions] = useState<Record<string, boolean>>({});
 
   // Cover Image Carousel states
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -289,6 +295,12 @@ export default function CohortLandingPage() {
 
   const subtotal = finalBasePrice + finalSessionsTotal + toolkitsTotal;
   const runningTotal = Math.max(0, subtotal);
+
+  const baseOriginalPrice = activeTier ? (activeTier.originalPrice || activeTier.price) : 0;
+  const sessionsOriginalTotal = cohort.sessions
+    ?.filter((s) => s.price && selectedAddonIds.includes(s.id))
+    .reduce((acc, current) => acc + (current.originalPrice || current.price || 0), 0) || 0;
+  const totalOriginalPrice = baseOriginalPrice + sessionsOriginalTotal + toolkitsTotal;
 
 
   const toggleAddon = (addonId: string) => {
@@ -544,7 +556,7 @@ export default function CohortLandingPage() {
                   {/* Side Arrows */}
                   <button
                     onClick={rotateMentorsBackward}
-                    className="absolute left-2 sm:left-6 md:left-12 z-20 p-2.5 rounded-full bg-white shadow-md border border-gray-200 text-gray-600 hover:text-black hover:shadow-lg transition-all active:scale-95"
+                    className="absolute left-2 sm:left-6 md:left-12 z-20 p-2.5 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 shadow-md border border-blue-200 text-blue-600 hover:text-blue-800 hover:shadow-lg transition-all active:scale-95"
                     aria-label="Previous mentor"
                   >
                     <ChevronLeft className="w-5 h-5" />
@@ -602,9 +614,11 @@ export default function CohortLandingPage() {
                               {mentor.role}
                             </p>
                             {mentor.bio && (
-                              <p className="text-[11px] md:text-xs text-gray-600 leading-relaxed max-w-[240px] mx-auto mt-2">
-                                {mentor.bio}
-                              </p>
+                              <div className="w-full max-h-[72px] sm:max-h-[100px] overflow-y-auto pr-1 text-center scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+                                <p className="text-[11px] md:text-xs text-gray-600 leading-relaxed max-w-[240px] mx-auto mt-1">
+                                  {mentor.bio}
+                                </p>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -625,7 +639,7 @@ export default function CohortLandingPage() {
 
                   <button
                     onClick={rotateMentorsForward}
-                    className="absolute right-2 sm:right-6 md:right-12 z-20 p-2.5 rounded-full bg-white shadow-md border border-gray-200 text-gray-600 hover:text-black hover:shadow-lg transition-all active:scale-95"
+                    className="absolute right-2 sm:right-6 md:right-12 z-20 p-2.5 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 shadow-md border border-blue-200 text-blue-600 hover:text-blue-800 hover:shadow-lg transition-all active:scale-95"
                     aria-label="Next mentor"
                   >
                     <ChevronRight className="w-5 h-5" />
@@ -660,9 +674,11 @@ export default function CohortLandingPage() {
                           {mentor.role}
                         </p>
                         {mentor.bio && (
-                          <p className="text-[11px] md:text-xs text-gray-500 line-clamp-2 leading-relaxed max-w-[240px] mx-auto mt-1">
-                            {mentor.bio}
-                          </p>
+                          <div className="w-full max-h-[60px] sm:max-h-[90px] overflow-y-auto pr-1 text-center scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+                            <p className="text-[11px] md:text-xs text-gray-500 leading-relaxed max-w-[240px] mx-auto mt-1">
+                              {mentor.bio}
+                            </p>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -691,28 +707,54 @@ export default function CohortLandingPage() {
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {cohort.sessions.map((session, index) => (
-                <div
-                  key={session.id}
-                  className="relative overflow-hidden bg-white rounded-xl border border-gray-100 p-5 pt-7 flex gap-4 items-start shadow-sm hover:shadow transition"
-                >
-                  <div className="absolute top-0 right-0 z-10">
-                    <span className="bg-[#ff5e14] text-white rounded-tr-none rounded-bl-xl px-3 py-1 text-[10px] font-bold uppercase tracking-wider">
-                      Session {index + 1}
-                    </span>
-                  </div>
-                  <div className="space-y-1.5 flex-1">
-                    <div className="flex justify-between items-start gap-2">
+              {cohort.sessions.map((session, index) => {
+                const isExpanded = !!expandedSessions[session.id];
+                return (
+                  <div
+                    key={session.id}
+                    onClick={() => {
+                      setExpandedSessions((prev) => ({
+                        ...prev,
+                        [session.id]: !prev[session.id],
+                      }));
+                    }}
+                    className="relative overflow-hidden bg-white rounded-xl border border-gray-100 p-5 pt-7 flex flex-col gap-2 items-stretch shadow-sm hover:shadow transition cursor-pointer select-none"
+                  >
+                    <div className="absolute top-0 right-0 z-10">
+                      <span className="bg-[#ff5e14] text-white rounded-tr-none rounded-bl-xl px-3 py-1 text-[10px] font-bold uppercase tracking-wider">
+                        Session {index + 1}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center w-full gap-2">
                       <h3 className="font-bold text-gray-900 text-sm md:text-base leading-snug pr-16">
                         {session.title}
                       </h3>
+                      <motion.span
+                        animate={{ rotate: isExpanded ? 90 : 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="text-gray-400 shrink-0"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </motion.span>
                     </div>
-                    <p className="text-xs md:text-sm text-gray-500 leading-relaxed">
-                      {session.description}
-                    </p>
+                    <AnimatePresence initial={false}>
+                      {isExpanded && session.description && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.25, ease: "easeInOut" }}
+                          className="overflow-hidden"
+                        >
+                          <p className="text-xs md:text-sm text-gray-500 leading-relaxed pt-2 border-t border-gray-100">
+                            {session.description}
+                          </p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
@@ -1108,11 +1150,11 @@ export default function CohortLandingPage() {
               )}
 
               {/* Toolkit Add-ons Selection */}
-              {liveToolkits && liveToolkits.filter(t => t.id !== cohort.toolkitId).length > 0 && (
+              {cohort.showAddonsCheckout !== false && liveToolkits && liveToolkits.filter(t => t.id !== cohort.toolkitId).length > 0 && (
                 <div className="space-y-3 border-t pt-4">
                   <div className="flex flex-col gap-0.5">
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Add Toolkits (Optional Add-ons)</h4>
-                    <p className="text-[10px] text-gray-500">Get additional live toolkits to enhance your career toolkit library.</p>
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Optional Add-Ons</h4>
+                    <p className="text-[10px] text-gray-500">Get additional 1:1 services to level up your cohort experience</p>
                   </div>
                   <div className="space-y-2">
                     {liveToolkits.filter(t => t.id !== cohort.toolkitId).map((tk) => {
@@ -1202,10 +1244,18 @@ export default function CohortLandingPage() {
             <div className="p-4 bg-gray-50 border-t flex items-center justify-between shrink-0">
               <div className="flex flex-col">
                 <span className="text-[9px] text-gray-400 font-bold uppercase">Payable Price</span>
-                <div className="flex items-baseline gap-2">
+                <div className="flex items-baseline gap-2 flex-wrap">
                   <span className="font-black text-gray-900 text-lg">₹{runningTotal}</span>
-                  {isDuoActive && (selectedTierId || selectedAddonIds.length > 0) && (
-                    <span className="line-through text-xs text-gray-400">₹{
+                  {cohort.showEarlyBirdCheckout && totalOriginalPrice > runningTotal && (
+                    <>
+                      <span className="line-through text-xs text-gray-400 font-medium">₹{totalOriginalPrice}</span>
+                      <span className="bg-blue-50 text-blue-600 border border-blue-200 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+                        Early Bird offer
+                      </span>
+                    </>
+                  )}
+                  {!cohort.showEarlyBirdCheckout && isDuoActive && (selectedTierId || selectedAddonIds.length > 0) && (
+                    <span className="line-through text-xs text-gray-400 font-medium">₹{
                       selectedTierId ? basePrice + toolkitsTotal : sessionsTotal + toolkitsTotal
                     }</span>
                   )}

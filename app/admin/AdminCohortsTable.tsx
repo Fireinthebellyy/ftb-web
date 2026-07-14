@@ -1422,7 +1422,6 @@ export default function AdminCohortsTable() {
                     onCheckedChange={(checked) => setEditingCohort({ ...editingCohort, showAddonsCheckout: checked })}
                   />
                 </div>
-
                 {/* Tiers / Bundles */}
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">

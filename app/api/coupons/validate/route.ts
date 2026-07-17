@@ -150,7 +150,10 @@ export async function POST(request: Request) {
     }
 
     // Calculate final price
-    const discountAmount = coupon.discountAmount;
+    // Calculate percentage-based discount if applicable
+    const discountAmount = coupon.discountType === "percentage"
+      ? Math.round(basePrice * (coupon.discountAmount / 100))
+      : coupon.discountAmount;
     const finalPrice = Math.max(0, basePrice - discountAmount);
 
     return NextResponse.json({

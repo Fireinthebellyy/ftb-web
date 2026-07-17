@@ -307,9 +307,14 @@ export async function POST(
           }
 
           // Return success with coupon data
+          // Calculate percentage-based discount if applicable
+          const calculatedDiscount = coupon.discountType === "percentage"
+            ? Math.round(toolkit.price * (coupon.discountAmount / 100))
+            : coupon.discountAmount;
+
           return {
             coupon,
-            discountAmount: coupon.discountAmount,
+            discountAmount: calculatedDiscount,
             couponId: coupon.id,
           };
         });

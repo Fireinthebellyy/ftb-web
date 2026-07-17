@@ -65,9 +65,12 @@ export async function GET(
 
     const completed = isCohortRegistrationComplete(order);
 
-    // Fetch sessions for this cohort
+    // Fetch sessions for this cohort (only active sessions)
     const sessions = await db.query.cohortSessions.findMany({
-      where: eq(cohortSessions.cohortId, cohort.id),
+      where: and(
+        eq(cohortSessions.cohortId, cohort.id),
+        eq(cohortSessions.isActive, true)
+      ),
       orderBy: (cohortSessions, { asc }) => [asc(cohortSessions.orderIndex)],
     });
 
@@ -152,7 +155,6 @@ export async function POST(
         registrationCourse: course,
         registrationYear: year,
         registrationExpectations: expectations,
-        registrationCompletedAt: new Date(),
       })
       .where(
         and(eq(cohortOrders.id, order.id), eq(cohortOrders.userId, session.user.id))

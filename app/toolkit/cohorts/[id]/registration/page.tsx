@@ -47,7 +47,14 @@ export default function CohortRegistrationPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [cohortTitle, setCohortTitle] = useState("");
   const [_toolkitId, _setToolkitId] = useState<string | null>(null);
-  const [sessions, setSessions] = useState<any[]>([]);
+
+  interface CohortSession {
+    id: string;
+    title: string;
+    description: string;
+  }
+
+  const [sessions, setSessions] = useState<CohortSession[]>([]);
 
   const [name, setName] = useState("");
   const [college, setCollege] = useState("");
@@ -387,7 +394,7 @@ export default function CohortRegistrationPage() {
           <div className="flex justify-center pt-6">
             <Button
               onClick={handleSessionSubmit}
-              disabled={isSubmittingSessions || selectedSessionIds.length === 0}
+              disabled={isSubmittingSessions || (sessions.length > 0 && selectedSessionIds.length === 0)}
               className="w-full max-w-xs bg-neutral-900 hover:bg-neutral-800"
             >
               {isSubmittingSessions ? (

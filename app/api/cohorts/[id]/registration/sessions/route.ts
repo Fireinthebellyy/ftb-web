@@ -11,7 +11,7 @@ const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const sessionsSchema = z.object({
-  selectedSessionIds: z.array(z.string()).min(1, "Please select at least one session"),
+  selectedSessionIds: z.array(z.string()).optional(),
 });
 
 async function resolveCohort(identifier: string) {
@@ -66,27 +66,31 @@ export async function POST(
     const { selectedSessionIds } = parsed.data;
 
     // Validate that all selected sessions belong to this cohort and are active
-    const cohortSessionsData = await db.query.cohortSessions.findMany({
-      where: and(
-        eq(cohortSessions.cohortId, cohort.id),
-        eq(cohortSessions.isActive, true)
-      ),
-    });
+    // Only validate if sessions are provided
+    if (selectedSessionIds && selectedSessionIds.length > 0) {
+      const cohortSessionsData = await db.query.cohortSessions.findMany({
+        where: and(
+          eq(cohortSessions.cohortId, cohort.id),
+          eq(cohortSessions.isActive, true)
+        ),
+      });
 
-    const activeSessionIds = new Set(cohortSessionsData.map(s => s.id));
-    const invalidSessionIds = selectedSessionIds.filter(id => !activeSessionIds.has(id));
+      const activeSessionIds = new Set(cohortSessionsData.map(s => s.id));
+      const invalidSessionIds = selectedSessionIds.filter(id => !activeSessionIds.has(id));
 
-    if (invalidSessionIds.length > 0) {
-      return NextResponse.json(
-        { error: "Some selected sessions are invalid or inactive" },
-        { status: 400 }
-      );
+      if (invalidSessionIds.length > 0) {
+        return NextResponse.json(
+          { error: "Some selected sessions are invalid or inactive" },
+          { status: 400 }
+        );
+      }
     }
 
     await db
       .update(cohortOrders)
       .set({
         selectedSessionIds,
+        registrationCompletedAt: new Date(),
       })
       .where(
         and(eq(cohortOrders.id, order.id), eq(cohortOrders.userId, session.user.id))

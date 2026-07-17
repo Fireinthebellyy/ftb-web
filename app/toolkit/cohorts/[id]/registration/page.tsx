@@ -137,7 +137,7 @@ export default function CohortRegistrationPage() {
 
     setIsSubmitting(true);
     try {
-      await axios.post(`/api/cohorts/${cohortId}/registration`, {
+      const response = await axios.post(`/api/cohorts/${cohortId}/registration`, {
         name: name.trim(),
         college: college.trim(),
         course: course.trim(),
@@ -145,7 +145,18 @@ export default function CohortRegistrationPage() {
         expectations: expectations.trim(),
       });
 
-      // Always show session selection dialog first
+      // Check if registration is complete (no sessions to select)
+      if (response.data.registrationComplete) {
+        toast.success("Registration complete! Welcome to the cohort.");
+        if (response.data.toolkitId) {
+          router.replace(`/toolkit/${response.data.toolkitId}/content`);
+        } else {
+          router.replace(`/toolkit/cohorts/${cohortId}/dashboard`);
+        }
+        return;
+      }
+
+      // Show session selection dialog if there are sessions
       setShowSessionSelectionDialog(true);
     } catch (error: unknown) {
       console.error(error);
@@ -346,7 +357,7 @@ export default function CohortRegistrationPage() {
       </Dialog>
 
       <Dialog open={showSessionSelectionDialog} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto" showCloseButton={false}>
           <DialogHeader>
             <DialogTitle className="text-xl">
               Which session(s) do you wish to attend?

@@ -147,6 +147,16 @@ export async function POST(
 
     const { name, college, course, year, expectations } = parsed.data;
 
+    // Check if cohort has any active sessions
+    const cohortSessionsData = await db.query.cohortSessions.findMany({
+      where: and(
+        eq(cohortSessions.cohortId, cohort.id),
+        eq(cohortSessions.isActive, true)
+      ),
+    });
+
+    const hasActiveSessions = cohortSessionsData.length > 0;
+
     await db
       .update(cohortOrders)
       .set({
@@ -155,6 +165,8 @@ export async function POST(
         registrationCourse: course,
         registrationYear: year,
         registrationExpectations: expectations,
+        // Mark registration as complete if there are no sessions to select
+        ...(hasActiveSessions ? {} : { registrationCompletedAt: new Date() }),
       })
       .where(
         and(eq(cohortOrders.id, order.id), eq(cohortOrders.userId, session.user.id))
@@ -164,6 +176,7 @@ export async function POST(
       success: true,
       toolkitId: cohort.toolkitId,
       isVerificationRequired: cohort.isVerificationRequired,
+      registrationComplete: !hasActiveSessions,
     });
   } catch (error) {
     console.error("Error submitting cohort registration:", error);

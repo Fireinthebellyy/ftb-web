@@ -131,6 +131,7 @@ export async function PUT(
       hasEarlyBird,
       isVerificationRequired,
       showEarlyBirdCheckout,
+      showEarlyBirdMarqueeCheckout,
       showAddonsCheckout,
       mentors: incomingMentors = [],
       features: incomingFeatures = [],
@@ -173,6 +174,7 @@ export async function PUT(
           hasEarlyBird: hasEarlyBird !== undefined ? Boolean(hasEarlyBird) : false,
           isVerificationRequired: isVerificationRequired !== undefined ? Boolean(isVerificationRequired) : true,
           showEarlyBirdCheckout: Boolean(showEarlyBirdCheckout ?? false),
+          showEarlyBirdMarqueeCheckout: Boolean(showEarlyBirdMarqueeCheckout ?? false),
           showAddonsCheckout: Boolean(showAddonsCheckout ?? true),
           updatedAt: new Date(),
         })

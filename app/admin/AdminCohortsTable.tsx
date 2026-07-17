@@ -103,6 +103,7 @@ interface Cohort {
   hasEarlyBird?: boolean | null;
   isVerificationRequired: boolean;
   showEarlyBirdCheckout?: boolean | null;
+  showEarlyBirdMarqueeCheckout?: boolean | null;
   showAddonsCheckout?: boolean | null;
   mentors?: Mentor[];
   features?: Feature[];
@@ -1560,15 +1561,27 @@ export default function AdminCohortsTable() {
                   </div>
                 </div>
 
-                 {/* Early Bird Offer Toggle */}
+                 {/* Early Bird Offer Toggle - Landing Page */}
                 <div className="flex items-center justify-between border-b pb-4">
                   <div className="space-y-0.5">
-                    <Label className="text-sm font-semibold">Enable Early Bird Offer Banner</Label>
-                    <p className="text-xs text-gray-500">Toggles the scrolling &quot;Early Bird Offer!!&quot; marquee at the top of landing & checkout screens.</p>
+                    <Label className="text-sm font-semibold">Enable Early Bird Offer Banner (Landing Page)</Label>
+                    <p className="text-xs text-gray-500">Toggles the scrolling &quot;Early Bird Offer!!&quot; marquee at the top of the landing page.</p>
                   </div>
                   <Switch
                     checked={Boolean(editingCohort.hasEarlyBird)}
                     onCheckedChange={(checked) => setEditingCohort({ ...editingCohort, hasEarlyBird: checked })}
+                  />
+                </div>
+
+                {/* Early Bird Offer Toggle - Checkout Page */}
+                <div className="flex items-center justify-between border-b pb-4">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-semibold">Enable Early Bird Offer Banner (Checkout Page)</Label>
+                    <p className="text-xs text-gray-500">Toggles the scrolling &quot;Early Bird Offer!!&quot; marquee at the top of the checkout page.</p>
+                  </div>
+                  <Switch
+                    checked={Boolean(editingCohort.showEarlyBirdMarqueeCheckout)}
+                    onCheckedChange={(checked) => setEditingCohort({ ...editingCohort, showEarlyBirdMarqueeCheckout: checked })}
                   />
                 </div>
 

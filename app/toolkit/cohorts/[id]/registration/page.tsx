@@ -48,12 +48,23 @@ export default function CohortRegistrationPage() {
   const [cohortTitle, setCohortTitle] = useState("");
   const [_toolkitId, _setToolkitId] = useState<string | null>(null);
 
+  interface CohortSession {
+    id: string;
+    title: string;
+    description: string;
+  }
+
+  const [sessions, setSessions] = useState<CohortSession[]>([]);
+
   const [name, setName] = useState("");
   const [college, setCollege] = useState("");
   const [course, setCourse] = useState("");
   const [year, setYear] = useState("");
   const [expectations, setExpectations] = useState("");
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
+  const [showSessionSelectionDialog, setShowSessionSelectionDialog] = useState(false);
+  const [selectedSessionIds, setSelectedSessionIds] = useState<string[]>([]);
+  const [isSubmittingSessions, setIsSubmittingSessions] = useState(false);
 
   const fetchRegistrationStatus = useCallback(async () => {
     setLoadError(null);
@@ -65,6 +76,7 @@ export default function CohortRegistrationPage() {
 
       setCohortTitle(data.cohortTitle);
       _setToolkitId(data.toolkitId ?? null);
+      setSessions(data.sessions || []);
 
       if (data.completed) {
         if (data.toolkitId) {
@@ -133,16 +145,19 @@ export default function CohortRegistrationPage() {
         expectations: expectations.trim(),
       });
 
-      if (response.data.isVerificationRequired) {
-        setShowVerificationDialog(true);
-      } else {
-        toast.success("Details saved! Welcome to the cohort.");
+      // Check if registration is complete (no sessions to select)
+      if (response.data.registrationComplete) {
+        toast.success("Registration complete! Welcome to the cohort.");
         if (response.data.toolkitId) {
           router.replace(`/toolkit/${response.data.toolkitId}/content`);
         } else {
           router.replace(`/toolkit/cohorts/${cohortId}/dashboard`);
         }
+        return;
       }
+
+      // Show session selection dialog if there are sessions
+      setShowSessionSelectionDialog(true);
     } catch (error: unknown) {
       console.error(error);
       const message =
@@ -152,6 +167,43 @@ export default function CohortRegistrationPage() {
       toast.error(message);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSessionSubmit = async () => {
+    if (selectedSessionIds.length === 0) {
+      toast.error("Please select at least one session");
+      return;
+    }
+
+    setIsSubmittingSessions(true);
+    try {
+      await axios.post(`/api/cohorts/${cohortId}/registration/sessions`, {
+        selectedSessionIds,
+      });
+
+      // Check if verification is required
+      const cohortResponse = await axios.get(`/api/cohorts/${cohortId}/registration`);
+      if (cohortResponse.data.isVerificationRequired) {
+        setShowSessionSelectionDialog(false);
+        setShowVerificationDialog(true);
+      } else {
+        toast.success("Sessions selected! Welcome to the cohort.");
+        if (_toolkitId) {
+          router.replace(`/toolkit/${_toolkitId}/content`);
+        } else {
+          router.replace(`/toolkit/cohorts/${cohortId}/dashboard`);
+        }
+      }
+    } catch (error: unknown) {
+      console.error(error);
+      const message =
+        axios.isAxiosError(error) && error.response?.data?.error
+          ? error.response.data.error
+          : "Failed to save sessions";
+      toast.error(message);
+    } finally {
+      setIsSubmittingSessions(false);
     }
   };
 
@@ -299,6 +351,71 @@ export default function CohortRegistrationPage() {
             <Button
               onClick={() => router.push("/")} className="w-full max-w-xs">
               Back to Home
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showSessionSelectionDialog} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto" showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle className="text-xl">
+              Which session(s) do you wish to attend?
+            </DialogTitle>
+            <DialogDescription className="text-gray-600 pt-2">
+              Select the sessions you want to attend from the list below.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 mt-4">
+            {sessions.length === 0 ? (
+              <p className="text-center text-gray-500 py-4">No sessions available</p>
+            ) : (
+              sessions.map((session) => (
+                <div
+                  key={session.id}
+                  onClick={() => {
+                    setSelectedSessionIds(prev =>
+                      prev.includes(session.id)
+                        ? prev.filter(id => id !== session.id)
+                        : [...prev, session.id]
+                    );
+                  }}
+                  className={`border-2 rounded-xl p-4 cursor-pointer transition ${
+                    selectedSessionIds.includes(session.id)
+                      ? "border-[#ff5e14] bg-orange-50/10"
+                      : "border-gray-200 hover:border-gray-300 bg-white"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedSessionIds.includes(session.id)}
+                      onChange={() => {}}
+                      className="mt-1 rounded border-gray-300 text-[#ff5e14] focus:ring-[#ff5e14]"
+                    />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900">{session.title}</h4>
+                      <p className="text-sm text-gray-600 mt-1">{session.description}</p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          <div className="flex justify-center pt-6">
+            <Button
+              onClick={handleSessionSubmit}
+              disabled={isSubmittingSessions || (sessions.length > 0 && selectedSessionIds.length === 0)}
+              className="w-full max-w-xs bg-neutral-900 hover:bg-neutral-800"
+            >
+              {isSubmittingSessions ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Continue to Dashboard"
+              )}
             </Button>
           </div>
         </DialogContent>

@@ -246,6 +246,11 @@ export async function POST(
             throw new Error("COUPON_NOT_ACTIVE");
           }
 
+          // Check if coupon is cohort-only
+          if (coupon.cohortOnly === true) {
+            throw new Error("COUPON_COHORT_ONLY");
+          }
+
           if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
             throw new Error("COUPON_EXPIRED");
           }
@@ -302,9 +307,14 @@ export async function POST(
           }
 
           // Return success with coupon data
+          // Calculate percentage-based discount if applicable
+          const calculatedDiscount = coupon.discountType === "percentage"
+            ? Math.round(toolkit.price * (coupon.discountAmount / 100))
+            : coupon.discountAmount;
+
           return {
             coupon,
-            discountAmount: coupon.discountAmount,
+            discountAmount: calculatedDiscount,
             couponId: coupon.id,
           };
         });
@@ -339,6 +349,12 @@ export async function POST(
         if (errorMessage === "COUPON_ALREADY_USED") {
           return NextResponse.json(
             { error: "You have already used this coupon" },
+            { status: 400 }
+          );
+        }
+        if (errorMessage === "COUPON_COHORT_ONLY") {
+          return NextResponse.json(
+            { error: "This coupon is only valid for cohort purchases" },
             { status: 400 }
           );
         }

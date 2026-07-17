@@ -101,6 +101,7 @@ interface CohortData {
   basePrice: number;
   hasEarlyBird?: boolean;
   showEarlyBirdCheckout?: boolean;
+  showEarlyBirdMarqueeCheckout?: boolean;
   showAddonsCheckout?: boolean;
   toolkitId?: string | null;
   hasAccess?: boolean;
@@ -120,9 +121,6 @@ export default function CohortLandingPage() {
   const [cohort, setCohort] = useState<CohortData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showSeatsPop, setShowSeatsPop] = useState(false);
-  const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
-
-
 
   // Upsell Modal / Bottom Sheet selections
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -137,6 +135,15 @@ export default function CohortLandingPage() {
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponError, setCouponError] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
+
+  // Clear coupon when cart dependencies change
+  useEffect(() => {
+    setCouponCode("");
+    setCouponDiscount(0);
+    setCouponError("");
+    setIsApplyingCoupon(false);
+  }, [selectedTierId, selectedAddonIds, buddyEmail]);
 
   const redirectToRegistrationIfNeeded = useCallback(async () => {
     try {
@@ -321,14 +328,18 @@ export default function CohortLandingPage() {
   // Razorpay Checkout handler
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsProcessingCheckout(true);
+
     if (!session) {
       toast.error("Please login to register for this cohort");
       router.push(`/login?returnUrl=%2Ftoolkit%2Fcohorts%2F${cohortId}`);
+      setIsProcessingCheckout(false);
       return;
     }
 
     if (!buyerName || !buyerEmail) {
       toast.error("Please fill in your name and email");
+      setIsProcessingCheckout(false);
       return;
     }
 
@@ -354,6 +365,7 @@ export default function CohortLandingPage() {
           setCouponCode("");
           setCouponDiscount(0);
           setIsApplyingCoupon(false);
+          setIsProcessingCheckout(false);
           return;
         }
       } catch (err: any) {
@@ -361,13 +373,13 @@ export default function CohortLandingPage() {
         setCouponCode("");
         setCouponDiscount(0);
         setIsApplyingCoupon(false);
+        setIsProcessingCheckout(false);
         return;
       } finally {
         setIsApplyingCoupon(false);
       }
     }
 
-    setIsProcessingCheckout(true);
     try {
       // 1. Call backend to create order or verify free access
       const response = await axios.post(`/api/cohorts/${cohort.id}/checkout`, {
@@ -1030,7 +1042,7 @@ export default function CohortLandingPage() {
           <Drawer.Overlay className="fixed inset-0 bg-black/40 z-40" />
           <Drawer.Content className="bg-white flex flex-col rounded-t-[20px] h-[85vh] fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto overflow-hidden">
             {/* Drawer Marquee Banner */}
-            {cohort.hasEarlyBird && (
+            {cohort.showEarlyBirdMarqueeCheckout && (
               <div className="w-full bg-black text-[#ff5e14] py-2 overflow-hidden relative font-extrabold text-[9px] uppercase tracking-widest select-none shrink-0 border-b border-gray-100">
                 <div className="marquee-container flex">
                   <div className="animate-marquee flex whitespace-nowrap gap-8">
@@ -1247,6 +1259,7 @@ export default function CohortLandingPage() {
                       onChange={(e) => {
                         setCouponCode(e.target.value.toUpperCase());
                         setCouponError("");
+                        setCouponDiscount(0);
                       }}
                       placeholder="Enter coupon code"
                       className="w-full px-3 py-2 pr-10 border rounded-lg text-sm uppercase"

@@ -560,6 +560,7 @@ export const coupons = pgTable("coupons", {
   maxUsesPerUser: integer("max_uses_per_user").default(1), // Per-user limit
   currentUses: integer("current_uses").default(0),
   isActive: boolean("is_active").default(true),
+  cohortOnly: boolean("cohort_only").default(false), // If true, only applies to cohorts
   expiresAt: timestamp("expires_at"), // Optional expiration
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -802,6 +803,7 @@ export const cohorts = pgTable("cohorts", {
   hasEarlyBird: boolean("has_early_bird").default(false),
   isVerificationRequired: boolean("is_verification_required").default(true),
   showEarlyBirdCheckout: boolean("show_early_bird_checkout").default(false),
+  showEarlyBirdMarqueeCheckout: boolean("show_early_bird_marquee_checkout").default(false),
   showAddonsCheckout: boolean("show_addons_checkout").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -863,6 +865,7 @@ export const cohortOrders = pgTable("cohort_orders", {
   selectedTierId: uuid("selected_tier_id").references(() => cohortTiers.id, { onDelete: "set null" }),
   selectedAddOnIds: jsonb("selected_addon_ids").$type<string[]>().default([]),
   selectedToolkitIds: jsonb("selected_toolkit_ids").$type<string[]>().default([]),
+  selectedSessionIds: jsonb("selected_session_ids").$type<string[]>().default([]),
   amountPaid: integer("amount_paid").notNull(),
   couponId: uuid("coupon_id").references(() => coupons.id, { onDelete: "set null" }),
   razorpayOrderId: text("razorpay_order_id").notNull(),

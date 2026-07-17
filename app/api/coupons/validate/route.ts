@@ -80,6 +80,14 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check if coupon is cohort-only and being used for toolkit
+    if (toolkitId && coupon.cohortOnly === true) {
+      return NextResponse.json(
+        { valid: false, error: "This coupon is only valid for cohort purchases" },
+        { status: 200 }
+      );
+    }
+
     // Check expiration
     if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
       return NextResponse.json(
@@ -142,7 +150,10 @@ export async function POST(request: Request) {
     }
 
     // Calculate final price
-    const discountAmount = coupon.discountAmount;
+    // Calculate percentage-based discount if applicable
+    const discountAmount = coupon.discountType === "percentage"
+      ? Math.round(basePrice * (coupon.discountAmount / 100))
+      : coupon.discountAmount;
     const finalPrice = Math.max(0, basePrice - discountAmount);
 
     return NextResponse.json({

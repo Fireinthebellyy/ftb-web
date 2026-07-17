@@ -13,6 +13,7 @@ const createCouponSchema = z.object({
   maxUses: z.number().int().positive().nullable().optional(),
   maxUsesPerUser: z.number().int().positive().default(1),
   isActive: z.boolean().default(true),
+  cohortOnly: z.boolean().default(false),
   expiresAt: z.string().datetime().nullable().optional(),
 });
 
@@ -108,6 +109,7 @@ export async function POST(request: Request) {
         maxUses: validatedData.maxUses ?? null,
         maxUsesPerUser: validatedData.maxUsesPerUser,
         isActive: validatedData.isActive,
+        cohortOnly: validatedData.cohortOnly,
         expiresAt: validatedData.expiresAt
           ? new Date(validatedData.expiresAt)
           : null,

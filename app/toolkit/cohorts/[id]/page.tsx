@@ -135,6 +135,7 @@ export default function CohortLandingPage() {
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponError, setCouponError] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+<<<<<<< fix/cohort-page
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
 
   // Clear coupon when cart dependencies change
@@ -144,6 +145,8 @@ export default function CohortLandingPage() {
     setCouponError("");
     setIsApplyingCoupon(false);
   }, [selectedTierId, selectedAddonIds, buddyEmail]);
+=======
+>>>>>>> main
 
   const redirectToRegistrationIfNeeded = useCallback(async () => {
     try {
@@ -365,7 +368,10 @@ export default function CohortLandingPage() {
           setCouponCode("");
           setCouponDiscount(0);
           setIsApplyingCoupon(false);
+<<<<<<< fix/cohort-page
           setIsProcessingCheckout(false);
+=======
+>>>>>>> main
           return;
         }
       } catch (err: any) {
@@ -373,13 +379,20 @@ export default function CohortLandingPage() {
         setCouponCode("");
         setCouponDiscount(0);
         setIsApplyingCoupon(false);
+<<<<<<< fix/cohort-page
         setIsProcessingCheckout(false);
+=======
+>>>>>>> main
         return;
       } finally {
         setIsApplyingCoupon(false);
       }
     }
 
+<<<<<<< fix/cohort-page
+=======
+    setIsProcessingCheckout(true);
+>>>>>>> main
     try {
       // 1. Call backend to create order or verify free access
       const response = await axios.post(`/api/cohorts/${cohort.id}/checkout`, {
@@ -1259,7 +1272,10 @@ export default function CohortLandingPage() {
                       onChange={(e) => {
                         setCouponCode(e.target.value.toUpperCase());
                         setCouponError("");
+<<<<<<< fix/cohort-page
                         setCouponDiscount(0);
+=======
+>>>>>>> main
                       }}
                       placeholder="Enter coupon code"
                       className="w-full px-3 py-2 pr-10 border rounded-lg text-sm uppercase"

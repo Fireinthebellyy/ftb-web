@@ -125,10 +125,16 @@ interface Order {
   cohortTitle: string | null;
   tierName: string | null;
   isVerified: boolean;
+  registrationName: string | null;
+  registrationCollege: string | null;
+  registrationCourse: string | null;
+  registrationYear: string | null;
+  registrationExpectations: string | null;
+  registrationCompletedAt: string | null;
 }
 
 export default function AdminCohortsTable() {
-  const [view, setView] = useState<"cohorts" | "orders">("cohorts");
+  const [view, setView] = useState<"cohorts" | "orders" | "registrations">("cohorts");
   const [cohortsList, setCohortsList] = useState<Cohort[]>([]);
   const [ordersList, setOrdersList] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -193,15 +199,16 @@ export default function AdminCohortsTable() {
 
   const handleVerifyOrder = async (orderId: string) => {
     try {
-      await axios.patch(`/api/admin/cohorts/orders/${orderId}/verify`);
-      toast.success("Order verified!");
+      const response = await axios.patch(`/api/admin/cohorts/orders/${orderId}/verify`);
+      const { isVerified } = response.data;
+      toast.success(isVerified ? "Order verified!" : "Order unverified!");
       fetchOrders();
     } catch (err: unknown) {
       console.error(err);
       if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.error || "Failed to verify order");
+        toast.error(err.response?.data?.error || "Failed to update verification status");
       } else {
-        toast.error("Failed to verify order");
+        toast.error("Failed to update verification status");
       }
     }
   };
@@ -389,6 +396,16 @@ export default function AdminCohortsTable() {
         >
           Orders & Applications Log
         </button>
+        <button
+          onClick={() => setView("registrations")}
+          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${
+            view === "registrations"
+              ? "border-[#ff5e14] text-[#ff5e14]"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Registration Details
+        </button>
       </div>
 
       {view === "cohorts" ? (
@@ -485,7 +502,7 @@ export default function AdminCohortsTable() {
             </div>
           )}
         </div>
-      ) : (
+      ) : view === "orders" ? (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Orders Log</h2>
@@ -563,20 +580,14 @@ export default function AdminCohortsTable() {
                         </span>
                       </td>
                       <td className="p-4">
-                        {order.isVerified ? (
-                          <span className="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                            Verified
-                          </span>
-                        ) : (
-                          <Button
-                            onClick={() => handleVerifyOrder(order.id)}
-                            variant="outline"
-                            size="sm"
-                            className="text-xs"
-                          >
-                            Verify
-                          </Button>
-                        )}
+                        <Button
+                          onClick={() => handleVerifyOrder(order.id)}
+                          variant={order.isVerified ? "outline" : "default"}
+                          size="sm"
+                          className={`text-xs ${order.isVerified ? "border-red-200 text-red-600 hover:bg-red-50" : "bg-green-600 hover:bg-green-700 text-white"}`}
+                        >
+                          {order.isVerified ? "Unverify" : "Verify"}
+                        </Button>
                       </td>
                       <td className="p-4 text-xs text-gray-500 whitespace-nowrap">
                         {new Date(order.createdAt).toLocaleDateString()}{" "}
@@ -590,7 +601,72 @@ export default function AdminCohortsTable() {
             </div>
           )}
         </div>
-      )}
+      ) : view === "registrations" ? (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Registration Details</h2>
+            <Button
+              onClick={exportToCSV}
+              variant="outline"
+              className="flex gap-1.5 items-center border-gray-300 hover:bg-gray-50 text-gray-700"
+            >
+              <Download className="w-4 h-4" /> Export CSV
+            </Button>
+          </div>
+
+          {ordersList.length === 0 ? (
+            <div className="border bg-white rounded-lg p-12 text-center">
+              <p className="text-gray-500">No registration details available yet.</p>
+            </div>
+          ) : (
+            <div className="border bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="overflow-x-auto w-full">
+                <table className="w-full text-left border-collapse text-xs md:text-sm min-w-[1000px]">
+                <thead>
+                  <tr className="bg-gray-50 border-b">
+                    <th className="p-4 font-semibold text-gray-700">Name</th>
+                    <th className="p-4 font-semibold text-gray-700">College</th>
+                    <th className="p-4 font-semibold text-gray-700">Course</th>
+                    <th className="p-4 font-semibold text-gray-700">Year</th>
+                    <th className="p-4 font-semibold text-gray-700">Expectations</th>
+                    <th className="p-4 font-semibold text-gray-700">Cohort</th>
+                    <th className="p-4 font-semibold text-gray-700">Email</th>
+                    <th className="p-4 font-semibold text-gray-700">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {ordersList.filter(order => order.registrationName).map((order) => (
+                    <tr key={order.id} className="hover:bg-gray-50">
+                      <td className="p-4 font-medium text-gray-900">{order.registrationName || order.buyerName}</td>
+                      <td className="p-4 text-gray-600">{order.registrationCollege || "-"}</td>
+                      <td className="p-4 text-gray-600">{order.registrationCourse || "-"}</td>
+                      <td className="p-4 text-gray-600">{order.registrationYear || "-"}</td>
+                      <td className="p-4 text-gray-600 max-w-xs truncate" title={order.registrationExpectations || ""}>
+                        {order.registrationExpectations || "-"}
+                      </td>
+                      <td className="p-4 text-gray-900">{order.cohortTitle || "Unknown"}</td>
+                      <td className="p-4 text-gray-500 text-xs">{order.buyerEmail}</td>
+                      <td className="p-4 text-xs text-gray-500 whitespace-nowrap">
+                        {order.registrationCompletedAt
+                          ? new Date(order.registrationCompletedAt).toLocaleDateString()
+                          : new Date(order.createdAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                  {ordersList.filter(order => order.registrationName).length === 0 && (
+                    <tr>
+                      <td colSpan={8} className="p-12 text-center text-gray-500">
+                        No registration forms completed yet.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : null}
 
       {/* Cohort Creation Dialog */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>

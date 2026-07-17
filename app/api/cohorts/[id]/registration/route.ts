@@ -21,7 +21,7 @@ const registrationSchema = z.object({
   expectations: z
     .string()
     .trim()
-    .min(10, "Please share what you are expecting from this cohort"),
+    .min(1, "Please share what you are expecting from this cohort"),
 });
 
 async function resolveCohort(identifier: string) {

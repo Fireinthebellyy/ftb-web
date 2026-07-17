@@ -20,12 +20,20 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const order = await db.query.cohortOrders.findFirst({
+      where: eq(cohortOrders.id, orderId),
+    });
+
+    if (!order) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
     await db
       .update(cohortOrders)
-      .set({ isVerified: true })
+      .set({ isVerified: !order.isVerified })
       .where(eq(cohortOrders.id, orderId));
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, isVerified: !order.isVerified });
   } catch (error) {
     console.error("Error verifying cohort order:", error);
     return NextResponse.json(

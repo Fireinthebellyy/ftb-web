@@ -5,6 +5,16 @@ import {
   CohortSessionResponse,
 } from "@/types/interfaces";
 
+async function fetchCohorts() {
+  try {
+    const { data } = await axios.get("/api/cohorts");
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch cohorts:", error);
+    throw error;
+  }
+}
+
 async function fetchCohortDetail(cohortId: string): Promise<CohortDetailResponse> {
   try {
     const { data } = await axios.get<CohortDetailResponse>(
@@ -30,6 +40,14 @@ async function fetchCohortSession(
     console.error("Failed to fetch cohort session:", error);
     throw error;
   }
+}
+
+export function useCohorts() {
+  return useQuery({
+    queryKey: ["cohorts"],
+    queryFn: fetchCohorts,
+    staleTime: 1000 * 60 * 5,
+  });
 }
 
 export function useCohortDetail(cohortId: string) {

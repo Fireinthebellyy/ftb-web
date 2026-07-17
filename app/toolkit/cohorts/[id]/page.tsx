@@ -101,6 +101,7 @@ interface CohortData {
   basePrice: number;
   hasEarlyBird?: boolean;
   showEarlyBirdCheckout?: boolean;
+  showEarlyBirdMarqueeCheckout?: boolean;
   showAddonsCheckout?: boolean;
   toolkitId?: string | null;
   hasAccess?: boolean;
@@ -1030,7 +1031,7 @@ export default function CohortLandingPage() {
           <Drawer.Overlay className="fixed inset-0 bg-black/40 z-40" />
           <Drawer.Content className="bg-white flex flex-col rounded-t-[20px] h-[85vh] fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto overflow-hidden">
             {/* Drawer Marquee Banner */}
-            {cohort.hasEarlyBird && (
+            {cohort.showEarlyBirdMarqueeCheckout && (
               <div className="w-full bg-black text-[#ff5e14] py-2 overflow-hidden relative font-extrabold text-[9px] uppercase tracking-widest select-none shrink-0 border-b border-gray-100">
                 <div className="marquee-container flex">
                   <div className="animate-marquee flex whitespace-nowrap gap-8">

@@ -80,6 +80,14 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check if coupon is cohort-only and being used for toolkit
+    if (toolkitId && coupon.cohortOnly === true) {
+      return NextResponse.json(
+        { valid: false, error: "This coupon is only valid for cohort purchases" },
+        { status: 200 }
+      );
+    }
+
     // Check expiration
     if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
       return NextResponse.json(

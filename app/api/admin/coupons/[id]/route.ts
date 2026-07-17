@@ -13,6 +13,7 @@ const updateCouponSchema = z.object({
   maxUses: z.number().int().positive().nullable().optional(),
   maxUsesPerUser: z.number().int().positive().optional(),
   isActive: z.boolean().optional(),
+  cohortOnly: z.boolean().optional(),
   expiresAt: z.string().datetime().nullable().optional(),
 });
 
@@ -105,6 +106,9 @@ export async function PATCH(
       }
       if (validatedData.isActive !== undefined) {
         updateData.isActive = validatedData.isActive;
+      }
+      if (validatedData.cohortOnly !== undefined) {
+        updateData.cohortOnly = validatedData.cohortOnly;
       }
       if (validatedData.expiresAt !== undefined) {
         updateData.expiresAt = validatedData.expiresAt

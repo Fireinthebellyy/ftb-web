@@ -40,6 +40,7 @@ interface Coupon {
   maxUsesPerUser: number;
   currentUses: number;
   isActive: boolean;
+  cohortOnly: boolean;
   expiresAt: Date | string | null;
   createdAt: Date | string;
 }
@@ -51,6 +52,7 @@ const couponFormSchema = z.object({
   maxUses: z.number().int().positive().nullable().optional(),
   maxUsesPerUser: z.number().int().positive().default(1),
   isActive: z.boolean().default(true),
+  cohortOnly: z.boolean().default(false),
   expiresAt: z.string().optional(),
 });
 
@@ -116,6 +118,7 @@ export default function AdminCouponsTable() {
       maxUses: null,
       maxUsesPerUser: 1,
       isActive: true,
+      cohortOnly: false,
       expiresAt: undefined,
     },
   });
@@ -179,6 +182,7 @@ export default function AdminCouponsTable() {
         maxUses: coupon.maxUses ?? null,
         maxUsesPerUser: coupon.maxUsesPerUser,
         isActive: coupon.isActive,
+        cohortOnly: coupon.cohortOnly,
         expiresAt: coupon.expiresAt
           ? new Date(coupon.expiresAt).toISOString().slice(0, 16)
           : undefined,
@@ -197,6 +201,7 @@ export default function AdminCouponsTable() {
       maxUses: null,
       maxUsesPerUser: 1,
       isActive: true,
+      cohortOnly: false,
       expiresAt: undefined,
     });
     setDialogOpen(true);
@@ -428,6 +433,15 @@ export default function AdminCouponsTable() {
                 onCheckedChange={(checked) => form.setValue("isActive", checked)}
               />
               <Label htmlFor="isActive">Active</Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="cohortOnly"
+                checked={form.watch("cohortOnly")}
+                onCheckedChange={(checked) => form.setValue("cohortOnly", checked)}
+              />
+              <Label htmlFor="cohortOnly">Cohort Only</Label>
             </div>
 
             <div className="flex justify-end gap-2">

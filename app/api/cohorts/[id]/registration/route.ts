@@ -8,7 +8,7 @@ import {
   isCohortRegistrationComplete,
 } from "@/lib/cohort-registration";
 import { db } from "@/lib/db";
-import { cohortOrders, cohorts } from "@/lib/schema";
+import { cohortOrders, cohorts, cohortSessions } from "@/lib/schema";
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -65,11 +65,18 @@ export async function GET(
 
     const completed = isCohortRegistrationComplete(order);
 
+    // Fetch sessions for this cohort
+    const sessions = await db.query.cohortSessions.findMany({
+      where: eq(cohortSessions.cohortId, cohort.id),
+      orderBy: (cohortSessions, { asc }) => [asc(cohortSessions.orderIndex)],
+    });
+
     return NextResponse.json({
       cohortId: cohort.id,
       cohortTitle: cohort.title,
       toolkitId: cohort.toolkitId,
       completed,
+      sessions,
       registration: completed
         ? {
             name: order.registrationName,

@@ -133,6 +133,10 @@ export default function CohortLandingPage() {
   const [buyerName, setBuyerName] = useState("");
   const [buyerEmail, setBuyerEmail] = useState("");
   const [buddyEmail, setBuddyEmail] = useState("");
+  const [couponCode, setCouponCode] = useState("");
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponError, setCouponError] = useState("");
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
   const redirectToRegistrationIfNeeded = useCallback(async () => {
     try {
@@ -292,7 +296,7 @@ export default function CohortLandingPage() {
     .reduce((acc, current) => acc + current.price, 0) || 0;
 
   const subtotal = finalBasePrice + finalSessionsTotal + toolkitsTotal;
-  const runningTotal = Math.max(0, subtotal);
+  const runningTotal = Math.max(0, subtotal - couponDiscount);
 
   const baseOriginalPrice = activeTier ? (activeTier.originalPrice || activeTier.price) : 0;
   const sessionsOriginalTotal = cohort.sessions
@@ -328,6 +332,41 @@ export default function CohortLandingPage() {
       return;
     }
 
+    // If coupon code is entered, validate it before checkout
+    if (couponCode.trim()) {
+      setIsApplyingCoupon(true);
+      try {
+        const validateResponse = await axios.post(`/api/cohorts/${cohort.id}/checkout`, {
+          selectedTierId: selectedTierId || null,
+          selectedAddOnIds: selectedAddonIds,
+          selectedToolkitIds: selectedToolkitIds,
+          buyerName,
+          buyerEmail,
+          buyerPhone: "",
+          buddyEmail: buddyEmail || null,
+          couponCode: couponCode.trim(),
+          validateCouponOnly: true,
+        });
+        if (validateResponse.data.discountAmount) {
+          setCouponDiscount(validateResponse.data.discountAmount);
+        } else {
+          toast.error("Invalid or expired coupon");
+          setCouponCode("");
+          setCouponDiscount(0);
+          setIsApplyingCoupon(false);
+          return;
+        }
+      } catch (err: any) {
+        toast.error(err.response?.data?.error || "Invalid coupon");
+        setCouponCode("");
+        setCouponDiscount(0);
+        setIsApplyingCoupon(false);
+        return;
+      } finally {
+        setIsApplyingCoupon(false);
+      }
+    }
+
     setIsProcessingCheckout(true);
     try {
       // 1. Call backend to create order or verify free access
@@ -339,6 +378,7 @@ export default function CohortLandingPage() {
         buyerEmail,
         buyerPhone: "",
         buddyEmail: buddyEmail || null,
+        couponCode: couponCode || null,
       });
 
       if (response.data.free) {
@@ -1196,6 +1236,82 @@ export default function CohortLandingPage() {
 
 
 
+              {/* Coupon Code */}
+              <div className="space-y-3 border-t pt-4">
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Discount Coupon</h4>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={(e) => {
+                        setCouponCode(e.target.value.toUpperCase());
+                        setCouponError("");
+                      }}
+                      placeholder="Enter coupon code"
+                      className="w-full px-3 py-2 pr-10 border rounded-lg text-sm uppercase"
+                    />
+                    {couponCode && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCouponCode("");
+                          setCouponDiscount(0);
+                          setCouponError("");
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!couponCode.trim()) {
+                        setCouponError("Please enter a coupon code");
+                        return;
+                      }
+                      setIsApplyingCoupon(true);
+                      setCouponError("");
+                      try {
+                        const response = await axios.post(`/api/cohorts/${cohort.id}/checkout`, {
+                          selectedTierId: selectedTierId || null,
+                          selectedAddOnIds: selectedAddonIds,
+                          selectedToolkitIds: selectedToolkitIds,
+                          buyerName,
+                          buyerEmail,
+                          buyerPhone: "",
+                          buddyEmail: buddyEmail || null,
+                          couponCode: couponCode.trim(),
+                          validateCouponOnly: true,
+                        });
+                        if (response.data.discountAmount) {
+                          setCouponDiscount(response.data.discountAmount);
+                          toast.success(`Coupon applied! ₹${response.data.discountAmount} discount`);
+                        } else {
+                          setCouponError("Invalid or expired coupon");
+                          setCouponDiscount(0);
+                        }
+                      } catch (err: any) {
+                        setCouponError(err.response?.data?.error || "Invalid coupon");
+                        setCouponDiscount(0);
+                      } finally {
+                        setIsApplyingCoupon(false);
+                      }
+                    }}
+                    disabled={isApplyingCoupon}
+                    className="px-4 py-2 bg-[#ff5e14] text-white rounded-lg text-sm font-medium hover:bg-[#e04f0f] disabled:opacity-50"
+                  >
+                    {isApplyingCoupon ? <Loader2 className="w-4 h-4 animate-spin" /> : "Apply"}
+                  </button>
+                </div>
+                {couponError && <p className="text-xs text-red-500">{couponError}</p>}
+                {couponDiscount > 0 && (
+                  <p className="text-xs text-green-600 font-medium">Coupon applied: ₹{couponDiscount} discount</p>
+                )}
+              </div>
+
               {/* Buyer Contact info */}
               <div className="space-y-3 border-t pt-4">
                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Contact Details</h4>
@@ -1244,7 +1360,15 @@ export default function CohortLandingPage() {
                 <span className="text-[9px] text-gray-400 font-bold uppercase">Payable Price</span>
                 <div className="flex items-baseline gap-2 flex-wrap">
                   <span className="font-black text-gray-900 text-lg">₹{runningTotal}</span>
-                  {cohort.showEarlyBirdCheckout && totalOriginalPrice > runningTotal && (
+                  {couponDiscount > 0 && (
+                    <>
+                      <span className="line-through text-xs text-gray-400 font-medium">₹{subtotal}</span>
+                      <span className="bg-green-50 text-green-600 border border-green-200 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+                        Coupon Applied
+                      </span>
+                    </>
+                  )}
+                  {cohort.showEarlyBirdCheckout && totalOriginalPrice > runningTotal && couponDiscount === 0 && (
                     <>
                       <span className="line-through text-xs text-gray-400 font-medium">₹{totalOriginalPrice}</span>
                       <span className="bg-blue-50 text-blue-600 border border-blue-200 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
@@ -1252,7 +1376,7 @@ export default function CohortLandingPage() {
                       </span>
                     </>
                   )}
-                  {!cohort.showEarlyBirdCheckout && isDuoActive && (selectedTierId || selectedAddonIds.length > 0) && (
+                  {!cohort.showEarlyBirdCheckout && isDuoActive && (selectedTierId || selectedAddonIds.length > 0) && couponDiscount === 0 && (
                     <span className="line-through text-xs text-gray-400 font-medium">₹{
                       selectedTierId ? basePrice * 2 + toolkitsTotal : sessionsTotal * 2 + toolkitsTotal
                     }</span>

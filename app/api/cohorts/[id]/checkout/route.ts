@@ -45,6 +45,7 @@ export async function POST(
       buyerPhone,
       buddyEmail,
       couponCode,
+      validateCouponOnly = false,
     } = body;
 
     if (!buyerName || !buyerEmail) {
@@ -54,18 +55,21 @@ export async function POST(
       );
     }
 
-    if (!selectedTierId && selectedAddOnIds.length === 0) {
-      return NextResponse.json(
-        { error: "Please select either the bundle tier or at least one individual session to apply." },
-        { status: 400 }
-      );
-    }
+    // Skip validation for coupon-only validation
+    if (!validateCouponOnly) {
+      if (!selectedTierId && selectedAddOnIds.length === 0) {
+        return NextResponse.json(
+          { error: "Please select either the bundle tier or at least one individual session to apply." },
+          { status: 400 }
+        );
+      }
 
-    if (selectedTierId && selectedAddOnIds.length > 0) {
-      return NextResponse.json(
-        { error: "Cannot select both a bundle tier and individual sessions simultaneously" },
-        { status: 400 }
-      );
+      if (selectedTierId && selectedAddOnIds.length > 0) {
+        return NextResponse.json(
+          { error: "Cannot select both a bundle tier and individual sessions simultaneously" },
+          { status: 400 }
+        );
+      }
     }
 
     // 1. Verify Cohort
@@ -123,7 +127,7 @@ export async function POST(
             inArray(toolkits.id, selectedToolkitIds)
           )
         );
-      
+
       dbToolkits.forEach((tk) => {
         toolkitsTotal += tk.price;
       });
@@ -143,7 +147,7 @@ export async function POST(
 
       if (couponResult && couponResult.length > 0) {
         const coupon = couponResult[0];
-        
+
         let isValid = coupon.isActive;
         if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
           isValid = false;
@@ -151,7 +155,7 @@ export async function POST(
         if (typeof coupon.maxUses === "number" && coupon.currentUses >= coupon.maxUses) {
           isValid = false;
         }
-        
+
         if (isValid) {
           const userCouponUses = await db
             .select({ count: sql<number>`count(*)` })
@@ -169,10 +173,10 @@ export async function POST(
             isValid = false;
           }
         }
-        
+
         if (isValid) {
-          const subtotalForDiscount = (isDuoActive ? getDuoPricing(tierPrice).final : tierPrice) + 
-                                      (isDuoActive ? getDuoPricing(addonsTotal).final : addonsTotal) + 
+          const subtotalForDiscount = (isDuoActive ? getDuoPricing(tierPrice).final : tierPrice) +
+                                      (isDuoActive ? getDuoPricing(addonsTotal).final : addonsTotal) +
                                       toolkitsTotal;
           if (coupon.discountType === "percentage") {
             discountAmount = Math.round((subtotalForDiscount * coupon.discountAmount) / 100);
@@ -180,7 +184,15 @@ export async function POST(
             discountAmount = coupon.discountAmount;
           }
           couponId = coupon.id;
+        } else {
+          // Coupon invalid, reset discount
+          discountAmount = 0;
+          couponId = null;
         }
+      } else {
+        // Coupon not found
+        discountAmount = 0;
+        couponId = null;
       }
     }
 
@@ -192,6 +204,15 @@ export async function POST(
     const subtotal = finalTierPrice + finalAddonsTotal + toolkitsTotal;
     const finalPriceRupees = Math.max(0, subtotal - discountAmount);
     const finalPricePaisa = finalPriceRupees * 100; // Razorpay needs amount in paisa
+
+    // If validateCouponOnly is true, just return the discount amount
+    if (validateCouponOnly) {
+      return NextResponse.json({
+        success: true,
+        discountAmount,
+        finalPrice: finalPriceRupees,
+      });
+    }
 
     // 6. Direct free cohort access if price is 0
     if (finalPriceRupees <= 0) {

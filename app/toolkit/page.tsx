@@ -204,7 +204,7 @@ export default function ToolkitPage() {
                         </div>
                       )}
                       {cohort.isBestSeller && (
-                        <div className="bg-[#ff5e14] text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
+                        <div className="bg-black text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
                           <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
                           Best Seller
                         </div>

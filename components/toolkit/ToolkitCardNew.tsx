@@ -98,8 +98,8 @@ export default function ToolkitCardNew({
                   </span>
                 )}
                 {toolkit.isBestSeller && (
-                  <span className="flex w-fit items-center rounded-full bg-[#ffb000] px-2.5 py-1 text-[10px] font-semibold text-yellow-950 shadow-sm sm:text-[11px]">
-                    <Star className="mr-1 h-3 w-3 fill-yellow-950" /> Best Seller
+                  <span className="flex w-fit items-center rounded-full bg-black px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm sm:text-[11px]">
+                    <Star className="mr-1 h-3 w-3 fill-white" /> Best Seller
                   </span>
                 )}
                 {toolkit.isLimitedSeats && (
@@ -165,8 +165,8 @@ export default function ToolkitCardNew({
                 </span>
               )}
               {toolkit.isBestSeller && (
-                <span className="flex w-fit items-center rounded-full bg-[#ffb000] px-2.5 py-1 text-[10px] font-semibold text-yellow-950 shadow-sm sm:text-[11px]">
-                  <Star className="mr-1 h-3 w-3 fill-yellow-950" /> Best Seller
+                <span className="flex w-fit items-center rounded-full bg-black px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm sm:text-[11px]">
+                  <Star className="mr-1 h-3 w-3 fill-white" /> Best Seller
                 </span>
               )}
               {toolkit.isLimitedSeats && (
@@ -275,8 +275,8 @@ export default function ToolkitCardNew({
                 </span>
               )}
               {toolkit.isBestSeller && !toolkit.is_trending && (
-                <span className="flex w-fit items-center rounded-bl-lg bg-[#ffb000] px-2.5 py-1 text-[10px] font-semibold text-yellow-950 shadow-sm sm:text-[11px]">
-                  <Star className="mr-1 h-3 w-3 fill-yellow-950" /> Best Seller
+                <span className="flex w-fit items-center rounded-bl-lg bg-black px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm sm:text-[11px]">
+                  <Star className="mr-1 h-3 w-3 fill-white" /> Best Seller
                 </span>
               )}
               {toolkit.isLimitedSeats && !toolkit.is_trending && !toolkit.isBestSeller && (

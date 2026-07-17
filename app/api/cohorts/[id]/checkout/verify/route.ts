@@ -74,8 +74,6 @@ export async function POST(
 
     const wasAlreadyPaid = existingOrder.status === "paid";
 
-    // Update order status to paid
-    await db
     // Update order status to paid — only if currently pending (prevents replay)
     const updatedOrders = await db
       .update(cohortOrders)

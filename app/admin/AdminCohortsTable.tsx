@@ -317,8 +317,8 @@ export default function AdminCohortsTable() {
     }
   };
 
-  // Export to CSV
-  const exportToCSV = () => {
+  // Export to CSV for Orders Log
+  const exportOrdersCSV = () => {
     if (ordersList.length === 0) {
       toast.error("No orders to export");
       return;
@@ -367,6 +367,56 @@ export default function AdminCohortsTable() {
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", `cohort_orders_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Export to CSV for Registration Details
+  const exportRegistrationsCSV = () => {
+    const registrations = ordersList.filter(order => order.registrationName);
+    if (registrations.length === 0) {
+      toast.error("No registration details to export");
+      return;
+    }
+
+    const headers = [
+      "Name",
+      "College",
+      "Course",
+      "Year",
+      "Expectations",
+      "Cohort",
+      "Email",
+      "Date",
+    ];
+
+    const rows = registrations.map((order) => [
+      order.registrationName || order.buyerName,
+      order.registrationCollege || "",
+      order.registrationCourse || "",
+      order.registrationYear || "",
+      order.registrationExpectations || "",
+      order.cohortTitle || "Unknown",
+      order.buyerEmail,
+      order.registrationCompletedAt
+        ? new Date(order.registrationCompletedAt).toLocaleDateString()
+        : new Date(order.createdAt).toLocaleDateString(),
+    ]);
+
+    const sanitizeCSV = (val: string): string => {
+      if (/^[=+\-@]/.test(val)) return `\t${val}`;
+      return val;
+    };
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((e) => e.map((val) => `"${sanitizeCSV(String(val)).replace(/"/g, '""')}"`).join(","))].join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `cohort_registrations_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -507,7 +557,7 @@ export default function AdminCohortsTable() {
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Orders Log</h2>
             <Button
-              onClick={exportToCSV}
+              onClick={exportOrdersCSV}
               variant="outline"
               className="flex gap-1.5 items-center border-gray-300 hover:bg-gray-50 text-gray-700"
             >
@@ -606,7 +656,7 @@ export default function AdminCohortsTable() {
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Registration Details</h2>
             <Button
-              onClick={exportToCSV}
+              onClick={exportRegistrationsCSV}
               variant="outline"
               className="flex gap-1.5 items-center border-gray-300 hover:bg-gray-50 text-gray-700"
             >
@@ -641,7 +691,7 @@ export default function AdminCohortsTable() {
                       <td className="p-4 text-gray-600">{order.registrationCollege || "-"}</td>
                       <td className="p-4 text-gray-600">{order.registrationCourse || "-"}</td>
                       <td className="p-4 text-gray-600">{order.registrationYear || "-"}</td>
-                      <td className="p-4 text-gray-600 max-w-xs truncate" title={order.registrationExpectations || ""}>
+                      <td className="p-4 text-gray-600">
                         {order.registrationExpectations || "-"}
                       </td>
                       <td className="p-4 text-gray-900">{order.cohortTitle || "Unknown"}</td>

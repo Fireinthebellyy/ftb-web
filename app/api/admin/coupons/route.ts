@@ -3,17 +3,39 @@ import { logAdminActivity } from "@/lib/admin-activity";
 import { db } from "@/lib/db";
 import { coupons } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 const createCouponSchema = z.object({
   code: z.string().min(1).max(50),
   discountAmount: z.number().int().positive(),
-  discountType: z.enum(["fixed", "percentage"]).default("fixed"), // ✅ ADDED
+  discountType: z.enum(["fixed", "percentage"]).default("fixed"),
   maxUses: z.number().int().positive().nullable().optional(),
   maxUsesPerUser: z.number().int().positive().default(1),
   isActive: z.boolean().default(true),
   cohortOnly: z.boolean().default(false),
+  expiresAt: z.string().datetime().nullable().optional(),
+});
+
+const bulkCreateCouponSchema = z.object({
+  codes: z.array(z.string().min(1).max(50)).min(1),
+  discountAmount: z.number().int().positive(),
+  discountType: z.enum(["fixed", "percentage"]).default("fixed"),
+  maxUses: z.number().int().positive().nullable().optional(),
+  maxUsesPerUser: z.number().int().positive().default(1),
+  isActive: z.boolean().default(true),
+  cohortOnly: z.boolean().default(false),
+  expiresAt: z.string().datetime().nullable().optional(),
+});
+
+const bulkUpdateCouponSchema = z.object({
+  couponIds: z.array(z.string()).min(1),
+  discountAmount: z.number().int().positive().optional(),
+  discountType: z.enum(["fixed", "percentage"]).optional(),
+  maxUses: z.number().int().positive().nullable().optional(),
+  maxUsesPerUser: z.number().int().positive().optional(),
+  isActive: z.boolean().optional(),
+  cohortOnly: z.boolean().optional(),
   expiresAt: z.string().datetime().nullable().optional(),
 });
 
@@ -83,6 +105,101 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
+
+    // Check if this is a bulk update request
+    if (body.couponIds && Array.isArray(body.couponIds)) {
+      const validatedData = bulkUpdateCouponSchema.parse(body);
+
+      if (Object.keys(validatedData).filter(k => k !== 'couponIds').length === 0) {
+        activityStatus = 400;
+        activityError = "Empty update payload";
+        return NextResponse.json(
+          { error: "At least one field to update must be provided" },
+          { status: 400 }
+        );
+      }
+
+      const updateData: any = {};
+      if (validatedData.discountAmount !== undefined) {
+        updateData.discountAmount = validatedData.discountAmount;
+      }
+      if (validatedData.discountType !== undefined) {
+        updateData.discountType = validatedData.discountType;
+      }
+      if (validatedData.maxUses !== undefined) {
+        updateData.maxUses = validatedData.maxUses;
+      }
+      if (validatedData.maxUsesPerUser !== undefined) {
+        updateData.maxUsesPerUser = validatedData.maxUsesPerUser;
+      }
+      if (validatedData.isActive !== undefined) {
+        updateData.isActive = validatedData.isActive;
+      }
+      if (validatedData.cohortOnly !== undefined) {
+        updateData.cohortOnly = validatedData.cohortOnly;
+      }
+      if (validatedData.expiresAt !== undefined) {
+        updateData.expiresAt = validatedData.expiresAt
+          ? new Date(validatedData.expiresAt)
+          : null;
+      }
+
+      const updatedCoupons = await db
+        .update(coupons)
+        .set(updateData)
+        .where(inArray(coupons.id, validatedData.couponIds))
+        .returning();
+
+      activityAfterState = updatedCoupons;
+      activityStatus = 200;
+      return NextResponse.json({ coupons: updatedCoupons }, { status: 200 });
+    }
+
+    // Check if this is a bulk creation request
+    if (body.codes && Array.isArray(body.codes)) {
+      const validatedData = bulkCreateCouponSchema.parse(body);
+
+      // Check for existing codes
+      const existingCodes = await db
+        .select({ code: coupons.code })
+        .from(coupons)
+        .where(eq(coupons.code, validatedData.codes[0].toUpperCase().trim()));
+
+      if (existingCodes.length > 0) {
+        activityStatus = 400;
+        activityError = "One or more coupon codes already exist";
+        return NextResponse.json(
+          { error: "One or more coupon codes already exist" },
+          { status: 400 }
+        );
+      }
+
+      // Create multiple coupons
+      const newCoupons = await db
+        .insert(coupons)
+        .values(
+          validatedData.codes.map((code) => ({
+            code: code.toUpperCase().trim(),
+            discountAmount: validatedData.discountAmount,
+            discountType: validatedData.discountType,
+            maxUses: validatedData.maxUses ?? null,
+            maxUsesPerUser: validatedData.maxUsesPerUser,
+            isActive: validatedData.isActive,
+            cohortOnly: validatedData.cohortOnly,
+            expiresAt: validatedData.expiresAt
+              ? new Date(validatedData.expiresAt)
+              : null,
+            currentUses: 0,
+          }))
+        )
+        .returning();
+
+      activityAfterState = newCoupons;
+      activityStatus = 201;
+      return NextResponse.json({ coupons: newCoupons }, { status: 201 });
+    }
+
+    // Single coupon creation
     const validatedData = createCouponSchema.parse(body);
 
     const existingCoupon = await db
@@ -105,7 +222,7 @@ export async function POST(request: Request) {
       .values({
         code: validatedData.code.toUpperCase().trim(),
         discountAmount: validatedData.discountAmount,
-        discountType: validatedData.discountType, // ✅ ADDED
+        discountType: validatedData.discountType,
         maxUses: validatedData.maxUses ?? null,
         maxUsesPerUser: validatedData.maxUsesPerUser,
         isActive: validatedData.isActive,

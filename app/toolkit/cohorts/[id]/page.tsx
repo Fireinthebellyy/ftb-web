@@ -1375,7 +1375,7 @@ export default function CohortLandingPage() {
                   <span className="font-black text-gray-900 text-lg">₹{runningTotal}</span>
                   {couponDiscount > 0 && (
                     <>
-                      <span className="line-through text-xs text-gray-400 font-medium">₹{subtotal}</span>
+                      <span className="line-through text-xs text-gray-400 font-medium">₹{totalOriginalPrice}</span>
                       <span className="bg-green-50 text-green-600 border border-green-200 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
                         Coupon Applied
                       </span>

@@ -124,6 +124,7 @@ interface Order {
   status: string;
   createdAt: string;
   cohortTitle: string | null;
+  cohortId: string | null;
   tierName: string | null;
   isVerified: boolean;
   registrationName: string | null;
@@ -132,6 +133,9 @@ interface Order {
   registrationYear: string | null;
   registrationExpectations: string | null;
   registrationCompletedAt: string | null;
+  selectedSessionIds: string[] | null;
+  couponId: string | null;
+  couponCode: string | null;
 }
 
 export default function AdminCohortsTable() {
@@ -159,12 +163,20 @@ export default function AdminCohortsTable() {
   const [sessionManagerOpen, setSessionManagerOpen] = useState(false);
   const [managingCohort, setManagingCohort] = useState<Cohort | null>(null);
 
+  // Sessions data for registration details
+  const [sessionsData, setSessionsData] = useState<Record<string, any[]>>({});
+
   // Load Initial Data
   useEffect(() => {
     fetchCohorts();
-    fetchOrders();
     fetchToolkits();
   }, []);
+
+  useEffect(() => {
+    if (cohortsList.length > 0) {
+      fetchOrders();
+    }
+  }, [cohortsList]);
 
   const fetchToolkits = async () => {
     try {
@@ -192,6 +204,21 @@ export default function AdminCohortsTable() {
     try {
       const response = await axios.get("/api/admin/cohorts/orders");
       setOrdersList(response.data);
+
+      // Fetch sessions for each cohort
+      const sessionsMap: Record<string, any[]> = {};
+
+      for (const cohort of cohortsList) {
+        try {
+          const sessionsResponse = await axios.get(`/api/admin/cohorts/${cohort.id}/sessions`);
+          sessionsMap[cohort.id] = sessionsResponse.data;
+        } catch (err) {
+          console.error(`Failed to load sessions for cohort ${cohort.id}:`, err);
+          sessionsMap[cohort.id] = [];
+        }
+      }
+
+      setSessionsData(sessionsMap);
     } catch (err) {
       console.error(err);
       toast.error("Failed to load orders log");
@@ -334,6 +361,7 @@ export default function AdminCohortsTable() {
       "Cohort Title",
       "Selected Tier",
       "Amount Paid (INR)",
+      "Coupon Code",
       "Razorpay Order ID",
       "Razorpay Payment ID",
       "Status",
@@ -349,6 +377,7 @@ export default function AdminCohortsTable() {
       order.cohortTitle || "",
       order.tierName || "",
       (order.amountPaid / 100).toFixed(2),
+      order.couponCode || "",
       order.razorpayOrderId,
       order.razorpayPaymentId || "",
       order.status,
@@ -387,23 +416,34 @@ export default function AdminCohortsTable() {
       "Course",
       "Year",
       "Expectations",
+      "Selected Sessions",
       "Cohort",
       "Email",
       "Date",
     ];
 
-    const rows = registrations.map((order) => [
-      order.registrationName || order.buyerName,
-      order.registrationCollege || "",
-      order.registrationCourse || "",
-      order.registrationYear || "",
-      order.registrationExpectations || "",
-      order.cohortTitle || "Unknown",
-      order.buyerEmail,
-      order.registrationCompletedAt
-        ? new Date(order.registrationCompletedAt).toLocaleDateString()
-        : new Date(order.createdAt).toLocaleDateString(),
-    ]);
+    const rows = registrations.map((order) => {
+      const sessionTitles = order.selectedSessionIds && order.selectedSessionIds.length > 0
+        ? order.selectedSessionIds.map((sessionId) => {
+            const session = order.cohortId ? sessionsData[order.cohortId]?.find((s: any) => s.id === sessionId) : null;
+            return session ? session.title : "";
+          }).filter(Boolean).join(", ")
+        : "";
+
+      return [
+        order.registrationName || order.buyerName,
+        order.registrationCollege || "",
+        order.registrationCourse || "",
+        order.registrationYear || "",
+        order.registrationExpectations || "",
+        sessionTitles,
+        order.cohortTitle || "Unknown",
+        order.buyerEmail,
+        order.registrationCompletedAt
+          ? new Date(order.registrationCompletedAt).toLocaleDateString()
+          : new Date(order.createdAt).toLocaleDateString(),
+      ];
+    });
 
     const sanitizeCSV = (val: string): string => {
       if (/^[=+\-@]/.test(val)) return `\t${val}`;
@@ -580,6 +620,7 @@ export default function AdminCohortsTable() {
                     <th className="p-4 font-semibold text-gray-700">Buddy (Referral)</th>
                     <th className="p-4 font-semibold text-gray-700">Cohort & Tier</th>
                     <th className="p-4 font-semibold text-gray-700">Paid</th>
+                    <th className="p-4 font-semibold text-gray-700">Coupon</th>
                     <th className="p-4 font-semibold text-gray-700">Razorpay Info</th>
                     <th className="p-4 font-semibold text-gray-700">Status</th>
                     <th className="p-4 font-semibold text-gray-700">Verified</th>
@@ -612,6 +653,18 @@ export default function AdminCohortsTable() {
                       </td>
                       <td className="p-4 font-semibold text-gray-900">
                         ₹{(order.amountPaid / 100).toFixed(2)}
+                      </td>
+                      <td className="p-4 text-gray-600">
+                        {order.couponId ? (
+                          <div>
+                            <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-medium">Yes</span>
+                            {order.couponCode && (
+                              <span className="ml-2 text-xs text-gray-500">({order.couponCode})</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="inline-block bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded">No</span>
+                        )}
                       </td>
                       <td className="p-4 text-xs text-gray-500">
                         <div>Order: {order.razorpayOrderId}</div>
@@ -680,6 +733,7 @@ export default function AdminCohortsTable() {
                     <th className="p-4 font-semibold text-gray-700">Course</th>
                     <th className="p-4 font-semibold text-gray-700">Year</th>
                     <th className="p-4 font-semibold text-gray-700">Expectations</th>
+                    <th className="p-4 font-semibold text-gray-700">Selected Sessions</th>
                     <th className="p-4 font-semibold text-gray-700">Cohort</th>
                     <th className="p-4 font-semibold text-gray-700">Email</th>
                     <th className="p-4 font-semibold text-gray-700">Date</th>
@@ -695,6 +749,20 @@ export default function AdminCohortsTable() {
                       <td className="p-4 text-gray-600">
                         {order.registrationExpectations || "-"}
                       </td>
+                      <td className="p-4 text-gray-600">
+                        {order.selectedSessionIds && order.selectedSessionIds.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {order.selectedSessionIds.map((sessionId) => {
+                              const session = order.cohortId ? sessionsData[order.cohortId]?.find((s: any) => s.id === sessionId) : null;
+                              return session ? (
+                                <span key={sessionId} className="inline-block bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded">
+                                  {session.title}
+                                </span>
+                              ) : null;
+                            })}
+                          </div>
+                        ) : "-"}
+                      </td>
                       <td className="p-4 text-gray-900">{order.cohortTitle || "Unknown"}</td>
                       <td className="p-4 text-gray-500 text-xs">{order.buyerEmail}</td>
                       <td className="p-4 text-xs text-gray-500 whitespace-nowrap">
@@ -706,7 +774,7 @@ export default function AdminCohortsTable() {
                   ))}
                   {ordersList.filter(order => order.registrationName).length === 0 && (
                     <tr>
-                      <td colSpan={8} className="p-12 text-center text-gray-500">
+                      <td colSpan={9} className="p-12 text-center text-gray-500">
                         No registration forms completed yet.
                       </td>
                     </tr>

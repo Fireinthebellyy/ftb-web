@@ -1644,13 +1644,18 @@ export default function CohortSessionManager({
                   <div key={query.id} className="border rounded-lg p-4 space-y-3">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
                           <p className="text-sm font-medium text-gray-900">
                             {query.userName || "Unknown User"}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             ({query.userEmail})
                           </p>
+                          {query.answer && (
+                            <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
+                              Resolved
+                            </span>
+                          )}
                         </div>
                         <p className="text-sm text-gray-700">{query.question}</p>
                         <p className="text-xs text-muted-foreground mt-1">

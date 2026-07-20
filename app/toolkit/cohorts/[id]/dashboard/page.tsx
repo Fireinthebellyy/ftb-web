@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Menu, Lock, Unlock, MessageCircle, Send, Loader2, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft, Menu, Lock, Unlock, MessageCircle, Send, Edit, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   useCohortDetail,
@@ -308,7 +308,6 @@ function CohortSessionMain({
       });
 
       if (response.ok) {
-        toast.success("We will get back to you personally");
         setNewQuestion("");
         refetchQueries();
       } else {
@@ -770,9 +769,8 @@ function CohortSessionMain({
                   </div>
                 ) : (
                   <div className="bg-gray-50 p-4">
-                    <div className="flex items-center gap-2 text-xs text-gray-500 italic">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Waiting for response from Fire in the Belly team...
+                    <div className="text-xs text-gray-500 italic">
+                      We have received your response we will get back to you soon.
                     </div>
                   </div>
                 )}

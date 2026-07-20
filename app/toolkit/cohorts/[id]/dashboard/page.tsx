@@ -1,3 +1,5 @@
+
+/* eslint-disable max-lines */
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -10,7 +12,15 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { ArrowLeft, Menu, Lock, Unlock, MessageCircle, Send } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ArrowLeft, Menu, Lock, Unlock, MessageCircle, Send, Loader2, Edit, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   useCohortDetail,
@@ -26,6 +36,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ImageCarousel } from "@/components/ui/image-carousel";
+import { useQuery } from "@tanstack/react-query";
 
 export default function CohortDashboardPage() {
   const params = useParams();
@@ -111,8 +122,8 @@ export default function CohortDashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 z-10 border-b bg-white/95 backdrop-blur supports-backdrop-filter:bg-white/60">
-        <div className="flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex h-16 items-center px-4 overflow-hidden">
+          <div className="flex items-center gap-1 sm:gap-3 min-w-0">
             <Button
               variant="ghost"
               size="icon"
@@ -126,13 +137,13 @@ export default function CohortDashboardPage() {
               <p className="truncate text-xs text-gray-500">
                 {cohortData.cohort.title}
               </p>
-              <h1 className="truncate text-sm font-semibold text-gray-900 sm:text-base">
+              <h1 className="truncate text-sm font-semibold text-gray-900 sm:text-base sm:break-words">
                 {sessionData?.session.title || "Select a session"}
               </h1>
             </div>
             <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden">
+                <Button variant="ghost" size="icon" className="lg:hidden shrink-0">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
@@ -234,7 +245,7 @@ function CohortSessionSidebar({
               )}
               <div className="flex-1">
                 <h3 className={cn(
-                  "text-base font-semibold leading-tight",
+                  "text-sm md:text-base font-semibold leading-tight",
                   currentSessionId === session.id ? "text-orange-700" : "text-gray-800"
                 )}>
                   {session.title}
@@ -266,6 +277,21 @@ function CohortSessionMain({
 }) {
   const [newQuestion, setNewQuestion] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingQueryId, setEditingQueryId] = useState<string | null>(null);
+  const [editQuestionText, setEditQuestionText] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [queryToDelete, setQueryToDelete] = useState<string | null>(null);
+
+  // Fetch user's queries for this session
+  const { data: userQueries, isLoading: _isLoadingQueries, refetch: refetchQueries } = useQuery({
+    queryKey: ["session-queries", sessionId],
+    queryFn: async () => {
+      const response = await fetch(`/api/cohorts/${cohortId}/sessions/${sessionId}/queries`);
+      if (!response.ok) throw new Error("Failed to fetch queries");
+      return response.json();
+    },
+    enabled: !!sessionId,
+  });
 
   const handleSubmitQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -284,6 +310,7 @@ function CohortSessionMain({
       if (response.ok) {
         toast.success("We will get back to you personally");
         setNewQuestion("");
+        refetchQueries();
       } else {
         console.error("Failed to submit question");
         toast.error("Failed to submit question");
@@ -293,6 +320,56 @@ function CohortSessionMain({
       toast.error("Failed to submit question");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleEditQuestion = async (queryId: string) => {
+    if (!editQuestionText.trim()) return;
+
+    try {
+      const response = await fetch(`/api/cohorts/${cohortId}/sessions/${sessionId}/queries?queryId=${queryId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ question: editQuestionText }),
+      });
+
+      if (response.ok) {
+        toast.success("Question updated successfully");
+        setEditingQueryId(null);
+        setEditQuestionText("");
+        refetchQueries();
+      } else {
+        console.error("Failed to edit question");
+        toast.error("Failed to edit question");
+      }
+    } catch (error) {
+      console.error("Error editing question:", error);
+      toast.error("Failed to edit question");
+    }
+  };
+
+  const handleDeleteQuestion = async () => {
+    if (!queryToDelete) return;
+
+    try {
+      const response = await fetch(`/api/cohorts/${cohortId}/sessions/${sessionId}/queries?queryId=${queryToDelete}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        toast.success("Question deleted successfully");
+        setDeleteDialogOpen(false);
+        setQueryToDelete(null);
+        refetchQueries();
+      } else {
+        console.error("Failed to delete question");
+        toast.error("Failed to delete question");
+      }
+    } catch (error) {
+      console.error("Error deleting question:", error);
+      toast.error("Failed to delete question");
     }
   };
 
@@ -584,26 +661,149 @@ function CohortSessionMain({
       <div className="rounded-lg border border-gray-200 bg-white p-6">
         <div className="mb-4 flex items-center gap-2">
           <MessageCircle className="h-5 w-5 text-orange-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Session Related Queries</h3>
+          <h3 className="text-base font-semibold text-gray-900 sm:text-lg">Session Related Queries</h3>
         </div>
 
         <form onSubmit={handleSubmitQuestion} className="mb-6">
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <Textarea
               placeholder="Ask a question about this session..."
               value={newQuestion}
               onChange={(e) => setNewQuestion(e.target.value)}
               disabled={isSubmitting}
               rows={3}
-              className="resize-none"
+              className="resize-none sm:flex-1"
             />
-            <Button type="submit" disabled={isSubmitting || !newQuestion.trim()} className="self-end">
+            <Button type="submit" disabled={isSubmitting || !newQuestion.trim()} className="sm:self-end" size="sm">
               <Send className="h-4 w-4 mr-2" />
               {isSubmitting ? "Submitting..." : "Submit"}
             </Button>
           </div>
         </form>
+
+        {/* Display user's questions and answers */}
+        {userQueries && userQueries.length > 0 && (
+          <div className="space-y-4">
+            {userQueries.map((query: any) => (
+              <div key={query.id} className="rounded-xl border border-gray-200 overflow-hidden">
+                {/* Question Section */}
+                <div className="bg-gradient-to-r from-orange-50 to-white p-4 border-b border-gray-200">
+                  <div className="flex items-start gap-2 sm:gap-3">
+                    <div className="hidden sm:flex flex-shrink-0 w-8 h-8 rounded-full bg-orange-100 items-center justify-center">
+                      <span className="text-orange-600 font-semibold text-sm">Q</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      {editingQueryId === query.id ? (
+                        <div className="space-y-2">
+                          <Textarea
+                            value={editQuestionText}
+                            onChange={(e) => setEditQuestionText(e.target.value)}
+                            rows={2}
+                            className="resize-none text-sm"
+                          />
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={() => handleEditQuestion(query.id)}>
+                              Save
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => {
+                              setEditingQueryId(null);
+                              setEditQuestionText("");
+                            }}>
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-xs sm:text-sm font-semibold text-gray-900 break-words">{query.question}</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {new Date(query.createdAt).toLocaleDateString()} at {new Date(query.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                    {editingQueryId !== query.id && (
+                      <div className="flex gap-0.5 flex-shrink-0">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditingQueryId(query.id);
+                            setEditQuestionText(query.question);
+                          }}
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        >
+                          <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setQueryToDelete(query.id);
+                            setDeleteDialogOpen(true);
+                          }}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Answer Section */}
+                {query.answer ? (
+                  <div className="bg-green-50 p-4">
+                    <div className="flex items-start gap-2 sm:gap-3">
+                      <div className="hidden sm:flex flex-shrink-0 w-8 h-8 rounded-full bg-green-100 items-center justify-center">
+                        <span className="text-green-600 font-semibold text-sm">A</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <span className="text-xs font-semibold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
+                            Fire in the Belly
+                          </span>
+                        </div>
+                        <p className="text-xs sm:text-sm font-semibold text-gray-700 leading-relaxed break-words">{query.answer}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 p-4">
+                    <div className="flex items-center gap-2 text-xs text-gray-500 italic">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Waiting for response from Fire in the Belly team...
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Question</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this question? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setDeleteDialogOpen(false);
+              setQueryToDelete(null);
+            }}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteQuestion}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Session Navigation */}
       <div className="flex items-center justify-between gap-4">

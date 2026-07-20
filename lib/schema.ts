@@ -928,7 +928,7 @@ export const cohortSessionResources = pgTable("cohort_session_resources", {
 export const cohortSessionQueries = pgTable("cohort_session_queries", {
   id: uuid("id").primaryKey().defaultRandom(),
   sessionId: uuid("session_id").notNull().references(() => cohortSessions.id, { onDelete: "cascade" }),
-  userId: text("user_id").notNull(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
   question: text("question").notNull(),
   answer: text("answer"),
   createdAt: timestamp("created_at").defaultNow(),

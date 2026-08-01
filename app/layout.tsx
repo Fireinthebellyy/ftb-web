@@ -17,6 +17,7 @@ import InterestPromptGate from "@/components/InterestPromptGate";
 import { TrackerProvider } from "@/components/providers/TrackerProvider";
 import { CSPostHogProvider } from "./providers/posthog-provider";
 import ThemeProvider from "@/components/ThemeProvider";
+import GlobalPopup from "@/components/GlobalPopup";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   weight: ["400", "700"], // or ["400", "700"] if multiple
@@ -69,6 +70,7 @@ export default function RootLayout({
                     <ConditionalWidgets />
                     <PostOnboardingSurveyWidget />
                     <InterestPromptGate />
+                    <GlobalPopup />
                   </TrackerProvider>
                 </CSPostHogProvider>
               </ProgressProvider>

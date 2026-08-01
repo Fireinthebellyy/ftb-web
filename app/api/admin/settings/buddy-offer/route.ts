@@ -10,21 +10,14 @@ const buddyOfferSchema = z.object({
   isBuddyOfferEnabled: z.boolean(),
 });
 
-export async function GET(request: Request) {
-  let activityStatus = 500;
-  let activityError: unknown = null;
-  let activityAdminUserId: string | null = null;
-
+export async function GET() {
   try {
     const currentUser = await getCurrentUser();
-    activityAdminUserId = currentUser?.currentUser?.id ?? null;
     if (
       !currentUser ||
       !currentUser.currentUser?.id ||
       currentUser.currentUser.role !== "admin"
     ) {
-      activityStatus = 401;
-      activityError = "Unauthorized";
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -34,14 +27,11 @@ export async function GET(request: Request) {
       .where(eq(siteSettings.id, "global"))
       .limit(1);
 
-    activityStatus = 200;
     return NextResponse.json({
       isBuddyOfferEnabled: settings[0]?.isBuddyOfferEnabled ?? false,
     });
   } catch (error) {
-    activityError = error;
     console.error("Error fetching site settings:", error);
-    activityStatus = 500;
     return NextResponse.json(
       { error: "Failed to fetch site settings" },
       { status: 500 }

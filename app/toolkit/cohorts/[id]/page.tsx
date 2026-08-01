@@ -1170,7 +1170,7 @@ export default function CohortLandingPage() {
                   <div className="relative group overflow-hidden p-[1.5px] rounded-xl bg-gradient-to-r from-orange-300 via-[#ff5e14] to-yellow-400 animate-gradient hover:shadow-[0_0_15px_rgba(255,94,20,0.25)] transition-all duration-300">
                     <div className="relative bg-white/95 backdrop-blur-sm p-3 rounded-[10px] space-y-2 z-10 h-full">
                       <p className="text-[11px] text-gray-600 font-medium leading-relaxed">
-                        Learning is better together! Enter your friend's email below so they can get access that too at 20% off
+                        Learning is better together! Enter your friend&apos;s email below so they can get access that too at 20% off
                       </p>
                       <div className="relative">
                         <input

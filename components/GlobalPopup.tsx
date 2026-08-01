@@ -24,10 +24,12 @@ type PopupData = {
   isActive: boolean;
 };
 
-function PopupDialog({ popup }: { popup: PopupData }) {
+function PopupDialog({ popup, onDismiss }: { popup: PopupData, onDismiss: (id: string) => void }) {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
+    if (sessionStorage.getItem(`popup-dismissed-${popup.id}`)) return;
+
     const timer = setTimeout(() => {
       setIsOpen(true);
     }, popup.delaySeconds * 1000);
@@ -37,6 +39,8 @@ function PopupDialog({ popup }: { popup: PopupData }) {
 
   const handleClose = () => {
     setIsOpen(false);
+    sessionStorage.setItem(`popup-dismissed-${popup.id}`, "true");
+    onDismiss(popup.id);
   };
 
   return (
@@ -62,7 +66,7 @@ function PopupDialog({ popup }: { popup: PopupData }) {
           </div>
         ) : (
           <div className="relative w-full">
-            {popup.images.length === 1 ? (
+            {!popup.images || popup.images.length === 0 ? null : popup.images.length === 1 ? (
               <div className="relative aspect-[4/3] w-full">
                 <Image
                   src={popup.images[0]}
@@ -102,6 +106,18 @@ function PopupDialog({ popup }: { popup: PopupData }) {
 
 export default function GlobalPopup() {
   const pathname = usePathname();
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const dismissed = new Set<string>();
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key?.startsWith("popup-dismissed-")) {
+        dismissed.add(key.replace("popup-dismissed-", ""));
+      }
+    }
+    setDismissedIds(dismissed);
+  }, []);
 
   const { data } = useQuery({
     queryKey: ["global-popups"],
@@ -117,11 +133,16 @@ export default function GlobalPopup() {
   if (pathname?.startsWith("/admin")) return null;
   if (!data?.popups || data.popups.length === 0) return null;
 
+  const activePopups = data.popups.filter((p) => !dismissedIds.has(p.id));
+  const popupToRender = activePopups[0];
+
+  if (!popupToRender) return null;
+
   return (
-    <>
-      {data.popups.map((popup) => (
-        <PopupDialog key={popup.id} popup={popup} />
-      ))}
-    </>
+    <PopupDialog 
+      key={popupToRender.id} 
+      popup={popupToRender} 
+      onDismiss={(id) => setDismissedIds((prev) => new Set(prev).add(id))} 
+    />
   );
 }

@@ -50,6 +50,10 @@ export async function POST(req: Request) {
     }
     const validatedData = parsed.data;
 
+    if (validatedData.type === "image" && (!validatedData.images || validatedData.images.length === 0)) {
+      return NextResponse.json({ error: "Image popups must have at least one image" }, { status: 400 });
+    }
+
     const [newPopup] = await db
       .insert(popups)
       .values({

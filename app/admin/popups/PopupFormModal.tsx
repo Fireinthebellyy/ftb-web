@@ -234,26 +234,28 @@ export default function PopupFormModal({
 
               <div className="flex items-center gap-4">
                 <Button
-                  type="button"
                   variant="outline"
                   disabled={isUploading}
                   className="w-full relative"
+                  asChild
                 >
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    disabled={isUploading}
-                  />
-                  {isUploading ? (
-                    "Uploading..."
-                  ) : (
-                    <>
-                      <ImageIcon className="mr-2 h-4 w-4" />
-                      Upload Image
-                    </>
-                  )}
+                  <label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      disabled={isUploading}
+                    />
+                    {isUploading ? (
+                      "Uploading..."
+                    ) : (
+                      <>
+                        <ImageIcon className="mr-2 h-4 w-4" />
+                        Upload Image
+                      </>
+                    )}
+                  </label>
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground">

@@ -12,9 +12,14 @@ export async function PATCH(
     const body = await req.json();
     
     // Create an object with only the fields that were provided
-    const updateData: any = {};
+    const updateData: Partial<typeof popups.$inferInsert> = {};
     if (body.title !== undefined) updateData.title = body.title;
-    if (body.type !== undefined) updateData.type = body.type;
+    if (body.type !== undefined) {
+      if (body.type !== "text" && body.type !== "image") {
+        return NextResponse.json({ error: "Invalid popup type" }, { status: 400 });
+      }
+      updateData.type = body.type;
+    }
     if (body.content !== undefined) updateData.content = body.content;
     if (body.images !== undefined) updateData.images = body.images;
     if (body.delaySeconds !== undefined) updateData.delaySeconds = body.delaySeconds;

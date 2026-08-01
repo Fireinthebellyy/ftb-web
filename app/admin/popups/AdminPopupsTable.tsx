@@ -32,7 +32,7 @@ export default function AdminPopupsTable() {
   const [editingPopup, setEditingPopup] = useState<Popup | null>(null);
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["admin-popups"],
     queryFn: async () => {
       const res = await fetch("/api/admin/popups");
@@ -89,6 +89,15 @@ export default function AdminPopupsTable() {
               <TableRow>
                 <TableCell colSpan={5} className="text-center">
                   Loading...
+                </TableCell>
+              </TableRow>
+            ) : isError ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center text-red-500">
+                  Failed to load popups.{" "}
+                  <button onClick={() => refetch()} className="underline font-medium hover:text-red-700">
+                    Retry
+                  </button>
                 </TableCell>
               </TableRow>
             ) : popups.length === 0 ? (

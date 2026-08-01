@@ -222,7 +222,8 @@ export default function PopupFormModal({
                       <button
                         type="button"
                         onClick={() => removeImage(idx)}
-                        className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 shadow opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label={`Remove image ${idx + 1}`}
+                        className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 shadow opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
                       >
                         <X className="h-4 w-4" />
                       </button>

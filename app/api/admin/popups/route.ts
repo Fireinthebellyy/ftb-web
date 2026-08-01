@@ -2,12 +2,25 @@ import { db } from "@/lib/db";
 import { popups } from "@/lib/schema";
 import { desc } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/server/users";
+import { z } from "zod";
 
-// Assuming there's some kind of auth check, you should check it.
-// Based on project structure, check if `admin` role is verified. For now we just implement the db logic.
+const popupSchema = z.object({
+  title: z.string().min(1),
+  type: z.enum(["text", "image"]),
+  content: z.string().nullable().optional(),
+  images: z.array(z.string().url()).optional().default([]),
+  delaySeconds: z.number().min(0).optional().default(0),
+  isActive: z.boolean().optional().default(false),
+});
 
 export async function GET() {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || !currentUser.currentUser?.id || currentUser.currentUser.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const allPopups = await db
       .select()
       .from(popups)
@@ -25,25 +38,27 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { title, type, content, images, delaySeconds, isActive } = body;
-
-    if (!title || !type) {
-      return NextResponse.json(
-        { error: "Title and type are required" },
-        { status: 400 }
-      );
+    const currentUser = await getCurrentUser();
+    if (!currentUser || !currentUser.currentUser?.id || currentUser.currentUser.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const body = await req.json();
+    const parsed = popupSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid request data", details: parsed.error.issues }, { status: 400 });
+    }
+    const validatedData = parsed.data;
 
     const [newPopup] = await db
       .insert(popups)
       .values({
-        title,
-        type,
-        content: content || null,
-        images: images || [],
-        delaySeconds: delaySeconds || 0,
-        isActive: isActive || false,
+        title: validatedData.title,
+        type: validatedData.type,
+        content: validatedData.content || null,
+        images: validatedData.images,
+        delaySeconds: validatedData.delaySeconds,
+        isActive: validatedData.isActive,
       })
       .returning();
 

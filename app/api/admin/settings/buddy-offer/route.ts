@@ -71,12 +71,19 @@ export async function PATCH(request: Request) {
     activityBeforeState = existingSettings[0];
 
     const updatedSettings = await db
-      .update(siteSettings)
-      .set({
+      .insert(siteSettings)
+      .values({
+        id: "global",
         isBuddyOfferEnabled: validatedData.isBuddyOfferEnabled,
         updatedAt: new Date(),
       })
-      .where(eq(siteSettings.id, "global"))
+      .onConflictDoUpdate({
+        target: siteSettings.id,
+        set: {
+          isBuddyOfferEnabled: validatedData.isBuddyOfferEnabled,
+          updatedAt: new Date(),
+        },
+      })
       .returning();
 
     activityAfterState = updatedSettings[0];

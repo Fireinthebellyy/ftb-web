@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { eq, and, inArray, sql } from "drizzle-orm";
-import { cohorts, cohortTiers, cohortOrders, coupons, userToolkits, toolkits, user, cohortSessions } from "@/lib/schema";
+import { cohorts, cohortTiers, cohortOrders, coupons, userToolkits, toolkits, user, cohortSessions, siteSettings } from "@/lib/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { createOrder } from "@/lib/razorpay";
@@ -43,16 +43,25 @@ export async function POST(
       buyerName,
       buyerEmail,
       buyerPhone,
-      buddyEmail,
       couponCode,
       validateCouponOnly = false,
     } = body;
+    
+    let { buddyEmail } = body;
 
     if (!buyerName || !buyerEmail) {
       return NextResponse.json(
         { error: "Buyer name and email are required" },
         { status: 400 }
       );
+    }
+
+    const settings = await db.query.siteSettings.findFirst({
+      where: eq(siteSettings.id, "global")
+    });
+
+    if (!settings?.isBuddyOfferEnabled) {
+      buddyEmail = null;
     }
 
     // Skip validation for coupon-only validation

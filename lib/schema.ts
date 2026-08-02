@@ -561,6 +561,7 @@ export const coupons = pgTable("coupons", {
   currentUses: integer("current_uses").default(0),
   isActive: boolean("is_active").default(true),
   cohortOnly: boolean("cohort_only").default(false), // If true, only applies to cohorts
+  isBuddyOffer: boolean("is_buddy_offer").default(false), // Buddy offer flag
   expiresAt: timestamp("expires_at"), // Optional expiration
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -984,6 +985,28 @@ export const cohortSessionMentorsRelations = relations(cohortSessionMentors, ({ 
   }),
 }));
 
+// Site Settings
+export const siteSettings = pgTable("site_settings", {
+  id: text("id").primaryKey(), // "global"
+  isBuddyOfferEnabled: boolean("is_buddy_offer_enabled").default(false),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Popups
+export const popupTypeEnum = pgEnum("popup_type", ["text", "image"]);
+
+export const popups = pgTable("popups", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  type: popupTypeEnum("type").notNull(),
+  content: text("content"),
+  images: text("images").array().default([]),
+  delaySeconds: integer("delay_seconds").default(0),
+  isActive: boolean("is_active").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Export schema object last
 export const schema = {
   user,
@@ -1032,5 +1055,7 @@ export const schema = {
   cohortSessionResources,
   cohortSessionQueries,
   cohortSessionMentors,
+  siteSettings,
+  popups,
 };
 

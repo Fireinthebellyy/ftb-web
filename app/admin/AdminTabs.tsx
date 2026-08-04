@@ -11,6 +11,7 @@ import {
   RadioTower,
   Ticket,
   Users,
+  MessageSquare,
 } from "lucide-react";
 import {
   canAccessAdminTab,
@@ -28,6 +29,7 @@ import OpportunityManagementTable from "./OpportunityManagementTable";
 import InternshipManagementTable from "./InternshipManagementTable";
 import AdminMentorsTable from "./AdminMentorsTable";
 import AdminCohortsTable from "./AdminCohortsTable";
+import AdminPopupsTable from "./popups/AdminPopupsTable";
 
 const _TAB_VALUES = [
   "opportunities",
@@ -39,6 +41,7 @@ const _TAB_VALUES = [
   "ungatekeep",
   "mentors",
   "cohorts",
+  "popups",
 ] as const;
 type TabValue = (typeof _TAB_VALUES)[number];
 
@@ -108,6 +111,12 @@ const adminCards: Array<{
     title: "Cohort Management",
     description: "Create and configure cohort landing pages, benefits, packages and select mentors",
     icon: BookOpen,
+  },
+  {
+    key: "popups",
+    title: "Global Popups",
+    description: "Manage global popups (text or image) shown to users",
+    icon: MessageSquare,
   },
 ];
 
@@ -183,6 +192,7 @@ export function AdminTabs({
       {activeTab === "ungatekeep" ? <AdminUngatekeepTable /> : null}
       {activeTab === "mentors" ? <AdminMentorsTable /> : null}
       {activeTab === "cohorts" ? <AdminCohortsTable /> : null}
+      {activeTab === "popups" ? <AdminPopupsTable /> : null}
     </div>
   );
 }

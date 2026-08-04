@@ -117,6 +117,27 @@ export default function AdminCouponsTable() {
   const [selectedCouponIds, setSelectedCouponIds] = useState<string[]>([]);
   const queryClient = useQueryClient();
 
+  const { data: buddyOfferEnabled } = useQuery({
+    queryKey: ["admin", "settings", "buddy-offer"],
+    queryFn: async () => {
+      const res = await axios.get("/api/admin/settings/buddy-offer");
+      return res.data.isBuddyOfferEnabled;
+    },
+  });
+
+  const toggleBuddyOfferMutation = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      await axios.patch("/api/admin/settings/buddy-offer", { isBuddyOfferEnabled: enabled });
+    },
+    onSuccess: () => {
+      toast.success("Buddy Offer setting updated");
+      queryClient.invalidateQueries({ queryKey: ["admin", "settings", "buddy-offer"] });
+    },
+    onError: () => {
+      toast.error("Failed to update Buddy Offer setting");
+    }
+  });
+
   const {
     data: coupons = [],
     isLoading,
@@ -506,6 +527,23 @@ export default function AdminCouponsTable() {
         </p>
       }
     >
+      <div className="mb-6 flex items-center justify-between rounded-lg border p-4 shadow-sm bg-card">
+        <div className="space-y-0.5">
+          <Label className="text-base font-semibold">Global Buddy Discount</Label>
+          <p className="text-sm text-muted-foreground">
+            When enabled, the buddy discount is active all over the website on all courses.
+          </p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Switch
+            checked={!!buddyOfferEnabled}
+            onCheckedChange={(checked) => toggleBuddyOfferMutation.mutate(checked)}
+            disabled={toggleBuddyOfferMutation.isPending}
+          />
+          <Label>{buddyOfferEnabled ? "Enabled" : "Disabled"}</Label>
+        </div>
+      </div>
+
       <AdminTableState
         isLoading={isLoading}
         isError={isError}

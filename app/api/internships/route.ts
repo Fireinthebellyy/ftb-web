@@ -316,12 +316,14 @@ export async function GET(req: NextRequest) {
       .where(filters)
       .orderBy(
           sql`CASE 
+            WHEN ${internships.is_exclusive} = TRUE THEN 0
             WHEN (
               (${internships.is_trending} = TRUE OR ${internships.is_featured_home} = TRUE)
               AND (${internships.trendingFeaturedExpiry} IS NULL OR ${internships.trendingFeaturedExpiry} >= CURRENT_DATE)
-            ) THEN 0 
-            ELSE 1 
+            ) THEN 1 
+            ELSE 2 
           END`,
+          sql`COALESCE("internships"."exclusive_index", 999)`,
           sql`COALESCE(CASE WHEN ${internships.trendingFeaturedExpiry} IS NOT NULL AND ${internships.trendingFeaturedExpiry} < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999)`,
           sql`CASE 
             WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 

@@ -228,7 +228,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
         )}
         {is_trending && !is_exclusive && (
           <div className="absolute -top-0.5 right-0 z-20">
-            <Badge className="bg-orange-500 text-white rounded-tl-none rounded-br-none px-2 py-1 text-[9px] font-medium">
+            <Badge className="bg-orange-500 text-white rounded-tl-none rounded-br-none px-2 py-1 text-[9px] font-bold">
               <Flame className="h-2.5 w-2.5 mr-0.5 inline" />Trending
             </Badge>
           </div>

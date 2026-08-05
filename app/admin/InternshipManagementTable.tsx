@@ -165,6 +165,11 @@ export default function InternshipManagementTable({
 
     if (aTrending !== bTrending) return aTrending - bTrending;
 
+    const aExclusive = a.exclusive_index ?? 9999;
+    const bExclusive = b.exclusive_index ?? 9999;
+
+    if (aExclusive !== bExclusive) return aExclusive - bExclusive;
+
     const aFeatured = a.featured_home_index ?? 9999;
     const bFeatured = b.featured_home_index ?? 9999;
 

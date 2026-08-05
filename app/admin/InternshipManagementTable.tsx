@@ -155,6 +155,11 @@ export default function InternshipManagementTable({
   });
 
   const internships = [...(data ?? EMPTY_INTERNSHIPS)].sort((a, b) => {
+    const aExclusive = a.exclusive_index ?? 9999;
+    const bExclusive = b.exclusive_index ?? 9999;
+
+    if (aExclusive !== bExclusive) return aExclusive - bExclusive;
+
     const aTrending = a.trending_index ?? 9999;
     const bTrending = b.trending_index ?? 9999;
 

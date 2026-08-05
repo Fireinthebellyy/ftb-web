@@ -38,8 +38,13 @@ async function getFreshInternship(id: string) {
         role: user.role,
       },
       is_trending: sql<boolean>`CASE WHEN ${internships.trendingFeaturedExpiry} IS NOT NULL AND ${internships.trendingFeaturedExpiry} < CURRENT_DATE THEN FALSE ELSE ${internships.is_trending} END`.as("is_trending"),
+      is_exclusive: internships.is_exclusive,
       is_featured_home: sql<boolean>`CASE WHEN ${internships.trendingFeaturedExpiry} IS NOT NULL AND ${internships.trendingFeaturedExpiry} < CURRENT_DATE THEN FALSE ELSE ${internships.is_featured_home} END`.as("is_featured_home"),
       trending_featured_expiry: internships.trendingFeaturedExpiry,
+      display_index: internships.display_index,
+      trending_index: internships.trending_index,
+      exclusive_index: internships.exclusive_index,
+      featured_home_index: internships.featured_home_index,
     })
     .from(internships)
     .leftJoin(user, eq(internships.userId, user.id))
@@ -87,8 +92,10 @@ const internshipUpdateSchema = z.object({
   trendingFeaturedExpiry: z.string().date("Invalid date format").optional().nullable(),
   display_index: z.number().optional().nullable(),
   trending_index: z.number().optional().nullable(),
+  exclusive_index: z.number().optional().nullable(),
   featured_home_index: z.number().optional().nullable(),
   isTrending: z.boolean().optional(),
+  isExclusive: z.boolean().optional(),
   isFeaturedHome: z.boolean().optional(),
 });
 
@@ -198,11 +205,16 @@ export async function PATCH(
         }
       }
 
+      if (validatedData.exclusive_index !== undefined) {
+        updates.exclusive_index = validatedData.exclusive_index;
+      }
+
       if (validatedData.featured_home_index !== undefined) {
         updates.featured_home_index = validatedData.featured_home_index;
       }
       if (validatedData.isActive !== undefined) updates.isActive = validatedData.isActive;
       if (validatedData.isTrending !== undefined) updates.is_trending = validatedData.isTrending;
+      if (validatedData.isExclusive !== undefined) updates.is_exclusive = validatedData.isExclusive;
       if (validatedData.isFeaturedHome !== undefined) updates.is_featured_home = validatedData.isFeaturedHome;
       if (validatedData.trendingFeaturedExpiry !== undefined) {
         updates.trendingFeaturedExpiry = validatedData.trendingFeaturedExpiry;

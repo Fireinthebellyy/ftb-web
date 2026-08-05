@@ -39,6 +39,7 @@ export async function GET() {
         registrationExpectations: cohortOrders.registrationExpectations,
         registrationCompletedAt: cohortOrders.registrationCompletedAt,
         selectedSessionIds: cohortOrders.selectedSessionIds,
+        selectedAddOnIds: cohortOrders.selectedAddOnIds,
         couponId: cohortOrders.couponId,
         couponCode: coupons.code,
       })

@@ -108,11 +108,24 @@ export default function CohortDashboardPage() {
             </div>
             <h2 className="mb-2 text-2xl font-bold text-gray-900">Access Locked</h2>
             <p className="mb-6 text-sm text-gray-600">
-              It will unlock in a few hours after verification. You will get contacted & get added to a WhatsApp community for access as well.
+              The Cohort will be starting from 15th August, you will get added in our exclusive community by 12th August & the cohort dashboard will unlock within a week.
             </p>
-            <Button onClick={() => router.push("/")} className="w-full">
+            <Button onClick={() => router.push("/")} className="w-full mb-3">
               Back to Home
             </Button>
+            <a
+              href="https://wa.me/916377492042?text=Hi%2C%20I%20enrolled%20into%20the%20Cohort%20and%20have%20a%20few%20queries."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full"
+            >
+              <Button className="w-full bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 shrink-0" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 0 0 1.333 4.982L2 22l5.202-1.362a9.923 9.923 0 0 0 4.808 1.236h.005c5.505 0 9.99-4.477 9.99-9.985C22.005 6.478 17.518 2 12.012 2Zm5.845 14.285c-.244.686-1.42 1.328-1.948 1.41-.478.077-1.101.144-3.187-.723-2.667-1.108-4.37-3.816-4.502-3.992-.133-.176-1.077-1.43-1.077-2.729 0-1.298.679-1.937.922-2.202.244-.265.533-.332.71-.332.178 0 .356.006.51.013.162.008.38-.06.593.453.22.532.753 1.836.82 1.968.067.133.11.288.022.465-.088.177-.133.288-.266.443-.133.155-.28.347-.4.493-.133.16-.272.336-.117.6.155.265.686 1.132 1.47 1.831.99.885 1.823 1.157 2.08 1.288.254.133.403.11.553-.066.15-.177.643-.753.815-.996.172-.244.344-.2.58-.112.235.088 1.492.703 1.748.83.256.128.427.194.49.305.061.11.061.643-.183 1.329Z" />
+                </svg>
+                Ask a Query
+              </Button>
+            </a>
           </CardContent>
         </Card>
       </div>
@@ -223,12 +236,14 @@ function CohortSessionSidebar({
         {sessions.map((session, index) => (
           <button
             key={session.id}
-            onClick={() => onSessionSelect(session.id)}
+            onClick={() => session.isAccessible && onSessionSelect(session.id)}
+            disabled={!session.isAccessible}
             className={cn(
               "w-full rounded-2xl p-4 text-left transition-all",
               currentSessionId === session.id
                 ? "bg-orange-100 border-l-4 border-orange-500"
-                : "bg-white border border-gray-100 hover:border-gray-200 hover:shadow-sm"
+                : "bg-white border border-gray-100 hover:border-gray-200 hover:shadow-sm",
+              !session.isAccessible && "opacity-60 cursor-not-allowed"
             )}
           >
             <div className="flex items-start gap-4">
@@ -251,7 +266,11 @@ function CohortSessionSidebar({
                   {session.title}
                 </h3>
               </div>
-              {currentSessionId === session.id && (
+              {!session.isAccessible ? (
+                <div className="flex-shrink-0">
+                  <Lock className="h-4 w-4 text-gray-400" />
+                </div>
+              ) : currentSessionId === session.id && (
                 <div className="flex-shrink-0 w-3 h-3 rounded-full bg-orange-500"></div>
               )}
             </div>

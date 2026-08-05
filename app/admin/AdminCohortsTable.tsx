@@ -134,6 +134,7 @@ interface Order {
   registrationExpectations: string | null;
   registrationCompletedAt: string | null;
   selectedSessionIds: string[] | null;
+  selectedAddOnIds: string[] | null;
   couponId: string | null;
   couponCode: string | null;
 }
@@ -417,6 +418,7 @@ export default function AdminCohortsTable() {
       "Year",
       "Expectations",
       "Selected Sessions",
+      "Individual Sessions",
       "Cohort",
       "Email",
       "Date",
@@ -430,6 +432,13 @@ export default function AdminCohortsTable() {
           }).filter(Boolean).join(", ")
         : "";
 
+      const individualSessionTitles = order.selectedAddOnIds && order.selectedAddOnIds.length > 0
+        ? order.selectedAddOnIds.map((sessionId) => {
+            const session = order.cohortId ? sessionsData[order.cohortId]?.find((s: any) => s.id === sessionId) : null;
+            return session ? session.title : "";
+          }).filter(Boolean).join(", ")
+        : "";
+
       return [
         order.registrationName || order.buyerName,
         order.registrationCollege || "",
@@ -437,6 +446,7 @@ export default function AdminCohortsTable() {
         order.registrationYear || "",
         order.registrationExpectations || "",
         sessionTitles,
+        individualSessionTitles,
         order.cohortTitle || "Unknown",
         order.buyerEmail,
         order.registrationCompletedAt
@@ -734,6 +744,7 @@ export default function AdminCohortsTable() {
                     <th className="p-4 font-semibold text-gray-700">Year</th>
                     <th className="p-4 font-semibold text-gray-700">Expectations</th>
                     <th className="p-4 font-semibold text-gray-700">Selected Sessions</th>
+                    <th className="p-4 font-semibold text-gray-700">Individual Sessions</th>
                     <th className="p-4 font-semibold text-gray-700">Cohort</th>
                     <th className="p-4 font-semibold text-gray-700">Email</th>
                     <th className="p-4 font-semibold text-gray-700">Date</th>
@@ -763,6 +774,20 @@ export default function AdminCohortsTable() {
                           </div>
                         ) : "-"}
                       </td>
+                      <td className="p-4 text-gray-600">
+                        {order.selectedAddOnIds && order.selectedAddOnIds.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {order.selectedAddOnIds.map((sessionId) => {
+                              const session = order.cohortId ? sessionsData[order.cohortId]?.find((s: any) => s.id === sessionId) : null;
+                              return session ? (
+                                <span key={sessionId} className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded">
+                                  {session.title}
+                                </span>
+                              ) : null;
+                            })}
+                          </div>
+                        ) : "-"}
+                      </td>
                       <td className="p-4 text-gray-900">{order.cohortTitle || "Unknown"}</td>
                       <td className="p-4 text-gray-500 text-xs">{order.buyerEmail}</td>
                       <td className="p-4 text-xs text-gray-500 whitespace-nowrap">
@@ -774,7 +799,7 @@ export default function AdminCohortsTable() {
                   ))}
                   {ordersList.filter(order => order.registrationName).length === 0 && (
                     <tr>
-                      <td colSpan={9} className="p-12 text-center text-gray-500">
+                      <td colSpan={10} className="p-12 text-center text-gray-500">
                         No registration forms completed yet.
                       </td>
                     </tr>

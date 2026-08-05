@@ -303,9 +303,11 @@ export async function GET(req: NextRequest) {
           role: user.role,
         },
         is_trending: sql<boolean>`CASE WHEN ${internships.trendingFeaturedExpiry} IS NOT NULL AND ${internships.trendingFeaturedExpiry} < CURRENT_DATE THEN FALSE ELSE ${internships.is_trending} END`.as("is_trending"),
+        is_exclusive: internships.is_exclusive,
         is_featured_home: sql<boolean>`CASE WHEN ${internships.trendingFeaturedExpiry} IS NOT NULL AND ${internships.trendingFeaturedExpiry} < CURRENT_DATE THEN FALSE ELSE ${internships.is_featured_home} END`.as("is_featured_home"),
         display_index: internships.display_index,
         trending_index: internships.trending_index,
+        exclusive_index: internships.exclusive_index,
         featured_home_index: internships.featured_home_index,
         trending_featured_expiry: internships.trendingFeaturedExpiry,
       })

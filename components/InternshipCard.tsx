@@ -15,6 +15,7 @@ import {
   Layout,
   Lightbulb,
   Flame,
+  Crown,
 } from "lucide-react";
 import { toast } from "sonner";
 import posthog from "posthog-js";
@@ -80,7 +81,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
   const { addToTracker, getStatus, removeFromTracker } = useTracker();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
-  const { id, title, hiringOrganization, deadline, is_trending } = internship;
+  const { id, title, hiringOrganization, deadline, is_trending, is_exclusive } = internship;
   
 
   const currentStatus = getStatus(id, "internship");
@@ -218,7 +219,14 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
         onKeyDown={handleCardKeyDown}
       >
 
-        {is_trending && (
+        {is_exclusive && (
+          <div className="absolute -top-0.5 right-0 z-20">
+            <Badge className="bg-black text-white rounded-tl-none rounded-br-none px-2 py-1 text-[9px] font-bold">
+              <Crown className="h-2.5 w-2.5 mr-0.5 inline" />Recommended
+            </Badge>
+          </div>
+        )}
+        {is_trending && !is_exclusive && (
           <div className="absolute -top-0.5 right-0 z-20">
             <Badge className="bg-orange-500 text-white rounded-tl-none rounded-br-none px-2 py-1 text-[9px] font-medium">
               <Flame className="h-2.5 w-2.5 mr-0.5 inline" />Trending

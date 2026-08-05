@@ -145,9 +145,11 @@ export const internships = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     is_trending: boolean("is_trending").default(false),
+    is_exclusive: boolean("is_exclusive").default(false),
     is_featured_home: boolean("is_featured_home").default(false),
     display_index: integer("display_index"),
-    trending_index: integer("trending_index"),         
+    trending_index: integer("trending_index"),
+    exclusive_index: integer("exclusive_index"),
     featured_home_index: integer("featured_home_index"),
     trendingFeaturedExpiry: date("trending_featured_expiry"),
   },

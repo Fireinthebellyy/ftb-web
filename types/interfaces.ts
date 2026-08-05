@@ -50,9 +50,11 @@ export type Internship = {
   isFlagged?: boolean;
   isActive?: boolean;
   is_trending?: boolean;
+  is_exclusive?: boolean;
   is_featured_home?: boolean;
   display_index?: number;
   trending_index?: number;
+  exclusive_index?: number;
   featured_home_index?: number;
   trending_featured_expiry?: string | null;
   user: {

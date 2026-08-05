@@ -37,8 +37,10 @@ interface Internship {
   isActive: boolean;
   isFlagged: boolean;
   is_trending?: boolean;
+  is_exclusive?: boolean;
   is_featured_home?: boolean;
   trending_index?: number;
+  exclusive_index?: number;
   featured_home_index?: number;
   display_index?: number | null;
   user: {
@@ -76,10 +78,12 @@ function OrangeCheckbox({
   checked,
   onChange,
   label,
+  variant = "orange",
 }: {
   checked: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   label: string;
+  variant?: "orange" | "exclusive";
 }) {
   return (
     <label className="relative inline-flex cursor-pointer">
@@ -87,14 +91,18 @@ function OrangeCheckbox({
       <span
         className={cn(
           "flex h-5 w-5 items-center justify-center rounded border-2 transition-colors",
-          checked
-            ? "border-orange-500 bg-orange-500"
-            : "border-gray-300 bg-white hover:border-orange-300"
+          variant === "exclusive"
+            ? checked
+              ? "border-black bg-black"
+              : "border-gray-300 bg-white hover:border-gray-400"
+            : checked
+              ? "border-orange-500 bg-orange-500"
+              : "border-gray-300 bg-white hover:border-orange-300"
         )}
       >
         {checked && (
           <svg
-            className="h-3 w-3 text-white"
+            className={cn("h-3 w-3", variant === "exclusive" ? "text-orange-500" : "text-white")}
             viewBox="0 0 12 12"
             fill="none"
             stroke="currentColor"
@@ -152,6 +160,11 @@ export default function InternshipManagementTable({
 
     if (aTrending !== bTrending) return aTrending - bTrending;
 
+    const aExclusive = a.exclusive_index ?? 9999;
+    const bExclusive = b.exclusive_index ?? 9999;
+
+    if (aExclusive !== bExclusive) return aExclusive - bExclusive;
+
     const aFeatured = a.featured_home_index ?? 9999;
     const bFeatured = b.featured_home_index ?? 9999;
 
@@ -178,6 +191,7 @@ export default function InternshipManagementTable({
           if (i.id !== id) return i;
           const mapped: any = { ...i };
           if (payload.isTrending !== undefined) mapped.is_trending = payload.isTrending;
+          if (payload.isExclusive !== undefined) mapped.is_exclusive = payload.isExclusive;
           if (payload.isFeaturedHome !== undefined) mapped.is_featured_home = payload.isFeaturedHome;
           if (payload.isActive !== undefined) mapped.isActive = payload.isActive;
           return mapped;
@@ -262,11 +276,31 @@ export default function InternshipManagementTable({
           return (
             <OrangeCheckbox
               checked={internship.is_trending ?? false}
-              label="Toggle Trending" 
+              label="Toggle Trending"
               onChange={() =>
                 updateInternshipMutation.mutate({
                   id: internship.id,
-                  payload: { isTrending: !internship.is_trending },
+                  payload: { isTrending: !internship.is_trending, isExclusive: false },
+                })
+              }
+            />
+          );
+        },
+      },
+      {
+        accessorKey: "is_exclusive",
+        header: "Recommended",
+        cell: ({ row }) => {
+          const internship = row.original;
+          return (
+            <OrangeCheckbox
+              checked={internship.is_exclusive ?? false}
+              label="Toggle Recommended"
+              variant="exclusive"
+              onChange={() =>
+                updateInternshipMutation.mutate({
+                  id: internship.id,
+                  payload: { isExclusive: !internship.is_exclusive, isTrending: false },
                 })
               }
             />
@@ -312,6 +346,36 @@ export default function InternshipManagementTable({
                 toast.success("Trending index updated");
               } catch {
                 toast.error("Failed to update trending index");
+              } finally {
+                queryClient.invalidateQueries({
+                  queryKey: ["admin-internship-management"],
+                });
+              }
+            }}
+          />
+        );
+      },
+    },
+    {
+      accessorKey: "exclusive_index",
+      header: "Recommended Index",
+      cell: ({ row }) => {
+        const internship = row.original;
+        return (
+          <input
+            key={`exclusive-${internship.id}-${internship.exclusive_index}`}
+            type="number"
+            defaultValue={internship.exclusive_index ?? ""}
+            className="border rounded px-2 py-1 text-sm w-[80px]"
+            onBlur={async (e) => {
+              const raw = e.target.value;
+              try {
+                await axios.patch(`/api/internships/${internship.id}`, {
+                  exclusive_index: raw === "" ? null : Number(raw),
+                });
+                toast.success("Exclusive index updated");
+              } catch {
+                toast.error("Failed to update exclusive index");
               } finally {
                 queryClient.invalidateQueries({
                   queryKey: ["admin-internship-management"],

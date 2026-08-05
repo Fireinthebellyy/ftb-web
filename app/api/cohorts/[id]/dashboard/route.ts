@@ -64,13 +64,26 @@ export async function GET(
       orderBy: (cohortSessions, { asc }) => [asc(cohortSessions.orderIndex)],
     });
 
+    // Add accessibility flag to each session
+    // If user purchased individual sessions (selectedAddOnIds), only those are accessible
+    // If user purchased a tier (selectedTierId), all sessions are accessible
+    const sessionsWithAccess = sessions.map(session => {
+      const isAccessible = order.selectedAddOnIds && Array.isArray(order.selectedAddOnIds) && order.selectedAddOnIds.length > 0
+        ? order.selectedAddOnIds.includes(session.id)
+        : true;
+      return {
+        ...session,
+        isAccessible,
+      };
+    });
+
     return NextResponse.json({
       cohort: { id: cohort.id, title: cohort.title },
       hasAccess: true,
       isLocked: false,
       isVerificationRequired: cohort.isVerificationRequired,
       isVerified: order.isVerified,
-      sessions,
+      sessions: sessionsWithAccess,
     });
   } catch (error) {
     console.error("Error fetching cohort dashboard:", error);

@@ -13,6 +13,8 @@ export async function GET() {
 
     return NextResponse.json({
       isBuddyOfferEnabled: settings[0]?.isBuddyOfferEnabled ?? false,
+      buddyOfferTitle: settings[0]?.buddyOfferTitle ?? "Friendship Day Offer",
+      buddyOfferText: settings[0]?.buddyOfferText ?? "Learning is better together! Enter your friend's email below so they can get access that too at 20% off",
     });
   } catch (error) {
     console.error("Error fetching public site settings:", error);

@@ -8,6 +8,8 @@ import { z } from "zod";
 
 const buddyOfferSchema = z.object({
   isBuddyOfferEnabled: z.boolean(),
+  buddyOfferTitle: z.string().optional(),
+  buddyOfferText: z.string().optional(),
 });
 
 export async function GET() {
@@ -29,6 +31,8 @@ export async function GET() {
 
     return NextResponse.json({
       isBuddyOfferEnabled: settings[0]?.isBuddyOfferEnabled ?? false,
+      buddyOfferTitle: settings[0]?.buddyOfferTitle ?? "Friendship Day Offer",
+      buddyOfferText: settings[0]?.buddyOfferText ?? "Learning is better together! Enter your friend's email below so they can get access that too at 20% off",
     });
   } catch (error) {
     console.error("Error fetching site settings:", error);
@@ -75,12 +79,16 @@ export async function PATCH(request: Request) {
       .values({
         id: "global",
         isBuddyOfferEnabled: validatedData.isBuddyOfferEnabled,
+        buddyOfferTitle: validatedData.buddyOfferTitle ?? "Friendship Day Offer",
+        buddyOfferText: validatedData.buddyOfferText ?? "Learning is better together! Enter your friend's email below so they can get access that too at 20% off",
         updatedAt: new Date(),
       })
       .onConflictDoUpdate({
         target: siteSettings.id,
         set: {
           isBuddyOfferEnabled: validatedData.isBuddyOfferEnabled,
+          buddyOfferTitle: validatedData.buddyOfferTitle ?? "Friendship Day Offer",
+          buddyOfferText: validatedData.buddyOfferText ?? "Learning is better together! Enter your friend's email below so they can get access that too at 20% off",
           updatedAt: new Date(),
         },
       })
@@ -90,6 +98,8 @@ export async function PATCH(request: Request) {
     activityStatus = 200;
     return NextResponse.json({
       isBuddyOfferEnabled: updatedSettings[0]?.isBuddyOfferEnabled ?? false,
+      buddyOfferTitle: updatedSettings[0]?.buddyOfferTitle,
+      buddyOfferText: updatedSettings[0]?.buddyOfferText,
     });
   } catch (error) {
     activityError = error;

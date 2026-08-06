@@ -991,6 +991,8 @@ export const cohortSessionMentorsRelations = relations(cohortSessionMentors, ({ 
 export const siteSettings = pgTable("site_settings", {
   id: text("id").primaryKey(), // "global"
   isBuddyOfferEnabled: boolean("is_buddy_offer_enabled").default(false),
+  buddyOfferTitle: text("buddy_offer_title").default("Friendship Day Offer"),
+  buddyOfferText: text("buddy_offer_text").default("Learning is better together! Enter your friend's email below so they can get access that too at 20% off"),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 

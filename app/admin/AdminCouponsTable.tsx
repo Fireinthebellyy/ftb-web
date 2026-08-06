@@ -549,7 +549,7 @@ export default function AdminCouponsTable() {
             <Switch
               checked={!!buddySettings?.isBuddyOfferEnabled}
               onCheckedChange={(checked) => updateBuddyOfferMutation.mutate({ isBuddyOfferEnabled: checked, buddyOfferTitle: localBuddyTitle, buddyOfferText: localBuddyText })}
-              disabled={updateBuddyOfferMutation.isPending}
+              disabled={!buddySettings || updateBuddyOfferMutation.isPending}
             />
             <Label>{buddySettings?.isBuddyOfferEnabled ? "Enabled" : "Disabled"}</Label>
           </div>
@@ -557,15 +557,17 @@ export default function AdminCouponsTable() {
 
         <div className="space-y-3 pt-4 border-t">
           <div className="space-y-1.5">
-            <Label>Buddy Offer Title</Label>
+            <Label htmlFor="buddyOfferTitle">Buddy Offer Title</Label>
             <Input 
+              id="buddyOfferTitle"
               value={localBuddyTitle} 
               onChange={(e) => setLocalBuddyTitle(e.target.value)} 
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Buddy Offer Text</Label>
+            <Label htmlFor="buddyOfferText">Buddy Offer Text</Label>
             <Textarea 
+              id="buddyOfferText"
               value={localBuddyText} 
               onChange={(e) => setLocalBuddyText(e.target.value)} 
             />
@@ -573,7 +575,7 @@ export default function AdminCouponsTable() {
           <Button 
             size="sm" 
             onClick={() => updateBuddyOfferMutation.mutate({ isBuddyOfferEnabled: buddySettings?.isBuddyOfferEnabled ?? false, buddyOfferTitle: localBuddyTitle, buddyOfferText: localBuddyText })}
-            disabled={updateBuddyOfferMutation.isPending}
+            disabled={!buddySettings || updateBuddyOfferMutation.isPending}
           >
             Save Texts
           </Button>

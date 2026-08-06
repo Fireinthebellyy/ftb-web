@@ -1019,6 +1019,10 @@ export const siteSettings = pgTable("site_settings", {
   isBuddyOfferEnabled: boolean("is_buddy_offer_enabled").default(false),
   buddyOfferTitle: text("buddy_offer_title").default("Friendship Day Offer"),
   buddyOfferText: text("buddy_offer_text").default("Learning is better together! Enter your friend's email below so they can get access that too at 20% off"),
+  toolkitCohortsTabLabel: text("toolkit_cohorts_tab_label").default("Live Cohorts"),
+  toolkitSessionsTabLabel: text("toolkit_sessions_tab_label").default("Sessions"),
+  toolkitMentorshipTabLabel: text("toolkit_mentorship_tab_label").default("1:1 Mentorship"),
+  toolkitDigitalProductsTabLabel: text("toolkit_digital_products_tab_label").default("Digital products"),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 

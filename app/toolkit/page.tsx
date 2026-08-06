@@ -40,11 +40,20 @@ export default function ToolkitPage() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<string>("cohorts");
 
+  const { data: settings } = useQuery({
+    queryKey: ["site_settings"],
+    queryFn: async () => {
+      const res = await axios.get("/api/settings");
+      return res.data;
+    },
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
+
   const TAB_CATEGORIES = [
-    { label: "Live Cohorts", value: "cohorts" },
-    { label: "Sessions", value: "sessions" },
-    { label: "1:1 Mentorship", value: "1:1 Mentorship" },
-    { label: "Digital products", value: "digital products" }
+    { label: settings?.toolkitCohortsTabLabel ?? "Live Cohorts", value: "cohorts" },
+    { label: settings?.toolkitSessionsTabLabel ?? "Sessions", value: "sessions" },
+    { label: settings?.toolkitMentorshipTabLabel ?? "1:1 Mentorship", value: "1:1 Mentorship" },
+    { label: settings?.toolkitDigitalProductsTabLabel ?? "Digital products", value: "digital products" }
   ];
 
   // Redirect to login if not authenticated

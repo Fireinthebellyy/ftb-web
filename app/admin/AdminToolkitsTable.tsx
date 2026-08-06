@@ -23,6 +23,7 @@ import ToolkitCommunityManager from "./ToolkitCommunityManager";
 import ToolkitContentManager from "./ToolkitContentManager";
 import { TestimonialCarouselManager } from "@/components/admin/TestimonialCarouselManager";
 import { MentorshipCarouselManager } from "@/components/admin/MentorshipCarouselManager";
+import ToolkitTabsEditDialog from "./ToolkitTabsEditDialog";
 import SessionApplicationsManager from "@/components/admin/SessionApplicationsManager";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
 import { AdminTableState } from "@/components/admin/AdminTableState";
@@ -672,6 +673,7 @@ export default function AdminToolkitsTable() {
           <Button variant="outline" className="gap-2 bg-white" onClick={() => setTestimonialManagerOpen(true)}>
             Testimonial Images
           </Button>
+          <ToolkitTabsEditDialog />
           <NewBundleModal
             onSuccess={() =>
               queryClient.invalidateQueries({ queryKey: ["admin", "toolkits"] })

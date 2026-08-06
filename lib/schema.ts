@@ -472,6 +472,10 @@ export const toolkits = pgTable("toolkits", {
     () => digitalProductSections.id,
     { onDelete: "set null" }
   ),
+  sessionWhatsappLink: text("session_whatsapp_link"),
+  sessionMeetLink: text("session_meet_link"),
+  sessionDate: timestamp("session_date"),
+  sessionQuestions: jsonb("session_questions").$type<any[]>().default([]),
 });
 
 export const toolkitContentItemTypeEnum = pgEnum("toolkit_content_item_type", [
@@ -502,6 +506,18 @@ export const toolkitContentItems = pgTable("toolkit_content_items", {
   orderIndex: integer("order_index").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const sessionApplications = pgTable("session_applications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  toolkitId: uuid("toolkit_id")
+    .notNull()
+    .references(() => toolkits.id, { onDelete: "cascade" }),
+  answers: jsonb("answers").$type<Record<string, any>>().notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export interface ToolkitCommunityOption {
@@ -1061,5 +1077,6 @@ export const schema = {
   cohortSessionMentors,
   siteSettings,
   popups,
+  sessionApplications,
 };
 

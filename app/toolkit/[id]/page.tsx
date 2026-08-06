@@ -25,6 +25,9 @@ import { useToolkit, useToolkitPurchase } from "@/lib/queries-toolkits";
 import { CAROUSEL_AUTOPLAY_DELAY_MS } from "@/lib/carousel";
 import { toast } from "sonner";
 import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
+import SessionApplicationModal from "@/components/toolkit/SessionApplicationModal";
+import { Calendar, MessageCircle } from "lucide-react";
 
 declare global {
   interface Window {
@@ -79,6 +82,21 @@ export default function ToolkitDetailPage() {
 
   const { data: toolkitData, isLoading } = useToolkit(params.id as string);
   const toolkit = toolkitData?.toolkit ?? null;
+
+  const isSession = toolkit?.category === "sessions";
+  const [sessionModalOpen, setSessionModalOpen] = useState(false);
+
+  const { data: applicationStatus, refetch: refetchApplicationStatus } = useQuery({
+    queryKey: ["session-application-status", toolkit?.id],
+    queryFn: async () => {
+      if (!toolkit?.id) return null;
+      const res = await axios.get(`/api/toolkits/${toolkit.id}/application-status`);
+      return res.data;
+    },
+    enabled: isSession && !!toolkit?.id,
+  });
+
+  const hasApplied = applicationStatus?.applied ?? false;
 
   const handleViewContent = () => {
     if (toolkit?.isBundle) {
@@ -364,21 +382,103 @@ export default function ToolkitDetailPage() {
           </div>
 
           <div className="hidden xl:col-span-1 xl:block">
-            <ToolkitSidebar
-              toolkit={toolkit}
-              contentItems={contentItems}
-              hasPurchased={hasPurchased}
-              isPurchaseLoading={isPurchaseLoading}
-              onPurchase={handlePurchase}
-              onAccessContent={handleViewContent}
-            />
+            {isSession ? (
+              <div className="sticky top-8 overflow-hidden rounded-lg border bg-white p-6 shadow-sm">
+                {hasApplied ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 rounded-lg bg-green-50 p-3 text-green-700">
+                      <Check className="h-5 w-5" />
+                      <span className="font-medium">You have applied to this session</span>
+                    </div>
+                    
+                    {toolkit.sessionWhatsappLink && (
+                      <Button asChild className="w-full bg-[#25D366] hover:bg-[#128C7E]" size="lg">
+                        <a href={toolkit.sessionWhatsappLink} target="_blank" rel="noopener noreferrer">
+                          <MessageCircle className="mr-2 h-5 w-5" />
+                          Join WhatsApp Group
+                        </a>
+                      </Button>
+                    )}
+                    
+                    {toolkit.sessionMeetLink && (
+                      <Button asChild variant="outline" className="w-full" size="lg">
+                        <a 
+                          href={toolkit.sessionMeetLink.includes("calendar.google.com") 
+                            ? toolkit.sessionMeetLink 
+                            : `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(toolkit.title)}&location=${encodeURIComponent(toolkit.sessionMeetLink)}${toolkit.sessionDate ? `&dates=${new Date(toolkit.sessionDate).toISOString().replace(/-|:|\.\d\d\d/g, "")}/${new Date(new Date(toolkit.sessionDate).getTime() + 60*60*1000).toISOString().replace(/-|:|\.\d\d\d/g, "")}` : ""}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                        >
+                          <Calendar className="mr-2 h-5 w-5" />
+                          Save to Calendar
+                        </a>
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-bold text-gray-900">Join this Session</h3>
+                    <p className="text-sm text-gray-600 mb-4">Apply now to get access to the WhatsApp group and calendar invite.</p>
+                    <Button onClick={() => setSessionModalOpen(true)} className="w-full" size="lg">
+                      Apply Now
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <ToolkitSidebar
+                toolkit={toolkit}
+                contentItems={contentItems}
+                hasPurchased={hasPurchased}
+                isPurchaseLoading={isPurchaseLoading}
+                onPurchase={handlePurchase}
+                onAccessContent={handleViewContent}
+              />
+            )}
           </div>
         </div>
       </div>
 
-      {/* Mobile sticky purchase bar */}
+      {isSession && toolkit && (
+        <SessionApplicationModal
+          toolkit={toolkit as any}
+          open={sessionModalOpen}
+          onOpenChange={setSessionModalOpen}
+          onSuccess={() => refetchApplicationStatus()}
+        />
+      )}
+
       <div className="fixed right-0 bottom-[52px] left-0 z-50 border-t bg-white p-4 shadow-lg md:bottom-0 xl:hidden">
-        {hasPurchased ? (
+        {isSession ? (
+          hasApplied ? (
+            <div className="flex gap-2">
+              {toolkit.sessionWhatsappLink && (
+                <Button asChild className="flex-1 bg-[#25D366] hover:bg-[#128C7E]">
+                  <a href={toolkit.sessionWhatsappLink} target="_blank" rel="noopener noreferrer">
+                    WhatsApp
+                  </a>
+                </Button>
+              )}
+              {toolkit.sessionMeetLink && (
+                <Button asChild variant="outline" className="flex-1">
+                  <a 
+                    href={toolkit.sessionMeetLink.includes("calendar.google.com") 
+                      ? toolkit.sessionMeetLink 
+                      : `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(toolkit.title)}&location=${encodeURIComponent(toolkit.sessionMeetLink)}${toolkit.sessionDate ? `&dates=${new Date(toolkit.sessionDate).toISOString().replace(/-|:|\.\d\d\d/g, "")}/${new Date(new Date(toolkit.sessionDate).getTime() + 60*60*1000).toISOString().replace(/-|:|\.\d\d\d/g, "")}` : ""}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    Calendar
+                  </a>
+                </Button>
+              )}
+            </div>
+          ) : (
+            <Button onClick={() => setSessionModalOpen(true)} size="lg" className="w-full">
+              Apply Now
+            </Button>
+          )
+        ) : hasPurchased ? (
           <Button onClick={handleViewContent} size="lg" className="w-full">
             Access Content
           </Button>

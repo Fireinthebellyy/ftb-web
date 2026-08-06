@@ -261,6 +261,10 @@ export type Toolkit = {
   isLimitedSeats?: boolean;
   digitalProductSectionId?: string | null;
   digitalProductSectionTitle?: string | null;
+  sessionWhatsappLink?: string;
+  sessionMeetLink?: string;
+  sessionDate?: string;
+  sessionQuestions?: any[];
 };
 
 export type ToolkitContentItem = {

@@ -164,6 +164,10 @@ export default function NewToolkitModal({
               message: item.message.trim(),
             }))
           : undefined,
+        sessionWhatsappLink: data.sessionWhatsappLink?.trim() || undefined,
+        sessionMeetLink: data.sessionMeetLink?.trim() || undefined,
+        sessionDate: data.sessionDate ? data.sessionDate.toISOString() : undefined,
+        sessionQuestions: data.sessionQuestions?.length ? data.sessionQuestions : undefined,
       };
 
       const response = await axios.post("/api/toolkits", cleanedData);

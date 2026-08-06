@@ -42,7 +42,7 @@ export default function ToolkitPage() {
 
   const TAB_CATEGORIES = [
     { label: "Live Cohorts", value: "cohorts" },
-    // { label: "Recorded Lectures", value: "Recorded toolkits" },
+    { label: "Sessions", value: "sessions" },
     { label: "1:1 Mentorship", value: "1:1 Mentorship" },
     { label: "Digital products", value: "digital products" }
   ];
@@ -274,6 +274,19 @@ export default function ToolkitPage() {
                       )}
                     </div>
                 </div>
+              ))}
+            </div>
+          )
+        ) : selectedCategory === "sessions" ? (
+          filteredToolkits.length === 0 ? (
+            <div className="rounded-lg border bg-white py-12 text-center">
+              <h3 className="mb-2 text-lg font-semibold text-gray-600">No sessions available</h3>
+              <p className="text-gray-500">Check back later for upcoming sessions.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {filteredToolkits.map((toolkit) => (
+                <ToolkitCardNew key={toolkit.id} toolkit={toolkit} href={`/toolkit/${toolkit.id}`} />
               ))}
             </div>
           )

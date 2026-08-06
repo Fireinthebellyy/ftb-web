@@ -57,6 +57,10 @@ export const toolkitFormSchema = z.object({
   isBestSeller: z.boolean().optional(),
   isLimitedSeats: z.boolean().optional(),
   digitalProductSectionId: z.string().uuid().optional().or(z.literal("")),
+  sessionWhatsappLink: z.string().optional().or(z.literal("")),
+  sessionMeetLink: z.string().optional().or(z.literal("")),
+  sessionDate: z.date().optional(),
+  sessionQuestions: z.array(z.any()).optional(),
 });
 
 export type ToolkitFormValues = z.infer<typeof toolkitFormSchema>;
@@ -125,4 +129,8 @@ export interface Toolkit {
   isLimitedSeats: boolean;
   digitalProductSectionId: string | null;
   digitalProductSectionTitle?: string | null;
+  sessionWhatsappLink?: string | null;
+  sessionMeetLink?: string | null;
+  sessionDate?: string | Date | null;
+  sessionQuestions?: any[] | null;
 }

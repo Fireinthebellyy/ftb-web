@@ -30,6 +30,7 @@ const CATEGORIES = [
   "1:1 Mentorship",
   "Recorded toolkits",
   "digital products",
+  "sessions",
 ];
 
 interface MentorOption {
@@ -67,6 +68,12 @@ export function ToolkitFormFields({
   });
   const selectedCategory = useWatch({ control, name: "category" });
   const isDigitalProduct = selectedCategory === "digital products";
+  const isSession = selectedCategory === "sessions";
+
+  const { fields: sessionQuestionFields, append: appendSessionQuestion, remove: removeSessionQuestion } = useFieldArray({
+    control,
+    name: "sessionQuestions",
+  });
 
   const { data: mentors = [] } = useQuery({
     queryKey: ["admin", "mentors"],
@@ -272,6 +279,158 @@ export function ToolkitFormFields({
                 </FormItem>
               )}
             />
+          </div>
+        </div>
+      )}
+
+      {isSession && (
+        <div className="space-y-4 rounded-lg border p-4 bg-blue-50/50 mt-6">
+          <h3 className="font-semibold text-lg text-blue-900">Session Details</h3>
+          
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField
+              control={control}
+              name="sessionWhatsappLink"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>WhatsApp Group Link</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://chat.whatsapp.com/..." {...field} value={field.value ?? ""} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={control}
+              name="sessionMeetLink"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Meet Link</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://meet.google.com/..." {...field} value={field.value ?? ""} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="space-y-3 mt-4">
+            <div className="flex items-center justify-between">
+              <FormLabel className="text-base text-blue-900">Session Questions</FormLabel>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => appendSessionQuestion({ id: Date.now().toString(), type: "text", question: "", options: [], required: true })}
+                disabled={isSubmitting}
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                Add Question
+              </Button>
+            </div>
+
+            {sessionQuestionFields.map((field, index) => (
+              <div key={field.id} className="space-y-3 rounded-lg border bg-white p-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <FormField
+                    control={control}
+                    name={`sessionQuestions.${index}.type`}
+                    render={({ field: typeField }) => (
+                      <FormItem>
+                        <FormLabel>Type</FormLabel>
+                        <Select
+                          onValueChange={typeField.onChange}
+                          value={typeField.value || "text"}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="text">Text Answer</SelectItem>
+                            <SelectItem value="mcq">Multiple Choice</SelectItem>
+                            <SelectItem value="file">File Upload</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={control}
+                    name={`sessionQuestions.${index}.required`}
+                    render={({ field: reqField }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-2 mt-7 h-10">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-sm">Required</FormLabel>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={reqField.value}
+                            onCheckedChange={reqField.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={control}
+                  name={`sessionQuestions.${index}.question`}
+                  render={({ field: qField }) => (
+                    <FormItem>
+                      <FormLabel>Question text</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter question..." {...qField} value={qField.value ?? ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {useWatch({ control, name: `sessionQuestions.${index}.type` }) === "mcq" && (
+                  <FormField
+                    control={control}
+                    name={`sessionQuestions.${index}.options`}
+                    render={({ field: optField }) => (
+                      <FormItem>
+                        <FormLabel>Options (comma-separated)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Option A, Option B, Option C" 
+                            value={optField.value?.join(", ") ?? ""} 
+                            onChange={(e) => {
+                              optField.onChange(e.target.value.split(",").map(v => v.trim()).filter(Boolean));
+                            }} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-500 hover:text-red-700"
+                    onClick={() => removeSessionQuestion(index)}
+                    disabled={isSubmitting}
+                  >
+                    <Trash2 className="mr-1 h-4 w-4" />
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

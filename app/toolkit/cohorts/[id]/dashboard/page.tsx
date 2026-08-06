@@ -321,7 +321,7 @@ function CohortSessionMain({
 
   const handleSubmitQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newQuestion.trim()) return;
+    if (!newQuestion.trim() || !sessionId) return;
 
     try {
       setIsSubmitting(true);

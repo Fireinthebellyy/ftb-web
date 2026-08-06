@@ -74,6 +74,8 @@ export function ToolkitFormFields({
     control,
     name: "sessionQuestions",
   });
+  
+  const watchedSessionQuestions = useWatch({ control, name: "sessionQuestions" });
 
   const { data: mentors = [] } = useQuery({
     queryKey: ["admin", "mentors"],
@@ -394,7 +396,7 @@ export function ToolkitFormFields({
                   )}
                 />
                 
-                {useWatch({ control, name: `sessionQuestions.${index}.type` }) === "mcq" && (
+                {watchedSessionQuestions?.[index]?.type === "mcq" && (
                   <FormField
                     control={control}
                     name={`sessionQuestions.${index}.options`}

@@ -15,7 +15,7 @@ import { Toolkit } from "@/types/interfaces";
 import axios from "axios";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { uploadFileViaSignedUrl } from "@/lib/storage/client";
+import { uploadFileViaSignedUrl, deleteStorageObjectClient } from "@/lib/storage/client";
 
 interface SessionApplicationModalProps {
   toolkit: Toolkit;
@@ -47,6 +47,8 @@ export default function SessionApplicationModal({
       }
     }
 
+    let uploadedKeys: string[] = [];
+
     try {
       setIsSubmitting(true);
       const finalAnswers = { ...answers };
@@ -59,6 +61,7 @@ export default function SessionApplicationModal({
             file,
           });
           finalAnswers[qId] = uploadedFile.publicUrl;
+          uploadedKeys.push(uploadedFile.key);
         }
       }
 
@@ -72,6 +75,11 @@ export default function SessionApplicationModal({
       onOpenChange(false);
     } catch (error) {
       console.error("Failed to submit application", error);
+      await Promise.all(
+        uploadedKeys.map((key) =>
+          deleteStorageObjectClient("ungatekeep-images", key).catch(() => null)
+        )
+      );
       toast.error("Failed to submit application. Please try again.");
     } finally {
       setIsSubmitting(false);

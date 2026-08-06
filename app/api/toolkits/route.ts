@@ -5,6 +5,22 @@ import { digitalProductSections, toolkits, user } from "@/lib/schema";
 import { hasMeaningfulRichText, normalizeRichText } from "@/lib/rich-text";
 import { getCurrentUser } from "@/server/users";
 import { eq, desc, sql } from "drizzle-orm";
+import { z } from "zod";
+
+const sessionDetailsSchema = z.object({
+  sessionWhatsappLink: z.string().url("Must be a valid URL").optional().nullable().or(z.literal("")),
+  sessionMeetLink: z.string().url("Must be a valid URL").optional().nullable().or(z.literal("")),
+  sessionDate: z.string().datetime({ message: "Invalid datetime string" }).optional().nullable(),
+  sessionQuestions: z.array(
+    z.object({
+      id: z.string(),
+      type: z.enum(["text", "mcq", "file"]),
+      question: z.string(),
+      options: z.array(z.string()).optional(),
+      required: z.boolean().optional(),
+    })
+  ).optional().nullable(),
+});
 
 // GET all toolkits
 export async function GET() {
@@ -140,11 +156,27 @@ export async function POST(request: Request) {
       });
     }
 
+    const parsedSessionDetails = sessionDetailsSchema.safeParse({
+      sessionWhatsappLink: body.sessionWhatsappLink,
+      sessionMeetLink: body.sessionMeetLink,
+      sessionDate: body.sessionDate,
+      sessionQuestions: body.sessionQuestions,
+    });
+
+    if (!parsedSessionDetails.success) {
+      return badRequest("Invalid session details provided", {
+        code: "INVALID_SESSION_DETAILS",
+        details: parsedSessionDetails.error.format(),
+      });
+    }
+
+    const sessionDetails = parsedSessionDetails.data;
+
     const newToolkit = await db
       .insert(toolkits)
       .values({
         title: title.trim(),
-        description: normalizedDescription || title.trim(), // fallback for bundles with no description
+        description: normalizedDescription || title.trim(),
         price,
         originalPrice: originalPrice ?? null,
         coverImageUrl: coverImageUrl || null,
@@ -167,10 +199,10 @@ export async function POST(request: Request) {
         isLimitedSeats: isLimitedSeats ?? false,
         digitalProductSectionId: digitalProductSectionId || null,
         mentorshipDetails: mentorshipDetails || null,
-        sessionWhatsappLink: body.sessionWhatsappLink || null,
-        sessionMeetLink: body.sessionMeetLink || null,
-        sessionDate: body.sessionDate ? new Date(body.sessionDate) : null,
-        sessionQuestions: body.sessionQuestions || null,
+        sessionWhatsappLink: sessionDetails.sessionWhatsappLink || null,
+        sessionMeetLink: sessionDetails.sessionMeetLink || null,
+        sessionDate: sessionDetails.sessionDate ? new Date(sessionDetails.sessionDate) : null,
+        sessionQuestions: sessionDetails.sessionQuestions || null,
         userId: user.currentUser.id,
       })
       .returning();

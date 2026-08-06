@@ -475,7 +475,7 @@ export const toolkits = pgTable("toolkits", {
   sessionWhatsappLink: text("session_whatsapp_link"),
   sessionMeetLink: text("session_meet_link"),
   sessionDate: timestamp("session_date"),
-  sessionQuestions: jsonb("session_questions").$type<any[]>().default([]),
+  sessionQuestions: jsonb("session_questions").$type<SessionQuestion[]>().default([]),
 });
 
 export const toolkitContentItemTypeEnum = pgEnum("toolkit_content_item_type", [
@@ -508,6 +508,16 @@ export const toolkitContentItems = pgTable("toolkit_content_items", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export interface SessionQuestion {
+  id: string;
+  type: "text" | "mcq" | "file";
+  question: string;
+  options?: string[];
+  required?: boolean;
+}
+
+export type SessionAnswers = Record<string, string>;
+
 export const sessionApplications = pgTable("session_applications", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id")
@@ -516,7 +526,7 @@ export const sessionApplications = pgTable("session_applications", {
   toolkitId: uuid("toolkit_id")
     .notNull()
     .references(() => toolkits.id, { onDelete: "cascade" }),
-  answers: jsonb("answers").$type<Record<string, any>>().notNull(),
+  answers: jsonb("answers").$type<SessionAnswers>().notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

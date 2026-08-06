@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Trash2,
   Copy,
+  ClipboardList,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -590,7 +591,7 @@ export default function AdminToolkitsTable() {
                   }}
                   title="View Applications"
                 >
-                  <MessageSquare className="h-4 w-4" />
+                  <ClipboardList className="h-4 w-4" />
                 </Button>
               )}
               <Button

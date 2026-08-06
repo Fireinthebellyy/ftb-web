@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
-import { sessionApplications } from "@/lib/schema";
+import { sessionApplications, toolkits } from "@/lib/schema";
+
+import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
   try {
@@ -14,13 +16,39 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { toolkitId, answers } = await req.json();
+    const body = await req.json();
+    const { toolkitId, answers } = body;
 
-    if (!toolkitId || !answers) {
+    if (!toolkitId || typeof toolkitId !== "string") {
       return NextResponse.json(
-        { error: "Toolkit ID and answers are required" },
+        { error: "Toolkit ID is required and must be a string" },
         { status: 400 }
       );
+    }
+
+    if (!answers || typeof answers !== "object" || Array.isArray(answers)) {
+      return NextResponse.json(
+        { error: "Answers must be a valid object" },
+        { status: 400 }
+      );
+    }
+
+    const toolkit = await db.query.toolkits.findFirst({
+      where: eq(toolkits.id, toolkitId),
+    });
+
+    if (!toolkit) {
+      return NextResponse.json({ error: "Toolkit not found" }, { status: 404 });
+    }
+
+    const questions = toolkit.sessionQuestions || [];
+    for (const q of questions) {
+      if (q.required && !answers[q.id]) {
+        return NextResponse.json(
+          { error: `Missing required answer for: ${q.question}` },
+          { status: 400 }
+        );
+      }
     }
 
     // Insert the application

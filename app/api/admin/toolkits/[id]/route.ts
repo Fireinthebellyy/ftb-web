@@ -91,10 +91,18 @@ const updateToolkitSchema = z.object({
     })
     .nullable()
     .optional(),
-  sessionWhatsappLink: z.string().optional().nullable(),
-  sessionMeetLink: z.string().optional().nullable(),
-  sessionDate: z.string().optional().nullable(),
-  sessionQuestions: z.array(z.any()).optional().nullable(),
+  sessionWhatsappLink: z.string().url("Must be a valid URL").optional().nullable().or(z.literal("")),
+  sessionMeetLink: z.string().url("Must be a valid URL").optional().nullable().or(z.literal("")),
+  sessionDate: z.string().datetime({ message: "Invalid datetime string" }).optional().nullable(),
+  sessionQuestions: z.array(
+    z.object({
+      id: z.string(),
+      type: z.enum(["text", "mcq", "file"]),
+      question: z.string(),
+      options: z.array(z.string()).optional(),
+      required: z.boolean().optional(),
+    })
+  ).optional().nullable(),
 });
 
 export async function PUT(

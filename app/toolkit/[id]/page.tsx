@@ -116,6 +116,21 @@ export default function ToolkitDetailPage() {
   const lessonCount = contentItems.length || toolkit?.lessonCount || 0;
   const testimonials = toolkit?.testimonials ?? [];
 
+  const calendarHref = useMemo(() => {
+    if (!toolkit?.sessionMeetLink || !toolkit.sessionDate) return null;
+    if (toolkit.sessionMeetLink.includes("calendar.google.com")) return toolkit.sessionMeetLink;
+    try {
+      const start = new Date(toolkit.sessionDate);
+      if (isNaN(start.getTime())) return null;
+      const end = new Date(start.getTime() + 60 * 60 * 1000);
+      const startStr = start.toISOString().replace(/-|:|\.\d\d\d/g, "");
+      const endStr = end.toISOString().replace(/-|:|\.\d\d\d/g, "");
+      return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(toolkit.title)}&location=${encodeURIComponent(toolkit.sessionMeetLink)}&dates=${startStr}/${endStr}`;
+    } catch {
+      return null;
+    }
+  }, [toolkit]);
+
   const handleApplyCoupon = async () => {
     if (!couponCode.trim() || !toolkit) {
       toast.error("Please enter a coupon code");
@@ -400,12 +415,10 @@ export default function ToolkitDetailPage() {
                       </Button>
                     )}
                     
-                    {toolkit.sessionMeetLink && (
+                    {calendarHref && (
                       <Button asChild variant="outline" className="w-full" size="lg">
                         <a 
-                          href={toolkit.sessionMeetLink.includes("calendar.google.com") 
-                            ? toolkit.sessionMeetLink 
-                            : `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(toolkit.title)}&location=${encodeURIComponent(toolkit.sessionMeetLink)}${toolkit.sessionDate ? `&dates=${new Date(toolkit.sessionDate).toISOString().replace(/-|:|\.\d\d\d/g, "")}/${new Date(new Date(toolkit.sessionDate).getTime() + 60*60*1000).toISOString().replace(/-|:|\.\d\d\d/g, "")}` : ""}`} 
+                          href={calendarHref} 
                           target="_blank" 
                           rel="noopener noreferrer"
                         >
@@ -459,12 +472,10 @@ export default function ToolkitDetailPage() {
                   </a>
                 </Button>
               )}
-              {toolkit.sessionMeetLink && (
+              {calendarHref && (
                 <Button asChild variant="outline" className="flex-1">
                   <a 
-                    href={toolkit.sessionMeetLink.includes("calendar.google.com") 
-                      ? toolkit.sessionMeetLink 
-                      : `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(toolkit.title)}&location=${encodeURIComponent(toolkit.sessionMeetLink)}${toolkit.sessionDate ? `&dates=${new Date(toolkit.sessionDate).toISOString().replace(/-|:|\.\d\d\d/g, "")}/${new Date(new Date(toolkit.sessionDate).getTime() + 60*60*1000).toISOString().replace(/-|:|\.\d\d\d/g, "")}` : ""}`} 
+                    href={calendarHref} 
                     target="_blank" 
                     rel="noopener noreferrer"
                   >

@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/dialog";
 import { Toolkit } from "./types";
 import { AdminDataTable } from "./AdminDataTable";
+import { useState } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SessionApplicationsManagerProps {
   toolkit: Toolkit | null;
@@ -35,6 +37,8 @@ export default function SessionApplicationsManager({
     enabled: open && !!toolkit?.id,
   });
 
+  const [selectedApp, setSelectedApp] = useState<any | null>(null);
+
   const columns = [
     {
       accessorKey: "userName",
@@ -54,9 +58,9 @@ export default function SessionApplicationsManager({
       id: "answers",
       header: "Answers",
       cell: ({ row }: any) => (
-        <div className="max-w-xs truncate text-xs" title={JSON.stringify(row.original.answers, null, 2)}>
-          Hover to view
-        </div>
+        <Button variant="outline" size="sm" onClick={() => setSelectedApp(row.original)}>
+          View Answers
+        </Button>
       ),
     },
   ];
@@ -99,6 +103,7 @@ export default function SessionApplicationsManager({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
         <DialogHeader className="flex flex-row items-center justify-between">
@@ -123,5 +128,37 @@ export default function SessionApplicationsManager({
         </div>
       </DialogContent>
     </Dialog>
+
+    <Dialog open={!!selectedApp} onOpenChange={(open) => !open && setSelectedApp(null)}>
+      <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Answers - {selectedApp?.userName}</DialogTitle>
+        </DialogHeader>
+        <ScrollArea className="flex-1 mt-4 max-h-[60vh] pr-4">
+          <div className="space-y-6">
+            {selectedApp?.answers ? (
+              Object.entries(selectedApp.answers).map(([questionId, answer]) => {
+                const isUrl = typeof answer === "string" && (answer.startsWith("http://") || answer.startsWith("https://"));
+                return (
+                  <div key={questionId} className="space-y-1">
+                    <p className="font-semibold text-sm text-gray-900">{questionId}</p>
+                    {isUrl ? (
+                      <a href={answer as string} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm break-all">
+                        {answer as string}
+                      </a>
+                    ) : (
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{String(answer)}</p>
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-sm text-gray-500">No answers provided.</p>
+            )}
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

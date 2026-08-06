@@ -464,26 +464,33 @@ export default function ToolkitDetailPage() {
       <div className="fixed right-0 bottom-[52px] left-0 z-50 border-t bg-white p-4 shadow-lg md:bottom-0 xl:hidden">
         {isSession ? (
           hasApplied ? (
-            <div className="flex gap-2">
-              {toolkit.sessionWhatsappLink && (
-                <Button asChild className="flex-1 bg-[#25D366] hover:bg-[#128C7E]">
-                  <a href={toolkit.sessionWhatsappLink} target="_blank" rel="noopener noreferrer">
-                    WhatsApp
-                  </a>
-                </Button>
-              )}
-              {calendarHref && (
-                <Button asChild variant="outline" className="flex-1">
-                  <a 
-                    href={calendarHref} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                  >
-                    Calendar
-                  </a>
-                </Button>
-              )}
-            </div>
+            toolkit.sessionWhatsappLink || calendarHref ? (
+              <div className="flex gap-2">
+                {toolkit.sessionWhatsappLink && (
+                  <Button asChild className="flex-1 bg-[#25D366] hover:bg-[#128C7E]">
+                    <a href={toolkit.sessionWhatsappLink} target="_blank" rel="noopener noreferrer">
+                      WhatsApp
+                    </a>
+                  </Button>
+                )}
+                {calendarHref && (
+                  <Button asChild variant="outline" className="flex-1">
+                    <a 
+                      href={calendarHref} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                    >
+                      Calendar
+                    </a>
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2 rounded-lg bg-green-50 p-3 text-green-700">
+                <Check className="h-5 w-5" />
+                <span className="font-medium text-sm">Applied</span>
+              </div>
+            )
           ) : (
             <Button onClick={() => setSessionModalOpen(true)} size="lg" className="w-full">
               Apply Now

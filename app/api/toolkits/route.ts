@@ -13,9 +13,9 @@ const sessionDetailsSchema = z.object({
   sessionDate: z.string().datetime({ message: "Invalid datetime string" }).optional().nullable(),
   sessionQuestions: z.array(
     z.object({
-      id: z.string(),
+      id: z.string().min(1),
       type: z.enum(["text", "mcq", "file"]),
-      question: z.string(),
+      question: z.string().min(1),
       options: z.array(z.string()).optional(),
       required: z.boolean().optional(),
     })
@@ -202,7 +202,7 @@ export async function POST(request: Request) {
         sessionWhatsappLink: sessionDetails.sessionWhatsappLink || null,
         sessionMeetLink: sessionDetails.sessionMeetLink || null,
         sessionDate: sessionDetails.sessionDate ? new Date(sessionDetails.sessionDate) : null,
-        sessionQuestions: sessionDetails.sessionQuestions || null,
+        sessionQuestions: (sessionDetails.sessionQuestions as any) || null,
         userId: user.currentUser.id,
       })
       .returning();

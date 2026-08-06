@@ -96,9 +96,9 @@ const updateToolkitSchema = z.object({
   sessionDate: z.string().datetime({ message: "Invalid datetime string" }).optional().nullable(),
   sessionQuestions: z.array(
     z.object({
-      id: z.string(),
+      id: z.string().min(1),
       type: z.enum(["text", "mcq", "file"]),
-      question: z.string(),
+      question: z.string().min(1),
       options: z.array(z.string()).optional(),
       required: z.boolean().optional(),
     })
@@ -228,7 +228,7 @@ export async function PUT(
     }
 
     if (validatedData.sessionQuestions !== undefined) {
-      updates.sessionQuestions = validatedData.sessionQuestions;
+      updates.sessionQuestions = validatedData.sessionQuestions as any;
     }
 
     const updatedToolkit = await db

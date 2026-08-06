@@ -74,17 +74,20 @@ export default function SessionApplicationsManager({
       Object.keys(app.answers || {}).forEach((key) => questionKeys.add(key));
     });
 
-    const headers = ["Name", "Email", "Applied At", ...Array.from(questionKeys)];
+    const headers = ["Name", "Email", "Applied At", ...Array.from(questionKeys)].map(h => `"${h.replace(/"/g, '""')}"`);
     const csvContent = [
       headers.join(","),
       ...applications.map((app: any) => {
         const row = [
-          `"${app.userName || ""}"`,
-          `"${app.userEmail || ""}"`,
+          `"${(app.userName || "").replace(/"/g, '""')}"`,
+          `"${(app.userEmail || "").replace(/"/g, '""')}"`,
           `"${format(new Date(app.createdAt), "yyyy-MM-dd HH:mm")}"`,
           ...Array.from(questionKeys).map((key) => {
             const val = app.answers?.[key];
-            const strVal = typeof val === "object" ? JSON.stringify(val) : String(val || "");
+            let strVal = typeof val === "object" ? JSON.stringify(val) : String(val || "");
+            if (/^[=+\-@]/.test(strVal)) {
+              strVal = "'" + strVal;
+            }
             return `"${strVal.replace(/"/g, '""')}"`;
           }),
         ];
@@ -100,6 +103,7 @@ export default function SessionApplicationsManager({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (

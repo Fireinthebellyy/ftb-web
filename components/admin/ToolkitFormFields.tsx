@@ -317,6 +317,34 @@ export function ToolkitFormFields({
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={control}
+              name="sessionDate"
+              render={({ field }) => {
+                const dateVal = field.value ? new Date(field.value) : null;
+                const formattedVal = dateVal && !isNaN(dateVal.getTime()) 
+                  ? new Date(dateVal.getTime() - dateVal.getTimezoneOffset() * 60000).toISOString().slice(0, 16) 
+                  : "";
+                
+                return (
+                  <FormItem>
+                    <FormLabel>Session Date & Time</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="datetime-local" 
+                        value={formattedVal}
+                        onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : undefined)}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
           </div>
 
           <div className="space-y-3 mt-4">

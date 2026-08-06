@@ -121,7 +121,6 @@ export default function CohortLandingPage() {
   const [cohort, setCohort] = useState<CohortData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showSeatsPop, setShowSeatsPop] = useState(false);
-  const [showSeatsPop, setShowSeatsPop] = useState(false);
   const [isBuddyOfferGlobalEnabled, setIsBuddyOfferGlobalEnabled] = useState(false);
   const [buddyOfferTitle, setBuddyOfferTitle] = useState("Friendship Day Offer");
   const [buddyOfferText, setBuddyOfferText] = useState("Learning is better together! Enter your friend's email below so they can get access that too at 20% off");

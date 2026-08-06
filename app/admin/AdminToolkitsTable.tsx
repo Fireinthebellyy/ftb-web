@@ -249,6 +249,8 @@ export default function AdminToolkitsTable() {
         uploadedKeys.push(uploadedBanner.key);
       }
 
+      const isSession = data.category === "sessions";
+
       const cleanedData = {
         ...data,
         description: normalizeRichText(data.description),
@@ -272,10 +274,10 @@ export default function AdminToolkitsTable() {
               message: item.message.trim(),
             }))
           : undefined,
-        sessionWhatsappLink: data.sessionWhatsappLink?.trim() || undefined,
-        sessionMeetLink: data.sessionMeetLink?.trim() || undefined,
-        sessionDate: data.sessionDate ? data.sessionDate.toISOString() : undefined,
-        sessionQuestions: data.sessionQuestions?.length ? data.sessionQuestions : undefined,
+        sessionWhatsappLink: isSession ? (data.sessionWhatsappLink?.trim() || null) : null,
+        sessionMeetLink: isSession ? (data.sessionMeetLink?.trim() || null) : null,
+        sessionDate: isSession ? (data.sessionDate ? data.sessionDate.toISOString() : null) : null,
+        sessionQuestions: isSession ? (data.sessionQuestions?.length ? data.sessionQuestions : null) : null,
       };
 
       await updateToolkitMutation.mutateAsync({

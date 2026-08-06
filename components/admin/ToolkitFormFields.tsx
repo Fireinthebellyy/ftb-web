@@ -354,7 +354,7 @@ export function ToolkitFormFields({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => appendSessionQuestion({ id: Date.now().toString(), type: "text", question: "", options: [], required: true })}
+                onClick={() => appendSessionQuestion({ id: crypto.randomUUID(), type: "text", question: "", options: [], required: true })}
                 disabled={isSubmitting}
               >
                 <Plus className="mr-1 h-4 w-4" />

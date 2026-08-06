@@ -400,21 +400,51 @@ export function ToolkitFormFields({
                   <FormField
                     control={control}
                     name={`sessionQuestions.${index}.options`}
-                    render={({ field: optField }) => (
-                      <FormItem>
-                        <FormLabel>Options (comma-separated)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Option A, Option B, Option C" 
-                            value={optField.value?.join(", ") ?? ""} 
-                            onChange={(e) => {
-                              optField.onChange(e.target.value.split(",").map(v => v.trim()).filter(Boolean));
-                            }} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field: optField }) => {
+                      const options = Array.isArray(optField.value) ? optField.value : [];
+                      return (
+                        <FormItem>
+                          <FormLabel>Options</FormLabel>
+                          <div className="space-y-2">
+                            {options.map((opt: string, optIndex: number) => (
+                              <div key={optIndex} className="flex items-center gap-2">
+                                <Input
+                                  value={opt}
+                                  placeholder={`Option ${optIndex + 1}`}
+                                  onChange={(e) => {
+                                    const newOpts = [...options];
+                                    newOpts[optIndex] = e.target.value;
+                                    optField.onChange(newOpts);
+                                  }}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const newOpts = options.filter((_, i) => i !== optIndex);
+                                    optField.onChange(newOpts);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                              </div>
+                            ))}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                optField.onChange([...options, ""]);
+                              }}
+                            >
+                              <Plus className="mr-1 h-4 w-4" /> Add Option
+                            </Button>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
                 )}
 

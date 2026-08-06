@@ -91,6 +91,10 @@ const updateToolkitSchema = z.object({
     })
     .nullable()
     .optional(),
+  sessionWhatsappLink: z.string().optional().nullable(),
+  sessionMeetLink: z.string().optional().nullable(),
+  sessionDate: z.string().optional().nullable(),
+  sessionQuestions: z.array(z.any()).optional().nullable(),
 });
 
 export async function PUT(
@@ -199,8 +203,25 @@ export async function PUT(
       updates.isLimitedSeats = validatedData.isLimitedSeats;
     if (validatedData.digitalProductSectionId !== undefined)
       updates.digitalProductSectionId = validatedData.digitalProductSectionId;
-    if (validatedData.mentorshipDetails !== undefined)
+    if (validatedData.mentorshipDetails !== undefined) {
       updates.mentorshipDetails = validatedData.mentorshipDetails;
+    }
+
+    if (validatedData.sessionWhatsappLink !== undefined) {
+      updates.sessionWhatsappLink = validatedData.sessionWhatsappLink;
+    }
+
+    if (validatedData.sessionMeetLink !== undefined) {
+      updates.sessionMeetLink = validatedData.sessionMeetLink;
+    }
+
+    if (validatedData.sessionDate !== undefined) {
+      updates.sessionDate = validatedData.sessionDate ? new Date(validatedData.sessionDate) : null;
+    }
+
+    if (validatedData.sessionQuestions !== undefined) {
+      updates.sessionQuestions = validatedData.sessionQuestions;
+    }
 
     const updatedToolkit = await db
       .update(toolkits)

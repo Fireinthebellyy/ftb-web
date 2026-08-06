@@ -167,6 +167,10 @@ export async function POST(request: Request) {
         isLimitedSeats: isLimitedSeats ?? false,
         digitalProductSectionId: digitalProductSectionId || null,
         mentorshipDetails: mentorshipDetails || null,
+        sessionWhatsappLink: body.sessionWhatsappLink || null,
+        sessionMeetLink: body.sessionMeetLink || null,
+        sessionDate: body.sessionDate ? new Date(body.sessionDate) : null,
+        sessionQuestions: body.sessionQuestions || null,
         userId: user.currentUser.id,
       })
       .returning();

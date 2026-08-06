@@ -52,10 +52,13 @@ export default function CohortDashboardPage() {
 
   const sessions = useMemo(() => cohortData?.sessions ?? [], [cohortData]);
 
-  // Auto-select first session
+  // Auto-select first accessible session
   useEffect(() => {
     if (sessions.length > 0 && !currentSessionId) {
-      setCurrentSessionId(sessions[0].id);
+      const firstAccessibleSession = sessions.find((s: any) => s.isAccessible);
+      if (firstAccessibleSession) {
+        setCurrentSessionId(firstAccessibleSession.id);
+      }
     }
   }, [sessions, currentSessionId]);
 
@@ -300,6 +303,10 @@ function CohortSessionMain({
   const [editQuestionText, setEditQuestionText] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [queryToDelete, setQueryToDelete] = useState<string | null>(null);
+
+  // Get only accessible sessions for navigation
+  const accessibleSessions = sessions.filter((s: any) => s.isAccessible);
+  const currentAccessibleIndex = accessibleSessions.findIndex((s: any) => s.id === sessionId);
 
   // Fetch user's queries for this session
   const { data: userQueries, isLoading: _isLoadingQueries, refetch: refetchQueries } = useQuery({
@@ -827,24 +834,22 @@ function CohortSessionMain({
         <Button
           variant="outline"
           onClick={() => {
-            const currentIndex = sessions.findIndex(s => s.id === sessionId);
-            if (currentIndex > 0) {
-              onSessionSelect(sessions[currentIndex - 1].id);
+            if (currentAccessibleIndex > 0) {
+              onSessionSelect(accessibleSessions[currentAccessibleIndex - 1].id);
             }
           }}
-          disabled={sessions.findIndex(s => s.id === sessionId) === 0}
+          disabled={currentAccessibleIndex <= 0}
           className="w-auto"
         >
           Previous Session
         </Button>
         <Button
           onClick={() => {
-            const currentIndex = sessions.findIndex(s => s.id === sessionId);
-            if (currentIndex < sessions.length - 1) {
-              onSessionSelect(sessions[currentIndex + 1].id);
+            if (currentAccessibleIndex < accessibleSessions.length - 1) {
+              onSessionSelect(accessibleSessions[currentAccessibleIndex + 1].id);
             }
           }}
-          disabled={sessions.findIndex(s => s.id === sessionId) === sessions.length - 1}
+          disabled={currentAccessibleIndex >= accessibleSessions.length - 1}
           className="w-auto"
         >
           Next Session

@@ -91,6 +91,18 @@ const updateToolkitSchema = z.object({
     })
     .nullable()
     .optional(),
+  sessionWhatsappLink: z.string().url("Must be a valid URL").optional().nullable().or(z.literal("")),
+  sessionMeetLink: z.string().url("Must be a valid URL").optional().nullable().or(z.literal("")),
+  sessionDate: z.string().datetime({ message: "Invalid datetime string" }).optional().nullable(),
+  sessionQuestions: z.array(
+    z.object({
+      id: z.string().min(1),
+      type: z.enum(["text", "mcq", "file"]),
+      question: z.string().min(1),
+      options: z.array(z.string()).optional(),
+      required: z.boolean().optional(),
+    })
+  ).optional().nullable(),
 });
 
 export async function PUT(
@@ -199,8 +211,25 @@ export async function PUT(
       updates.isLimitedSeats = validatedData.isLimitedSeats;
     if (validatedData.digitalProductSectionId !== undefined)
       updates.digitalProductSectionId = validatedData.digitalProductSectionId;
-    if (validatedData.mentorshipDetails !== undefined)
+    if (validatedData.mentorshipDetails !== undefined) {
       updates.mentorshipDetails = validatedData.mentorshipDetails;
+    }
+
+    if (validatedData.sessionWhatsappLink !== undefined) {
+      updates.sessionWhatsappLink = validatedData.sessionWhatsappLink;
+    }
+
+    if (validatedData.sessionMeetLink !== undefined) {
+      updates.sessionMeetLink = validatedData.sessionMeetLink;
+    }
+
+    if (validatedData.sessionDate !== undefined) {
+      updates.sessionDate = validatedData.sessionDate ? new Date(validatedData.sessionDate) : null;
+    }
+
+    if (validatedData.sessionQuestions !== undefined) {
+      updates.sessionQuestions = validatedData.sessionQuestions as any;
+    }
 
     const updatedToolkit = await db
       .update(toolkits)

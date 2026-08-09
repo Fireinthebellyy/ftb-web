@@ -57,6 +57,18 @@ export const toolkitFormSchema = z.object({
   isBestSeller: z.boolean().optional(),
   isLimitedSeats: z.boolean().optional(),
   digitalProductSectionId: z.string().uuid().optional().or(z.literal("")),
+  sessionWhatsappLink: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  sessionMeetLink: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  sessionDate: z.date().optional(),
+  sessionQuestions: z.array(
+    z.object({
+      id: z.string().min(1),
+      type: z.enum(["text", "mcq", "file"]),
+      question: z.string().min(1),
+      options: z.array(z.string()).optional(),
+      required: z.boolean().optional(),
+    })
+  ).optional(),
 });
 
 export type ToolkitFormValues = z.infer<typeof toolkitFormSchema>;
@@ -125,4 +137,8 @@ export interface Toolkit {
   isLimitedSeats: boolean;
   digitalProductSectionId: string | null;
   digitalProductSectionTitle?: string | null;
+  sessionWhatsappLink?: string | null;
+  sessionMeetLink?: string | null;
+  sessionDate?: string | Date | null;
+  sessionQuestions?: any[] | null;
 }

@@ -14,14 +14,17 @@ import {
   RefreshCw,
   Trash2,
   Copy,
+  ClipboardList,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import ToolkitCommunityManager from "./ToolkitCommunityManager";
 import ToolkitContentManager from "./ToolkitContentManager";
-import { MentorshipCarouselManager } from "@/components/admin/MentorshipCarouselManager";
 import { TestimonialCarouselManager } from "@/components/admin/TestimonialCarouselManager";
+import { MentorshipCarouselManager } from "@/components/admin/MentorshipCarouselManager";
+import ToolkitTabsEditDialog from "./ToolkitTabsEditDialog";
+import SessionApplicationsManager from "@/components/admin/SessionApplicationsManager";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
 import { AdminTableState } from "@/components/admin/AdminTableState";
 import { AdminTabLayout } from "@/components/admin/AdminTabLayout";
@@ -73,6 +76,8 @@ export default function AdminToolkitsTable() {
   const [managingToolkit, setManagingToolkit] = useState<Toolkit | null>(null);
   const [managingCommunityToolkit, setManagingCommunityToolkit] =
     useState<Toolkit | null>(null);
+  const [sessionApplicationsOpen, setSessionApplicationsOpen] = useState(false);
+  const [managingSessionToolkit, setManagingSessionToolkit] = useState<Toolkit | null>(null);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [bannerImageFile, setBannerImageFile] = useState<File | null>(null);
   const [updatingActiveToolkitIds, setUpdatingActiveToolkitIds] = useState<Set<string>>(new Set());
@@ -192,6 +197,10 @@ export default function AdminToolkitsTable() {
         isActive: toolkit.isActive,
         showSaleBadge: toolkit.showSaleBadge,
         digitalProductSectionId: toolkit.digitalProductSectionId ?? "",
+        sessionWhatsappLink: toolkit.sessionWhatsappLink ?? "",
+        sessionMeetLink: toolkit.sessionMeetLink ?? "",
+        sessionDate: toolkit.sessionDate ? new Date(toolkit.sessionDate) : undefined,
+        sessionQuestions: toolkit.sessionQuestions ?? [],
       });
       setCoverImageFile(null);
       setBannerImageFile(null);
@@ -241,6 +250,8 @@ export default function AdminToolkitsTable() {
         uploadedKeys.push(uploadedBanner.key);
       }
 
+      const isSession = data.category === "sessions";
+
       const cleanedData = {
         ...data,
         description: normalizeRichText(data.description),
@@ -264,6 +275,10 @@ export default function AdminToolkitsTable() {
               message: item.message.trim(),
             }))
           : undefined,
+        sessionWhatsappLink: isSession ? (data.sessionWhatsappLink?.trim() || null) : null,
+        sessionMeetLink: isSession ? (data.sessionMeetLink?.trim() || null) : null,
+        sessionDate: isSession ? (data.sessionDate ? data.sessionDate.toISOString() : null) : null,
+        sessionQuestions: isSession ? (data.sessionQuestions?.length ? data.sessionQuestions : null) : null,
       };
 
       await updateToolkitMutation.mutateAsync({
@@ -569,6 +584,19 @@ export default function AdminToolkitsTable() {
               >
                 <FolderCog className="h-4 w-4" />
               </Button>
+              {toolkit.category === "sessions" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setManagingSessionToolkit(toolkit);
+                    setSessionApplicationsOpen(true);
+                  }}
+                  title="View Applications"
+                >
+                  <ClipboardList className="h-4 w-4" />
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
@@ -645,6 +673,7 @@ export default function AdminToolkitsTable() {
           <Button variant="outline" className="gap-2 bg-white" onClick={() => setTestimonialManagerOpen(true)}>
             Testimonial Images
           </Button>
+          <ToolkitTabsEditDialog />
           <NewBundleModal
             onSuccess={() =>
               queryClient.invalidateQueries({ queryKey: ["admin", "toolkits"] })
@@ -770,6 +799,13 @@ export default function AdminToolkitsTable() {
           onClose={() => setCommunityManagerOpen(false)}
         />
       ) : null}
+      {managingSessionToolkit && (
+        <SessionApplicationsManager
+          toolkit={managingSessionToolkit}
+          open={sessionApplicationsOpen}
+          onOpenChange={setSessionApplicationsOpen}
+        />
+      )}
       <MentorshipCarouselManager 
         open={carouselManagerOpen} 
         onClose={() => setCarouselManagerOpen(false)} 

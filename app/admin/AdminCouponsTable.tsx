@@ -2,7 +2,7 @@
 /* eslint-disable max-lines */
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
@@ -117,17 +117,27 @@ export default function AdminCouponsTable() {
   const [selectedCouponIds, setSelectedCouponIds] = useState<string[]>([]);
   const queryClient = useQueryClient();
 
-  const { data: buddyOfferEnabled } = useQuery({
+  const { data: buddySettings } = useQuery({
     queryKey: ["admin", "settings", "buddy-offer"],
     queryFn: async () => {
       const res = await axios.get("/api/admin/settings/buddy-offer");
-      return res.data.isBuddyOfferEnabled;
+      return res.data;
     },
   });
 
-  const toggleBuddyOfferMutation = useMutation({
-    mutationFn: async (enabled: boolean) => {
-      await axios.patch("/api/admin/settings/buddy-offer", { isBuddyOfferEnabled: enabled });
+  const [localBuddyTitle, setLocalBuddyTitle] = useState("");
+  const [localBuddyText, setLocalBuddyText] = useState("");
+
+  useEffect(() => {
+    if (buddySettings) {
+      setLocalBuddyTitle(buddySettings.buddyOfferTitle ?? "Friendship Day Offer");
+      setLocalBuddyText(buddySettings.buddyOfferText ?? "Learning is better together! Enter your friend's email below so they can get access that too at 20% off");
+    }
+  }, [buddySettings]);
+
+  const updateBuddyOfferMutation = useMutation({
+    mutationFn: async (payload: { isBuddyOfferEnabled: boolean, buddyOfferTitle: string, buddyOfferText: string }) => {
+      await axios.patch("/api/admin/settings/buddy-offer", payload);
     },
     onSuccess: () => {
       toast.success("Buddy Offer setting updated");
@@ -527,20 +537,48 @@ export default function AdminCouponsTable() {
         </p>
       }
     >
-      <div className="mb-6 flex items-center justify-between rounded-lg border p-4 shadow-sm bg-card">
-        <div className="space-y-0.5">
-          <Label className="text-base font-semibold">Global Buddy Discount</Label>
-          <p className="text-sm text-muted-foreground">
-            When enabled, the buddy discount is active all over the website on all courses.
-          </p>
+      <div className="mb-6 flex flex-col gap-4 rounded-lg border p-4 shadow-sm bg-card">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label className="text-base font-semibold">Global Buddy Discount</Label>
+            <p className="text-sm text-muted-foreground">
+              When enabled, the buddy discount is active all over the website on all courses.
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              checked={!!buddySettings?.isBuddyOfferEnabled}
+              onCheckedChange={(checked) => updateBuddyOfferMutation.mutate({ isBuddyOfferEnabled: checked, buddyOfferTitle: localBuddyTitle, buddyOfferText: localBuddyText })}
+              disabled={!buddySettings || updateBuddyOfferMutation.isPending}
+            />
+            <Label>{buddySettings?.isBuddyOfferEnabled ? "Enabled" : "Disabled"}</Label>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <Switch
-            checked={!!buddyOfferEnabled}
-            onCheckedChange={(checked) => toggleBuddyOfferMutation.mutate(checked)}
-            disabled={toggleBuddyOfferMutation.isPending}
-          />
-          <Label>{buddyOfferEnabled ? "Enabled" : "Disabled"}</Label>
+
+        <div className="space-y-3 pt-4 border-t">
+          <div className="space-y-1.5">
+            <Label htmlFor="buddyOfferTitle">Buddy Offer Title</Label>
+            <Input 
+              id="buddyOfferTitle"
+              value={localBuddyTitle} 
+              onChange={(e) => setLocalBuddyTitle(e.target.value)} 
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="buddyOfferText">Buddy Offer Text</Label>
+            <Textarea 
+              id="buddyOfferText"
+              value={localBuddyText} 
+              onChange={(e) => setLocalBuddyText(e.target.value)} 
+            />
+          </div>
+          <Button 
+            size="sm" 
+            onClick={() => updateBuddyOfferMutation.mutate({ isBuddyOfferEnabled: buddySettings?.isBuddyOfferEnabled ?? false, buddyOfferTitle: localBuddyTitle, buddyOfferText: localBuddyText })}
+            disabled={!buddySettings || updateBuddyOfferMutation.isPending}
+          >
+            Save Texts
+          </Button>
         </div>
       </div>
 

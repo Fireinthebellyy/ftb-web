@@ -472,6 +472,10 @@ export const toolkits = pgTable("toolkits", {
     () => digitalProductSections.id,
     { onDelete: "set null" }
   ),
+  sessionWhatsappLink: text("session_whatsapp_link"),
+  sessionMeetLink: text("session_meet_link"),
+  sessionDate: timestamp("session_date"),
+  sessionQuestions: jsonb("session_questions").$type<SessionQuestion[]>().default([]),
 });
 
 export const toolkitContentItemTypeEnum = pgEnum("toolkit_content_item_type", [
@@ -502,6 +506,28 @@ export const toolkitContentItems = pgTable("toolkit_content_items", {
   orderIndex: integer("order_index").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export interface SessionQuestion {
+  id: string;
+  type: "text" | "mcq" | "file";
+  question: string;
+  options?: string[];
+  required?: boolean;
+}
+
+export type SessionAnswers = Record<string, string>;
+
+export const sessionApplications = pgTable("session_applications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  toolkitId: uuid("toolkit_id")
+    .notNull()
+    .references(() => toolkits.id, { onDelete: "cascade" }),
+  answers: jsonb("answers").$type<SessionAnswers>().notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export interface ToolkitCommunityOption {
@@ -991,6 +1017,12 @@ export const cohortSessionMentorsRelations = relations(cohortSessionMentors, ({ 
 export const siteSettings = pgTable("site_settings", {
   id: text("id").primaryKey(), // "global"
   isBuddyOfferEnabled: boolean("is_buddy_offer_enabled").default(false),
+  buddyOfferTitle: text("buddy_offer_title").default("Friendship Day Offer"),
+  buddyOfferText: text("buddy_offer_text").default("Learning is better together! Enter your friend's email below so they can get access that too at 20% off"),
+  toolkitCohortsTabLabel: text("toolkit_cohorts_tab_label").default("Live Cohorts"),
+  toolkitSessionsTabLabel: text("toolkit_sessions_tab_label").default("Sessions"),
+  toolkitMentorshipTabLabel: text("toolkit_mentorship_tab_label").default("1:1 Mentorship"),
+  toolkitDigitalProductsTabLabel: text("toolkit_digital_products_tab_label").default("Digital products"),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
@@ -1059,5 +1091,6 @@ export const schema = {
   cohortSessionMentors,
   siteSettings,
   popups,
+  sessionApplications,
 };
 

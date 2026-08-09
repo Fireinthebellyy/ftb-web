@@ -122,6 +122,8 @@ export default function CohortLandingPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showSeatsPop, setShowSeatsPop] = useState(false);
   const [isBuddyOfferGlobalEnabled, setIsBuddyOfferGlobalEnabled] = useState(false);
+  const [buddyOfferTitle, setBuddyOfferTitle] = useState("Friendship Day Offer");
+  const [buddyOfferText, setBuddyOfferText] = useState("Learning is better together! Enter your friend's email below so they can get access that too at 20% off");
 
   // Upsell Modal / Bottom Sheet selections
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -241,6 +243,8 @@ export default function CohortLandingPage() {
       try {
         const response = await axios.get("/api/settings");
         setIsBuddyOfferGlobalEnabled(response.data.isBuddyOfferEnabled);
+        if (response.data.buddyOfferTitle) setBuddyOfferTitle(response.data.buddyOfferTitle);
+        if (response.data.buddyOfferText) setBuddyOfferText(response.data.buddyOfferText);
       } catch (err) {
         console.error("Failed to load buddy settings", err);
       }
@@ -1161,7 +1165,7 @@ export default function CohortLandingPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <Gift className="w-3.5 h-3.5 text-[#ff5e14]" /> Friendship Day Offer
+                      <Gift className="w-3.5 h-3.5 text-[#ff5e14]" /> {buddyOfferTitle}
                     </h4>
                     <span className="text-[#ff5e14] text-[9px] font-bold uppercase tracking-wider">
                       Optional Referral
@@ -1170,7 +1174,7 @@ export default function CohortLandingPage() {
                   <div className="relative group overflow-hidden p-[1.5px] rounded-xl bg-gradient-to-r from-orange-300 via-[#ff5e14] to-yellow-400 animate-gradient hover:shadow-[0_0_15px_rgba(255,94,20,0.25)] transition-all duration-300">
                     <div className="relative bg-white/95 backdrop-blur-sm p-3 rounded-[10px] space-y-2 z-10 h-full">
                       <p className="text-[11px] text-gray-600 font-medium leading-relaxed">
-                        Learning is better together! Enter your friend&apos;s email below so they can get access that too at 20% off
+                        {buddyOfferText}
                       </p>
                       <div className="relative">
                         <input

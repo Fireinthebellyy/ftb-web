@@ -139,6 +139,8 @@ export default function NewToolkitModal({
         uploadedKeys.push(uploadedMentor.key);
       }
 
+      const isSession = data.category === "sessions";
+
       const cleanedData = {
         ...data,
         description: normalizeRichText(data.description),
@@ -164,6 +166,10 @@ export default function NewToolkitModal({
               message: item.message.trim(),
             }))
           : undefined,
+        sessionWhatsappLink: isSession ? (data.sessionWhatsappLink?.trim() || undefined) : undefined,
+        sessionMeetLink: isSession ? (data.sessionMeetLink?.trim() || undefined) : undefined,
+        sessionDate: isSession && data.sessionDate ? data.sessionDate.toISOString() : undefined,
+        sessionQuestions: isSession && data.sessionQuestions?.length ? data.sessionQuestions : undefined,
       };
 
       const response = await axios.post("/api/toolkits", cleanedData);

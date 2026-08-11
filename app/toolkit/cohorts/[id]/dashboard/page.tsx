@@ -111,7 +111,7 @@ export default function CohortDashboardPage() {
             </div>
             <h2 className="mb-2 text-2xl font-bold text-gray-900">Access Locked</h2>
             <p className="mb-6 text-sm text-gray-600">
-              The Cohort will be starting from 15th August, you will get added in our exclusive community by 12th August & the cohort dashboard will unlock within a week.
+              The Cohort will be starting from 15th August, you will get added in our exclusive community by 13th August & the cohort dashboard will unlock within a week.
             </p>
             <Button onClick={() => router.push("/")} className="w-full mb-3">
               Back to Home

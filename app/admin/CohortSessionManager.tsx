@@ -1329,31 +1329,37 @@ export default function CohortSessionManager({
                     <FormItem>
                       <FormLabel>Link to Cohort Mentor (Optional)</FormLabel>
                       <FormControl>
-                        <select
-                          className="border rounded px-3 py-2 w-full bg-white"
-                          value={field.value || ""}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            field.onChange(val);
-                            if (val) {
-                              const selected = cohortMentors.find(m => m.id === val);
-                              if (selected) {
-                                mentorForm.setValue("name", selected.name || "");
-                                mentorForm.setValue("role", selected.role || "");
-                                mentorForm.setValue("imageUrl", selected.imageUrl || "");
-                                mentorForm.setValue("bio", selected.bio || "");
-                                mentorForm.setValue("linkedinUrl", selected.link || "");
+                        {cohortMentors.length === 0 ? (
+                          <p className="text-xs text-muted-foreground py-2 px-3 border rounded bg-gray-50">
+                            No mentors found for this cohort. Add mentors in the cohort&apos;s &quot;Meet your mentors&quot; section first, then they will appear here.
+                          </p>
+                        ) : (
+                          <select
+                            className="border rounded px-3 py-2 w-full bg-white"
+                            value={field.value || ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              field.onChange(val);
+                              if (val) {
+                                const selected = cohortMentors.find(m => m.id === val);
+                                if (selected) {
+                                  mentorForm.setValue("name", selected.name || "");
+                                  mentorForm.setValue("role", selected.role || "");
+                                  mentorForm.setValue("imageUrl", selected.imageUrl || "");
+                                  mentorForm.setValue("bio", selected.bio || "");
+                                  mentorForm.setValue("linkedinUrl", selected.link || "");
+                                }
                               }
-                            }
-                          }}
-                        >
-                          <option value="">-- Select Cohort Mentor (or fill details below manually) --</option>
-                          {cohortMentors.map((m) => (
-                            <option key={m.id} value={m.id}>
-                              {m.name} ({m.role})
-                            </option>
-                          ))}
-                        </select>
+                            }}
+                          >
+                            <option value="">-- Select Cohort Mentor (or fill details below manually) --</option>
+                            {cohortMentors.map((m) => (
+                              <option key={m.id} value={m.id}>
+                                {m.name} ({m.role})
+                              </option>
+                            ))}
+                          </select>
+                        )}
                       </FormControl>
                       <FormMessage />
                     </FormItem>

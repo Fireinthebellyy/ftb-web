@@ -968,8 +968,7 @@ export const cohortSessionQueries = pgTable("cohort_session_queries", {
 export const cohortSessionMentors = pgTable("cohort_session_mentors", {
   id: uuid("id").primaryKey().defaultRandom(),
   contentId: uuid("content_id").notNull().references(() => cohortSessionContents.id, { onDelete: "cascade" }),
-  cohortMentorId: uuid("cohort_mentor_id").references(() => cohortMentors.id, { onDelete: "set null" }),
-  name: text("name"),
+  name: text("name").notNull(),
   role: text("role"),
   imageUrl: text("image_url"),
   bio: text("bio"),
@@ -1011,10 +1010,6 @@ export const cohortSessionMentorsRelations = relations(cohortSessionMentors, ({ 
   content: one(cohortSessionContents, {
     fields: [cohortSessionMentors.contentId],
     references: [cohortSessionContents.id],
-  }),
-  cohortMentor: one(cohortMentors, {
-    fields: [cohortSessionMentors.cohortMentorId],
-    references: [cohortMentors.id],
   }),
 }));
 
@@ -1094,11 +1089,6 @@ export const schema = {
   cohortSessionResources,
   cohortSessionQueries,
   cohortSessionMentors,
-  cohortSessionsRelations,
-  cohortSessionContentsRelations,
-  cohortSessionResourcesRelations,
-  cohortSessionQueriesRelations,
-  cohortSessionMentorsRelations,
   siteSettings,
   popups,
   sessionApplications,

@@ -76,7 +76,7 @@ const mentorSchema = z.object({
   linkedinUrl: z.string().optional(),
   otherLinks: z.array(z.object({ title: z.string(), url: z.string() })).optional(),
   orderIndex: z.coerce.number().int().min(0).default(0),
-}).refine(data => data.cohortMentorId || data.name, {
+}).refine(data => data.cohortMentorId || data.name?.trim(), {
   message: "Mentor name is required when not selecting a cohort mentor",
   path: ["name"],
 });
@@ -144,6 +144,18 @@ interface CohortSessionResource {
   type: "file" | "video" | "link" | "image" | "pdf" | "ppt";
   orderIndex: number;
   createdAt: string;
+}
+
+interface CohortMentor {
+  id: string;
+  cohortId: string | null;
+  name: string;
+  role: string;
+  imageUrl: string | null;
+  bio: string | null;
+  link: string | null;
+  orderIndex: number | null;
+  createdAt: string | null;
 }
 
 interface CohortSessionManagerProps {
@@ -215,7 +227,7 @@ export default function CohortSessionManager({
     },
   });
 
-  const [cohortMentors, setCohortMentors] = useState<any[]>([]);
+  const [cohortMentors, setCohortMentors] = useState<CohortMentor[]>([]);
 
   const mentorForm = useForm<MentorFormValues>({
     resolver: zodResolver(mentorSchema),
@@ -262,16 +274,22 @@ export default function CohortSessionManager({
   }, [fetchSessions]);
 
   useEffect(() => {
+    let active = true;
     const fetchCohortDetails = async () => {
       if (!cohortId || !open) return;
       try {
         const response = await axios.get(`/api/admin/cohorts/${cohortId}`);
-        setCohortMentors(response.data.mentors || []);
+        if (active) {
+          setCohortMentors(response.data.mentors || []);
+        }
       } catch (error) {
         console.error("Error fetching cohort details for mentors:", error);
       }
     };
     fetchCohortDetails();
+    return () => {
+      active = false;
+    };
   }, [cohortId, open]);
 
   const handleEditSession = (session: CohortSession) => {
@@ -1312,7 +1330,7 @@ export default function CohortSessionManager({
                       <FormLabel>Link to Cohort Mentor (Optional)</FormLabel>
                       <FormControl>
                         <select
-                          className="w-full border rounded px-3 py-2 bg-white"
+                          className="border rounded px-3 py-2 w-full bg-white"
                           value={field.value || ""}
                           onChange={(e) => {
                             const val = e.target.value;

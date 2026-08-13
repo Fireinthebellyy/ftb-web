@@ -437,10 +437,10 @@ function CohortSessionMain({
                       href={content.liveSessionLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-3 w-full sm:w-auto rounded-xl bg-orange-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-orange-600/20 hover:bg-orange-700 transition-all duration-300 hover:shadow-xl hover:shadow-orange-600/30 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                      className="inline-flex items-center justify-center gap-3 px-6 py-3.5 w-full sm:w-auto text-sm font-semibold rounded-xl bg-orange-600 text-white shadow-lg shadow-orange-600/20 transition-all duration-300 hover:bg-orange-700 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-orange-600/30 active:translate-y-0 cursor-pointer"
                     >
                       <span className="relative flex h-3.5 w-3.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                        <span className="animate-ping motion-reduce:animate-none absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-400"></span>
                       </span>
                       <span>Join Live Session</span>

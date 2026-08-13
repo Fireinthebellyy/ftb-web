@@ -3,8 +3,9 @@ import { badRequest } from "@/lib/api-error";
 import { logAdminActivity } from "@/lib/admin-activity";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { db } from "@/lib/db";
-import { cohortSessionMentors } from "@/lib/schema";
+import { cohortMentors, cohortSessionContents, cohortSessions, cohortSessionMentors } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
+import { eq } from "drizzle-orm";
 
 export async function POST(request: Request) {
   let activityStatus = 500;
@@ -55,6 +56,31 @@ export async function POST(request: Request) {
         code: "MISSING_REQUIRED_FIELDS",
         fields: ["name"],
       });
+    }
+
+    // Enforce cohort ownership when linking to a cohort mentor
+    if (cohortMentorId?.trim()) {
+      const [content] = await db
+        .select({ cohortId: cohortSessions.cohortId })
+        .from(cohortSessionContents)
+        .innerJoin(cohortSessions, eq(cohortSessionContents.sessionId, cohortSessions.id))
+        .where(eq(cohortSessionContents.id, contentId))
+        .limit(1);
+
+      const [mentor] = await db
+        .select({ cohortId: cohortMentors.cohortId })
+        .from(cohortMentors)
+        .where(eq(cohortMentors.id, cohortMentorId))
+        .limit(1);
+
+      if (!content || !mentor || content.cohortId !== mentor.cohortId) {
+        activityStatus = 400;
+        activityError = "Cohort mentor does not belong to this cohort";
+        return badRequest("The selected mentor does not belong to this cohort.", {
+          code: "COHORT_MISMATCH",
+          fields: ["cohortMentorId"],
+        });
+      }
     }
 
     const newMentor = await db

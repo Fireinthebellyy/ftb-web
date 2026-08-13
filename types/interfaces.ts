@@ -367,7 +367,7 @@ export type CohortSessionQuery = {
   updatedAt: string;
 };
 
-export type CohortSessionMentor = {
+export interface CohortSessionMentor {
   id: string;
   contentId: string;
   cohortMentorId?: string | null;
@@ -379,7 +379,7 @@ export type CohortSessionMentor = {
   otherLinks?: { title: string; url: string }[] | null;
   orderIndex: number;
   createdAt: string;
-};
+}
 
 export type CohortDetailResponse = {
   cohort: { id: string; title: string };

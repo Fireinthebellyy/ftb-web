@@ -72,9 +72,6 @@ export async function GET(
     const mentors = await db.query.cohortSessionMentors.findMany({
       where: (cohortSessionMentors, { inArray }) =>
         inArray(cohortSessionMentors.contentId, contentIds),
-      with: {
-        cohortMentor: true,
-      },
       orderBy: (cohortSessionMentors, { asc }) => [asc(cohortSessionMentors.orderIndex)],
     });
     const resources = await db.query.cohortSessionResources.findMany({
@@ -89,17 +86,7 @@ export async function GET(
       if (!mentorsByContent.has(mentor.contentId)) {
         mentorsByContent.set(mentor.contentId, []);
       }
-      
-      const resolvedMentor = {
-        ...mentor,
-        name: mentor.cohortMentor?.name ?? mentor.name,
-        role: mentor.cohortMentor?.role ?? mentor.role,
-        imageUrl: mentor.cohortMentor?.imageUrl ?? mentor.imageUrl,
-        bio: mentor.cohortMentor?.bio ?? mentor.bio,
-        linkedinUrl: mentor.cohortMentor?.link ?? mentor.linkedinUrl,
-      };
-
-      mentorsByContent.get(mentor.contentId).push(resolvedMentor);
+      mentorsByContent.get(mentor.contentId).push(mentor);
     }
     const resourcesByContent = new Map();
     for (const resource of resources) {

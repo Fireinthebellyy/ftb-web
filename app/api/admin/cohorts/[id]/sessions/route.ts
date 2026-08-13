@@ -49,29 +49,14 @@ export async function GET(
         .orderBy(asc(cohortSessionContents.createdAt));
     }
 
-    // Fetch mentors for all contents, resolving linked cohort mentor fields
-    type ResolvedMentor = typeof cohortSessionMentors.$inferSelect & {
-      name: string | null;
-      role: string | null;
-      imageUrl: string | null;
-      bio: string | null;
-      linkedinUrl: string | null;
-    };
-    let allMentors: ResolvedMentor[] = [];
+    // Fetch mentors for all contents
+    let allMentors: (typeof cohortSessionMentors.$inferSelect)[] = [];
     if (allContents.length > 0) {
-      const rawMentors = await db.query.cohortSessionMentors.findMany({
-        where: (csm, { inArray }) => inArray(csm.contentId, allContents.map(c => c.id)),
-        with: { cohortMentor: true },
-        orderBy: (csm, { asc }) => [asc(csm.orderIndex)],
-      });
-      allMentors = rawMentors.map(m => ({
-        ...m,
-        name: m.cohortMentor?.name ?? m.name,
-        role: m.cohortMentor?.role ?? m.role,
-        imageUrl: m.cohortMentor?.imageUrl ?? m.imageUrl,
-        bio: m.cohortMentor?.bio ?? m.bio,
-        linkedinUrl: m.cohortMentor?.link ?? m.linkedinUrl,
-      }));
+      allMentors = await db
+        .select()
+        .from(cohortSessionMentors)
+        .where(inArray(cohortSessionMentors.contentId, allContents.map(c => c.id)))
+        .orderBy(asc(cohortSessionMentors.orderIndex));
     }
 
     // Fetch resources for all contents

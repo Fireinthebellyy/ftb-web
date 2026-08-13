@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   Check,
   ChevronRight,
@@ -115,6 +115,7 @@ interface CohortData {
 export default function CohortLandingPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const cohortId = params.id as string;
   const { data: session, isPending: sessionPending } = useSession();
 
@@ -124,6 +125,8 @@ export default function CohortLandingPage() {
   const [isBuddyOfferGlobalEnabled, setIsBuddyOfferGlobalEnabled] = useState(false);
   const [buddyOfferTitle, setBuddyOfferTitle] = useState("Friendship Day Offer");
   const [buddyOfferText, setBuddyOfferText] = useState("Learning is better together! Enter your friend's email below so they can get access that too at 20% off");
+  const [purchasedSessionIds, setPurchasedSessionIds] = useState<string[]>([]);
+  const [isBuyingFromLockedSession, setIsBuyingFromLockedSession] = useState(false);
 
   // Upsell Modal / Bottom Sheet selections
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -147,6 +150,13 @@ export default function CohortLandingPage() {
     setCouponError("");
     setIsApplyingCoupon(false);
   }, [selectedTierId, selectedAddonIds, buddyEmail]);
+
+  // Reset the locked session buying flag when drawer closes
+  useEffect(() => {
+    if (!isDrawerOpen) {
+      setIsBuyingFromLockedSession(false);
+    }
+  }, [isDrawerOpen]);
 
   const redirectToRegistrationIfNeeded = useCallback(async () => {
     try {
@@ -217,10 +227,13 @@ export default function CohortLandingPage() {
           setMentorCards(data.mentors);
         }
         
-        // Auto-select default tier
-        const defaultTier = data.tiers?.find((t: Tier) => t.isDefault) || data.tiers?.[0];
-        if (defaultTier) {
-          setSelectedTierId(defaultTier.id);
+        // Auto-select default tier only if not buying from locked session
+        const buySessionId = searchParams.get("buySession");
+        if (!buySessionId) {
+          const defaultTier = data.tiers?.find((t: Tier) => t.isDefault) || data.tiers?.[0];
+          if (defaultTier) {
+            setSelectedTierId(defaultTier.id);
+          }
         }
       } catch (err) {
         console.error(err);
@@ -270,6 +283,57 @@ export default function CohortLandingPage() {
       setBuyerEmail(session.user.email || "");
     }
   }, [session]);
+
+  // Handle buySession parameter - pre-select session and open checkout
+  useEffect(() => {
+    const buySessionId = searchParams.get("buySession");
+    if (buySessionId && cohort?.sessions) {
+      const sessionToBuy = cohort.sessions.find((s: Session) => s.id === buySessionId);
+      // Check if session is already purchased
+      if (purchasedSessionIds.includes(buySessionId)) {
+        toast.info("You already have access to this session");
+        router.replace(`/toolkit/cohorts/${cohortId}/dashboard`, { scroll: false });
+        return;
+      }
+      if (sessionToBuy) {
+        // Set flag that we're buying from locked session
+        setIsBuyingFromLockedSession(true);
+        // Clear all selections
+        setSelectedTierId("");
+        setSelectedAddonIds([]);
+        setSelectedToolkitIds([]);
+        // Select only this session
+        setSelectedAddonIds([buySessionId]);
+        // Open checkout drawer
+        setIsDrawerOpen(true);
+        // Remove the parameter from URL
+        router.replace(`/toolkit/cohorts/${cohortId}`, { scroll: false });
+      }
+    }
+  }, [searchParams, cohort, cohortId, router, purchasedSessionIds]);
+
+  // Fetch user's purchased sessions to disable them in checkout
+  useEffect(() => {
+    const fetchPurchasedSessions = async () => {
+      if (!session?.user || !cohortId) return;
+      
+      try {
+        const response = await axios.get(`/api/cohorts/${cohortId}/dashboard`);
+        if (response.data.hasAccess && response.data.sessions) {
+          // Get sessions that are accessible (purchased)
+          const accessibleSessionIds = response.data.sessions
+            .filter((s: any) => s.isAccessible)
+            .map((s: any) => s.id);
+          setPurchasedSessionIds(accessibleSessionIds);
+        }
+      } catch (_error) {
+        // User might not have access yet, which is fine
+        console.log("User hasn't purchased any sessions yet");
+      }
+    };
+
+    fetchPurchasedSessions();
+  }, [session, cohortId]);
 
 
 
@@ -328,6 +392,12 @@ export default function CohortLandingPage() {
 
 
   const toggleAddon = (addonId: string) => {
+    // Prevent selecting already purchased sessions
+    if (purchasedSessionIds.includes(addonId)) {
+      toast.info("You already have access to this session");
+      return;
+    }
+
     setSelectedAddonIds((prev) => {
       const isSelected = prev.includes(addonId);
       if (!isSelected) {
@@ -408,10 +478,21 @@ export default function CohortLandingPage() {
         couponCode: couponCode || null,
       });
 
+      if (response.data.error) {
+        toast.error(response.data.error);
+        setIsProcessingCheckout(false);
+        return;
+      }
+
       if (response.data.free) {
         toast.success("Registration Successful! Welcome to the cohort.");
         setIsDrawerOpen(false);
-        router.push(`/toolkit/cohorts/${cohortId}/registration`);
+        // Only redirect to dashboard if buying from locked session, otherwise normal flow
+        if (isBuyingFromLockedSession) {
+          router.push(`/toolkit/cohorts/${cohortId}/dashboard`);
+        } else {
+          router.push(`/toolkit/cohorts/${cohortId}/registration`);
+        }
         setIsProcessingCheckout(false);
         return;
       }
@@ -461,7 +542,12 @@ export default function CohortLandingPage() {
             if (verifyRes.data.success) {
               toast.success("Registration Successful! Welcome to the cohort.");
               setIsDrawerOpen(false);
-              router.push(`/toolkit/cohorts/${cohortId}/registration`);
+              // Only redirect to dashboard if buying from locked session, otherwise normal flow
+              if (isBuyingFromLockedSession) {
+                router.push(`/toolkit/cohorts/${cohortId}/dashboard`);
+              } else {
+                router.push(`/toolkit/cohorts/${cohortId}/registration`);
+              }
             } else {
               toast.error("Payment verification failed");
             }
@@ -1084,8 +1170,12 @@ export default function CohortLandingPage() {
 
             <div className="p-4 bg-gray-50 border-b flex justify-between items-center shrink-0">
               <div>
-                <Drawer.Title className="text-base font-bold">Select Your Cohort Plan</Drawer.Title>
-                <Drawer.Description className="text-xs text-gray-500">Pick packages & optional career add-ons</Drawer.Description>
+                <Drawer.Title className="text-base font-bold">
+                  {isBuyingFromLockedSession ? "Select Your Individual Sessions" : "Select Your Cohort Plan"}
+                </Drawer.Title>
+                {!isBuyingFromLockedSession && (
+                  <Drawer.Description className="text-xs text-gray-500">Pick packages & optional career add-ons</Drawer.Description>
+                )}
               </div>
               <button
                 onClick={() => setIsDrawerOpen(false)}
@@ -1096,8 +1186,8 @@ export default function CohortLandingPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-6">
-              {/* Tiers/Bundles Selection */}
-              {cohort.tiers && cohort.tiers.length > 0 && (
+              {/* Tiers/Bundles Selection - Hide when buying from locked session */}
+              {!isBuyingFromLockedSession && cohort.tiers && cohort.tiers.length > 0 && (
                 <div className="space-y-3">
                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Choose a Bundle Tier</h4>
                   <div className="space-y-2">
@@ -1160,8 +1250,8 @@ export default function CohortLandingPage() {
                 </div>
               )}
 
-              {/* Buddy Offer Card */}
-              {isBuddyOfferGlobalEnabled && (
+              {/* Buddy Offer Card - Hide when buying from locked session */}
+              {!isBuyingFromLockedSession && isBuddyOfferGlobalEnabled && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -1196,36 +1286,51 @@ export default function CohortLandingPage() {
                 <div className="space-y-3">
                   <div className="flex flex-col gap-0.5">
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Select Individual Sessions</h4>
-                    <p className="text-[10px] text-gray-500">Choosing an individual session will deselect the bundle tier.</p>
+                    {!isBuyingFromLockedSession && (
+                      <p className="text-[10px] text-gray-500">Choosing an individual session will deselect the bundle tier.</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     {cohort.sessions.filter(s => s.price && s.price > 0).map((session, index) => {
                       const isSelected = selectedAddonIds.includes(session.id);
+                      const isPurchased = purchasedSessionIds.includes(session.id);
                       return (
                         <div
                           key={session.id}
-                          onClick={() => toggleAddon(session.id)}
+                          onClick={() => !isPurchased && toggleAddon(session.id)}
                           className={cn(
-                            "border-2 rounded-xl p-3.5 cursor-pointer transition flex items-center justify-between",
+                            "border-2 rounded-xl p-3.5 transition flex items-center justify-between",
                             isSelected
                               ? "border-[#ff5e14] bg-orange-50/10"
-                              : "border-gray-200 hover:border-gray-300 bg-white"
+                              : "border-gray-200 hover:border-gray-300 bg-white",
+                            isPurchased && "opacity-50 cursor-not-allowed bg-gray-50 border-gray-200"
                           )}
                         >
                           <div className="flex gap-3 items-start">
                             <input
                               type="checkbox"
-                              checked={isSelected}
+                              checked={isSelected || isPurchased}
+                              disabled={isPurchased}
                               onChange={() => {}} // toggled by parent div
-                              className="rounded border-gray-300 text-[#ff5e14] focus:ring-[#ff5e14] mt-0.5 h-4 w-4"
+                              className="rounded border-gray-300 text-[#ff5e14] focus:ring-[#ff5e14] mt-0.5 h-4 w-4 disabled:opacity-50"
                             />
                             <div>
                               <h5 className="font-bold text-xs text-gray-900">Session {index + 1}: {session.title}</h5>
                               <p className="text-[10px] text-gray-500">{session.description}</p>
+                              {isPurchased && (
+                                <span className="text-[9px] text-green-600 font-medium block mt-1">✓ Purchased</span>
+                              )}
                             </div>
                           </div>
                           <div className="text-right whitespace-nowrap">
-                            {isDuoActive ? (
+                            {isPurchased ? (
+                              <>
+                                <span className="font-bold text-xs text-gray-400 block">₹{session.price}</span>
+                                {session.originalPrice && session.originalPrice > (session.price || 0) && (
+                                  <span className="line-through text-gray-300 text-[10px] block">₹{session.originalPrice}</span>
+                                )}
+                              </>
+                            ) : isDuoActive ? (
                               <>
                                 <span className="font-bold text-xs text-[#ff5e14] block">+ ₹{Math.round((session.price || 0) * 0.8)}</span>
                                 <span className="line-through text-gray-400 text-[10px] block">₹{session.price}</span>
@@ -1247,8 +1352,8 @@ export default function CohortLandingPage() {
                 </div>
               )}
 
-              {/* Toolkit Add-ons Selection */}
-              {cohort.showAddonsCheckout !== false && liveToolkits && liveToolkits.filter(t => t.id !== cohort.toolkitId).length > 0 && (
+              {/* Toolkit Add-ons Selection - Hide when buying from locked session */}
+              {!isBuyingFromLockedSession && cohort.showAddonsCheckout !== false && liveToolkits && liveToolkits.filter(t => t.id !== cohort.toolkitId).length > 0 && (
                 <div className="space-y-3 border-t pt-4">
                   <div className="flex flex-col gap-0.5">
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Optional Add-Ons</h4>
@@ -1296,84 +1401,87 @@ export default function CohortLandingPage() {
 
 
 
-              {/* Coupon Code */}
-              <div className="space-y-3 border-t pt-4">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Discount Coupon</h4>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <input
-                      type="text"
-                      value={couponCode}
-                      onChange={(e) => {
-                        setCouponCode(e.target.value.toUpperCase());
-                        setCouponError("");
-                        setCouponDiscount(0);
-                      }}
-                      placeholder="Enter coupon code"
-                      className="w-full px-3 py-2 pr-10 border rounded-lg text-sm uppercase"
-                    />
-                    {couponCode && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCouponCode("");
-                          setCouponDiscount(0);
+              {/* Coupon Code - Hide when buying from locked session */}
+              {!isBuyingFromLockedSession && (
+                <div className="space-y-3 border-t pt-4">
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Discount Coupon</h4>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => {
+                          setCouponCode(e.target.value.toUpperCase());
                           setCouponError("");
-                        }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!couponCode.trim()) {
-                        setCouponError("Please enter a coupon code");
-                        return;
-                      }
-                      setIsApplyingCoupon(true);
-                      setCouponError("");
-                      try {
-                        const response = await axios.post(`/api/cohorts/${cohort.id}/checkout`, {
-                          selectedTierId: selectedTierId || null,
-                          selectedAddOnIds: selectedAddonIds,
-                          selectedToolkitIds: selectedToolkitIds,
-                          buyerName,
-                          buyerEmail,
-                          buyerPhone: "",
-                          buddyEmail: buddyEmail || null,
-                          couponCode: couponCode.trim(),
-                          validateCouponOnly: true,
-                        });
-                        if (response.data.discountAmount) {
-                          setCouponDiscount(response.data.discountAmount);
-                          toast.success(`Coupon applied! ₹${response.data.discountAmount} discount`);
-                        } else {
-                          setCouponError("Invalid or expired coupon");
                           setCouponDiscount(0);
+                        }}
+                        placeholder="Enter coupon code"
+                        className="w-full px-3 py-2 pr-10 border rounded-lg text-sm uppercase"
+                      />
+                      {couponCode && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCouponCode("");
+                            setCouponDiscount(0);
+                            setCouponError("");
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!couponCode.trim()) {
+                          setCouponError("Please enter a coupon code");
+                          return;
                         }
-                      } catch (err: any) {
-                        setCouponError(err.response?.data?.error || "Invalid coupon");
-                        setCouponDiscount(0);
-                      } finally {
-                        setIsApplyingCoupon(false);
-                      }
-                    }}
-                    disabled={isApplyingCoupon}
-                    className="px-4 py-2 bg-[#ff5e14] text-white rounded-lg text-sm font-medium hover:bg-[#e04f0f] disabled:opacity-50"
-                  >
-                    {isApplyingCoupon ? <Loader2 className="w-4 h-4 animate-spin" /> : "Apply"}
-                  </button>
+                        setIsApplyingCoupon(true);
+                        setCouponError("");
+                        try {
+                          const response = await axios.post(`/api/cohorts/${cohort.id}/checkout`, {
+                            selectedTierId: selectedTierId || null,
+                            selectedAddOnIds: selectedAddonIds,
+                            selectedToolkitIds: selectedToolkitIds,
+                            buyerName,
+                            buyerEmail,
+                            buyerPhone: "",
+                            buddyEmail: buddyEmail || null,
+                            couponCode: couponCode.trim(),
+                            validateCouponOnly: true,
+                          });
+                          if (response.data.discountAmount) {
+                            setCouponDiscount(response.data.discountAmount);
+                            toast.success(`Coupon applied! ₹${response.data.discountAmount} discount`);
+                          } else {
+                            setCouponError("Invalid or expired coupon");
+                            setCouponDiscount(0);
+                          }
+                        } catch (err: any) {
+                          setCouponError(err.response?.data?.error || "Invalid coupon");
+                          setCouponDiscount(0);
+                        } finally {
+                          setIsApplyingCoupon(false);
+                        }
+                      }}
+                      disabled={isApplyingCoupon}
+                      className="px-4 py-2 bg-[#ff5e14] text-white rounded-lg text-sm font-medium hover:bg-[#e04f0f] disabled:opacity-50"
+                    >
+                      {isApplyingCoupon ? <Loader2 className="w-4 h-4 animate-spin" /> : "Apply"}
+                    </button>
+                  </div>
+                  {couponError && <p className="text-xs text-red-500">{couponError}</p>}
+                  {couponDiscount > 0 && (
+                    <p className="text-xs text-green-600 font-medium">Coupon applied: ₹{couponDiscount} discount</p>
+                  )}
                 </div>
-                {couponError && <p className="text-xs text-red-500">{couponError}</p>}
-                {couponDiscount > 0 && (
-                  <p className="text-xs text-green-600 font-medium">Coupon applied: ₹{couponDiscount} discount</p>
-                )}
-              </div>
+              )}
 
-              {/* Buyer Contact info */}
+
+              {/* Buyer Contact info - Read-only when buying from locked session */}
               <div className="space-y-3 border-t pt-4">
                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Contact Details</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1384,7 +1492,8 @@ export default function CohortLandingPage() {
                       value={buyerName}
                       onChange={(e) => setBuyerName(e.target.value)}
                       placeholder="Enter name"
-                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                      disabled={isBuyingFromLockedSession}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm ${isBuyingFromLockedSession ? 'bg-gray-50 text-gray-600' : ''}`}
                       required
                     />
                   </div>
@@ -1395,7 +1504,8 @@ export default function CohortLandingPage() {
                       value={buyerEmail}
                       onChange={(e) => setBuyerEmail(e.target.value)}
                       placeholder="Enter email"
-                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                      disabled={isBuyingFromLockedSession}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm ${isBuyingFromLockedSession ? 'bg-gray-50 text-gray-600' : ''}`}
                       required
                     />
                   </div>

@@ -168,6 +168,7 @@ export default function CohortDashboardPage() {
                 <CohortSessionSidebar
                   sessions={sessions}
                   currentSessionId={currentSessionId}
+                  cohortId={cohortId}
                   onSessionSelect={(id) => {
                     setCurrentSessionId(id);
                     setSidebarOpen(false);
@@ -209,6 +210,7 @@ export default function CohortDashboardPage() {
             <CohortSessionSidebar
               sessions={sessions}
               currentSessionId={currentSessionId}
+              cohortId={cohortId}
               onSessionSelect={setCurrentSessionId}
             />
           </div>
@@ -222,11 +224,24 @@ function CohortSessionSidebar({
   sessions,
   currentSessionId,
   onSessionSelect,
+  cohortId,
 }: {
   sessions: any[];
   currentSessionId: string | null;
   onSessionSelect: (id: string) => void;
+  cohortId: string;
 }) {
+  const router = useRouter();
+
+  const handleSessionClick = (session: any) => {
+    if (session.isAccessible) {
+      onSessionSelect(session.id);
+    } else {
+      // Redirect to checkout with this session pre-selected
+      router.push(`/toolkit/cohorts/${cohortId}?buySession=${session.id}`);
+    }
+  };
+
   return (
     <div className="h-full overflow-y-auto">
       <div className="p-4 border-b border-gray-100">
@@ -239,14 +254,13 @@ function CohortSessionSidebar({
         {sessions.map((session, index) => (
           <button
             key={session.id}
-            onClick={() => session.isAccessible && onSessionSelect(session.id)}
-            disabled={!session.isAccessible}
+            onClick={() => handleSessionClick(session)}
             className={cn(
               "w-full rounded-2xl p-4 text-left transition-all",
               currentSessionId === session.id
                 ? "bg-orange-100 border-l-4 border-orange-500"
                 : "bg-white border border-gray-100 hover:border-gray-200 hover:shadow-sm",
-              !session.isAccessible && "opacity-60 cursor-not-allowed"
+              !session.isAccessible && "opacity-60 hover:border-orange-400 hover:shadow-md"
             )}
           >
             <div className="flex items-start gap-4">

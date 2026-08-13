@@ -90,6 +90,218 @@ export async function POST(
       return NextResponse.json({ error: "Cohort not found" }, { status: 404 });
     }
 
+    // 1.5. Check for duplicate session purchases and update existing order if user already has cohort access
+    if (selectedAddOnIds.length > 0) {
+      const existingOrder = await db.query.cohortOrders.findFirst({
+        where: and(
+          eq(cohortOrders.userId, userId),
+          eq(cohortOrders.cohortId, cohortId),
+          eq(cohortOrders.status, "paid")
+        ),
+      });
+
+      if (existingOrder) {
+        // User already has cohort access, check for duplicate sessions
+        if (existingOrder.selectedAddOnIds && Array.isArray(existingOrder.selectedAddOnIds)) {
+          const alreadyPurchased = selectedAddOnIds.filter((id: string) => 
+            existingOrder.selectedAddOnIds.includes(id)
+          );
+          
+          if (alreadyPurchased.length > 0) {
+            return NextResponse.json(
+              { 
+                error: "You already have access to some of these sessions",
+                alreadyPurchasedSessions: alreadyPurchased
+              },
+              { status: 400 }
+            );
+          }
+        }
+
+        // If no duplicates, this is an add-on purchase for existing user
+        // Merge the new sessions with existing ones
+        const mergedAddOnIds = [
+          ...(existingOrder.selectedAddOnIds || []),
+          ...selectedAddOnIds
+        ];
+
+        // Calculate price for new sessions only
+        let addonsTotal = 0;
+        const newSessions = await db
+          .select()
+          .from(cohortSessions)
+          .where(
+            and(
+              eq(cohortSessions.cohortId, cohortId),
+              inArray(cohortSessions.id, selectedAddOnIds)
+            )
+          );
+
+        newSessions.forEach((session) => {
+          addonsTotal += session.price || 0;
+        });
+
+        // Fetch Toolkit Add-ons
+        let toolkitsTotal = 0;
+        if (selectedToolkitIds.length > 0) {
+          const dbToolkits = await db
+            .select()
+            .from(toolkits)
+            .where(
+              and(
+                eq(toolkits.isActive, true),
+                inArray(toolkits.id, selectedToolkitIds)
+              )
+            );
+
+          dbToolkits.forEach((tk) => {
+            toolkitsTotal += tk.price;
+          });
+        }
+
+        // Validate coupon for add-on purchase
+        let addOnDiscountAmount = 0;
+        let addOnCouponId: string | null = null;
+        
+        if (couponCode) {
+          const couponResult = await db
+            .select()
+            .from(coupons)
+            .where(eq(coupons.code, couponCode.toUpperCase().trim()))
+            .limit(1);
+
+          if (couponResult && couponResult.length > 0) {
+            const coupon = couponResult[0];
+
+            let isValid = coupon.isActive;
+            if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
+              isValid = false;
+            }
+            if (typeof coupon.maxUses === "number" && coupon.currentUses >= coupon.maxUses) {
+              isValid = false;
+            }
+
+            if (isValid) {
+              const userCouponUses = await db
+                .select({ count: sql<number>`count(*)` })
+                .from(cohortOrders)
+                .where(
+                  and(
+                    eq(cohortOrders.userId, userId),
+                    eq(cohortOrders.couponId, coupon.id),
+                    eq(cohortOrders.status, "paid")
+                  )
+                );
+              const usesCount = Number(userCouponUses[0]?.count || 0);
+              const maxPerUser = coupon.maxUsesPerUser == null ? Infinity : Number(coupon.maxUsesPerUser);
+              if (usesCount >= maxPerUser) {
+                isValid = false;
+              }
+            }
+
+            if (isValid) {
+              const isDuoActive = buddyEmail && buddyEmail.trim().length > 0;
+              const subtotalForDiscount = (isDuoActive ? getDuoPricing(addonsTotal).final : addonsTotal) +
+                                          toolkitsTotal;
+              if (coupon.discountType === "percentage") {
+                addOnDiscountAmount = Math.round((subtotalForDiscount * coupon.discountAmount) / 100);
+              } else {
+                addOnDiscountAmount = coupon.discountAmount;
+              }
+              addOnCouponId = coupon.id;
+            }
+          }
+        }
+
+        const isDuoActive = buddyEmail && buddyEmail.trim().length > 0;
+        const finalAddonsTotal = isDuoActive ? getDuoPricing(addonsTotal).final : addonsTotal;
+        const subtotal = finalAddonsTotal + toolkitsTotal;
+        const finalPriceRupees = Math.max(0, subtotal - addOnDiscountAmount);
+        const finalPricePaisa = finalPriceRupees * 100;
+
+        // If price is 0, directly update the existing order
+        if (finalPriceRupees <= 0) {
+          await db
+            .update(cohortOrders)
+            .set({
+              selectedAddOnIds: mergedAddOnIds,
+              selectedToolkitIds: [
+                ...(existingOrder.selectedToolkitIds || []),
+                ...selectedToolkitIds
+              ],
+            })
+            .where(eq(cohortOrders.id, existingOrder.id));
+
+          // Grant access to new toolkit add-ons
+          for (const tkId of selectedToolkitIds) {
+            const existingUserToolkit = await db.query.userToolkits.findFirst({
+              where: and(
+                eq(userToolkits.userId, userId),
+                eq(userToolkits.toolkitId, tkId)
+              ),
+            });
+            
+            if (!existingUserToolkit) {
+              await db.insert(userToolkits).values({
+                userId,
+                toolkitId: tkId,
+                paymentStatus: "completed",
+                amountPaid: 0,
+              });
+            }
+          }
+
+          // Increment coupon usage if a coupon was applied
+          if (addOnCouponId) {
+            await db
+              .update(coupons)
+              .set({ currentUses: sql`${coupons.currentUses} + 1` })
+              .where(eq(coupons.id, addOnCouponId));
+          }
+
+          return NextResponse.json({
+            success: true,
+            free: true,
+            orderRecord: existingOrder,
+          });
+        }
+
+        // Create Razorpay order for the additional sessions
+        const receiptId = `ch_addon_${cohortId.slice(-6)}_${Date.now().toString().slice(-6)}`;
+        const order = await createOrder({
+          amount: finalPricePaisa,
+          currency: "INR",
+          receipt: receiptId,
+        });
+
+        // Store the pending add-on data in the existing order temporarily
+        // We'll update it after payment verification
+        await db
+          .update(cohortOrders)
+          .set({
+            pendingAddOnIds: selectedAddOnIds,
+            pendingToolkitIds: selectedToolkitIds,
+            pendingCouponId: addOnCouponId,
+            pendingAmount: finalPricePaisa,
+            pendingRazorpayOrderId: order.id,
+          })
+          .where(eq(cohortOrders.id, existingOrder.id));
+
+        return NextResponse.json({
+          success: true,
+          free: false,
+          order: {
+            id: order.id,
+            amount: order.amount,
+            currency: order.currency,
+          },
+          key: process.env.RAZORPAY_KEY_ID,
+          orderRecord: existingOrder,
+          isAddOnPurchase: true,
+        });
+      }
+    }
+
     // 2. Fetch Tier if selected
     let tierPrice = 0;
     if (selectedTierId) {

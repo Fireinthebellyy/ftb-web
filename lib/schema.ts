@@ -908,6 +908,12 @@ export const cohortOrders = pgTable("cohort_orders", {
   registrationCompletedAt: timestamp("registration_completed_at"),
   isVerified: boolean("is_verified").default(false),
   createdAt: timestamp("created_at").defaultNow(),
+  // Fields for add-on purchases
+  pendingAddOnIds: jsonb("pending_addon_ids").$type<string[]>().default([]),
+  pendingToolkitIds: jsonb("pending_toolkit_ids").$type<string[]>().default([]),
+  pendingCouponId: uuid("pending_coupon_id").references(() => coupons.id, { onDelete: "set null" }),
+  pendingAmount: integer("pending_amount"),
+  pendingRazorpayOrderId: text("pending_razorpay_order_id"),
 });
 
 // Cohort Sessions

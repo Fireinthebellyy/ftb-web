@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cohortOrders, cohorts, coupons, userToolkits, user } from "@/lib/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, or } from "drizzle-orm";
 import { createHmac, timingSafeEqual } from "crypto";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -53,11 +53,15 @@ export async function POST(
 
     const userId = session.user.id;
 
-    // 3. Find and update the order
+    // 3. Find the order - could be main order or check for add-on purchase
     const existingOrder = await db.query.cohortOrders.findFirst({
       where: and(
         eq(cohortOrders.cohortId, cohortId),
-        eq(cohortOrders.razorpayOrderId, razorpay_order_id)
+        eq(cohortOrders.userId, userId),
+        or(
+          eq(cohortOrders.razorpayOrderId, razorpay_order_id),
+          eq(cohortOrders.pendingRazorpayOrderId, razorpay_order_id)
+        )
       ),
     });
 
@@ -68,13 +72,73 @@ export async function POST(
       );
     }
 
-    if (existingOrder.userId !== userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     const wasAlreadyPaid = existingOrder.status === "paid";
 
-    // Update order status to paid — only if currently pending (prevents replay)
+    // Check if this is an add-on purchase (pendingRazorpayOrderId matches)
+    const isAddOnPurchase = existingOrder.pendingRazorpayOrderId === razorpay_order_id;
+
+    if (isAddOnPurchase) {
+      // This is an add-on purchase, merge the pending data into the main order
+      const currentAddOnIds = Array.isArray(existingOrder.selectedAddOnIds) ? existingOrder.selectedAddOnIds : [];
+      const newAddOnIds = Array.isArray(existingOrder.pendingAddOnIds) ? existingOrder.pendingAddOnIds : [];
+      const mergedAddOnIds = [...new Set([...currentAddOnIds, ...newAddOnIds])];
+
+      const currentToolkitIds = Array.isArray(existingOrder.selectedToolkitIds) ? existingOrder.selectedToolkitIds : [];
+      const newToolkitIds = Array.isArray(existingOrder.pendingToolkitIds) ? existingOrder.pendingToolkitIds : [];
+      const mergedToolkitIds = [...new Set([...currentToolkitIds, ...newToolkitIds])];
+
+      await db
+        .update(cohortOrders)
+        .set({
+          selectedAddOnIds: mergedAddOnIds,
+          selectedToolkitIds: mergedToolkitIds,
+          amountPaid: existingOrder.amountPaid + (existingOrder.pendingAmount || 0),
+          // Clear pending fields
+          pendingAddOnIds: [],
+          pendingToolkitIds: [],
+          pendingCouponId: null,
+          pendingAmount: null,
+          pendingRazorpayOrderId: null,
+        })
+        .where(eq(cohortOrders.id, existingOrder.id));
+
+      // Grant access to new toolkit add-ons
+      for (const tkId of newToolkitIds) {
+        const existingUserToolkit = await db.query.userToolkits.findFirst({
+          where: and(
+            eq(userToolkits.userId, userId),
+            eq(userToolkits.toolkitId, tkId)
+          ),
+        });
+
+        if (!existingUserToolkit) {
+          await db.insert(userToolkits).values({
+            userId,
+            toolkitId: tkId,
+            paymentStatus: "completed",
+            amountPaid: 0,
+          });
+        }
+      }
+
+      // Increment coupon usage if a coupon was applied for add-on
+      if (existingOrder.pendingCouponId) {
+        await db
+          .update(coupons)
+          .set({ currentUses: sql`${coupons.currentUses} + 1` })
+          .where(eq(coupons.id, existingOrder.pendingCouponId));
+      }
+
+      if (!wasAlreadyPaid) {
+        sendCohortPaymentConfirmationEmail(existingOrder.id).catch((emailError) => {
+          console.error("Cohort payment confirmation email failed:", emailError);
+        });
+      }
+
+      return NextResponse.json({ success: true });
+    }
+
+    // Regular order verification
     const updatedOrders = await db
       .update(cohortOrders)
       .set({
@@ -92,6 +156,71 @@ export async function POST(
 
     if (updatedOrders.length === 0) {
       // Order already verified or not found in pending state
+      // Check if this is an add-on purchase that needs to be merged with existing order
+      const existingOrder = await db.query.cohortOrders.findFirst({
+        where: and(
+          eq(cohortOrders.cohortId, cohortId),
+          eq(cohortOrders.razorpayOrderId, razorpay_order_id)
+        ),
+      });
+
+      if (existingOrder && existingOrder.status === "paid") {
+        // Check if this order has pending add-on data (add-on purchase flow)
+        if (existingOrder.pendingAddOnIds && Array.isArray(existingOrder.pendingAddOnIds) && existingOrder.pendingAddOnIds.length > 0) {
+          // This is an add-on purchase, merge the pending data into the main order
+          const currentAddOnIds = Array.isArray(existingOrder.selectedAddOnIds) ? existingOrder.selectedAddOnIds : [];
+          const newAddOnIds = Array.isArray(existingOrder.pendingAddOnIds) ? existingOrder.pendingAddOnIds : [];
+          const mergedAddOnIds = [...new Set([...currentAddOnIds, ...newAddOnIds])];
+
+          const currentToolkitIds = Array.isArray(existingOrder.selectedToolkitIds) ? existingOrder.selectedToolkitIds : [];
+          const newToolkitIds = Array.isArray(existingOrder.pendingToolkitIds) ? existingOrder.pendingToolkitIds : [];
+          const mergedToolkitIds = [...new Set([...currentToolkitIds, ...newToolkitIds])];
+
+          await db
+            .update(cohortOrders)
+            .set({
+              selectedAddOnIds: mergedAddOnIds,
+              selectedToolkitIds: mergedToolkitIds,
+              // Update amount paid to include the add-on purchase
+              amountPaid: existingOrder.amountPaid + (existingOrder.pendingAmount || 0),
+              // Clear pending fields
+              pendingAddOnIds: [],
+              pendingToolkitIds: [],
+              pendingCouponId: null,
+              pendingAmount: null,
+              pendingRazorpayOrderId: null,
+            })
+            .where(eq(cohortOrders.id, existingOrder.id));
+
+          // Grant access to new toolkit add-ons
+          for (const tkId of newToolkitIds) {
+            const existingUserToolkit = await db.query.userToolkits.findFirst({
+              where: and(
+                eq(userToolkits.userId, userId),
+                eq(userToolkits.toolkitId, tkId)
+              ),
+            });
+
+            if (!existingUserToolkit) {
+              await db.insert(userToolkits).values({
+                userId,
+                toolkitId: tkId,
+                paymentStatus: "completed",
+                amountPaid: 0,
+              });
+            }
+          }
+
+          // Increment coupon usage if a coupon was applied for add-on
+          if (existingOrder.pendingCouponId) {
+            await db
+              .update(coupons)
+              .set({ currentUses: sql`${coupons.currentUses} + 1` })
+              .where(eq(coupons.id, existingOrder.pendingCouponId));
+          }
+        }
+      }
+
       return NextResponse.json({ success: true, alreadyVerified: true });
     }
 

@@ -440,7 +440,7 @@ export default function OpportunityCardsPage({
 
         <div className="hidden gap-6 lg:grid lg:grid-cols-12">
           <aside className="col-span-3">
-            <div className="sticky top-6 space-y-6">
+            <div className="sticky top-16 space-y-6">
               <div className="rounded-lg border bg-white px-4 py-3">
                 <h3 className="mb-3 font-semibold text-gray-900">
                   Quick Links
@@ -682,7 +682,7 @@ export default function OpportunityCardsPage({
           </main>
 
           <aside className="col-span-3">
-            <div className="sticky top-6 space-y-6">
+            <div className="sticky top-16 space-y-6">
               {showSecondaryWidgets ? (
                 <>
                   <CalendarWidget

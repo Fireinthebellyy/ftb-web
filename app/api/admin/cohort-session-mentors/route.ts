@@ -29,6 +29,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const {
       contentId,
+      cohortMentorId,
       name,
       role,
       imageUrl,
@@ -47,10 +48,10 @@ export async function POST(request: Request) {
       });
     }
 
-    if (!name?.trim()) {
+    if (!cohortMentorId?.trim() && !name?.trim()) {
       activityStatus = 400;
-      activityError = "Name is required";
-      return badRequest("Please provide a mentor name.", {
+      activityError = "Name is required when not linking to a cohort mentor";
+      return badRequest("Please provide a mentor name or link to a cohort mentor.", {
         code: "MISSING_REQUIRED_FIELDS",
         fields: ["name"],
       });
@@ -60,7 +61,8 @@ export async function POST(request: Request) {
       .insert(cohortSessionMentors)
       .values({
         contentId,
-        name,
+        cohortMentorId: cohortMentorId || null,
+        name: name || null,
         role: role || null,
         imageUrl: imageUrl || null,
         bio: bio || null,

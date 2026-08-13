@@ -370,7 +370,8 @@ export type CohortSessionQuery = {
 export type CohortSessionMentor = {
   id: string;
   contentId: string;
-  name: string;
+  cohortMentorId?: string | null;
+  name?: string | null;
   role?: string | null;
   imageUrl?: string | null;
   bio?: string | null;

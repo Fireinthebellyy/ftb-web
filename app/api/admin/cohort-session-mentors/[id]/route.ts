@@ -52,6 +52,7 @@ export async function PUT(
 
     const body = await request.json();
     const {
+      cohortMentorId,
       name,
       role,
       imageUrl,
@@ -61,10 +62,20 @@ export async function PUT(
       orderIndex,
     } = body;
 
+    if (!cohortMentorId?.trim() && !name?.trim()) {
+      activityStatus = 400;
+      activityError = "Name is required when not linking to a cohort mentor";
+      return NextResponse.json(
+        { error: "Please provide a mentor name or link to a cohort mentor." },
+        { status: 400 }
+      );
+    }
+
     const updatedMentor = await db
       .update(cohortSessionMentors)
       .set({
-        name,
+        cohortMentorId: cohortMentorId || null,
+        name: name || null,
         role: role ?? null,
         imageUrl: imageUrl ?? null,
         bio: bio ?? null,

@@ -68,13 +68,17 @@ const sessionContentSchema = z.object({
 // Schema for mentor
 const mentorSchema = z.object({
   contentId: z.string().min(1, { message: "Content ID is required" }),
-  name: z.string().min(1, { message: "Mentor name is required" }),
+  cohortMentorId: z.string().optional().nullable(),
+  name: z.string().optional(),
   role: z.string().optional(),
   imageUrl: z.string().optional(),
   bio: z.string().optional(),
   linkedinUrl: z.string().optional(),
   otherLinks: z.array(z.object({ title: z.string(), url: z.string() })).optional(),
   orderIndex: z.coerce.number().int().min(0).default(0),
+}).refine(data => data.cohortMentorId || data.name, {
+  message: "Mentor name is required when not selecting a cohort mentor",
+  path: ["name"],
 });
 
 // Schema for resource
@@ -121,7 +125,8 @@ interface CohortSessionContent {
 interface CohortSessionMentor {
   id: string;
   contentId: string;
-  name: string;
+  cohortMentorId: string | null;
+  name: string | null;
   role: string | null;
   imageUrl: string | null;
   bio: string | null;
@@ -210,10 +215,13 @@ export default function CohortSessionManager({
     },
   });
 
+  const [cohortMentors, setCohortMentors] = useState<any[]>([]);
+
   const mentorForm = useForm<MentorFormValues>({
     resolver: zodResolver(mentorSchema),
     defaultValues: {
       contentId: "",
+      cohortMentorId: "",
       name: "",
       role: "",
       imageUrl: "",
@@ -252,6 +260,19 @@ export default function CohortSessionManager({
   useEffect(() => {
     fetchSessions();
   }, [fetchSessions]);
+
+  useEffect(() => {
+    const fetchCohortDetails = async () => {
+      if (!cohortId || !open) return;
+      try {
+        const response = await axios.get(`/api/admin/cohorts/${cohortId}`);
+        setCohortMentors(response.data.mentors || []);
+      } catch (error) {
+        console.error("Error fetching cohort details for mentors:", error);
+      }
+    };
+    fetchCohortDetails();
+  }, [cohortId, open]);
 
   const handleEditSession = (session: CohortSession) => {
     setEditingSession(session);
@@ -421,7 +442,8 @@ export default function CohortSessionManager({
     setIsAddingMentor(false);
     mentorForm.reset({
       contentId: content.id,
-      name: mentor.name,
+      cohortMentorId: mentor.cohortMentorId ?? "",
+      name: mentor.name ?? "",
       role: mentor.role ?? "",
       imageUrl: mentor.imageUrl ?? "",
       bio: mentor.bio ?? "",
@@ -441,6 +463,7 @@ export default function CohortSessionManager({
       : -1;
     mentorForm.reset({
       contentId: content.id,
+      cohortMentorId: "",
       name: "",
       role: "",
       imageUrl: "",
@@ -1281,6 +1304,43 @@ export default function CohortSessionManager({
             </DialogHeader>
             <Form {...mentorForm}>
               <form onSubmit={mentorForm.handleSubmit(handleSaveMentor)} className="space-y-4">
+                <FormField
+                  control={mentorForm.control}
+                  name="cohortMentorId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Link to Cohort Mentor (Optional)</FormLabel>
+                      <FormControl>
+                        <select
+                          className="w-full border rounded px-3 py-2 bg-white"
+                          value={field.value || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            field.onChange(val);
+                            if (val) {
+                              const selected = cohortMentors.find(m => m.id === val);
+                              if (selected) {
+                                mentorForm.setValue("name", selected.name || "");
+                                mentorForm.setValue("role", selected.role || "");
+                                mentorForm.setValue("imageUrl", selected.imageUrl || "");
+                                mentorForm.setValue("bio", selected.bio || "");
+                                mentorForm.setValue("linkedinUrl", selected.link || "");
+                              }
+                            }
+                          }}
+                        >
+                          <option value="">-- Select Cohort Mentor (or fill details below manually) --</option>
+                          {cohortMentors.map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.name} ({m.role})
+                            </option>
+                          ))}
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={mentorForm.control}
                   name="name"

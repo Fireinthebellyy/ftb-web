@@ -133,6 +133,16 @@ export function CohortUpgradeGrid({
       return;
     }
 
+    // Custom / General plan: no session logic, go straight to upgrade
+    const isCustomPlan =
+      !plan.isAllInOne &&
+      (!plan.includedSessionIds || plan.includedSessionIds.length === 0) &&
+      !plan.includedSessionCount;
+    if (isCustomPlan) {
+      handleUpgrade(plan, []);
+      return;
+    }
+
     const unpurchasedSessions = sessions.filter((s: any) => !s.isAccessible);
 
     // Case 1: Package has fixed included session IDs
@@ -143,11 +153,9 @@ export function CohortUpgradeGrid({
 
       // If user already owns 1 or more sessions in this fixed package
       if (ownedInPlan.length > 0) {
-        // Find unowned fixed sessions in plan
         const unownedInPlan = plan.includedSessionIds.filter(
           (id) => !ownedInPlan.includes(id)
         );
-        // Find other unpurchased sessions outside this plan to let user pick replacement
         const replacementCandidates = unpurchasedSessions
           .filter((s) => !plan.includedSessionIds?.includes(s.id))
           .map((s) => s.id);
@@ -295,15 +303,10 @@ export function CohortUpgradeGrid({
 
   return (
     <div className="w-full space-y-4 pt-4">
-      {/* Cards: horizontal scroll on mobile, grid on md+ */}
-      <div className="
-        flex flex-row gap-4 overflow-x-auto snap-x snap-mandatory pb-2
-        md:grid md:grid-cols-2 md:overflow-visible md:snap-none md:pb-0
-        xl:grid-cols-3
-        scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent
-      ">
+      {/* Cards: always horizontal scroll */}
+      <div className="flex flex-row gap-4 overflow-x-auto snap-x snap-mandatory pb-3 -mx-1 px-1 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
         {/* Current Plan Card */}
-        <div className="snap-start shrink-0 w-[280px] md:w-auto rounded-2xl border border-gray-200 bg-white p-5 shadow-sm flex flex-col justify-between">
+        <div className="snap-start shrink-0 w-[280px] sm:w-[300px] rounded-2xl border border-gray-200 bg-white p-5 shadow-sm flex flex-col justify-between">
           <div className="space-y-4">
             <div className="flex items-center justify-between border-b pb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
@@ -340,7 +343,7 @@ export function CohortUpgradeGrid({
           return (
             <div
               key={plan.id}
-              className={`snap-start shrink-0 w-[280px] md:w-auto rounded-2xl border p-5 shadow-sm flex flex-col justify-between relative transition-all ${
+              className={`snap-start shrink-0 w-[280px] sm:w-[300px] rounded-2xl border p-5 shadow-sm flex flex-col justify-between relative transition-all ${
                 isFeatured
                   ? "bg-white border-orange-500 ring-2 ring-orange-500/10"
                   : "bg-white border-gray-200 hover:border-gray-300"
@@ -361,7 +364,10 @@ export function CohortUpgradeGrid({
               <div className="space-y-4 pt-1 flex-1">
                 <div className="space-y-1">
                   <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
-                    {plan.isAllInOne ? "Full Cohort Upgrade" : "Package Option"}
+                    {(plan as any).sectionLabel ||
+                      (plan.isAllInOne
+                        ? "Full Cohort Upgrade"
+                        : "Package Option")}
                   </div>
                   <h3 className="text-base font-bold text-gray-900 leading-snug">
                     {plan.title}
@@ -444,11 +450,11 @@ export function CohortUpgradeGrid({
                       )}
                     </div>
                   );
-                })() : (
+                })() : plan.includedSessionCount !== null ? (
                   <div className="rounded-xl bg-gray-50 border border-gray-200 p-3 text-xs font-medium text-gray-800">
                     Choice of any {plan.includedSessionCount ?? 1} Live Sessions
                   </div>
-                )}
+                ) : null}
 
                 {/* Features */}
                 <div className="space-y-2 pt-2 border-t border-gray-100">
@@ -499,7 +505,7 @@ export function CohortUpgradeGrid({
                     "Processing..."
                   ) : !plan.isAllInOne && plan.includedSessionIds && plan.includedSessionIds.length > 0 && plan.includedSessionIds.some(sId => sessions.find(s => s.id === sId && s.isAccessible)) ? (
                     "Swap Owned Sessions & Upgrade"
-                  ) : !plan.isAllInOne && (!plan.includedSessionIds || plan.includedSessionIds.length === 0) ? (
+                  ) : !plan.isAllInOne && plan.includedSessionCount && (!plan.includedSessionIds || plan.includedSessionIds.length === 0) ? (
                     "Select Sessions & Upgrade"
                   ) : (
                     "Upgrade Plan"

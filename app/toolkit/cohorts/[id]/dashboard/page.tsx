@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Menu, Lock, Unlock, MessageCircle, Send, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft, Menu, Lock, Unlock, MessageCircle, Send, Edit, Trash2, ExternalLink } from "lucide-react";
 import { cn, stripHtml } from "@/lib/utils";
 import {
   useCohortDetail,
@@ -216,33 +216,6 @@ export default function CohortDashboardPage() {
                 {sessionData?.session.title || "Select a session"}
               </h1>
             </div>
-            <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden shrink-0">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-80 p-0">
-                <SheetTitle className="sr-only">Session Menu</SheetTitle>
-                <CohortSessionSidebar
-                  sessions={sessions}
-                  currentSessionId={currentSessionId}
-                  onSessionSelect={(id) => {
-                    handleSessionSelect(id);
-                    setSidebarOpen(false);
-                  }}
-                />
-              </SheetContent>
-            </Sheet>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
-              className="hidden shrink-0 lg:flex"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
           </div>
           <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
             <SheetTrigger asChild>
@@ -608,20 +581,7 @@ function CohortSessionMain({
                             .filter((r: CohortSessionResource) => r.type === "pdf")
                             .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
                             .map((resource: CohortSessionResource) => (
-                              <div key={resource.id} className="space-y-3">
-                                <h4 className="text-sm font-semibold text-gray-900">{resource.name}</h4>
-                                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                                  <div className="h-96">
-                                    <iframe
-                                      src={`https://docs.google.com/viewer?url=${encodeURIComponent(resource.url)}&embedded=true`}
-                                      className="w-full h-full"
-                                      title={resource.name}
-                                      sandbox="allow-scripts allow-same-origin"
-                                      referrerPolicy="no-referrer"
-                                    />
-                                  </div>
-                                </div>
-                              </div>
+                              <EmbeddedResourceViewer key={resource.id} resource={resource} />
                             ))}
                         </div>
                       )}
@@ -633,20 +593,7 @@ function CohortSessionMain({
                             .filter((r: CohortSessionResource) => r.type === "ppt")
                             .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
                             .map((resource: CohortSessionResource) => (
-                              <div key={resource.id} className="space-y-2">
-                                <h4 className="text-sm font-semibold text-gray-900">{resource.name}</h4>
-                                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                                  <div className="h-96">
-                                    <iframe
-                                      src={`https://docs.google.com/viewer?url=${encodeURIComponent(resource.url)}&embedded=true`}
-                                      className="w-full h-full"
-                                      title={resource.name}
-                                      sandbox="allow-scripts allow-same-origin"
-                                      referrerPolicy="no-referrer"
-                                    />
-                                  </div>
-                                </div>
-                              </div>
+                              <EmbeddedResourceViewer key={resource.id} resource={resource} />
                             ))}
                         </div>
                       )}
@@ -679,20 +626,7 @@ function CohortSessionMain({
                             .filter((r: CohortSessionResource) => r.type === "excel")
                             .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
                             .map((resource: CohortSessionResource) => (
-                              <div key={resource.id} className="space-y-2">
-                                <h4 className="text-sm font-semibold text-gray-900">{resource.name}</h4>
-                                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                                  <div className="h-96">
-                                    <iframe
-                                      src={`https://docs.google.com/viewer?url=${encodeURIComponent(resource.url)}&embedded=true`}
-                                      className="w-full h-full"
-                                      title={resource.name}
-                                      sandbox="allow-scripts allow-same-origin"
-                                      referrerPolicy="no-referrer"
-                                    />
-                                  </div>
-                                </div>
-                              </div>
+                              <EmbeddedResourceViewer key={resource.id} resource={resource} />
                             ))}
                         </div>
                       )}
@@ -704,20 +638,7 @@ function CohortSessionMain({
                             .filter((r: CohortSessionResource) => r.type === "word")
                             .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
                             .map((resource: CohortSessionResource) => (
-                              <div key={resource.id} className="space-y-2">
-                                <h4 className="text-sm font-semibold text-gray-900">{resource.name}</h4>
-                                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                                  <div className="h-96">
-                                    <iframe
-                                      src={`https://docs.google.com/viewer?url=${encodeURIComponent(resource.url)}&embedded=true`}
-                                      className="w-full h-full"
-                                      title={resource.name}
-                                      sandbox="allow-scripts allow-same-origin"
-                                      referrerPolicy="no-referrer"
-                                    />
-                                  </div>
-                                </div>
-                              </div>
+                              <EmbeddedResourceViewer key={resource.id} resource={resource} />
                             ))}
                         </div>
                       )}

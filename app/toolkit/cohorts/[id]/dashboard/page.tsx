@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Menu, Lock, Unlock, MessageCircle, Send, Edit, Trash2, ExternalLink } from "lucide-react";
+import { ArrowLeft, Menu, Lock, Unlock, MessageCircle, Send, Edit, Trash2 } from "lucide-react";
 import { cn, stripHtml } from "@/lib/utils";
 import {
   useCohortDetail,

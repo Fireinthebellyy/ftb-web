@@ -183,7 +183,7 @@ export type UploadProgress = {
   progress: number;
 };
 
-export type FileKind = "image" | "pdf" | "ppt";
+export type FileKind = "image" | "pdf" | "ppt" | "excel" | "word";
 
 export interface FileItem {
   id: string;
@@ -352,7 +352,7 @@ export type CohortSessionResource = {
   contentId: string;
   name: string;
   url: string;
-  type: "file" | "video" | "link" | "image" | "pdf" | "ppt";
+  type: "file" | "video" | "link" | "image" | "pdf" | "ppt" | "excel" | "word";
   orderIndex: number;
   createdAt: string;
 };

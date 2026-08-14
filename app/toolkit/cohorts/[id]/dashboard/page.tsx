@@ -198,7 +198,7 @@ export default function CohortDashboardPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 z-10 border-b bg-white/95 backdrop-blur supports-backdrop-filter:bg-white/60">
         <div className="flex h-16 items-center px-4 overflow-hidden">
-          <div className="flex items-center gap-1 sm:gap-3 min-w-0">
+          <div className="flex items-center gap-1 sm:gap-3 min-w-0 flex-1">
             <Button
               variant="ghost"
               size="icon"
@@ -216,34 +216,34 @@ export default function CohortDashboardPage() {
                 {sessionData?.session.title || "Select a session"}
               </h1>
             </div>
-            <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden shrink-0">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-80 p-0">
-                <SheetTitle className="sr-only">Session Menu</SheetTitle>
-                <CohortSessionSidebar
-                  sessions={sessions}
-                  currentSessionId={currentSessionId}
-                  onSessionSelect={(id) => {
-                    handleSessionSelect(id);
-                    setSidebarOpen(false);
-                  }}
-                />
-              </SheetContent>
-            </Sheet>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
-              className="hidden shrink-0 lg:flex"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
           </div>
+          <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="lg:hidden shrink-0">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-80 p-0">
+              <SheetTitle className="sr-only">Session Menu</SheetTitle>
+              <CohortSessionSidebar
+                sessions={sessions}
+                currentSessionId={currentSessionId}
+                onSessionSelect={(id) => {
+                  handleSessionSelect(id);
+                  setSidebarOpen(false);
+                }}
+              />
+            </SheetContent>
+          </Sheet>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
+            className="hidden shrink-0 lg:flex"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
         </div>
       </header>
 
@@ -290,8 +290,8 @@ function CohortSessionSidebar({
     <div className="h-full overflow-y-auto">
       <div className="p-4 border-b border-gray-100">
         <h2 className="text-lg md:text-xl font-extrabold text-gray-900">Cohort Content</h2>
-        <p className="text-gray-500 text-sm mt-1">
-          {sessions.length} {sessions.length === 1 ? "Session" : "Sessions"} • 0 completed
+        <p className="text-gray-500 text-md font-semibold">
+          {sessions.length} {sessions.length === 1 ? "Session" : "Sessions"}
         </p>
       </div>
       <div className="p-4 space-y-3">
@@ -581,20 +581,7 @@ function CohortSessionMain({
                             .filter((r: CohortSessionResource) => r.type === "pdf")
                             .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
                             .map((resource: CohortSessionResource) => (
-                              <div key={resource.id} className="space-y-3">
-                                <h4 className="text-sm font-semibold text-gray-900">{resource.name}</h4>
-                                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                                  <div className="h-96">
-                                    <iframe
-                                      src={`https://docs.google.com/viewer?url=${encodeURIComponent(resource.url)}&embedded=true`}
-                                      className="w-full h-full"
-                                      title={resource.name}
-                                      sandbox="allow-scripts allow-same-origin"
-                                      referrerPolicy="no-referrer"
-                                    />
-                                  </div>
-                                </div>
-                              </div>
+                              <EmbeddedResourceViewer key={resource.id} resource={resource} />
                             ))}
                         </div>
                       )}
@@ -606,20 +593,7 @@ function CohortSessionMain({
                             .filter((r: CohortSessionResource) => r.type === "ppt")
                             .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
                             .map((resource: CohortSessionResource) => (
-                              <div key={resource.id} className="space-y-2">
-                                <h4 className="text-sm font-semibold text-gray-900">{resource.name}</h4>
-                                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                                  <div className="h-96">
-                                    <iframe
-                                      src={`https://docs.google.com/viewer?url=${encodeURIComponent(resource.url)}&embedded=true`}
-                                      className="w-full h-full"
-                                      title={resource.name}
-                                      sandbox="allow-scripts allow-same-origin"
-                                      referrerPolicy="no-referrer"
-                                    />
-                                  </div>
-                                </div>
-                              </div>
+                              <EmbeddedResourceViewer key={resource.id} resource={resource} />
                             ))}
                         </div>
                       )}
@@ -652,20 +626,7 @@ function CohortSessionMain({
                             .filter((r: CohortSessionResource) => r.type === "excel")
                             .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
                             .map((resource: CohortSessionResource) => (
-                              <div key={resource.id} className="space-y-2">
-                                <h4 className="text-sm font-semibold text-gray-900">{resource.name}</h4>
-                                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                                  <div className="h-96">
-                                    <iframe
-                                      src={`https://docs.google.com/viewer?url=${encodeURIComponent(resource.url)}&embedded=true`}
-                                      className="w-full h-full"
-                                      title={resource.name}
-                                      sandbox="allow-scripts allow-same-origin"
-                                      referrerPolicy="no-referrer"
-                                    />
-                                  </div>
-                                </div>
-                              </div>
+                              <EmbeddedResourceViewer key={resource.id} resource={resource} />
                             ))}
                         </div>
                       )}
@@ -677,20 +638,7 @@ function CohortSessionMain({
                             .filter((r: CohortSessionResource) => r.type === "word")
                             .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
                             .map((resource: CohortSessionResource) => (
-                              <div key={resource.id} className="space-y-2">
-                                <h4 className="text-sm font-semibold text-gray-900">{resource.name}</h4>
-                                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                                  <div className="h-96">
-                                    <iframe
-                                      src={`https://docs.google.com/viewer?url=${encodeURIComponent(resource.url)}&embedded=true`}
-                                      className="w-full h-full"
-                                      title={resource.name}
-                                      sandbox="allow-scripts allow-same-origin"
-                                      referrerPolicy="no-referrer"
-                                    />
-                                  </div>
-                                </div>
-                              </div>
+                              <EmbeddedResourceViewer key={resource.id} resource={resource} />
                             ))}
                         </div>
                       )}
@@ -956,6 +904,29 @@ function CohortSessionMain({
         >
           Next Session
         </Button>
+      </div>
+    </div>
+  );
+}
+
+function EmbeddedResourceViewer({ resource }: { resource: CohortSessionResource }) {
+  const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(resource.url)}&embedded=true`;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <h4 className="text-sm font-semibold text-gray-900">{resource.name}</h4>
+      </div>
+      <div className="relative overflow-hidden rounded-lg border border-gray-200">
+        <div className="h-96">
+          <iframe
+            src={viewerUrl}
+            className="h-full w-full"
+            title={resource.name}
+            sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+            referrerPolicy="no-referrer"
+          />
+        </div>
       </div>
     </div>
   );

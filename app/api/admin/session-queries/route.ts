@@ -6,16 +6,16 @@ import { getCurrentUser } from "@/server/users";
 import { eq, desc } from "drizzle-orm";
 
 export async function GET(_request: Request) {
-  try {
-    const currentUser = await getCurrentUser();
-    if (
-      !currentUser ||
-      !currentUser.currentUser?.id ||
-      !canAccessAdminTab(currentUser.currentUser.role, "session-queries")
-    ) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const currentUser = await getCurrentUser();
+  if (
+    !currentUser ||
+    !currentUser.currentUser?.id ||
+    !canAccessAdminTab(currentUser.currentUser.role, "session-queries")
+  ) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
+  try {
     // Fetch all queries with session, cohort, and user information
     const queries = await db
       .select({

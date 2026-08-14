@@ -34,9 +34,9 @@ export default function SessionQueriesManager() {
   const [queries, setQueries] = useState<SessionQuery[]>([]);
   const [loading, setLoading] = useState(true);
   const [answeringQueryId, setAnsweringQueryId] = useState<string | null>(null);
-  const [answerText, setAnswerText] = useState("");
+  const [answerDrafts, setAnswerDrafts] = useState<Record<string, string>>({});
   const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null);
-  const [editAnswerText, setEditAnswerText] = useState("");
+  const [editAnswerDrafts, setEditAnswerDrafts] = useState<Record<string, string>>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCohort, setFilterCohort] = useState("");
   const [filterSession, setFilterSession] = useState("");
@@ -60,18 +60,27 @@ export default function SessionQueriesManager() {
   };
 
   const handleSubmitAnswer = async (query: SessionQuery) => {
-    if (!answerText.trim()) return;
+    if (answeringQueryId !== query.id) {
+      toast.error("Query ID mismatch — please re-open the answer editor");
+      return;
+    }
+    const draft = answerDrafts[query.id] ?? "";
+    if (!draft.trim()) return;
 
     try {
       await axios.post(
         `/api/admin/cohorts/${query.cohortId}/sessions/${query.sessionId}/queries`,
         {
           queryId: answeringQueryId,
-          answer: answerText,
+          answer: draft,
         }
       );
       toast.success("Answer submitted successfully!");
-      setAnswerText("");
+      setAnswerDrafts((prev) => {
+        const next = { ...prev };
+        delete next[query.id];
+        return next;
+      });
       setAnsweringQueryId(null);
       fetchQueries();
     } catch (error) {
@@ -81,19 +90,28 @@ export default function SessionQueriesManager() {
   };
 
   const handleEditAnswer = async (query: SessionQuery) => {
-    if (!editAnswerText.trim()) return;
+    if (editingAnswerId !== query.id) {
+      toast.error("Query ID mismatch — please re-open the edit editor");
+      return;
+    }
+    const draft = editAnswerDrafts[query.id] ?? "";
+    if (!draft.trim()) return;
 
     try {
       await axios.put(
         `/api/admin/cohorts/${query.cohortId}/sessions/${query.sessionId}/queries`,
         {
           queryId: editingAnswerId,
-          answer: editAnswerText,
+          answer: draft,
         }
       );
       toast.success("Answer updated successfully");
       setEditingAnswerId(null);
-      setEditAnswerText("");
+      setEditAnswerDrafts((prev) => {
+        const next = { ...prev };
+        delete next[query.id];
+        return next;
+      });
       fetchQueries();
     } catch (error) {
       console.error("Error editing answer:", error);
@@ -341,8 +359,13 @@ export default function SessionQueriesManager() {
                       {editingAnswerId === query.id ? (
                         <div className="space-y-2">
                           <Textarea
-                            value={editAnswerText}
-                            onChange={(e) => setEditAnswerText(e.target.value)}
+                            value={editAnswerDrafts[query.id] ?? ""}
+                            onChange={(e) =>
+                              setEditAnswerDrafts((prev) => ({
+                                ...prev,
+                                [query.id]: e.target.value,
+                              }))
+                            }
                             rows={3}
                             className="resize-none text-sm"
                           />
@@ -350,6 +373,7 @@ export default function SessionQueriesManager() {
                             <Button
                               size="sm"
                               onClick={() => handleEditAnswer(query)}
+                              disabled={!((editAnswerDrafts[query.id] ?? "").trim())}
                             >
                               Save
                             </Button>
@@ -358,7 +382,11 @@ export default function SessionQueriesManager() {
                               variant="outline"
                               onClick={() => {
                                 setEditingAnswerId(null);
-                                setEditAnswerText("");
+                                setEditAnswerDrafts((prev) => {
+                                  const next = { ...prev };
+                                  delete next[query.id];
+                                  return next;
+                                });
                               }}
                             >
                               Cancel
@@ -376,9 +404,13 @@ export default function SessionQueriesManager() {
                           variant="ghost"
                           onClick={() => {
                             setEditingAnswerId(query.id);
-                            setEditAnswerText(query.answer || "");
+                            setEditAnswerDrafts((prev) => ({
+                              ...prev,
+                              [query.id]: query.answer || "",
+                            }));
                           }}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          disabled={editingAnswerId !== null || answeringQueryId !== null}
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -400,8 +432,13 @@ export default function SessionQueriesManager() {
                     <div className="space-y-2">
                       <Textarea
                         placeholder="Type your answer..."
-                        value={answerText}
-                        onChange={(e) => setAnswerText(e.target.value)}
+                        value={answerDrafts[query.id] ?? ""}
+                        onChange={(e) =>
+                          setAnswerDrafts((prev) => ({
+                            ...prev,
+                            [query.id]: e.target.value,
+                          }))
+                        }
                         rows={3}
                         className="resize-none"
                       />
@@ -409,7 +446,7 @@ export default function SessionQueriesManager() {
                         <Button
                           size="sm"
                           onClick={() => handleSubmitAnswer(query)}
-                          disabled={!answerText.trim()}
+                          disabled={!((answerDrafts[query.id] ?? "").trim())}
                         >
                           <Send className="mr-2 h-4 w-4" />
                           Submit Answer
@@ -419,7 +456,11 @@ export default function SessionQueriesManager() {
                           variant="outline"
                           onClick={() => {
                             setAnsweringQueryId(null);
-                            setAnswerText("");
+                            setAnswerDrafts((prev) => {
+                              const next = { ...prev };
+                              delete next[query.id];
+                              return next;
+                            });
                           }}
                         >
                           Cancel
@@ -427,7 +468,12 @@ export default function SessionQueriesManager() {
                       </div>
                     </div>
                   ) : (
-                    <Button size="sm" onClick={() => setAnsweringQueryId(query.id)}>
+                    <Button
+                      size="sm"
+                      onClick={() => setAnsweringQueryId(query.id)}
+                      disabled={answeringQueryId !== null || editingAnswerId !== null}
+                      className="disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                       <Send className="mr-2 h-4 w-4" />
                       Answer
                     </Button>

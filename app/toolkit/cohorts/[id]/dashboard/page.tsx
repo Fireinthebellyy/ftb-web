@@ -584,6 +584,8 @@ function CohortSessionMain({
                                       src={`https://docs.google.com/viewer?url=${encodeURIComponent(resource.url)}&embedded=true`}
                                       className="w-full h-full"
                                       title={resource.name}
+                                      sandbox="allow-scripts allow-same-origin"
+                                      referrerPolicy="no-referrer"
                                     />
                                   </div>
                                 </div>
@@ -607,6 +609,8 @@ function CohortSessionMain({
                                       src={`https://docs.google.com/viewer?url=${encodeURIComponent(resource.url)}&embedded=true`}
                                       className="w-full h-full"
                                       title={resource.name}
+                                      sandbox="allow-scripts allow-same-origin"
+                                      referrerPolicy="no-referrer"
                                     />
                                   </div>
                                 </div>
@@ -651,6 +655,8 @@ function CohortSessionMain({
                                       src={`https://docs.google.com/viewer?url=${encodeURIComponent(resource.url)}&embedded=true`}
                                       className="w-full h-full"
                                       title={resource.name}
+                                      sandbox="allow-scripts allow-same-origin"
+                                      referrerPolicy="no-referrer"
                                     />
                                   </div>
                                 </div>
@@ -674,6 +680,8 @@ function CohortSessionMain({
                                       src={`https://docs.google.com/viewer?url=${encodeURIComponent(resource.url)}&embedded=true`}
                                       className="w-full h-full"
                                       title={resource.name}
+                                      sandbox="allow-scripts allow-same-origin"
+                                      referrerPolicy="no-referrer"
                                     />
                                   </div>
                                 </div>

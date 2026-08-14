@@ -948,7 +948,7 @@ export const cohortSessionResources = pgTable("cohort_session_resources", {
   contentId: uuid("content_id").notNull().references(() => cohortSessionContents.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   url: text("url").notNull(),
-  type: text("type").default("file"), // "file", "video", "link", "image", "pdf", "ppt"
+  type: text("type").default("file"), // "file", "video", "link", "image", "pdf", "ppt", "excel", "word"
   orderIndex: integer("order_index").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });

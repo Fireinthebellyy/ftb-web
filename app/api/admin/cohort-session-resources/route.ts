@@ -62,7 +62,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const validTypes = ["file", "video", "link", "image", "pdf", "ppt"];
+    const validTypes = ["file", "video", "link", "image", "pdf", "ppt", "excel", "word"];
     if (!type || !validTypes.includes(type)) {
       activityStatus = 400;
       activityError = "Invalid type";

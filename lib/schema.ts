@@ -12,6 +12,7 @@ import {
   uuid,
   index,
   uniqueIndex,
+  unique,
   check,
 } from "drizzle-orm/pg-core";
 import { sql, relations } from "drizzle-orm";
@@ -883,6 +884,49 @@ export const cohortAddOns = pgTable("cohort_addons", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const cohortUpgradePlans = pgTable("cohort_upgrade_plans", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  cohortId: uuid("cohort_id").references(() => cohorts.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  price: integer("price").notNull(),
+  originalPrice: integer("original_price"),
+  includedSessionCount: integer("included_session_count").default(1),
+  includedSessionIds: jsonb("included_session_ids").$type<string[]>().default([]),
+  isAllInOne: boolean("is_all_in_one").default(false),
+  badgeText: text("badge_text"),
+  features: jsonb("features").$type<string[]>().default([]),
+  orderIndex: integer("order_index").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userCohortTargetPlans = pgTable(
+  "user_cohort_target_plans",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    cohortId: uuid("cohort_id")
+      .notNull()
+      .references(() => cohorts.id, { onDelete: "cascade" }),
+    planId: uuid("plan_id")
+      .notNull()
+      .references(() => cohortUpgradePlans.id, { onDelete: "cascade" }),
+    isEnabled: boolean("is_enabled").default(true),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    unique("user_cohort_target_plans_user_cohort_plan_unique").on(
+      table.userId,
+      table.cohortId,
+      table.planId
+    ),
+  ]
+);
+
 export const cohortOrders = pgTable("cohort_orders", {
   id: uuid("id").primaryKey().defaultRandom(),
   cohortId: uuid("cohort_id").references(() => cohorts.id, { onDelete: "cascade" }),
@@ -1018,6 +1062,28 @@ export const cohortSessionMentorsRelations = relations(cohortSessionMentors, ({ 
   }),
 }));
 
+export const cohortUpgradePlansRelations = relations(cohortUpgradePlans, ({ one }) => ({
+  cohort: one(cohorts, {
+    fields: [cohortUpgradePlans.cohortId],
+    references: [cohorts.id],
+  }),
+}));
+
+export const userCohortTargetPlansRelations = relations(userCohortTargetPlans, ({ one }) => ({
+  user: one(user, {
+    fields: [userCohortTargetPlans.userId],
+    references: [user.id],
+  }),
+  cohort: one(cohorts, {
+    fields: [userCohortTargetPlans.cohortId],
+    references: [cohorts.id],
+  }),
+  plan: one(cohortUpgradePlans, {
+    fields: [userCohortTargetPlans.planId],
+    references: [cohortUpgradePlans.id],
+  }),
+}));
+
 // Site Settings
 export const siteSettings = pgTable("site_settings", {
   id: text("id").primaryKey(), // "global"
@@ -1094,11 +1160,15 @@ export const schema = {
   cohortSessionResources,
   cohortSessionQueries,
   cohortSessionMentors,
+  cohortUpgradePlans,
+  userCohortTargetPlans,
   cohortSessionsRelations,
   cohortSessionContentsRelations,
   cohortSessionResourcesRelations,
   cohortSessionQueriesRelations,
   cohortSessionMentorsRelations,
+  cohortUpgradePlansRelations,
+  userCohortTargetPlansRelations,
   siteSettings,
   popups,
   sessionApplications,

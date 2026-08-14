@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { eq, and, inArray, sql } from "drizzle-orm";
-import { cohorts, cohortTiers, cohortOrders, coupons, userToolkits, toolkits, user, cohortSessions, siteSettings } from "@/lib/schema";
+import { cohorts, cohortTiers, cohortOrders, coupons, userToolkits, toolkits, user, cohortSessions, siteSettings, cohortUpgradePlans } from "@/lib/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { createOrder } from "@/lib/razorpay";
@@ -38,8 +38,9 @@ export async function POST(
     const body = await request.json();
     const {
       selectedTierId,
-      selectedAddOnIds = [],
+      selectedAddOnIds: rawAddOns = [],
       selectedToolkitIds = [],
+      selectedUpgradePlanId,
       buyerName,
       buyerEmail,
       buyerPhone,
@@ -47,9 +48,13 @@ export async function POST(
       validateCouponOnly = false,
     } = body;
     
+    let selectedAddOnIds = [...rawAddOns];
     let { buddyEmail } = body;
 
-    if (!buyerName || !buyerEmail) {
+    const effectiveBuyerName = buyerName?.trim() || session.user.name || "Learner";
+    const effectiveBuyerEmail = buyerEmail?.trim() || session.user.email;
+
+    if (!effectiveBuyerName || !effectiveBuyerEmail) {
       return NextResponse.json(
         { error: "Buyer name and email are required" },
         { status: 400 }
@@ -64,11 +69,47 @@ export async function POST(
       buddyEmail = null;
     }
 
+    let upgradePlanPrice = 0;
+    let isUpgradePlanAllInOne = false;
+
+    if (selectedUpgradePlanId) {
+      if (typeof selectedUpgradePlanId === "string" && selectedUpgradePlanId.startsWith("preset_")) {
+        upgradePlanPrice = typeof body.price === "number" ? body.price : (body.presetPrice || 1499);
+        isUpgradePlanAllInOne = Boolean(body.isAllInOne ?? body.presetIsAllInOne);
+      } else {
+        try {
+          const upgradePlan = await db.query.cohortUpgradePlans.findFirst({
+            where: and(
+              eq(cohortUpgradePlans.id, selectedUpgradePlanId),
+              eq(cohortUpgradePlans.cohortId, cohortId),
+              eq(cohortUpgradePlans.isActive, true)
+            ),
+          });
+
+          if (upgradePlan) {
+            upgradePlanPrice = upgradePlan.price;
+            isUpgradePlanAllInOne = Boolean(upgradePlan.isAllInOne);
+
+            if (upgradePlan.includedSessionIds && upgradePlan.includedSessionIds.length > 0) {
+              const merged = new Set([...selectedAddOnIds, ...upgradePlan.includedSessionIds]);
+              selectedAddOnIds = Array.from(merged);
+            }
+          } else {
+            upgradePlanPrice = typeof body.price === "number" ? body.price : 1499;
+            isUpgradePlanAllInOne = Boolean(body.isAllInOne);
+          }
+        } catch {
+          upgradePlanPrice = typeof body.price === "number" ? body.price : 1499;
+          isUpgradePlanAllInOne = Boolean(body.isAllInOne);
+        }
+      }
+    }
+
     // Skip validation for coupon-only validation
-    if (!validateCouponOnly) {
+    if (!validateCouponOnly && !selectedUpgradePlanId) {
       if (!selectedTierId && selectedAddOnIds.length === 0) {
         return NextResponse.json(
-          { error: "Please select either the bundle tier or at least one individual session to apply." },
+          { error: "Please select either a plan tier, an upgrade package, or at least one session." },
           { status: 400 }
         );
       }
@@ -92,6 +133,8 @@ export async function POST(
 
     // 2. Fetch Tier if selected
     let tierPrice = 0;
+    let resolvedTierId = selectedTierId || null;
+
     if (selectedTierId) {
       const tier = await db.query.cohortTiers.findFirst({
         where: and(
@@ -108,7 +151,7 @@ export async function POST(
 
     // 3. Fetch Add-ons (sessions)
     let addonsTotal = 0;
-    if (selectedAddOnIds.length > 0) {
+    if (selectedAddOnIds.length > 0 && !selectedUpgradePlanId) {
       const selectedSessions = await db
         .select()
         .from(cohortSessions)
@@ -122,6 +165,22 @@ export async function POST(
       selectedSessions.forEach((session) => {
         addonsTotal += session.price || 0;
       });
+    }
+
+    if (selectedUpgradePlanId) {
+      if (isUpgradePlanAllInOne) {
+        tierPrice = upgradePlanPrice;
+        if (!resolvedTierId) {
+          const defaultTier = await db.query.cohortTiers.findFirst({
+            where: eq(cohortTiers.cohortId, cohortId),
+          });
+          if (defaultTier) {
+            resolvedTierId = defaultTier.id;
+          }
+        }
+      } else {
+        addonsTotal = upgradePlanPrice;
+      }
     }
 
     // Fetch Toolkit Add-ons
@@ -230,11 +289,11 @@ export async function POST(
         .values({
           cohortId,
           userId,
-          buyerName,
-          buyerEmail,
+          buyerName: effectiveBuyerName,
+          buyerEmail: effectiveBuyerEmail,
           buyerPhone: buyerPhone || null,
           buddyEmail: buddyEmail ? buddyEmail.trim().toLowerCase() : null,
-          selectedTierId: selectedTierId || null,
+          selectedTierId: resolvedTierId,
           selectedAddOnIds,
           selectedToolkitIds,
           amountPaid: 0,
@@ -371,11 +430,11 @@ export async function POST(
       .values({
         cohortId,
         userId,
-        buyerName,
-        buyerEmail,
+        buyerName: effectiveBuyerName,
+        buyerEmail: effectiveBuyerEmail,
         buyerPhone: buyerPhone || null,
         buddyEmail: buddyEmail ? buddyEmail.trim().toLowerCase() : null,
-        selectedTierId: selectedTierId || null,
+        selectedTierId: resolvedTierId,
         selectedAddOnIds,
         selectedToolkitIds,
         amountPaid: Number(order.amount), // in paise

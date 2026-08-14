@@ -37,6 +37,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ImageCarousel } from "@/components/ui/image-carousel";
 import { useQuery } from "@tanstack/react-query";
+import { CohortUpgradeGrid } from "./CohortUpgradeGrid";
 
 export default function CohortDashboardPage() {
   const params = useParams();
@@ -59,8 +60,9 @@ export default function CohortDashboardPage() {
   );
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
-  const { data: cohortData, isLoading: isCohortLoading } =
+  const { data: cohortData, isLoading: isCohortLoading, refetch: refetchCohort } =
     useCohortDetail(cohortId);
 
   const sessions = useMemo(() => cohortData?.sessions ?? [], [cohortData]);
@@ -68,22 +70,18 @@ export default function CohortDashboardPage() {
   useEffect(() => {
     if (sessions.length === 0) return;
 
-    const accessibleSessions = sessions.filter((s: any) => s.isAccessible);
-    if (accessibleSessions.length === 0) return;
-
     let targetId: string | null = null;
 
     if (currentSessionId) {
-      const isValid = accessibleSessions.some(
-        (s: any) => s.id === currentSessionId
-      );
+      const isValid = sessions.some((s: any) => s.id === currentSessionId);
       if (isValid) {
         targetId = currentSessionId;
       }
     }
 
     if (!targetId) {
-      targetId = accessibleSessions[0].id;
+      const accessibleSessions = sessions.filter((s: any) => s.isAccessible);
+      targetId = accessibleSessions.length > 0 ? accessibleSessions[0].id : sessions[0].id;
       setCurrentSessionId(targetId);
     }
 
@@ -101,7 +99,7 @@ export default function CohortDashboardPage() {
     const onHashChange = () => {
       const hash = window.location.hash.replace("#", "");
       if (hash && hash !== currentSessionId) {
-        const match = sessions.find((s: any) => s.id === hash && s.isAccessible);
+        const match = sessions.find((s: any) => s.id === hash);
         if (match) setCurrentSessionId(hash);
       }
     };
@@ -216,6 +214,15 @@ export default function CohortDashboardPage() {
                 {sessionData?.session.title || "Select a session"}
               </h1>
             </div>
+
+            {/* Top-Right Global Upgrade Button */}
+            <Button
+              size="sm"
+              onClick={() => setUpgradeModalOpen(true)}
+              className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg shrink-0"
+            >
+              Upgrade
+            </Button>
           </div>
           <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
             <SheetTrigger asChild>
@@ -259,7 +266,17 @@ export default function CohortDashboardPage() {
               <Skeleton className="h-40 w-full" />
             </div>
           ) : (
-            <CohortSessionMain contents={contents} sessionId={currentSessionId || ""} cohortId={cohortId} sessions={sessions} onSessionSelect={handleSessionSelect} />
+            <CohortSessionMain
+              contents={contents}
+              sessionId={currentSessionId || ""}
+              cohortId={cohortId}
+              cohortTitle={cohortData.cohort.title}
+              sessions={sessions}
+              currentPlanStatus={cohortData.currentPlanStatus}
+              upgradePlans={cohortData.upgradePlans}
+              onSessionSelect={handleSessionSelect}
+              refetchCohort={refetchCohort}
+            />
           )}
         </main>
 
@@ -273,6 +290,33 @@ export default function CohortDashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Global Upgrade Modal (Requirement 5 & Global Minimal Rule) */}
+      {upgradeModalOpen && (
+        <Dialog open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen}>
+          <DialogContent className="w-full max-w-[96vw] sm:max-w-2xl md:max-w-4xl max-h-[88vh] flex flex-col p-0 gap-0 overflow-hidden">
+            <DialogHeader className="px-5 py-4 border-b shrink-0">
+              <DialogTitle className="text-base font-bold text-gray-900">
+                Upgrade Options — {cohortData.cohort.title}
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="flex-1 overflow-y-auto px-5 pb-5">
+              <CohortUpgradeGrid
+                cohortId={cohortId}
+                cohortTitle={cohortData.cohort.title}
+                currentPlanStatus={cohortData.currentPlanStatus}
+                upgradePlans={cohortData.upgradePlans}
+                sessions={sessions}
+                onUpgradeSuccess={() => {
+                  setUpgradeModalOpen(false);
+                  refetchCohort();
+                }}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
@@ -298,14 +342,13 @@ function CohortSessionSidebar({
         {sessions.map((session, index) => (
           <button
             key={session.id}
-            onClick={() => session.isAccessible && onSessionSelect(session.id)}
-            disabled={!session.isAccessible}
+            onClick={() => onSessionSelect(session.id)}
             className={cn(
-              "w-full rounded-2xl p-4 text-left transition-all",
+              "w-full rounded-2xl p-4 text-left transition-all cursor-pointer",
               currentSessionId === session.id
                 ? "bg-orange-100 border-l-4 border-orange-500"
                 : "bg-white border border-gray-100 hover:border-gray-200 hover:shadow-sm",
-              !session.isAccessible && "opacity-60 cursor-not-allowed"
+              !session.isAccessible && "bg-gray-50/70 opacity-90"
             )}
           >
             <div className="flex items-start gap-4">
@@ -347,14 +390,22 @@ function CohortSessionMain({
   contents,
   sessionId,
   cohortId,
+  cohortTitle,
   sessions,
+  currentPlanStatus,
+  upgradePlans,
   onSessionSelect,
+  refetchCohort,
 }: {
   contents: CohortSessionContent[];
   sessionId: string;
   cohortId: string;
+  cohortTitle: string;
   sessions: any[];
+  currentPlanStatus?: any;
+  upgradePlans?: any[];
   onSessionSelect: (id: string) => void;
+  refetchCohort: () => void;
 }) {
   const [newQuestion, setNewQuestion] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -463,9 +514,42 @@ function CohortSessionMain({
     const indexA = sortOrder.indexOf(a.sectionType);
     const indexB = sortOrder.indexOf(b.sectionType);
     if (indexA !== indexB) return indexA - indexB;
-    // If same section type, sort by orderIndex
     return a.orderIndex - b.orderIndex;
   });
+
+  const currentSession = sessions.find((s: any) => s.id === sessionId);
+  const isAccessible = currentSession ? currentSession.isAccessible !== false : true;
+
+  if (!isAccessible) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-orange-200 bg-orange-50/80 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-600 shrink-0">
+              <Lock className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-extrabold text-gray-900">
+                {currentSession?.title || "Session Locked"} — Upgrade Required
+              </h2>
+              <p className="text-xs text-gray-600 mt-0.5">
+                This session is not included in your current active plan. Choose an upgrade package below to get immediate access.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <CohortUpgradeGrid
+          cohortId={cohortId}
+          cohortTitle={cohortTitle}
+          currentPlanStatus={currentPlanStatus}
+          upgradePlans={upgradePlans}
+          sessions={sessions}
+          onUpgradeSuccess={() => refetchCohort()}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

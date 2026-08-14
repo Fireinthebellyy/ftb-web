@@ -139,13 +139,14 @@ export function LoginForm({
     setIsLoading(true);
 
     try {
-      await authClient.signIn.email(
+      const res = await authClient.signIn.email(
         {
           email: values.email,
           password: values.password,
         },
         {
           onSuccess: async (ctx) => {
+            toast.success("Logged in. Redirecting...");
             if (ctx.data?.user) {
               posthog.identify(ctx.data.user.id, {
                 email: ctx.data.user.email,
@@ -153,30 +154,23 @@ export function LoginForm({
                 createdAt: ctx.data.user.createdAt?.toISOString(),
               });
             }
-            // Check if user has completed onboarding by fetching profile
-            try {
-              const response = await fetch("/api/onboarding");
-              const data = await response.json();
-
-              // User has completed onboarding if profile exists
-              const hasCompletedOnboarding = !!data.profile;
-
-              if (hasCompletedOnboarding) {
-                router.push(returnUrl);
-              } else {
-                router.push(returnUrl);
-              }
-            } catch (error) {
-              console.error("Error checking onboarding status:", error);
-              router.push(returnUrl);
-            }
+            router.push(returnUrl);
+          },
+          onError: (ctx) => {
+            setIsLoading(false);
+            const msg = ctx.error?.message || "Invalid email or password";
+            toast.error(msg);
           },
         }
       );
-      toast.success("Logged in. Redirecting...");
-    } catch (error) {
+
+      if (res?.error) {
+        setIsLoading(false);
+        toast.error(res.error.message || "Invalid email or password");
+      }
+    } catch (error: any) {
       console.error("Login error:", error);
-      toast.error("Login failed. Please try again.");
+      toast.error(error?.message || "Login failed. Please try again.");
     } finally {
       setIsLoading(false);
     }

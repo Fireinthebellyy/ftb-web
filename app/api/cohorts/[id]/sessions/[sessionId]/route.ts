@@ -61,6 +61,10 @@ export async function GET(
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
+    const isAccessible = order.selectedAddOnIds && Array.isArray(order.selectedAddOnIds) && order.selectedAddOnIds.length > 0
+      ? order.selectedAddOnIds.includes(sessionId)
+      : true;
+
     // First fetch the content items
     const contentItems = await db.query.cohortSessionContents.findMany({
       where: eq(cohortSessionContents.sessionId, sessionId),
@@ -117,8 +121,12 @@ export async function GET(
     }));
 
     return NextResponse.json({
-      session: cohortSession,
+      session: {
+        ...cohortSession,
+        isAccessible,
+      },
       contents,
+      isAccessible,
     });
   } catch (error) {
     console.error("Error fetching cohort session:", error);

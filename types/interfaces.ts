@@ -388,6 +388,14 @@ export type CohortDetailResponse = {
   isVerificationRequired: boolean;
   isVerified: boolean;
   sessions: CohortSession[];
+  currentPlanStatus?: {
+    purchasedSessionsCount: number;
+    totalSessionsCount: number;
+    amountPaid: number;
+    isAllInOne: boolean;
+    selectedAddOnIds: string[];
+  };
+  upgradePlans?: any[];
 };
 
 export type CohortSessionResponse = {

@@ -25,6 +25,7 @@ export interface CohortUpgradePlan {
   id: string;
   cohortId: string;
   title: string;
+  sectionLabel: string | null;
   description: string | null;
   price: number;
   originalPrice: number | null;
@@ -114,7 +115,7 @@ export default function CohortUpgradePlansManager({
     setEditingPlan(plan);
     setForm({
       title: plan.title || "",
-      sectionLabel: (plan as any).sectionLabel || "",
+      sectionLabel: plan.sectionLabel || "",
       description: plan.description || "",
       price: String(plan.price),
       originalPrice: plan.originalPrice ? String(plan.originalPrice) : "",
@@ -266,6 +267,7 @@ export default function CohortUpgradePlansManager({
                   <Button
                     size="sm"
                     variant="outline"
+                    disabled={loading}
                     onClick={handleInitPresets}
                     className="gap-1.5 border-gray-300 text-gray-700 hover:bg-gray-50 text-xs"
                   >
@@ -297,6 +299,7 @@ export default function CohortUpgradePlansManager({
                 </p>
                 <Button
                   size="sm"
+                  disabled={loading}
                   onClick={handleInitPresets}
                   className="bg-orange-600 hover:bg-orange-700 text-xs gap-1.5"
                 >

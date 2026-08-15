@@ -833,6 +833,7 @@ export default function AdminCohortsTable() {
                         <Button
                           variant="outline"
                           size="sm"
+                          disabled={!order.cohortId}
                           onClick={() =>
                             setManagePackagesModalState({
                               open: true,
@@ -848,7 +849,7 @@ export default function AdminCohortsTable() {
                               ),
                             })
                           }
-                          className="text-xs font-semibold border-gray-300 hover:bg-gray-50 text-gray-700"
+                          className="text-xs font-semibold border-gray-300 hover:bg-gray-50 text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           Manage Packages
                         </Button>
@@ -857,7 +858,7 @@ export default function AdminCohortsTable() {
                   ))}
                   {ordersList.filter(order => order.registrationName).length === 0 && (
                     <tr>
-                      <td colSpan={10} className="p-12 text-center text-gray-500">
+                      <td colSpan={11} className="p-12 text-center text-gray-500">
                         No registration forms completed yet.
                       </td>
                     </tr>

@@ -163,14 +163,11 @@ export function LoginForm({
           },
         }
       );
-
-      if (res?.error) {
-        setIsLoading(false);
-        toast.error(res.error.message || "Invalid email or password");
-      }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Login error:", error);
-      toast.error(error?.message || "Login failed. Please try again.");
+      const msg =
+        error instanceof Error ? error.message : "Login failed. Please try again.";
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }

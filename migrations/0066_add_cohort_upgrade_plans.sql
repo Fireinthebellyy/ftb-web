@@ -16,3 +16,7 @@ CREATE TABLE IF NOT EXISTS "cohort_upgrade_plans" (
   "is_active" boolean DEFAULT true,
   "created_at" timestamp DEFAULT now()
 );
+
+-- Add section_label column (safe to run on existing tables)
+ALTER TABLE "cohort_upgrade_plans"
+  ADD COLUMN IF NOT EXISTS "section_label" text;

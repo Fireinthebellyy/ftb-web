@@ -888,6 +888,7 @@ export const cohortUpgradePlans = pgTable("cohort_upgrade_plans", {
   id: uuid("id").primaryKey().defaultRandom(),
   cohortId: uuid("cohort_id").references(() => cohorts.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
+  sectionLabel: text("section_label"),
   description: text("description"),
   price: integer("price").notNull(),
   originalPrice: integer("original_price"),

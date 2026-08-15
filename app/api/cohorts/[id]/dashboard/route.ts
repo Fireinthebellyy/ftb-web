@@ -117,9 +117,8 @@ export async function GET(
       ? sessions.length
       : sessions.filter((s) => order.selectedAddOnIds?.includes(s.id)).length;
 
-    // Amount paid in order (convert paise to rupees if needed, assuming amountPaid in Rupees or Paise)
-    // If order.amountPaid is > 100000, it might be in paise. Let's handle amount in rupees safely.
-    const amountPaidRupees = order.amountPaid > 50000 ? Math.round(order.amountPaid / 100) : order.amountPaid;
+    // amountPaid is stored in paise by Razorpay; convert to rupees (0 stays 0 for free orders).
+    const amountPaidRupees = order.amountPaid > 0 ? Math.round(order.amountPaid / 100) : 0;
 
     const currentPlanStatus = {
       purchasedSessionsCount: accessibleCount,

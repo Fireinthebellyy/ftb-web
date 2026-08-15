@@ -76,6 +76,19 @@ export async function POST(
 
     // Check for preset initialization
     if (body.action === "init_presets") {
+      // Guard: reject if plans already exist for this cohort
+      const existing = await db.query.cohortUpgradePlans.findFirst({
+        where: eq(cohortUpgradePlans.cohortId, cohortId),
+      });
+      if (existing) {
+        activityStatus = 409;
+        activityError = "Upgrade plans already exist for this cohort";
+        return NextResponse.json(
+          { error: "Upgrade plans already exist for this cohort" },
+          { status: 409 }
+        );
+      }
+
       const defaultPresets = [
         {
           cohortId,

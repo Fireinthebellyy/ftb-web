@@ -48,11 +48,18 @@ export default function ManageUserPackagesModal({
   const [togglingPlanId, setTogglingPlanId] = useState<string | null>(null);
 
   const fetchTargetPlans = useCallback(async () => {
-    if (!cohortId || (!userId && !userEmail) || !open) return;
+    if (!cohortId || (!userId && !userEmail) || !open) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
+      const params = new URLSearchParams({
+        userId: userId || "",
+        email: userEmail || "",
+      });
       const res = await axios.get(
-        `/api/admin/cohorts/${cohortId}/user-targets?userId=${encodeURIComponent(userId || "")}&email=${encodeURIComponent(userEmail || "")}`
+        `/api/admin/cohorts/${cohortId}/user-targets?${params.toString()}`
       );
       setPlans(res.data?.plans || []);
     } catch (err) {

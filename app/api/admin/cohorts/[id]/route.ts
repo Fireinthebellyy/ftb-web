@@ -22,7 +22,7 @@ export async function GET(
     if (
       !currentUser ||
       !currentUser.currentUser?.id ||
-      !canAccessAdminTab(currentUser.currentUser.role, "toolkits")
+      !canAccessAdminTab(currentUser.currentUser.role, "cohorts")
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -101,7 +101,7 @@ export async function PUT(
     if (
       !currentUser ||
       !currentUser.currentUser?.id ||
-      !canAccessAdminTab(currentUser.currentUser.role, "toolkits")
+      !canAccessAdminTab(currentUser.currentUser.role, "cohorts")
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -442,7 +442,7 @@ export async function DELETE(
     if (
       !currentUser ||
       !currentUser.currentUser?.id ||
-      !canAccessAdminTab(currentUser.currentUser.role, "toolkits")
+      !canAccessAdminTab(currentUser.currentUser.role, "cohorts")
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

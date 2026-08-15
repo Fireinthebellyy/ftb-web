@@ -12,6 +12,8 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
+import { cn } from "@/lib/utils";
+
 interface TargetedPlan {
   id: string;
   title: string;
@@ -145,11 +147,12 @@ export default function ManageUserPackagesModal({
               {plans.map((plan) => (
                 <div
                   key={plan.id}
-                  className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
+                  className={cn(
+                    "flex items-center justify-between p-4 rounded-xl border transition-all",
                     plan.isEnabled
                       ? "bg-white border-gray-300 shadow-xs"
                       : "bg-gray-50 border-gray-200 opacity-60"
-                  }`}
+                  )}
                 >
                   <div className="space-y-1 max-w-[340px]">
                     <div className="flex items-center gap-2">

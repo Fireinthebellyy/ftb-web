@@ -37,7 +37,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ImageCarousel } from "@/components/ui/image-carousel";
 import { useQuery } from "@tanstack/react-query";
-import { CohortUpgradeGrid } from "./CohortUpgradeGrid";
+import { CohortUpgradeGrid, CurrentPlanStatus, UpgradePlan } from "./CohortUpgradeGrid";
 
 export default function CohortDashboardPage() {
   const params = useParams();
@@ -402,8 +402,8 @@ function CohortSessionMain({
   cohortId: string;
   cohortTitle: string;
   sessions: any[];
-  currentPlanStatus?: any;
-  upgradePlans?: any[];
+  currentPlanStatus?: CurrentPlanStatus | null;
+  upgradePlans?: UpgradePlan[] | null;
   onSessionSelect: (id: string) => void;
   refetchCohort: () => void;
 }) {

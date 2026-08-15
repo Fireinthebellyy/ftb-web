@@ -65,6 +65,19 @@ export async function GET(
       ? order.selectedAddOnIds.includes(sessionId)
       : true;
 
+    if (!isAccessible) {
+      return NextResponse.json({
+        session: {
+          ...cohortSession,
+          liveSessionLink: null,
+          videoUrl: null,
+          isAccessible: false,
+        },
+        contents: [],
+        isAccessible: false,
+      });
+    }
+
     // First fetch the content items
     const contentItems = await db.query.cohortSessionContents.findMany({
       where: eq(cohortSessionContents.sessionId, sessionId),

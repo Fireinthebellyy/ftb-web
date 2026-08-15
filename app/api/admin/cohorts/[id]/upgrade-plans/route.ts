@@ -190,6 +190,24 @@ export async function POST(
       });
     }
 
+    if (includedSessionIds !== undefined && !Array.isArray(includedSessionIds)) {
+      activityStatus = 400;
+      activityError = "includedSessionIds must be an array";
+      return badRequest("includedSessionIds must be an array", {
+        code: "INVALID_FIELD",
+        fields: ["includedSessionIds"],
+      });
+    }
+
+    if (features !== undefined && !Array.isArray(features)) {
+      activityStatus = 400;
+      activityError = "features must be an array";
+      return badRequest("features must be an array", {
+        code: "INVALID_FIELD",
+        fields: ["features"],
+      });
+    }
+
     const [newPlan] = await db
       .insert(cohortUpgradePlans)
       .values({

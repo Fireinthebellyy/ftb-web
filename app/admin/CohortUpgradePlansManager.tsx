@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2, Edit, Layers, LayoutGrid } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import {
   UpgradePlanFormDialog,
   EMPTY_FORM,
@@ -314,11 +315,12 @@ export default function CohortUpgradePlansManager({
                   return (
                     <div
                       key={plan.id}
-                      className={`rounded-xl border p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all ${
+                      className={cn(
+                        "rounded-xl border p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all",
                         plan.isActive
                           ? "bg-white border-gray-200 shadow-xs hover:border-gray-300"
                           : "bg-gray-50 border-gray-200 opacity-60"
-                      }`}
+                      )}
                     >
                       <div className="space-y-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">

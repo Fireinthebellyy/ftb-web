@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 
+import { cn } from "@/lib/utils";
+
 // ── Types ────────────────────────────────────────────────────────
 export type PlanType = "session_based" | "all_in_one" | "custom";
 
@@ -142,15 +144,17 @@ export function UpgradePlanFormDialog({
                           setField("includedCount", "3");
                       }
                     }}
-                    className={`rounded-xl border p-3 text-left transition-all ${
+                    className={cn(
+                      "rounded-xl border p-3 text-left transition-all",
                       isActive ? colors.active : "border-gray-200 bg-white hover:border-gray-300"
-                    }`}
+                    )}
                   >
                     <div className="flex items-center gap-1.5 font-bold text-xs text-gray-900">
                       <span
-                        className={`h-2.5 w-2.5 rounded-full shrink-0 ${
+                        className={cn(
+                          "h-2.5 w-2.5 rounded-full shrink-0",
                           isActive ? colors.dot : "bg-gray-300"
-                        }`}
+                        )}
                       />
                       {opt.label}
                     </div>
@@ -170,13 +174,14 @@ export function UpgradePlanFormDialog({
             </legend>
 
             <div>
-              <label className="text-xs font-semibold text-gray-700 block mb-1">
+              <label htmlFor="plan-section-label" className="text-xs font-semibold text-gray-700 block mb-1">
                 Section Label{" "}
                 <span className="text-gray-400 font-normal">
                   (small orange text above title — e.g. &quot;Package Option&quot;)
                 </span>
               </label>
               <Input
+                id="plan-section-label"
                 placeholder="e.g. Package Option, Full Cohort Upgrade, Mentorship Add-on"
                 value={form.sectionLabel}
                 onChange={(e) => setField("sectionLabel", e.target.value)}
@@ -184,10 +189,11 @@ export function UpgradePlanFormDialog({
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-gray-700 block mb-1">
+              <label htmlFor="plan-title" className="text-xs font-semibold text-gray-700 block mb-1">
                 Plan Title *
               </label>
               <Input
+                id="plan-title"
                 placeholder="e.g. 3-Session Skill Pass, All-Access Bundle, Mentorship Bootcamp"
                 value={form.title}
                 onChange={(e) => setField("title", e.target.value)}
@@ -196,10 +202,11 @@ export function UpgradePlanFormDialog({
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-gray-700 block mb-1">
+              <label htmlFor="plan-description" className="text-xs font-semibold text-gray-700 block mb-1">
                 Short Description
               </label>
               <Input
+                id="plan-description"
                 placeholder="e.g. Unlock 3 sessions of your choice with Q&A access"
                 value={form.description}
                 onChange={(e) => setField("description", e.target.value)}
@@ -207,13 +214,14 @@ export function UpgradePlanFormDialog({
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-gray-700 block mb-1">
+              <label htmlFor="plan-badge-text" className="text-xs font-semibold text-gray-700 block mb-1">
                 Badge Text{" "}
                 <span className="text-gray-400 font-normal">
                   (corner ribbon — e.g. &quot;Most Popular&quot;)
                 </span>
               </label>
               <Input
+                id="plan-badge-text"
                 placeholder="e.g. Most Popular, Best Value, Limited Offer"
                 value={form.badgeText}
                 onChange={(e) => setField("badgeText", e.target.value)}
@@ -228,10 +236,11 @@ export function UpgradePlanFormDialog({
             </legend>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-gray-700 block mb-1">
+                <label htmlFor="plan-price" className="text-xs font-semibold text-gray-700 block mb-1">
                   Price (₹) *
                 </label>
                 <Input
+                  id="plan-price"
                   type="number"
                   min="0"
                   placeholder="1499"
@@ -241,11 +250,12 @@ export function UpgradePlanFormDialog({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-700 block mb-1">
+                <label htmlFor="plan-original-price" className="text-xs font-semibold text-gray-700 block mb-1">
                   Original Price (₹){" "}
                   <span className="text-gray-400 font-normal">(strikethrough)</span>
                 </label>
                 <Input
+                  id="plan-original-price"
                   type="number"
                   min="0"
                   placeholder="2499"
@@ -264,10 +274,11 @@ export function UpgradePlanFormDialog({
               </legend>
 
               <div>
-                <label className="text-xs font-semibold text-gray-700 block mb-1">
+                <label htmlFor="plan-included-count" className="text-xs font-semibold text-gray-700 block mb-1">
                   Number of Sessions User Can Choose
                 </label>
                 <Input
+                  id="plan-included-count"
                   type="number"
                   min="1"
                   placeholder="3"
@@ -355,10 +366,11 @@ export function UpgradePlanFormDialog({
             <legend className="text-xs font-bold text-gray-800 uppercase tracking-wider">
               Features List
             </legend>
-            <label className="text-xs text-gray-500 block">
+            <label htmlFor="plan-features" className="text-xs text-gray-500 block">
               One feature per line — shown as bullet points on the plan card.
             </label>
             <Textarea
+              id="plan-features"
               placeholder={
                 form.planType === "custom"
                   ? "Access to Mentorship Portal\n1-on-1 Review Sessions\nCertificate on Completion"
@@ -377,11 +389,12 @@ export function UpgradePlanFormDialog({
             </legend>
             <div className="grid grid-cols-2 gap-3 items-end">
               <div>
-                <label className="text-xs font-semibold text-gray-700 block mb-1">
+                <label htmlFor="plan-order-index" className="text-xs font-semibold text-gray-700 block mb-1">
                   Order Index{" "}
                   <span className="text-gray-400 font-normal">(lower = first)</span>
                 </label>
                 <Input
+                  id="plan-order-index"
                   type="number"
                   min="0"
                   value={form.orderIndex}

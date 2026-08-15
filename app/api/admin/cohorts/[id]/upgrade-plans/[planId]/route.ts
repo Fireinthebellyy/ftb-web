@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { badRequest } from "@/lib/api-error";
+import { eq, and, inArray } from "drizzle-orm";
+
 import { logAdminActivity } from "@/lib/admin-activity";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
+import { badRequest } from "@/lib/api-error";
 import { db } from "@/lib/db";
-import { cohortUpgradePlans } from "@/lib/schema";
+import { cohortSessions, cohortUpgradePlans } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
-import { eq, and } from "drizzle-orm";
 
 export async function PUT(
   request: Request,
@@ -77,6 +78,36 @@ export async function PUT(
         code: "INVALID_FIELD",
         fields: ["title"],
       });
+    }
+
+    if (includedSessionIds !== undefined) {
+      if (!Array.isArray(includedSessionIds)) {
+        activityStatus = 400;
+        activityError = "includedSessionIds must be an array";
+        return badRequest("includedSessionIds must be an array", {
+          code: "INVALID_FIELD",
+          fields: ["includedSessionIds"],
+        });
+      }
+      if (includedSessionIds.length > 0) {
+        const validSessions = await db
+          .select({ id: cohortSessions.id })
+          .from(cohortSessions)
+          .where(
+            and(
+              eq(cohortSessions.cohortId, cohortId),
+              inArray(cohortSessions.id, includedSessionIds)
+            )
+          );
+        if (validSessions.length !== includedSessionIds.length) {
+          activityStatus = 400;
+          activityError = "One or more includedSessionIds are invalid for this cohort";
+          return badRequest("One or more includedSessionIds are invalid for this cohort", {
+            code: "INVALID_FIELD",
+            fields: ["includedSessionIds"],
+          });
+        }
+      }
     }
 
     const [updatedPlan] = await db

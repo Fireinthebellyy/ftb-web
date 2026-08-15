@@ -71,36 +71,83 @@ export async function POST(
 
     let upgradePlanPrice = 0;
     let isUpgradePlanAllInOne = false;
+    let upgradePlanIncludedSessionCount: number | null = null;
+    let upgradePlanIncludedSessionIds: string[] = [];
 
     if (selectedUpgradePlanId) {
-      if (typeof selectedUpgradePlanId === "string" && selectedUpgradePlanId.startsWith("preset_")) {
-        upgradePlanPrice = typeof body.price === "number" ? body.price : (body.presetPrice || 1499);
-        isUpgradePlanAllInOne = Boolean(body.isAllInOne ?? body.presetIsAllInOne);
-      } else {
-        try {
-          const upgradePlan = await db.query.cohortUpgradePlans.findFirst({
-            where: and(
-              eq(cohortUpgradePlans.id, selectedUpgradePlanId),
-              eq(cohortUpgradePlans.cohortId, cohortId),
-              eq(cohortUpgradePlans.isActive, true)
-            ),
-          });
+      const upgradePlan = await db.query.cohortUpgradePlans.findFirst({
+        where: and(
+          eq(cohortUpgradePlans.id, selectedUpgradePlanId),
+          eq(cohortUpgradePlans.cohortId, cohortId),
+          eq(cohortUpgradePlans.isActive, true)
+        ),
+      });
 
-          if (upgradePlan) {
-            upgradePlanPrice = upgradePlan.price;
-            isUpgradePlanAllInOne = Boolean(upgradePlan.isAllInOne);
+      if (!upgradePlan) {
+        return NextResponse.json(
+          { error: "Selected upgrade package is not available or invalid" },
+          { status: 400 }
+        );
+      }
 
-            if (upgradePlan.includedSessionIds && upgradePlan.includedSessionIds.length > 0) {
-              const merged = new Set([...selectedAddOnIds, ...upgradePlan.includedSessionIds]);
-              selectedAddOnIds = Array.from(merged);
-            }
-          } else {
-            upgradePlanPrice = typeof body.price === "number" ? body.price : 1499;
-            isUpgradePlanAllInOne = Boolean(body.isAllInOne);
-          }
-        } catch {
-          upgradePlanPrice = typeof body.price === "number" ? body.price : 1499;
-          isUpgradePlanAllInOne = Boolean(body.isAllInOne);
+      upgradePlanPrice = upgradePlan.price;
+      isUpgradePlanAllInOne = Boolean(upgradePlan.isAllInOne);
+      upgradePlanIncludedSessionCount = upgradePlan.includedSessionCount;
+
+      if (upgradePlan.includedSessionIds && upgradePlan.includedSessionIds.length > 0) {
+        upgradePlanIncludedSessionIds = upgradePlan.includedSessionIds;
+        const merged = new Set([...selectedAddOnIds, ...upgradePlan.includedSessionIds]);
+        selectedAddOnIds = Array.from(merged);
+      }
+    }
+
+    // Load cohort sessions to validate selectedAddOnIds
+    const cohortSessionsList = await db
+      .select({ id: cohortSessions.id, price: cohortSessions.price })
+      .from(cohortSessions)
+      .where(
+        and(
+          eq(cohortSessions.cohortId, cohortId),
+          eq(cohortSessions.isActive, true)
+        )
+      );
+    const validCohortSessionIds = new Set(cohortSessionsList.map((s) => s.id));
+    selectedAddOnIds = selectedAddOnIds.filter((id) => validCohortSessionIds.has(id));
+
+    // Load all paid orders for user in this cohort to deduplicate owned sessions
+    const existingPaidOrders = await db.query.cohortOrders.findMany({
+      where: and(
+        eq(cohortOrders.userId, userId),
+        eq(cohortOrders.cohortId, cohortId),
+        eq(cohortOrders.status, "paid")
+      ),
+    });
+
+    const userAlreadyOwnedSessionIds = new Set<string>();
+    existingPaidOrders.forEach((o) => {
+      if (o.selectedAddOnIds && Array.isArray(o.selectedAddOnIds)) {
+        o.selectedAddOnIds.forEach((id) => userAlreadyOwnedSessionIds.add(id));
+      }
+    });
+
+    // Enforce upgrade package session allowances if applicable
+    if (selectedUpgradePlanId && !isUpgradePlanAllInOne) {
+      const newSessionsToUnlock = selectedAddOnIds.filter((id) => !userAlreadyOwnedSessionIds.has(id));
+
+      if (upgradePlanIncludedSessionIds.length > 0) {
+        const allowedSet = new Set(upgradePlanIncludedSessionIds);
+        if (newSessionsToUnlock.some((id) => !allowedSet.has(id))) {
+          return NextResponse.json(
+            { error: "Selected sessions exceed the allowed pinned sessions for this upgrade package" },
+            { status: 400 }
+          );
+        }
+      } else if (upgradePlanIncludedSessionCount !== null) {
+        if (newSessionsToUnlock.length > upgradePlanIncludedSessionCount) {
+          return NextResponse.json(
+            { error: `You can select at most ${upgradePlanIncludedSessionCount} new session(s) with this upgrade package.` },
+            { status: 400 }
+          );
         }
       }
     }
@@ -152,18 +199,9 @@ export async function POST(
     // 3. Fetch Add-ons (sessions)
     let addonsTotal = 0;
     if (selectedAddOnIds.length > 0 && !selectedUpgradePlanId) {
-      const selectedSessions = await db
-        .select()
-        .from(cohortSessions)
-        .where(
-          and(
-            eq(cohortSessions.cohortId, cohortId),
-            inArray(cohortSessions.id, selectedAddOnIds)
-          )
-        );
-
-      selectedSessions.forEach((session) => {
-        addonsTotal += session.price || 0;
+      const selectedSessionsMap = new Map(cohortSessionsList.map((s) => [s.id, s.price || 0]));
+      selectedAddOnIds.forEach((id) => {
+        addonsTotal += selectedSessionsMap.get(id) || 0;
       });
     }
 
@@ -173,6 +211,7 @@ export async function POST(
         if (!resolvedTierId) {
           const defaultTier = await db.query.cohortTiers.findFirst({
             where: eq(cohortTiers.cohortId, cohortId),
+            orderBy: (cohortTiers, { asc }) => [asc(cohortTiers.price), asc(cohortTiers.id)],
           });
           if (defaultTier) {
             resolvedTierId = defaultTier.id;
@@ -341,11 +380,11 @@ export async function POST(
               await db.insert(cohortOrders).values({
                 cohortId,
                 userId: buddyUser.id,
-                buyerName,
+                buyerName: effectiveBuyerName,
                 buyerEmail: buddyEmail.trim().toLowerCase(),
                 buyerPhone: buyerPhone || null,
                 buddyEmail: null,
-                selectedTierId: selectedTierId || null,
+                selectedTierId: resolvedTierId,
                 selectedAddOnIds,
                 selectedToolkitIds,
                 amountPaid: 0,

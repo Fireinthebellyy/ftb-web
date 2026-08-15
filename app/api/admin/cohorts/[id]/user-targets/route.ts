@@ -1,25 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { eq, and, asc } from "drizzle-orm";
+
+import { logAdminActivity } from "@/lib/admin-activity";
+import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { db } from "@/lib/db";
 import {
   cohortUpgradePlans,
   userCohortTargetPlans,
   user,
 } from "@/lib/schema";
-import { eq, and, asc } from "drizzle-orm";
-import { logAdminActivity } from "@/lib/admin-activity";
+import { getCurrentUser } from "@/server/users";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session || session.user.role !== "admin") {
+    const currentUser = await getCurrentUser();
+    if (
+      !currentUser ||
+      !currentUser.currentUser?.id ||
+      !canAccessAdminTab(currentUser.currentUser.role, "cohorts")
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -42,31 +44,21 @@ export async function GET(
     }
 
     // Fetch all active upgrade plans for this cohort
-    let plans: any[] = [];
-    try {
-      plans = await db.query.cohortUpgradePlans.findMany({
-        where: and(
-          eq(cohortUpgradePlans.cohortId, cohortId),
-          eq(cohortUpgradePlans.isActive, true)
-        ),
-        orderBy: [asc(cohortUpgradePlans.orderIndex)],
-      });
-    } catch {
-      plans = [];
-    }
+    const plans = await db.query.cohortUpgradePlans.findMany({
+      where: and(
+        eq(cohortUpgradePlans.cohortId, cohortId),
+        eq(cohortUpgradePlans.isActive, true)
+      ),
+      orderBy: [asc(cohortUpgradePlans.orderIndex)],
+    });
 
     // Fetch user target plan overrides
-    let targetRecords: any[] = [];
-    try {
-      targetRecords = await db.query.userCohortTargetPlans.findMany({
-        where: and(
-          eq(userCohortTargetPlans.userId, userId),
-          eq(userCohortTargetPlans.cohortId, cohortId)
-        ),
-      });
-    } catch {
-      targetRecords = [];
-    }
+    const targetRecords = await db.query.userCohortTargetPlans.findMany({
+      where: and(
+        eq(userCohortTargetPlans.userId, userId),
+        eq(userCohortTargetPlans.cohortId, cohortId)
+      ),
+    });
 
     const targetMap = new Map<string, boolean>();
     targetRecords.forEach((tr) => {
@@ -88,21 +80,29 @@ export async function GET(
   }
 }
 
+interface UpdateUserTargetBody {
+  userId?: string;
+  userEmail?: string;
+  planId: string;
+  isEnabled: boolean;
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session || session.user.role !== "admin") {
+    const currentUser = await getCurrentUser();
+    if (
+      !currentUser ||
+      !currentUser.currentUser?.id ||
+      !canAccessAdminTab(currentUser.currentUser.role, "cohorts")
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id: cohortId } = await params;
-    const body = await request.json();
+    const body = (await request.json()) as UpdateUserTargetBody;
     let { userId, userEmail, planId, isEnabled } = body;
 
     if ((!userId || userId === "undefined" || userId === "null") && userEmail) {
@@ -116,6 +116,18 @@ export async function POST(
 
     if (!userId || !planId || typeof isEnabled !== "boolean") {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    // Verify plan belongs to this cohort
+    const plan = await db.query.cohortUpgradePlans.findFirst({
+      where: and(
+        eq(cohortUpgradePlans.id, planId),
+        eq(cohortUpgradePlans.cohortId, cohortId)
+      ),
+    });
+
+    if (!plan) {
+      return NextResponse.json({ error: "Upgrade plan not found for this cohort" }, { status: 404 });
     }
 
     try {
@@ -141,7 +153,7 @@ export async function POST(
         });
     } catch (dbErr) {
       console.error("Error updating user target plan DB:", dbErr);
-      return NextResponse.json({ error: "Database table not ready" }, { status: 500 });
+      return NextResponse.json({ error: "Failed to update user target plan" }, { status: 500 });
     }
 
     void logAdminActivity({
@@ -149,7 +161,7 @@ export async function POST(
       action: "admin.cohorts.user_targets.update",
       statusCode: 200,
       success: true,
-      adminUserId: session.user.id,
+      adminUserId: currentUser.currentUser.id,
       entityType: "cohort",
       entityId: cohortId,
       metadata: {

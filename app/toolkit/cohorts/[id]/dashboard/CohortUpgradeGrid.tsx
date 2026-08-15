@@ -15,6 +15,7 @@ export interface UpgradePlan {
   id: string;
   cohortId: string;
   title: string;
+  sectionLabel?: string | null;
   description: string | null;
   price: number;
   originalPrice: number | null;
@@ -35,12 +36,45 @@ export interface CurrentPlanStatus {
   selectedAddOnIds: string[];
 }
 
+export interface CohortSessionItem {
+  id: string;
+  title: string;
+  orderIndex?: number;
+  isAccessible?: boolean;
+}
+
+interface RazorpayResponse {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+}
+
+interface RazorpayCheckoutOptions {
+  key: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+  handler: (response: RazorpayResponse) => void;
+  prefill: {
+    name?: string;
+    email?: string;
+  };
+  theme: {
+    color: string;
+  };
+  modal: {
+    ondismiss: () => void;
+  };
+}
+
 interface CohortUpgradeGridProps {
   cohortId: string;
   cohortTitle: string;
   currentPlanStatus?: CurrentPlanStatus | null;
   upgradePlans?: UpgradePlan[] | null;
-  sessions?: { id: string; title: string; orderIndex?: number; isAccessible?: boolean }[];
+  sessions?: CohortSessionItem[];
   onUpgradeSuccess: () => void;
   buyerName?: string;
   buyerEmail?: string;
@@ -57,75 +91,10 @@ export function CohortUpgradeGrid({
   buyerEmail = "",
 }: CohortUpgradeGridProps) {
   const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
-
-  // Default preset fallback plans if admin has not configured custom plans yet
-  const defaultUpgradePlans: UpgradePlan[] = [
-    {
-      id: "preset_3_sessions",
-      cohortId,
-      title: "3-Session Skill Pack",
-      description: "Upgrade to any 3 live cohort sessions of your choice",
-      price: 1499,
-      originalPrice: 2499,
-      includedSessionCount: 3,
-      includedSessionIds: [],
-      isAllInOne: false,
-      badgeText: "Starter Pack",
-      features: [
-        "Access 3 Live Cohort Sessions",
-        "Resource & Code Slide Downloads",
-        "Interactive Live Q&A",
-      ],
-      orderIndex: 0,
-      isActive: true,
-    },
-    {
-      id: "preset_6_sessions",
-      cohortId,
-      title: "Pro Multi-Session Pass",
-      description: "Access 6 live sessions with extended recorded replays",
-      price: 2999,
-      originalPrice: 4999,
-      includedSessionCount: 6,
-      includedSessionIds: [],
-      isAllInOne: false,
-      badgeText: "Most Popular",
-      features: [
-        "Access 6 Live Cohort Sessions",
-        "HD Recording Replays",
-        "All Slide & Resource Downloads",
-        "Priority Mentor Support & Q&A",
-      ],
-      orderIndex: 1,
-      isActive: true,
-    },
-    {
-      id: "preset_all_in_one",
-      cohortId,
-      title: "All-In-One Full Pass",
-      description: "Complete access to all live sessions, recordings & mentorship",
-      price: 4999,
-      originalPrice: 8999,
-      includedSessionCount: 99,
-      includedSessionIds: [],
-      isAllInOne: true,
-      badgeText: "Best Value",
-      features: [
-        "Unlock ALL Live Sessions & Recordings",
-        "Direct Mentor Q&A & Code Reviews",
-        "All Resource & Slide Downloads",
-        "Verified Cohort Completion Certificate",
-      ],
-      orderIndex: 2,
-      isActive: true,
-    },
-  ];
-
   const [sessionPickerPlan, setSessionPickerPlan] = useState<UpgradePlan | null>(null);
   const [selectedSessionIdsForPicker, setSelectedSessionIdsForPicker] = useState<string[]>([]);
 
-  const displayPlans =
-    upgradePlans && upgradePlans.length > 0 ? upgradePlans : defaultUpgradePlans;
+  const displayPlans = upgradePlans || [];
 
   const handleCardClick = (plan: UpgradePlan) => {
     if (plan.isAllInOne) {
@@ -143,12 +112,16 @@ export function CohortUpgradeGrid({
       return;
     }
 
-    const unpurchasedSessions = sessions.filter((s: any) => !s.isAccessible);
+    const unpurchasedSessions = sessions.filter((s) => !s.isAccessible);
+    if (unpurchasedSessions.length === 0) {
+      toast.info("All sessions in this cohort are already unlocked!");
+      return;
+    }
 
     // Case 1: Package has fixed included session IDs
     if (plan.includedSessionIds && plan.includedSessionIds.length > 0) {
       const ownedInPlan = plan.includedSessionIds.filter((id) =>
-        sessions.find((s) => s.id === id && s.isAccessible)
+        sessions.some((s) => s.id === id && s.isAccessible)
       );
 
       // If user already owns 1 or more sessions in this fixed package
@@ -161,10 +134,17 @@ export function CohortUpgradeGrid({
           .map((s) => s.id);
 
         const targetCount = plan.includedSessionIds.length;
+        const requiredCount = Math.min(targetCount, unpurchasedSessions.length);
+
+        if (requiredCount <= 0) {
+          toast.info("All sessions for this package are already unlocked!");
+          return;
+        }
+
         const initialSelected = [
           ...unownedInPlan,
-          ...replacementCandidates.slice(0, targetCount - unownedInPlan.length),
-        ];
+          ...replacementCandidates.slice(0, Math.max(0, targetCount - unownedInPlan.length)),
+        ].slice(0, requiredCount);
 
         setSelectedSessionIdsForPicker(initialSelected);
         setSessionPickerPlan(plan);
@@ -177,10 +157,17 @@ export function CohortUpgradeGrid({
     }
 
     // Case 2: Open session-based choice
-    const maxCount = plan.includedSessionCount || 1;
-    const initialSelected = (unpurchasedSessions.length > 0 ? unpurchasedSessions : sessions)
-      .slice(0, maxCount)
-      .map((s: any) => s.id);
+    const targetCount = plan.includedSessionCount || 1;
+    const requiredCount = Math.min(targetCount, unpurchasedSessions.length);
+
+    if (requiredCount <= 0) {
+      toast.info("All sessions in this cohort are already unlocked!");
+      return;
+    }
+
+    const initialSelected = unpurchasedSessions
+      .slice(0, requiredCount)
+      .map((s) => s.id);
 
     setSelectedSessionIdsForPicker(initialSelected);
     setSessionPickerPlan(plan);
@@ -196,8 +183,6 @@ export function CohortUpgradeGrid({
         selectedAddOnIds: chosenSessionIds.length > 0 ? chosenSessionIds : (plan.includedSessionIds || []),
         price: plan.price,
         isAllInOne: plan.isAllInOne,
-        presetPrice: plan.price,
-        presetIsAllInOne: plan.isAllInOne,
         buyerName: buyerName && buyerName !== "Learner" ? buyerName : undefined,
         buyerEmail: buyerEmail || undefined,
       });
@@ -218,7 +203,7 @@ export function CohortUpgradeGrid({
 
       // 2. Load Razorpay SDK
       const scriptLoaded = await new Promise<boolean>((resolve) => {
-        if ((window as any).Razorpay) return resolve(true);
+        if ((window as unknown as { Razorpay?: unknown }).Razorpay) return resolve(true);
         const script = document.createElement("script");
         script.src = "https://checkout.razorpay.com/v1/checkout.js";
         script.onload = () => resolve(true);
@@ -239,15 +224,14 @@ export function CohortUpgradeGrid({
         return;
       }
 
-      // 3. Launch Razorpay Modal
-      const options = {
+      const options: RazorpayCheckoutOptions = {
         key,
         amount: order.amount,
-        currency: order.currency,
+        currency: order.currency || "INR",
         name: "Fire In The Belly",
         description: `Upgrade: ${plan.title}`,
         order_id: order.id,
-        handler: async function (razorpayResponse: any) {
+        handler: async (razorpayResponse: RazorpayResponse) => {
           try {
             const verifyRes = await axios.post(
               `/api/cohorts/${cohortId}/checkout/verify`,
@@ -272,27 +256,26 @@ export function CohortUpgradeGrid({
           }
         },
         prefill: {
-          name: buyerName,
-          email: buyerEmail,
+          name: buyerName !== "Learner" ? buyerName : undefined,
+          email: buyerEmail || undefined,
         },
         theme: {
           color: "#ea580c",
         },
         modal: {
-          ondismiss: function () {
+          ondismiss: () => {
             setProcessingPlanId(null);
             toast.info("Upgrade cancelled");
           },
         },
       };
 
-      const rzp = new (window as any).Razorpay(options);
+      const RazorpayConstructor = (window as unknown as { Razorpay: new (opts: RazorpayCheckoutOptions) => { open: () => void } }).Razorpay;
+      const rzp = new RazorpayConstructor(options);
       rzp.open();
-    } catch (err: any) {
-      console.error("Upgrade error:", err);
-      toast.error(
-        err.response?.data?.error || "Upgrade failed. Please try again."
-      );
+    } catch (err) {
+      console.error("Error during upgrade checkout:", err);
+      toast.error("An error occurred during checkout");
       setProcessingPlanId(null);
     }
   };

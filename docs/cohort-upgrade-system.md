@@ -24,10 +24,10 @@ The Cohort Upgrade System allows admins to configure upgrade plans for a cohort,
 | `price` | integer | Price in ₹ |
 | `original_price` | integer | Optional strikethrough price |
 | `included_session_count` | integer | Max sessions user can pick (session-based); `null` for custom plans |
-| `included_session_ids` | text[] | Pinned session IDs; empty for free-choice or custom |
+| `included_session_ids` | jsonb | Pinned session IDs (`string[]`); empty for free-choice or custom |
 | `is_all_in_one` | boolean | If true, unlocks all cohort sessions |
 | `badge_text` | text | Corner ribbon label (e.g. "Most Popular") |
-| `features` | text[] | Bullet-point feature list |
+| `features` | jsonb | Bullet-point feature list (`string[]`) |
 | `order_index` | integer | Display order (lower = first) |
 | `is_active` | boolean | Controls visibility to users |
 | `created_at` | timestamp | Auto-set |
@@ -86,7 +86,7 @@ Can represent: mentorship, bootcamp, product, certificate, etc.
 
 ## handleCardClick Flow
 
-```
+```text
 1. isAllInOne?
    → handleUpgrade(plan, [])
 
@@ -119,7 +119,7 @@ Can represent: mentorship, bootcamp, product, certificate, etc.
 
 ## Payment Flow (`handleUpgrade`)
 
-```
+```text
 1. POST /api/cohorts/[id]/checkout
    Body: { selectedUpgradePlanId, selectedAddOnIds, price, isAllInOne }
 
@@ -234,7 +234,7 @@ Orange **"Upgrade"** button in the top-right of the cohort session page header (
 
 ## File Map
 
-```
+```text
 app/
 ├── admin/
 │   ├── CohortUpgradePlansManager.tsx     # Create/edit/delete upgrade plans

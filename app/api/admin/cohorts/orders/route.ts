@@ -19,6 +19,7 @@ export async function GET() {
     const orders = await db
       .select({
         id: cohortOrders.id,
+        userId: cohortOrders.userId,
         buyerName: cohortOrders.buyerName,
         buyerEmail: cohortOrders.buyerEmail,
         buyerPhone: cohortOrders.buyerPhone,

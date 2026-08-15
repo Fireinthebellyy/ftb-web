@@ -16,6 +16,7 @@ import {
   Download,
   FolderCog,
   Gift,
+  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { uploadFileViaSignedUrl } from "@/lib/storage/client";
 import CohortSessionManager from "./CohortSessionManager";
+import CohortUpgradePlansManager from "./CohortUpgradePlansManager";
+import ManageUserPackagesModal from "./ManageUserPackagesModal";
 
 interface Mentor {
   id?: string;
@@ -116,6 +119,7 @@ interface Cohort {
 
 interface Order {
   id: string;
+  userId?: string | null;
   buyerName: string;
   buyerEmail: string;
   buyerPhone: string | null;
@@ -164,7 +168,25 @@ export default function AdminCohortsTable() {
 
   // Session manager state
   const [sessionManagerOpen, setSessionManagerOpen] = useState(false);
+  const [upgradePlansOpen, setUpgradePlansOpen] = useState(false);
   const [managingCohort, setManagingCohort] = useState<Cohort | null>(null);
+
+  // User package targeting modal state
+  const [managePackagesModalState, setManagePackagesModalState] = useState<{
+    open: boolean;
+    cohortId: string;
+    userId: string;
+    userName: string;
+    userEmail: string;
+    userTierName?: string;
+    isBundleUser?: boolean;
+  }>({
+    open: false,
+    cohortId: "",
+    userId: "",
+    userName: "",
+    userEmail: "",
+  });
 
   // Sessions data for registration details
   const [sessionsData, setSessionsData] = useState<Record<string, any[]>>({});
@@ -583,6 +605,17 @@ export default function AdminCohortsTable() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => {
+                            setManagingCohort(c);
+                            setUpgradePlansOpen(true);
+                          }}
+                          className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                        >
+                          <Layers className="w-4 h-4 mr-1" /> Upgrade Plans
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => startEditCohort(c.id)}
                           className="text-gray-600 hover:text-gray-900"
                         >
@@ -750,6 +783,7 @@ export default function AdminCohortsTable() {
                     <th className="p-4 font-semibold text-gray-700">Cohort</th>
                     <th className="p-4 font-semibold text-gray-700">Email</th>
                     <th className="p-4 font-semibold text-gray-700">Date</th>
+                    <th className="p-4 font-semibold text-gray-700">Manage Packages</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -797,11 +831,36 @@ export default function AdminCohortsTable() {
                           ? new Date(order.registrationCompletedAt).toLocaleDateString()
                           : new Date(order.createdAt).toLocaleDateString()}
                       </td>
+                      <td className="p-4 whitespace-nowrap">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={!order.cohortId}
+                          onClick={() =>
+                            setManagePackagesModalState({
+                              open: true,
+                              cohortId: order.cohortId || "",
+                              userId: order.userId || "",
+                              userName: order.registrationName || order.buyerName,
+                              userEmail: order.buyerEmail,
+                              userTierName: order.tierName || undefined,
+                              isBundleUser: Boolean(
+                                order.tierName ||
+                                  !order.selectedAddOnIds ||
+                                  order.selectedAddOnIds.length === 0
+                              ),
+                            })
+                          }
+                          className="text-xs font-semibold border-gray-300 hover:bg-gray-50 text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          Manage Packages
+                        </Button>
+                      </td>
                     </tr>
                   ))}
                   {ordersList.filter(order => order.registrationName).length === 0 && (
                     <tr>
-                      <td colSpan={10} className="p-12 text-center text-gray-500">
+                      <td colSpan={11} className="p-12 text-center text-gray-500">
                         No registration forms completed yet.
                       </td>
                     </tr>
@@ -2022,14 +2081,38 @@ export default function AdminCohortsTable() {
       )}
 
       {managingCohort ? (
-        <CohortSessionManager
-          cohortId={managingCohort.id}
-          cohortTitle={managingCohort.title}
-          open={sessionManagerOpen}
-          onClose={() => setSessionManagerOpen(false)}
-          onUpdate={() => fetchCohorts()}
-        />
+        <>
+          <CohortSessionManager
+            cohortId={managingCohort.id}
+            cohortTitle={managingCohort.title}
+            open={sessionManagerOpen}
+            onClose={() => setSessionManagerOpen(false)}
+            onUpdate={() => fetchCohorts()}
+          />
+          <CohortUpgradePlansManager
+            cohortId={managingCohort.id}
+            cohortTitle={managingCohort.title}
+            open={upgradePlansOpen}
+            onClose={() => setUpgradePlansOpen(false)}
+            onUpdate={() => fetchCohorts()}
+          />
+        </>
       ) : null}
+
+      {managePackagesModalState.open && (
+        <ManageUserPackagesModal
+          open={managePackagesModalState.open}
+          onClose={() =>
+            setManagePackagesModalState((prev) => ({ ...prev, open: false }))
+          }
+          cohortId={managePackagesModalState.cohortId}
+          userId={managePackagesModalState.userId}
+          userName={managePackagesModalState.userName}
+          userEmail={managePackagesModalState.userEmail}
+          userTierName={managePackagesModalState.userTierName}
+          isBundleUser={managePackagesModalState.isBundleUser}
+        />
+      )}
     </div>
   );
 }

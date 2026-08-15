@@ -144,12 +144,15 @@ export async function POST(
       return NextResponse.json({ error: "Database table not ready" }, { status: 500 });
     }
 
-    await logAdminActivity({
-      adminId: session.user.id,
-      action: "UPDATE",
-      targetType: "COHORT",
-      targetId: cohortId,
-      details: {
+    void logAdminActivity({
+      request,
+      action: "admin.cohorts.user_targets.update",
+      statusCode: 200,
+      success: true,
+      adminUserId: session.user.id,
+      entityType: "cohort",
+      entityId: cohortId,
+      metadata: {
         action: "toggle_user_package_target",
         userId,
         planId,

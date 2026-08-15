@@ -286,12 +286,12 @@ export function CohortUpgradeGrid({
 
   return (
     <div className="w-full space-y-4 pt-4">
-      {/* Cards: responsive layout - vertical on mobile, horizontal on desktop */}
-      <div className="flex flex-col sm:flex-row gap-4 flex-nowrap justify-center items-center pb-3 -mx-1 px-1">
+      {/* Cards: full-width landscape on mobile, portrait from sm+ */}
+      <div className="flex flex-col sm:flex-row gap-4 flex-nowrap justify-center items-stretch sm:items-center pb-3 -mx-1 px-1">
         {/* Current Plan Card */}
-        <div className="w-[260px] sm:w-[280px] h-[450px] rounded-2xl border border-gray-200 bg-white p-5 shadow-sm flex flex-col justify-between">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b pb-3">
+        <div className="w-full sm:w-[280px] sm:h-[450px] rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex items-center justify-between border-b pb-2 sm:pb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
                 Current Plan
               </span>
@@ -300,19 +300,21 @@ export function CohortUpgradeGrid({
               </span>
             </div>
 
-            <div className="space-y-1">
-              <div className="text-xs text-gray-500 font-medium">Price Paid</div>
-              <div className="text-2xl font-bold text-gray-900">
-                ₹{amountPaid.toLocaleString("en-IN")}
+            <div className="grid grid-cols-2 sm:grid-cols-1 gap-4 sm:gap-0 sm:space-y-4">
+              <div className="space-y-1">
+                <div className="text-xs text-gray-500 font-medium">Price Paid</div>
+                <div className="text-xl sm:text-2xl font-bold text-gray-900">
+                  ₹{amountPaid.toLocaleString("en-IN")}
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-1.5 pt-2 border-t border-gray-100">
-              <div className="text-xs text-gray-500 font-medium">Plan Details</div>
-              <div className="text-sm font-semibold text-gray-800 leading-snug">
-                {currentPlanStatus?.isAllInOne
-                  ? "All-In-One Full Bundle Pass — Complete access to all live sessions & recordings"
-                  : `${purchasedCount} of ${totalCount} Sessions Chosen & Unlocked`}
+              <div className="space-y-1.5 sm:pt-2 sm:border-t border-gray-100">
+                <div className="text-xs text-gray-500 font-medium">Plan Details</div>
+                <div className="text-xs sm:text-sm font-semibold text-gray-800 leading-snug">
+                  {currentPlanStatus?.isAllInOne
+                    ? "All-In-One Full Bundle Pass — Complete access to all live sessions & recordings"
+                    : `${purchasedCount} of ${totalCount} Sessions Chosen & Unlocked`}
+                </div>
               </div>
             </div>
           </div>
@@ -322,11 +324,102 @@ export function CohortUpgradeGrid({
         {displayPlans.map((plan) => {
           const isFeatured = plan.badgeText?.toLowerCase().includes("popular") || plan.isAllInOne;
           const savings = plan.originalPrice ? plan.originalPrice - plan.price : null;
+          const ownedCount =
+            plan.includedSessionIds?.filter((sId) =>
+              sessions.find((s) => s.id === sId && s.isAccessible)
+            ).length ?? 0;
+
+          const sessionsBlock = plan.isAllInOne ? (
+            <div className="rounded-xl bg-gray-50 border border-gray-200 p-2.5 sm:p-3 text-gray-900 space-y-1">
+              <div className="font-bold text-xs uppercase tracking-wider text-gray-800">
+                All Cohort Sessions Included
+              </div>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Complete access to all live interactive sessions, recordings & downloads.
+              </p>
+            </div>
+          ) : plan.includedSessionIds && plan.includedSessionIds.length > 0 ? (
+            <div className="rounded-xl bg-gray-50 border border-gray-200 p-2.5 sm:p-3 space-y-2">
+              <div className="flex items-center justify-between font-bold text-xs uppercase tracking-wider text-gray-800">
+                <span>Included Sessions ({plan.includedSessionIds.length}):</span>
+                {ownedCount > 0 && (
+                  <span className="text-[10px] bg-gray-200 text-gray-800 font-semibold px-2 py-0.5 rounded">
+                    {ownedCount} Owned
+                  </span>
+                )}
+              </div>
+              <ul className="space-y-1 sm:space-y-1.5 max-h-28 sm:max-h-40 overflow-y-auto pr-1">
+                {plan.includedSessionIds.map((sId) => {
+                  const matched = sessions?.find((s) => s.id === sId);
+                  const isAlreadyOwned = matched?.isAccessible;
+                  return (
+                    <li key={sId} className="flex items-start justify-between gap-2 text-xs font-medium text-gray-800 leading-snug">
+                      <div className="flex items-start gap-1.5 min-w-0">
+                        <span className="text-gray-400 shrink-0">•</span>
+                        <span className="break-words font-semibold">
+                          {matched ? matched.title : "Live Cohort Session"}
+                        </span>
+                      </div>
+                      {isAlreadyOwned && (
+                        <span className="text-[10px] font-semibold text-gray-600 bg-gray-200/80 px-1.5 py-0.5 rounded shrink-0">
+                          In Plan
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+              {ownedCount > 0 && (
+                <div className="pt-2 border-t border-gray-200 text-[11px] sm:text-xs text-gray-600 font-medium leading-relaxed">
+                  You already own {ownedCount} of these. Swap them for unpurchased sessions at checkout.
+                </div>
+              )}
+            </div>
+          ) : plan.includedSessionCount !== null ? (
+            <div className="rounded-xl bg-gray-50 border border-gray-200 p-2.5 sm:p-3 text-xs font-medium text-gray-800">
+              Choice of any {plan.includedSessionCount ?? 1} Live Sessions
+            </div>
+          ) : null;
+
+          const featuresBlock = (
+            <div className="space-y-2 sm:pt-2 sm:border-t border-gray-100">
+              <div className="text-xs font-bold text-gray-700 uppercase tracking-wider">Features</div>
+              <ul className="space-y-1 sm:space-y-1.5 text-xs text-gray-700">
+                <li className="flex items-start gap-2 font-semibold text-gray-900">
+                  <span className="shrink-0">•</span>
+                  <span>
+                    {plan.isAllInOne
+                      ? "All Sessions & Recordings Unlocked"
+                      : `Unlock ${plan.includedSessionCount ?? 1} Sessions`}
+                  </span>
+                </li>
+                {plan.features && plan.features.length > 0 ? (
+                  plan.features.map((feat, fIdx) => (
+                    <li key={fIdx} className="flex items-start gap-2">
+                      <span className="text-gray-400 shrink-0">•</span>
+                      <span className="font-medium leading-snug">{feat}</span>
+                    </li>
+                  ))
+                ) : (
+                  <>
+                    <li className="flex items-start gap-2">
+                      <span className="text-gray-400 shrink-0">•</span>
+                      <span className="font-medium">Live Interactive Session Access</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-gray-400 shrink-0">•</span>
+                      <span className="font-medium">Resource & Slide Downloads</span>
+                    </li>
+                  </>
+                )}
+              </ul>
+            </div>
+          );
 
           return (
             <div
               key={plan.id}
-              className={`w-[260px] sm:w-[280px] h-[450px] rounded-2xl border p-5 shadow-sm flex flex-col justify-between relative transition-all ${
+              className={`w-full sm:w-[280px] sm:h-[450px] rounded-2xl border p-4 sm:p-5 shadow-sm flex flex-col justify-between relative transition-all ${
                 isFeatured
                   ? "bg-white border-orange-500 ring-2 ring-orange-500/10"
                   : "bg-white border-gray-200 hover:border-gray-300"
@@ -334,7 +427,7 @@ export function CohortUpgradeGrid({
             >
               {plan.badgeText && (
                 <div
-                  className={`absolute top-0 right-0 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-bl-xl border-l border-b ${
+                  className={`absolute top-0 right-0 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-bl-xl rounded-tr-2xl border-l border-b ${
                     isFeatured
                       ? "bg-orange-600 text-white border-orange-600"
                       : "bg-gray-100 text-gray-800 border-gray-200"
@@ -344,15 +437,15 @@ export function CohortUpgradeGrid({
                 </div>
               )}
 
-              <div className="space-y-4 pt-1 flex-1">
-                <div className="space-y-1">
+              <div className="pt-1 flex-1 min-h-0 overflow-y-auto sm:overflow-visible">
+                <div className="space-y-1 pr-14 sm:pr-0">
                   <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
                     {(plan as any).sectionLabel ||
                       (plan.isAllInOne
                         ? "Full Cohort Upgrade"
                         : "Package Option")}
                   </div>
-                  <h3 className="text-base font-bold text-gray-900 leading-snug">
+                  <h3 className="text-sm sm:text-base font-bold text-gray-900 leading-snug">
                     {plan.title}
                   </h3>
                   {plan.description && (
@@ -362,119 +455,33 @@ export function CohortUpgradeGrid({
                   )}
                 </div>
 
-                {/* Price */}
-                <div className="space-y-1">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-gray-900">
-                      ₹{plan.price.toLocaleString("en-IN")}
-                    </span>
-                    {plan.originalPrice && (
-                      <span className="text-xs text-gray-400 line-through font-medium">
-                        ₹{plan.originalPrice.toLocaleString("en-IN")}
-                      </span>
-                    )}
-                  </div>
-                  {savings && savings > 0 && (
-                    <span className="inline-block rounded bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-xs font-bold text-emerald-800">
-                      Save ₹{savings.toLocaleString("en-IN")}
-                    </span>
-                  )}
-                </div>
-
-                {/* Included Sessions */}
-                {plan.isAllInOne ? (
-                  <div className="rounded-xl bg-gray-50 border border-gray-200 p-3 text-gray-900 space-y-1">
-                    <div className="font-bold text-xs uppercase tracking-wider text-gray-800">
-                      All Cohort Sessions Included
-                    </div>
-                    <p className="text-xs text-gray-600 leading-relaxed">
-                      Complete access to all live interactive sessions, recordings & downloads.
-                    </p>
-                  </div>
-                ) : plan.includedSessionIds && plan.includedSessionIds.length > 0 ? (() => {
-                  const ownedCount = plan.includedSessionIds.filter(sId =>
-                    sessions.find(s => s.id === sId && s.isAccessible)
-                  ).length;
-                  return (
-                    <div className="rounded-xl bg-gray-50 border border-gray-200 p-3 space-y-2">
-                      <div className="flex items-center justify-between font-bold text-xs uppercase tracking-wider text-gray-800">
-                        <span>Included Sessions ({plan.includedSessionIds.length}):</span>
-                        {ownedCount > 0 && (
-                          <span className="text-[10px] bg-gray-200 text-gray-800 font-semibold px-2 py-0.5 rounded">
-                            {ownedCount} Owned
+                <div className="mt-3 sm:mt-4 grid grid-cols-2 sm:grid-cols-1 gap-3 sm:gap-0 sm:space-y-4">
+                  <div className="space-y-3 sm:space-y-4 min-w-0">
+                    <div className="space-y-1">
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        <span className="text-xl sm:text-2xl font-bold text-gray-900">
+                          ₹{plan.price.toLocaleString("en-IN")}
+                        </span>
+                        {plan.originalPrice && (
+                          <span className="text-xs text-gray-400 line-through font-medium">
+                            ₹{plan.originalPrice.toLocaleString("en-IN")}
                           </span>
                         )}
                       </div>
-                      <ul className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-                        {plan.includedSessionIds.map((sId) => {
-                          const matched = sessions?.find((s) => s.id === sId);
-                          const isAlreadyOwned = matched?.isAccessible;
-                          return (
-                            <li key={sId} className="flex items-start justify-between gap-2 text-xs font-medium text-gray-800 leading-snug">
-                              <div className="flex items-start gap-1.5">
-                                <span className="text-gray-400 shrink-0">•</span>
-                                <span className="break-words font-semibold">
-                                  {matched ? matched.title : "Live Cohort Session"}
-                                </span>
-                              </div>
-                              {isAlreadyOwned && (
-                                <span className="text-[10px] font-semibold text-gray-600 bg-gray-200/80 px-1.5 py-0.5 rounded shrink-0">
-                                  In Plan
-                                </span>
-                              )}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                      {ownedCount > 0 && (
-                        <div className="pt-2 border-t border-gray-200 text-xs text-gray-600 font-medium leading-relaxed">
-                          You already own {ownedCount} of these. Swap them for unpurchased sessions at checkout.
-                        </div>
+                      {savings && savings > 0 && (
+                        <span className="inline-block rounded bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-xs font-bold text-emerald-800">
+                          Save ₹{savings.toLocaleString("en-IN")}
+                        </span>
                       )}
                     </div>
-                  );
-                })() : plan.includedSessionCount !== null ? (
-                  <div className="rounded-xl bg-gray-50 border border-gray-200 p-3 text-xs font-medium text-gray-800">
-                    Choice of any {plan.includedSessionCount ?? 1} Live Sessions
+                    {sessionsBlock}
                   </div>
-                ) : null}
 
-                {/* Features */}
-                <div className="space-y-2 pt-2 border-t border-gray-100">
-                  <div className="text-xs font-bold text-gray-700 uppercase tracking-wider">Features</div>
-                  <ul className="space-y-1.5 text-xs text-gray-700">
-                    <li className="flex items-start gap-2 font-semibold text-gray-900">
-                      <span className="shrink-0">•</span>
-                      <span>
-                        {plan.isAllInOne
-                          ? "All Sessions & Recordings Unlocked"
-                          : `Unlock ${plan.includedSessionCount ?? 1} Sessions`}
-                      </span>
-                    </li>
-                    {plan.features && plan.features.length > 0 ? (
-                      plan.features.map((feat, fIdx) => (
-                        <li key={fIdx} className="flex items-start gap-2">
-                          <span className="text-gray-400 shrink-0">•</span>
-                          <span className="font-medium leading-snug">{feat}</span>
-                        </li>
-                      ))
-                    ) : (
-                      <>
-                        <li className="flex items-start gap-2">
-                          <span className="text-gray-400 shrink-0">•</span>
-                          <span className="font-medium">Live Interactive Session Access</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-gray-400 shrink-0">•</span>
-                          <span className="font-medium">Resource & Slide Downloads</span>
-                        </li>
-                      </>
-                    )}
-                  </ul>
+                  <div className="min-w-0">{featuresBlock}</div>
                 </div>
               </div>
 
-              <div className="pt-4 mt-auto">
+              <div className="pt-3 sm:pt-4 mt-auto shrink-0">
                 <Button
                   onClick={() => handleCardClick(plan)}
                   disabled={processingPlanId === plan.id}

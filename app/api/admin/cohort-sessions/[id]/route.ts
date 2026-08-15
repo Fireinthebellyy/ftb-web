@@ -51,7 +51,7 @@ export async function PUT(
     activityBeforeState = existingSession[0];
 
     const body = await request.json();
-    const { title, orderIndex, isActive, description } = body;
+    const { title, orderIndex, isActive, description, showInDashboard, showInHome } = body;
 
     const updatedSession = await db
       .update(cohortSessions)
@@ -60,6 +60,8 @@ export async function PUT(
         description,
         orderIndex,
         isActive,
+        showInDashboard,
+        showInHome,
         updatedAt: new Date(),
       })
       .where(eq(cohortSessions.id, sessionId))

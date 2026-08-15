@@ -58,7 +58,11 @@ export async function GET(
     const sessionsList = await db
       .select()
       .from(cohortSessions)
-      .where(eq(cohortSessions.cohortId, cohort.id))
+      .where(and(
+        eq(cohortSessions.cohortId, cohort.id),
+        eq(cohortSessions.isActive, true),
+        eq(cohortSessions.showInHome, true)
+      ))
       .orderBy(cohortSessions.orderIndex);
 
     // Check purchase status

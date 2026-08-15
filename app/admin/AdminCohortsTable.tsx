@@ -71,6 +71,8 @@ interface Session {
   description: string;
   price?: number;
   originalPrice?: number | null;
+  showInDashboard?: boolean;
+  showInHome?: boolean;
 }
 
 interface Cohort {
@@ -1848,7 +1850,7 @@ export default function AdminCohortsTable() {
                         ...editingCohort,
                         sessions: [
                           ...currentSessions,
-                          { title: "", description: "", price: 0, originalPrice: null },
+                          { title: "", description: "", price: 0, originalPrice: null, showInDashboard: true, showInHome: true },
                         ],
                       });
                     }}
@@ -1873,7 +1875,7 @@ export default function AdminCohortsTable() {
                         <X className="w-4 h-4" />
                       </button>
 
-                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs">Session Title</Label>
                           <Input
@@ -1884,18 +1886,6 @@ export default function AdminCohortsTable() {
                               setEditingCohort({ ...editingCohort, sessions: currentSessions });
                             }}
                             placeholder="e.g. Session 1: Resume Deep-dive"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">Session Description</Label>
-                          <Input
-                            value={session.description}
-                            onChange={(e) => {
-                              const currentSessions = [...(editingCohort.sessions || [])];
-                              currentSessions[index] = { ...currentSessions[index], description: e.target.value };
-                              setEditingCohort({ ...editingCohort, sessions: currentSessions });
-                            }}
-                            placeholder="Brief detail explaining the session agenda"
                           />
                         </div>
                         <div className="space-y-1">
@@ -1912,6 +1902,18 @@ export default function AdminCohortsTable() {
                           />
                         </div>
                         <div className="space-y-1">
+                          <Label className="text-xs">Session Description</Label>
+                          <Input
+                            value={session.description}
+                            onChange={(e) => {
+                              const currentSessions = [...(editingCohort.sessions || [])];
+                              currentSessions[index] = { ...currentSessions[index], description: e.target.value };
+                              setEditingCohort({ ...editingCohort, sessions: currentSessions });
+                            }}
+                            placeholder="Brief detail explaining the session agenda"
+                          />
+                        </div>
+                        <div className="space-y-1">
                           <Label className="text-xs">Original Price (INR, Optional)</Label>
                           <Input
                             type="number"
@@ -1923,6 +1925,42 @@ export default function AdminCohortsTable() {
                             }}
                             placeholder="Strikethrough price"
                           />
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <input
+                              id={`show-dashboard-${index}`}
+                              type="checkbox"
+                              checked={session.showInDashboard ?? true}
+                              onChange={(e) => {
+                                const currentSessions = [...(editingCohort.sessions || [])];
+                                currentSessions[index] = { ...currentSessions[index], showInDashboard: e.target.checked };
+                                setEditingCohort({ ...editingCohort, sessions: currentSessions });
+                              }}
+                              className="rounded border-gray-300 text-[#ff5e14] focus:ring-[#ff5e14] h-4 w-4"
+                            />
+                            <Label htmlFor={`show-dashboard-${index}`} className="text-xs cursor-pointer">
+                              Show in Dashboard
+                            </Label>
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <input
+                              id={`show-home-${index}`}
+                              type="checkbox"
+                              checked={session.showInHome ?? true}
+                              onChange={(e) => {
+                                const currentSessions = [...(editingCohort.sessions || [])];
+                                currentSessions[index] = { ...currentSessions[index], showInHome: e.target.checked };
+                                setEditingCohort({ ...editingCohort, sessions: currentSessions });
+                              }}
+                              className="rounded border-gray-300 text-[#ff5e14] focus:ring-[#ff5e14] h-4 w-4"
+                            />
+                            <Label htmlFor={`show-home-${index}`} className="text-xs cursor-pointer">
+                              Show in Home
+                            </Label>
+                          </div>
                         </div>
                       </div>
 

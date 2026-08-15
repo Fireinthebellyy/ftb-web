@@ -920,6 +920,8 @@ export const cohortSessions = pgTable("cohort_sessions", {
   originalPrice: integer("original_price"), // original/strikethrough price
   orderIndex: integer("order_index").default(0).notNull(),
   isActive: boolean("is_active").default(true).notNull(),
+  showInDashboard: boolean("show_in_dashboard").default(true).notNull(), // Show in cohort dashboard
+  showInHome: boolean("show_in_home").default(true).notNull(), // Show in cohort home page
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

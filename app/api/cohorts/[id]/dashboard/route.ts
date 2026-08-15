@@ -60,7 +60,11 @@ export async function GET(
     }
 
     const sessions = await db.query.cohortSessions.findMany({
-      where: and(eq(cohortSessions.cohortId, cohort.id), eq(cohortSessions.isActive, true)),
+      where: and(
+        eq(cohortSessions.cohortId, cohort.id),
+        eq(cohortSessions.isActive, true),
+        eq(cohortSessions.showInDashboard, true)
+      ),
       orderBy: (cohortSessions, { asc }) => [asc(cohortSessions.orderIndex)],
     });
 

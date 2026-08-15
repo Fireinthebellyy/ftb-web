@@ -286,10 +286,10 @@ export function CohortUpgradeGrid({
 
   return (
     <div className="w-full space-y-4 pt-4">
-      {/* Cards: always horizontal scroll */}
-      <div className="flex flex-row gap-4 overflow-x-auto snap-x snap-mandatory pb-3 -mx-1 px-1 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+      {/* Cards: responsive layout - vertical on mobile, horizontal on desktop */}
+      <div className="flex flex-col sm:flex-row gap-4 flex-nowrap justify-center items-center pb-3 -mx-1 px-1">
         {/* Current Plan Card */}
-        <div className="snap-start shrink-0 w-[280px] sm:w-[300px] rounded-2xl border border-gray-200 bg-white p-5 shadow-sm flex flex-col justify-between">
+        <div className="w-[260px] sm:w-[280px] h-[450px] rounded-2xl border border-gray-200 bg-white p-5 shadow-sm flex flex-col justify-between">
           <div className="space-y-4">
             <div className="flex items-center justify-between border-b pb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
@@ -326,7 +326,7 @@ export function CohortUpgradeGrid({
           return (
             <div
               key={plan.id}
-              className={`snap-start shrink-0 w-[280px] sm:w-[300px] rounded-2xl border p-5 shadow-sm flex flex-col justify-between relative transition-all ${
+              className={`w-[260px] sm:w-[280px] h-[450px] rounded-2xl border p-5 shadow-sm flex flex-col justify-between relative transition-all ${
                 isFeatured
                   ? "bg-white border-orange-500 ring-2 ring-orange-500/10"
                   : "bg-white border-gray-200 hover:border-gray-300"
@@ -508,7 +508,7 @@ export function CohortUpgradeGrid({
             if (!open) setSessionPickerPlan(null);
           }}
         >
-          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[540px]">
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[1400px]">
             <DialogHeader>
               <DialogTitle className="text-base font-bold text-gray-900">
                 Select Sessions to Unlock — {sessionPickerPlan.title}

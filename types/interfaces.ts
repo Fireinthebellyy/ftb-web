@@ -381,6 +381,24 @@ export interface CohortSessionMentor {
   createdAt: string;
 }
 
+export interface CohortUpgradePlan {
+  id: string;
+  cohortId: string;
+  title: string;
+  sectionLabel?: string | null;
+  description: string | null;
+  price: number;
+  originalPrice: number | null;
+  includedSessionCount: number | null;
+  includedSessionIds: string[] | null;
+  isAllInOne: boolean | null;
+  badgeText: string | null;
+  features: string[] | null;
+  orderIndex: number;
+  isActive: boolean;
+  createdAt?: string | Date;
+}
+
 export type CohortDetailResponse = {
   cohort: { id: string; title: string };
   hasAccess?: boolean;
@@ -388,6 +406,14 @@ export type CohortDetailResponse = {
   isVerificationRequired: boolean;
   isVerified: boolean;
   sessions: CohortSession[];
+  currentPlanStatus?: {
+    purchasedSessionsCount: number;
+    totalSessionsCount: number;
+    amountPaid: number;
+    isAllInOne: boolean;
+    selectedAddOnIds: string[];
+  };
+  upgradePlans?: CohortUpgradePlan[];
 };
 
 export type CohortSessionResponse = {

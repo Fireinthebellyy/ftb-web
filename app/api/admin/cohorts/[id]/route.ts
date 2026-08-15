@@ -7,6 +7,7 @@ import {
   cohortTiers,
   cohortAddOns,
   cohortSessions,
+  cohortUpgradePlans,
 } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
@@ -21,7 +22,7 @@ export async function GET(
     if (
       !currentUser ||
       !currentUser.currentUser?.id ||
-      !canAccessAdminTab(currentUser.currentUser.role, "toolkits")
+      !canAccessAdminTab(currentUser.currentUser.role, "cohorts")
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -67,6 +68,12 @@ export async function GET(
       .where(eq(cohortSessions.cohortId, id))
       .orderBy(cohortSessions.orderIndex);
 
+    const upgradePlansList = await db
+      .select()
+      .from(cohortUpgradePlans)
+      .where(eq(cohortUpgradePlans.cohortId, id))
+      .orderBy(cohortUpgradePlans.orderIndex);
+
     return NextResponse.json({
       ...cohort,
       mentors: mentorsList,
@@ -74,6 +81,7 @@ export async function GET(
       tiers: tiersList,
       addons: addonsList,
       sessions: sessionsList,
+      upgradePlans: upgradePlansList,
     });
   } catch (error) {
     console.error("Error fetching admin cohort details:", error);
@@ -93,7 +101,7 @@ export async function PUT(
     if (
       !currentUser ||
       !currentUser.currentUser?.id ||
-      !canAccessAdminTab(currentUser.currentUser.role, "toolkits")
+      !canAccessAdminTab(currentUser.currentUser.role, "cohorts")
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -438,7 +446,7 @@ export async function DELETE(
     if (
       !currentUser ||
       !currentUser.currentUser?.id ||
-      !canAccessAdminTab(currentUser.currentUser.role, "toolkits")
+      !canAccessAdminTab(currentUser.currentUser.role, "cohorts")
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

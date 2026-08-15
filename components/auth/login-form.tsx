@@ -139,7 +139,7 @@ export function LoginForm({
     setIsLoading(true);
 
     try {
-      const res = await authClient.signIn.email(
+      await authClient.signIn.email(
         {
           email: values.email,
           password: values.password,

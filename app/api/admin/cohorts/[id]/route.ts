@@ -398,6 +398,8 @@ export async function PUT(
               price: s.price ? Number(s.price) : null,
               originalPrice: s.originalPrice ? Number(s.originalPrice) : null,
               orderIndex: i,
+              showInDashboard: s.showInDashboard !== undefined ? Boolean(s.showInDashboard) : true,
+              showInHome: s.showInHome !== undefined ? Boolean(s.showInHome) : true,
             })
             .where(eq(cohortSessions.id, s.id));
         } else {
@@ -408,6 +410,8 @@ export async function PUT(
             price: s.price ? Number(s.price) : null,
             originalPrice: s.originalPrice ? Number(s.originalPrice) : null,
             orderIndex: i,
+            showInDashboard: s.showInDashboard !== undefined ? Boolean(s.showInDashboard) : true,
+            showInHome: s.showInHome !== undefined ? Boolean(s.showInHome) : true,
           });
         }
       }

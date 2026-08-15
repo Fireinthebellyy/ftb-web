@@ -193,7 +193,7 @@ export async function POST(
     activityEntityId = cohortId;
 
     const body = await request.json();
-    const { title, orderIndex, description } = body;
+    const { title, orderIndex, description, showInDashboard, showInHome } = body;
 
     if (!title?.trim()) {
       activityStatus = 400;
@@ -212,6 +212,8 @@ export async function POST(
         description,
         orderIndex: orderIndex ?? 0,
         isActive: true,
+        showInDashboard: showInDashboard ?? true,
+        showInHome: showInHome ?? true,
       })
       .returning();
 

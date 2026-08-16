@@ -385,14 +385,12 @@ export function CohortUpgradeGrid({
             <div className="space-y-2 sm:pt-2 sm:border-t border-gray-100">
               <div className="text-xs font-bold text-gray-700 uppercase tracking-wider">Features</div>
               <ul className="space-y-1 sm:space-y-1.5 text-xs text-gray-700">
-                <li className="flex items-start gap-2 font-semibold text-gray-900">
-                  <span className="shrink-0">•</span>
-                  <span>
-                    {plan.isAllInOne
-                      ? "All Sessions & Recordings Unlocked"
-                      : `Unlock ${plan.includedSessionCount ?? 1} Sessions`}
-                  </span>
-                </li>
+                {plan.isAllInOne && (
+                  <li className="flex items-start gap-2 font-semibold text-gray-900">
+                    <span className="shrink-0">•</span>
+                    <span>All Sessions & Recordings Unlocked</span>
+                  </li>
+                )}
                 {plan.features && plan.features.length > 0 ? (
                   plan.features.map((feat, fIdx) => (
                     <li key={fIdx} className="flex items-start gap-2">

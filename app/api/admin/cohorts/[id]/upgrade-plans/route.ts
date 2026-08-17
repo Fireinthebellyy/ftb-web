@@ -160,6 +160,7 @@ export async function POST(
 
     const {
       title,
+      sectionLabel,
       description,
       price,
       originalPrice,
@@ -213,6 +214,7 @@ export async function POST(
       .values({
         cohortId,
         title: title.trim(),
+        sectionLabel: sectionLabel || null,
         description: description || null,
         price,
         originalPrice: originalPrice ?? null,

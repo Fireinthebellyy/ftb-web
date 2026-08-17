@@ -219,7 +219,7 @@ export default function CohortDashboardPage() {
             <Button
               size="sm"
               onClick={() => setUpgradeModalOpen(true)}
-              className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg shrink-0"
+              className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg shrink-0 transition-all shadow-sm"
             >
               Upgrade
             </Button>
@@ -238,6 +238,10 @@ export default function CohortDashboardPage() {
                 onSessionSelect={(id) => {
                   handleSessionSelect(id);
                   setSidebarOpen(false);
+                }}
+                onOpenUpgrade={() => {
+                  setSidebarOpen(false);
+                  setUpgradeModalOpen(true);
                 }}
               />
             </SheetContent>
@@ -286,6 +290,7 @@ export default function CohortDashboardPage() {
               sessions={sessions}
               currentSessionId={currentSessionId}
               onSessionSelect={handleSessionSelect}
+              onOpenUpgrade={() => setUpgradeModalOpen(true)}
             />
           </div>
         )}
@@ -325,63 +330,78 @@ function CohortSessionSidebar({
   sessions,
   currentSessionId,
   onSessionSelect,
+  onOpenUpgrade,
 }: {
   sessions: any[];
   currentSessionId: string | null;
   onSessionSelect: (id: string) => void;
+  onOpenUpgrade?: () => void;
 }) {
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-4 border-b border-gray-100">
-        <h2 className="text-lg md:text-xl font-extrabold text-gray-900">Cohort Content</h2>
-        <p className="text-gray-500 text-md font-semibold">
-          {sessions.length} {sessions.length === 1 ? "Session" : "Sessions"}
-        </p>
-      </div>
-      <div className="p-4 space-y-3">
-        {sessions.map((session, index) => (
-          <button
-            key={session.id}
-            onClick={() => onSessionSelect(session.id)}
-            className={cn(
-              "w-full rounded-2xl p-4 text-left transition-all cursor-pointer",
-              currentSessionId === session.id
-                ? "bg-orange-100 border-l-4 border-orange-500"
-                : "bg-white border border-gray-100 hover:border-gray-200 hover:shadow-sm",
-              !session.isAccessible && "bg-gray-50/70 opacity-90"
-            )}
-          >
-            <div className="flex items-start gap-4">
-              {currentSessionId === session.id ? (
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-600">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                </div>
-              ) : (
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-semibold text-sm">
-                  {index + 1}
-                </div>
+    <div className="h-full flex flex-col justify-between overflow-y-auto">
+      <div>
+        <div className="p-4 border-b border-gray-100">
+          <h2 className="text-lg md:text-xl font-extrabold text-gray-900">Cohort Content</h2>
+          <p className="text-gray-500 text-md font-semibold">
+            {sessions.length} {sessions.length === 1 ? "Session" : "Sessions"}
+          </p>
+        </div>
+        <div className="p-4 space-y-3">
+          {sessions.map((session, index) => (
+            <button
+              key={session.id}
+              onClick={() => onSessionSelect(session.id)}
+              className={cn(
+                "w-full rounded-2xl p-4 text-left transition-all cursor-pointer",
+                currentSessionId === session.id
+                  ? "bg-orange-100 border-l-4 border-orange-500"
+                  : "bg-white border border-gray-100 hover:border-gray-200 hover:shadow-sm",
+                !session.isAccessible && "bg-gray-50/70 opacity-90"
               )}
-              <div className="flex-1">
-                <h3 className={cn(
-                  "text-sm md:text-base font-semibold leading-tight",
-                  currentSessionId === session.id ? "text-orange-700" : "text-gray-800"
-                )}>
-                  {session.title}
-                </h3>
+            >
+              <div className="flex items-start gap-4">
+                {currentSessionId === session.id ? (
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </div>
+                ) : (
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-semibold text-sm">
+                    {index + 1}
+                  </div>
+                )}
+                <div className="flex-1">
+                  <h3 className={cn(
+                    "text-sm md:text-base font-semibold leading-tight",
+                    currentSessionId === session.id ? "text-orange-700" : "text-gray-800"
+                  )}>
+                    {session.title}
+                  </h3>
+                </div>
+                {!session.isAccessible ? (
+                  <div className="flex-shrink-0">
+                    <Lock className="h-4 w-4 text-gray-400" />
+                  </div>
+                ) : currentSessionId === session.id && (
+                  <div className="flex-shrink-0 w-3 h-3 rounded-full bg-orange-500"></div>
+                )}
               </div>
-              {!session.isAccessible ? (
-                <div className="flex-shrink-0">
-                  <Lock className="h-4 w-4 text-gray-400" />
-                </div>
-              ) : currentSessionId === session.id && (
-                <div className="flex-shrink-0 w-3 h-3 rounded-full bg-orange-500"></div>
-              )}
-            </div>
-          </button>
-        ))}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {onOpenUpgrade && (
+        <div className="p-4 border-t border-gray-100 bg-white sticky bottom-0">
+          <Button
+            onClick={onOpenUpgrade}
+            className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2.5 px-4 rounded-lg text-sm transition-all shadow-sm flex items-center justify-center"
+          >
+            Upgrade Plan
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

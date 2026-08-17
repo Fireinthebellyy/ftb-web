@@ -141,6 +141,11 @@ interface Order {
   registrationCompletedAt: string | null;
   selectedSessionIds: string[] | null;
   selectedAddOnIds: string[] | null;
+  selectedUpgradePlanId?: string | null;
+  upgradePlanTitle?: string | null;
+  upgradePlanPrice?: number | null;
+  upgradePlanSectionLabel?: string | null;
+  upgradePlanIsAllInOne?: boolean | null;
   couponId: string | null;
   couponCode: string | null;
 }
@@ -384,7 +389,7 @@ export default function AdminCohortsTable() {
       "Buyer Phone",
       "Buddy Email",
       "Cohort Title",
-      "Selected Tier",
+      "Selected Tier / Upgrade Plan",
       "Amount Paid (INR)",
       "Coupon Code",
       "Razorpay Order ID",
@@ -400,7 +405,7 @@ export default function AdminCohortsTable() {
       order.buyerPhone || "",
       order.buddyEmail || "",
       order.cohortTitle || "",
-      order.tierName || "",
+      order.upgradePlanTitle ? `Upgrade: ${order.upgradePlanTitle}` : (order.tierName || "Base price"),
       (order.amountPaid / 100).toFixed(2),
       order.couponCode || "",
       order.razorpayOrderId,
@@ -694,7 +699,18 @@ export default function AdminCohortsTable() {
                       </td>
                       <td className="p-4">
                         <div className="font-medium text-gray-950">{order.cohortTitle || "Unknown"}</div>
-                        <div className="text-xs text-[#ff5e14]">{order.tierName || "Base price"}</div>
+                        {order.upgradePlanTitle ? (
+                          <div className="mt-1">
+                            <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 text-[11px] font-bold rounded-md">
+                              Upgrade: {order.upgradePlanTitle}
+                            </span>
+                            {order.upgradePlanSectionLabel && (
+                              <div className="text-[10px] text-gray-500 mt-0.5">{order.upgradePlanSectionLabel}</div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-[#ff5e14]">{order.tierName || "Base price"}</div>
+                        )}
                       </td>
                       <td className="p-4 font-semibold text-gray-900">
                         ₹{(order.amountPaid / 100).toFixed(2)}
@@ -778,6 +794,7 @@ export default function AdminCohortsTable() {
                     <th className="p-4 font-semibold text-gray-700">Course</th>
                     <th className="p-4 font-semibold text-gray-700">Year</th>
                     <th className="p-4 font-semibold text-gray-700">Expectations</th>
+                    <th className="p-4 font-semibold text-gray-700">Opted Plan / Upgrade</th>
                     <th className="p-4 font-semibold text-gray-700">Selected Sessions</th>
                     <th className="p-4 font-semibold text-gray-700">Individual Sessions</th>
                     <th className="p-4 font-semibold text-gray-700">Cohort</th>
@@ -795,6 +812,27 @@ export default function AdminCohortsTable() {
                       <td className="p-4 text-gray-600">{order.registrationYear || "-"}</td>
                       <td className="p-4 text-gray-600">
                         {order.registrationExpectations || "-"}
+                      </td>
+                      <td className="p-4 text-gray-900">
+                        {order.upgradePlanTitle ? (
+                          <div>
+                            <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 text-xs font-bold rounded">
+                              Upgrade: {order.upgradePlanTitle}
+                            </span>
+                            <div className="text-[11px] font-semibold text-emerald-700 mt-0.5">
+                              Paid: ₹{(order.amountPaid / 100).toFixed(2)}
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <span className="inline-block bg-orange-50 text-[#ff5e14] border border-orange-200 text-xs px-2 py-0.5 rounded font-semibold">
+                              {order.tierName || "Base Plan"}
+                            </span>
+                            <div className="text-[11px] text-gray-500 mt-0.5">
+                              Paid: ₹{(order.amountPaid / 100).toFixed(2)}
+                            </div>
+                          </div>
+                        )}
                       </td>
                       <td className="p-4 text-gray-600">
                         {order.selectedSessionIds && order.selectedSessionIds.length > 0 ? (

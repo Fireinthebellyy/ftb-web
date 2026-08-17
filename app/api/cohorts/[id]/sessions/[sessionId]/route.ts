@@ -3,12 +3,12 @@ import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { getPaidCohortOrderForUser } from "@/lib/cohort-registration";
 import { db } from "@/lib/db";
 import {
   cohorts,
   cohortSessions,
   cohortSessionContents,
+  cohortOrders,
 } from "@/lib/schema";
 
 const UUID_REGEX =
@@ -45,8 +45,15 @@ export async function GET(
       return NextResponse.json({ error: "Cohort not found" }, { status: 404 });
     }
 
-    const order = await getPaidCohortOrderForUser(session.user.id, cohort.id);
-    if (!order) {
+    const paidOrders = await db.query.cohortOrders.findMany({
+      where: and(
+        eq(cohortOrders.cohortId, cohort.id),
+        eq(cohortOrders.userId, session.user.id),
+        eq(cohortOrders.status, "paid")
+      ),
+    });
+
+    if (paidOrders.length === 0) {
       return NextResponse.json(
         { error: "Access denied" },
         { status: 403 }
@@ -61,9 +68,15 @@ export async function GET(
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
-    const isAccessible = order.selectedAddOnIds && Array.isArray(order.selectedAddOnIds) && order.selectedAddOnIds.length > 0
-      ? order.selectedAddOnIds.includes(sessionId)
-      : true;
+    const hasAnyTierAccess = paidOrders.some((o) => Boolean(o.selectedTierId));
+    const allPurchasedAddOnIds = new Set<string>();
+    paidOrders.forEach((o) => {
+      if (Array.isArray(o.selectedAddOnIds)) {
+        o.selectedAddOnIds.forEach((id) => allPurchasedAddOnIds.add(id));
+      }
+    });
+
+    const isAccessible = hasAnyTierAccess || allPurchasedAddOnIds.size === 0 || allPurchasedAddOnIds.has(sessionId);
 
     if (!isAccessible) {
       return NextResponse.json({

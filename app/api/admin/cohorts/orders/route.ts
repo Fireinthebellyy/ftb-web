@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cohortOrders, cohorts, cohortTiers, coupons } from "@/lib/schema";
+import { cohortOrders, cohorts, cohortTiers, coupons, cohortUpgradePlans } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { desc, eq } from "drizzle-orm";
@@ -32,6 +32,11 @@ export async function GET() {
         cohortTitle: cohorts.title,
         cohortId: cohortOrders.cohortId,
         tierName: cohortTiers.name,
+        selectedUpgradePlanId: cohortOrders.selectedUpgradePlanId,
+        upgradePlanTitle: cohortUpgradePlans.title,
+        upgradePlanPrice: cohortUpgradePlans.price,
+        upgradePlanSectionLabel: cohortUpgradePlans.sectionLabel,
+        upgradePlanIsAllInOne: cohortUpgradePlans.isAllInOne,
         isVerified: cohortOrders.isVerified,
         registrationName: cohortOrders.registrationName,
         registrationCollege: cohortOrders.registrationCollege,
@@ -47,6 +52,7 @@ export async function GET() {
       .from(cohortOrders)
       .leftJoin(cohorts, eq(cohortOrders.cohortId, cohorts.id))
       .leftJoin(cohortTiers, eq(cohortOrders.selectedTierId, cohortTiers.id))
+      .leftJoin(cohortUpgradePlans, eq(cohortOrders.selectedUpgradePlanId, cohortUpgradePlans.id))
       .leftJoin(coupons, eq(cohortOrders.couponId, coupons.id))
       .where(eq(cohortOrders.status, "paid"))
       .orderBy(desc(cohortOrders.createdAt));

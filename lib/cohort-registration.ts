@@ -69,5 +69,9 @@ export async function getPaidCohortOrderForUser(
       eq(cohortOrders.userId, userId),
       eq(cohortOrders.status, "paid")
     ),
+    orderBy: (cohortOrders, { desc }) => [
+      desc(cohortOrders.isVerified),
+      desc(cohortOrders.createdAt),
+    ],
   });
 }

@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { getPaidCohortOrderForUser } from "@/lib/cohort-registration";
 import { db } from "@/lib/db";
-import { cohorts, cohortSessions, cohortUpgradePlans, userCohortTargetPlans } from "@/lib/schema";
+import { cohorts, cohortSessions, cohortUpgradePlans, userCohortTargetPlans, cohortOrders } from "@/lib/schema";
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -48,8 +48,18 @@ export async function GET(
       );
     }
 
-    // Check if verification is required and if order is not verified
-    if (cohort.isVerificationRequired && !order.isVerified) {
+    const paidOrders = await db.query.cohortOrders.findMany({
+      where: and(
+        eq(cohortOrders.cohortId, cohort.id),
+        eq(cohortOrders.userId, session.user.id),
+        eq(cohortOrders.status, "paid")
+      ),
+    });
+
+    const isVerified = paidOrders.some(o => o.isVerified);
+
+    // Check if verification is required and if user has no verified order
+    if (cohort.isVerificationRequired && !isVerified) {
       return NextResponse.json({
         cohort: { id: cohort.id, title: cohort.title },
         isLocked: true,
@@ -68,13 +78,36 @@ export async function GET(
       orderBy: (cohortSessions, { asc }) => [asc(cohortSessions.orderIndex)],
     });
 
-    // Add accessibility flag to each session
-    // If user purchased individual sessions (selectedAddOnIds), only those are accessible
-    // If user purchased a tier (selectedTierId), all sessions are accessible
-    const sessionsWithAccess = sessions.map(session => {
-      const isAccessible = order.selectedAddOnIds && Array.isArray(order.selectedAddOnIds) && order.selectedAddOnIds.length > 0
-        ? order.selectedAddOnIds.includes(session.id)
-        : true;
+    // Aggregate access across all paid orders
+    const hasAnyTierAccess = paidOrders.some((o) => Boolean(o.selectedTierId));
+    const allPurchasedAddOnIds = new Set<string>();
+    paidOrders.forEach((o) => {
+      if (Array.isArray(o.selectedAddOnIds)) {
+        o.selectedAddOnIds.forEach((id) => allPurchasedAddOnIds.add(id));
+      }
+    });
+
+    // Check if user has purchased an all-in-one upgrade plan
+    const paidUpgradePlanIds = new Set(paidOrders.map(o => o.selectedUpgradePlanId).filter(Boolean));
+    let hasAllInOneUpgrade = false;
+    if (paidUpgradePlanIds.size > 0) {
+      try {
+        const allInOnePlan = await db.query.cohortUpgradePlans.findFirst({
+          where: and(
+            eq(cohortUpgradePlans.cohortId, cohort.id),
+            eq(cohortUpgradePlans.isAllInOne, true)
+          ),
+        });
+        if (allInOnePlan && paidUpgradePlanIds.has(allInOnePlan.id)) {
+          hasAllInOneUpgrade = true;
+        }
+      } catch (e) {
+        console.warn("Error checking all-in-one plan access:", e);
+      }
+    }
+
+    const sessionsWithAccess = sessions.map((session) => {
+      const isAccessible = hasAnyTierAccess || hasAllInOneUpgrade || allPurchasedAddOnIds.has(session.id);
       return {
         ...session,
         isAccessible,
@@ -115,21 +148,22 @@ export async function GET(
       console.warn("User cohort target plans table query warning:", e);
     }
 
-    const isAllInOne = Boolean(order.selectedTierId || !order.selectedAddOnIds || order.selectedAddOnIds.length === 0);
+    const isAllInOne = hasAnyTierAccess || hasAllInOneUpgrade;
 
     const accessibleCount = isAllInOne
       ? sessions.length
-      : sessions.filter((s) => order.selectedAddOnIds?.includes(s.id)).length;
+      : sessions.filter((s) => allPurchasedAddOnIds.has(s.id)).length;
 
-    // amountPaid is stored in paise by Razorpay; convert to rupees (0 stays 0 for free orders).
-    const amountPaidRupees = order.amountPaid > 0 ? Math.round(order.amountPaid / 100) : 0;
+    // sum total amount paid across orders
+    const totalAmountPaidPaise = paidOrders.reduce((sum, o) => sum + (o.amountPaid || 0), 0);
+    const amountPaidRupees = totalAmountPaidPaise > 0 ? Math.round(totalAmountPaidPaise / 100) : 0;
 
     const currentPlanStatus = {
       purchasedSessionsCount: accessibleCount,
       totalSessionsCount: sessions.length,
       amountPaid: amountPaidRupees,
       isAllInOne,
-      selectedAddOnIds: order.selectedAddOnIds || [],
+      selectedAddOnIds: Array.from(allPurchasedAddOnIds),
     };
 
     return NextResponse.json({

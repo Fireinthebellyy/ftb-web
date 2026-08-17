@@ -72,7 +72,7 @@ export async function GET(
         headers: await headers(),
       });
       if (session?.user) {
-        const order = await db.query.cohortOrders.findFirst({
+        const orders = await db.query.cohortOrders.findMany({
           where: and(
             eq(cohortOrders.cohortId, cohort.id),
             eq(cohortOrders.status, "paid"),
@@ -82,8 +82,8 @@ export async function GET(
             )
           ),
         });
-        if (order) {
-          hasAccess = isCohortRegistrationComplete(order);
+        if (orders.length > 0) {
+          hasAccess = orders.some(o => isCohortRegistrationComplete(o));
         }
       }
     } catch (e) {

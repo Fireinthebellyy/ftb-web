@@ -9,7 +9,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export interface UpgradePlan {
   id: string;
@@ -91,12 +93,15 @@ export function CohortUpgradeGrid({
   buyerEmail = "",
 }: CohortUpgradeGridProps) {
   const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [sessionPickerPlan, setSessionPickerPlan] = useState<UpgradePlan | null>(null);
   const [selectedSessionIdsForPicker, setSelectedSessionIdsForPicker] = useState<string[]>([]);
+  const [isUpgradeSuccessLoading, setIsUpgradeSuccessLoading] = useState<boolean>(false);
 
   const displayPlans = upgradePlans || [];
 
   const handleCardClick = (plan: UpgradePlan) => {
+    setSelectedPlanId(plan.id);
     if (plan.isAllInOne) {
       handleUpgrade(plan, []);
       return;
@@ -195,9 +200,13 @@ export function CohortUpgradeGrid({
 
       // If free or instantly unlocked
       if (response.data.free) {
+        setIsUpgradeSuccessLoading(true);
         toast.success("Upgrade Successful!");
-        onUpgradeSuccess();
-        setProcessingPlanId(null);
+        setTimeout(() => {
+          onUpgradeSuccess();
+          setIsUpgradeSuccessLoading(false);
+          setProcessingPlanId(null);
+        }, 2500);
         return;
       }
 
@@ -243,8 +252,12 @@ export function CohortUpgradeGrid({
             );
 
             if (verifyRes.data.success) {
+              setIsUpgradeSuccessLoading(true);
               toast.success("Plan Upgrade Complete! Sessions unlocked.");
-              onUpgradeSuccess();
+              setTimeout(() => {
+                onUpgradeSuccess();
+                setIsUpgradeSuccessLoading(false);
+              }, 2500);
             } else {
               toast.error("Payment verification failed.");
             }
@@ -385,14 +398,12 @@ export function CohortUpgradeGrid({
             <div className="space-y-2 sm:pt-2 sm:border-t border-gray-100">
               <div className="text-xs font-bold text-gray-700 uppercase tracking-wider">Features</div>
               <ul className="space-y-1 sm:space-y-1.5 text-xs text-gray-700">
-                <li className="flex items-start gap-2 font-semibold text-gray-900">
-                  <span className="shrink-0">•</span>
-                  <span>
-                    {plan.isAllInOne
-                      ? "All Sessions & Recordings Unlocked"
-                      : `Unlock ${plan.includedSessionCount ?? 1} Sessions`}
-                  </span>
-                </li>
+                {plan.isAllInOne && (
+                  <li className="flex items-start gap-2 font-semibold text-gray-900">
+                    <span className="shrink-0">•</span>
+                    <span>All Sessions & Recordings Unlocked</span>
+                  </li>
+                )}
                 {plan.features && plan.features.length > 0 ? (
                   plan.features.map((feat, fIdx) => (
                     <li key={fIdx} className="flex items-start gap-2">
@@ -416,22 +427,29 @@ export function CohortUpgradeGrid({
             </div>
           );
 
+          const isSelected = selectedPlanId === plan.id;
+
           return (
             <div
               key={plan.id}
-              className={`w-full sm:w-[280px] sm:h-[450px] rounded-2xl border p-4 sm:p-5 shadow-sm flex flex-col justify-between relative transition-all ${
-                isFeatured
-                  ? "bg-white border-orange-500 ring-2 ring-orange-500/10"
-                  : "bg-white border-gray-200 hover:border-gray-300"
-              }`}
+              onClick={() => setSelectedPlanId(plan.id)}
+              className={cn(
+                "w-full sm:w-[280px] sm:h-[450px] rounded-2xl border p-4 sm:p-5 flex flex-col justify-between relative transition-all duration-200 cursor-pointer",
+                isSelected
+                  ? "bg-orange-50/30 border-orange-500 ring-4 ring-orange-500/25 shadow-md scale-[1.02]"
+                  : isFeatured
+                  ? "bg-white border-orange-400 ring-2 ring-orange-500/10 hover:border-orange-500 hover:shadow-md"
+                  : "bg-white border-gray-200 hover:border-orange-300 hover:shadow-md"
+              )}
             >
               {plan.badgeText && (
                 <div
-                  className={`absolute top-0 right-0 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-bl-xl rounded-tr-2xl border-l border-b ${
-                    isFeatured
+                  className={cn(
+                    "absolute top-0 right-0 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-bl-xl rounded-tr-2xl border-l border-b",
+                    isSelected || isFeatured
                       ? "bg-orange-600 text-white border-orange-600"
                       : "bg-gray-100 text-gray-800 border-gray-200"
-                  }`}
+                  )}
                 >
                   {plan.badgeText}
                 </div>
@@ -483,11 +501,14 @@ export function CohortUpgradeGrid({
 
               <div className="pt-3 sm:pt-4 mt-auto shrink-0">
                 <Button
-                  onClick={() => handleCardClick(plan)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCardClick(plan);
+                  }}
                   disabled={processingPlanId === plan.id}
                   className={`w-full text-xs font-bold py-2.5 rounded-lg transition-all ${
-                    isFeatured
-                      ? "bg-orange-600 hover:bg-orange-700 text-white"
+                    isSelected || isFeatured
+                      ? "bg-orange-600 hover:bg-orange-700 text-white shadow-sm"
                       : "bg-gray-900 hover:bg-gray-800 text-white"
                   }`}
                 >
@@ -647,6 +668,34 @@ export function CohortUpgradeGrid({
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Upgrade Success Loader Modal */}
+      <Dialog open={isUpgradeSuccessLoading} onOpenChange={() => {}}>
+        <DialogContent className="max-w-md border-0 bg-gradient-to-b from-gray-900 via-gray-900 to-black text-white p-8 text-center rounded-3xl shadow-2xl [&>button]:hidden">
+          <div className="flex flex-col items-center justify-center space-y-5 py-4">
+            <div className="relative flex items-center justify-center">
+              <div className="absolute -inset-4 rounded-full bg-orange-500/20 blur-xl animate-pulse" />
+              <div className="relative h-16 w-16 rounded-2xl bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
+                <Loader2 className="h-8 w-8 text-white animate-spin" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-semibold uppercase tracking-wider">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-orange-400" />
+                Upgrading Account
+              </div>
+              <h3 className="text-xl font-bold text-white tracking-tight leading-snug">
+                Your upgrade is complete.
+              </h3>
+            </div>
+
+            <div className="w-full bg-gray-800/80 rounded-full h-1.5 overflow-hidden">
+              <div className="bg-gradient-to-r from-orange-500 to-amber-400 h-full w-full animate-pulse rounded-full" />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

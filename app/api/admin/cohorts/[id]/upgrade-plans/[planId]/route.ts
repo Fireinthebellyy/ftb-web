@@ -59,6 +59,7 @@ export async function PUT(
     const body = await request.json();
     const {
       title,
+      sectionLabel,
       description,
       price,
       originalPrice,
@@ -70,6 +71,15 @@ export async function PUT(
       orderIndex,
       isActive,
     } = body;
+
+    if (sectionLabel !== undefined && sectionLabel !== null && typeof sectionLabel !== "string") {
+      activityStatus = 400;
+      activityError = "sectionLabel must be a string or null";
+      return badRequest("sectionLabel must be a string or null", {
+        code: "INVALID_FIELD",
+        fields: ["sectionLabel"],
+      });
+    }
 
     if (title !== undefined && !title?.trim()) {
       activityStatus = 400;
@@ -114,6 +124,12 @@ export async function PUT(
       .update(cohortUpgradePlans)
       .set({
         title: title !== undefined ? title.trim() : existingPlan.title,
+        sectionLabel:
+          sectionLabel !== undefined
+            ? typeof sectionLabel === "string"
+              ? sectionLabel.trim() || null
+              : null
+            : existingPlan.sectionLabel,
         description: description !== undefined ? description : existingPlan.description,
         price: price !== undefined ? price : existingPlan.price,
         originalPrice: originalPrice !== undefined ? originalPrice : existingPlan.originalPrice,

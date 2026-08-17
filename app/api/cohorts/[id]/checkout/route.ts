@@ -5,6 +5,7 @@ import { cohorts, cohortTiers, cohortOrders, coupons, userToolkits, toolkits, us
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { createOrder } from "@/lib/razorpay";
+import { getPaidCohortOrderForUser } from "@/lib/cohort-registration";
 import { sendCohortPaymentConfirmationEmail } from "@/lib/cohort-payment-email";
 export function getDuoPricing(singlePrice: number) {
   if (!singlePrice || singlePrice <= 0) {
@@ -143,6 +144,12 @@ export async function POST(
           );
         }
       } else if (upgradePlanIncludedSessionCount !== null) {
+        if (newSessionsToUnlock.length === 0) {
+          return NextResponse.json(
+            { error: "Please select at least one session to unlock with this upgrade package." },
+            { status: 400 }
+          );
+        }
         if (newSessionsToUnlock.length > upgradePlanIncludedSessionCount) {
           return NextResponse.json(
             { error: `You can select at most ${upgradePlanIncludedSessionCount} new session(s) with this upgrade package.` },
@@ -321,6 +328,17 @@ export async function POST(
       });
     }
 
+    // Check existing paid order for user to copy over verification and registration details upon upgrade
+    const primaryExistingOrder = await getPaidCohortOrderForUser(userId, cohortId);
+
+    const isVerifiedFromPrevious = primaryExistingOrder ? primaryExistingOrder.isVerified : false;
+    const registrationCompletedAtFromPrevious = primaryExistingOrder ? primaryExistingOrder.registrationCompletedAt : null;
+    const registrationNameFromPrevious = primaryExistingOrder ? primaryExistingOrder.registrationName : null;
+    const registrationCollegeFromPrevious = primaryExistingOrder ? primaryExistingOrder.registrationCollege : null;
+    const registrationCourseFromPrevious = primaryExistingOrder ? primaryExistingOrder.registrationCourse : null;
+    const registrationYearFromPrevious = primaryExistingOrder ? primaryExistingOrder.registrationYear : null;
+    const registrationExpectationsFromPrevious = primaryExistingOrder ? primaryExistingOrder.registrationExpectations : null;
+
     // 6. Direct free cohort access if price is 0
     if (finalPriceRupees <= 0) {
       const [newOrder] = await db
@@ -333,12 +351,20 @@ export async function POST(
           buyerPhone: buyerPhone || null,
           buddyEmail: buddyEmail ? buddyEmail.trim().toLowerCase() : null,
           selectedTierId: resolvedTierId,
+          selectedUpgradePlanId: selectedUpgradePlanId || null,
           selectedAddOnIds,
           selectedToolkitIds,
           amountPaid: 0,
           razorpayOrderId: "free_cohort_" + crypto.randomUUID(),
           couponId,
           status: "paid",
+          isVerified: isVerifiedFromPrevious,
+          registrationCompletedAt: registrationCompletedAtFromPrevious,
+          registrationName: registrationNameFromPrevious,
+          registrationCollege: registrationCollegeFromPrevious,
+          registrationCourse: registrationCourseFromPrevious,
+          registrationYear: registrationYearFromPrevious,
+          registrationExpectations: registrationExpectationsFromPrevious,
         })
         .returning();
 
@@ -474,12 +500,20 @@ export async function POST(
         buyerPhone: buyerPhone || null,
         buddyEmail: buddyEmail ? buddyEmail.trim().toLowerCase() : null,
         selectedTierId: resolvedTierId,
+        selectedUpgradePlanId: selectedUpgradePlanId || null,
         selectedAddOnIds,
         selectedToolkitIds,
         amountPaid: Number(order.amount), // in paise
         razorpayOrderId: order.id,
         couponId,
         status: "pending",
+        isVerified: isVerifiedFromPrevious,
+        registrationCompletedAt: registrationCompletedAtFromPrevious,
+        registrationName: registrationNameFromPrevious,
+        registrationCollege: registrationCollegeFromPrevious,
+        registrationCourse: registrationCourseFromPrevious,
+        registrationYear: registrationYearFromPrevious,
+        registrationExpectations: registrationExpectationsFromPrevious,
       })
       .returning();
 

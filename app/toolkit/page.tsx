@@ -206,16 +206,26 @@ export default function ToolkitPage() {
                     )}
                     
                     <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-10">
-                      {cohort.isFillingFast && (
+                      {cohort.isFillingFast ? (
                         <div className="bg-red-600 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
                           <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
                           Filling Fast
                         </div>
+                      ) : (
+                        <div className="bg-gray-700 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
+                          <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
+                          Registration Closed
+                        </div>
                       )}
-                      {cohort.isBestSeller && (
+                      {cohort.isBestSeller ? (
                         <div className="bg-black text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
                           <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
                           Best Seller
+                        </div>
+                      ) : (
+                        <div className="bg-emerald-600 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
+                          <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
+                          Cohort Live
                         </div>
                       )}
                     </div>

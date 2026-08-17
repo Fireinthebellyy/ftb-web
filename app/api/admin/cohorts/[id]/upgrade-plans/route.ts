@@ -173,6 +173,16 @@ export async function POST(
       isActive,
     } = body;
 
+    if (sectionLabel !== undefined && sectionLabel !== null && typeof sectionLabel !== "string") {
+      activityStatus = 400;
+      activityError = "sectionLabel must be a string or null";
+      return badRequest("sectionLabel must be a string or null", {
+        code: "INVALID_FIELD",
+        fields: ["sectionLabel"],
+      });
+    }
+    const normalizedSectionLabel = typeof sectionLabel === "string" ? sectionLabel.trim() || null : null;
+
     if (!title?.trim()) {
       activityStatus = 400;
       activityError = "Title is required";
@@ -214,7 +224,7 @@ export async function POST(
       .values({
         cohortId,
         title: title.trim(),
-        sectionLabel: sectionLabel || null,
+        sectionLabel: normalizedSectionLabel,
         description: description || null,
         price,
         originalPrice: originalPrice ?? null,

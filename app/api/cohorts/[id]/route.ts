@@ -83,7 +83,7 @@ export async function GET(
           ),
         });
         if (orders.length > 0) {
-          hasAccess = orders.some(o => isCohortRegistrationComplete(o)) || true;
+          hasAccess = orders.some(o => isCohortRegistrationComplete(o));
         }
       }
     } catch (e) {

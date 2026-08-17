@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "./db";
 import { cohortOrders, cohorts } from "./schema";
 
@@ -70,7 +70,7 @@ export async function getPaidCohortOrderForUser(
       eq(cohortOrders.status, "paid")
     ),
     orderBy: (cohortOrders, { desc }) => [
-      desc(cohortOrders.isVerified),
+      sql`CASE WHEN ${cohortOrders.isVerified} IS TRUE THEN 1 WHEN ${cohortOrders.isVerified} IS FALSE THEN 2 ELSE 3 END`,
       desc(cohortOrders.createdAt),
     ],
   });

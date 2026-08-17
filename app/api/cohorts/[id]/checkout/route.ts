@@ -5,6 +5,7 @@ import { cohorts, cohortTiers, cohortOrders, coupons, userToolkits, toolkits, us
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { createOrder } from "@/lib/razorpay";
+import { getPaidCohortOrderForUser } from "@/lib/cohort-registration";
 import { sendCohortPaymentConfirmationEmail } from "@/lib/cohort-payment-email";
 export function getDuoPricing(singlePrice: number) {
   if (!singlePrice || singlePrice <= 0) {
@@ -143,6 +144,12 @@ export async function POST(
           );
         }
       } else if (upgradePlanIncludedSessionCount !== null) {
+        if (newSessionsToUnlock.length === 0) {
+          return NextResponse.json(
+            { error: "Please select at least one session to unlock with this upgrade package." },
+            { status: 400 }
+          );
+        }
         if (newSessionsToUnlock.length > upgradePlanIncludedSessionCount) {
           return NextResponse.json(
             { error: `You can select at most ${upgradePlanIncludedSessionCount} new session(s) with this upgrade package.` },
@@ -322,14 +329,7 @@ export async function POST(
     }
 
     // Check existing paid order for user to copy over verification and registration details upon upgrade
-    const primaryExistingOrder = await db.query.cohortOrders.findFirst({
-      where: and(
-        eq(cohortOrders.userId, userId),
-        eq(cohortOrders.cohortId, cohortId),
-        eq(cohortOrders.status, "paid")
-      ),
-      orderBy: (cohortOrders, { desc }) => [desc(cohortOrders.createdAt)],
-    });
+    const primaryExistingOrder = await getPaidCohortOrderForUser(userId, cohortId);
 
     const isVerifiedFromPrevious = primaryExistingOrder ? primaryExistingOrder.isVerified : false;
     const registrationCompletedAtFromPrevious = primaryExistingOrder ? primaryExistingOrder.registrationCompletedAt : null;

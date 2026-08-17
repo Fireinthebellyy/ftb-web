@@ -37,7 +37,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ImageCarousel } from "@/components/ui/image-carousel";
 import { useQuery } from "@tanstack/react-query";
-import { CohortUpgradeGrid, CurrentPlanStatus, UpgradePlan } from "./CohortUpgradeGrid";
+import { CohortUpgradeGrid, CohortSessionItem, CurrentPlanStatus, UpgradePlan } from "./CohortUpgradeGrid";
 
 export default function CohortDashboardPage() {
   const params = useParams();
@@ -219,7 +219,7 @@ export default function CohortDashboardPage() {
             <Button
               size="sm"
               onClick={() => setUpgradeModalOpen(true)}
-              className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg shrink-0 transition-all shadow-sm"
+              className="shrink-0 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 shadow-sm transition-all"
             >
               Upgrade
             </Button>
@@ -332,7 +332,7 @@ function CohortSessionSidebar({
   onSessionSelect,
   onOpenUpgrade,
 }: {
-  sessions: any[];
+  sessions: CohortSessionItem[];
   currentSessionId: string | null;
   onSessionSelect: (id: string) => void;
   onOpenUpgrade?: () => void;

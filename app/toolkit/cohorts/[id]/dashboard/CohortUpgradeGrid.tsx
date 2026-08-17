@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export interface UpgradePlan {
   id: string;
@@ -432,21 +433,23 @@ export function CohortUpgradeGrid({
             <div
               key={plan.id}
               onClick={() => setSelectedPlanId(plan.id)}
-              className={`w-full sm:w-[280px] sm:h-[450px] rounded-2xl border p-4 sm:p-5 flex flex-col justify-between relative transition-all duration-200 cursor-pointer ${
+              className={cn(
+                "w-full sm:w-[280px] sm:h-[450px] rounded-2xl border p-4 sm:p-5 flex flex-col justify-between relative transition-all duration-200 cursor-pointer",
                 isSelected
                   ? "bg-orange-50/30 border-orange-500 ring-4 ring-orange-500/25 shadow-md scale-[1.02]"
                   : isFeatured
                   ? "bg-white border-orange-400 ring-2 ring-orange-500/10 hover:border-orange-500 hover:shadow-md"
                   : "bg-white border-gray-200 hover:border-orange-300 hover:shadow-md"
-              }`}
+              )}
             >
               {plan.badgeText && (
                 <div
-                  className={`absolute top-0 right-0 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-bl-xl rounded-tr-2xl border-l border-b ${
+                  className={cn(
+                    "absolute top-0 right-0 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-bl-xl rounded-tr-2xl border-l border-b",
                     isSelected || isFeatured
                       ? "bg-orange-600 text-white border-orange-600"
                       : "bg-gray-100 text-gray-800 border-gray-200"
-                  }`}
+                  )}
                 >
                   {plan.badgeText}
                 </div>
@@ -683,7 +686,7 @@ export function CohortUpgradeGrid({
                 Upgrading Account
               </div>
               <h3 className="text-xl font-bold text-white tracking-tight leading-snug">
-                You have been upgraded to one of our best packages of the cohort! Lessgoo&lt;3
+                Your upgrade is complete.
               </h3>
             </div>
 

@@ -405,7 +405,9 @@ export default function AdminCohortsTable() {
       order.buyerPhone || "",
       order.buddyEmail || "",
       order.cohortTitle || "",
-      order.upgradePlanTitle ? `Upgrade: ${order.upgradePlanTitle}` : (order.tierName || "Base price"),
+      order.upgradePlanTitle
+        ? `Upgrade: ${order.upgradePlanTitle}${order.upgradePlanSectionLabel ? ` (${order.upgradePlanSectionLabel})` : ""}`
+        : (order.tierName || "Base price"),
       (order.amountPaid / 100).toFixed(2),
       order.couponCode || "",
       order.razorpayOrderId,
@@ -446,6 +448,7 @@ export default function AdminCohortsTable() {
       "Course",
       "Year",
       "Expectations",
+      "Opted Plan / Upgrade",
       "Selected Sessions",
       "Individual Sessions",
       "Cohort",
@@ -468,19 +471,24 @@ export default function AdminCohortsTable() {
           }).filter(Boolean).join(", ")
         : "";
 
+      const optedPlanLabel = order.upgradePlanTitle
+        ? `Upgrade: ${order.upgradePlanTitle} (Paid: ₹${(order.amountPaid / 100).toFixed(2)})`
+        : `${order.tierName || "Base Plan"} (Paid: ₹${(order.amountPaid / 100).toFixed(2)})`;
+
       return [
         order.registrationName || order.buyerName,
         order.registrationCollege || "",
         order.registrationCourse || "",
         order.registrationYear || "",
         order.registrationExpectations || "",
+        optedPlanLabel,
         sessionTitles,
         individualSessionTitles,
         order.cohortTitle || "Unknown",
         order.buyerEmail,
         order.registrationCompletedAt
-          ? new Date(order.registrationCompletedAt).toLocaleDateString()
-          : new Date(order.createdAt).toLocaleDateString(),
+          ? new Date(order.registrationCompletedAt).toLocaleString()
+          : new Date(order.createdAt).toLocaleString(),
       ];
     });
 
@@ -668,7 +676,7 @@ export default function AdminCohortsTable() {
                   <tr className="bg-gray-50 border-b">
                     <th className="p-4 font-semibold text-gray-700">Buyer</th>
                     <th className="p-4 font-semibold text-gray-700">Buddy (Referral)</th>
-                    <th className="p-4 font-semibold text-gray-700">Cohort & Tier</th>
+                    <th className="p-4 font-semibold text-gray-700">Cohort & Tier / Upgrade Plan</th>
                     <th className="p-4 font-semibold text-gray-700">Paid</th>
                     <th className="p-4 font-semibold text-gray-700">Coupon</th>
                     <th className="p-4 font-semibold text-gray-700">Razorpay Info</th>
@@ -688,24 +696,24 @@ export default function AdminCohortsTable() {
                       <td className="p-4">
                         {order.buddyEmail ? (
                           <div>
-                            <span className="inline-flex items-center gap-1 bg-orange-50 text-[#ff5e14] px-2 py-0.5 text-[10px] font-bold rounded-full border border-orange-100 mb-1">
+                            <span className="inline-flex items-center gap-1 mb-1 px-2 py-0.5 rounded-full border border-orange-100 bg-orange-50 text-[10px] font-bold text-[#ff5e14]">
                               <Gift className="w-3 h-3" /> Buddy Added
                             </span>
-                            <div className="text-xs text-gray-600 font-medium select-all">{order.buddyEmail}</div>
+                            <div className="select-all text-xs font-medium text-gray-600">{order.buddyEmail}</div>
                           </div>
                         ) : (
-                          <span className="text-xs text-gray-400 font-normal italic">-</span>
+                          <span className="text-xs font-normal italic text-gray-400">-</span>
                         )}
                       </td>
                       <td className="p-4">
                         <div className="font-medium text-gray-950">{order.cohortTitle || "Unknown"}</div>
                         {order.upgradePlanTitle ? (
                           <div className="mt-1">
-                            <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 text-[11px] font-bold rounded-md">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-amber-200 bg-amber-50 text-[11px] font-bold text-amber-800">
                               Upgrade: {order.upgradePlanTitle}
                             </span>
                             {order.upgradePlanSectionLabel && (
-                              <div className="text-[10px] text-gray-500 mt-0.5">{order.upgradePlanSectionLabel}</div>
+                              <div className="mt-0.5 text-[10px] text-gray-500">{order.upgradePlanSectionLabel}</div>
                             )}
                           </div>
                         ) : (
@@ -898,7 +906,7 @@ export default function AdminCohortsTable() {
                   ))}
                   {ordersList.filter(order => order.registrationName).length === 0 && (
                     <tr>
-                      <td colSpan={11} className="p-12 text-center text-gray-500">
+                      <td colSpan={12} className="p-12 text-center text-gray-500">
                         No registration forms completed yet.
                       </td>
                     </tr>

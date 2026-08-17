@@ -87,8 +87,27 @@ export async function GET(
       }
     });
 
+    // Check if user has purchased an all-in-one upgrade plan
+    const paidUpgradePlanIds = new Set(paidOrders.map(o => o.selectedUpgradePlanId).filter(Boolean));
+    let hasAllInOneUpgrade = false;
+    if (paidUpgradePlanIds.size > 0) {
+      try {
+        const allInOnePlan = await db.query.cohortUpgradePlans.findFirst({
+          where: and(
+            eq(cohortUpgradePlans.cohortId, cohort.id),
+            eq(cohortUpgradePlans.isAllInOne, true)
+          ),
+        });
+        if (allInOnePlan && paidUpgradePlanIds.has(allInOnePlan.id)) {
+          hasAllInOneUpgrade = true;
+        }
+      } catch (e) {
+        console.warn("Error checking all-in-one plan access:", e);
+      }
+    }
+
     const sessionsWithAccess = sessions.map((session) => {
-      const isAccessible = hasAnyTierAccess || allPurchasedAddOnIds.size === 0 || allPurchasedAddOnIds.has(session.id);
+      const isAccessible = hasAnyTierAccess || hasAllInOneUpgrade || allPurchasedAddOnIds.has(session.id);
       return {
         ...session,
         isAccessible,
@@ -129,7 +148,7 @@ export async function GET(
       console.warn("User cohort target plans table query warning:", e);
     }
 
-    const isAllInOne = hasAnyTierAccess || (paidOrders.some(o => !o.selectedAddOnIds || o.selectedAddOnIds.length === 0));
+    const isAllInOne = hasAnyTierAccess || hasAllInOneUpgrade;
 
     const accessibleCount = isAllInOne
       ? sessions.length

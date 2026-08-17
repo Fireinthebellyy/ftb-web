@@ -9,6 +9,7 @@ import {
   cohortSessions,
   cohortSessionContents,
   cohortOrders,
+  cohortUpgradePlans,
 } from "@/lib/schema";
 
 const UUID_REGEX =
@@ -76,7 +77,26 @@ export async function GET(
       }
     });
 
-    const isAccessible = hasAnyTierAccess || allPurchasedAddOnIds.size === 0 || allPurchasedAddOnIds.has(sessionId);
+    // Check if user has purchased an all-in-one upgrade plan
+    const paidUpgradePlanIds = new Set(paidOrders.map(o => o.selectedUpgradePlanId).filter(Boolean));
+    let hasAllInOneUpgrade = false;
+    if (paidUpgradePlanIds.size > 0) {
+      try {
+        const allInOnePlan = await db.query.cohortUpgradePlans.findFirst({
+          where: and(
+            eq(cohortUpgradePlans.cohortId, cohort.id),
+            eq(cohortUpgradePlans.isAllInOne, true)
+          ),
+        });
+        if (allInOnePlan && paidUpgradePlanIds.has(allInOnePlan.id)) {
+          hasAllInOneUpgrade = true;
+        }
+      } catch (e) {
+        console.warn("Error checking all-in-one plan access:", e);
+      }
+    }
+
+    const isAccessible = hasAnyTierAccess || hasAllInOneUpgrade || allPurchasedAddOnIds.has(sessionId);
 
     if (!isAccessible) {
       return NextResponse.json({

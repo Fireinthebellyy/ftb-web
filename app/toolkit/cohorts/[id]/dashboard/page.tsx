@@ -21,7 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ArrowLeft, Menu, Lock, Unlock, MessageCircle, Send, Edit, Trash2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, stripHtml } from "@/lib/utils";
 import {
   useCohortDetail,
   useCohortSession,
@@ -37,30 +37,87 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ImageCarousel } from "@/components/ui/image-carousel";
 import { useQuery } from "@tanstack/react-query";
+import { CohortUpgradeGrid, CohortSessionItem, CurrentPlanStatus, UpgradePlan } from "./CohortUpgradeGrid";
 
 export default function CohortDashboardPage() {
   const params = useParams();
   const router = useRouter();
   const cohortId = params.id as string;
 
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const getInitialSessionId = (): string | null => {
+    if (typeof window === "undefined") return null;
+    const hash = window.location.hash.replace("#", "");
+    if (hash) return hash;
+    try {
+      return localStorage.getItem(`cohort:${cohortId}:session`);
+    } catch {
+      return null;
+    }
+  };
+
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(
+    getInitialSessionId
+  );
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
-  const { data: cohortData, isLoading: isCohortLoading } =
+  const { data: cohortData, isLoading: isCohortLoading, refetch: refetchCohort } =
     useCohortDetail(cohortId);
 
   const sessions = useMemo(() => cohortData?.sessions ?? [], [cohortData]);
 
-  // Auto-select first accessible session
   useEffect(() => {
-    if (sessions.length > 0 && !currentSessionId) {
-      const firstAccessibleSession = sessions.find((s: any) => s.isAccessible);
-      if (firstAccessibleSession) {
-        setCurrentSessionId(firstAccessibleSession.id);
+    if (sessions.length === 0) return;
+
+    let targetId: string | null = null;
+
+    if (currentSessionId) {
+      const isValid = sessions.some((s: any) => s.id === currentSessionId);
+      if (isValid) {
+        targetId = currentSessionId;
       }
     }
+
+    if (!targetId) {
+      const accessibleSessions = sessions.filter((s: any) => s.isAccessible);
+      targetId = accessibleSessions.length > 0 ? accessibleSessions[0].id : sessions[0].id;
+      setCurrentSessionId(targetId);
+    }
+
+    try {
+      localStorage.setItem(`cohort:${cohortId}:session`, targetId);
+    } catch {
+      /* noop */
+    }
+    if (typeof window !== "undefined" && window.location.hash !== `#${targetId}`) {
+      history.replaceState(null, "", `#${targetId}`);
+    }
+  }, [sessions, currentSessionId, cohortId]);
+
+  useEffect(() => {
+    const onHashChange = () => {
+      const hash = window.location.hash.replace("#", "");
+      if (hash && hash !== currentSessionId) {
+        const match = sessions.find((s: any) => s.id === hash);
+        if (match) setCurrentSessionId(hash);
+      }
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
   }, [sessions, currentSessionId]);
+
+  const handleSessionSelect = (id: string) => {
+    setCurrentSessionId(id);
+    try {
+      localStorage.setItem(`cohort:${cohortId}:session`, id);
+    } catch {
+      /* noop */
+    }
+    if (typeof window !== "undefined" && window.location.hash !== `#${id}`) {
+      history.replaceState(null, "", `#${id}`);
+    }
+  };
 
   const { data: sessionData, isLoading: isSessionLoading } = useCohortSession(
     cohortId,
@@ -139,7 +196,7 @@ export default function CohortDashboardPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 z-10 border-b bg-white/95 backdrop-blur supports-backdrop-filter:bg-white/60">
         <div className="flex h-16 items-center px-4 overflow-hidden">
-          <div className="flex items-center gap-1 sm:gap-3 min-w-0">
+          <div className="flex items-center gap-1 sm:gap-3 min-w-0 flex-1">
             <Button
               variant="ghost"
               size="icon"
@@ -157,34 +214,47 @@ export default function CohortDashboardPage() {
                 {sessionData?.session.title || "Select a session"}
               </h1>
             </div>
-            <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden shrink-0">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-80 p-0">
-                <SheetTitle className="sr-only">Session Menu</SheetTitle>
-                <CohortSessionSidebar
-                  sessions={sessions}
-                  currentSessionId={currentSessionId}
-                  onSessionSelect={(id) => {
-                    setCurrentSessionId(id);
-                    setSidebarOpen(false);
-                  }}
-                />
-              </SheetContent>
-            </Sheet>
 
+            {/* Top-Right Global Upgrade Button */}
             <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
-              className="hidden shrink-0 lg:flex"
+              size="sm"
+              onClick={() => setUpgradeModalOpen(true)}
+              className="shrink-0 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 shadow-sm transition-all"
             >
-              <Menu className="h-5 w-5" />
+              Upgrade
             </Button>
           </div>
+          <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="lg:hidden shrink-0">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-80 p-0">
+              <SheetTitle className="sr-only">Session Menu</SheetTitle>
+              <CohortSessionSidebar
+                sessions={sessions}
+                currentSessionId={currentSessionId}
+                onSessionSelect={(id) => {
+                  handleSessionSelect(id);
+                  setSidebarOpen(false);
+                }}
+                onOpenUpgrade={() => {
+                  setSidebarOpen(false);
+                  setUpgradeModalOpen(true);
+                }}
+              />
+            </SheetContent>
+          </Sheet>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
+            className="hidden shrink-0 lg:flex"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
         </div>
       </header>
 
@@ -200,7 +270,17 @@ export default function CohortDashboardPage() {
               <Skeleton className="h-40 w-full" />
             </div>
           ) : (
-            <CohortSessionMain contents={contents} sessionId={currentSessionId || ""} cohortId={cohortId} sessions={sessions} onSessionSelect={setCurrentSessionId} />
+            <CohortSessionMain
+              contents={contents}
+              sessionId={currentSessionId || ""}
+              cohortId={cohortId}
+              cohortTitle={cohortData.cohort.title}
+              sessions={sessions}
+              currentPlanStatus={cohortData.currentPlanStatus}
+              upgradePlans={cohortData.upgradePlans}
+              onSessionSelect={handleSessionSelect}
+              refetchCohort={refetchCohort}
+            />
           )}
         </main>
 
@@ -209,11 +289,39 @@ export default function CohortDashboardPage() {
             <CohortSessionSidebar
               sessions={sessions}
               currentSessionId={currentSessionId}
-              onSessionSelect={setCurrentSessionId}
+              onSessionSelect={handleSessionSelect}
+              onOpenUpgrade={() => setUpgradeModalOpen(true)}
             />
           </div>
         )}
       </div>
+
+      {/* Global Upgrade Modal (Requirement 5 & Global Minimal Rule) */}
+      {upgradeModalOpen && (
+        <Dialog open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen}>
+          <DialogContent className="w-full max-w-[96vw] sm:max-w-2xl md:max-w-4xl max-h-[88vh] flex flex-col p-0 gap-0 overflow-hidden">
+            <DialogHeader className="px-5 py-4 pr-14 border-b shrink-0 text-left">
+              <DialogTitle className="text-sm sm:text-base font-bold text-gray-900 leading-snug break-words">
+                Upgrade Options — {cohortData.cohort.title}
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="flex-1 overflow-y-auto px-5 pb-5">
+              <CohortUpgradeGrid
+                cohortId={cohortId}
+                cohortTitle={cohortData.cohort.title}
+                currentPlanStatus={cohortData.currentPlanStatus}
+                upgradePlans={cohortData.upgradePlans}
+                sessions={sessions}
+                onUpgradeSuccess={() => {
+                  setUpgradeModalOpen(false);
+                  refetchCohort();
+                }}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
@@ -222,64 +330,78 @@ function CohortSessionSidebar({
   sessions,
   currentSessionId,
   onSessionSelect,
+  onOpenUpgrade,
 }: {
-  sessions: any[];
+  sessions: CohortSessionItem[];
   currentSessionId: string | null;
   onSessionSelect: (id: string) => void;
+  onOpenUpgrade?: () => void;
 }) {
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-4 border-b border-gray-100">
-        <h2 className="text-lg md:text-xl font-extrabold text-gray-900">Cohort Content</h2>
-        <p className="text-gray-500 text-sm mt-1">
-          {sessions.length} {sessions.length === 1 ? "Session" : "Sessions"} • 0 completed
-        </p>
-      </div>
-      <div className="p-4 space-y-3">
-        {sessions.map((session, index) => (
-          <button
-            key={session.id}
-            onClick={() => session.isAccessible && onSessionSelect(session.id)}
-            disabled={!session.isAccessible}
-            className={cn(
-              "w-full rounded-2xl p-4 text-left transition-all",
-              currentSessionId === session.id
-                ? "bg-orange-100 border-l-4 border-orange-500"
-                : "bg-white border border-gray-100 hover:border-gray-200 hover:shadow-sm",
-              !session.isAccessible && "opacity-60 cursor-not-allowed"
-            )}
-          >
-            <div className="flex items-start gap-4">
-              {currentSessionId === session.id ? (
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-600">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                </div>
-              ) : (
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-semibold text-sm">
-                  {index + 1}
-                </div>
+    <div className="h-full flex flex-col justify-between overflow-y-auto">
+      <div>
+        <div className="p-4 border-b border-gray-100">
+          <h2 className="text-lg md:text-xl font-extrabold text-gray-900">Cohort Content</h2>
+          <p className="text-gray-500 text-md font-semibold">
+            {sessions.length} {sessions.length === 1 ? "Session" : "Sessions"}
+          </p>
+        </div>
+        <div className="p-4 space-y-3">
+          {sessions.map((session, index) => (
+            <button
+              key={session.id}
+              onClick={() => onSessionSelect(session.id)}
+              className={cn(
+                "w-full rounded-2xl p-4 text-left transition-all cursor-pointer",
+                currentSessionId === session.id
+                  ? "bg-orange-100 border-l-4 border-orange-500"
+                  : "bg-white border border-gray-100 hover:border-gray-200 hover:shadow-sm",
+                !session.isAccessible && "bg-gray-50/70 opacity-90"
               )}
-              <div className="flex-1">
-                <h3 className={cn(
-                  "text-sm md:text-base font-semibold leading-tight",
-                  currentSessionId === session.id ? "text-orange-700" : "text-gray-800"
-                )}>
-                  {session.title}
-                </h3>
+            >
+              <div className="flex items-start gap-4">
+                {currentSessionId === session.id ? (
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </div>
+                ) : (
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-semibold text-sm">
+                    {index + 1}
+                  </div>
+                )}
+                <div className="flex-1">
+                  <h3 className={cn(
+                    "text-sm md:text-base font-semibold leading-tight",
+                    currentSessionId === session.id ? "text-orange-700" : "text-gray-800"
+                  )}>
+                    {session.title}
+                  </h3>
+                </div>
+                {!session.isAccessible ? (
+                  <div className="flex-shrink-0">
+                    <Lock className="h-4 w-4 text-gray-400" />
+                  </div>
+                ) : currentSessionId === session.id && (
+                  <div className="flex-shrink-0 w-3 h-3 rounded-full bg-orange-500"></div>
+                )}
               </div>
-              {!session.isAccessible ? (
-                <div className="flex-shrink-0">
-                  <Lock className="h-4 w-4 text-gray-400" />
-                </div>
-              ) : currentSessionId === session.id && (
-                <div className="flex-shrink-0 w-3 h-3 rounded-full bg-orange-500"></div>
-              )}
-            </div>
-          </button>
-        ))}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {onOpenUpgrade && (
+        <div className="p-4 border-t border-gray-100 bg-white sticky bottom-0">
+          <Button
+            onClick={onOpenUpgrade}
+            className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2.5 px-4 rounded-lg text-sm transition-all shadow-sm flex items-center justify-center"
+          >
+            Upgrade Plan
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -288,14 +410,22 @@ function CohortSessionMain({
   contents,
   sessionId,
   cohortId,
+  cohortTitle,
   sessions,
+  currentPlanStatus,
+  upgradePlans,
   onSessionSelect,
+  refetchCohort,
 }: {
   contents: CohortSessionContent[];
   sessionId: string;
   cohortId: string;
+  cohortTitle: string;
   sessions: any[];
+  currentPlanStatus?: CurrentPlanStatus | null;
+  upgradePlans?: UpgradePlan[] | null;
   onSessionSelect: (id: string) => void;
+  refetchCohort: () => void;
 }) {
   const [newQuestion, setNewQuestion] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -404,9 +534,42 @@ function CohortSessionMain({
     const indexA = sortOrder.indexOf(a.sectionType);
     const indexB = sortOrder.indexOf(b.sectionType);
     if (indexA !== indexB) return indexA - indexB;
-    // If same section type, sort by orderIndex
     return a.orderIndex - b.orderIndex;
   });
+
+  const currentSession = sessions.find((s: any) => s.id === sessionId);
+  const isAccessible = currentSession ? currentSession.isAccessible !== false : true;
+
+  if (!isAccessible) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-orange-200 bg-orange-50/80 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-600 shrink-0">
+              <Lock className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-extrabold text-gray-900">
+                {currentSession?.title || "Session Locked"} — Upgrade Required
+              </h2>
+              <p className="text-xs text-gray-600 mt-0.5">
+                This session is not included in your current active plan. Choose an upgrade package below to get immediate access.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <CohortUpgradeGrid
+          cohortId={cohortId}
+          cohortTitle={cohortTitle}
+          currentPlanStatus={currentPlanStatus}
+          upgradePlans={upgradePlans}
+          sessions={sessions}
+          onUpgradeSuccess={() => refetchCohort()}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -427,7 +590,7 @@ function CohortSessionMain({
             </div>
             {content.isUnlocked ? (
               <div className="space-y-4">
-              {content.sectionType === "live_session" && (
+              {content.sectionType === "live_session" && content.liveSessionLink && (
                 <div className="rounded-lg border border-gray-200 bg-white p-6">
                   <h3 className="mb-4 font-semibold text-gray-900">
                     Live Session Link
@@ -437,9 +600,12 @@ function CohortSessionMain({
                       href={content.liveSessionLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-700 hover:border-orange-500 hover:text-orange-700"
+                      className="inline-flex items-center justify-center gap-3 px-6 py-3.5 w-full sm:w-auto text-sm font-semibold rounded-xl bg-orange-600 text-white shadow-lg shadow-orange-600/20 transition-all duration-300 hover:bg-orange-700 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-orange-600/30 active:translate-y-0 cursor-pointer"
                     >
-                      <span className="text-orange-500">🔗</span>
+                      <span className="relative flex h-3.5 w-3.5">
+                        <span className="animate-ping motion-reduce:animate-none absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-400"></span>
+                      </span>
                       <span>Join Live Session</span>
                     </a>
                   )}
@@ -450,7 +616,7 @@ function CohortSessionMain({
                   <ImageCarousel images={content.images} />
                 </div>
               )}
-              {content.sectionType === "recording" && (
+              {content.sectionType === "recording" && (content.videoUrl || stripHtml(content.content)) && (
                 <div className="rounded-lg border border-gray-200 bg-white p-6">
                   {content.videoUrl && (
                     <div className="mb-4">
@@ -461,7 +627,7 @@ function CohortSessionMain({
                       />
                     </div>
                   )}
-                  {content.content && (
+                  {stripHtml(content.content) && (
                     <div className="prose prose-slate max-w-none">
                       <HtmlRenderer content={content.content} />
                     </div>
@@ -474,7 +640,7 @@ function CohortSessionMain({
                 </div>
               )}
               {/* Only render content block for non-recording sections (live_session, meet_mentor, resources) */}
-              {content.content && content.sectionType !== "recording" && (
+              {stripHtml(content.content) && content.sectionType !== "recording" && (
                 <div className="prose prose-slate max-w-none rounded-lg border border-gray-200 bg-white p-6">
                   <HtmlRenderer content={content.content} />
                 </div>
@@ -486,110 +652,98 @@ function CohortSessionMain({
                     <div className="space-y-4">
                       {/* Image Carousel */}
                       {content.resources.filter((r: CohortSessionResource) => r.type === "image").length > 0 && (
-                        <div>
-                          <h4 className="mb-3 text-sm font-medium text-gray-700">Images</h4>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {content.resources
-                              .filter((r: CohortSessionResource) => r.type === "image")
-                              .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
-                              .map((resource: CohortSessionResource) => (
-                                <div key={resource.id} className="relative group">
-                                  <img
-                                    src={resource.url}
-                                    alt={resource.name}
-                                    className="w-full h-40 object-cover rounded-lg border border-gray-200"
-                                  />
-                                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
-                                    <a
-                                      href={resource.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="opacity-0 group-hover:opacity-100 transition-opacity bg-white px-3 py-1 rounded-full text-sm font-medium"
-                                    >
-                                      View
-                                    </a>
-                                  </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {content.resources
+                            .filter((r: CohortSessionResource) => r.type === "image")
+                            .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
+                            .map((resource: CohortSessionResource) => (
+                              <div key={resource.id} className="relative group">
+                                <img
+                                  src={resource.url}
+                                  alt={resource.name}
+                                  className="w-full h-40 object-cover rounded-lg border border-gray-200"
+                                />
+                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
+                                  <a
+                                    href={resource.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity bg-white px-3 py-1 rounded-full text-sm font-medium"
+                                  >
+                                    View
+                                  </a>
                                 </div>
-                              ))}
-                          </div>
+                              </div>
+                            ))}
                         </div>
                       )}
 
                       {/* PDF Resources with Google Docs Viewer */}
                       {content.resources.filter((r: CohortSessionResource) => r.type === "pdf").length > 0 && (
-                        <div>
-                          <h4 className="mb-3 text-sm font-medium text-gray-700">PDF Documents</h4>
-                          <div className="space-y-3">
-                            {content.resources
-                              .filter((r: CohortSessionResource) => r.type === "pdf")
-                              .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
-                              .map((resource: CohortSessionResource) => (
-                                <div key={resource.id} className="border border-gray-200 rounded-lg overflow-hidden">
-                                  <div className="p-4 border-b border-gray-200">
-                                    <p className="font-medium text-gray-900">{resource.name}</p>
-                                  </div>
-                                  <div className="h-96">
-                                    <iframe
-                                      src={`https://docs.google.com/viewer?url=${encodeURIComponent(resource.url)}&embedded=true`}
-                                      className="w-full h-full"
-                                      title={resource.name}
-                                    />
-                                  </div>
-                                </div>
-                              ))}
-                          </div>
+                        <div className="space-y-6">
+                          {content.resources
+                            .filter((r: CohortSessionResource) => r.type === "pdf")
+                            .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
+                            .map((resource: CohortSessionResource) => (
+                              <EmbeddedResourceViewer key={resource.id} resource={resource} />
+                            ))}
                         </div>
                       )}
 
                       {/* PPT Resources */}
                       {content.resources.filter((r: CohortSessionResource) => r.type === "ppt").length > 0 && (
-                        <div>
-                          <h4 className="mb-3 text-sm font-medium text-gray-700">Presentations</h4>
-                          <div className="space-y-3">
-                            {content.resources
-                              .filter((r: CohortSessionResource) => r.type === "ppt")
-                              .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
-                              .map((resource: CohortSessionResource) => (
-                                <div
-                                  key={resource.id}
-                                  className="flex items-center gap-3 rounded-lg border border-gray-200 p-4"
-                                >
-                                  <a
-                                    href={resource.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex-1 font-medium text-gray-900 hover:text-orange-600"
-                                  >
-                                    {resource.name}
-                                  </a>
-                                  <span className="text-sm text-gray-500">PPT</span>
-                                </div>
-                              ))}
-                          </div>
+                        <div className="space-y-6">
+                          {content.resources
+                            .filter((r: CohortSessionResource) => r.type === "ppt")
+                            .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
+                            .map((resource: CohortSessionResource) => (
+                              <EmbeddedResourceViewer key={resource.id} resource={resource} />
+                            ))}
                         </div>
                       )}
 
                       {/* Link Resources */}
                       {content.resources.filter((r: CohortSessionResource) => r.type === "link").length > 0 && (
-                        <div>
-                          <h4 className="mb-3 text-sm font-medium text-gray-700">Links</h4>
-                          <div className="space-y-2">
-                            {content.resources
-                              .filter((r: CohortSessionResource) => r.type === "link")
-                              .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
-                              .map((resource: CohortSessionResource) => (
-                                <a
-                                  key={resource.id}
-                                  href={resource.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-700 hover:border-orange-500 hover:text-orange-700"
-                                >
-                                  <span className="text-orange-500">🔗</span>
-                                  <span>{resource.name}</span>
-                                </a>
-                              ))}
-                          </div>
+                        <div className="space-y-2">
+                          {content.resources
+                            .filter((r: CohortSessionResource) => r.type === "link")
+                            .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
+                            .map((resource: CohortSessionResource) => (
+                              <a
+                                key={resource.id}
+                                href={resource.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-700 hover:border-orange-500 hover:text-orange-700"
+                              >
+                                <span className="text-orange-500">🔗</span>
+                                <span className="font-medium">{resource.name}</span>
+                              </a>
+                            ))}
+                        </div>
+                      )}
+
+                      {/* Excel Resources */}
+                      {content.resources.filter((r: CohortSessionResource) => r.type === "excel").length > 0 && (
+                        <div className="space-y-6">
+                          {content.resources
+                            .filter((r: CohortSessionResource) => r.type === "excel")
+                            .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
+                            .map((resource: CohortSessionResource) => (
+                              <EmbeddedResourceViewer key={resource.id} resource={resource} />
+                            ))}
+                        </div>
+                      )}
+
+                      {/* Word Resources */}
+                      {content.resources.filter((r: CohortSessionResource) => r.type === "word").length > 0 && (
+                        <div className="space-y-6">
+                          {content.resources
+                            .filter((r: CohortSessionResource) => r.type === "word")
+                            .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
+                            .map((resource: CohortSessionResource) => (
+                              <EmbeddedResourceViewer key={resource.id} resource={resource} />
+                            ))}
                         </div>
                       )}
                     </div>
@@ -854,6 +1008,29 @@ function CohortSessionMain({
         >
           Next Session
         </Button>
+      </div>
+    </div>
+  );
+}
+
+function EmbeddedResourceViewer({ resource }: { resource: CohortSessionResource }) {
+  const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(resource.url)}&embedded=true`;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <h4 className="text-sm font-semibold text-gray-900">{resource.name}</h4>
+      </div>
+      <div className="relative overflow-hidden rounded-lg border border-gray-200">
+        <div className="h-96">
+          <iframe
+            src={viewerUrl}
+            className="h-full w-full"
+            title={resource.name}
+            sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+            referrerPolicy="no-referrer"
+          />
+        </div>
       </div>
     </div>
   );

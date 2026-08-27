@@ -49,14 +49,29 @@ export async function GET(
         .orderBy(asc(cohortSessionContents.createdAt));
     }
 
-    // Fetch mentors for all contents
-    let allMentors: (typeof cohortSessionMentors.$inferSelect)[] = [];
+    // Fetch mentors for all contents, resolving linked cohort mentor fields
+    type ResolvedMentor = typeof cohortSessionMentors.$inferSelect & {
+      name: string | null;
+      role: string | null;
+      imageUrl: string | null;
+      bio: string | null;
+      linkedinUrl: string | null;
+    };
+    let allMentors: ResolvedMentor[] = [];
     if (allContents.length > 0) {
-      allMentors = await db
-        .select()
-        .from(cohortSessionMentors)
-        .where(inArray(cohortSessionMentors.contentId, allContents.map(c => c.id)))
-        .orderBy(asc(cohortSessionMentors.orderIndex));
+      const rawMentors = await db.query.cohortSessionMentors.findMany({
+        where: (csm, { inArray }) => inArray(csm.contentId, allContents.map(c => c.id)),
+        with: { cohortMentor: true },
+        orderBy: (csm, { asc }) => [asc(csm.orderIndex)],
+      });
+      allMentors = rawMentors.map(m => ({
+        ...m,
+        name: m.cohortMentor?.name ?? m.name,
+        role: m.cohortMentor?.role ?? m.role,
+        imageUrl: m.cohortMentor?.imageUrl ?? m.imageUrl,
+        bio: m.cohortMentor?.bio ?? m.bio,
+        linkedinUrl: m.cohortMentor?.link ?? m.linkedinUrl,
+      }));
     }
 
     // Fetch resources for all contents
@@ -178,7 +193,7 @@ export async function POST(
     activityEntityId = cohortId;
 
     const body = await request.json();
-    const { title, orderIndex, description } = body;
+    const { title, orderIndex, description, showInDashboard, showInHome } = body;
 
     if (!title?.trim()) {
       activityStatus = 400;
@@ -197,6 +212,8 @@ export async function POST(
         description,
         orderIndex: orderIndex ?? 0,
         isActive: true,
+        showInDashboard: showInDashboard ?? true,
+        showInHome: showInHome ?? true,
       })
       .returning();
 

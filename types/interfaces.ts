@@ -183,7 +183,7 @@ export type UploadProgress = {
   progress: number;
 };
 
-export type FileKind = "image" | "pdf" | "ppt";
+export type FileKind = "image" | "pdf" | "ppt" | "excel" | "word";
 
 export interface FileItem {
   id: string;
@@ -352,7 +352,7 @@ export type CohortSessionResource = {
   contentId: string;
   name: string;
   url: string;
-  type: "file" | "video" | "link" | "image" | "pdf" | "ppt";
+  type: "file" | "video" | "link" | "image" | "pdf" | "ppt" | "excel" | "word";
   orderIndex: number;
   createdAt: string;
 };
@@ -367,10 +367,11 @@ export type CohortSessionQuery = {
   updatedAt: string;
 };
 
-export type CohortSessionMentor = {
+export interface CohortSessionMentor {
   id: string;
   contentId: string;
-  name: string;
+  cohortMentorId?: string | null;
+  name?: string | null;
   role?: string | null;
   imageUrl?: string | null;
   bio?: string | null;
@@ -378,7 +379,25 @@ export type CohortSessionMentor = {
   otherLinks?: { title: string; url: string }[] | null;
   orderIndex: number;
   createdAt: string;
-};
+}
+
+export interface CohortUpgradePlan {
+  id: string;
+  cohortId: string;
+  title: string;
+  sectionLabel?: string | null;
+  description: string | null;
+  price: number;
+  originalPrice: number | null;
+  includedSessionCount: number | null;
+  includedSessionIds: string[] | null;
+  isAllInOne: boolean | null;
+  badgeText: string | null;
+  features: string[] | null;
+  orderIndex: number;
+  isActive: boolean;
+  createdAt?: string | Date;
+}
 
 export type CohortDetailResponse = {
   cohort: { id: string; title: string };
@@ -387,6 +406,14 @@ export type CohortDetailResponse = {
   isVerificationRequired: boolean;
   isVerified: boolean;
   sessions: CohortSession[];
+  currentPlanStatus?: {
+    purchasedSessionsCount: number;
+    totalSessionsCount: number;
+    amountPaid: number;
+    isAllInOne: boolean;
+    selectedAddOnIds: string[];
+  };
+  upgradePlans?: CohortUpgradePlan[];
 };
 
 export type CohortSessionResponse = {

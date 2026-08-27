@@ -13,7 +13,7 @@ const resourceSchema = z.object({
   contentId: z.string().min(1, { message: "Content ID is required" }),
   name: z.string().min(1, { message: "Resource name is required" }),
   url: z.string().min(1, { message: "Resource URL is required" }),
-  type: z.enum(["file", "video", "link", "image", "pdf", "ppt"]),
+  type: z.enum(["file", "video", "link", "image", "pdf", "ppt", "excel", "word"]),
   orderIndex: z.coerce.number().int().min(0).default(0),
 });
 
@@ -53,7 +53,7 @@ export function ResourceEditDialog({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          domain: "cohort-resources",
+          domain: "opportunity-attachments",
           fileName: file.name,
           contentType: file.type,
           fileSize: file.size,
@@ -126,7 +126,9 @@ export function ResourceEditDialog({
                       <option value="link">Link</option>
                       <option value="image">Image</option>
                       <option value="pdf">PDF</option>
-                      <option value="ppt">Presentation</option>
+                      <option value="ppt">Presentation (PPT)</option>
+                      <option value="excel">Excel (XLS/XLSX)</option>
+                      <option value="word">Word (DOC/DOCX)</option>
                     </select>
                   </FormControl>
                   <FormMessage />
@@ -164,13 +166,18 @@ export function ResourceEditDialog({
                             ? ".pdf"
                             : form.watch("type") === "ppt"
                             ? ".ppt,.pptx"
+                            : form.watch("type") === "excel"
+                            ? ".xls,.xlsx"
+                            : form.watch("type") === "word"
+                            ? ".doc,.docx"
                             : "*/*"
                         }
                         onChange={(e) => handleFileUpload(e, field)}
                       />
                     </FormControl>
                     {field.value && (
-                      <div className="mt-2">
+                      <div className="mt-2 p-3 bg-gray-50 rounded border">
+                        <p className="text-xs text-gray-500 mb-1">Current file:</p>
                         <a
                           href={field.value}
                           target="_blank"
@@ -182,6 +189,7 @@ export function ResourceEditDialog({
                       </div>
                     )}
                     <FormMessage />
+                    <p className="text-xs text-muted-foreground">Leave empty to keep current file when editing</p>
                   </FormItem>
                 )}
               />

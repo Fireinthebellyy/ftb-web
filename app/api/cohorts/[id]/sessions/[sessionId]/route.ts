@@ -3,12 +3,13 @@ import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { getPaidCohortOrderForUser } from "@/lib/cohort-registration";
 import { db } from "@/lib/db";
 import {
   cohorts,
   cohortSessions,
   cohortSessionContents,
+  cohortOrders,
+  cohortUpgradePlans,
 } from "@/lib/schema";
 
 const UUID_REGEX =
@@ -45,8 +46,15 @@ export async function GET(
       return NextResponse.json({ error: "Cohort not found" }, { status: 404 });
     }
 
-    const order = await getPaidCohortOrderForUser(session.user.id, cohort.id);
-    if (!order) {
+    const paidOrders = await db.query.cohortOrders.findMany({
+      where: and(
+        eq(cohortOrders.cohortId, cohort.id),
+        eq(cohortOrders.userId, session.user.id),
+        eq(cohortOrders.status, "paid")
+      ),
+    });
+
+    if (paidOrders.length === 0) {
       return NextResponse.json(
         { error: "Access denied" },
         { status: 403 }
@@ -61,6 +69,48 @@ export async function GET(
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
+    const hasAnyTierAccess = paidOrders.some((o) => Boolean(o.selectedTierId));
+    const allPurchasedAddOnIds = new Set<string>();
+    paidOrders.forEach((o) => {
+      if (Array.isArray(o.selectedAddOnIds)) {
+        o.selectedAddOnIds.forEach((id) => allPurchasedAddOnIds.add(id));
+      }
+    });
+
+    // Check if user has purchased an all-in-one upgrade plan
+    const paidUpgradePlanIds = new Set(paidOrders.map(o => o.selectedUpgradePlanId).filter(Boolean));
+    let hasAllInOneUpgrade = false;
+    if (paidUpgradePlanIds.size > 0) {
+      try {
+        const allInOnePlan = await db.query.cohortUpgradePlans.findFirst({
+          where: and(
+            eq(cohortUpgradePlans.cohortId, cohort.id),
+            eq(cohortUpgradePlans.isAllInOne, true)
+          ),
+        });
+        if (allInOnePlan && paidUpgradePlanIds.has(allInOnePlan.id)) {
+          hasAllInOneUpgrade = true;
+        }
+      } catch (e) {
+        console.warn("Error checking all-in-one plan access:", e);
+      }
+    }
+
+    const isAccessible = hasAnyTierAccess || hasAllInOneUpgrade || allPurchasedAddOnIds.has(sessionId);
+
+    if (!isAccessible) {
+      return NextResponse.json({
+        session: {
+          ...cohortSession,
+          liveSessionLink: null,
+          videoUrl: null,
+          isAccessible: false,
+        },
+        contents: [],
+        isAccessible: false,
+      });
+    }
+
     // First fetch the content items
     const contentItems = await db.query.cohortSessionContents.findMany({
       where: eq(cohortSessionContents.sessionId, sessionId),
@@ -72,6 +122,9 @@ export async function GET(
     const mentors = await db.query.cohortSessionMentors.findMany({
       where: (cohortSessionMentors, { inArray }) =>
         inArray(cohortSessionMentors.contentId, contentIds),
+      with: {
+        cohortMentor: true,
+      },
       orderBy: (cohortSessionMentors, { asc }) => [asc(cohortSessionMentors.orderIndex)],
     });
     const resources = await db.query.cohortSessionResources.findMany({
@@ -86,7 +139,17 @@ export async function GET(
       if (!mentorsByContent.has(mentor.contentId)) {
         mentorsByContent.set(mentor.contentId, []);
       }
-      mentorsByContent.get(mentor.contentId).push(mentor);
+      
+      const resolvedMentor = {
+        ...mentor,
+        name: mentor.cohortMentor?.name ?? mentor.name,
+        role: mentor.cohortMentor?.role ?? mentor.role,
+        imageUrl: mentor.cohortMentor?.imageUrl ?? mentor.imageUrl,
+        bio: mentor.cohortMentor?.bio ?? mentor.bio,
+        linkedinUrl: mentor.cohortMentor?.link ?? mentor.linkedinUrl,
+      };
+
+      mentorsByContent.get(mentor.contentId).push(resolvedMentor);
     }
     const resourcesByContent = new Map();
     for (const resource of resources) {
@@ -104,8 +167,12 @@ export async function GET(
     }));
 
     return NextResponse.json({
-      session: cohortSession,
+      session: {
+        ...cohortSession,
+        isAccessible,
+      },
       contents,
+      isAccessible,
     });
   } catch (error) {
     console.error("Error fetching cohort session:", error);

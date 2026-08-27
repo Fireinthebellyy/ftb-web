@@ -30,6 +30,7 @@ import InternshipManagementTable from "./InternshipManagementTable";
 import AdminMentorsTable from "./AdminMentorsTable";
 import AdminCohortsTable from "./AdminCohortsTable";
 import AdminPopupsTable from "./popups/AdminPopupsTable";
+import SessionQueriesManager from "./SessionQueriesManager";
 
 const _TAB_VALUES = [
   "opportunities",
@@ -42,6 +43,7 @@ const _TAB_VALUES = [
   "mentors",
   "cohorts",
   "popups",
+  "session-queries",
 ] as const;
 type TabValue = (typeof _TAB_VALUES)[number];
 
@@ -116,6 +118,12 @@ const adminCards: Array<{
     key: "popups",
     title: "Global Popups",
     description: "Manage global popups (text or image) shown to users",
+    icon: MessageSquare,
+  },
+  {
+    key: "session-queries",
+    title: "Session Queries",
+    description: "Manage and answer questions from all cohort sessions",
     icon: MessageSquare,
   },
 ];
@@ -193,6 +201,7 @@ export function AdminTabs({
       {activeTab === "mentors" ? <AdminMentorsTable /> : null}
       {activeTab === "cohorts" ? <AdminCohortsTable /> : null}
       {activeTab === "popups" ? <AdminPopupsTable /> : null}
+      {activeTab === "session-queries" ? <SessionQueriesManager /> : null}
     </div>
   );
 }

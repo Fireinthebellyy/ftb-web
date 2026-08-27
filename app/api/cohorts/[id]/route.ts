@@ -58,7 +58,11 @@ export async function GET(
     const sessionsList = await db
       .select()
       .from(cohortSessions)
-      .where(eq(cohortSessions.cohortId, cohort.id))
+      .where(and(
+        eq(cohortSessions.cohortId, cohort.id),
+        eq(cohortSessions.isActive, true),
+        eq(cohortSessions.showInHome, true)
+      ))
       .orderBy(cohortSessions.orderIndex);
 
     // Check purchase status
@@ -68,7 +72,7 @@ export async function GET(
         headers: await headers(),
       });
       if (session?.user) {
-        const order = await db.query.cohortOrders.findFirst({
+        const orders = await db.query.cohortOrders.findMany({
           where: and(
             eq(cohortOrders.cohortId, cohort.id),
             eq(cohortOrders.status, "paid"),
@@ -78,8 +82,8 @@ export async function GET(
             )
           ),
         });
-        if (order) {
-          hasAccess = isCohortRegistrationComplete(order);
+        if (orders.length > 0) {
+          hasAccess = orders.some(o => isCohortRegistrationComplete(o));
         }
       }
     } catch (e) {

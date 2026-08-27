@@ -16,6 +16,7 @@ import {
   Download,
   FolderCog,
   Gift,
+  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { uploadFileViaSignedUrl } from "@/lib/storage/client";
 import CohortSessionManager from "./CohortSessionManager";
+import CohortUpgradePlansManager from "./CohortUpgradePlansManager";
+import ManageUserPackagesModal from "./ManageUserPackagesModal";
 
 interface Mentor {
   id?: string;
@@ -71,6 +74,8 @@ interface Session {
   description: string;
   price?: number;
   originalPrice?: number | null;
+  showInDashboard?: boolean;
+  showInHome?: boolean;
 }
 
 interface Cohort {
@@ -114,6 +119,7 @@ interface Cohort {
 
 interface Order {
   id: string;
+  userId?: string | null;
   buyerName: string;
   buyerEmail: string;
   buyerPhone: string | null;
@@ -135,6 +141,11 @@ interface Order {
   registrationCompletedAt: string | null;
   selectedSessionIds: string[] | null;
   selectedAddOnIds: string[] | null;
+  selectedUpgradePlanId?: string | null;
+  upgradePlanTitle?: string | null;
+  upgradePlanPrice?: number | null;
+  upgradePlanSectionLabel?: string | null;
+  upgradePlanIsAllInOne?: boolean | null;
   couponId: string | null;
   couponCode: string | null;
 }
@@ -162,7 +173,25 @@ export default function AdminCohortsTable() {
 
   // Session manager state
   const [sessionManagerOpen, setSessionManagerOpen] = useState(false);
+  const [upgradePlansOpen, setUpgradePlansOpen] = useState(false);
   const [managingCohort, setManagingCohort] = useState<Cohort | null>(null);
+
+  // User package targeting modal state
+  const [managePackagesModalState, setManagePackagesModalState] = useState<{
+    open: boolean;
+    cohortId: string;
+    userId: string;
+    userName: string;
+    userEmail: string;
+    userTierName?: string;
+    isBundleUser?: boolean;
+  }>({
+    open: false,
+    cohortId: "",
+    userId: "",
+    userName: "",
+    userEmail: "",
+  });
 
   // Sessions data for registration details
   const [sessionsData, setSessionsData] = useState<Record<string, any[]>>({});
@@ -360,7 +389,7 @@ export default function AdminCohortsTable() {
       "Buyer Phone",
       "Buddy Email",
       "Cohort Title",
-      "Selected Tier",
+      "Selected Tier / Upgrade Plan",
       "Amount Paid (INR)",
       "Coupon Code",
       "Razorpay Order ID",
@@ -376,7 +405,9 @@ export default function AdminCohortsTable() {
       order.buyerPhone || "",
       order.buddyEmail || "",
       order.cohortTitle || "",
-      order.tierName || "",
+      order.upgradePlanTitle
+        ? `Upgrade: ${order.upgradePlanTitle}${order.upgradePlanSectionLabel ? ` (${order.upgradePlanSectionLabel})` : ""}`
+        : (order.tierName || "Base price"),
       (order.amountPaid / 100).toFixed(2),
       order.couponCode || "",
       order.razorpayOrderId,
@@ -417,6 +448,7 @@ export default function AdminCohortsTable() {
       "Course",
       "Year",
       "Expectations",
+      "Opted Plan / Upgrade",
       "Selected Sessions",
       "Individual Sessions",
       "Cohort",
@@ -439,19 +471,24 @@ export default function AdminCohortsTable() {
           }).filter(Boolean).join(", ")
         : "";
 
+      const optedPlanLabel = order.upgradePlanTitle
+        ? `Upgrade: ${order.upgradePlanTitle} (Paid: ₹${(order.amountPaid / 100).toFixed(2)})`
+        : `${order.tierName || "Base Plan"} (Paid: ₹${(order.amountPaid / 100).toFixed(2)})`;
+
       return [
         order.registrationName || order.buyerName,
         order.registrationCollege || "",
         order.registrationCourse || "",
         order.registrationYear || "",
         order.registrationExpectations || "",
+        optedPlanLabel,
         sessionTitles,
         individualSessionTitles,
         order.cohortTitle || "Unknown",
         order.buyerEmail,
         order.registrationCompletedAt
-          ? new Date(order.registrationCompletedAt).toLocaleDateString()
-          : new Date(order.createdAt).toLocaleDateString(),
+          ? new Date(order.registrationCompletedAt).toLocaleString()
+          : new Date(order.createdAt).toLocaleString(),
       ];
     });
 
@@ -581,6 +618,17 @@ export default function AdminCohortsTable() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => {
+                            setManagingCohort(c);
+                            setUpgradePlansOpen(true);
+                          }}
+                          className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                        >
+                          <Layers className="w-4 h-4 mr-1" /> Upgrade Plans
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => startEditCohort(c.id)}
                           className="text-gray-600 hover:text-gray-900"
                         >
@@ -628,7 +676,7 @@ export default function AdminCohortsTable() {
                   <tr className="bg-gray-50 border-b">
                     <th className="p-4 font-semibold text-gray-700">Buyer</th>
                     <th className="p-4 font-semibold text-gray-700">Buddy (Referral)</th>
-                    <th className="p-4 font-semibold text-gray-700">Cohort & Tier</th>
+                    <th className="p-4 font-semibold text-gray-700">Cohort & Tier / Upgrade Plan</th>
                     <th className="p-4 font-semibold text-gray-700">Paid</th>
                     <th className="p-4 font-semibold text-gray-700">Coupon</th>
                     <th className="p-4 font-semibold text-gray-700">Razorpay Info</th>
@@ -648,18 +696,29 @@ export default function AdminCohortsTable() {
                       <td className="p-4">
                         {order.buddyEmail ? (
                           <div>
-                            <span className="inline-flex items-center gap-1 bg-orange-50 text-[#ff5e14] px-2 py-0.5 text-[10px] font-bold rounded-full border border-orange-100 mb-1">
+                            <span className="inline-flex items-center gap-1 mb-1 px-2 py-0.5 rounded-full border border-orange-100 bg-orange-50 text-[10px] font-bold text-[#ff5e14]">
                               <Gift className="w-3 h-3" /> Buddy Added
                             </span>
-                            <div className="text-xs text-gray-600 font-medium select-all">{order.buddyEmail}</div>
+                            <div className="select-all text-xs font-medium text-gray-600">{order.buddyEmail}</div>
                           </div>
                         ) : (
-                          <span className="text-xs text-gray-400 font-normal italic">-</span>
+                          <span className="text-xs font-normal italic text-gray-400">-</span>
                         )}
                       </td>
                       <td className="p-4">
                         <div className="font-medium text-gray-950">{order.cohortTitle || "Unknown"}</div>
-                        <div className="text-xs text-[#ff5e14]">{order.tierName || "Base price"}</div>
+                        {order.upgradePlanTitle ? (
+                          <div className="mt-1">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-amber-200 bg-amber-50 text-[11px] font-bold text-amber-800">
+                              Upgrade: {order.upgradePlanTitle}
+                            </span>
+                            {order.upgradePlanSectionLabel && (
+                              <div className="mt-0.5 text-[10px] text-gray-500">{order.upgradePlanSectionLabel}</div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-[#ff5e14]">{order.tierName || "Base price"}</div>
+                        )}
                       </td>
                       <td className="p-4 font-semibold text-gray-900">
                         ₹{(order.amountPaid / 100).toFixed(2)}
@@ -743,11 +802,13 @@ export default function AdminCohortsTable() {
                     <th className="p-4 font-semibold text-gray-700">Course</th>
                     <th className="p-4 font-semibold text-gray-700">Year</th>
                     <th className="p-4 font-semibold text-gray-700">Expectations</th>
+                    <th className="p-4 font-semibold text-gray-700">Opted Plan / Upgrade</th>
                     <th className="p-4 font-semibold text-gray-700">Selected Sessions</th>
                     <th className="p-4 font-semibold text-gray-700">Individual Sessions</th>
                     <th className="p-4 font-semibold text-gray-700">Cohort</th>
                     <th className="p-4 font-semibold text-gray-700">Email</th>
                     <th className="p-4 font-semibold text-gray-700">Date</th>
+                    <th className="p-4 font-semibold text-gray-700">Manage Packages</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -759,6 +820,27 @@ export default function AdminCohortsTable() {
                       <td className="p-4 text-gray-600">{order.registrationYear || "-"}</td>
                       <td className="p-4 text-gray-600">
                         {order.registrationExpectations || "-"}
+                      </td>
+                      <td className="p-4 text-gray-900">
+                        {order.upgradePlanTitle ? (
+                          <div>
+                            <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 text-xs font-bold rounded">
+                              Upgrade: {order.upgradePlanTitle}
+                            </span>
+                            <div className="text-[11px] font-semibold text-emerald-700 mt-0.5">
+                              Paid: ₹{(order.amountPaid / 100).toFixed(2)}
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <span className="inline-block bg-orange-50 text-[#ff5e14] border border-orange-200 text-xs px-2 py-0.5 rounded font-semibold">
+                              {order.tierName || "Base Plan"}
+                            </span>
+                            <div className="text-[11px] text-gray-500 mt-0.5">
+                              Paid: ₹{(order.amountPaid / 100).toFixed(2)}
+                            </div>
+                          </div>
+                        )}
                       </td>
                       <td className="p-4 text-gray-600">
                         {order.selectedSessionIds && order.selectedSessionIds.length > 0 ? (
@@ -795,11 +877,36 @@ export default function AdminCohortsTable() {
                           ? new Date(order.registrationCompletedAt).toLocaleDateString()
                           : new Date(order.createdAt).toLocaleDateString()}
                       </td>
+                      <td className="p-4 whitespace-nowrap">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={!order.cohortId}
+                          onClick={() =>
+                            setManagePackagesModalState({
+                              open: true,
+                              cohortId: order.cohortId || "",
+                              userId: order.userId || "",
+                              userName: order.registrationName || order.buyerName,
+                              userEmail: order.buyerEmail,
+                              userTierName: order.tierName || undefined,
+                              isBundleUser: Boolean(
+                                order.tierName ||
+                                  !order.selectedAddOnIds ||
+                                  order.selectedAddOnIds.length === 0
+                              ),
+                            })
+                          }
+                          className="text-xs font-semibold border-gray-300 hover:bg-gray-50 text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          Manage Packages
+                        </Button>
+                      </td>
                     </tr>
                   ))}
                   {ordersList.filter(order => order.registrationName).length === 0 && (
                     <tr>
-                      <td colSpan={10} className="p-12 text-center text-gray-500">
+                      <td colSpan={12} className="p-12 text-center text-gray-500">
                         No registration forms completed yet.
                       </td>
                     </tr>
@@ -1848,7 +1955,7 @@ export default function AdminCohortsTable() {
                         ...editingCohort,
                         sessions: [
                           ...currentSessions,
-                          { title: "", description: "", price: 0, originalPrice: null },
+                          { title: "", description: "", price: 0, originalPrice: null, showInDashboard: true, showInHome: true },
                         ],
                       });
                     }}
@@ -1873,7 +1980,7 @@ export default function AdminCohortsTable() {
                         <X className="w-4 h-4" />
                       </button>
 
-                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs">Session Title</Label>
                           <Input
@@ -1884,18 +1991,6 @@ export default function AdminCohortsTable() {
                               setEditingCohort({ ...editingCohort, sessions: currentSessions });
                             }}
                             placeholder="e.g. Session 1: Resume Deep-dive"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">Session Description</Label>
-                          <Input
-                            value={session.description}
-                            onChange={(e) => {
-                              const currentSessions = [...(editingCohort.sessions || [])];
-                              currentSessions[index] = { ...currentSessions[index], description: e.target.value };
-                              setEditingCohort({ ...editingCohort, sessions: currentSessions });
-                            }}
-                            placeholder="Brief detail explaining the session agenda"
                           />
                         </div>
                         <div className="space-y-1">
@@ -1912,6 +2007,18 @@ export default function AdminCohortsTable() {
                           />
                         </div>
                         <div className="space-y-1">
+                          <Label className="text-xs">Session Description</Label>
+                          <Input
+                            value={session.description}
+                            onChange={(e) => {
+                              const currentSessions = [...(editingCohort.sessions || [])];
+                              currentSessions[index] = { ...currentSessions[index], description: e.target.value };
+                              setEditingCohort({ ...editingCohort, sessions: currentSessions });
+                            }}
+                            placeholder="Brief detail explaining the session agenda"
+                          />
+                        </div>
+                        <div className="space-y-1">
                           <Label className="text-xs">Original Price (INR, Optional)</Label>
                           <Input
                             type="number"
@@ -1923,6 +2030,42 @@ export default function AdminCohortsTable() {
                             }}
                             placeholder="Strikethrough price"
                           />
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <input
+                              id={`show-dashboard-${index}`}
+                              type="checkbox"
+                              checked={session.showInDashboard ?? true}
+                              onChange={(e) => {
+                                const currentSessions = [...(editingCohort.sessions || [])];
+                                currentSessions[index] = { ...currentSessions[index], showInDashboard: e.target.checked };
+                                setEditingCohort({ ...editingCohort, sessions: currentSessions });
+                              }}
+                              className="rounded border-gray-300 text-[#ff5e14] focus:ring-[#ff5e14] h-4 w-4"
+                            />
+                            <Label htmlFor={`show-dashboard-${index}`} className="text-xs cursor-pointer">
+                              Show in Dashboard
+                            </Label>
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <input
+                              id={`show-home-${index}`}
+                              type="checkbox"
+                              checked={session.showInHome ?? true}
+                              onChange={(e) => {
+                                const currentSessions = [...(editingCohort.sessions || [])];
+                                currentSessions[index] = { ...currentSessions[index], showInHome: e.target.checked };
+                                setEditingCohort({ ...editingCohort, sessions: currentSessions });
+                              }}
+                              className="rounded border-gray-300 text-[#ff5e14] focus:ring-[#ff5e14] h-4 w-4"
+                            />
+                            <Label htmlFor={`show-home-${index}`} className="text-xs cursor-pointer">
+                              Show in Home
+                            </Label>
+                          </div>
                         </div>
                       </div>
 
@@ -1984,14 +2127,38 @@ export default function AdminCohortsTable() {
       )}
 
       {managingCohort ? (
-        <CohortSessionManager
-          cohortId={managingCohort.id}
-          cohortTitle={managingCohort.title}
-          open={sessionManagerOpen}
-          onClose={() => setSessionManagerOpen(false)}
-          onUpdate={() => fetchCohorts()}
-        />
+        <>
+          <CohortSessionManager
+            cohortId={managingCohort.id}
+            cohortTitle={managingCohort.title}
+            open={sessionManagerOpen}
+            onClose={() => setSessionManagerOpen(false)}
+            onUpdate={() => fetchCohorts()}
+          />
+          <CohortUpgradePlansManager
+            cohortId={managingCohort.id}
+            cohortTitle={managingCohort.title}
+            open={upgradePlansOpen}
+            onClose={() => setUpgradePlansOpen(false)}
+            onUpdate={() => fetchCohorts()}
+          />
+        </>
       ) : null}
+
+      {managePackagesModalState.open && (
+        <ManageUserPackagesModal
+          open={managePackagesModalState.open}
+          onClose={() =>
+            setManagePackagesModalState((prev) => ({ ...prev, open: false }))
+          }
+          cohortId={managePackagesModalState.cohortId}
+          userId={managePackagesModalState.userId}
+          userName={managePackagesModalState.userName}
+          userEmail={managePackagesModalState.userEmail}
+          userTierName={managePackagesModalState.userTierName}
+          isBundleUser={managePackagesModalState.isBundleUser}
+        />
+      )}
     </div>
   );
 }

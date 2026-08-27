@@ -146,6 +146,7 @@ export function LoginForm({
         },
         {
           onSuccess: async (ctx) => {
+            toast.success("Logged in. Redirecting...");
             if (ctx.data?.user) {
               posthog.identify(ctx.data.user.id, {
                 email: ctx.data.user.email,
@@ -153,30 +154,20 @@ export function LoginForm({
                 createdAt: ctx.data.user.createdAt?.toISOString(),
               });
             }
-            // Check if user has completed onboarding by fetching profile
-            try {
-              const response = await fetch("/api/onboarding");
-              const data = await response.json();
-
-              // User has completed onboarding if profile exists
-              const hasCompletedOnboarding = !!data.profile;
-
-              if (hasCompletedOnboarding) {
-                router.push(returnUrl);
-              } else {
-                router.push(returnUrl);
-              }
-            } catch (error) {
-              console.error("Error checking onboarding status:", error);
-              router.push(returnUrl);
-            }
+            router.push(returnUrl);
+          },
+          onError: (ctx) => {
+            setIsLoading(false);
+            const msg = ctx.error?.message || "Invalid email or password";
+            toast.error(msg);
           },
         }
       );
-      toast.success("Logged in. Redirecting...");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Login error:", error);
-      toast.error("Login failed. Please try again.");
+      const msg =
+        error instanceof Error ? error.message : "Login failed. Please try again.";
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }

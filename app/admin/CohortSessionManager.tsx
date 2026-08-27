@@ -27,8 +27,6 @@ import {
   Unlock,
   User,
   FileText,
-  MessageCircle,
-  Send,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,11 +39,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { Switch } from "@/components/ui/switch";
 
 // Session schema for creating/editing a cohort session
 const sessionSchema = z.object({
@@ -68,13 +66,17 @@ const sessionContentSchema = z.object({
 // Schema for mentor
 const mentorSchema = z.object({
   contentId: z.string().min(1, { message: "Content ID is required" }),
-  name: z.string().min(1, { message: "Mentor name is required" }),
+  cohortMentorId: z.string().optional().nullable(),
+  name: z.string().optional(),
   role: z.string().optional(),
   imageUrl: z.string().optional(),
   bio: z.string().optional(),
   linkedinUrl: z.string().optional(),
   otherLinks: z.array(z.object({ title: z.string(), url: z.string() })).optional(),
   orderIndex: z.coerce.number().int().min(0).default(0),
+}).refine(data => data.cohortMentorId || data.name?.trim(), {
+  message: "Mentor name is required when not selecting a cohort mentor",
+  path: ["name"],
 });
 
 // Schema for resource
@@ -82,7 +84,7 @@ const resourceSchema = z.object({
   contentId: z.string().min(1, { message: "Content ID is required" }),
   name: z.string().min(1, { message: "Resource name is required" }),
   url: z.string().min(1, { message: "Resource URL is required" }),
-  type: z.enum(["file", "video", "link", "image", "pdf", "ppt"]),
+  type: z.enum(["file", "video", "link", "image", "pdf", "ppt", "excel", "word"]),
   orderIndex: z.coerce.number().int().min(0).default(0),
 });
 
@@ -121,7 +123,8 @@ interface CohortSessionContent {
 interface CohortSessionMentor {
   id: string;
   contentId: string;
-  name: string;
+  cohortMentorId: string | null;
+  name: string | null;
   role: string | null;
   imageUrl: string | null;
   bio: string | null;
@@ -136,9 +139,21 @@ interface CohortSessionResource {
   contentId: string;
   name: string;
   url: string;
-  type: "file" | "video" | "link" | "image" | "pdf" | "ppt";
+  type: "file" | "video" | "link" | "image" | "pdf" | "ppt" | "excel" | "word";
   orderIndex: number;
   createdAt: string;
+}
+
+interface CohortMentor {
+  id: string;
+  cohortId: string | null;
+  name: string;
+  role: string;
+  imageUrl: string | null;
+  bio: string | null;
+  link: string | null;
+  orderIndex: number | null;
+  createdAt: string | null;
 }
 
 interface CohortSessionManagerProps {
@@ -180,14 +195,6 @@ export default function CohortSessionManager({
   const [editingResource, setEditingResource] = useState<CohortSessionResource | null>(null);
   const [isAddingResource, setIsAddingResource] = useState(false);
   const [selectedContentForResource, setSelectedContentForResource] = useState<CohortSessionContent | null>(null);
-  const [queriesDialogOpen, setQueriesDialogOpen] = useState(false);
-  const [selectedSessionForQueries, setSelectedSessionForQueries] = useState<CohortSession | null>(null);
-  const [queries, setQueries] = useState<any[]>([]);
-  const [loadingQueries, setLoadingQueries] = useState(false);
-  const [answeringQueryId, setAnsweringQueryId] = useState<string | null>(null);
-  const [answerText, setAnswerText] = useState("");
-  const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null);
-  const [editAnswerText, setEditAnswerText] = useState("");
 
   const sessionForm = useForm<SessionFormValues>({
     resolver: zodResolver(sessionSchema),
@@ -210,10 +217,13 @@ export default function CohortSessionManager({
     },
   });
 
+  const [cohortMentors, setCohortMentors] = useState<CohortMentor[]>([]);
+
   const mentorForm = useForm<MentorFormValues>({
     resolver: zodResolver(mentorSchema),
     defaultValues: {
       contentId: "",
+      cohortMentorId: "",
       name: "",
       role: "",
       imageUrl: "",
@@ -252,6 +262,25 @@ export default function CohortSessionManager({
   useEffect(() => {
     fetchSessions();
   }, [fetchSessions]);
+
+  useEffect(() => {
+    let active = true;
+    const fetchCohortDetails = async () => {
+      if (!cohortId || !open) return;
+      try {
+        const response = await axios.get(`/api/admin/cohorts/${cohortId}`);
+        if (active) {
+          setCohortMentors(response.data.mentors || []);
+        }
+      } catch (error) {
+        console.error("Error fetching cohort details for mentors:", error);
+      }
+    };
+    fetchCohortDetails();
+    return () => {
+      active = false;
+    };
+  }, [cohortId, open]);
 
   const handleEditSession = (session: CohortSession) => {
     setEditingSession(session);
@@ -365,8 +394,8 @@ export default function CohortSessionManager({
         payload.videoUrl = data.videoUrl;
       }
 
-      // Include images if provided
-      if (data.images && data.images.length > 0) {
+      // Always include images field if it's defined (even if empty array)
+      if (data.images !== undefined) {
         payload.images = data.images;
       }
 
@@ -421,7 +450,8 @@ export default function CohortSessionManager({
     setIsAddingMentor(false);
     mentorForm.reset({
       contentId: content.id,
-      name: mentor.name,
+      cohortMentorId: mentor.cohortMentorId ?? "",
+      name: mentor.name ?? "",
       role: mentor.role ?? "",
       imageUrl: mentor.imageUrl ?? "",
       bio: mentor.bio ?? "",
@@ -441,6 +471,7 @@ export default function CohortSessionManager({
       : -1;
     mentorForm.reset({
       contentId: content.id,
+      cohortMentorId: "",
       name: "",
       role: "",
       imageUrl: "",
@@ -527,10 +558,11 @@ export default function CohortSessionManager({
         // Check if url contains multiple resources (JSON string)
         if (data.url && data.url.startsWith('[')) {
           const multipleResources = JSON.parse(data.url);
+          const hasCustomName = data.name && data.name.trim() !== "";
           const promises = multipleResources.map((resource: any) =>
             axios.post("/api/admin/cohort-session-resources", {
               ...data,
-              name: resource.name,
+              name: hasCustomName ? data.name : resource.name,
               url: resource.url,
               type: resource.type,
             })
@@ -563,99 +595,6 @@ export default function CohortSessionManager({
     } catch (error) {
       console.error("Error deleting resource:", error);
       toast.error("Failed to delete resource");
-    }
-  };
-
-  const handleManageQueries = async (session: CohortSession) => {
-    setSelectedSessionForQueries(session);
-    setQueriesDialogOpen(true);
-    setLoadingQueries(true);
-    try {
-      const response = await axios.get(`/api/admin/cohorts/${cohortId}/sessions/${session.id}/queries`);
-      setQueries(response.data);
-    } catch (error) {
-      console.error("Error fetching queries:", error);
-      toast.error("Failed to fetch queries");
-    } finally {
-      setLoadingQueries(false);
-    }
-  };
-
-  const handleSubmitAnswer = async () => {
-    if (!answeringQueryId || !answerText.trim()) return;
-
-    try {
-      await axios.post(`/api/admin/cohorts/${cohortId}/sessions/${selectedSessionForQueries?.id}/queries`, {
-        queryId: answeringQueryId,
-        answer: answerText,
-      });
-      toast.success("Answer submitted successfully!");
-      setAnswerText("");
-      setAnsweringQueryId(null);
-      // Refresh queries
-      if (selectedSessionForQueries) {
-        const response = await axios.get(`/api/admin/cohorts/${cohortId}/sessions/${selectedSessionForQueries.id}/queries`);
-        setQueries(response.data);
-      }
-    } catch (error) {
-      console.error("Error submitting answer:", error);
-      toast.error("Failed to submit answer");
-    }
-  };
-
-  const handleDeleteQuery = async (queryId: string) => {
-    if (!confirm("Are you sure you want to delete this query and its answer?")) return;
-
-    try {
-      await axios.delete(`/api/admin/cohorts/${cohortId}/sessions/${selectedSessionForQueries?.id}/queries?queryId=${queryId}`);
-      toast.success("Query deleted successfully");
-      if (selectedSessionForQueries) {
-        const response = await axios.get(`/api/admin/cohorts/${cohortId}/sessions/${selectedSessionForQueries.id}/queries`);
-        setQueries(response.data);
-      }
-    } catch (error) {
-      console.error("Error deleting query:", error);
-      toast.error("Failed to delete query");
-    }
-  };
-
-  const handleEditAnswer = async (queryId: string) => {
-    if (!editAnswerText.trim()) return;
-
-    try {
-      await axios.put(`/api/admin/cohorts/${cohortId}/sessions/${selectedSessionForQueries?.id}/queries`, {
-        queryId,
-        answer: editAnswerText,
-      });
-      toast.success("Answer updated successfully");
-      setEditingAnswerId(null);
-      setEditAnswerText("");
-      if (selectedSessionForQueries) {
-        const response = await axios.get(`/api/admin/cohorts/${cohortId}/sessions/${selectedSessionForQueries.id}/queries`);
-        setQueries(response.data);
-      }
-    } catch (error) {
-      console.error("Error editing answer:", error);
-      toast.error("Failed to edit answer");
-    }
-  };
-
-  const handleDeleteAnswer = async (queryId: string) => {
-    if (!confirm("Are you sure you want to delete this answer?")) return;
-
-    try {
-      await axios.put(`/api/admin/cohorts/${cohortId}/sessions/${selectedSessionForQueries?.id}/queries`, {
-        queryId,
-        answer: "",
-      });
-      toast.success("Answer deleted successfully");
-      if (selectedSessionForQueries) {
-        const response = await axios.get(`/api/admin/cohorts/${cohortId}/sessions/${selectedSessionForQueries.id}/queries`);
-        setQueries(response.data);
-      }
-    } catch (error) {
-      console.error("Error deleting answer:", error);
-      toast.error("Failed to delete answer");
     }
   };
 
@@ -712,10 +651,6 @@ export default function CohortSessionManager({
                             <DropdownMenuItem onClick={() => handleEditSession(session)}>
                               <Edit className="mr-2 h-4 w-4" />
                               Edit Session
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleManageQueries(session)}>
-                              <MessageCircle className="mr-2 h-4 w-4" />
-                              Manage Queries
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleDeleteSession(session.id, session.title)}
@@ -1283,6 +1218,49 @@ export default function CohortSessionManager({
               <form onSubmit={mentorForm.handleSubmit(handleSaveMentor)} className="space-y-4">
                 <FormField
                   control={mentorForm.control}
+                  name="cohortMentorId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Link to Cohort Mentor (Optional)</FormLabel>
+                      <FormControl>
+                        {cohortMentors.length === 0 ? (
+                          <p className="text-xs text-muted-foreground py-2 px-3 border rounded bg-gray-50">
+                            No mentors found for this cohort. Add mentors in the cohort&apos;s &quot;Meet your mentors&quot; section first, then they will appear here.
+                          </p>
+                        ) : (
+                          <select
+                            className="border rounded px-3 py-2 w-full bg-white"
+                            value={field.value || ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              field.onChange(val);
+                              if (val) {
+                                const selected = cohortMentors.find(m => m.id === val);
+                                if (selected) {
+                                  mentorForm.setValue("name", selected.name || "");
+                                  mentorForm.setValue("role", selected.role || "");
+                                  mentorForm.setValue("imageUrl", selected.imageUrl || "");
+                                  mentorForm.setValue("bio", selected.bio || "");
+                                  mentorForm.setValue("linkedinUrl", selected.link || "");
+                                }
+                              }
+                            }}
+                          >
+                            <option value="">-- Select Cohort Mentor (or fill details below manually) --</option>
+                            {cohortMentors.map((m) => (
+                              <option key={m.id} value={m.id}>
+                                {m.name} ({m.role})
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={mentorForm.control}
                   name="name"
                   render={({ field }) => (
                     <FormItem>
@@ -1480,6 +1458,8 @@ export default function CohortSessionManager({
                         >
                           <option value="pdf">PDF</option>
                           <option value="ppt">Presentation (PPT)</option>
+                          <option value="excel">Excel (XLS/XLSX)</option>
+                          <option value="word">Word (DOC/DOCX)</option>
                           <option value="link">Link</option>
                         </select>
                       </FormControl>
@@ -1516,6 +1496,10 @@ export default function CohortSessionManager({
                                 ? ".pdf"
                                 : resourceForm.watch("type") === "ppt"
                                 ? ".ppt,.pptx"
+                                : resourceForm.watch("type") === "excel"
+                                ? ".xls,.xlsx"
+                                : resourceForm.watch("type") === "word"
+                                ? ".doc,.docx"
                                 : "*"
                             }
                             multiple
@@ -1574,8 +1558,21 @@ export default function CohortSessionManager({
                             }}
                           />
                         </FormControl>
+                        {field.value && !field.value.startsWith("[") && (
+                          <div className="mt-2 p-3 bg-gray-50 rounded border">
+                            <p className="text-xs text-gray-500 mb-1">Current file:</p>
+                            <a
+                              href={field.value}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-blue-600 hover:underline break-all"
+                            >
+                              {field.value}
+                            </a>
+                          </div>
+                        )}
                         <FormMessage />
-                        <p className="text-xs text-muted-foreground">You can select multiple files</p>
+                        <p className="text-xs text-muted-foreground">You can select multiple files (leave empty to keep current file when editing)</p>
                       </FormItem>
                     )}
                   />
@@ -1614,164 +1611,6 @@ export default function CohortSessionManager({
                 </div>
               </form>
             </Form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Queries Management Dialog */}
-        <Dialog open={queriesDialogOpen} onOpenChange={setQueriesDialogOpen}>
-          <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-[700px]">
-            <DialogHeader>
-              <DialogTitle>
-                Manage Queries: {selectedSessionForQueries?.title}
-              </DialogTitle>
-            </DialogHeader>
-
-            {loadingQueries ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
-                <span className="sr-only">Loading queries</span>
-              </div>
-            ) : queries.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <MessageCircle className="text-muted-foreground h-8 w-8 mb-2" />
-                <p className="text-muted-foreground mb-4">
-                  No queries found for this session.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {queries.map((query) => (
-                  <div key={query.id} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <p className="text-sm font-medium text-gray-900">
-                            {query.userName || "Unknown User"}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            ({query.userEmail})
-                          </p>
-                          {query.answer && (
-                            <span className="text-xs font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
-                              Resolved
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-700">{query.question}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {new Date(query.createdAt).toLocaleDateString()} at {new Date(query.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDeleteQuery(query.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    {query.answer ? (
-                      <div className="mt-3 rounded-lg bg-green-50 border border-green-200 p-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-green-800 mb-1">Admin Answer:</p>
-                            {editingAnswerId === query.id ? (
-                              <div className="space-y-2">
-                                <Textarea
-                                  value={editAnswerText}
-                                  onChange={(e) => setEditAnswerText(e.target.value)}
-                                  rows={3}
-                                  className="resize-none text-sm"
-                                />
-                                <div className="flex gap-2">
-                                  <Button size="sm" onClick={() => handleEditAnswer(query.id)}>
-                                    Save
-                                  </Button>
-                                  <Button size="sm" variant="outline" onClick={() => {
-                                    setEditingAnswerId(null);
-                                    setEditAnswerText("");
-                                  }}>
-                                    Cancel
-                                  </Button>
-                                </div>
-                              </div>
-                            ) : (
-                              <p className="text-sm text-gray-700">{query.answer}</p>
-                            )}
-                          </div>
-                          {editingAnswerId !== query.id && (
-                            <div className="flex gap-1">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => {
-                                  setEditingAnswerId(query.id);
-                                  setEditAnswerText(query.answer);
-                                }}
-                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleDeleteAnswer(query.id)}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mt-3">
-                        {answeringQueryId === query.id ? (
-                          <div className="space-y-2">
-                            <Textarea
-                              placeholder="Type your answer..."
-                              value={answerText}
-                              onChange={(e) => setAnswerText(e.target.value)}
-                              rows={3}
-                              className="resize-none"
-                            />
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                onClick={handleSubmitAnswer}
-                                disabled={!answerText.trim()}
-                              >
-                                Submit Answer
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setAnsweringQueryId(null);
-                                  setAnswerText("");
-                                }}
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <Button
-                            size="sm"
-                            onClick={() => setAnsweringQueryId(query.id)}
-                          >
-                            <Send className="mr-2 h-4 w-4" />
-                            Answer
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
           </DialogContent>
         </Dialog>
       </DialogContent>

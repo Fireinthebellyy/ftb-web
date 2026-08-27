@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { eq, and, inArray, sql } from "drizzle-orm";
-import { cohorts, cohortTiers, cohortOrders, coupons, userToolkits, toolkits, user, cohortSessions, siteSettings } from "@/lib/schema";
+import { cohorts, cohortTiers, cohortOrders, coupons, userToolkits, toolkits, user, cohortSessions, siteSettings, cohortUpgradePlans } from "@/lib/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { createOrder } from "@/lib/razorpay";
+import { getPaidCohortOrderForUser } from "@/lib/cohort-registration";
 import { sendCohortPaymentConfirmationEmail } from "@/lib/cohort-payment-email";
 export function getDuoPricing(singlePrice: number) {
   if (!singlePrice || singlePrice <= 0) {
@@ -38,8 +39,9 @@ export async function POST(
     const body = await request.json();
     const {
       selectedTierId,
-      selectedAddOnIds = [],
+      selectedAddOnIds: rawAddOns = [],
       selectedToolkitIds = [],
+      selectedUpgradePlanId,
       buyerName,
       buyerEmail,
       buyerPhone,
@@ -47,9 +49,13 @@ export async function POST(
       validateCouponOnly = false,
     } = body;
     
+    let selectedAddOnIds = [...rawAddOns];
     let { buddyEmail } = body;
 
-    if (!buyerName || !buyerEmail) {
+    const effectiveBuyerName = buyerName?.trim() || session.user.name || "Learner";
+    const effectiveBuyerEmail = buyerEmail?.trim() || session.user.email;
+
+    if (!effectiveBuyerName || !effectiveBuyerEmail) {
       return NextResponse.json(
         { error: "Buyer name and email are required" },
         { status: 400 }
@@ -64,11 +70,100 @@ export async function POST(
       buddyEmail = null;
     }
 
+    let upgradePlanPrice = 0;
+    let isUpgradePlanAllInOne = false;
+    let upgradePlanIncludedSessionCount: number | null = null;
+    let upgradePlanIncludedSessionIds: string[] = [];
+
+    if (selectedUpgradePlanId) {
+      const upgradePlan = await db.query.cohortUpgradePlans.findFirst({
+        where: and(
+          eq(cohortUpgradePlans.id, selectedUpgradePlanId),
+          eq(cohortUpgradePlans.cohortId, cohortId),
+          eq(cohortUpgradePlans.isActive, true)
+        ),
+      });
+
+      if (!upgradePlan) {
+        return NextResponse.json(
+          { error: "Selected upgrade package is not available or invalid" },
+          { status: 400 }
+        );
+      }
+
+      upgradePlanPrice = upgradePlan.price;
+      isUpgradePlanAllInOne = Boolean(upgradePlan.isAllInOne);
+      upgradePlanIncludedSessionCount = upgradePlan.includedSessionCount;
+
+      if (upgradePlan.includedSessionIds && upgradePlan.includedSessionIds.length > 0) {
+        upgradePlanIncludedSessionIds = upgradePlan.includedSessionIds;
+        const merged = new Set([...selectedAddOnIds, ...upgradePlan.includedSessionIds]);
+        selectedAddOnIds = Array.from(merged);
+      }
+    }
+
+    // Load cohort sessions to validate selectedAddOnIds
+    const cohortSessionsList = await db
+      .select({ id: cohortSessions.id, price: cohortSessions.price })
+      .from(cohortSessions)
+      .where(
+        and(
+          eq(cohortSessions.cohortId, cohortId),
+          eq(cohortSessions.isActive, true)
+        )
+      );
+    const validCohortSessionIds = new Set(cohortSessionsList.map((s) => s.id));
+    selectedAddOnIds = selectedAddOnIds.filter((id) => validCohortSessionIds.has(id));
+
+    // Load all paid orders for user in this cohort to deduplicate owned sessions
+    const existingPaidOrders = await db.query.cohortOrders.findMany({
+      where: and(
+        eq(cohortOrders.userId, userId),
+        eq(cohortOrders.cohortId, cohortId),
+        eq(cohortOrders.status, "paid")
+      ),
+    });
+
+    const userAlreadyOwnedSessionIds = new Set<string>();
+    existingPaidOrders.forEach((o) => {
+      if (o.selectedAddOnIds && Array.isArray(o.selectedAddOnIds)) {
+        o.selectedAddOnIds.forEach((id) => userAlreadyOwnedSessionIds.add(id));
+      }
+    });
+
+    // Enforce upgrade package session allowances if applicable
+    if (selectedUpgradePlanId && !isUpgradePlanAllInOne) {
+      const newSessionsToUnlock = selectedAddOnIds.filter((id) => !userAlreadyOwnedSessionIds.has(id));
+
+      if (upgradePlanIncludedSessionIds.length > 0) {
+        const allowedSet = new Set(upgradePlanIncludedSessionIds);
+        if (newSessionsToUnlock.some((id) => !allowedSet.has(id))) {
+          return NextResponse.json(
+            { error: "Selected sessions exceed the allowed pinned sessions for this upgrade package" },
+            { status: 400 }
+          );
+        }
+      } else if (upgradePlanIncludedSessionCount !== null) {
+        if (newSessionsToUnlock.length === 0) {
+          return NextResponse.json(
+            { error: "Please select at least one session to unlock with this upgrade package." },
+            { status: 400 }
+          );
+        }
+        if (newSessionsToUnlock.length > upgradePlanIncludedSessionCount) {
+          return NextResponse.json(
+            { error: `You can select at most ${upgradePlanIncludedSessionCount} new session(s) with this upgrade package.` },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
     // Skip validation for coupon-only validation
-    if (!validateCouponOnly) {
+    if (!validateCouponOnly && !selectedUpgradePlanId) {
       if (!selectedTierId && selectedAddOnIds.length === 0) {
         return NextResponse.json(
-          { error: "Please select either the bundle tier or at least one individual session to apply." },
+          { error: "Please select either a plan tier, an upgrade package, or at least one session." },
           { status: 400 }
         );
       }
@@ -92,6 +187,8 @@ export async function POST(
 
     // 2. Fetch Tier if selected
     let tierPrice = 0;
+    let resolvedTierId = selectedTierId || null;
+
     if (selectedTierId) {
       const tier = await db.query.cohortTiers.findFirst({
         where: and(
@@ -108,20 +205,28 @@ export async function POST(
 
     // 3. Fetch Add-ons (sessions)
     let addonsTotal = 0;
-    if (selectedAddOnIds.length > 0) {
-      const selectedSessions = await db
-        .select()
-        .from(cohortSessions)
-        .where(
-          and(
-            eq(cohortSessions.cohortId, cohortId),
-            inArray(cohortSessions.id, selectedAddOnIds)
-          )
-        );
-
-      selectedSessions.forEach((session) => {
-        addonsTotal += session.price || 0;
+    if (selectedAddOnIds.length > 0 && !selectedUpgradePlanId) {
+      const selectedSessionsMap = new Map(cohortSessionsList.map((s) => [s.id, s.price || 0]));
+      selectedAddOnIds.forEach((id) => {
+        addonsTotal += selectedSessionsMap.get(id) || 0;
       });
+    }
+
+    if (selectedUpgradePlanId) {
+      if (isUpgradePlanAllInOne) {
+        tierPrice = upgradePlanPrice;
+        if (!resolvedTierId) {
+          const defaultTier = await db.query.cohortTiers.findFirst({
+            where: eq(cohortTiers.cohortId, cohortId),
+            orderBy: (cohortTiers, { asc }) => [asc(cohortTiers.price), asc(cohortTiers.id)],
+          });
+          if (defaultTier) {
+            resolvedTierId = defaultTier.id;
+          }
+        }
+      } else {
+        addonsTotal = upgradePlanPrice;
+      }
     }
 
     // Fetch Toolkit Add-ons
@@ -223,6 +328,17 @@ export async function POST(
       });
     }
 
+    // Check existing paid order for user to copy over verification and registration details upon upgrade
+    const primaryExistingOrder = await getPaidCohortOrderForUser(userId, cohortId);
+
+    const isVerifiedFromPrevious = primaryExistingOrder ? primaryExistingOrder.isVerified : false;
+    const registrationCompletedAtFromPrevious = primaryExistingOrder ? primaryExistingOrder.registrationCompletedAt : null;
+    const registrationNameFromPrevious = primaryExistingOrder ? primaryExistingOrder.registrationName : null;
+    const registrationCollegeFromPrevious = primaryExistingOrder ? primaryExistingOrder.registrationCollege : null;
+    const registrationCourseFromPrevious = primaryExistingOrder ? primaryExistingOrder.registrationCourse : null;
+    const registrationYearFromPrevious = primaryExistingOrder ? primaryExistingOrder.registrationYear : null;
+    const registrationExpectationsFromPrevious = primaryExistingOrder ? primaryExistingOrder.registrationExpectations : null;
+
     // 6. Direct free cohort access if price is 0
     if (finalPriceRupees <= 0) {
       const [newOrder] = await db
@@ -230,17 +346,25 @@ export async function POST(
         .values({
           cohortId,
           userId,
-          buyerName,
-          buyerEmail,
+          buyerName: effectiveBuyerName,
+          buyerEmail: effectiveBuyerEmail,
           buyerPhone: buyerPhone || null,
           buddyEmail: buddyEmail ? buddyEmail.trim().toLowerCase() : null,
-          selectedTierId: selectedTierId || null,
+          selectedTierId: resolvedTierId,
+          selectedUpgradePlanId: selectedUpgradePlanId || null,
           selectedAddOnIds,
           selectedToolkitIds,
           amountPaid: 0,
           razorpayOrderId: "free_cohort_" + crypto.randomUUID(),
           couponId,
           status: "paid",
+          isVerified: isVerifiedFromPrevious,
+          registrationCompletedAt: registrationCompletedAtFromPrevious,
+          registrationName: registrationNameFromPrevious,
+          registrationCollege: registrationCollegeFromPrevious,
+          registrationCourse: registrationCourseFromPrevious,
+          registrationYear: registrationYearFromPrevious,
+          registrationExpectations: registrationExpectationsFromPrevious,
         })
         .returning();
 
@@ -282,11 +406,11 @@ export async function POST(
               await db.insert(cohortOrders).values({
                 cohortId,
                 userId: buddyUser.id,
-                buyerName,
+                buyerName: effectiveBuyerName,
                 buyerEmail: buddyEmail.trim().toLowerCase(),
                 buyerPhone: buyerPhone || null,
                 buddyEmail: null,
-                selectedTierId: selectedTierId || null,
+                selectedTierId: resolvedTierId,
                 selectedAddOnIds,
                 selectedToolkitIds,
                 amountPaid: 0,
@@ -371,17 +495,25 @@ export async function POST(
       .values({
         cohortId,
         userId,
-        buyerName,
-        buyerEmail,
+        buyerName: effectiveBuyerName,
+        buyerEmail: effectiveBuyerEmail,
         buyerPhone: buyerPhone || null,
         buddyEmail: buddyEmail ? buddyEmail.trim().toLowerCase() : null,
-        selectedTierId: selectedTierId || null,
+        selectedTierId: resolvedTierId,
+        selectedUpgradePlanId: selectedUpgradePlanId || null,
         selectedAddOnIds,
         selectedToolkitIds,
         amountPaid: Number(order.amount), // in paise
         razorpayOrderId: order.id,
         couponId,
         status: "pending",
+        isVerified: isVerifiedFromPrevious,
+        registrationCompletedAt: registrationCompletedAtFromPrevious,
+        registrationName: registrationNameFromPrevious,
+        registrationCollege: registrationCollegeFromPrevious,
+        registrationCourse: registrationCourseFromPrevious,
+        registrationYear: registrationYearFromPrevious,
+        registrationExpectations: registrationExpectationsFromPrevious,
       })
       .returning();
 

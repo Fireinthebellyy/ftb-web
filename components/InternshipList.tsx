@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Filter, Loader2, RotateCcw, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams,useRouter } from "next/navigation";
 import InternshipPost from "@/components/InternshipCard";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { useInfiniteInternships } from "@/lib/queries-internships";
@@ -40,7 +40,7 @@ interface SearchWidgetProps {
   setIsSearchFocused: (focused: boolean) => void;
   filteredSuggestions: string[];
   placeholder: string;
-  applyFilters: (term?: string, specificFields?: string[]) => void;
+  applyFilters: (term?: string,specificFields?:string[]) => void;
   selectedFields: string[];
 }
 
@@ -55,7 +55,7 @@ const SearchWidget = ({
   selectedFields,
 }: SearchWidgetProps) => {
   const [focusedIndex, setFocusedIndex] = useState(-1);
-  const [activeBubble, setActiveBubble] = useState<{ id: string, label: string } | null>(null);
+  const [activeBubble,setActiveBubble] = useState<{id:string,label:string}|null>(null);
   // Reset focusedIndex when suggestions change or list closes
   useEffect(() => {
     if (!isSearchFocused || filteredSuggestions.length === 0) {
@@ -83,6 +83,7 @@ const SearchWidget = ({
       }
     }
   };
+
   return (
     <form
       onSubmit={(e) => {
@@ -108,7 +109,8 @@ const SearchWidget = ({
             type="button"
             onClick={() => {
               setSearchTerm("");
-              applyFilters("", []);
+              setActiveBubble(null);
+              applyFilters("",[]);
             }}
             className="absolute right-3 text-gray-400 hover:text-gray-600"
           >
@@ -123,7 +125,7 @@ const SearchWidget = ({
             className="fixed inset-0 z-40 bg-transparent"
             onClick={() => setIsSearchFocused(false)}
           />
-          <div
+         <div
             className={cn(
               "animate-in fade-in slide-in-from-top-2 absolute top-[calc(100%+10px)] left-0 z-50 flex max-h-[80vh] flex-col overflow-hidden rounded-2xl border-[3px] border-[#ec5b13]/50 bg-white shadow-xl shadow-orange-200/30 duration-200",
               "right-[-3.25rem]"
@@ -139,7 +141,7 @@ const SearchWidget = ({
                   Choose one, then search
                 </p>
               </div>
-            </div>
+              </div>
             {/* Field boxes */}
             <div className="grid max-h-[10rem] grid-cols-2 gap-2.5 overflow-y-auto bg-white p-4 scrollbar-none lg:max-h-[12.5rem]">
               {internshipFields.map((field, idx) => {
@@ -169,8 +171,8 @@ const SearchWidget = ({
               })}
             </div>
 
-            {/* search button */}
-            <div className="border-t border-slate-100 bg-white px-4 py-3">
+             {/* search button */}
+             <div className="border-t border-slate-100 bg-white px-4 py-3">
               <button
                 type="button"
                 className={cn(
@@ -181,11 +183,12 @@ const SearchWidget = ({
                 )}
                 onClick={() => {
                   if (activeBubble && activeBubble?.label) {
-                    setSearchTerm(activeBubble.label);
+                    setSearchTerm(activeBubble.label);            
                     applyFilters(activeBubble.label, [activeBubble.id]);
                     setActiveBubble(null);
                     setIsSearchFocused(false);
-                  } else {
+                  }       
+                  else {
                     applyFilters(searchTerm, selectedFields);
                     setIsSearchFocused(false);
                   }
@@ -238,34 +241,34 @@ const parseFiniteNumberFromSearchParam = (valueStr: string | null): number | und
 
 export default function InternshipList() {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const router= useRouter();
   const [isNewInternshipOpen, setIsNewInternshipOpen] = useState(false);
 
-  const initialSearch = searchParams.get("search") || "";
-  const initialLocation = searchParams.get("location") || "";
-  const initialPaidOnly = searchParams.get("paid") === "true";
-  const initialMinStipend = parseFiniteNumberFromSearchParam(searchParams.get("min_stipend"));
+  const initialSearch=searchParams.get("search")||"";
+  const initialLocation=searchParams.get("location")||"";
+  const initialPaidOnly=searchParams.get("paid")==="true";
+  const initialMinStipend=parseFiniteNumberFromSearchParam(searchParams.get("min_stipend"));
   const initialStipendFilter = initialPaidOnly ? "paid" : (initialMinStipend !== undefined ? "custom" : "all");
-  const initialType = searchParams.get("type") ? searchParams.get("type")!.split(",") : [];
-  const initialTags = searchParams.get("tags") ? searchParams.get("tags")!.split(",") : [];
+  const initialType=searchParams.get("type")?searchParams.get("type")!.split(","):[];
+  const initialTags=searchParams.get("tags")?searchParams.get("tags")!.split(","):[];
 
-  const [searchTerm, setSearchTerm] = useState(initialSearch);
-  const [location, setLocation] = useState(initialLocation);
-  const [stipendFilter, setStipendFilter] = useState<"all" | "paid" | "custom">(initialStipendFilter);
-  const [minStipend, setMinStipend] = useState<number>(initialMinStipend ?? 10000);
-  const [selectedTypes, setSelectedTypes] = useState<string[]>(initialType);
-  const [selectedTags, setSelectedTags] = useState<string[]>(initialTags);
+  const [searchTerm,setSearchTerm]=useState(initialSearch);
+  const [location,setLocation]=useState(initialLocation);
+  const [stipendFilter,setStipendFilter]=useState<"all" | "paid" | "custom">(initialStipendFilter);
+  const [minStipend,setMinStipend]=useState<number>(initialMinStipend ?? 10000);
+  const [selectedTypes,setSelectedTypes]=useState<string[]>(initialType);
+  const [selectedTags,setSelectedTags]=useState<string[]>(initialTags);
 
-  const initialFields = searchParams.get("fields") ? searchParams.get("fields")!.split(",") : [];
-  const [selectedFields, setSelectedFields] = useState<string[]>(initialFields);
+  const initialFields=searchParams.get("fields")?searchParams.get("fields")!.split(","):[];
+  const [selectedFields,setSelectedFields]=useState<string[]>(initialFields);
 
-  const [appliedSearchTerm, setAppliedSearchTerm] = useState(initialSearch);
-  const [appliedLocation, setAppliedLocation] = useState(initialLocation);
-  const [appliedStipendFilter, setAppliedStipendFilter] = useState<"all" | "paid" | "custom">(initialStipendFilter);
-  const [appliedMinStipend, setAppliedMinStipend] = useState<number | undefined>(initialMinStipend);
-  const [appliedTypes, setAppliedTypes] = useState<string[]>(initialType);
-  const [appliedTags, setAppliedTags] = useState<string[]>(initialTags);
-  const [appliedFields, setAppliedFields] = useState<string[]>(initialFields);
+  const [appliedSearchTerm,setAppliedSearchTerm]=useState(initialSearch);
+  const [appliedLocation,setAppliedLocation]=useState(initialLocation);
+  const [appliedStipendFilter,setAppliedStipendFilter]=useState<"all" | "paid" | "custom">(initialStipendFilter);
+  const [appliedMinStipend,setAppliedMinStipend]=useState<number | undefined>(initialMinStipend);
+  const [appliedTypes,setAppliedTypes]=useState<string[]>(initialType);
+  const [appliedTags,setAppliedTags]=useState<string[]>(initialTags);
+  const [appliedFields,setAppliedFields]=useState<string[]>(initialFields);
 
   const [activeTab, setActiveTab] = useState<"type" | "stipend" | "location" | "fields">("type");
 
@@ -292,15 +295,15 @@ export default function InternshipList() {
     }
   }, []);
 
-  useEffect(() => {
-    const updatedSearch = searchParams.get("search") || "";
-    const updatedLocation = searchParams.get("location") || "";
-    const updatedPaidOnly = searchParams.get("paid") === "true";
-    const updatedMinStipend = parseFiniteNumberFromSearchParam(searchParams.get("min_stipend"));
+  useEffect(()=>{
+    const updatedSearch=searchParams.get("search")||"";
+    const updatedLocation=searchParams.get("location")||"";
+    const updatedPaidOnly=searchParams.get("paid")==="true";
+    const updatedMinStipend=parseFiniteNumberFromSearchParam(searchParams.get("min_stipend"));
     const updatedStipendFilter = updatedPaidOnly ? "paid" : (updatedMinStipend !== undefined ? "custom" : "all");
-    const updatedType = searchParams.get("type") ? searchParams.get("type")!.split(",") : [];
-    const updatedTags = searchParams.get("tags") ? searchParams.get("tags")!.split(",") : [];
-    const updatedFields = searchParams.get("fields") ? searchParams.get("fields")!.split(",") : [];
+    const updatedType=searchParams.get("type")?searchParams.get("type")!.split(","):[];
+    const updatedTags=searchParams.get("tags")?searchParams.get("tags")!.split(","):[];
+    const updatedFields=searchParams.get("fields")?searchParams.get("fields")!.split(","):[];
 
     let initialSearchTermVal = updatedSearch;
     if (!updatedSearch && updatedFields.length > 0) {
@@ -324,7 +327,7 @@ export default function InternshipList() {
     setAppliedTags(updatedTags);
     setSelectedFields(updatedFields);
     setAppliedFields(updatedFields);
-  }, [searchParams])
+  },[searchParams])
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -441,37 +444,37 @@ export default function InternshipList() {
       .slice(0, 5);
   }, [searchTerm, searchSuggestions]);
 
-  const [showInternshipSkeleton, setShowInternshipSkeleton] = useState(false);
+  const [showInternshipSkeleton,setShowInternshipSkeleton]=useState(false);
   const applyFilters = useCallback(
-    (overrideSearch?: string, specificFields?: string[]) => {
+    (overrideSearch?: string,specificFields?:string[]) => {
       const nextSearch = (overrideSearch ?? searchTerm).trim();
 
-      const finalFields = specificFields !== undefined ? specificFields : selectedFields;
-
+      const finalFields=specificFields!==undefined?specificFields:selectedFields;
+      
       const isFieldLabel = internshipFields.some(
         (f) => f.label.toLowerCase() === nextSearch.toLowerCase() && finalFields.includes(f.id)
       );
 
-      const newParams = new URLSearchParams();
-      if (nextSearch && !isFieldLabel) {
-        newParams.set("search", nextSearch);
+      const newParams=new URLSearchParams();
+      if(nextSearch && !isFieldLabel){
+        newParams.set("search",nextSearch);
       }
-      if (location.trim()) {
-        newParams.set("location", normalizedLocation);
+      if(location.trim()){
+        newParams.set("location",normalizedLocation);
       }
-      if (stipendFilter === "paid") {
-        newParams.set("paid", "true");
-      } else if (stipendFilter === "custom") {
-        newParams.set("min_stipend", minStipend.toString());
+      if(stipendFilter === "paid"){
+        newParams.set("paid","true");
+      } else if(stipendFilter === "custom"){
+        newParams.set("min_stipend",minStipend.toString());
       }
-      if (selectedTypes.length > 0) {
-        newParams.set("type", selectedTypes.join(","));
+      if(selectedTypes.length>0){
+        newParams.set("type",selectedTypes.join(","));
       }
-      if (selectedTags.length > 0) {
-        newParams.set("tags", selectedTags.join(","));
+      if(selectedTags.length>0){
+        newParams.set("tags",selectedTags.join(","));
       }
-      if (finalFields.length > 0) {
-        newParams.set("fields", finalFields.join(","));
+      if(finalFields.length>0){
+        newParams.set("fields",finalFields.join(","));
       }
       if (nextSearch) {
         posthog.capture("internship_search_submitted", {
@@ -492,23 +495,23 @@ export default function InternshipList() {
       }
 
       setShowInternshipSkeleton(true);
-      setTimeout(() => {
-        router.push(`?${newParams.toString()}`, { scroll: false })
-        if (overrideSearch !== undefined) {
-          setSearchTerm(overrideSearch);
-        }
-        setAppliedSearchTerm(isFieldLabel ? "" : nextSearch);
-        setAppliedLocation(normalizedLocation);
-        setAppliedTypes(selectedTypes);
-        setAppliedStipendFilter(stipendFilter);
-        setAppliedMinStipend(stipendFilter === "custom" ? minStipend : undefined);
-        setAppliedTags(selectedTags);
-        setAppliedFields(finalFields);
-        if (specificFields !== undefined) {
-          setSelectedFields(specificFields);
-        }
-        setShowInternshipSkeleton(false);
-      }, 1000)
+      setTimeout(()=>{
+        router.push(`?${newParams.toString()}`,{scroll:false})
+      if (overrideSearch !== undefined) {
+        setSearchTerm(overrideSearch);
+      }
+      setAppliedSearchTerm(isFieldLabel ? "" : nextSearch);
+      setAppliedLocation(normalizedLocation);
+      setAppliedTypes(selectedTypes);
+      setAppliedStipendFilter(stipendFilter);
+      setAppliedMinStipend(stipendFilter === "custom" ? minStipend : undefined);
+      setAppliedTags(selectedTags);
+      setAppliedFields(finalFields);
+      if(specificFields!==undefined){
+      setSelectedFields(specificFields);
+      }
+      setShowInternshipSkeleton(false);
+      },1000)
     },
     [searchTerm, normalizedLocation, selectedTypes, selectedTags, selectedFields, stipendFilter, minStipend, location, router]
   );
@@ -716,7 +719,7 @@ export default function InternshipList() {
                   applyFilters={applyFilters}
                   selectedFields={selectedFields}
                 />
-                <Button
+                  <Button
                   aria-label="Toggle filters"
                   aria-expanded={isMobileFilterOpen}
                   aria-controls="mobile-filter-panel"
@@ -735,7 +738,7 @@ export default function InternshipList() {
               {/* Bottom-to-Top Filter Drawer */}
               <Drawer open={isMobileFilterOpen} onOpenChange={setIsMobileFilterOpen}>
                 <DrawerContent className="p-0 pb-0 flex flex-col h-[48vh] max-h-[55vh] rounded-t-3xl overflow-hidden bg-white">
-
+                  
                   {/* Header */}
                   <div className="px-6 py-4 flex flex-row items-center justify-between border-b border-slate-100 shrink-0">
                     <div className="flex flex-col">
@@ -764,7 +767,7 @@ export default function InternshipList() {
 
                   {/* Two-pane layout body */}
                   <div className="flex-grow flex overflow-hidden min-h-0">
-
+                    
                     {/* Left Pane (Tabs sidebar) */}
                     <div className="w-[125px] shrink-0 border-r border-slate-100 bg-slate-50 flex flex-col overflow-y-auto">
                       {([
@@ -793,7 +796,7 @@ export default function InternshipList() {
 
                     {/* Right Pane (Options container) */}
                     <div className="flex-1 overflow-y-auto p-4 bg-white">
-
+                      
                       {/* TYPE options */}
                       {activeTab === "type" && (
                         <div className="space-y-1">
@@ -1109,12 +1112,12 @@ export default function InternshipList() {
                             <button
                               key={option.value}
                               onClick={() => {
-                                setStipendFilter(option.value);
-                                if (option.value === "all") {
-                                  setMinStipend(0);
-                                } else {
-                                  setMinStipend(1);
-                                }
+                                  setStipendFilter(option.value);
+                                  if (option.value === "all") {
+                                    setMinStipend(0);
+                                  } else {
+                                    setMinStipend(1);
+                                  }
                               }}
                               className="w-full flex items-center py-1.5 px-2 rounded-lg transition-colors hover:bg-slate-50 text-left active:scale-[0.99]"
                             >
@@ -1270,23 +1273,23 @@ export default function InternshipList() {
 
             {/* Loader when filter is applied or internship is searched */}
             {showInternshipSkeleton && <>
-              <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm animate-in fade-in duration-200">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-[#ec5b13]" />
-                  <p className="text-sm font-semibold text-slate-700 animate-pulse tracking-tight">
-                    Finding the best internships for you...
-                  </p>
-                </div>
-              </div>
-            </>
-            }
+               <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm animate-in fade-in duration-200">
+                   <div className="flex flex-col items-center gap-4">
+                     <div className="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-[#ec5b13]" />
+                     <p className="text-sm font-semibold text-slate-700 animate-pulse tracking-tight">
+                       Finding the best internships for you...
+                       </p>
+                   </div>
+               </div> 
+               </>
+             }
 
             {!showInitialSkeleton && (
               <>
                 {allInternships.length > 0 ? (
                   <>
                     <div className="space-y-4">
-                      {allInternships.map((internship, idx) => (
+                      {allInternships.map((internship,idx) => (
                         <div key={`${internship.title}-${internship.id}-${idx}`} id={`desktop-internship-card-${internship.id}`}>
                           <InternshipPost
                             internship={internship}
@@ -1346,7 +1349,7 @@ export default function InternshipList() {
                 <>
                   <CalendarWidget kind="internship" />
                   <TaskWidget />
-                  {lastInteracted && lastInteracted.id && (
+                   {lastInteracted && lastInteracted.id && (
                     <SimilarInternships
                       currentId={lastInteracted.id}
                       field={selectedFields.length > 0 ? selectedFields[0] : lastInteracted.field}
@@ -1394,16 +1397,16 @@ export default function InternshipList() {
 
           {/* Loader when filter is applied or internship is searched */}
           {showInternshipSkeleton && <>
-            <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm animate-in fade-in duration-200">
-              <div className="flex flex-col items-center gap-4">
-                <div className="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-[#ec5b13]" />
-                <p className="text-sm font-semibold text-slate-700 animate-pulse tracking-tight">
-                  Finding the best internships for you...
-                </p>
-              </div>
-            </div>
-          </>
-          }
+               <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm animate-in fade-in duration-200">
+                   <div className="flex flex-col items-center gap-4">
+                     <div className="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-[#ec5b13]" />
+                     <p className="text-sm font-semibold text-slate-700 animate-pulse tracking-tight">
+                       Finding the best internships for you...
+                       </p>
+                   </div>
+               </div> 
+               </>
+             }
 
 
           {!showInitialSkeleton && (

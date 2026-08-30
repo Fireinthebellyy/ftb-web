@@ -12,6 +12,7 @@ import {
   SortingState,
   useReactTable,
   FilterFn,
+  Row,
 } from "@tanstack/react-table";
 import {
   ArrowDown,
@@ -51,6 +52,7 @@ interface AdminDataTableProps<TData, TValue> {
   pageSize?: number;
   tableId?: string;
   stickyColumnIds?: string[];
+  onRowClick?: (row: Row<TData>) => void;
 }
 
 const DEFAULT_VISIBILITY_STATE: VisibilityState = {};
@@ -76,6 +78,7 @@ export function AdminDataTable<TData, TValue>({
   pageSize = 10,
   tableId,
   stickyColumnIds = [],
+  onRowClick,
 }: AdminDataTableProps<TData, TValue>) {
   const [globalFilter, setGlobalFilter] = useState("");
 
@@ -288,11 +291,13 @@ export function AdminDataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className={
+                  onClick={() => onRowClick?.(row)}
+                  className={cn(
                     index % 2 === 0
                       ? "bg-background hover:bg-muted/40 data-[state=selected]:bg-muted/55"
-                      : "bg-muted/20 hover:bg-muted/40 data-[state=selected]:bg-muted/55"
-                  }
+                      : "bg-muted/20 hover:bg-muted/40 data-[state=selected]:bg-muted/55",
+                    onRowClick && "cursor-pointer"
+                  )}
                 >
                   {row.getVisibleCells().map((cell) => {
                     const isSticky = stickyColumnIds.includes(cell.column.id);

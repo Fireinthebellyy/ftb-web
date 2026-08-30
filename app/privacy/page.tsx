@@ -1,5 +1,13 @@
 import { getPrivacyPolicy } from "@/lib/queries";
 import { PrivacyPolicy } from "@/types/interfaces";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy — Fire in the Belly",
+  description: "Read the Privacy Policy for Fire in the Belly.",
+  robots: { index: true, follow: false },
+};
+
 
 export default async function PrivacyPage() {
   const privacy: PrivacyPolicy | null = await getPrivacyPolicy();

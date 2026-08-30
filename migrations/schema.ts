@@ -1,4 +1,5 @@
 /* eslint-disable max-lines */
+/* eslint-disable max-lines */
 import { pgTable, foreignKey, uuid, text, timestamp, unique, uniqueIndex, check, smallint, integer, index, boolean, jsonb, date, primaryKey, pgEnum } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
@@ -1064,3 +1065,4 @@ export const authenticator = pgTable("authenticator", {
 	primaryKey({ columns: [table.credentialId, table.userId], name: "authenticator_userId_credentialID_pk"}),
 	unique("authenticator_credentialID_unique").on(table.credentialId),
 ]);
+

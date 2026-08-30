@@ -33,9 +33,67 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Fire in the Belly - Ignite Your Learning Journey",
+  metadataBase: new URL("https://www.ftbhustle.com"),
+  title: {
+    default: "Fire in the Belly — Ignite Your Learning Journey",
+    template: "%s | Fire in the Belly",
+  },
   description:
-    "Connect with certified mentors, discover trending resources, and accelerate your growth with personalized guidance.",
+    "Connect with mentors, discover verified internships, fellowships, and resources. Accelerate your career with personalized guidance for India's ambitious students.",
+  keywords: [
+    "internships india",
+    "student opportunities",
+    "career guidance",
+    "fellowships",
+    "hackathons",
+    "case competitions",
+    "career toolkit",
+    "ungatekeep",
+    "fire in the belly",
+    "ftb",
+  ],
+  authors: [{ name: "Fire in the Belly", url: "https://www.ftbhustle.com" }],
+  creator: "Fire in the Belly",
+  openGraph: {
+    type: "website",
+    locale: "en_IN",
+    url: "https://www.ftbhustle.com",
+    siteName: "Fire in the Belly",
+    title: "Fire in the Belly — Ignite Your Learning Journey",
+    description:
+      "Discover internships, opportunities, and career toolkits for ambitious Indian students. Zero gatekeeping.",
+    images: [
+      {
+        url: "/images/og-home.png",
+        width: 1200,
+        height: 630,
+        alt: "Fire in the Belly",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Fire in the Belly — Ignite Your Learning Journey",
+    description:
+      "Discover internships, opportunities, and career toolkits for ambitious Indian students.",
+    images: ["/images/og-home.png"],
+    creator: "@ftbhustle",
+  },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function RootLayout({

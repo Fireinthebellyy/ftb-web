@@ -1,8 +1,14 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
-
+import type { Metadata } from 'next';
 import { LoginForm } from '@/components/auth/login-form';
 import Image from 'next/image';
+
+export const metadata: Metadata = {
+  title: 'Login — Fire in the Belly',
+  description: 'Log in to your Fire in the Belly account.',
+  robots: { index: false, follow: false },
+};
 
 export default function LoginPage() {
   return (

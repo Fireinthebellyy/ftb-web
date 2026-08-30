@@ -7,9 +7,16 @@ export const dynamic = 'force-dynamic';
 
 // Metadata
 export const metadata: Metadata = {
-  title: 'OpportunityHub - Discover Amazing Opportunities',
+  title: 'Opportunities — Hackathons, Fellowships & Competitions',
   description:
-    'Find hackathons, grants, competitions, ideathons and more. Connect with opportunities that match your skills and interests.',
+    'Find verified hackathons, grants, case competitions, fellowships, and scholarships in India. Filter by tag and never miss a deadline.',
+  openGraph: {
+    title: 'Discover Opportunities — Fire in the Belly',
+    description:
+      'Hackathons, fellowships, case competitions, and more — curated and verified for Indian students.',
+    images: [{ url: '/images/og-opportunities.png', width: 1200, height: 630, alt: 'Opportunities on Fire in the Belly' }],
+  },
+  twitter: { card: 'summary_large_image' },
 };
 
 const Opportunitypage = async () => {

@@ -1,5 +1,13 @@
 import { getTermsOfService } from "@/lib/queries";
 import { TermsType } from "@/types/interfaces";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Terms of Service — Fire in the Belly",
+  description: "Read the Terms of Service for Fire in the Belly.",
+  robots: { index: true, follow: false },
+};
+
 
 export default async function TermsPage() {
   const terms: TermsType | null = await getTermsOfService();

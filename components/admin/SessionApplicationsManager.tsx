@@ -54,15 +54,6 @@ export default function SessionApplicationsManager({
       cell: ({ row }: any) =>
         format(new Date(row.original.createdAt), "MMM d, yyyy h:mm a"),
     },
-    {
-      id: "answers",
-      header: "Answers",
-      cell: ({ row }: any) => (
-        <Button variant="outline" size="sm" onClick={() => setSelectedApp(row.original)}>
-          View Answers
-        </Button>
-      ),
-    },
   ];
 
   const handleDownloadCSV = () => {
@@ -127,7 +118,12 @@ export default function SessionApplicationsManager({
               <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
             </div>
           ) : (
-            <AdminDataTable columns={columns} data={applications} emptyMessage="No applications found for this session." />
+            <AdminDataTable 
+              columns={columns} 
+              data={applications} 
+              emptyMessage="No applications found for this session." 
+              onRowClick={(row) => setSelectedApp(row.original)}
+            />
           )}
         </div>
       </DialogContent>

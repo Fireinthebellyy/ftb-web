@@ -33,9 +33,67 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Fire in the Belly - Ignite Your Learning Journey",
+  metadataBase: new URL("https://www.ftbhustle.com"),
+  title: {
+    default: "Fire in the Belly — Ignite Your Learning Journey",
+    template: "%s | Fire in the Belly",
+  },
   description:
-    "Connect with certified mentors, discover trending resources, and accelerate your growth with personalized guidance.",
+    "Connect with mentors, discover verified internships, fellowships, and resources. Accelerate your career with personalized guidance for India's ambitious students.",
+  keywords: [
+    "internships india",
+    "student opportunities",
+    "career guidance",
+    "fellowships",
+    "hackathons",
+    "case competitions",
+    "career toolkit",
+    "ungatekeep",
+    "fire in the belly",
+    "ftb",
+  ],
+  authors: [{ name: "Fire in the Belly", url: "https://www.ftbhustle.com" }],
+  creator: "Fire in the Belly",
+  openGraph: {
+    type: "website",
+    locale: "en_IN",
+    url: "https://www.ftbhustle.com",
+    siteName: "Fire in the Belly",
+    title: "Fire in the Belly — Ignite Your Learning Journey",
+    description:
+      "Discover internships, opportunities, and career toolkits for ambitious Indian students. Zero gatekeeping.",
+    images: [
+      {
+        url: "/images/og-home.png",
+        width: 1200,
+        height: 630,
+        alt: "Fire in the Belly",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Fire in the Belly — Ignite Your Learning Journey",
+    description:
+      "Discover internships, opportunities, and career toolkits for ambitious Indian students.",
+    images: ["/images/og-home.png"],
+    creator: "@ftbhustle",
+  },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function RootLayout({
@@ -46,6 +104,42 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://checkout.razorpay.com" />
+        <link rel="preconnect" href="https://app.posthog.com" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Fire in the Belly",
+              url: "https://www.ftbhustle.com",
+              logo: "https://www.ftbhustle.com/images/fire-logo.png",
+              sameAs: [
+                "https://www.instagram.com/fireinthebellyy",
+                "https://www.linkedin.com/company/fireinthebellyy",
+              ],
+            }),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              url: "https://www.ftbhustle.com",
+              potentialAction: {
+                "@type": "SearchAction",
+                target: {
+                  "@type": "EntryPoint",
+                  urlTemplate: "https://www.ftbhustle.com/opportunities?q={search_term_string}",
+                },
+                "query-input": "required name=search_term_string",
+              },
+            }),
+          }}
+        />
         <Script
           id="razorpay-checkout-js"
           src="https://checkout.razorpay.com/v1/checkout.js"

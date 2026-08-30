@@ -1,0 +1,582 @@
+"use client";
+
+import React, { useMemo, useRef, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, BookOpen, Check, Clock, Cloud, Star } from "lucide-react";
+import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
+import ToolkitSidebar from "@/components/toolkit/ToolkitSidebar";
+import ContentList from "@/components/toolkit/ContentList";
+import MentorshipView from "@/components/toolkit/MentorshipView";
+import ToolkitDetailSkeleton from "@/components/toolkit/ToolkitDetailSkeleton";
+import {
+  Autoplay,
+  Carousel,
+  CarouselContent,
+  CarouselDots,
+  CarouselDotsOverlay,
+  CarouselItem,
+} from "@/components/ui/carousel";
+import { useToolkit, useToolkitPurchase } from "@/lib/queries-toolkits";
+import { CAROUSEL_AUTOPLAY_DELAY_MS } from "@/lib/carousel";
+import { toast } from "sonner";
+import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
+import SessionApplicationModal from "@/components/toolkit/SessionApplicationModal";
+import { Calendar, MessageCircle } from "lucide-react";
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+function getYouTubeVideoId(url: string): string | null {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return match && match[2].length === 11 ? match[2] : null;
+}
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "NA";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+}
+
+interface CouponValidationResult {
+  valid: boolean;
+  discountAmount?: number;
+  finalPrice?: number;
+  error?: string;
+}
+
+export default function ToolkitDetailClient() {
+  const params = useParams();
+  const router = useRouter();
+  const [isPurchaseLoading, setIsPurchaseLoading] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] =
+    useState<CouponValidationResult | null>(null);
+  const testimonialsAutoplay = useMemo(
+    () =>
+      Autoplay({
+        delay: CAROUSEL_AUTOPLAY_DELAY_MS,
+        stopOnMouseEnter: true,
+        stopOnFocusIn: true,
+      }),
+    []
+  );
+  const testimonialsAutoplayRef = useRef<ReturnType<typeof Autoplay> | null>(
+    null
+  );
+
+  if (!testimonialsAutoplayRef.current) {
+    testimonialsAutoplayRef.current = testimonialsAutoplay;
+  }
+
+  const { data: toolkitData, isLoading } = useToolkit(params.id as string);
+  const toolkit = toolkitData?.toolkit ?? null;
+
+  const isSession = toolkit?.category === "sessions";
+  const [sessionModalOpen, setSessionModalOpen] = useState(false);
+
+  const { data: applicationStatus, refetch: refetchApplicationStatus } = useQuery({
+    queryKey: ["session-application-status", toolkit?.id],
+    queryFn: async () => {
+      if (!toolkit?.id) return null;
+      const res = await axios.get(`/api/toolkits/${toolkit.id}/application-status`);
+      return res.data;
+    },
+    enabled: isSession && !!toolkit?.id,
+  });
+
+  const hasApplied = applicationStatus?.applied ?? false;
+
+  const handleViewContent = () => {
+    if (toolkit?.isBundle) {
+      router.push("/toolkit");
+    } else {
+      router.push(`/toolkit/${toolkit?.id}/content`);
+    }
+  };
+
+  const purchaseMutation = useToolkitPurchase(
+    params.id as string,
+    handleViewContent
+  );
+
+  const contentItems = toolkitData?.contentItems ?? [];
+  const hasPurchased = toolkitData?.hasPurchased ?? false;
+  const lessonCount = contentItems.length || toolkit?.lessonCount || 0;
+  const testimonials = toolkit?.testimonials ?? [];
+
+  const calendarHref = useMemo(() => {
+    if (!toolkit?.sessionMeetLink || !toolkit.sessionDate) return null;
+    if (toolkit.sessionMeetLink.includes("calendar.google.com")) return toolkit.sessionMeetLink;
+    try {
+      const start = new Date(toolkit.sessionDate);
+      if (isNaN(start.getTime())) return null;
+      const end = new Date(start.getTime() + 60 * 60 * 1000);
+      const startStr = start.toISOString().replace(/-|:|\.\d\d\d/g, "");
+      const endStr = end.toISOString().replace(/-|:|\.\d\d\d/g, "");
+      return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(toolkit.title)}&location=${encodeURIComponent(toolkit.sessionMeetLink)}&dates=${startStr}/${endStr}`;
+    } catch {
+      return null;
+    }
+  }, [toolkit]);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim() || !toolkit) {
+      toast.error("Please enter a coupon code");
+      return;
+    }
+
+    setIsValidatingCoupon(true);
+    try {
+      const { data } = await axios.post<CouponValidationResult>(
+        "/api/coupons/validate",
+        {
+          code: couponCode.trim(),
+          toolkitId: toolkit.id,
+        }
+      );
+
+      if (
+        data.valid &&
+        data.discountAmount !== undefined &&
+        data.finalPrice !== undefined
+      ) {
+        setAppliedCoupon(data);
+        toast.success(`Coupon applied! ₹${data.discountAmount} off`);
+      } else {
+        setAppliedCoupon(null);
+        toast.error(data.error || "Invalid coupon code");
+      }
+    } catch (error) {
+      setAppliedCoupon(null);
+      if (axios.isAxiosError(error) && error.response) {
+        toast.error(error.response.data.error || "Failed to validate coupon");
+      } else {
+        toast.error("Failed to validate coupon");
+      }
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setCouponCode("");
+    setAppliedCoupon(null);
+  };
+
+  const handlePurchase = async (couponCode?: string) => {
+    try {
+      setIsPurchaseLoading(true);
+      await purchaseMutation.mutateAsync(couponCode);
+    } finally {
+      setIsPurchaseLoading(false);
+    }
+  };
+
+
+  const videoId = toolkit?.videoUrl
+    ? getYouTubeVideoId(toolkit.videoUrl)
+    : null;
+  const heroImageUrl = toolkit?.bannerImageUrl || toolkit?.coverImageUrl;
+
+  if (isLoading) {
+    return <ToolkitDetailSkeleton />;
+  }
+
+  if (!toolkit) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-8 text-center">
+          <h2 className="mb-4 text-2xl font-bold">Toolkit Not Found</h2>
+          <p className="mb-6 text-gray-600">
+            The toolkit you&apos;re looking for doesn&apos;t exist.
+          </p>
+          <Button onClick={() => router.push("/toolkit")}>
+            Back to Toolkits
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen overflow-x-hidden bg-gray-50">
+      <div className="container mx-auto max-w-7xl px-4 py-6">
+        <Link
+          href="/toolkit"
+          className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Link>
+
+        <div className="grid gap-8 xl:grid-cols-3">
+          <div className="min-w-0 xl:col-span-2">
+            {toolkit.category === "1:1 Mentorship" ? (
+              <MentorshipView toolkit={toolkit as any} />
+            ) : (
+              <div className="mb-6 overflow-hidden rounded-lg border bg-white">
+                <div className="relative aspect-video bg-gray-100">
+                  {heroImageUrl ? (
+                    <Image
+                      src={heroImageUrl}
+                      alt={toolkit.title}
+                      fill
+                      className="object-cover"
+                      priority
+                      sizes="(max-width: 1024px) 100vw, 66vw"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center bg-gray-100">
+                      <span className="text-6xl font-bold text-gray-300">
+                        {toolkit.title.charAt(0)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-6">
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    {toolkit.category && (
+                      <Badge variant="secondary">{toolkit.category}</Badge>
+                    )}
+                  </div>
+
+                  <h1 className="mb-3 text-2xl font-bold text-gray-900 md:text-3xl">
+                    {toolkit.title.charAt(0).toUpperCase() +
+                      toolkit.title.slice(1)}
+                  </h1>
+
+                  <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                    {toolkit.rating && (
+                      <div className="flex shrink-0 items-center gap-1 rounded-md bg-yellow-50 px-1.5 py-0.5 text-sm font-semibold text-yellow-700 border border-yellow-200/50">
+                        <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                        {toolkit.rating}
+                      </div>
+                    )}
+
+                    {lessonCount > 0 && (
+                      <div className="flex items-center gap-1">
+                        <BookOpen className="h-4 w-4" />
+                        {lessonCount} lessons
+                      </div>
+                    )}
+
+                    {toolkit.totalDuration && (
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        {toolkit.totalDuration}
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-1">
+                      <Cloud className="h-4 w-4" />
+                      Lifetime access
+                    </div>
+                  </div>
+
+                  <HtmlRenderer
+                    content={toolkit.description}
+                    className="text-gray-700"
+                  />
+
+                  {toolkit.highlights && toolkit.highlights.length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="mb-3 font-semibold text-gray-900">
+                        What you&apos;ll learn:
+                      </h3>
+                      <ul className="grid gap-2 sm:grid-cols-2">
+                        {toolkit.highlights.map((highlight, index) => (
+                          <li
+                            key={index}
+                            className="flex items-start gap-2 text-gray-600"
+                          >
+                            <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
+                            {highlight}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {contentItems.length > 0 && (
+              <div className="rounded-lg border bg-white p-6">
+                <ContentList items={contentItems} hasPurchased={hasPurchased} />
+              </div>
+            )}
+
+            {videoId && (
+              <div className="mt-6 overflow-hidden rounded-lg border bg-white p-6">
+                <h3 className="mb-4 text-lg font-semibold text-gray-900">
+                  Preview
+                </h3>
+                <div className="aspect-video">
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src={`https://www.youtube.com/embed/${videoId}`}
+                    title={toolkit.title}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="rounded-lg"
+                  />
+                </div>
+              </div>
+            )}
+
+            {testimonials.length > 0 ? (
+              <div className="mt-6 rounded-lg border bg-white p-6">
+                <h3 className="mb-4 text-lg font-semibold text-gray-900">
+                  Testimonials
+                </h3>
+                <div className="relative">
+                  <Carousel
+                    opts={{ align: "start", loop: testimonials.length > 1 }}
+                    plugins={
+                      testimonials.length > 1
+                        ? [testimonialsAutoplayRef.current]
+                        : undefined
+                    }
+                    className="w-full"
+                  >
+                    <CarouselContent>
+                      {testimonials.map((testimonial, index) => (
+                        <CarouselItem
+                          key={`${testimonial.name}-${index}`}
+                          className="basis-full md:basis-1/2"
+                        >
+                          <div className="h-full rounded-lg border border-gray-100 bg-gray-50 p-4">
+                            <div className="mb-3 flex items-center gap-2">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-xs font-semibold text-orange-700">
+                                {getInitials(testimonial.name)}
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-gray-900">
+                                  {testimonial.name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {testimonial.role}
+                                </p>
+                              </div>
+                            </div>
+                            <p className="text-sm leading-relaxed text-gray-700">
+                              {testimonial.message}
+                            </p>
+                          </div>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    {testimonials.length > 1 ? (
+                      <CarouselDotsOverlay>
+                        <CarouselDots
+                          className="gap-1.5 py-0"
+                          dotClassName="bg-white/45 hover:bg-white/70"
+                          activeDotClassName="h-1.5 w-3 rounded-full bg-white"
+                        />
+                      </CarouselDotsOverlay>
+                    ) : null}
+                  </Carousel>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="hidden xl:col-span-1 xl:block">
+            {isSession ? (
+              <div className="sticky top-8 overflow-hidden rounded-lg border bg-white p-6 shadow-sm">
+                {hasApplied ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 rounded-lg bg-green-50 p-3 text-green-700">
+                      <Check className="h-5 w-5" />
+                      <span className="font-medium">You have applied to this session</span>
+                    </div>
+                    
+                    {toolkit.sessionWhatsappLink && (
+                      <Button asChild className="w-full bg-[#25D366] hover:bg-[#128C7E]" size="lg">
+                        <a href={toolkit.sessionWhatsappLink} target="_blank" rel="noopener noreferrer">
+                          <MessageCircle className="mr-2 h-5 w-5" />
+                          Join WhatsApp Group
+                        </a>
+                      </Button>
+                    )}
+                    
+                    {calendarHref && (
+                      <Button asChild variant="outline" className="w-full" size="lg">
+                        <a 
+                          href={calendarHref} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                        >
+                          <Calendar className="mr-2 h-5 w-5" />
+                          Save to Calendar
+                        </a>
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-bold text-gray-900">Join this Session</h3>
+                    <p className="text-sm text-gray-600 mb-4">Apply now to get access to the WhatsApp group and calendar invite.</p>
+                    <Button onClick={() => setSessionModalOpen(true)} className="w-full" size="lg">
+                      Apply Now
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <ToolkitSidebar
+                toolkit={toolkit}
+                contentItems={contentItems}
+                hasPurchased={hasPurchased}
+                isPurchaseLoading={isPurchaseLoading}
+                onPurchase={handlePurchase}
+                onAccessContent={handleViewContent}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {isSession && toolkit && (
+        <SessionApplicationModal
+          toolkit={toolkit as any}
+          open={sessionModalOpen}
+          onOpenChange={setSessionModalOpen}
+          onSuccess={() => refetchApplicationStatus()}
+        />
+      )}
+
+      <div className="fixed right-0 bottom-[52px] left-0 z-50 border-t bg-white p-4 shadow-lg md:bottom-0 xl:hidden">
+        {isSession ? (
+          hasApplied ? (
+            toolkit.sessionWhatsappLink || calendarHref ? (
+              <div className="flex gap-2">
+                {toolkit.sessionWhatsappLink && (
+                  <Button asChild className="flex-1 bg-[#25D366] hover:bg-[#128C7E]">
+                    <a href={toolkit.sessionWhatsappLink} target="_blank" rel="noopener noreferrer">
+                      WhatsApp
+                    </a>
+                  </Button>
+                )}
+                {calendarHref && (
+                  <Button asChild variant="outline" className="flex-1">
+                    <a 
+                      href={calendarHref} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                    >
+                      Calendar
+                    </a>
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2 rounded-lg bg-green-50 p-3 text-green-700">
+                <Check className="h-5 w-5" />
+                <span className="font-medium text-sm">Applied</span>
+              </div>
+            )
+          ) : (
+            <Button onClick={() => setSessionModalOpen(true)} size="lg" className="w-full">
+              Apply Now
+            </Button>
+          )
+        ) : hasPurchased ? (
+          <Button onClick={handleViewContent} size="lg" className="w-full">
+            Access Content
+          </Button>
+        ) : (
+          <div className="space-y-3">
+            {/* Coupon Code Input */}
+            <div className="flex gap-2">
+              <Input
+                type="text"
+                placeholder="Enter coupon code"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !isValidatingCoupon) {
+                    handleApplyCoupon();
+                  }
+                }}
+                disabled={isValidatingCoupon || !!appliedCoupon?.valid}
+                className="h-10 flex-1"
+              />
+              {appliedCoupon?.valid ? (
+                <Button
+                  variant="outline"
+                  className="h-10 px-4"
+                  onClick={handleRemoveCoupon}
+                  disabled={isValidatingCoupon}
+                >
+                  Remove
+                </Button>
+              ) : (
+                <Button
+                  className="h-10 bg-orange-500 px-4 text-white hover:bg-orange-600"
+                  onClick={handleApplyCoupon}
+                  disabled={isValidatingCoupon || !couponCode.trim()}
+                >
+                  {isValidatingCoupon ? "..." : "Apply"}
+                </Button>
+              )}
+            </div>
+            {appliedCoupon?.valid && (
+              <p className="text-xs font-medium text-green-600">
+                Coupon applied! Save ₹{appliedCoupon.discountAmount}
+              </p>
+            )}
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-gray-900">
+                  ₹
+                  {(appliedCoupon?.finalPrice ?? toolkit.price ?? 0).toLocaleString(
+                    "en-IN"
+                  )}
+                </span>
+                {toolkit.originalPrice &&
+                  toolkit.originalPrice > (toolkit.price ?? 0) && (
+                    <span className="text-sm text-gray-400 line-through">
+                      ₹{toolkit.originalPrice.toLocaleString("en-IN")}
+                    </span>
+                  )}
+                {appliedCoupon?.valid && !toolkit.originalPrice && (
+                  <span className="text-sm text-gray-400 line-through">
+                    ₹{(toolkit.price ?? 0).toLocaleString("en-IN")}
+                  </span>
+                )}
+              </div>
+              <Button
+                onClick={() =>
+                  handlePurchase(
+                    appliedCoupon?.valid ? couponCode.trim() : undefined
+                  )
+                }
+                disabled={isPurchaseLoading}
+                size="lg"
+                className="flex-1"
+              >
+                {isPurchaseLoading ? "Processing..." : "Buy Now"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

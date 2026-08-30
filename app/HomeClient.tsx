@@ -225,15 +225,15 @@ function TrustedSection() {
             <div className="flex shrink-0 items-center gap-8">
               {logos.map((logo, index) => (
                 <div key={`logo-${index}`} className="relative h-[81px] w-[70px] shrink-0">
-                  <Image src={logo} alt="University logo" fill className="object-contain" />
+                  <Image src={logo} alt={`${logo.split("/").pop()?.split(".")[0].toUpperCase() || "University"} logo`} fill className="object-contain" />
                 </div>
               ))}
             </div>
             <div className="flex shrink-0 items-center gap-8" aria-hidden="true">
               {logos.map((logo, index) => (
                 <div key={`logo-dup-${index}`} className="relative h-[81px] w-[70px] shrink-0">
-                <Image src={logo} alt="University logo" fill className="object-contain" />
-              </div>
+                  <Image src={logo} alt={`${logo.split("/").pop()?.split(".")[0].toUpperCase() || "University"} logo`} fill className="object-contain" />
+                </div>
               ))}
             </div>
           </div>
@@ -392,7 +392,7 @@ function ToolkitCarousel() {
     <section className="mt-0 bg-black px-4 pt-2 pb-2 md:px-8 md:py-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h3 className={`${outfit.className} text-[30px] leading-[30px] font-medium tracking-[-0.25px] text-white`}>Trending toolkits</h3>
+          <h2 className={`${outfit.className} text-[30px] leading-[30px] font-medium tracking-[-0.25px] text-white`}>Trending toolkits</h2>
           <p className={`${outfit.className} mt-0 text-[20px] leading-5 tracking-[-0.25px] text-[#ff6e00]/75`}>Built to get you moving &amp; acing</p>
         </div>
         <Link href="/toolkit" className={`${outfit.className} text-[16px] leading-[110px] tracking-[-0.25px] text-[#ff6e00]`}>
@@ -693,9 +693,9 @@ function FaqSection() {
   return (
     <section className="bg-white px-4 py-4 md:px-8 md:py-8">
       <div className="space-y-1 text-center">
-        <h3 className={`${outfit.className} text-[30px] leading-[30px] font-medium tracking-[-2.25px] text-black/80`}>
+        <h2 className={`${outfit.className} text-[30px] leading-[30px] font-medium tracking-[-2.25px] text-black/80`}>
           Frequently Asked Questions
-        </h3>
+        </h2>
         <p className={`${outfit.className} whitespace-nowrap text-[20px] leading-5 tracking-[-0.25px] text-[#ff6e00]/75`}>#beeninyourshoes</p>
       </div>
 
@@ -722,6 +722,24 @@ function FaqSection() {
           </div>
         ))}
       </div>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: faqs.map((faq) => ({
+              "@type": "Question",
+              name: faq.question,
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: faq.answer,
+              },
+            })),
+          }),
+        }}
+      />
     </section>
   );
 }

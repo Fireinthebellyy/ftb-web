@@ -8,8 +8,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 export const metadata: Metadata = {
-  title: "Changelog - FTB",
-  description: "Stay up to date with the latest features, improvements, and fixes to FTB.",
+  title: "Changelog — Fire in the Belly",
+  description: "Stay up to date with the latest features, improvements, and fixes to Fire in the Belly.",
 };
 
 export default async function ChangelogPage() {
@@ -28,7 +28,7 @@ export default async function ChangelogPage() {
           </div>
           <p className="text-muted-foreground mx-auto max-w-2xl text-lg">
             Stay up to date with the latest features, improvements, and fixes to
-            FTB.
+            Fire in the Belly.
           </p>
         </div>
 

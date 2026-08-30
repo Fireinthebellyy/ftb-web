@@ -109,7 +109,8 @@ const SearchWidget = ({
             type="button"
             onClick={() => {
               setSearchTerm("");
-              applyFilters("");
+              setActiveBubble(null);
+              applyFilters("",[]);
             }}
             className="absolute right-3 text-gray-400 hover:text-gray-600"
           >
@@ -124,50 +125,67 @@ const SearchWidget = ({
             className="fixed inset-0 z-40 bg-transparent"
             onClick={() => setIsSearchFocused(false)}
           />
-          <div className="absolute top-[calc(100%+8px)] left-0 right-[-60] z-50 rounded-[16px] border border-slate-700 bg-[rgba(0,0,0,0.95)] max-h-[80vh] shadow-2xl overflow-hidden flex flex-col">
-
-            <div>
-              <p className="w-full text-slate-200 text-sm font-bold uppercase tracking-widest text-center mt-4">
-                Explore The Popular Fields
-              </p>  
-             
-              <div className="w-full flex justify-center">
-                <div className="grid grid-cols-2 gap-2.5 p-4 max-h-[9.5rem] lg:max-h-[12rem] overflow-y-auto scrollbar-none items-stretch">
-                  {internshipFields.map((field, idx) => {
-                    const isSelected = activeBubble?.id === field.id;
-                    return (
-                      <button
-                        className={cn(
-                          "w-full min-h-10 h-auto cursor-pointer px-2 py-1 flex items-center justify-center rounded-md border text-[11px] lg:text-xs font-bold text-center whitespace-nowrap transition-transform duration-100 ease-out active:scale-95",
-                          isSelected
-                            ? "border-[#ec5b13] bg-[#ec5b13] text-white"
-                            : "border-slate-700 bg-slate-200 text-black hover:border-2 hover:border-[#ec5b13] focus:border-2 focus:border-[#ec5b13]"
-                        )}
-                        key={`${field.id}-${idx}`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setActiveBubble(isSelected ? null : { id: field.id, label: field.label });
-                        }}               
-                      >
-                        <span className="w-full text-center">
-                          {field.label}
-                        </span>
-                      </button>
-                    );
-                  })}   
-                </div>
+         <div
+            className={cn(
+              "animate-in fade-in slide-in-from-top-2 absolute top-[calc(100%+10px)] left-0 z-50 flex max-h-[80vh] flex-col overflow-hidden rounded-2xl border-[3px] border-[#ec5b13]/50 bg-white shadow-xl shadow-orange-200/30 duration-200",
+              "right-[-3.25rem]"
+            )}
+          >
+            {/* Header */}
+            <div className="border-b border-slate-100 bg-white px-4 py-3.5">
+              <div className="flex flex-col items-center gap-1 text-center">
+                <p className="text-sm font-bold text-slate-900">
+                  Explore popular fields
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  Choose one, then search
+                </p>
               </div>
-            </div> 
+              </div>
+            {/* Field boxes */}
+            <div className="grid max-h-[10rem] grid-cols-2 gap-2.5 overflow-y-auto bg-white p-4 scrollbar-none lg:max-h-[12.5rem]">
+              {internshipFields.map((field, idx) => {
+                const isSelected = activeBubble?.id === field.id;
+                return (
+                  <button
+                    type="button"
+                    key={`${field.id}-${idx}`}
+                    className={cn(
+                      "flex min-h-11 w-full cursor-pointer items-center justify-center rounded-xl border px-2.5 py-2 text-center text-[11px] font-bold whitespace-normal transition-all duration-200 ease-out active:scale-[0.98] lg:text-xs",
+                      isSelected
+                        ? "border-[#ec5b13] bg-gradient-to-br from-[#ec5b13] to-orange-600 text-white shadow-md shadow-orange-300/50"
+                        : "border-orange-100 bg-white text-slate-800 shadow-sm hover:border-orange-300 hover:bg-orange-50 hover:text-orange-900"
+                    )}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setActiveBubble(
+                        isSelected ? null : { id: field.id, label: field.label }
+                      );
+                    }}
+                  >
+                    <span className="w-full text-center leading-snug">
+                      {field.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
 
-            <div className="flex justify-center items-center px-4 py-2 border-t border-slate-800 bg-black/40">
+             {/* search button */}
+             <div className="border-t border-slate-100 bg-white px-4 py-3">
               <button
                 type="button"
-                className={cn("text-white font-bold h-10 w-full rounded-xl transition-all", activeBubble ? "bg-orange-500 hover:bg-orange-600" : "bg-[#555555]")}
-                onClick={() => {  
-                  if (activeBubble && activeBubble.label) {
-                    setSearchTerm(activeBubble.label);                    
+                className={cn(
+                  "h-10 w-full rounded-xl text-sm font-bold transition-all active:scale-[0.98]",
+                  activeBubble
+                    ? "bg-[#ec5b13] text-white shadow-lg shadow-orange-300/40 hover:bg-orange-700"
+                    : "border border-orange-200 bg-orange-50 text-orange-900/80 hover:bg-orange-100"
+                )}
+                onClick={() => {
+                  if (activeBubble && activeBubble?.label) {
+                    setSearchTerm(activeBubble.label);            
                     applyFilters(activeBubble.label, [activeBubble.id]);
-                    setActiveBubble({ id: "", label: "" });
+                    setActiveBubble(null);
                     setIsSearchFocused(false);
                   }       
                   else {
@@ -176,7 +194,7 @@ const SearchWidget = ({
                   }
                 }}
               >
-                Search
+                Search Internships
               </button>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { cohorts } from "@/lib/schema";
-import { eq, or } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import CohortDetailClient from "./CohortDetailClient";
 
 type Props = {

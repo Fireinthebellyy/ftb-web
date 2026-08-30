@@ -1,0 +1,21 @@
+{
+  "name": "Fire in the Belly",
+  "short_name": "FTB",
+  "description": "India's #1 platform for ambitious students. Discover verified internships, fellowships, hackathons, and career toolkits.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ff6e00",
+  "icons": [
+    {
+      "src": "/images/fire-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/fire-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

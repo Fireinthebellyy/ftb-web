@@ -104,6 +104,42 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://checkout.razorpay.com" />
+        <link rel="preconnect" href="https://app.posthog.com" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Fire in the Belly",
+              url: "https://www.ftbhustle.com",
+              logo: "https://www.ftbhustle.com/images/fire-logo.png",
+              sameAs: [
+                "https://www.instagram.com/fireinthebellyy",
+                "https://www.linkedin.com/company/fireinthebellyy",
+              ],
+            }),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              url: "https://www.ftbhustle.com",
+              potentialAction: {
+                "@type": "SearchAction",
+                target: {
+                  "@type": "EntryPoint",
+                  urlTemplate: "https://www.ftbhustle.com/opportunities?q={search_term_string}",
+                },
+                "query-input": "required name=search_term_string",
+              },
+            }),
+          }}
+        />
         <Script
           id="razorpay-checkout-js"
           src="https://checkout.razorpay.com/v1/checkout.js"

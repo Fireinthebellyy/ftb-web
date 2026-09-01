@@ -8,8 +8,30 @@ export function getYesterdayInIST(): string {
 }
 
 /**
+ * Validates whether a YYYY-MM-DD string represents a valid calendar date
+ * (checking month length boundaries and leap years).
+ */
+export function isValidCalendarDateString(str: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+  const [yearStr, monthStr, dayStr] = str.split("-");
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+  const day = parseInt(dayStr, 10);
+
+  if (month < 1 || month > 12) return false;
+  if (day < 1 || day > 31) return false;
+
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
+
+/**
  * Normalizes input date (string YYYY-MM-DD, ISO string, or Date object)
- * to a clean calendar date string (YYYY-MM-DD) in IST timezone.
+ * to a clean, validated calendar date string (YYYY-MM-DD) in IST timezone.
  */
 export function normalizeDateToISTString(
   dateInput: string | Date | null | undefined
@@ -17,18 +39,20 @@ export function normalizeDateToISTString(
   if (!dateInput) return null;
   if (dateInput instanceof Date) {
     if (isNaN(dateInput.getTime())) return null;
-    return getCalendarDateInIST(dateInput);
+    const formatted = getCalendarDateInIST(dateInput);
+    return isValidCalendarDateString(formatted) ? formatted : null;
   }
   const str = String(dateInput).trim();
   if (!str) return null;
 
   if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
-    return str;
+    return isValidCalendarDateString(str) ? str : null;
   }
 
   const parsedDate = new Date(str);
   if (!isNaN(parsedDate.getTime())) {
-    return getCalendarDateInIST(parsedDate);
+    const formatted = getCalendarDateInIST(parsedDate);
+    return isValidCalendarDateString(formatted) ? formatted : null;
   }
 
   return null;
@@ -41,6 +65,9 @@ export function getDaysDifferenceInIST(
   fromDateStr: string,
   toDateStr: string
 ): number {
+  if (!isValidCalendarDateString(fromDateStr) || !isValidCalendarDateString(toDateStr)) {
+    return Infinity;
+  }
   const utcFrom = Date.parse(`${fromDateStr}T00:00:00Z`);
   const utcTo = Date.parse(`${toDateStr}T00:00:00Z`);
   if (isNaN(utcFrom) || isNaN(utcTo)) return Infinity;
@@ -64,10 +91,16 @@ export function getDisplayStreak(
   return 0;
 }
 
+export interface LoginStreakUpdate {
+  streak: number;
+  lastLoginDate: string;
+  changed: boolean;
+}
+
 export function computeLoginStreakUpdate(
   currentStreak: number,
   lastLoginDate: string | Date | null | undefined
-): { streak: number; lastLoginDate: string; changed: boolean } {
+): LoginStreakUpdate {
   const today = getCalendarDateInIST();
   const safeStreak = Math.max(currentStreak, 0);
   const normLastLogin = normalizeDateToISTString(lastLoginDate);

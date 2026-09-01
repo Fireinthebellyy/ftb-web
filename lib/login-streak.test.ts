@@ -3,20 +3,33 @@ import {
   computeLoginStreakUpdate,
   getDaysDifferenceInIST,
   getDisplayStreak,
+  isValidCalendarDateString,
   normalizeDateToISTString,
 } from "./login-streak";
 
 describe("login-streak utils", () => {
-  describe("normalizeDateToISTString", () => {
+  describe("isValidCalendarDateString & normalizeDateToISTString", () => {
     it("handles null or undefined", () => {
       expect(normalizeDateToISTString(null)).toBeNull();
       expect(normalizeDateToISTString(undefined)).toBeNull();
       expect(normalizeDateToISTString("")).toBeNull();
     });
 
-    it("handles YYYY-MM-DD strings directly", () => {
+    it("handles valid YYYY-MM-DD strings directly", () => {
       expect(normalizeDateToISTString("2026-08-31")).toBe("2026-08-31");
       expect(normalizeDateToISTString("2026-09-01")).toBe("2026-09-01");
+      expect(isValidCalendarDateString("2028-02-29")).toBe(true); // leap year
+    });
+
+    it("rejects invalid calendar dates such as 2026-02-30, 2025-02-29, and 2026-08-32", () => {
+      expect(isValidCalendarDateString("2026-02-30")).toBe(false);
+      expect(normalizeDateToISTString("2026-02-30")).toBeNull();
+
+      expect(isValidCalendarDateString("2025-02-29")).toBe(false);
+      expect(normalizeDateToISTString("2025-02-29")).toBeNull();
+
+      expect(isValidCalendarDateString("2026-08-32")).toBe(false);
+      expect(normalizeDateToISTString("2026-08-32")).toBeNull();
     });
 
     it("handles ISO strings and Date objects", () => {
@@ -51,21 +64,23 @@ describe("login-streak utils", () => {
     it("calculates difference across year boundaries", () => {
       expect(getDaysDifferenceInIST("2026-12-31", "2027-01-01")).toBe(1);
     });
+
+    it("returns Infinity if either date is invalid", () => {
+      expect(getDaysDifferenceInIST("2026-02-30", "2026-03-01")).toBe(Infinity);
+      expect(getDaysDifferenceInIST("2026-08-31", "2026-08-32")).toBe(Infinity);
+    });
   });
 
   describe("computeLoginStreakUpdate", () => {
     it("increments streak beyond 30 days without capping", () => {
-      // Mock system date to 2026-09-01
       vi.useFakeTimers();
       vi.setSystemTime(new Date("2026-09-01T10:00:00+05:30"));
 
-      // Streak 30 yesterday (2026-08-31) -> 31 today (2026-09-01)
       const res31 = computeLoginStreakUpdate(30, "2026-08-31");
       expect(res31.streak).toBe(31);
       expect(res31.changed).toBe(true);
       expect(res31.lastLoginDate).toBe("2026-09-01");
 
-      // Streak 100 yesterday -> 101 today
       const res101 = computeLoginStreakUpdate(100, "2026-08-31");
       expect(res101.streak).toBe(101);
 
@@ -97,9 +112,8 @@ describe("login-streak utils", () => {
 
     it("resets streak to 1 when a day is missed across month boundary", () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date("2026-09-02T10:00:00+05:30")); // today is Sep 2
+      vi.setSystemTime(new Date("2026-09-02T10:00:00+05:30"));
 
-      // last login was Aug 31 (2 days ago)
       const res = computeLoginStreakUpdate(25, "2026-08-31");
       expect(res.streak).toBe(1);
       expect(res.changed).toBe(true);

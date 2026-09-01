@@ -208,7 +208,7 @@ export const user = pgTable("user", {
   loginStreak: integer("login_streak").default(0).notNull(),
   lastLoginDate: date("last_login_date"),
 }, (table) => [
-  check("login_streak_range", sql`${table.loginStreak} BETWEEN 0 AND 30`)
+  check("login_streak_range", sql`${table.loginStreak} >= 0`)
 ]);
 
 export const adminActivityLogs = pgTable(

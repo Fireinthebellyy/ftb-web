@@ -32,7 +32,7 @@ export function LoginStreakBadge({ userId, className }: LoginStreakBadgeProps) {
         "flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-xs font-semibold text-orange-700",
         className
       )}
-      title={`${streak} day login streak (max 30)`}
+      title={`${streak} day login streak`}
       aria-label={`Login streak: ${streak} days`}
     >
       <Flame

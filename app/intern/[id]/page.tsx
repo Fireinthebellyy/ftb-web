@@ -352,7 +352,7 @@ export default function InternshipDetailPage() {
               onClick={handleCalendarClick}
             >
               {isCalendarAnimating && (
-                <div className="absolute inset-0 bg-white dark:bg-zinc-950 flex items-center justify-center animate-slide-in-bell z-20">
+                <div className="absolute inset-0 bg-white flex items-center justify-center animate-slide-in-bell z-20">
                   <Bell className="w-5 h-5 text-[#ec5b13] animate-ring-bell" />
                 </div>
               )}

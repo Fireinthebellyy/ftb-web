@@ -16,7 +16,6 @@ import PostOnboardingSurveyWidget from "@/components/PostOnboardingSurveyWidget"
 import InterestPromptGate from "@/components/InterestPromptGate";
 import { TrackerProvider } from "@/components/providers/TrackerProvider";
 import { CSPostHogProvider } from "./providers/posthog-provider";
-import ThemeProvider from "@/components/ThemeProvider";
 import GlobalPopup from "@/components/GlobalPopup";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -152,25 +151,23 @@ export default function RootLayout({
       >
         <Suspense fallback={<div>Loading ..</div>}>
           <QueryProvider>
-            <ThemeProvider attribute="class" defaultTheme="light" enableSystem={true}>
-              <ProgressProvider>
-                <CSPostHogProvider>
-                  <TrackerProvider>
-                    <Navbar />
-                    <main className="grow pt-16 pb-20 md:pb-0">{children}</main>
-                    <AuthOverlay />
-                    <BottomNav />
-                    <Footer />
-                    <ConditionalWidgets />
-                    <PostOnboardingSurveyWidget />
-                    <InterestPromptGate />
-                    <GlobalPopup />
-                  </TrackerProvider>
-                </CSPostHogProvider>
-              </ProgressProvider>
-              <Toaster />
-              <Analytics />
-            </ThemeProvider>
+            <ProgressProvider>
+              <CSPostHogProvider>
+                <TrackerProvider>
+                  <Navbar />
+                  <main className="grow pt-16 pb-20 md:pb-0">{children}</main>
+                  <AuthOverlay />
+                  <BottomNav />
+                  <Footer />
+                  <ConditionalWidgets />
+                  <PostOnboardingSurveyWidget />
+                  <InterestPromptGate />
+                  <GlobalPopup />
+                </TrackerProvider>
+              </CSPostHogProvider>
+            </ProgressProvider>
+            <Toaster />
+            <Analytics />
           </QueryProvider>
         </Suspense>
       </body>

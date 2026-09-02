@@ -99,7 +99,7 @@ export default async function ChangelogPage() {
 
                 {entry.content && (
                   <CardContent className="border-t pt-6">
-                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <div className="prose prose-sm max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {entry.content}
                       </ReactMarkdown>

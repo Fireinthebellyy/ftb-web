@@ -165,7 +165,7 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
                 aria-label="Add to calendar"
               >
                 {isCalendarAnimating && (
-                  <div className="animate-slide-in-bell absolute inset-0 z-20 flex items-center justify-center bg-white dark:bg-zinc-950">
+                  <div className="animate-slide-in-bell absolute inset-0 z-20 flex items-center justify-center bg-white">
                     <Bell className="animate-ring-bell h-4 w-4 text-[#ec5b13]" />
                   </div>
                 )}

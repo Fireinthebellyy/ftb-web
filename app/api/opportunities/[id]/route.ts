@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { opportunities } from "@/lib/schema";
 import {
-  getExistingTagIdsOrThrow,
+  upsertTagsAndGetIds,
   InvalidTagSelectionError,
 } from "@/lib/tags";
 import { normalizeDateOnly } from "@/lib/date-utils";
@@ -125,7 +125,7 @@ export async function PUT(
       updateData.attachments = validatedData.attachments;
 
     if (validatedData.tags !== undefined)
-      updateData.tagIds = await getExistingTagIdsOrThrow(validatedData.tags);
+      updateData.tagIds = await upsertTagsAndGetIds(validatedData.tags);
 
     if (validatedData.location !== undefined)
       updateData.location = validatedData.location;

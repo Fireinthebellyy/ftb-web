@@ -17,7 +17,7 @@ import { createApiTimer } from "@/lib/api-timing";
 import { getSessionCached } from "@/lib/auth-session-cache";
 import { normalizeDateOnly } from "@/lib/date-utils";
 import {
-  getExistingTagIdsOrThrow,
+  upsertTagsAndGetIds,
   InvalidTagSelectionError,
 } from "@/lib/tags";
 import { headers } from "next/headers";
@@ -161,7 +161,7 @@ export async function POST(req: NextRequest) {
       description: validatedData.description,
       userId: session.user.id,
       isFlagged: false,
-      isVerified: false,
+      isVerified: canPostDirectly,
       isActive: canPostDirectly,
     };
 
@@ -169,7 +169,7 @@ export async function POST(req: NextRequest) {
       timer.mark("tags_lookup_start", {
         incomingTags: validatedData.tags.length,
       });
-      const tagIds = await getExistingTagIdsOrThrow(validatedData.tags);
+      const tagIds = await upsertTagsAndGetIds(validatedData.tags);
       timer.mark("tags_lookup_done", { resolvedTagIds: tagIds.length });
       if (tagIds.length > 0) {
         insertData.tagIds = tagIds;

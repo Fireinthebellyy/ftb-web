@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, FieldErrors } from "react-hook-form";
+import { toast } from "sonner";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { parseDateOnlyToLocalDate, toDateTimeLocalValue } from "@/lib/date-utils";
@@ -196,10 +197,16 @@ export default function NewOpportunityForm({
     form.setValue("type", type, { shouldValidate: true, shouldTouch: true });
   }
 
+  const onInvalid = (errors: FieldErrors<FormData>) => {
+    const firstError = Object.values(errors)[0];
+    const message = (firstError?.message as string) || "Please fill in all required fields.";
+    toast.error(message);
+  };
+
   return (
     <FormProvider {...form}>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-1">
+        <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-1">
           <TitleField control={form.control} />
 
           <DescriptionField control={form.control} />

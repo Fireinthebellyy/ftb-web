@@ -315,22 +315,36 @@ export async function GET(req: NextRequest) {
       .leftJoin(user, eq(internships.userId, user.id))
       .where(filters)
       .orderBy(
-          sql`CASE 
-            WHEN ${internships.is_exclusive} = TRUE THEN 0
-            WHEN (
-              (${internships.is_trending} = TRUE OR ${internships.is_featured_home} = TRUE)
-              AND (${internships.trendingFeaturedExpiry} IS NULL OR ${internships.trendingFeaturedExpiry} >= CURRENT_DATE)
-            ) THEN 1 
-            ELSE 2 
-          END`,
-          sql`COALESCE("internships"."exclusive_index", 999)`,
-          sql`COALESCE(CASE WHEN ${internships.trendingFeaturedExpiry} IS NOT NULL AND ${internships.trendingFeaturedExpiry} < CURRENT_DATE THEN NULL ELSE "internships"."trending_index" END, 999)`,
-          sql`CASE 
-            WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
-            ELSE 0 
-          END`,
-          desc(internships.createdAt)
-        )
+        sql`CASE 
+          WHEN ${internships.is_exclusive} = TRUE THEN 0
+          WHEN (
+            (${internships.is_trending} = TRUE )
+            AND (${internships.trendingFeaturedExpiry} IS NULL OR ${internships.trendingFeaturedExpiry} >= CURRENT_DATE)
+          ) THEN 1 
+          WHEN (
+          (${internships.is_featured_home}=TRUE)
+          AND (${internships.trendingFeaturedExpiry}IS NULL OR ${internships.trendingFeaturedExpiry}>= CURRENT_DATE) 
+          ) THEN 2
+          ELSE 3
+        END`,
+        sql`CASE
+        WHEN ${internships.is_exclusive}=TRUE 
+            THEN COALESCE("internships"."exclusive_index", 999)
+        WHEN (${internships.is_trending}=TRUE
+        AND (${internships.trendingFeaturedExpiry} IS NULL OR ${internships.trendingFeaturedExpiry} >= CURRENT_DATE))
+            THEN COALESCE("internships"."trending_index", 999)
+        WHEN (${internships.is_featured_home}=TRUE
+        AND (${internships.trendingFeaturedExpiry} IS NULL OR ${internships.trendingFeaturedExpiry} >= CURRENT_DATE))
+            THEN COALESCE("internships"."featured_home_index", 999)
+        ELSE COALESCE("internships"."display_index",999)
+        END`,
+        desc(internships.createdAt)
+        // sql`CASE 
+        //   WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
+        //   ELSE 0 
+        // END`,
+        // desc(internships.createdAt)
+      )
 
     const rows =
       limit !== undefined

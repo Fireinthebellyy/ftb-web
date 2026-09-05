@@ -334,7 +334,7 @@ export async function GET(req: NextRequest) {
         AND (${internships.trendingFeaturedExpiry} IS NULL OR ${internships.trendingFeaturedExpiry} >= CURRENT_DATE))
             THEN COALESCE("internships"."trending_index", 999)
         WHEN (${internships.is_featured_home}=TRUE
-        AND (${internships.trendingFeaturedExpiry} IS NULL OR ${internships.trendingFeaturedExpiry} >= CURRENT_DATE)))
+        AND (${internships.trendingFeaturedExpiry} IS NULL OR ${internships.trendingFeaturedExpiry} >= CURRENT_DATE))
             THEN COALESCE("internships"."featured_home_index", 999)
         ELSE COALESCE("internships"."display_index",999)
         END`,

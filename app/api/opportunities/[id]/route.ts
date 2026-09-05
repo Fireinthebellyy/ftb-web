@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { opportunities } from "@/lib/schema";
 import {
-  getExistingTagIdsOrThrow,
+  upsertTagsAndGetIds,
   InvalidTagSelectionError,
 } from "@/lib/tags";
 import { normalizeDateOnly } from "@/lib/date-utils";
@@ -29,7 +29,12 @@ const updateOpportunitySchema = z.object({
   description: z.string().min(1, "Description is required").optional(),
   images: z.array(z.string()).optional(),
   attachments: z.array(z.string()).optional(),
-  tags: z.array(z.string()).optional(),
+  tags: z
+    .array(
+      z.string().max(50, "Tag name cannot exceed 50 characters")
+    )
+    .max(30, "Cannot specify more than 30 tags")
+    .optional(),
   location: z.string().optional(),
   organiserInfo: z.string().optional(),
   startDate: z.string().optional(),
@@ -125,7 +130,7 @@ export async function PUT(
       updateData.attachments = validatedData.attachments;
 
     if (validatedData.tags !== undefined)
-      updateData.tagIds = await getExistingTagIdsOrThrow(validatedData.tags);
+      updateData.tagIds = await upsertTagsAndGetIds(validatedData.tags);
 
     if (validatedData.location !== undefined)
       updateData.location = validatedData.location;

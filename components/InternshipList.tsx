@@ -532,11 +532,14 @@ export default function InternshipList() {
     data?.pages?.flatMap((page) => page.internships) || []
   ).filter(Boolean);
   const seenIds = new Set<string>();
+  const seenOtherDetails= new Set<string>();
   const allInternships = rawInternships.filter((internship) => {
-    if (seenIds.has(internship.id)) {
+    const otherDetails=`${internship.title},${internship.hiringOrganization},${internship.description}`;
+    if(seenIds.has(internship.id)||seenOtherDetails.has(otherDetails)){
       return false;
     }
     seenIds.add(internship.id);
+    seenOtherDetails.add(otherDetails);
     return true;
   });
 

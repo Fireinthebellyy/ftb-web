@@ -334,11 +334,11 @@ export async function GET(req: NextRequest) {
         AND (${internships.trendingFeaturedExpiry} IS NULL OR ${internships.trendingFeaturedExpiry} >= CURRENT_DATE))
             THEN COALESCE("internships"."trending_index", 999)
         WHEN (${internships.is_featured_home}=TRUE
-        AND (${internships.trendingFeaturedExpiry} IS NULL OR ${internships.trendingFeaturedExpiry} >= CURRENT_DATE)))
+        AND (${internships.trendingFeaturedExpiry} IS NULL OR ${internships.trendingFeaturedExpiry} >= CURRENT_DATE))
             THEN COALESCE("internships"."featured_home_index", 999)
         ELSE COALESCE("internships"."display_index",999)
         END`,
-        sql`${internships.createdAt} DESC`
+        desc(internships.createdAt)
         // sql`CASE 
         //   WHEN COALESCE("internships"."deadline", ("internships"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
         //   ELSE 0 

@@ -48,6 +48,7 @@ import {
   PreviewItem,
   PreviewList,
 } from "@/components/onboarding";
+import { toTitleCase } from "@/lib/utils";
 
 type Role = "student" | "society";
 
@@ -68,10 +69,6 @@ type Step =
   | { id: "basics"; title: string; description: string }
   | { id: "interests"; title: string; description: string }
   | { id: "wrap"; title: string; description: string };
-
-function titleCase(text: string) {
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
 
 function pickLabel(list: string[], options: { id: string; label: string }[], max = 3) {
   if (!list.length) return "—";
@@ -597,7 +594,7 @@ export default function OnboardingPage() {
                         <SummaryItem
                           title="Role"
                           value={
-                            answers.role ? titleCase(answers.role) : "Not set"
+                            answers.role ? toTitleCase(answers.role) : "Not set"
                           }
                         />
                         <SummaryItem
@@ -700,7 +697,7 @@ export default function OnboardingPage() {
             <CardContent className="space-y-4 text-sm">
               <PreviewItem
                 label="Role"
-                value={answers.role ? titleCase(answers.role) : "—"}
+                value={answers.role ? toTitleCase(answers.role) : "—"}
               />
               <PreviewItem
                 label="Location"

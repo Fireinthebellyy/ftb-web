@@ -214,7 +214,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
       <div
         role="button"
         tabIndex={0}
-        className="relative group cursor-pointer rounded-xl border border-slate-200 bg-white px-4 py-3 transition-all hover:border-[#ec5b13]/30 hover:bg-orange-50/10 hover:shadow-md"
+        className="relative group cursor-pointer rounded-xl border border-slate-200 bg-white pl-4 pr-2 py-3 transition-all hover:border-[#ec5b13]/30 hover:bg-orange-50/10 hover:shadow-md"
         onClick={handleCardClick}
         onKeyDown={handleCardKeyDown}
       >
@@ -235,7 +235,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
         )}
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/50 shadow-sm sm:h-11 sm:w-11">
+            <div className={`${isActionsHidden?"mt-3":"mt-0"} flex h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/50 shadow-sm sm:h-11 sm:w-11`}>
               <div
                 className="flex h-full w-full items-center justify-center"
                 style={{
@@ -248,7 +248,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
             </div>
 
             <div className="min-w-0 flex-1">
-              <h3 className="truncate text-sm font-bold text-slate-900 sm:text-base">
+              <h3 className={`${isActionsHidden?"mt-3":"mt-0"} truncate text-sm font-bold text-slate-900 sm:text-base`}>
                 {toTitleCase(title)}
               </h3>
               <p className="truncate text-xs text-slate-500 sm:text-sm">
@@ -260,7 +260,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             {isActionsHidden ? (
               <span
-                className="inline-flex h-8 items-center justify-center rounded-[39px] bg-black px-3.5 text-[12px] font-semibold tracking-[-0.25px] text-white transition-colors group-hover:bg-slate-800"
+                className={`${isActionsHidden?"mt-4":"mt-0"} inline-flex h-8 items-center justify-center rounded-[39px] bg-black px-3.5 text-[12px] font-semibold tracking-[-0.25px] text-white transition-colors group-hover:bg-slate-800`}
               >
                 Explore
               </span>

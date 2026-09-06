@@ -30,6 +30,8 @@ export async function GET(req: NextRequest) {
         id: opportunities.id,
         title: opportunities.title,
         applyLink: opportunities.applyLink,
+        guideUrl: opportunities.guideUrl,
+        guideType: opportunities.guideType,
       })
       .from(opportunities)
       .where(

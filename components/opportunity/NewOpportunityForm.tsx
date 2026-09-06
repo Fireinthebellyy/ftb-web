@@ -12,6 +12,7 @@ import { TitleField } from "./fields/TitleField";
 import { DescriptionField } from "./fields/DescriptionField";
 import { TagsField } from "./fields/TagsField";
 import { TypeSelector } from "./fields/TypeSelector";
+import { GuideField } from "./fields/GuideField";
 import { MetaPopovers, SchedulePublishPopover } from "./fields/MetaPopovers";
 import {
   UnifiedFilePicker,
@@ -77,6 +78,8 @@ export default function NewOpportunityForm({
       location: opportunity?.location || "",
       organiserInfo: opportunity?.organiserInfo || "",
       applyLink: opportunity?.applyLink || "",
+      guideUrl: opportunity?.guideUrl || "",
+      guideType: opportunity?.guideType || undefined,
       dateRange: undefined,
       publishAt: toDateTimeLocalValue(opportunity?.publishAt),
     },
@@ -86,6 +89,8 @@ export default function NewOpportunityForm({
   const watchedLocation = form.watch("location");
   const watchedOrganiser = form.watch("organiserInfo");
   const watchedApplyLink = form.watch("applyLink");
+  const watchedGuideUrl = form.watch("guideUrl");
+  const watchedGuideType = form.watch("guideType");
   const watchedDateRange = form.watch("dateRange");
   const watchedTitle = form.watch("title");
   const watchedDescription = form.watch("description");
@@ -120,6 +125,8 @@ export default function NewOpportunityForm({
       location: watchedLocation || "",
       organiserInfo: watchedOrganiser || "",
       applyLink: watchedApplyLink || "",
+      guideUrl: watchedGuideUrl || "",
+      guideType: watchedGuideType || "",
       dateRange: {
         from: watchedDateRange?.from
           ? watchedDateRange.from.toISOString()
@@ -137,6 +144,8 @@ export default function NewOpportunityForm({
       location: opportunity.location || "",
       organiserInfo: opportunity.organiserInfo || "",
       applyLink: opportunity.applyLink || "",
+      guideUrl: opportunity.guideUrl || "",
+      guideType: opportunity.guideType || "",
       dateRange: {
         from: opportunity.startDate
           ? new Date(opportunity.startDate).toISOString()
@@ -181,6 +190,8 @@ export default function NewOpportunityForm({
     existingImages,
     attachmentFiles,
     existingAttachments,
+    watchedGuideUrl,
+    watchedGuideType,
   ]);
 
   const handleRemoveExistingImage = (imageId: string) => {
@@ -242,6 +253,8 @@ export default function NewOpportunityForm({
             value={watchedType}
             onChange={handleTypeChange}
           />
+
+          <GuideField />
 
           {/* Bottom Action Bar */}
           <div className="space-y-1 pt-2">

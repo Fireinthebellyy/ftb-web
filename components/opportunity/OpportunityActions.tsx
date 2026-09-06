@@ -1,14 +1,20 @@
-import {
-  Flame,
-  MessageSquare,
-  Bookmark,
-  Share2,
-  EllipsisVertical,
-  Trash2,
-  PencilLine,
-} from "lucide-react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import {
+  Bookmark,
+  EllipsisVertical,
+  ExternalLink,
+  Flame,
+  MessageSquare,
+  PencilLine,
+  Share2,
+  Trash2,
+  X,
+  Youtube,
+} from "lucide-react";
+import posthog from "posthog-js";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import {
@@ -17,14 +23,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useToggleUpvote } from "@/lib/queries-opportunities";
 import { useSession } from "@/hooks/use-session";
-import { toast } from "sonner";
-import { ShareDialog } from "./ShareDialog";
-import CommentSection from "./CommentSection";
+import { useToggleUpvote } from "@/lib/queries-opportunities";
+import { addUtmParams, cn } from "@/lib/utils";
+import { getYouTubeEmbedUrl, isYouTubeUrl } from "@/lib/youtube";
 import { OpportunityPostProps } from "@/types/interfaces";
-import posthog from "posthog-js";
-import { addUtmParams } from "@/lib/utils";
+import CommentSection from "./CommentSection";
+import { OpportunityGuideModal } from "./OpportunityGuideModal";
+import { ShareDialog } from "./ShareDialog";
 
 interface OpportunityActionsProps {
   opportunity: OpportunityPostProps["opportunity"];
@@ -44,6 +50,8 @@ export function OpportunityActions({
   onEdit,
 }: OpportunityActionsProps) {
   const { id, user, userHasUpvoted } = opportunity;
+  const [guideModalOpen, setGuideModalOpen] = useState(false);
+  const [isMobileExpanded, setIsMobileExpanded] = useState(false);
   const { data: session } = useSession();
   const toggleUpvote = useToggleUpvote(id);
   const actionIconClass =
@@ -204,26 +212,101 @@ export function OpportunityActions({
         </div>
 
         <div className="flex items-center gap-2">
+          {(() => {
+            const guideUrl = opportunity.guideUrl?.trim();
+            if (!guideUrl) return null;
+            const isYouTube = opportunity.guideType
+              ? opportunity.guideType === "youtube"
+              : isYouTubeUrl(guideUrl);
+
+            return (
+              <>
+                {isYouTube ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      posthog.capture("opportunity_guide_clicked", {
+                        opportunity_id: id,
+                        title: opportunity.title,
+                        type: "youtube",
+                      });
+                      if (typeof window !== "undefined" && window.innerWidth < 768) {
+                        setIsMobileExpanded((prev) => !prev);
+                      } else {
+                        setGuideModalOpen(true);
+                      }
+                    }}
+                    className={cn(
+                      "h-7 cursor-pointer rounded-lg border px-2 text-[10px] font-bold shadow-none transition-all active:scale-95 sm:h-8 sm:px-3 sm:text-xs",
+                      isMobileExpanded
+                        ? "border-red-400 bg-red-100 text-red-800"
+                        : "border-red-200 bg-red-50/80 text-red-700 hover:border-red-300 hover:bg-red-100"
+                    )}
+                  >
+                    <Youtube className="h-3.5 w-3.5 fill-red-600 text-red-600" />
+                    <span>Guide</span>
+                  </Button>
+                ) : (
+                  <Button
+                    asChild
+                    size="sm"
+                    variant="outline"
+                    className="h-7 cursor-pointer rounded-lg border border-blue-200 bg-blue-50/80 px-2 text-[10px] font-bold text-blue-700 shadow-none transition-all hover:border-blue-300 hover:bg-blue-100 active:scale-95 sm:h-8 sm:px-3 sm:text-xs"
+                  >
+                    <Link
+                      href={guideUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        posthog.capture("opportunity_guide_clicked", {
+                          opportunity_id: id,
+                          title: opportunity.title,
+                          type: "external",
+                        });
+                      }}
+                    >
+                      <ExternalLink className="h-3.5 w-3.5 text-blue-600" />
+                      <span>Guide</span>
+                    </Link>
+                  </Button>
+                )}
+
+                {isYouTube && (
+                  <OpportunityGuideModal
+                    isOpen={guideModalOpen}
+                    onClose={() => setGuideModalOpen(false)}
+                    title={opportunity.title}
+                    guideUrl={guideUrl}
+                  />
+                )}
+              </>
+            );
+          })()}
+
           {opportunity.applyLink && (
-            <Link
-              href={addUtmParams(opportunity.applyLink, "opportunity_card")}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => {
-                e.stopPropagation();
-                posthog.capture("opportunity_apply_clicked", {
-                  opportunity_id: id,
-                  title: opportunity.title,
-                });
-              }}
+            <Button
+              asChild
+              size="sm"
+              className="h-7 cursor-pointer rounded-lg border-none bg-orange-600 px-2 text-[10px] font-bold text-white shadow-none transition-all hover:bg-orange-700 active:scale-95 sm:h-8 sm:px-3 sm:text-xs"
             >
-              <Button
-                size="sm"
-                className="h-7 cursor-pointer rounded-lg border-none bg-orange-600 px-2 text-[10px] font-bold text-white shadow-none transition-all hover:bg-orange-700 active:scale-95 sm:h-8 sm:px-3 sm:text-xs"
+              <Link
+                href={addUtmParams(opportunity.applyLink, "opportunity_card")}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  posthog.capture("opportunity_apply_clicked", {
+                    opportunity_id: id,
+                    title: opportunity.title,
+                  });
+                }}
               >
                 Apply
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           )}
           <a
               href={`https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
@@ -301,6 +384,48 @@ export function OpportunityActions({
           )}
         </div>
       </footer>
+
+      {/* Mobile inline video expansion from below card */}
+      {(() => {
+        const guideUrl = opportunity.guideUrl?.trim();
+        if (!guideUrl) return null;
+        const isYouTube =
+          opportunity.guideType === "youtube" || isYouTubeUrl(guideUrl);
+
+        if (!isYouTube || !isMobileExpanded) return null;
+
+        const embedUrl = getYouTubeEmbedUrl(guideUrl);
+        if (!embedUrl) return null;
+
+        return (
+          <div className="md:hidden mt-2 pt-3 border-t border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center justify-between mb-2 px-1">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-800">
+                <Youtube className="h-3.5 w-3.5 text-red-600 fill-red-600" />
+                <span>Video Guide</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMobileExpanded(false)}
+                className="flex items-center gap-1 text-[11px] font-medium text-gray-500 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded-md transition-colors"
+                aria-label="Close video guide"
+              >
+                <span>Close</span>
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+            <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-black shadow-inner">
+              <iframe
+                src={embedUrl}
+                title={`Guide: ${opportunity.title}`}
+                className="w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        );
+      })()}
 
       {showComments && <CommentSection opportunityId={id} />}
     </>

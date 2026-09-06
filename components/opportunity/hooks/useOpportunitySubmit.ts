@@ -9,6 +9,7 @@ import {
   uploadFileViaSignedUrl,
 } from "@/lib/storage/client";
 import { FileItem, Opportunity } from "@/types/interfaces";
+import { isYouTubeUrl } from "@/lib/youtube";
 import { FormData } from "../schema";
 
 interface UseOpportunitySubmitProps {
@@ -165,6 +166,10 @@ export function useOpportunitySubmit({
           : attachmentResult.ids.length > 0
             ? attachmentResult.ids
             : undefined,
+        guideUrl: data.guideUrl ? data.guideUrl.trim() : null,
+        guideType: data.guideUrl
+          ? data.guideType || (isYouTubeUrl(data.guideUrl) ? "youtube" : "external")
+          : null,
       };
 
       if (payload.publishAt) {

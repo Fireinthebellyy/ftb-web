@@ -1,11 +1,11 @@
 import { db } from "@/lib/db";
-import { internships } from "@/lib/schema";
+import { internships, internshipReports } from "@/lib/schema";
 import { and, eq, isNull } from "drizzle-orm";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -26,6 +26,16 @@ export async function POST(
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
+    let body: { reasonCategory?: string; description?: string } = {};
+    try {
+      body = await req.json();
+    } catch {
+      // Body optional for backwards compatibility
+    }
+
+    const reasonCategory = body.reasonCategory || "General Issue";
+    const description = body.description || null;
+
     const internship = await db
       .select({
         id: internships.id,
@@ -42,10 +52,15 @@ export async function POST(
       );
     }
 
-    if (internship[0].isFlagged) {
-      return NextResponse.json({ success: true, alreadyFlagged: true });
-    }
+    // Insert new report entry
+    await db.insert(internshipReports).values({
+      internshipId: id,
+      userId: currentUser.currentUser.id,
+      reasonCategory,
+      description,
+    });
 
+    // Mark internship as flagged
     await db
       .update(internships)
       .set({

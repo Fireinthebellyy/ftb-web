@@ -159,6 +159,23 @@ export const internships = pgTable(
   ]
 );
 
+export const internshipReports = pgTable(
+  "internship_reports",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    internshipId: uuid("internship_id")
+      .notNull()
+      .references(() => internships.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    reasonCategory: text("reason_category").notNull(),
+    description: text("description"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("internship_reports_internship_id_idx").on(table.internshipId),
+  ]
+);
+
 export const internshipSearchTerms = pgTable(
   "internship_search_terms",
   {
@@ -1088,6 +1105,21 @@ export const userCohortTargetPlansRelations = relations(userCohortTargetPlans, (
   }),
 }));
 
+export const internshipReportsRelations = relations(internshipReports, ({ one }) => ({
+  internship: one(internships, {
+    fields: [internshipReports.internshipId],
+    references: [internships.id],
+  }),
+  user: one(user, {
+    fields: [internshipReports.userId],
+    references: [user.id],
+  }),
+}));
+
+export const internshipsRelations = relations(internships, ({ many }) => ({
+  reports: many(internshipReports),
+}));
+
 // Site Settings
 export const siteSettings = pgTable("site_settings", {
   id: text("id").primaryKey(), // "global"
@@ -1173,8 +1205,9 @@ export const schema = {
   cohortSessionMentorsRelations,
   cohortUpgradePlansRelations,
   userCohortTargetPlansRelations,
+  internshipReportsRelations,
+  internshipsRelations,
   siteSettings,
   popups,
   sessionApplications,
 };
-

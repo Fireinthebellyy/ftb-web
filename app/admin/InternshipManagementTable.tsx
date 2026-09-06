@@ -43,6 +43,7 @@ interface Internship {
   exclusive_index?: number;
   featured_home_index?: number;
   display_index?: number | null;
+  trending_featured_expiry?: string | null;
   user: {
     id: string;
     name: string;
@@ -154,6 +155,46 @@ export default function InternshipManagementTable({
     queryFn: fetchAllInternships,
   });
 
+const internships=[...(data??EMPTY_INTERNSHIPS)].sort((a,b)=>{
+  const getPriority=(internship:typeof a)=>{
+    const today=new Date();
+    today.setHours(0,0,0,0);
+    const validExpiry=internship.trending_featured_expiry===null||internship.trending_featured_expiry===undefined||new Date(internship.trending_featured_expiry)>=today;
+
+    if(internship.is_exclusive)return 0;
+    else if(internship.is_trending && validExpiry)return 1;
+    else if(internship.is_featured_home && validExpiry)return 2;
+    else return 3;
+  }
+  const aPriority=getPriority(a);
+  const bPriority=getPriority(b);
+
+  if(aPriority!==bPriority)return aPriority-bPriority;
+  else{
+    if(aPriority===0){
+      const aExclusiveIndex=a.exclusive_index??999;
+      const bExclusiveIndex=b.exclusive_index??999;
+      if(aExclusiveIndex!==bExclusiveIndex)return aExclusiveIndex-bExclusiveIndex; 
+    }
+
+    else if(aPriority===1){
+      const aTrendingIndex=a.trending_index??999;
+      const bTrendingIndex=b.trending_index??999;
+      if(aTrendingIndex!==bTrendingIndex)return aTrendingIndex-bTrendingIndex;
+    }
+
+    else if(aPriority===2){
+      const aFeaturedHomeIndex=a.featured_home_index??999;
+      const bFeaturedHomeIndex=b.featured_home_index??999;
+      if(aFeaturedHomeIndex!==bFeaturedHomeIndex)return aFeaturedHomeIndex-bFeaturedHomeIndex;
+    }
+
+    const aDisplayIndex=a.display_index??999;
+    const bDisplayIndex=b.display_index??999;
+    if(aDisplayIndex!==bDisplayIndex)return (aDisplayIndex)-(bDisplayIndex);
+    return (new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime());
+  }
+});
   // const internships = [...(data ?? EMPTY_INTERNSHIPS)].sort((a, b) => {
   //   const aExclusive = a.exclusive_index ?? 9999;
   //   const bExclusive = b.exclusive_index ?? 9999;
@@ -173,7 +214,7 @@ export default function InternshipManagementTable({
   //   return (a.display_index ?? 9999) - (b.display_index ?? 9999);
   // });
   
-const internships=[...(data??EMPTY_INTERNSHIPS)];
+// const internships=[...(data??EMPTY_INTERNSHIPS)];
   const updateInternshipMutation = useMutation({
     mutationFn: async ({
       id,

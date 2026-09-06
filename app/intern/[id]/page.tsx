@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Share2, Flag, Loader2, Settings, Bookmark, Pencil, Bell } from "lucide-react";
+import { ArrowLeft, Share2, Flag, Settings, Bookmark, Pencil, Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import posthog from "posthog-js";
@@ -30,6 +30,7 @@ import { InternshipStickyFooter } from "@/components/internship/InternshipSticky
 import { SimilarInternships } from "@/components/internship/SimilarInternships";
 import NewInternshipForm from "@/components/internship/NewInternshipForm";
 import { AdminControlsModal } from "@/components/internship/AdminControlsModal";
+import { ReportInternshipModal } from "@/components/internship/ReportInternshipModal";
 
 export default function InternshipDetailPage() {
   const router = useRouter();
@@ -39,7 +40,7 @@ export default function InternshipDetailPage() {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   const [notFoundError, setNotFoundError] = useState(false);
-  const [isFlagging, setIsFlagging] = useState(false);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
   const [adminModalOpen, setAdminModalOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isCalendarAnimating, setIsCalendarAnimating] = useState(false);
@@ -222,39 +223,25 @@ export default function InternshipDetailPage() {
     setShareDialogOpen(open);
   };
 
-  const handleFlagInternship = async () => {
-    if (!id || !internship || internship.isFlagged || isFlagging) {
+  const handleFlagInternship = () => {
+    if (!id || !internship || internship.isFlagged) {
       return;
     }
 
     if (!session?.user) {
-      toast.error("Please sign in to flag this internship");
+      toast.error("Please sign in to report this internship");
       return;
     }
 
-    try {
-      setIsFlagging(true);
-      const response = await fetch(`/api/internships/${id}/flag`, {
-        method: "POST",
-      });
-      const data = await response.json();
+    setReportModalOpen(true);
+  };
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || "Failed to flag internship");
-      }
-
-      setInternship((prev) => (prev ? { ...prev, isFlagged: true } : prev));
-      posthog.capture("internship_flagged", {
-        internship_id: id,
-        title: internship.title,
-      });
-      toast.success("Internship flagged for review");
-    } catch (error) {
-      console.error("Failed to flag internship:", error);
-      toast.error("Failed to flag internship");
-    } finally {
-      setIsFlagging(false);
-    }
+  const handleReportSuccess = () => {
+    setInternship((prev) => (prev ? { ...prev, isFlagged: true } : prev));
+    posthog.capture("internship_flagged", {
+      internship_id: id,
+      title: internship?.title,
+    });
   };
 
   const handleOnInternshipUpdated = async () => {
@@ -309,17 +296,13 @@ export default function InternshipDetailPage() {
             )}
             <button
               onClick={handleFlagInternship}
-              disabled={isFlagging || internship.isFlagged}
+              disabled={internship.isFlagged}
               className="flex w-8 justify-end p-1 text-slate-800 transition-all active:scale-95 disabled:opacity-60"
               aria-label={
                 internship.isFlagged ? "Internship flagged" : "Flag internship"
               }
             >
-              {isFlagging ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Flag className="h-5 w-5" />
-              )}
+              <Flag className="h-5 w-5" />
             </button>
             <button
               onClick={() => setShareDialogOpen(true)}
@@ -386,8 +369,9 @@ export default function InternshipDetailPage() {
             internship={internship}
             handleOpenChat={handleOpenChat}
           />
+        </div>
 
-          {/* Similar Internships */}
+          {/* Similar Internships Mobile */}
           <SimilarInternships
             currentId={internship.id}
             field={internship.field}
@@ -399,11 +383,10 @@ export default function InternshipDetailPage() {
           <InternshipDisclaimer
             variant="mobile"
             organization={internship.hiringOrganization}
-            isFlagging={isFlagging}
+            isFlagging={false}
             isFlagged={internship.isFlagged || false}
             onFlag={handleFlagInternship}
           />
-        </div>
 
         <InternshipStickyFooter
           internship={internship}
@@ -452,7 +435,7 @@ export default function InternshipDetailPage() {
               <InternshipDisclaimer
                 variant="desktop"
                 organization={internship.hiringOrganization}
-                isFlagging={isFlagging}
+                isFlagging={false}
                 isFlagged={internship.isFlagged || false}
                 onFlag={handleFlagInternship}
               />
@@ -502,6 +485,17 @@ export default function InternshipDetailPage() {
       </Dialog>
 
 
+
+      {/* Report Internship Modal */}
+      {id && (
+        <ReportInternshipModal
+          isOpen={reportModalOpen}
+          onClose={() => setReportModalOpen(false)}
+          internshipId={id}
+          internshipTitle={internship?.title}
+          onReportSuccess={handleReportSuccess}
+        />
+      )}
 
       {/* Admin Controls Modal */}
       <AdminControlsModal

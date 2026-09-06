@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { Eye, EyeOff, Trash2, SquarePen} from "lucide-react";
+import { Eye, EyeOff, Trash2, SquarePen, Flag } from "lucide-react";
 import { toast } from "sonner";
 
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
@@ -12,6 +12,7 @@ import { AdminTableState } from "@/components/admin/AdminTableState";
 import { AdminTabLayout } from "@/components/admin/AdminTabLayout";
 import NewInternshipButton from "@/components/internship/NewInternshipButton";
 import NewInternshipForm from "@/components/internship/NewInternshipForm";
+import { InternshipReportsDialog } from "@/app/admin/InternshipReportsDialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -132,6 +133,12 @@ export default function InternshipManagementTable({
   const [open, setOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loadingEditId, setLoadingEditId] = useState<string | null>(null);
+  const [reportsDialogOpen, setReportsDialogOpen] = useState(false);
+  const [reportingInternship, setReportingInternship] = useState<{
+    id: string;
+    title: string;
+    hiringOrganization?: string;
+  } | null>(null);
 
   const handleEdit = async (internship: Internship) => {
     setLoadingEditId(internship.id);
@@ -303,11 +310,29 @@ const internships=[...(data??EMPTY_INTERNSHIPS)].sort((a,b)=>{
       {
         accessorKey: "isFlagged",
         header: "Flagged",
-        cell: ({ row }) => (
-          <span className={cn(row.original.isFlagged ? "font-medium text-red-500" : "text-gray-400")}>
-            {row.original.isFlagged ? "Yes" : "No"}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const isFlagged = row.original.isFlagged;
+          if (!isFlagged) {
+            return <span className="text-gray-400">No</span>;
+          }
+          return (
+            <button
+              type="button"
+              onClick={() => {
+                setReportingInternship({
+                  id: row.original.id,
+                  title: row.original.title,
+                  hiringOrganization: row.original.hiringOrganization,
+                });
+                setReportsDialogOpen(true);
+              }}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-red-100 text-red-700 hover:bg-red-200 border border-red-200 transition-colors cursor-pointer"
+            >
+              <Flag className="h-3 w-3 text-red-600 fill-red-600" />
+              View Reports
+            </button>
+          );
+        },
       },
   
       {
@@ -613,6 +638,23 @@ const internships=[...(data??EMPTY_INTERNSHIPS)].sort((a,b)=>{
           </DialogContent>
         )}
       </Dialog>
+
+      {reportingInternship && (
+        <InternshipReportsDialog
+          isOpen={reportsDialogOpen}
+          onClose={() => {
+            setReportsDialogOpen(false);
+            setReportingInternship(null);
+          }}
+          internshipId={reportingInternship.id}
+          internshipTitle={reportingInternship.title}
+          hiringOrganization={reportingInternship.hiringOrganization}
+          onRefetchInternships={() => {
+            queryClient.invalidateQueries({ queryKey: ["admin-internship-management"] });
+            queryClient.invalidateQueries({ queryKey: ["internships"] });
+          }}
+        />
+      )}
     </>
   );
 }

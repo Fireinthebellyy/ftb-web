@@ -407,6 +407,7 @@ export default function InternshipDetailPage() {
 
         <InternshipStickyFooter
           internship={internship}
+          isEditOpen={isEditOpen}
         />
       </div>
 

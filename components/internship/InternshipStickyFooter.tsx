@@ -11,10 +11,11 @@ import { InternshipData } from "@/types/interfaces";
 
 interface InternshipStickyFooterProps {
   internship: InternshipData;
+  isEditOpen: boolean;
 }
 
 export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
-  internship,
+  internship,isEditOpen
 }) => {
   const hasApply = !!(internship.applyLink || internship.link);
   const hasDM = !!internship.hiringManagerLinkedin;
@@ -27,7 +28,9 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
   const mailUrl = `mailto:${internship.hiringManagerEmail || ""}?subject=${encodeURIComponent(emailSubject)}`;
 
   return (
-    <footer className="pb-safe fixed right-0 bottom-0 left-0 z-[60] border-t border-slate-100 bg-white px-4 py-3 shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
+    <>
+    {!isEditOpen && (
+      <footer className="pb-safe fixed right-0 bottom-0 left-0 z-[60] border-t border-slate-100 bg-white px-4 py-3 shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
       {/* Dynamic Action Buttons */}
       <div className="flex items-center gap-2 w-full">
         {hasApply && (
@@ -100,5 +103,7 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
         )}
       </div>
     </footer>
+    )}
+    </>
   );
 };

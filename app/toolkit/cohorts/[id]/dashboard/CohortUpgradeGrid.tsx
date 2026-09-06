@@ -299,10 +299,10 @@ export function CohortUpgradeGrid({
 
   return (
     <div className="w-full space-y-4 pt-4">
-      {/* Cards: full-width landscape on mobile, portrait from sm+ */}
-      <div className="flex flex-col sm:flex-row gap-4 flex-nowrap justify-center items-stretch sm:items-center pb-3 -mx-1 px-1">
+      {/* Cards: responsive grid layout with stretch alignment */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch pb-3 -mx-1 px-1">
         {/* Current Plan Card */}
-        <div className="w-full sm:w-[280px] sm:h-[450px] rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+        <div className="w-full min-h-[480px] rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm flex flex-col justify-between">
           <div className="space-y-3 sm:space-y-4">
             <div className="flex items-center justify-between border-b pb-2 sm:pb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
@@ -313,7 +313,7 @@ export function CohortUpgradeGrid({
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-1 gap-4 sm:gap-0 sm:space-y-4">
+            <div className="space-y-4">
               <div className="space-y-1">
                 <div className="text-xs text-gray-500 font-medium">Price Paid</div>
                 <div className="text-xl sm:text-2xl font-bold text-gray-900">
@@ -321,7 +321,7 @@ export function CohortUpgradeGrid({
                 </div>
               </div>
 
-              <div className="space-y-1.5 sm:pt-2 sm:border-t border-gray-100">
+              <div className="space-y-1.5 pt-2 border-t border-gray-100">
                 <div className="text-xs text-gray-500 font-medium">Plan Details</div>
                 <div className="text-xs sm:text-sm font-semibold text-gray-800 leading-snug">
                   {currentPlanStatus?.isAllInOne
@@ -395,9 +395,9 @@ export function CohortUpgradeGrid({
           ) : null;
 
           const featuresBlock = (
-            <div className="space-y-2 sm:pt-2 sm:border-t border-gray-100">
+            <div className="space-y-2 pt-2 border-t border-gray-100">
               <div className="text-xs font-bold text-gray-700 uppercase tracking-wider">Features</div>
-              <ul className="space-y-1 sm:space-y-1.5 text-xs text-gray-700">
+              <ul className="space-y-1.5 text-xs text-gray-700">
                 {plan.isAllInOne && (
                   <li className="flex items-start gap-2 font-semibold text-gray-900">
                     <span className="shrink-0">•</span>
@@ -434,9 +434,9 @@ export function CohortUpgradeGrid({
               key={plan.id}
               onClick={() => setSelectedPlanId(plan.id)}
               className={cn(
-                "w-full sm:w-[280px] sm:h-[450px] rounded-2xl border p-4 sm:p-5 flex flex-col justify-between relative transition-all duration-200 cursor-pointer",
+                "w-full min-h-[480px] rounded-2xl border p-4 sm:p-5 flex flex-col justify-between relative transition-all duration-200 cursor-pointer overflow-hidden",
                 isSelected
-                  ? "bg-orange-50/30 border-orange-500 ring-4 ring-orange-500/25 shadow-md scale-[1.02]"
+                  ? "bg-orange-50/30 border-orange-500 ring-4 ring-orange-500/25 shadow-md scale-[1.01]"
                   : isFeatured
                   ? "bg-white border-orange-400 ring-2 ring-orange-500/10 hover:border-orange-500 hover:shadow-md"
                   : "bg-white border-gray-200 hover:border-orange-300 hover:shadow-md"
@@ -445,7 +445,7 @@ export function CohortUpgradeGrid({
               {plan.badgeText && (
                 <div
                   className={cn(
-                    "absolute top-0 right-0 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-bl-xl rounded-tr-2xl border-l border-b",
+                    "absolute top-0 right-0 text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-bl-xl border-l border-b z-10",
                     isSelected || isFeatured
                       ? "bg-orange-600 text-white border-orange-600"
                       : "bg-gray-100 text-gray-800 border-gray-200"
@@ -455,7 +455,7 @@ export function CohortUpgradeGrid({
                 </div>
               )}
 
-              <div className="pt-1 flex-1 min-h-0 overflow-y-auto sm:overflow-visible">
+              <div className="pt-1 flex-1 min-h-0 overflow-y-auto pr-1 space-y-4">
                 <div className="space-y-1 pr-14 sm:pr-0">
                   <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
                     {(plan as any).sectionLabel ||
@@ -473,29 +473,26 @@ export function CohortUpgradeGrid({
                   )}
                 </div>
 
-                <div className="mt-3 sm:mt-4 grid grid-cols-2 sm:grid-cols-1 gap-3 sm:gap-0 sm:space-y-4">
-                  <div className="space-y-3 sm:space-y-4 min-w-0">
-                    <div className="space-y-1">
-                      <div className="flex items-baseline gap-2 flex-wrap">
-                        <span className="text-xl sm:text-2xl font-bold text-gray-900">
-                          ₹{plan.price.toLocaleString("en-IN")}
-                        </span>
-                        {plan.originalPrice && (
-                          <span className="text-xs text-gray-400 line-through font-medium">
-                            ₹{plan.originalPrice.toLocaleString("en-IN")}
-                          </span>
-                        )}
-                      </div>
-                      {savings && savings > 0 && (
-                        <span className="inline-block rounded bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-xs font-bold text-emerald-800">
-                          Save ₹{savings.toLocaleString("en-IN")}
+                <div className="space-y-4 min-w-0">
+                  <div className="space-y-1">
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <span className="text-xl sm:text-2xl font-bold text-gray-900">
+                        ₹{plan.price.toLocaleString("en-IN")}
+                      </span>
+                      {plan.originalPrice && (
+                        <span className="text-xs text-gray-400 line-through font-medium">
+                          ₹{plan.originalPrice.toLocaleString("en-IN")}
                         </span>
                       )}
                     </div>
-                    {sessionsBlock}
+                    {savings && savings > 0 && (
+                      <span className="inline-block rounded bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-xs font-bold text-emerald-800">
+                        Save ₹{savings.toLocaleString("en-IN")}
+                      </span>
+                    )}
                   </div>
-
-                  <div className="min-w-0">{featuresBlock}</div>
+                  {sessionsBlock}
+                  {featuresBlock}
                 </div>
               </div>
 

@@ -64,6 +64,8 @@ const opportunitySchema = z.object({
       z.null(),
     ])
     .optional(),
+  guideUrl: z.string().url("Invalid URL format").optional().or(z.literal("")).or(z.null()),
+  guideType: z.enum(["youtube", "external"]).optional().or(z.literal("")).or(z.null()),
 });
 
 async function getUserRoleFromSession(session: {
@@ -208,6 +210,16 @@ export async function POST(req: NextRequest) {
     if (validatedData.applyLink !== undefined) {
       insertData.applyLink =
         validatedData.applyLink === "" ? null : validatedData.applyLink;
+    }
+
+    if (validatedData.guideUrl !== undefined) {
+      insertData.guideUrl =
+        validatedData.guideUrl === "" ? null : validatedData.guideUrl;
+    }
+
+    if (validatedData.guideType !== undefined) {
+      insertData.guideType =
+        validatedData.guideType === "" ? null : validatedData.guideType;
     }
 
     if (validatedData.startDate) {
@@ -428,6 +440,8 @@ export async function GET(req: NextRequest) {
           startDate: opportunities.startDate,
           endDate: opportunities.endDate,
           applyLink: opportunities.applyLink,
+          guideUrl: opportunities.guideUrl,
+          guideType: opportunities.guideType,
           publishAt: usePublishAt
             ? opportunities.publishAt
             : sql<Date | null>`null`.as("publish_at"),

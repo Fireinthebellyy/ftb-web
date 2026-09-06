@@ -111,6 +111,8 @@ export const opportunities = pgTable("opportunities", {
   isActive: boolean("is_active").default(true),
   upvoterIds: text("upvoter_ids").array().default([]),
   upvoteCount: integer("upvote_count").default(0),
+  guideUrl: text("guide_url"),
+  guideType: text("guide_type"),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),

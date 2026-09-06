@@ -52,6 +52,8 @@ const updateOpportunitySchema = z.object({
       z.null(),
     ])
     .optional(),
+  guideUrl: z.string().url("Invalid URL format").optional().or(z.literal("")).or(z.null()),
+  guideType: z.enum(["youtube", "external"]).optional().or(z.literal("")).or(z.null()),
 });
 
 function parsePublishAt(
@@ -140,6 +142,12 @@ export async function PUT(
 
     if (validatedData.applyLink !== undefined)
       updateData.applyLink = validatedData.applyLink;
+
+    if (validatedData.guideUrl !== undefined)
+      updateData.guideUrl = validatedData.guideUrl === "" ? null : validatedData.guideUrl;
+
+    if (validatedData.guideType !== undefined)
+      updateData.guideType = validatedData.guideType === "" ? null : validatedData.guideType;
 
     if (validatedData.startDate !== undefined) {
       const normalizedStartDate = normalizeDateOnly(validatedData.startDate);

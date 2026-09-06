@@ -1,20 +1,20 @@
 "use client";
 
+import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
+import { ExternalLink, Video, Youtube } from "lucide-react";
 import {
+  FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
-  FormControl,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { isYouTubeUrl } from "@/lib/youtube";
-import { Youtube, ExternalLink, Video } from "lucide-react";
-import { useEffect } from "react";
 
 export function GuideField() {
   const { control, watch, setValue } = useFormContext();
@@ -22,17 +22,22 @@ export function GuideField() {
   const guideUrl = watch("guideUrl");
   const guideType = watch("guideType");
 
-  // Auto-detect URL type when URL changes and user hasn't explicitly set type or URL changes significantly
+  // Auto-detect URL type when URL changes
   useEffect(() => {
-    if (guideUrl && guideUrl.trim().length > 0) {
-      if (isYouTubeUrl(guideUrl)) {
+    const trimmed = guideUrl?.trim() || "";
+    if (trimmed.length > 0) {
+      if (isYouTubeUrl(trimmed)) {
         if (guideType !== "youtube") {
           setValue("guideType", "youtube", { shouldValidate: true, shouldDirty: true });
         }
       } else {
-        if (!guideType) {
+        if (guideType !== "external") {
           setValue("guideType", "external", { shouldValidate: true, shouldDirty: true });
         }
+      }
+    } else {
+      if (guideType) {
+        setValue("guideType", "external", { shouldValidate: true, shouldDirty: true });
       }
     }
   }, [guideUrl, guideType, setValue]);

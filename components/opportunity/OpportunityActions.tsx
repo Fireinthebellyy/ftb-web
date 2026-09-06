@@ -1,18 +1,20 @@
 import { useState } from "react";
-import {
-  Flame,
-  MessageSquare,
-  Bookmark,
-  Share2,
-  EllipsisVertical,
-  Trash2,
-  PencilLine,
-  Youtube,
-  ExternalLink,
-  X,
-} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import {
+  Bookmark,
+  EllipsisVertical,
+  ExternalLink,
+  Flame,
+  MessageSquare,
+  PencilLine,
+  Share2,
+  Trash2,
+  X,
+  Youtube,
+} from "lucide-react";
+import posthog from "posthog-js";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import {
@@ -21,16 +23,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useToggleUpvote } from "@/lib/queries-opportunities";
 import { useSession } from "@/hooks/use-session";
-import { toast } from "sonner";
-import { ShareDialog } from "./ShareDialog";
-import CommentSection from "./CommentSection";
-import { OpportunityPostProps } from "@/types/interfaces";
-import posthog from "posthog-js";
+import { useToggleUpvote } from "@/lib/queries-opportunities";
 import { addUtmParams, cn } from "@/lib/utils";
-import { OpportunityGuideModal } from "./OpportunityGuideModal";
 import { getYouTubeEmbedUrl, isYouTubeUrl } from "@/lib/youtube";
+import { OpportunityPostProps } from "@/types/interfaces";
+import CommentSection from "./CommentSection";
+import { OpportunityGuideModal } from "./OpportunityGuideModal";
+import { ShareDialog } from "./ShareDialog";
 
 interface OpportunityActionsProps {
   opportunity: OpportunityPostProps["opportunity"];
@@ -215,8 +215,9 @@ export function OpportunityActions({
           {(() => {
             const guideUrl = opportunity.guideUrl?.trim();
             if (!guideUrl) return null;
-            const isYouTube =
-              opportunity.guideType === "youtube" || isYouTubeUrl(guideUrl);
+            const isYouTube = opportunity.guideType
+              ? opportunity.guideType === "youtube"
+              : isYouTubeUrl(guideUrl);
 
             return (
               <>
@@ -248,28 +249,29 @@ export function OpportunityActions({
                     <span>Guide</span>
                   </Button>
                 ) : (
-                  <Link
-                    href={guideUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      posthog.capture("opportunity_guide_clicked", {
-                        opportunity_id: id,
-                        title: opportunity.title,
-                        type: "external",
-                      });
-                    }}
+                  <Button
+                    asChild
+                    size="sm"
+                    variant="outline"
+                    className="h-7 cursor-pointer rounded-lg border border-blue-200 bg-blue-50/80 px-2 text-[10px] font-bold text-blue-700 shadow-none transition-all hover:border-blue-300 hover:bg-blue-100 active:scale-95 sm:h-8 sm:px-3 sm:text-xs"
                   >
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 cursor-pointer rounded-lg border border-blue-200 bg-blue-50/80 px-2 text-[10px] font-bold text-blue-700 shadow-none transition-all hover:border-blue-300 hover:bg-blue-100 active:scale-95 sm:h-8 sm:px-3 sm:text-xs"
+                    <Link
+                      href={guideUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        posthog.capture("opportunity_guide_clicked", {
+                          opportunity_id: id,
+                          title: opportunity.title,
+                          type: "external",
+                        });
+                      }}
                     >
                       <ExternalLink className="h-3.5 w-3.5 text-blue-600" />
                       <span>Guide</span>
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 )}
 
                 {isYouTube && (
@@ -285,25 +287,26 @@ export function OpportunityActions({
           })()}
 
           {opportunity.applyLink && (
-            <Link
-              href={addUtmParams(opportunity.applyLink, "opportunity_card")}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => {
-                e.stopPropagation();
-                posthog.capture("opportunity_apply_clicked", {
-                  opportunity_id: id,
-                  title: opportunity.title,
-                });
-              }}
+            <Button
+              asChild
+              size="sm"
+              className="h-7 cursor-pointer rounded-lg border-none bg-orange-600 px-2 text-[10px] font-bold text-white shadow-none transition-all hover:bg-orange-700 active:scale-95 sm:h-8 sm:px-3 sm:text-xs"
             >
-              <Button
-                size="sm"
-                className="h-7 cursor-pointer rounded-lg border-none bg-orange-600 px-2 text-[10px] font-bold text-white shadow-none transition-all hover:bg-orange-700 active:scale-95 sm:h-8 sm:px-3 sm:text-xs"
+              <Link
+                href={addUtmParams(opportunity.applyLink, "opportunity_card")}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  posthog.capture("opportunity_apply_clicked", {
+                    opportunity_id: id,
+                    title: opportunity.title,
+                  });
+                }}
               >
                 Apply
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           )}
           <a
               href={`https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(

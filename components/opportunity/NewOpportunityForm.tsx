@@ -190,6 +190,8 @@ export default function NewOpportunityForm({
     existingImages,
     attachmentFiles,
     existingAttachments,
+    watchedGuideUrl,
+    watchedGuideType,
   ]);
 
   const handleRemoveExistingImage = (imageId: string) => {

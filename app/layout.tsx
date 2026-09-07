@@ -104,7 +104,7 @@ export default function RootLayout({
     <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://checkout.razorpay.com" />
-        <link rel="preconnect" href="https://app.posthog.com" />
+        <link rel="preconnect" href="https://us.i.posthog.com" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

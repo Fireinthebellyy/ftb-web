@@ -168,6 +168,7 @@ export async function GET(
 
     return NextResponse.json({
       cohort: { id: cohort.id, title: cohort.title },
+      userId:session.user.id,
       hasAccess: true,
       isLocked: false,
       isVerificationRequired: cohort.isVerificationRequired,

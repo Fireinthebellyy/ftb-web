@@ -401,6 +401,7 @@ export interface CohortUpgradePlan {
 
 export type CohortDetailResponse = {
   cohort: { id: string; title: string };
+  userId:string,
   hasAccess?: boolean;
   isLocked: boolean;
   isVerificationRequired: boolean;

@@ -33,6 +33,8 @@ export const formSchema = z.object({
   location: z.string().optional(),
   organiserInfo: z.string().optional(),
   applyLink: z.string().url("Invalid URL format").optional().or(z.literal("")),
+  guideUrl: z.string().url("Invalid URL format").optional().or(z.literal("")),
+  guideType: z.enum(["youtube", "external"]).optional(),
   dateRange: z
     .object({
       from: z.date().optional(),

@@ -46,35 +46,42 @@ export function stripHtml(input: string | null | undefined): string {
 }
 
 /**
- * Converts a string to title case while preserving capitalization for common industry acronyms.
+ * Converts a string to title case while preserving admin's intentional casing and industry acronyms.
  */
 export function toTitleCase(str: string | null | undefined): string {
   if (!str) return "";
 
-  // Words that should always be fully capitalized
+  // If the string already contains uppercase letters, respect admin's exact casing choice
+  if (/[A-Z]/.test(str)) {
+    return str;
+  }
+
+  // Expanded list of words/acronyms that should always be fully capitalized when auto-formatting
   const acronyms = new Set([
-    "HR", "CEO", "CTO", "CFO", "COO", "CMO", "VP", "PR",
-    "IT", "UI", "UX", "AI", "ML", "API", "PM", "QA", "SDE",
+    "HR", "HRBP", "SDET", "SRE", "HOD", "CEO", "CTO", "CFO", "COO", "CMO", "VP", "PR",
+    "IT", "UI", "UX", "AI", "ML", "API", "PM", "QA", "SDE", "MERN", "MEAN", "LAMP", "PERN",
     "CA", "CPA", "CS", "BBA", "MBA", "BCA", "MCA", "BTECH", "MTECH",
-    "SEO", "SMM", "GST"
+    "SEO", "SMM", "GST", "AWS", "GCP", "AZURE", "IBM", "TCS", "CTS", "HCL", "WIPRO",
+    "NPCI", "ISRO", "DRDO", "NASA", "FAANG", "MAANG", "MNC", "SaaS", "PaaS", "IaaS",
+    "B2B", "B2C", "D2C", "SDK", "LLM", "NLP", "FTE", "PwC", "EY", "KPMG",
+    "IIT", "NIT", "BITS", "IIIT"
   ]);
+
+  const minorWords = new Set(["at", "in", "of", "and", "for", "the", "on", "to", "with", "by", "or", "a", "an"]);
 
   return str.replace(
     /[a-zA-Z0-9]+/g,
-    (text) => {
-      // Extract pure alphabetic part for mixed-case detection
-      const cleanText = text.replace(/[^a-zA-Z]/g, "");
-      const hasUpper = /[A-Z]/.test(cleanText);
-      const hasLower = /[a-z]/.test(cleanText);
-
-      // Preserve mixed-case tokens (e.g., iPhone, FedEx)
-      if (hasUpper && hasLower) {
-        return text;
+    (text, offset) => {
+      const upper = text.toUpperCase();
+      // Check against acronyms using the uppercase version
+      if (acronyms.has(upper)) {
+        return upper;
       }
 
-      // Check against acronyms using the uppercase version
-      if (acronyms.has(text.toUpperCase())) {
-        return text.toUpperCase();
+      const lower = text.toLowerCase();
+      // Keep minor prepositions/conjunctions lowercase if not at start of string
+      if (offset > 0 && minorWords.has(lower)) {
+        return lower;
       }
 
       return text.charAt(0).toUpperCase() + text.substring(1).toLowerCase();

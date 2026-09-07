@@ -306,7 +306,7 @@ export default function CohortDashboardPage() {
       {/* Global Upgrade Modal (Requirement 5 & Global Minimal Rule) */}
       {upgradeModalOpen && (
         <Dialog open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen}>
-          <DialogContent className="w-full max-w-[96vw] sm:max-w-2xl md:max-w-4xl max-h-[88vh] flex flex-col p-0 gap-0 overflow-hidden">
+          <DialogContent className="w-full max-w-[96vw] sm:max-w-3xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
             <DialogHeader className="px-5 py-4 pr-14 border-b shrink-0 text-left">
               <DialogTitle className="text-sm sm:text-base font-bold text-gray-900 leading-snug break-words">
                 Upgrade Options — {cohortData.cohort.title}

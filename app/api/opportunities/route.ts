@@ -17,7 +17,7 @@ import { createApiTimer } from "@/lib/api-timing";
 import { getSessionCached } from "@/lib/auth-session-cache";
 import { normalizeDateOnly } from "@/lib/date-utils";
 import {
-  getExistingTagIdsOrThrow,
+  upsertTagsAndGetIds,
   InvalidTagSelectionError,
 } from "@/lib/tags";
 import { headers } from "next/headers";
@@ -41,7 +41,12 @@ const opportunitySchema = z.object({
   description: z.string().min(1, "Description is required"),
   images: z.array(z.string()).optional(),
   attachments: z.array(z.string()).optional(),
-  tags: z.array(z.string()).optional(),
+  tags: z
+    .array(
+      z.string().max(50, "Tag name cannot exceed 50 characters")
+    )
+    .max(30, "Cannot specify more than 30 tags")
+    .optional(),
   location: z.string().optional(),
   organiserInfo: z.string().optional(),
   startDate: z.string().optional(),
@@ -59,6 +64,8 @@ const opportunitySchema = z.object({
       z.null(),
     ])
     .optional(),
+  guideUrl: z.string().url("Invalid URL format").optional().or(z.literal("")).or(z.null()),
+  guideType: z.enum(["youtube", "external"]).optional().or(z.literal("")).or(z.null()),
 });
 
 async function getUserRoleFromSession(session: {
@@ -161,7 +168,7 @@ export async function POST(req: NextRequest) {
       description: validatedData.description,
       userId: session.user.id,
       isFlagged: false,
-      isVerified: false,
+      isVerified: canPostDirectly,
       isActive: canPostDirectly,
     };
 
@@ -169,7 +176,7 @@ export async function POST(req: NextRequest) {
       timer.mark("tags_lookup_start", {
         incomingTags: validatedData.tags.length,
       });
-      const tagIds = await getExistingTagIdsOrThrow(validatedData.tags);
+      const tagIds = await upsertTagsAndGetIds(validatedData.tags);
       timer.mark("tags_lookup_done", { resolvedTagIds: tagIds.length });
       if (tagIds.length > 0) {
         insertData.tagIds = tagIds;
@@ -203,6 +210,16 @@ export async function POST(req: NextRequest) {
     if (validatedData.applyLink !== undefined) {
       insertData.applyLink =
         validatedData.applyLink === "" ? null : validatedData.applyLink;
+    }
+
+    if (validatedData.guideUrl !== undefined) {
+      insertData.guideUrl =
+        validatedData.guideUrl === "" ? null : validatedData.guideUrl;
+    }
+
+    if (validatedData.guideType !== undefined) {
+      insertData.guideType =
+        validatedData.guideType === "" ? null : validatedData.guideType;
     }
 
     if (validatedData.startDate) {
@@ -423,6 +440,8 @@ export async function GET(req: NextRequest) {
           startDate: opportunities.startDate,
           endDate: opportunities.endDate,
           applyLink: opportunities.applyLink,
+          guideUrl: opportunities.guideUrl,
+          guideType: opportunities.guideType,
           publishAt: usePublishAt
             ? opportunities.publishAt
             : sql<Date | null>`null`.as("publish_at"),

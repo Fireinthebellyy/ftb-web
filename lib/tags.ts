@@ -38,8 +38,17 @@ export async function getExistingTagIdsOrThrow(
     .filter((id): id is string => Boolean(id));
 }
 
+const MAX_TAG_NAME_LENGTH = 50;
+const MAX_TAGS_COUNT = 30;
+
 export async function upsertTagsAndGetIds(tagNames: string[]): Promise<string[]> {
-  const normalized = Array.from(new Set(tagNames.map((name) => name.trim()).filter(Boolean)));
+  const normalized = Array.from(
+    new Set(
+      tagNames
+        .map((name) => name.trim().slice(0, MAX_TAG_NAME_LENGTH))
+        .filter(Boolean)
+    )
+  ).slice(0, MAX_TAGS_COUNT);
 
   if (normalized.length === 0) return [];
 

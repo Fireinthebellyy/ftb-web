@@ -19,6 +19,8 @@ export type Opportunity = {
   trending?: boolean;        
   featuredHome?: boolean;
   displayIndex?: number; 
+  guideUrl?: string | null;
+  guideType?: "youtube" | "external" | null;
   user: {
     id: string;
     name: string;

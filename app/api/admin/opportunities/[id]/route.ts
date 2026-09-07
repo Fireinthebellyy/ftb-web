@@ -64,6 +64,8 @@ export async function GET(
         startDate: opportunities.startDate,
         endDate: opportunities.endDate,
         applyLink: opportunities.applyLink,
+        guideUrl: opportunities.guideUrl,
+        guideType: opportunities.guideType,
         publishAt: opportunities.publishAt,
         isFlagged: opportunities.isFlagged,
         createdAt: opportunities.createdAt,

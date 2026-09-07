@@ -5,11 +5,11 @@ import { usePostHog } from "posthog-js/react";
 import { useSession } from "@/hooks/use-session";
 
 export function PostHogIdentify() {
-  const { data: session } = useSession();
+  const { data: session, isLoading } = useSession();
   const posthog = usePostHog();
 
   useEffect(() => {
-    if (!posthog) return;
+    if (!posthog || isLoading) return;
 
     if (session?.user) {
       posthog.identify(session.user.id, {
@@ -17,12 +17,12 @@ export function PostHogIdentify() {
         name: session.user.name,
         createdAt: session.user.createdAt.toISOString(),
       });
-    } else {
-      // Reset when logged out so anonymous sessions don't
-      // bleed into a previous user's profile
+    } else if (session === null) {
+      // Only reset when session is explicitly null (confirmed signed-out),
+      // not while it's still undefined (query pending).
       posthog.reset();
     }
-  }, [session?.user, posthog]);
+  }, [session, isLoading, posthog]);
 
   return null;
 }

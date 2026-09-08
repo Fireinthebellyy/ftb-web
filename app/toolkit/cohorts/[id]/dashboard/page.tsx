@@ -94,7 +94,7 @@ export default function CohortDashboardPage() {
     if (typeof window !== "undefined" && window.location.hash !== `#${targetId}`) {
       history.replaceState(null, "", `#${targetId}`);
     }
-  }, [sessions, currentSessionId]);
+  }, [sessions, currentSessionId,cohortId]);
 
   useEffect(() => {
     const onHashChange = () => {

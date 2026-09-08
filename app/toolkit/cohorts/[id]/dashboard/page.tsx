@@ -276,7 +276,6 @@ export default function CohortDashboardPage() {
               contents={contents}
               sessionId={currentSessionId || ""}
               cohortId={cohortId}
-              userId={cohortData.userId}
               cohortTitle={cohortData.cohort.title}
               sessions={sessions}
               currentPlanStatus={cohortData.currentPlanStatus}
@@ -354,7 +353,6 @@ function CohortSessionSidebar({
   // Remove time from extended access date
   const extendedEndDate = new Date(extendedAccessDate);
   extendedEndDate.setHours(0, 0, 0, 0);
-  const isExtendedAccessExpired=(isExtendedAccess && today)>extendedAccessDate;
   // Milliseconds in one day
   const millisecondsPerDay = 1000 * 60 * 60 * 24;
 
@@ -732,7 +730,6 @@ function CohortSessionMain({
   contents,
   sessionId,
   cohortId,
-  userId,
   cohortTitle,
   sessions,
   currentPlanStatus,
@@ -743,7 +740,6 @@ function CohortSessionMain({
   contents: CohortSessionContent[];
   sessionId: string;
   cohortId: string;
-  userId:string;
   cohortTitle: string;
   sessions: any[];
   currentPlanStatus?: CurrentPlanStatus | null;

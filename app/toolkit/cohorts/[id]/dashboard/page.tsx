@@ -64,9 +64,8 @@ export default function CohortDashboardPage() {
 
   const { data: cohortData, isLoading: isCohortLoading, refetch: refetchCohort } =
     useCohortDetail(cohortId);
-  const userId=cohortData?.userId;
-
-  const [upgradeResourceDate,setUpgradeResourceDate]=useState<string>("false");
+  
+    const hasExtendedResourceAccess =cohortData?.hasExtendedResourceAccess ?? false;
   const sessions = useMemo(() => cohortData?.sessions ?? [], [cohortData]);
 
   useEffect(() => {
@@ -89,15 +88,13 @@ export default function CohortDashboardPage() {
 
     try {
       localStorage.setItem(`cohort:${cohortId}:session`, targetId);
-      const value=localStorage.getItem(`upgradePlan-${cohortId}-${userId}`)||"false";
-      setUpgradeResourceDate(value);
     } catch {
       /* noop */
     }
     if (typeof window !== "undefined" && window.location.hash !== `#${targetId}`) {
       history.replaceState(null, "", `#${targetId}`);
     }
-  }, [sessions, currentSessionId, cohortId]);
+  }, [sessions, currentSessionId]);
 
   useEffect(() => {
     const onHashChange = () => {
@@ -239,7 +236,7 @@ export default function CohortDashboardPage() {
               <CohortSessionSidebar
                 sessions={sessions}
                 currentSessionId={currentSessionId}
-                upgradeResourceDate={upgradeResourceDate}
+                hasExtendedResourceAccess={hasExtendedResourceAccess}
                 onSessionSelect={(id) => {
                   handleSessionSelect(id);
                   setSidebarOpen(false);
@@ -295,7 +292,7 @@ export default function CohortDashboardPage() {
             <CohortSessionSidebar
               sessions={sessions}
               currentSessionId={currentSessionId}
-              upgradeResourceDate={upgradeResourceDate}
+              hasExtendedResourceAccess={hasExtendedResourceAccess}
               onSessionSelect={handleSessionSelect}
               onOpenUpgrade={() => setUpgradeModalOpen(true)}
             />
@@ -316,13 +313,11 @@ export default function CohortDashboardPage() {
             <div className="flex-1 overflow-y-auto px-5 pb-5">
               <CohortUpgradeGrid
                 cohortId={cohortId}
-                userId={cohortData.userId}
                 cohortTitle={cohortData.cohort.title}
                 currentPlanStatus={cohortData.currentPlanStatus}
                 upgradePlans={cohortData.upgradePlans}
                 sessions={sessions}
                 onUpgradeSuccess={() => {
-                  setUpgradeResourceDate(localStorage.getItem(`upgradePlan-${cohortId}-${userId}`)||"false");
                   setUpgradeModalOpen(false);
                   refetchCohort();
                 }}
@@ -338,21 +333,20 @@ export default function CohortDashboardPage() {
 function CohortSessionSidebar({
   sessions,
   currentSessionId,
-  upgradeResourceDate,
+  hasExtendedResourceAccess,
   onSessionSelect,
   onOpenUpgrade,
 }: {
   sessions: CohortSessionItem[];
   currentSessionId: string | null;
-  upgradeResourceDate: string;
+  hasExtendedResourceAccess: boolean;
   onSessionSelect: (id: string) => void;
   onOpenUpgrade?: () => void;
 }) {
-  const isExtendedAccess = upgradeResourceDate === "true";
+  const isExtendedAccess = hasExtendedResourceAccess;
 
   // Extended access ends on 25 October 2026
   const extendedAccessDate = new Date("2026-10-25T23:59:59");
-
   // Today's date
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -360,7 +354,7 @@ function CohortSessionSidebar({
   // Remove time from extended access date
   const extendedEndDate = new Date(extendedAccessDate);
   extendedEndDate.setHours(0, 0, 0, 0);
-
+  const isExtendedAccessExpired=(isExtendedAccess && today)>extendedAccessDate;
   // Milliseconds in one day
   const millisecondsPerDay = 1000 * 60 * 60 * 24;
 
@@ -421,7 +415,7 @@ function CohortSessionSidebar({
 
                 <span className="whitespace-nowrap text-xs font-semibold sm:text-sm">
                   {isExtendedAccess
-                    ? "Access till 25th October"
+                    ?"Access till 25th October"
                     : "Access till 25th September"}
                 </span>
               </div>
@@ -453,7 +447,7 @@ function CohortSessionSidebar({
 
     <div className="min-w-0 flex-1">
       <p className="text-[11px] font-medium text-gray-500">
-        Free access remaining
+          Free Access Remaining
       </p>
 
       <p className="text-xs font-semibold text-green-700">
@@ -891,7 +885,6 @@ function CohortSessionMain({
 
         <CohortUpgradeGrid
           cohortId={cohortId}
-          userId={userId}
           cohortTitle={cohortTitle}
           currentPlanStatus={currentPlanStatus}
           upgradePlans={upgradePlans}

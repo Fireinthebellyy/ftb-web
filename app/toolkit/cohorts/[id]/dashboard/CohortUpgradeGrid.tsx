@@ -73,7 +73,6 @@ interface RazorpayCheckoutOptions {
 
 interface CohortUpgradeGridProps {
   cohortId: string;
-  userId:string,
   cohortTitle: string;
   currentPlanStatus?: CurrentPlanStatus | null;
   upgradePlans?: UpgradePlan[] | null;
@@ -85,7 +84,6 @@ interface CohortUpgradeGridProps {
 
 export function CohortUpgradeGrid({
   cohortId,
-  userId,
   cohortTitle: _cohortTitle,
   currentPlanStatus,
   upgradePlans = [],
@@ -257,7 +255,7 @@ export function CohortUpgradeGrid({
               setIsUpgradeSuccessLoading(true);
               toast.success("Plan Upgrade Complete! Sessions unlocked.");
               setTimeout(() => {
-                (plan.title==="Unlock 1:1 Mentorship Calls (2) +  60 Day Access to all Resources"||plan.title==="End to End Mentorship (3-5 calls) + Cohort 60 Day Access")&&localStorage.setItem(`upgradePlan-${cohortId}-${userId}`,"true");
+                // (plan.title==="Unlock 1:1 Mentorship Calls (2) +  60 Day Access to all Resources"||plan.title==="End to End Mentorship (3-5 calls) + Cohort 60 Day Access")&&localStorage.setItem(`upgradePlan-${cohortId}-${userId}`,"true");
                 onUpgradeSuccess();
                 setIsUpgradeSuccessLoading(false);
               }, 2500);

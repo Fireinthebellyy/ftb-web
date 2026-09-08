@@ -417,6 +417,7 @@ export type CohortDetailResponse = {
     selectedAddOnIds: string[];
   };
   upgradePlans?: CohortUpgradePlan[];
+  hasExtendedResourceAccess:boolean;
 };
 
 export type CohortSessionResponse = {

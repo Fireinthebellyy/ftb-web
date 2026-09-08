@@ -403,6 +403,7 @@ export interface CohortUpgradePlan {
 
 export type CohortDetailResponse = {
   cohort: { id: string; title: string };
+  userId:string,
   hasAccess?: boolean;
   isLocked: boolean;
   isVerificationRequired: boolean;
@@ -416,6 +417,7 @@ export type CohortDetailResponse = {
     selectedAddOnIds: string[];
   };
   upgradePlans?: CohortUpgradePlan[];
+  hasExtendedResourceAccess:boolean;
 };
 
 export type CohortSessionResponse = {

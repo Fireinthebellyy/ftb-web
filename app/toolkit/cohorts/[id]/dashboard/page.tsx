@@ -64,7 +64,8 @@ export default function CohortDashboardPage() {
 
   const { data: cohortData, isLoading: isCohortLoading, refetch: refetchCohort } =
     useCohortDetail(cohortId);
-
+  
+    const hasExtendedResourceAccess =cohortData?.hasExtendedResourceAccess ?? false;
   const sessions = useMemo(() => cohortData?.sessions ?? [], [cohortData]);
 
   useEffect(() => {
@@ -93,7 +94,7 @@ export default function CohortDashboardPage() {
     if (typeof window !== "undefined" && window.location.hash !== `#${targetId}`) {
       history.replaceState(null, "", `#${targetId}`);
     }
-  }, [sessions, currentSessionId, cohortId]);
+  }, [sessions, currentSessionId,cohortId]);
 
   useEffect(() => {
     const onHashChange = () => {
@@ -235,6 +236,7 @@ export default function CohortDashboardPage() {
               <CohortSessionSidebar
                 sessions={sessions}
                 currentSessionId={currentSessionId}
+                hasExtendedResourceAccess={hasExtendedResourceAccess}
                 onSessionSelect={(id) => {
                   handleSessionSelect(id);
                   setSidebarOpen(false);
@@ -289,6 +291,7 @@ export default function CohortDashboardPage() {
             <CohortSessionSidebar
               sessions={sessions}
               currentSessionId={currentSessionId}
+              hasExtendedResourceAccess={hasExtendedResourceAccess}
               onSessionSelect={handleSessionSelect}
               onOpenUpgrade={() => setUpgradeModalOpen(true)}
             />
@@ -329,80 +332,397 @@ export default function CohortDashboardPage() {
 function CohortSessionSidebar({
   sessions,
   currentSessionId,
+  hasExtendedResourceAccess,
   onSessionSelect,
   onOpenUpgrade,
 }: {
   sessions: CohortSessionItem[];
   currentSessionId: string | null;
+  hasExtendedResourceAccess: boolean;
   onSessionSelect: (id: string) => void;
   onOpenUpgrade?: () => void;
 }) {
+  const isExtendedAccess = hasExtendedResourceAccess;
+
+  // Extended access ends on 25 October 2026
+  const extendedAccessDate = new Date("2026-10-25T23:59:59");
+  // Today's date
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Remove time from extended access date
+  const extendedEndDate = new Date(extendedAccessDate);
+  extendedEndDate.setHours(0, 0, 0, 0);
+  // Milliseconds in one day
+  const millisecondsPerDay = 1000 * 60 * 60 * 24;
+
+  // Days remaining until 25 October
+  const daysLeft = Math.max(
+    0,
+    Math.ceil(
+      (extendedEndDate.getTime() - today.getTime()) /
+        millisecondsPerDay
+    )
+  );
+
+  // Modal state
+  const [showAccessModal, setShowAccessModal] = useState(false);
+
   return (
-    <div className="h-full flex flex-col justify-between overflow-y-auto">
-      <div>
-        <div className="p-4 border-b border-gray-100">
-          <h2 className="text-lg md:text-xl font-extrabold text-gray-900">Cohort Content</h2>
-          <p className="text-gray-500 text-md font-semibold">
-            {sessions.length} {sessions.length === 1 ? "Session" : "Sessions"}
-          </p>
-        </div>
-        <div className="p-4 space-y-3">
-          {sessions.map((session, index) => (
+    <>
+      <div className="h-full flex flex-col justify-between overflow-y-auto">
+        <div>
+          {/* cohort content header */}
+          <div className="border-b border-gray-100 px-4 py-4">
+            {/* Title */}
+            <h2 className="text-lg md:text-xl font-extrabold leading-tight text-gray-900">
+              Cohort Content
+            </h2>
+
+            {/* Session count */}
+            <p className="mt-0.5 text-sm md:text-base font-semibold text-gray-500">
+              {sessions.length}{" "}
+              {sessions.length === 1 ? "Session" : "Sessions"}
+            </p>
+
+           {/* access bar */}
             <button
-              key={session.id}
-              onClick={() => onSessionSelect(session.id)}
+              type="button"
+              onClick={() => setShowAccessModal(true)}
               className={cn(
-                "w-full rounded-2xl p-4 text-left transition-all cursor-pointer",
-                currentSessionId === session.id
-                  ? "bg-orange-100 border-l-4 border-orange-500"
-                  : "bg-white border border-gray-100 hover:border-gray-200 hover:shadow-sm",
-                !session.isAccessible && "bg-gray-50/70 opacity-90"
+                "group mt-3 flex w-full items-center justify-between",
+                "rounded-lg border px-3 py-2.5",
+                "transition-all duration-200",
+                "focus:outline-none focus:ring-2 focus:ring-offset-1",
+                isExtendedAccess
+                  ? "border-green-200 bg-green-50 text-green-700 hover:border-green-300 hover:bg-green-100 focus:ring-green-300"
+                  : "border-orange-200 bg-orange-50 text-orange-700 hover:border-orange-300 hover:bg-orange-100 focus:ring-orange-300"
               )}
             >
-              <div className="flex items-start gap-4">
-                {currentSessionId === session.id ? (
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                  </div>
-                ) : (
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-semibold text-sm">
-                    {index + 1}
-                  </div>
-                )}
-                <div className="flex-1">
-                  <h3 className={cn(
-                    "text-sm md:text-base font-semibold leading-tight",
-                    currentSessionId === session.id ? "text-orange-700" : "text-gray-800"
-                  )}>
-                    {session.title}
-                  </h3>
-                </div>
-                {!session.isAccessible ? (
-                  <div className="flex-shrink-0">
-                    <Lock className="h-4 w-4 text-gray-400" />
-                  </div>
-                ) : currentSessionId === session.id && (
-                  <div className="flex-shrink-0 w-3 h-3 rounded-full bg-orange-500"></div>
-                )}
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span
+                  className={cn(
+                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                    isExtendedAccess
+                      ? "bg-green-100 text-green-700"
+                      : "bg-orange-100 text-orange-700"
+                  )}
+                >
+                  ✓
+                </span>
+
+                <span className="whitespace-nowrap text-xs font-semibold sm:text-sm">
+                  {isExtendedAccess
+                    ?"Access till 25th October"
+                    : "Access till 25th September"}
+                </span>
               </div>
+
+              <span className="ml-2 shrink-0 text-sm opacity-60 transition-transform group-hover:translate-x-0.5">
+                →
+              </span>
             </button>
-          ))}
+
+             {/* number of days left */}
+            {isExtendedAccess && (
+  <div className="mt-3 flex items-center gap-3 rounded-xl border  px-3 py-2.5 shadow-sm"
+  onClick={()=>setShowAccessModal(true)}>
+    {/* Clock */}
+    <div className="flex h-9 w-9  shrink-0 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-green-100">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-4 w-4 text-green-600"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <circle cx="12" cy="12" r="9" />
+        <polyline points="12 7 12 12 15 14" />
+      </svg>
+    </div>
+
+
+    <div className="min-w-0 flex-1">
+      <p className="text-[11px] font-medium text-gray-500">
+          Free Access Remaining
+      </p>
+
+      <p className="text-xs font-semibold text-green-700">
+        Until 25th October
+      </p>
+    </div>
+
+    {/* Days */}
+    <div className="flex shrink-0 items-center gap-1.5">
+      <span className="text-2xl font-extrabold leading-none text-green-600">
+        {daysLeft}
+      </span>
+
+      <span className="text-[10px] font-bold uppercase leading-tight text-green-600">
+        {daysLeft === 1 ? (
+          <>
+            day
+            <br />
+            left
+          </>
+        ) : (
+          <>
+            days
+            <br />
+            left
+          </>
+        )}
+      </span>
+    </div>
+  </div>
+)}
+          </div>
+
+
+          <div className="space-y-3 p-4">
+            {sessions.map((session, index) => (
+              <button
+                key={session.id}
+                onClick={() => onSessionSelect(session.id)}
+                className={cn(
+                  "w-full cursor-pointer rounded-2xl p-4 text-left transition-all",
+                  currentSessionId === session.id
+                    ? "border-l-4 border-orange-500 bg-orange-100"
+                    : "border border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm",
+                  !session.isAccessible &&
+                    "bg-gray-50/70 opacity-90"
+                )}
+              >
+                <div className="flex items-start gap-4">
+                  {currentSessionId === session.id ? (
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-500/20 text-orange-600">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </div>
+                  ) : (
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-gray-500">
+                      {index + 1}
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <h3
+                      className={cn(
+                        "text-sm md:text-base font-semibold leading-tight",
+                        currentSessionId === session.id
+                          ? "text-orange-700"
+                          : "text-gray-800"
+                      )}
+                    >
+                      {session.title}
+                    </h3>
+                  </div>
+
+                  {/* LOCK / ACTIVE INDICATOR */}
+                  {!session.isAccessible ? (
+                    <div className="shrink-0">
+                      <Lock className="h-4 w-4 text-gray-400" />
+                    </div>
+                  ) : (
+                    currentSessionId === session.id && (
+                      <div className="h-3 w-3 shrink-0 rounded-full bg-orange-500" />
+                    )
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
+
+        {onOpenUpgrade && (
+          <div className="sticky bottom-0 border-t border-gray-100 bg-white p-4">
+            <Button
+              onClick={onOpenUpgrade}
+              className="flex w-full items-center justify-center rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-orange-700"
+            >
+              Upgrade Plan
+            </Button>
+          </div>
+        )}
       </div>
 
-      {onOpenUpgrade && (
-        <div className="p-4 border-t border-gray-100 bg-white sticky bottom-0">
-          <Button
-            onClick={onOpenUpgrade}
-            className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2.5 px-4 rounded-lg text-sm transition-all shadow-sm flex items-center justify-center"
+      {/* resource access modal */}
+      {showAccessModal && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]"
+          onClick={() => setShowAccessModal(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
           >
-            Upgrade Plan
-          </Button>
+            {/* MODAL HEADER */}
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">
+                  Resource Access
+                </h3>
+
+                <p className="mt-1 text-xs text-gray-500">
+                  Your access to cohort resources
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowAccessModal(false)}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* standard access */}
+            <div
+              className={cn(
+                "rounded-xl border p-4",
+                !isExtendedAccess
+                  ? "border-orange-200 bg-orange-50"
+                  : "border-gray-200 bg-gray-50"
+              )}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  {/* Icon */}
+                  <span
+                    className={cn(
+                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold",
+                      !isExtendedAccess
+                        ? "bg-orange-100 text-orange-700"
+                        : "bg-gray-200 text-gray-500"
+                    )}
+                  >
+                    {!isExtendedAccess ? "✓" : "🔒"}
+                  </span>
+
+                  {/* Text */}
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-gray-900">
+                      Standard Access
+                    </p>
+
+                    <p className="mt-0.5 text-xs text-gray-500">
+                      Available till 25th September
+                    </p>
+                  </div>
+                </div>
+
+                {/* Badge */}
+                {!isExtendedAccess && (
+                  <span className="shrink-0 rounded-full bg-orange-100 px-2 py-1 text-[10px] font-bold text-orange-700">
+                    YOUR ACCESS
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* extended/upgraded access */}
+            <div
+              className={cn(
+                "mt-3 rounded-xl border p-4",
+                isExtendedAccess
+                  ? "border-green-200 bg-green-50"
+                  : "border-gray-200 bg-gray-50"
+              )}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  {/* Icon */}
+                  <span
+                    className={cn(
+                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold",
+                      isExtendedAccess
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-200 text-gray-500"
+                    )}
+                  >
+                    {isExtendedAccess ? "✓" : "🔒"}
+                  </span>
+
+                  {/* Text */}
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-gray-900">
+                      Extended Access
+                    </p>
+
+                    <p className="mt-0.5 text-xs text-gray-500">
+                      Available till 25th October
+                    </p>
+                  </div>
+                </div>
+
+                {/* Badge */}
+                {isExtendedAccess && (
+                  <span className="shrink-0 rounded-full bg-green-100 px-2 py-1 text-[10px] font-bold text-green-700">
+                    YOUR ACCESS
+                  </span>
+                )}
+              </div>
+
+              {/* DAYS LEFT */}
+              {isExtendedAccess && (
+                <div className="mt-3 rounded-lg bg-green-100/70 px-3 py-2">
+                  <p className="text-xs font-semibold text-green-800">
+                    {daysLeft}{" "}
+                    {daysLeft === 1 ? "day" : "days"} of free
+                    access remaining
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* to upgrade section */}
+            {!isExtendedAccess && (
+              <div className="mt-4 rounded-xl border border-orange-100 bg-orange-50/60 p-4">
+                <p className="text-sm font-semibold text-gray-900">
+                  Want access till 25th October?
+                </p>
+
+                <p className="mt-1 text-xs leading-relaxed text-gray-600">
+                  Upgrade your plan to extend your resource access
+                  beyond 25th September.
+                </p>
+
+                {onOpenUpgrade && (
+                  <Button
+                    onClick={() => {
+                      setShowAccessModal(false);
+                      onOpenUpgrade();
+                    }}
+                    className="mt-3 w-full rounded-lg bg-orange-600 py-2.5 text-sm font-bold text-white hover:bg-orange-700"
+                  >
+                    Upgrade Plan
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* CLOSE BUTTON */}
+            <button
+              type="button"
+              onClick={() => setShowAccessModal(false)}
+              className="mt-3 w-full py-2 text-xs font-medium text-gray-500 transition hover:text-gray-800"
+            >
+              Close
+            </button>
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 

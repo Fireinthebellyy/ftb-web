@@ -89,6 +89,16 @@ export async function GET(
 
     // Check if user has purchased an all-in-one upgrade plan
     const paidUpgradePlanIds = new Set(paidOrders.map(o => o.selectedUpgradePlanId).filter(Boolean));
+    const EXTENDED_ACCESS_PLAN_IDS = new Set([
+      "ced83417-3fac-4dfa-8969-30211b5125d5",
+      "6415617e-cee7-4179-a58b-b0f9703a7d53",
+    ]);
+    
+    const hasExtendedResourceAccess = paidOrders.some(
+      (order) =>
+        order.selectedUpgradePlanId &&
+        EXTENDED_ACCESS_PLAN_IDS.has(order.selectedUpgradePlanId)
+    );
     let hasAllInOneUpgrade = false;
     if (paidUpgradePlanIds.size > 0) {
       try {
@@ -168,6 +178,7 @@ export async function GET(
 
     return NextResponse.json({
       cohort: { id: cohort.id, title: cohort.title },
+      userId:session.user.id,
       hasAccess: true,
       isLocked: false,
       isVerificationRequired: cohort.isVerificationRequired,
@@ -175,6 +186,7 @@ export async function GET(
       sessions: sessionsWithAccess,
       currentPlanStatus,
       upgradePlans,
+      hasExtendedResourceAccess
     });
   } catch (error) {
     console.error("Error fetching cohort dashboard:", error);

@@ -303,7 +303,7 @@ export function CohortUpgradeGrid({
       {/* Cards: responsive grid layout with stretch alignment */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch pb-3 -mx-1 px-1">
         {/* Current Plan Card */}
-        <div className="w-full min-h-[480px] rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+        <div className="w-full min-h-[150px] rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm flex flex-col justify-between">
           <div className="space-y-3 sm:space-y-4">
             <div className="flex items-center justify-between border-b pb-2 sm:pb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
@@ -336,6 +336,7 @@ export function CohortUpgradeGrid({
 
         {/* Upgrade Plan Cards */}
         {displayPlans.map((plan) => {
+          console.log(displayPlans);
           const isFeatured = plan.badgeText?.toLowerCase().includes("popular") || plan.isAllInOne;
           const savings = plan.originalPrice ? plan.originalPrice - plan.price : null;
           const ownedCount =
@@ -435,7 +436,7 @@ export function CohortUpgradeGrid({
               key={plan.id}
               onClick={() => setSelectedPlanId(plan.id)}
               className={cn(
-                "w-full min-h-[480px] rounded-2xl border p-4 sm:p-5 flex flex-col justify-between relative transition-all duration-200 cursor-pointer overflow-hidden",
+                "w-full min-h-[200px] rounded-2xl border p-4 sm:p-5 flex flex-col justify-between relative transition-all duration-200 cursor-pointer overflow-hidden",
                 isSelected
                   ? "bg-orange-50/30 border-orange-500 ring-4 ring-orange-500/25 shadow-md scale-[1.01]"
                   : isFeatured

@@ -336,7 +336,6 @@ export function CohortUpgradeGrid({
 
         {/* Upgrade Plan Cards */}
         {displayPlans.map((plan) => {
-          console.log(displayPlans);
           const isFeatured = plan.badgeText?.toLowerCase().includes("popular") || plan.isAllInOne;
           const savings = plan.originalPrice ? plan.originalPrice - plan.price : null;
           const ownedCount =

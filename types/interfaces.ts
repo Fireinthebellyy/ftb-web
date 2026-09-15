@@ -424,3 +424,112 @@ export type CohortSessionResponse = {
   session: CohortSession;
   contents: CohortSessionContent[];
 };
+
+// Sprint Types
+export type SprintSession = {
+  id: string;
+  sprintId: string;
+  title: string;
+  description?: string | null;
+  orderIndex: number;
+  isActive: boolean;
+  isAccessible?: boolean;
+  createdAt: string;
+  updatedAt: string;
+  queries?: SprintSessionQuery[];
+};
+
+export type SprintSessionContent = {
+  id: string;
+  sessionId: string;
+  sectionType: "live_session" | "meet_mentor" | "resources" | "recording";
+  title: string;
+  content?: string | null;
+  isUnlocked: boolean;
+  lockedMessage?: string | null;
+  orderIndex: number;
+  liveSessionLink?: string | null;
+  videoUrl?: string | null;
+  images?: string[] | null;
+  createdAt: string;
+  updatedAt: string;
+  resources?: SprintSessionResource[];
+  mentors?: SprintSessionMentor[];
+};
+
+export type SprintSessionResource = {
+  id: string;
+  contentId: string;
+  name: string;
+  url: string;
+  type: "file" | "video" | "link" | "image" | "pdf" | "ppt" | "excel" | "word";
+  orderIndex: number;
+  createdAt: string;
+};
+
+export type SprintSessionQuery = {
+  id: string;
+  sessionId: string;
+  userId: string;
+  question: string;
+  answer?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export interface SprintSessionMentor {
+  id: string;
+  contentId: string;
+  sprintMentorId?: string | null;
+  name?: string | null;
+  role?: string | null;
+  imageUrl?: string | null;
+  bio?: string | null;
+  linkedinUrl?: string | null;
+  otherLinks?: { title: string; url: string }[] | null;
+  orderIndex: number;
+  createdAt: string;
+}
+
+export interface SprintUpgradePlan {
+  id: string;
+  sprintId: string;
+  title: string;
+  sectionLabel?: string | null;
+  description: string | null;
+  price: number;
+  originalPrice: number | null;
+  includedSessionCount: number | null;
+  includedSessionIds: string[] | null;
+  isAllInOne: boolean | null;
+  badgeText: string | null;
+  features: string[] | null;
+  orderIndex: number;
+  isActive: boolean;
+  createdAt?: string | Date;
+}
+
+export type SprintDetailResponse = {
+  sprint: { id: string; title: string };
+  userId: string;
+  hasAccess?: boolean;
+  isLocked: boolean;
+  isVerificationRequired: boolean;
+  isVerified: boolean;
+  sessions: SprintSession[];
+  currentPlanStatus?: {
+    purchasedSessionsCount: number;
+    totalSessionsCount: number;
+    amountPaid: number;
+    isAllInOne: boolean;
+    selectedAddOnIds: string[];
+  };
+  upgradePlans?: SprintUpgradePlan[];
+  hasExtendedResourceAccess: boolean;
+};
+
+export type SprintSessionResponse = {
+  session: SprintSession;
+  contents: SprintSessionContent[];
+};
+

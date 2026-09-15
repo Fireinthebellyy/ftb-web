@@ -1129,6 +1129,7 @@ export const siteSettings = pgTable("site_settings", {
   buddyOfferTitle: text("buddy_offer_title").default("Friendship Day Offer"),
   buddyOfferText: text("buddy_offer_text").default("Learning is better together! Enter your friend's email below so they can get access that too at 20% off"),
   toolkitCohortsTabLabel: text("toolkit_cohorts_tab_label").default("Live Cohorts"),
+  toolkitSprintsTabLabel: text("toolkit_sprints_tab_label").default("Sprints"),
   toolkitSessionsTabLabel: text("toolkit_sessions_tab_label").default("Sessions"),
   toolkitMentorshipTabLabel: text("toolkit_mentorship_tab_label").default("1:1 Mentorship"),
   toolkitDigitalProductsTabLabel: text("toolkit_digital_products_tab_label").default("Digital products"),
@@ -1150,7 +1151,286 @@ export const popups = pgTable("popups", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Export schema object last
+// Sprints
+export const sprints = pgTable("sprints", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  badge1: text("badge1"),
+  badge2: text("badge2"),
+  subtitle: text("subtitle"),
+  coverImageUrl: text("cover_image_url"),
+  coverImageUrls: text("cover_image_urls").array(),
+  cardImageUrl: text("card_image_url"),
+  startDate: text("start_date"),
+  highlights: text("highlights").array(),
+  mentorsHeading: text("mentors_heading").default("Meet Your Mentors"),
+  mentorsLinkTarget: text("mentors_link_target"),
+  mentorsLimit: integer("mentors_limit").default(4),
+  featuresHeading: text("features_heading").default("What You Get"),
+  sessionsHeading: text("sessions_heading").default("Sprint Sessions & Curriculum"),
+  testimonialsHeading: text("testimonials_heading").default("What Members Say About Our Ecosystem"),
+  whoIsThisForHeading: text("who_is_this_for_heading").default("Who Is This For?"),
+  whoIsThisForBullets: text("who_is_this_for_bullets").array(),
+  investmentLabel: text("investment_label").default("Total Investment"),
+  basePrice: integer("base_price").notNull(),
+  originalPrice: integer("original_price"),
+  toolkitId: uuid("toolkit_id").references(() => toolkits.id, { onDelete: "set null" }),
+  isActive: boolean("is_active").default(true),
+  isBestSeller: boolean("is_best_seller").default(false),
+  isFillingFast: boolean("is_filling_fast").default(false),
+  hasEarlyBird: boolean("has_early_bird").default(false),
+  isVerificationRequired: boolean("is_verification_required").default(true),
+  showEarlyBirdCheckout: boolean("show_early_bird_checkout").default(false),
+  showEarlyBirdMarqueeCheckout: boolean("show_early_bird_marquee_checkout").default(false),
+  showAddonsCheckout: boolean("show_addons_checkout").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const sprintMentors = pgTable("sprint_mentors", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sprintId: uuid("sprint_id").references(() => sprints.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  role: text("role").notNull(),
+  imageUrl: text("image_url"),
+  bio: text("bio"),
+  link: text("link"),
+  orderIndex: integer("order_index").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const sprintFeatures = pgTable("sprint_features", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sprintId: uuid("sprint_id").references(() => sprints.id, { onDelete: "cascade" }),
+  icon: text("icon").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  orderIndex: integer("order_index").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const sprintTiers = pgTable("sprint_tiers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sprintId: uuid("sprint_id").references(() => sprints.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  price: integer("price").notNull(),
+  originalPrice: integer("original_price"),
+  description: text("description").notNull(),
+  whatIncluded: jsonb("what_included").$type<string[]>().default([]),
+  isDefault: boolean("is_default").default(false),
+  orderIndex: integer("order_index").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const sprintAddOns = pgTable("sprint_addons", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sprintId: uuid("sprint_id").references(() => sprints.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  priceDelta: integer("price_delta").notNull(),
+  description: text("description").notNull(),
+  orderIndex: integer("order_index").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const sprintUpgradePlans = pgTable("sprint_upgrade_plans", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sprintId: uuid("sprint_id").references(() => sprints.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  sectionLabel: text("section_label"),
+  description: text("description"),
+  price: integer("price").notNull(),
+  originalPrice: integer("original_price"),
+  includedSessionCount: integer("included_session_count").default(1),
+  includedSessionIds: jsonb("included_session_ids").$type<string[]>().default([]),
+  isAllInOne: boolean("is_all_in_one").default(false),
+  badgeText: text("badge_text"),
+  features: jsonb("features").$type<string[]>().default([]),
+  orderIndex: integer("order_index").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userSprintTargetPlans = pgTable(
+  "user_sprint_target_plans",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    sprintId: uuid("sprint_id")
+      .notNull()
+      .references(() => sprints.id, { onDelete: "cascade" }),
+    planId: uuid("plan_id")
+      .notNull()
+      .references(() => sprintUpgradePlans.id, { onDelete: "cascade" }),
+    isEnabled: boolean("is_enabled").default(true),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    unique("user_sprint_target_plans_user_sprint_plan_unique").on(
+      table.userId,
+      table.sprintId,
+      table.planId
+    ),
+  ]
+);
+
+export const sprintOrders = pgTable("sprint_orders", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sprintId: uuid("sprint_id").references(() => sprints.id, { onDelete: "cascade" }),
+  userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+  buyerName: text("buyer_name").notNull(),
+  buyerEmail: text("buyer_email").notNull(),
+  buyerPhone: text("buyer_phone"),
+  buddyEmail: text("buddy_email"),
+  selectedTierId: uuid("selected_tier_id").references(() => sprintTiers.id, { onDelete: "set null" }),
+  selectedUpgradePlanId: uuid("selected_upgrade_plan_id").references(() => sprintUpgradePlans.id, { onDelete: "restrict" }),
+  selectedAddOnIds: jsonb("selected_addon_ids").$type<string[]>().default([]),
+  selectedToolkitIds: jsonb("selected_toolkit_ids").$type<string[]>().default([]),
+  selectedSessionIds: jsonb("selected_session_ids").$type<string[]>().default([]),
+  amountPaid: integer("amount_paid").notNull(),
+  couponId: uuid("coupon_id").references(() => coupons.id, { onDelete: "set null" }),
+  razorpayOrderId: text("razorpay_order_id").notNull(),
+  razorpayPaymentId: text("razorpay_payment_id"),
+  status: text("status").notNull(),
+  registrationName: text("registration_name"),
+  registrationCollege: text("registration_college"),
+  registrationCourse: text("registration_course"),
+  registrationYear: text("registration_year"),
+  registrationExpectations: text("registration_expectations"),
+  registrationCompletedAt: timestamp("registration_completed_at"),
+  isVerified: boolean("is_verified").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const sprintSessions = pgTable("sprint_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sprintId: uuid("sprint_id").notNull().references(() => sprints.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  price: integer("price"),
+  originalPrice: integer("original_price"),
+  orderIndex: integer("order_index").default(0).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  showInDashboard: boolean("show_in_dashboard").default(true).notNull(),
+  showInHome: boolean("show_in_home").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const sprintSessionContents = pgTable("sprint_session_contents", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sessionId: uuid("session_id").notNull().references(() => sprintSessions.id, { onDelete: "cascade" }),
+  sectionType: text("section_type").notNull(),
+  title: text("title").notNull(),
+  content: text("content"),
+  isUnlocked: boolean("is_unlocked").default(false).notNull(),
+  lockedMessage: text("locked_message"),
+  orderIndex: integer("order_index").default(0).notNull(),
+  liveSessionLink: text("live_session_link"),
+  videoUrl: text("video_url"),
+  images: jsonb("images"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const sprintSessionResources = pgTable("sprint_session_resources", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  contentId: uuid("content_id").notNull().references(() => sprintSessionContents.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  url: text("url").notNull(),
+  type: text("type").default("file"),
+  orderIndex: integer("order_index").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const sprintSessionQueries = pgTable("sprint_session_queries", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sessionId: uuid("session_id").notNull().references(() => sprintSessions.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  question: text("question").notNull(),
+  answer: text("answer"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const sprintSessionMentors = pgTable("sprint_session_mentors", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  contentId: uuid("content_id").notNull().references(() => sprintSessionContents.id, { onDelete: "cascade" }),
+  sprintMentorId: uuid("sprint_mentor_id").references(() => sprintMentors.id, { onDelete: "set null" }),
+  name: text("name"),
+  role: text("role"),
+  imageUrl: text("image_url"),
+  bio: text("bio"),
+  linkedinUrl: text("linkedin_url"),
+  otherLinks: jsonb("other_links").$type<{ title: string; url: string }[]>().default([]),
+  orderIndex: integer("order_index").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const sprintSessionsRelations = relations(sprintSessions, ({ many }) => ({
+  contents: many(sprintSessionContents),
+  queries: many(sprintSessionQueries),
+}));
+
+export const sprintSessionContentsRelations = relations(sprintSessionContents, ({ one, many }) => ({
+  session: one(sprintSessions, {
+    fields: [sprintSessionContents.sessionId],
+    references: [sprintSessions.id],
+  }),
+  resources: many(sprintSessionResources),
+  mentors: many(sprintSessionMentors),
+}));
+
+export const sprintSessionResourcesRelations = relations(sprintSessionResources, ({ one }) => ({
+  content: one(sprintSessionContents, {
+    fields: [sprintSessionResources.contentId],
+    references: [sprintSessionContents.id],
+  }),
+}));
+
+export const sprintSessionQueriesRelations = relations(sprintSessionQueries, ({ one }) => ({
+  session: one(sprintSessions, {
+    fields: [sprintSessionQueries.sessionId],
+    references: [sprintSessions.id],
+  }),
+}));
+
+export const sprintSessionMentorsRelations = relations(sprintSessionMentors, ({ one }) => ({
+  content: one(sprintSessionContents, {
+    fields: [sprintSessionMentors.contentId],
+    references: [sprintSessionContents.id],
+  }),
+  sprintMentor: one(sprintMentors, {
+    fields: [sprintSessionMentors.sprintMentorId],
+    references: [sprintMentors.id],
+  }),
+}));
+
+export const sprintUpgradePlansRelations = relations(sprintUpgradePlans, ({ one }) => ({
+  sprint: one(sprints, {
+    fields: [sprintUpgradePlans.sprintId],
+    references: [sprints.id],
+  }),
+}));
+
+export const userSprintTargetPlansRelations = relations(userSprintTargetPlans, ({ one }) => ({
+  sprint: one(sprints, {
+    fields: [userSprintTargetPlans.sprintId],
+    references: [sprints.id],
+  }),
+  plan: one(sprintUpgradePlans, {
+    fields: [userSprintTargetPlans.planId],
+    references: [sprintUpgradePlans.id],
+  }),
+  user: one(user, {
+    fields: [userSprintTargetPlans.userId],
+    references: [user.id],
+  }),
+}));
+
 export const schema = {
   user,
   userOnboardingProfiles,
@@ -1212,4 +1492,25 @@ export const schema = {
   siteSettings,
   popups,
   sessionApplications,
+  sprints,
+  sprintMentors,
+  sprintFeatures,
+  sprintTiers,
+  sprintAddOns,
+  sprintSessions,
+  sprintOrders,
+  sprintSessionContents,
+  sprintSessionResources,
+  sprintSessionQueries,
+  sprintSessionMentors,
+  sprintUpgradePlans,
+  userSprintTargetPlans,
+  sprintSessionsRelations,
+  sprintSessionContentsRelations,
+  sprintSessionResourcesRelations,
+  sprintSessionQueriesRelations,
+  sprintSessionMentorsRelations,
+  sprintUpgradePlansRelations,
+  userSprintTargetPlansRelations,
 };
+

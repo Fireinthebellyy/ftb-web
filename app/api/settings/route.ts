@@ -16,6 +16,7 @@ export async function GET() {
       buddyOfferTitle: settings[0]?.buddyOfferTitle ?? "Friendship Day Offer",
       buddyOfferText: settings[0]?.buddyOfferText ?? "Learning is better together! Enter your friend's email below so they can get access that too at 20% off",
       toolkitCohortsTabLabel: settings[0]?.toolkitCohortsTabLabel ?? "Live Cohorts",
+      toolkitSprintsTabLabel: settings[0]?.toolkitSprintsTabLabel ?? "Sprints",
       toolkitSessionsTabLabel: settings[0]?.toolkitSessionsTabLabel ?? "Sessions",
       toolkitMentorshipTabLabel: settings[0]?.toolkitMentorshipTabLabel ?? "1:1 Mentorship",
       toolkitDigitalProductsTabLabel: settings[0]?.toolkitDigitalProductsTabLabel ?? "Digital products",

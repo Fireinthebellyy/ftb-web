@@ -12,7 +12,7 @@ Added support for embedding CDN videos (e.g. Bunny CDN player / iframe links) in
 ### 1. Database & Schema
 - **File**: `lib/schema.ts`
   - Added `cdnVideoUrl: text("cdn_video_url")` column to `cohortSessionContents` table.
-- **SQL Migration required**:
+- **Migration**: `migrations/0070_add_cdn_video_url_to_cohort_session_contents.sql`
   ```sql
   ALTER TABLE "cohort_session_contents"
   ADD COLUMN IF NOT EXISTS "cdn_video_url" text;

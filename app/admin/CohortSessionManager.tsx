@@ -60,6 +60,7 @@ const sessionContentSchema = z.object({
   lockedMessage: z.string().optional(),
   liveSessionLink: z.string().optional(),
   videoUrl: z.string().optional(),
+  cdnVideoUrl: z.string().optional(),
   images: z.array(z.string()).optional(),
 });
 
@@ -113,6 +114,7 @@ interface CohortSessionContent {
   lockedMessage: string | null;
   liveSessionLink: string | null;
   videoUrl: string | null;
+  cdnVideoUrl: string | null;
   images: string[] | null;
   createdAt: string;
   updatedAt: string;
@@ -213,6 +215,7 @@ export default function CohortSessionManager({
       isUnlocked: false,
       liveSessionLink: "",
       videoUrl: "",
+      cdnVideoUrl:"",
       images: [],
     },
   });
@@ -348,6 +351,7 @@ export default function CohortSessionManager({
       lockedMessage: content.lockedMessage ?? "",
       liveSessionLink: content.liveSessionLink ?? "",
       videoUrl: content.videoUrl ?? "",
+      cdnVideoUrl: content.cdnVideoUrl ?? "",
       images: content.images ?? [],
     });
     setContentEditDialogOpen(true);
@@ -364,6 +368,7 @@ export default function CohortSessionManager({
       isUnlocked: false,
       liveSessionLink: "",
       videoUrl: "",
+      cdnVideoUrl: "",
       images: [],
     });
     setContentEditDialogOpen(true);
@@ -389,6 +394,9 @@ export default function CohortSessionManager({
         payload.liveSessionLink = data.liveSessionLink;
       }
 
+      if (data.sectionType === "live_session") {
+        payload.cdnVideoUrl = data.cdnVideoUrl || null;
+      }
       // Only include videoUrl if it has a value and it's a recording
       if (data.sectionType === "recording" && data.videoUrl) {
         payload.videoUrl = data.videoUrl;
@@ -969,6 +977,35 @@ export default function CohortSessionManager({
                     )}
                   />
                 )}
+                {contentForm.watch("sectionType")=== "live_session" && (
+                    <FormField
+                    control={contentForm.control}
+                    name="cdnVideoUrl"
+                    render={({field})=>(
+                      <FormItem>
+                        <FormLabel>CDN</FormLabel>
+                        <FormControl>
+                          <Input 
+                          placeholder="Paste full embed code or URL..." {...field}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const value = e.target.value;
+                            let videoUrl = value;
+
+                            if (value.includes("<iframe")) {
+                              const match =
+                                value.match(/src=["']([^"']*)["']/);
+                              if (match && match[1]) {
+                                videoUrl = match[1];
+                              }
+                            }
+
+                            field.onChange(videoUrl);
+                          }}/>
+                        </FormControl>
+                      </FormItem>
+                )}/>
+                  )
+                }
                 {contentForm.watch("sectionType") === "recording" && (
                   <>
                     {editingContent && editingContent.videoUrl && (

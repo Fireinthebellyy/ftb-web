@@ -342,6 +342,7 @@ export type CohortSessionContent = {
   orderIndex: number;
   liveSessionLink?: string | null;
   videoUrl?: string | null;
+  cdnVideoUrl?: string | null;
   images?: string[] | null;
   createdAt: string;
   updatedAt: string;

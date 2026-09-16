@@ -4,6 +4,7 @@ import { logAdminActivity } from "@/lib/admin-activity";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { db } from "@/lib/db";
 import { cohortSessionContents } from "@/lib/schema";
+import { normalizeAbsoluteUrl } from "@/lib/utils";
 import { getCurrentUser } from "@/server/users";
 import { eq, asc } from "drizzle-orm";
 
@@ -99,6 +100,7 @@ export async function POST(
       orderIndex,
       liveSessionLink,
       videoUrl,
+      cdnVideoUrl,
       lockedMessage,
       images,
     } = body;
@@ -122,6 +124,20 @@ export async function POST(
       });
     }
 
+    let normalizedCdnVideoUrl: string | null = null;
+    if (cdnVideoUrl !== undefined && cdnVideoUrl !== null) {
+      const norm = normalizeAbsoluteUrl(cdnVideoUrl);
+      if (!norm.isValid) {
+        activityStatus = 400;
+        activityError = "Invalid CDN Video URL";
+        return badRequest("Please provide a valid absolute URL for CDN Video.", {
+          code: "INVALID_URL",
+          fields: ["cdnVideoUrl"],
+        });
+      }
+      normalizedCdnVideoUrl = norm.value;
+    }
+
     const newContent = await db
       .insert(cohortSessionContents)
       .values({
@@ -133,6 +149,7 @@ export async function POST(
         orderIndex: orderIndex ?? 0,
         liveSessionLink: liveSessionLink || null,
         videoUrl: videoUrl || null,
+        cdnVideoUrl: normalizedCdnVideoUrl,
         lockedMessage: lockedMessage || null,
         images: images || null,
       })

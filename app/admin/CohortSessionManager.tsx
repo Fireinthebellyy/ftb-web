@@ -394,8 +394,8 @@ export default function CohortSessionManager({
         payload.liveSessionLink = data.liveSessionLink;
       }
 
-      if (data.sectionType === "live_session" && data.cdnVideoUrl) {
-        payload.cdnVideoUrl = data.cdnVideoUrl;
+      if (data.sectionType === "live_session") {
+        payload.cdnVideoUrl = data.cdnVideoUrl || null;
       }
       // Only include videoUrl if it has a value and it's a recording
       if (data.sectionType === "recording" && data.videoUrl) {
@@ -987,16 +987,16 @@ export default function CohortSessionManager({
                         <FormControl>
                           <Input 
                           placeholder="Paste full embed code or URL..." {...field}
-                          onChange={(e)=>{
-                            const value=e.target.value;
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const value = e.target.value;
                             let videoUrl = value;
 
-                            if(value.includes("<iframe")){
+                            if (value.includes("<iframe")) {
                               const match =
-                                    value.match(/src=["']([^"']*)["']/);
-                                  if (match && match[1]) {
-                                    videoUrl = match[1];
-                                  }
+                                value.match(/src=["']([^"']*)["']/);
+                              if (match && match[1]) {
+                                videoUrl = match[1];
+                              }
                             }
 
                             field.onChange(videoUrl);

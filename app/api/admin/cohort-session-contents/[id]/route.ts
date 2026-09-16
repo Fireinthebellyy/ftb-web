@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { badRequest } from "@/lib/api-error";
 import { logAdminActivity } from "@/lib/admin-activity";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { db } from "@/lib/db";
 import { cohortSessionContents } from "@/lib/schema";
+import { normalizeAbsoluteUrl } from "@/lib/utils";
 import { getCurrentUser } from "@/server/users";
 import { eq } from "drizzle-orm";
 
@@ -51,7 +53,7 @@ export async function PUT(
     activityBeforeState = existingContent[0];
 
     const body = await request.json();
-    const { title, content, isUnlocked, orderIndex, liveSessionLink, videoUrl, cdnVideoUrl,lockedMessage, images } = body;
+    const { title, content, isUnlocked, orderIndex, liveSessionLink, videoUrl, cdnVideoUrl, lockedMessage, images } = body;
 
     // Build update object with only provided fields
     const updateData: Partial<typeof cohortSessionContents.$inferInsert> & { updatedAt: Date } = {
@@ -64,7 +66,18 @@ export async function PUT(
     if (orderIndex !== undefined) updateData.orderIndex = orderIndex;
     if (liveSessionLink !== undefined) updateData.liveSessionLink = liveSessionLink ?? null;
     if (videoUrl !== undefined) updateData.videoUrl = videoUrl ?? null;
-    if (cdnVideoUrl !== undefined) updateData.cdnVideoUrl = cdnVideoUrl ?? null;
+    if (cdnVideoUrl !== undefined) {
+      const norm = normalizeAbsoluteUrl(cdnVideoUrl);
+      if (!norm.isValid) {
+        activityStatus = 400;
+        activityError = "Invalid CDN Video URL";
+        return badRequest("Please provide a valid absolute URL for CDN Video.", {
+          code: "INVALID_URL",
+          fields: ["cdnVideoUrl"],
+        });
+      }
+      updateData.cdnVideoUrl = norm.value;
+    }
     if (lockedMessage !== undefined) updateData.lockedMessage = lockedMessage ?? null;
     if (images !== undefined) updateData.images = images ?? null;
 

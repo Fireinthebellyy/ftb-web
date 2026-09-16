@@ -141,3 +141,30 @@ export function ensureAbsoluteUrl(url: string | null | undefined): string {
   }
   return `https://${trimmed}`;
 }
+
+/**
+ * Normalizes and validates an absolute URL.
+ * Returns null if blank/whitespace/null/undefined.
+ * Returns isValid: false if non-blank but not a valid absolute HTTP/HTTPS URL.
+ */
+export function normalizeAbsoluteUrl(url: unknown): { isValid: boolean; value: string | null } {
+  if (url === undefined || url === null) {
+    return { isValid: true, value: null };
+  }
+  if (typeof url !== "string") {
+    return { isValid: false, value: null };
+  }
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return { isValid: true, value: null };
+  }
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return { isValid: false, value: null };
+    }
+    return { isValid: true, value: trimmed };
+  } catch {
+    return { isValid: false, value: null };
+  }
+}

@@ -1175,6 +1175,7 @@ export const sprints = pgTable("sprints", {
   investmentLabel: text("investment_label").default("Total Investment"),
   basePrice: integer("base_price").notNull(),
   originalPrice: integer("original_price"),
+  videoUrl: text("video_url"),
   toolkitId: uuid("toolkit_id").references(() => toolkits.id, { onDelete: "set null" }),
   isActive: boolean("is_active").default(true),
   isBestSeller: boolean("is_best_seller").default(false),

@@ -93,6 +93,7 @@ interface Sprint {
   investmentLabel?: string;
   basePrice: number;
   originalPrice?: number | null;
+  videoUrl?: string | null;
   toolkitId?: string;
   isActive: boolean;
   isBestSeller?: boolean;
@@ -159,6 +160,7 @@ export default function AdminSprintsTable() {
     coverImageUrl: "",
     coverImageUrls: [] as string[],
     cardImageUrl: "",
+    videoUrl: "",
     startDate: "",
     highlightsText: "",
     mentorsHeading: "Meet Your Mentors",
@@ -223,6 +225,7 @@ export default function AdminSprintsTable() {
       coverImageUrl: "",
       coverImageUrls: [],
       cardImageUrl: "",
+      videoUrl: "",
       startDate: "",
       highlightsText: "",
       mentorsHeading: "Meet Your Mentors",
@@ -263,6 +266,7 @@ export default function AdminSprintsTable() {
         coverImageUrl: full.coverImageUrl || "",
         coverImageUrls: full.coverImageUrls || [],
         cardImageUrl: full.cardImageUrl || "",
+        videoUrl: full.videoUrl || "",
         startDate: full.startDate || "",
         highlightsText: (full.highlights || []).join("\n"),
         mentorsHeading: full.mentorsHeading || "Meet Your Mentors",
@@ -608,6 +612,19 @@ export default function AdminSprintsTable() {
               />
             </div>
 
+            <div>
+              <Label>Banner Video URL (YouTube or Instagram Reel/Post)</Label>
+              <Input
+                placeholder="https://www.youtube.com/watch?v=... or https://www.instagram.com/reel/..."
+                value={formData.videoUrl}
+                onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+                className="bg-zinc-950 border-zinc-800"
+              />
+              <p className="text-[11px] text-zinc-500 mt-1">
+                Supports YouTube videos/shorts and Instagram Reels/posts. Displays in the inner banner.
+              </p>
+            </div>
+
             <div className="flex items-center justify-between pt-2">
               <Label>Active Status</Label>
               <Switch
@@ -634,6 +651,7 @@ export default function AdminSprintsTable() {
           onClose={() => setSessionManagerSprint(null)}
           sprintId={sessionManagerSprint.id}
           sprintTitle={sessionManagerSprint.title}
+          onUpdate={fetchSprints}
         />
       )}
 

@@ -951,10 +951,6 @@ function CohortSessionMain({
                       className={content.liveSessionLink ? "mt-3 shadow-sm" : "shadow-sm"}
                     />
                   )}
-                  {content.cdnVideoUrl && (
-                      <CohortBunnyPlayer videoUrl={content.cdnVideoUrl} className="shadow-sm mt-3"/>
-                    )
-                  }
                 </div>
               )}
               {content.images && content.images.length > 0 && content.sectionType === "live_session" && (

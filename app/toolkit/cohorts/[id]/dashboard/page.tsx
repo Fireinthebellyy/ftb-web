@@ -38,6 +38,7 @@ import { toast } from "sonner";
 import { ImageCarousel } from "@/components/ui/image-carousel";
 import { useQuery } from "@tanstack/react-query";
 import { CohortUpgradeGrid, CohortSessionItem, CurrentPlanStatus, UpgradePlan } from "./CohortUpgradeGrid";
+import CohortBunnyPlayer from "@/components/toolkit/CohortBunnyPlayer";
 
 export default function CohortDashboardPage() {
   const params = useParams();
@@ -929,6 +930,10 @@ function CohortSessionMain({
                       <span>Join Live Session</span>
                     </a>
                   )}
+                  {content.cdnVideoUrl && (
+                      <CohortBunnyPlayer videoUrl={content.cdnVideoUrl} className="shadow-sm mt-3"/>
+                    )
+                  }
                 </div>
               )}
               {content.images && content.images.length > 0 && content.sectionType === "live_session" && (

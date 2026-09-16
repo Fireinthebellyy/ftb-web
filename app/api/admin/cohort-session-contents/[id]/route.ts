@@ -51,7 +51,7 @@ export async function PUT(
     activityBeforeState = existingContent[0];
 
     const body = await request.json();
-    const { title, content, isUnlocked, orderIndex, liveSessionLink, videoUrl, lockedMessage, images } = body;
+    const { title, content, isUnlocked, orderIndex, liveSessionLink, videoUrl, cdnVideoUrl,lockedMessage, images } = body;
 
     // Build update object with only provided fields
     const updateData: Partial<typeof cohortSessionContents.$inferInsert> & { updatedAt: Date } = {
@@ -64,6 +64,7 @@ export async function PUT(
     if (orderIndex !== undefined) updateData.orderIndex = orderIndex;
     if (liveSessionLink !== undefined) updateData.liveSessionLink = liveSessionLink ?? null;
     if (videoUrl !== undefined) updateData.videoUrl = videoUrl ?? null;
+    if (cdnVideoUrl !== undefined) updateData.cdnVideoUrl = cdnVideoUrl ?? null;
     if (lockedMessage !== undefined) updateData.lockedMessage = lockedMessage ?? null;
     if (images !== undefined) updateData.images = images ?? null;
 

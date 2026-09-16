@@ -99,6 +99,7 @@ export async function POST(
       orderIndex,
       liveSessionLink,
       videoUrl,
+      cdnVideoUrl,
       lockedMessage,
       images,
     } = body;
@@ -133,6 +134,7 @@ export async function POST(
         orderIndex: orderIndex ?? 0,
         liveSessionLink: liveSessionLink || null,
         videoUrl: videoUrl || null,
+        cdnVideoUrl: cdnVideoUrl || null,
         lockedMessage: lockedMessage || null,
         images: images || null,
       })

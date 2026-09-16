@@ -1004,6 +1004,7 @@ export const cohortSessionContents = pgTable("cohort_session_contents", {
   orderIndex: integer("order_index").default(0).notNull(),
   liveSessionLink: text("live_session_link"), // Single link for live session
   videoUrl: text("video_url"),
+  cdnVideoUrl :text("cdn_video_url"),
   images: jsonb("images"), // Array of image URLs for carousel display
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

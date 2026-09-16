@@ -168,4 +168,3 @@ export function normalizeAbsoluteUrl(url: unknown): { isValid: boolean; value: s
     return { isValid: false, value: null };
   }
 }
-

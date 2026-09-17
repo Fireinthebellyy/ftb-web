@@ -7,8 +7,68 @@ export function getBunnyExpirySeconds(): number {
   return isNaN(parsed) ? 900 : parsed;
 }
 
-export function generateBunnyEmbedUrl(videoId: string): string {
-  const libraryId = process.env.BUNNY_STREAM_LIBRARY_ID;
+export function extractBunnyVideoDetails(input?: string | null): {
+  videoId: string;
+  libraryId?: string;
+} | null {
+  if (!input) return null;
+  let cleaned = input.trim();
+  if (!cleaned) return null;
+
+  // If iframe snippet was provided
+  if (cleaned.includes("<iframe")) {
+    const match = cleaned.match(/src=["']([^"']*)["']/);
+    if (match && match[1]) {
+      cleaned = match[1].trim();
+    }
+  }
+
+  // Remove query string and hash
+  const urlWithoutQuery = cleaned.split("?")[0].split("#")[0];
+
+  // Check if it is a URL with path segments
+  if (urlWithoutQuery.includes("/")) {
+    const parts = urlWithoutQuery.split("/").filter(Boolean);
+    const lastPart = parts[parts.length - 1];
+    const secondLastPart = parts[parts.length - 2];
+
+    // Check if second last part is a numeric libraryId (e.g. embed/626882/uuid)
+    if (secondLastPart && /^\d+$/.test(secondLastPart)) {
+      return { videoId: lastPart, libraryId: secondLastPart };
+    }
+    return { videoId: lastPart };
+  }
+
+  // If it is just a video ID (UUID)
+  return { videoId: urlWithoutQuery };
+}
+
+export function isBunnyVideo(input?: string | null): boolean {
+  if (!input) return false;
+  const cleaned = input.trim();
+  if (!cleaned) return false;
+
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (uuidRegex.test(cleaned)) return true;
+
+  if (
+    cleaned.includes("mediadelivery.net") ||
+    cleaned.includes("bunnycdn.com") ||
+    cleaned.includes("bunny.net") ||
+    cleaned.includes("<iframe")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+export function generateBunnyEmbedUrl(
+  videoId: string,
+  customLibraryId?: string
+): string {
+  const libraryId = customLibraryId || process.env.BUNNY_STREAM_LIBRARY_ID;
   const tokenSecret = process.env.BUNNY_TOKEN_SECRET;
   const expirySeconds = Number(process.env.BUNNY_TOKEN_EXPIRY_SECONDS ?? 900);
 

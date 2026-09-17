@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { badRequest } from "@/lib/api-error";
 import { logAdminActivity } from "@/lib/admin-activity";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
+import { extractBunnyVideoDetails } from "@/lib/bunny";
 import { db } from "@/lib/db";
 import { cohortSessionContents } from "@/lib/schema";
 import { normalizeAbsoluteUrl } from "@/lib/utils";
@@ -130,20 +131,29 @@ export async function POST(
     }
 
     let normalizedCdnVideoUrl: string | null = null;
-    if (cdnVideoUrl !== undefined && cdnVideoUrl !== null) {
-      const norm = normalizeAbsoluteUrl(cdnVideoUrl);
-      if (!norm.isValid) {
-        activityStatus = 400;
-        activityError = "Invalid CDN Video URL";
-        return badRequest(
-          "Please provide a valid absolute URL for CDN Video.",
-          {
-            code: "INVALID_URL",
-            fields: ["cdnVideoUrl"],
-          }
-        );
+    if (
+      cdnVideoUrl !== undefined &&
+      cdnVideoUrl !== null &&
+      cdnVideoUrl.trim() !== ""
+    ) {
+      const bunnyDetails = extractBunnyVideoDetails(cdnVideoUrl);
+      if (bunnyDetails?.videoId) {
+        normalizedCdnVideoUrl = cdnVideoUrl.trim();
+      } else {
+        const norm = normalizeAbsoluteUrl(cdnVideoUrl);
+        if (!norm.isValid) {
+          activityStatus = 400;
+          activityError = "Invalid CDN Video URL or ID";
+          return badRequest(
+            "Please provide a valid CDN Video URL or Video ID.",
+            {
+              code: "INVALID_URL",
+              fields: ["cdnVideoUrl"],
+            }
+          );
+        }
+        normalizedCdnVideoUrl = norm.value;
       }
-      normalizedCdnVideoUrl = norm.value;
     }
 
     const newContent = await db

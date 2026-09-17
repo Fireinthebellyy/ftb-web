@@ -379,7 +379,32 @@ function CohortSessionSidebar({
   const isExtendedAccess = hasExtendedResourceAccess;
 
   // Extended access ends on 25 October 2026
-  const extendedAccessDate = new Date("2026-10-25T23:59:59");
+  const extendedAccessDate = new Date("2026-11-01T23:59:59");
+  const standardAccessDate = new Date("2026-10-01T23:59:59");
+
+  const getOrdinal = (date) => {
+    switch (date % 10) {
+      case 1:
+        return "st";
+      case 2:
+        return "nd";
+      case 3:
+        return "rd";
+      default:
+        return "th";
+    }
+  };
+  const extendedAccessDateInWords =
+    extendedAccessDate.getDate() +
+    getOrdinal(extendedAccessDate.getDate()) +
+    " " +
+    extendedAccessDate.toLocaleString("default", { month: "long" });
+  const standardAccessDateInWords =
+    standardAccessDate.getDate() +
+    getOrdinal(standardAccessDate.getDate()) +
+    " " +
+    standardAccessDate.toLocaleString("default", { month: "long" });
+
   // Today's date
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -445,8 +470,8 @@ function CohortSessionSidebar({
 
                 <span className="text-xs font-semibold whitespace-nowrap sm:text-sm">
                   {isExtendedAccess
-                    ? "Access till 25th October"
-                    : "Access till 25th September"}
+                    ? `Access till ${extendedAccessDateInWords}`
+                    : `Access till ${standardAccessDateInWords}`}
                 </span>
               </div>
 
@@ -482,7 +507,7 @@ function CohortSessionSidebar({
                   </p>
 
                   <p className="text-xs font-semibold text-green-700">
-                    Until 25th October
+                    Until {`${extendedAccessDateInWords}`}
                   </p>
                 </div>
 
@@ -647,7 +672,7 @@ function CohortSessionSidebar({
                     </p>
 
                     <p className="mt-0.5 text-xs text-gray-500">
-                      Available till 25th September
+                      Available till {`${standardAccessDateInWords}`}
                     </p>
                   </div>
                 </div>
@@ -691,7 +716,7 @@ function CohortSessionSidebar({
                     </p>
 
                     <p className="mt-0.5 text-xs text-gray-500">
-                      Available till 25th October
+                      Available till {`${extendedAccessDateInWords}`}
                     </p>
                   </div>
                 </div>
@@ -719,12 +744,12 @@ function CohortSessionSidebar({
             {!isExtendedAccess && (
               <div className="mt-4 rounded-xl border border-orange-100 bg-orange-50/60 p-4">
                 <p className="text-sm font-semibold text-gray-900">
-                  Want access till 25th October?
+                  Want access till {`${extendedAccessDateInWords}`}?
                 </p>
 
                 <p className="mt-1 text-xs leading-relaxed text-gray-600">
-                  Upgrade your plan to extend your resource access beyond 25th
-                  September.
+                  Upgrade your plan to extend your resource access beyond{" "}
+                  {`${standardAccessDateInWords}`}.
                 </p>
 
                 {onOpenUpgrade && (

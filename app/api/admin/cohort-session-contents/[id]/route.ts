@@ -78,6 +78,14 @@ export async function PUT(
       updateData.liveSessionLink = liveSessionLink ?? null;
     if (videoUrl !== undefined) updateData.videoUrl = videoUrl ?? null;
     if (cdnVideoUrl !== undefined) {
+      if (cdnVideoUrl !== null && typeof cdnVideoUrl !== "string") {
+        activityStatus = 400;
+        activityError = "Invalid CDN Video URL";
+        return badRequest("Please provide a valid CDN Video URL or Video ID.", {
+          code: "INVALID_URL",
+          fields: ["cdnVideoUrl"],
+        });
+      }
       if (cdnVideoUrl === null || cdnVideoUrl.trim() === "") {
         updateData.cdnVideoUrl = null;
       } else {

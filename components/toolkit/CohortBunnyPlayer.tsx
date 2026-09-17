@@ -46,6 +46,7 @@ export default function CohortBunnyPlayer({
         videoUrl.includes("token=") &&
         videoUrl.includes("expires=")
       ) {
+        setError(null);
         setResolvedVideoUrl(videoUrl);
         setLoading(false);
         return;
@@ -74,6 +75,7 @@ export default function CohortBunnyPlayer({
 
         const data = await response.json();
         if (isMounted) {
+          setError(null);
           setResolvedVideoUrl(data.videoUrl);
         }
       } catch (err) {

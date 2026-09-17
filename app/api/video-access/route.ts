@@ -5,6 +5,7 @@ import {
   toolkitContentItems,
   userToolkits,
   cohortSessionContents,
+  cohortSessions,
 } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 import {
@@ -13,6 +14,30 @@ import {
   isBunnyVideo,
 } from "@/lib/bunny";
 import { getPaidCohortOrderForUser } from "@/lib/cohort-registration";
+
+function resolveVideoResponse(rawVideo: string): NextResponse {
+  if (isBunnyVideo(rawVideo)) {
+    const details = extractBunnyVideoDetails(rawVideo);
+    if (!details?.videoId) {
+      return NextResponse.json(
+        { error: "Invalid video identifier" },
+        { status: 400 }
+      );
+    }
+
+    const embedUrl = generateBunnyEmbedUrl(details.videoId, details.libraryId);
+    return NextResponse.json({ videoUrl: embedUrl });
+  }
+
+  if (rawVideo.startsWith("http://") || rawVideo.startsWith("https://")) {
+    return NextResponse.json({ videoUrl: rawVideo });
+  }
+
+  return NextResponse.json(
+    { error: "Invalid video identifier" },
+    { status: 400 }
+  );
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -60,7 +85,9 @@ export async function GET(req: NextRequest) {
       }
 
       const rawVideo =
-        contentItem.cdnVideoUrl || contentItem.videoUrl || videoUrlParam;
+        contentItem.cdnVideoUrl ||
+        contentItem.videoUrl ||
+        (isAdmin ? videoUrlParam : null);
       if (!rawVideo) {
         return NextResponse.json(
           { error: "No video URL available for this content" },
@@ -68,19 +95,7 @@ export async function GET(req: NextRequest) {
         );
       }
 
-      const details = extractBunnyVideoDetails(rawVideo);
-      if (!details?.videoId) {
-        return NextResponse.json(
-          { error: "Invalid video identifier" },
-          { status: 400 }
-        );
-      }
-
-      const embedUrl = generateBunnyEmbedUrl(
-        details.videoId,
-        details.libraryId
-      );
-      return NextResponse.json({ videoUrl: embedUrl });
+      return resolveVideoResponse(rawVideo);
     }
 
     // 2. Handle generic videoId (checks toolkit content items first, then cohort content items)
@@ -115,19 +130,7 @@ export async function GET(req: NextRequest) {
           );
         }
 
-        const details = extractBunnyVideoDetails(toolkitItem.bunnyVideoUrl);
-        if (!details?.videoId) {
-          return NextResponse.json(
-            { error: "Invalid video URL format" },
-            { status: 400 }
-          );
-        }
-
-        const embedUrl = generateBunnyEmbedUrl(
-          details.videoId,
-          details.libraryId
-        );
-        return NextResponse.json({ videoUrl: embedUrl });
+        return resolveVideoResponse(toolkitItem.bunnyVideoUrl);
       }
 
       // Check Cohort Content Items if not found in toolkits
@@ -153,7 +156,9 @@ export async function GET(req: NextRequest) {
         }
 
         const rawVideo =
-          cohortItem.cdnVideoUrl || cohortItem.videoUrl || videoUrlParam;
+          cohortItem.cdnVideoUrl ||
+          cohortItem.videoUrl ||
+          (isAdmin ? videoUrlParam : null);
         if (!rawVideo) {
           return NextResponse.json(
             { error: "No video URL available for this content" },
@@ -161,25 +166,17 @@ export async function GET(req: NextRequest) {
           );
         }
 
-        const details = extractBunnyVideoDetails(rawVideo);
-        if (!details?.videoId) {
-          return NextResponse.json(
-            { error: "Invalid video identifier" },
-            { status: 400 }
-          );
-        }
-
-        const embedUrl = generateBunnyEmbedUrl(
-          details.videoId,
-          details.libraryId
-        );
-        return NextResponse.json({ videoUrl: embedUrl });
+        return resolveVideoResponse(rawVideo);
       }
     }
 
-    // 3. Handle raw videoUrl/videoId with cohortId authorization
-    if (videoUrlParam && isBunnyVideo(videoUrlParam)) {
-      if (!isAdmin && cohortIdParam) {
+    // 3. Handle raw videoUrl/videoId
+    if (videoUrlParam) {
+      if (isAdmin) {
+        return resolveVideoResponse(videoUrlParam);
+      }
+
+      if (cohortIdParam) {
         const order = await getPaidCohortOrderForUser(
           session.user.id,
           cohortIdParam
@@ -190,26 +187,55 @@ export async function GET(req: NextRequest) {
             { status: 403 }
           );
         }
-      } else if (!isAdmin && !cohortIdParam) {
-        return NextResponse.json(
-          { error: "Access parameters missing" },
-          { status: 400 }
+
+        const targetDetails = extractBunnyVideoDetails(videoUrlParam);
+        const targetVideoId = targetDetails?.videoId;
+
+        const cohortSessionsList = await db.query.cohortSessions.findMany({
+          where: eq(cohortSessions.cohortId, cohortIdParam),
+          with: {
+            contents: true,
+          },
+        });
+
+        const hasMatchingContent = cohortSessionsList.some((s) =>
+          s.contents.some((c) => {
+            if (
+              c.cdnVideoUrl &&
+              (c.cdnVideoUrl === videoUrlParam ||
+                (targetVideoId &&
+                  extractBunnyVideoDetails(c.cdnVideoUrl)?.videoId ===
+                    targetVideoId))
+            ) {
+              return true;
+            }
+            if (
+              c.videoUrl &&
+              (c.videoUrl === videoUrlParam ||
+                (targetVideoId &&
+                  extractBunnyVideoDetails(c.videoUrl)?.videoId ===
+                    targetVideoId))
+            ) {
+              return true;
+            }
+            return false;
+          })
         );
+
+        if (!hasMatchingContent) {
+          return NextResponse.json(
+            { error: "Video not found in authorized cohort content" },
+            { status: 404 }
+          );
+        }
+
+        return resolveVideoResponse(videoUrlParam);
       }
 
-      const details = extractBunnyVideoDetails(videoUrlParam);
-      if (!details?.videoId) {
-        return NextResponse.json(
-          { error: "Invalid video identifier" },
-          { status: 400 }
-        );
-      }
-
-      const embedUrl = generateBunnyEmbedUrl(
-        details.videoId,
-        details.libraryId
+      return NextResponse.json(
+        { error: "Access parameters missing" },
+        { status: 400 }
       );
-      return NextResponse.json({ videoUrl: embedUrl });
     }
 
     return NextResponse.json(

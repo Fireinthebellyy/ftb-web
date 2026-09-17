@@ -7,61 +7,73 @@ export function getBunnyExpirySeconds(): number {
   return isNaN(parsed) ? 900 : parsed;
 }
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isBunnyHostname(hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  return (
+    host === "iframe.mediadelivery.net" ||
+    host === "video.bunnycdn.com" ||
+    host.endsWith(".mediadelivery.net") ||
+    host.endsWith(".b-cdn.net") ||
+    host.endsWith(".bunnycdn.com") ||
+    host.endsWith(".bunny.net")
+  );
+}
+
 export function extractBunnyVideoDetails(input?: string | null): {
   videoId: string;
   libraryId?: string;
 } | null {
-  if (!input) return null;
+  if (!input || typeof input !== "string") return null;
   let cleaned = input.trim();
   if (!cleaned) return null;
 
+  // If plain UUID was provided
+  if (UUID_REGEX.test(cleaned)) {
+    return { videoId: cleaned };
+  }
+
   // If iframe snippet was provided
   if (cleaned.includes("<iframe")) {
-    const match = cleaned.match(/src=["']([^"']*)["']/);
+    const match = cleaned.match(/src=["']([^"']*)["']/i);
     if (match && match[1]) {
       cleaned = match[1].trim();
+    } else {
+      return null;
     }
   }
 
-  // Remove query string and hash
-  const urlWithoutQuery = cleaned.split("?")[0].split("#")[0];
-
-  // Check if it is a URL with path segments
-  if (urlWithoutQuery.includes("/")) {
-    const parts = urlWithoutQuery.split("/").filter(Boolean);
-    const lastPart = parts[parts.length - 1];
-    const secondLastPart = parts[parts.length - 2];
-
-    // Check if second last part is a numeric libraryId (e.g. embed/626882/uuid)
-    if (secondLastPart && /^\d+$/.test(secondLastPart)) {
-      return { videoId: lastPart, libraryId: secondLastPart };
+  try {
+    const url = new URL(
+      cleaned.startsWith("//") ? `https:${cleaned}` : cleaned
+    );
+    if (!isBunnyHostname(url.hostname)) {
+      return null;
     }
-    return { videoId: lastPart };
-  }
 
-  // If it is just a video ID (UUID)
-  return { videoId: urlWithoutQuery };
+    const segments = url.pathname.split("/").filter(Boolean);
+    if (segments.length === 0) return null;
+
+    const uuidIndex = segments.findIndex((seg) => UUID_REGEX.test(seg));
+    if (uuidIndex === -1) {
+      return null;
+    }
+
+    const videoId = segments[uuidIndex];
+    const prevSegment = uuidIndex > 0 ? segments[uuidIndex - 1] : undefined;
+    const libraryId =
+      prevSegment && /^\d+$/.test(prevSegment) ? prevSegment : undefined;
+
+    return { videoId, libraryId };
+  } catch {
+    return null;
+  }
 }
 
 export function isBunnyVideo(input?: string | null): boolean {
-  if (!input) return false;
-  const cleaned = input.trim();
-  if (!cleaned) return false;
-
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (uuidRegex.test(cleaned)) return true;
-
-  if (
-    cleaned.includes("mediadelivery.net") ||
-    cleaned.includes("bunnycdn.com") ||
-    cleaned.includes("bunny.net") ||
-    cleaned.includes("<iframe")
-  ) {
-    return true;
-  }
-
-  return false;
+  return extractBunnyVideoDetails(input) !== null;
 }
 
 export function generateBunnyEmbedUrl(

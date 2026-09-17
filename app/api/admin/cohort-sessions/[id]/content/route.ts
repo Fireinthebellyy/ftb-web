@@ -131,28 +131,34 @@ export async function POST(
     }
 
     let normalizedCdnVideoUrl: string | null = null;
-    if (
-      cdnVideoUrl !== undefined &&
-      cdnVideoUrl !== null &&
-      cdnVideoUrl.trim() !== ""
-    ) {
-      const bunnyDetails = extractBunnyVideoDetails(cdnVideoUrl);
-      if (bunnyDetails?.videoId) {
-        normalizedCdnVideoUrl = cdnVideoUrl.trim();
-      } else {
-        const norm = normalizeAbsoluteUrl(cdnVideoUrl);
-        if (!norm.isValid) {
-          activityStatus = 400;
-          activityError = "Invalid CDN Video URL or ID";
-          return badRequest(
-            "Please provide a valid CDN Video URL or Video ID.",
-            {
-              code: "INVALID_URL",
-              fields: ["cdnVideoUrl"],
-            }
-          );
+    if (cdnVideoUrl !== undefined && cdnVideoUrl !== null) {
+      if (typeof cdnVideoUrl !== "string") {
+        activityStatus = 400;
+        activityError = "Invalid CDN Video URL";
+        return badRequest("Please provide a valid CDN Video URL or Video ID.", {
+          code: "INVALID_URL",
+          fields: ["cdnVideoUrl"],
+        });
+      }
+      if (cdnVideoUrl.trim() !== "") {
+        const bunnyDetails = extractBunnyVideoDetails(cdnVideoUrl);
+        if (bunnyDetails?.videoId) {
+          normalizedCdnVideoUrl = cdnVideoUrl.trim();
+        } else {
+          const norm = normalizeAbsoluteUrl(cdnVideoUrl);
+          if (!norm.isValid) {
+            activityStatus = 400;
+            activityError = "Invalid CDN Video URL or ID";
+            return badRequest(
+              "Please provide a valid CDN Video URL or Video ID.",
+              {
+                code: "INVALID_URL",
+                fields: ["cdnVideoUrl"],
+              }
+            );
+          }
+          normalizedCdnVideoUrl = norm.value;
         }
-        normalizedCdnVideoUrl = norm.value;
       }
     }
 

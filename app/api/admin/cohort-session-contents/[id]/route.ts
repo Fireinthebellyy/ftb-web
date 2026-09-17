@@ -45,18 +45,27 @@ export async function PUT(
     if (!existingContent.length) {
       activityStatus = 404;
       activityError = "Content not found";
-      return NextResponse.json(
-        { error: "Content not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Content not found" }, { status: 404 });
     }
     activityBeforeState = existingContent[0];
 
     const body = await request.json();
-    const { title, content, isUnlocked, orderIndex, liveSessionLink, videoUrl, cdnVideoUrl, lockedMessage, images } = body;
+    const {
+      title,
+      content,
+      isUnlocked,
+      orderIndex,
+      liveSessionLink,
+      videoUrl,
+      cdnVideoUrl,
+      lockedMessage,
+      images,
+    } = body;
 
     // Build update object with only provided fields
-    const updateData: Partial<typeof cohortSessionContents.$inferInsert> & { updatedAt: Date } = {
+    const updateData: Partial<typeof cohortSessionContents.$inferInsert> & {
+      updatedAt: Date;
+    } = {
       updatedAt: new Date(),
     };
 
@@ -64,21 +73,26 @@ export async function PUT(
     if (content !== undefined) updateData.content = content ?? null;
     if (isUnlocked !== undefined) updateData.isUnlocked = isUnlocked;
     if (orderIndex !== undefined) updateData.orderIndex = orderIndex;
-    if (liveSessionLink !== undefined) updateData.liveSessionLink = liveSessionLink ?? null;
+    if (liveSessionLink !== undefined)
+      updateData.liveSessionLink = liveSessionLink ?? null;
     if (videoUrl !== undefined) updateData.videoUrl = videoUrl ?? null;
     if (cdnVideoUrl !== undefined) {
       const norm = normalizeAbsoluteUrl(cdnVideoUrl);
       if (!norm.isValid) {
         activityStatus = 400;
         activityError = "Invalid CDN Video URL";
-        return badRequest("Please provide a valid absolute URL for CDN Video.", {
-          code: "INVALID_URL",
-          fields: ["cdnVideoUrl"],
-        });
+        return badRequest(
+          "Please provide a valid absolute URL for CDN Video.",
+          {
+            code: "INVALID_URL",
+            fields: ["cdnVideoUrl"],
+          }
+        );
       }
       updateData.cdnVideoUrl = norm.value;
     }
-    if (lockedMessage !== undefined) updateData.lockedMessage = lockedMessage ?? null;
+    if (lockedMessage !== undefined)
+      updateData.lockedMessage = lockedMessage ?? null;
     if (images !== undefined) updateData.images = images ?? null;
 
     const updatedContent = await db
@@ -90,10 +104,7 @@ export async function PUT(
     if (!updatedContent.length) {
       activityStatus = 404;
       activityError = "Content not found";
-      return NextResponse.json(
-        { error: "Content not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Content not found" }, { status: 404 });
     }
 
     activityAfterState = updatedContent[0];
@@ -159,14 +170,13 @@ export async function DELETE(
     if (!existingContent.length) {
       activityStatus = 404;
       activityError = "Content not found";
-      return NextResponse.json(
-        { error: "Content not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Content not found" }, { status: 404 });
     }
     activityBeforeState = existingContent[0];
 
-    await db.delete(cohortSessionContents).where(eq(cohortSessionContents.id, contentId));
+    await db
+      .delete(cohortSessionContents)
+      .where(eq(cohortSessionContents.id, contentId));
 
     activityStatus = 200;
     return NextResponse.json({ success: true });

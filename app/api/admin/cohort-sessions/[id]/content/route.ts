@@ -105,7 +105,12 @@ export async function POST(
       images,
     } = body;
 
-    const validSectionTypes = ["live_session", "meet_mentor", "resources", "recording"];
+    const validSectionTypes = [
+      "live_session",
+      "meet_mentor",
+      "resources",
+      "recording",
+    ];
     if (!validSectionTypes.includes(sectionType)) {
       activityStatus = 400;
       activityError = "Invalid section type";
@@ -130,10 +135,13 @@ export async function POST(
       if (!norm.isValid) {
         activityStatus = 400;
         activityError = "Invalid CDN Video URL";
-        return badRequest("Please provide a valid absolute URL for CDN Video.", {
-          code: "INVALID_URL",
-          fields: ["cdnVideoUrl"],
-        });
+        return badRequest(
+          "Please provide a valid absolute URL for CDN Video.",
+          {
+            code: "INVALID_URL",
+            fields: ["cdnVideoUrl"],
+          }
+        );
       }
       normalizedCdnVideoUrl = norm.value;
     }

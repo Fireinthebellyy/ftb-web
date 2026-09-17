@@ -1,4 +1,3 @@
-
 /* eslint-disable max-lines */
 "use client";
 
@@ -20,12 +19,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Menu, Lock, Unlock, MessageCircle, Send, Edit, Trash2 } from "lucide-react";
-import { cn, stripHtml } from "@/lib/utils";
 import {
-  useCohortDetail,
-  useCohortSession,
-} from "@/lib/queries-cohorts";
+  ArrowLeft,
+  Menu,
+  Lock,
+  Unlock,
+  MessageCircle,
+  Send,
+  Edit,
+  Trash2,
+} from "lucide-react";
+import { cn, stripHtml } from "@/lib/utils";
+import { useCohortDetail, useCohortSession } from "@/lib/queries-cohorts";
 import { Skeleton } from "@/components/ui/skeleton";
 import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
 import {
@@ -37,8 +42,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ImageCarousel } from "@/components/ui/image-carousel";
 import { useQuery } from "@tanstack/react-query";
-import { CohortUpgradeGrid, CohortSessionItem, CurrentPlanStatus, UpgradePlan } from "./CohortUpgradeGrid";
 import CohortBunnyPlayer from "@/components/toolkit/CohortBunnyPlayer";
+import {
+  CohortUpgradeGrid,
+  CohortSessionItem,
+  CurrentPlanStatus,
+  UpgradePlan,
+} from "./CohortUpgradeGrid";
 
 export default function CohortDashboardPage() {
   const params = useParams();
@@ -63,10 +73,14 @@ export default function CohortDashboardPage() {
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
-  const { data: cohortData, isLoading: isCohortLoading, refetch: refetchCohort } =
-    useCohortDetail(cohortId);
-  
-    const hasExtendedResourceAccess =cohortData?.hasExtendedResourceAccess ?? false;
+  const {
+    data: cohortData,
+    isLoading: isCohortLoading,
+    refetch: refetchCohort,
+  } = useCohortDetail(cohortId);
+
+  const hasExtendedResourceAccess =
+    cohortData?.hasExtendedResourceAccess ?? false;
   const sessions = useMemo(() => cohortData?.sessions ?? [], [cohortData]);
 
   useEffect(() => {
@@ -83,7 +97,10 @@ export default function CohortDashboardPage() {
 
     if (!targetId) {
       const accessibleSessions = sessions.filter((s: any) => s.isAccessible);
-      targetId = accessibleSessions.length > 0 ? accessibleSessions[0].id : sessions[0].id;
+      targetId =
+        accessibleSessions.length > 0
+          ? accessibleSessions[0].id
+          : sessions[0].id;
       setCurrentSessionId(targetId);
     }
 
@@ -92,10 +109,13 @@ export default function CohortDashboardPage() {
     } catch {
       /* noop */
     }
-    if (typeof window !== "undefined" && window.location.hash !== `#${targetId}`) {
+    if (
+      typeof window !== "undefined" &&
+      window.location.hash !== `#${targetId}`
+    ) {
       history.replaceState(null, "", `#${targetId}`);
     }
-  }, [sessions, currentSessionId,cohortId]);
+  }, [sessions, currentSessionId, cohortId]);
 
   useEffect(() => {
     const onHashChange = () => {
@@ -168,11 +188,15 @@ export default function CohortDashboardPage() {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100">
               <Lock className="h-8 w-8 text-orange-500" />
             </div>
-            <h2 className="mb-2 text-2xl font-bold text-gray-900">Access Locked</h2>
+            <h2 className="mb-2 text-2xl font-bold text-gray-900">
+              Access Locked
+            </h2>
             <p className="mb-6 text-sm text-gray-600">
-              The Cohort will be starting from 15th August, you will get added in our exclusive community by 13th August & the cohort dashboard will unlock within a week.
+              The Cohort will be starting from 15th August, you will get added
+              in our exclusive community by 13th August & the cohort dashboard
+              will unlock within a week.
             </p>
-            <Button onClick={() => router.push("/")} className="w-full mb-3">
+            <Button onClick={() => router.push("/")} className="mb-3 w-full">
               Back to Home
             </Button>
             <a
@@ -181,8 +205,13 @@ export default function CohortDashboardPage() {
               rel="noopener noreferrer"
               className="w-full"
             >
-              <Button className="w-full bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2">
-                <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 shrink-0" xmlns="http://www.w3.org/2000/svg">
+              <Button className="flex w-full items-center justify-center gap-2 bg-green-600 hover:bg-green-700">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="h-4 w-4 shrink-0"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
                   <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 0 0 1.333 4.982L2 22l5.202-1.362a9.923 9.923 0 0 0 4.808 1.236h.005c5.505 0 9.99-4.477 9.99-9.985C22.005 6.478 17.518 2 12.012 2Zm5.845 14.285c-.244.686-1.42 1.328-1.948 1.41-.478.077-1.101.144-3.187-.723-2.667-1.108-4.37-3.816-4.502-3.992-.133-.176-1.077-1.43-1.077-2.729 0-1.298.679-1.937.922-2.202.244-.265.533-.332.71-.332.178 0 .356.006.51.013.162.008.38-.06.593.453.22.532.753 1.836.82 1.968.067.133.11.288.022.465-.088.177-.133.288-.266.443-.133.155-.28.347-.4.493-.133.16-.272.336-.117.6.155.265.686 1.132 1.47 1.831.99.885 1.823 1.157 2.08 1.288.254.133.403.11.553-.066.15-.177.643-.753.815-.996.172-.244.344-.2.58-.112.235.088 1.492.703 1.748.83.256.128.427.194.49.305.061.11.061.643-.183 1.329Z" />
                 </svg>
                 Ask a Query
@@ -197,8 +226,8 @@ export default function CohortDashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 z-10 border-b bg-white/95 backdrop-blur supports-backdrop-filter:bg-white/60">
-        <div className="flex h-16 items-center px-4 overflow-hidden">
-          <div className="flex items-center gap-1 sm:gap-3 min-w-0 flex-1">
+        <div className="flex h-16 items-center overflow-hidden px-4">
+          <div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-3">
             <Button
               variant="ghost"
               size="icon"
@@ -221,14 +250,18 @@ export default function CohortDashboardPage() {
             <Button
               size="sm"
               onClick={() => setUpgradeModalOpen(true)}
-              className="shrink-0 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 shadow-sm transition-all"
+              className="shrink-0 rounded-lg bg-orange-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-orange-700"
             >
               Upgrade
             </Button>
           </div>
           <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0 lg:hidden"
+              >
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
@@ -303,9 +336,9 @@ export default function CohortDashboardPage() {
       {/* Global Upgrade Modal (Requirement 5 & Global Minimal Rule) */}
       {upgradeModalOpen && (
         <Dialog open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen}>
-          <DialogContent className="w-full max-w-[96vw] sm:max-w-3xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
-            <DialogHeader className="px-5 py-4 pr-14 border-b shrink-0 text-left">
-              <DialogTitle className="text-sm sm:text-base font-bold text-gray-900 leading-snug break-words">
+          <DialogContent className="flex max-h-[90vh] w-full max-w-[96vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl">
+            <DialogHeader className="shrink-0 border-b px-5 py-4 pr-14 text-left">
+              <DialogTitle className="text-sm leading-snug font-bold break-words text-gray-900 sm:text-base">
                 Upgrade Options — {cohortData.cohort.title}
               </DialogTitle>
             </DialogHeader>
@@ -347,19 +380,31 @@ function CohortSessionSidebar({
 
   // Extended access ends on 25 October 2026
   const extendedAccessDate = new Date("2026-11-01T23:59:59");
-  const standardAccessDate= new Date("2026-10-01T23:59:59");
+  const standardAccessDate = new Date("2026-10-01T23:59:59");
 
-  const getOrdinal=(date)=>{
-    switch(date%10){
-      case 1: return 'st';
-      case 2: return 'nd';
-      case 3: return 'rd';
-      default: return 'th';
+  const getOrdinal = (date) => {
+    switch (date % 10) {
+      case 1:
+        return "st";
+      case 2:
+        return "nd";
+      case 3:
+        return "rd";
+      default:
+        return "th";
     }
-  }
-  const extendedAccessDateInWords= extendedAccessDate.getDate()+getOrdinal(extendedAccessDate.getDate())+" "+extendedAccessDate.toLocaleString('default',{month:'long'});
-  const standardAccessDateInWords= standardAccessDate.getDate()+getOrdinal(standardAccessDate.getDate())+" "+standardAccessDate.toLocaleString('default',{month:'long'});
-  
+  };
+  const extendedAccessDateInWords =
+    extendedAccessDate.getDate() +
+    getOrdinal(extendedAccessDate.getDate()) +
+    " " +
+    extendedAccessDate.toLocaleString("default", { month: "long" });
+  const standardAccessDateInWords =
+    standardAccessDate.getDate() +
+    getOrdinal(standardAccessDate.getDate()) +
+    " " +
+    standardAccessDate.toLocaleString("default", { month: "long" });
+
   // Today's date
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -374,8 +419,7 @@ function CohortSessionSidebar({
   const daysLeft = Math.max(
     0,
     Math.ceil(
-      (extendedEndDate.getTime() - today.getTime()) /
-        millisecondsPerDay
+      (extendedEndDate.getTime() - today.getTime()) / millisecondsPerDay
     )
   );
 
@@ -384,22 +428,21 @@ function CohortSessionSidebar({
 
   return (
     <>
-      <div className="h-full flex flex-col justify-between overflow-y-auto">
+      <div className="flex h-full flex-col justify-between overflow-y-auto">
         <div>
           {/* cohort content header */}
           <div className="border-b border-gray-100 px-4 py-4">
             {/* Title */}
-            <h2 className="text-lg md:text-xl font-extrabold leading-tight text-gray-900">
+            <h2 className="text-lg leading-tight font-extrabold text-gray-900 md:text-xl">
               Cohort Content
             </h2>
 
             {/* Session count */}
-            <p className="mt-0.5 text-sm md:text-base font-semibold text-gray-500">
-              {sessions.length}{" "}
-              {sessions.length === 1 ? "Session" : "Sessions"}
+            <p className="mt-0.5 text-sm font-semibold text-gray-500 md:text-base">
+              {sessions.length} {sessions.length === 1 ? "Session" : "Sessions"}
             </p>
 
-           {/* access bar */}
+            {/* access bar */}
             <button
               type="button"
               onClick={() => setShowAccessModal(true)}
@@ -407,7 +450,7 @@ function CohortSessionSidebar({
                 "group mt-3 flex w-full items-center justify-between",
                 "rounded-lg border px-3 py-2.5",
                 "transition-all duration-200",
-                "focus:outline-none focus:ring-2 focus:ring-offset-1",
+                "focus:ring-2 focus:ring-offset-1 focus:outline-none",
                 isExtendedAccess
                   ? "border-green-200 bg-green-50 text-green-700 hover:border-green-300 hover:bg-green-100 focus:ring-green-300"
                   : "border-orange-200 bg-orange-50 text-orange-700 hover:border-orange-300 hover:bg-orange-100 focus:ring-orange-300"
@@ -425,10 +468,10 @@ function CohortSessionSidebar({
                   ✓
                 </span>
 
-                <span className="whitespace-nowrap text-xs font-semibold sm:text-sm">
+                <span className="text-xs font-semibold whitespace-nowrap sm:text-sm">
                   {isExtendedAccess
-                    ?`Access till ${extendedAccessDateInWords}`
-                    :`Access till ${standardAccessDateInWords}`}
+                    ? `Access till ${extendedAccessDateInWords}`
+                    : `Access till ${standardAccessDateInWords}`}
                 </span>
               </div>
 
@@ -437,62 +480,62 @@ function CohortSessionSidebar({
               </span>
             </button>
 
-             {/* number of days left */}
+            {/* number of days left */}
             {isExtendedAccess && (
-  <div className="mt-3 flex items-center gap-3 rounded-xl border  px-3 py-2.5 shadow-sm"
-  onClick={()=>setShowAccessModal(true)}>
-    {/* Clock */}
-    <div className="flex h-9 w-9  shrink-0 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-green-100">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-4 w-4 text-green-600"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <circle cx="12" cy="12" r="9" />
-        <polyline points="12 7 12 12 15 14" />
-      </svg>
-    </div>
+              <div
+                className="mt-3 flex items-center gap-3 rounded-xl border px-3 py-2.5 shadow-sm"
+                onClick={() => setShowAccessModal(true)}
+              >
+                {/* Clock */}
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-green-100">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 text-green-600"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <polyline points="12 7 12 12 15 14" />
+                  </svg>
+                </div>
 
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-medium text-gray-500">
+                    Free Access Remaining
+                  </p>
 
-    <div className="min-w-0 flex-1">
-      <p className="text-[11px] font-medium text-gray-500">
-          Free Access Remaining
-      </p>
+                  <p className="text-xs font-semibold text-green-700">
+                    Until {`${extendedAccessDateInWords}`}
+                  </p>
+                </div>
 
-      <p className="text-xs font-semibold text-green-700">
-        Until {`${extendedAccessDateInWords}`}
-      </p>
-    </div>
+                {/* Days */}
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <span className="text-2xl leading-none font-extrabold text-green-600">
+                    {daysLeft}
+                  </span>
 
-    {/* Days */}
-    <div className="flex shrink-0 items-center gap-1.5">
-      <span className="text-2xl font-extrabold leading-none text-green-600">
-        {daysLeft}
-      </span>
-
-      <span className="text-[10px] font-bold uppercase leading-tight text-green-600">
-        {daysLeft === 1 ? (
-          <>
-            day
-            <br />
-            left
-          </>
-        ) : (
-          <>
-            days
-            <br />
-            left
-          </>
-        )}
-      </span>
-    </div>
-  </div>
-)}
+                  <span className="text-[10px] leading-tight font-bold text-green-600 uppercase">
+                    {daysLeft === 1 ? (
+                      <>
+                        day
+                        <br />
+                        left
+                      </>
+                    ) : (
+                      <>
+                        days
+                        <br />
+                        left
+                      </>
+                    )}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
-
 
           <div className="space-y-3 p-4">
             {sessions.map((session, index) => (
@@ -504,8 +547,7 @@ function CohortSessionSidebar({
                   currentSessionId === session.id
                     ? "border-l-4 border-orange-500 bg-orange-100"
                     : "border border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm",
-                  !session.isAccessible &&
-                    "bg-gray-50/70 opacity-90"
+                  !session.isAccessible && "bg-gray-50/70 opacity-90"
                 )}
               >
                 <div className="flex items-start gap-4">
@@ -531,7 +573,7 @@ function CohortSessionSidebar({
                   <div className="min-w-0 flex-1">
                     <h3
                       className={cn(
-                        "text-sm md:text-base font-semibold leading-tight",
+                        "text-sm leading-tight font-semibold md:text-base",
                         currentSessionId === session.id
                           ? "text-orange-700"
                           : "text-gray-800"
@@ -691,9 +733,8 @@ function CohortSessionSidebar({
               {isExtendedAccess && (
                 <div className="mt-3 rounded-lg bg-green-100/70 px-3 py-2">
                   <p className="text-xs font-semibold text-green-800">
-                    {daysLeft}{" "}
-                    {daysLeft === 1 ? "day" : "days"} of free
-                    access remaining
+                    {daysLeft} {daysLeft === 1 ? "day" : "days"} of free access
+                    remaining
                   </p>
                 </div>
               )}
@@ -707,8 +748,8 @@ function CohortSessionSidebar({
                 </p>
 
                 <p className="mt-1 text-xs leading-relaxed text-gray-600">
-                  Upgrade your plan to extend your resource access
-                  beyond {`${standardAccessDateInWords}`}.
+                  Upgrade your plan to extend your resource access beyond{" "}
+                  {`${standardAccessDateInWords}`}.
                 </p>
 
                 {onOpenUpgrade && (
@@ -770,13 +811,21 @@ function CohortSessionMain({
 
   // Get only accessible sessions for navigation
   const accessibleSessions = sessions.filter((s: any) => s.isAccessible);
-  const currentAccessibleIndex = accessibleSessions.findIndex((s: any) => s.id === sessionId);
+  const currentAccessibleIndex = accessibleSessions.findIndex(
+    (s: any) => s.id === sessionId
+  );
 
   // Fetch user's queries for this session
-  const { data: userQueries, isLoading: _isLoadingQueries, refetch: refetchQueries } = useQuery({
+  const {
+    data: userQueries,
+    isLoading: _isLoadingQueries,
+    refetch: refetchQueries,
+  } = useQuery({
     queryKey: ["session-queries", sessionId],
     queryFn: async () => {
-      const response = await fetch(`/api/cohorts/${cohortId}/sessions/${sessionId}/queries`);
+      const response = await fetch(
+        `/api/cohorts/${cohortId}/sessions/${sessionId}/queries`
+      );
       if (!response.ok) throw new Error("Failed to fetch queries");
       return response.json();
     },
@@ -789,13 +838,16 @@ function CohortSessionMain({
 
     try {
       setIsSubmitting(true);
-      const response = await fetch(`/api/cohorts/${cohortId}/sessions/${sessionId}/queries`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ question: newQuestion }),
-      });
+      const response = await fetch(
+        `/api/cohorts/${cohortId}/sessions/${sessionId}/queries`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ question: newQuestion }),
+        }
+      );
 
       if (response.ok) {
         setNewQuestion("");
@@ -816,13 +868,16 @@ function CohortSessionMain({
     if (!editQuestionText.trim()) return;
 
     try {
-      const response = await fetch(`/api/cohorts/${cohortId}/sessions/${sessionId}/queries?queryId=${queryId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ question: editQuestionText }),
-      });
+      const response = await fetch(
+        `/api/cohorts/${cohortId}/sessions/${sessionId}/queries?queryId=${queryId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ question: editQuestionText }),
+        }
+      );
 
       if (response.ok) {
         toast.success("Question updated successfully");
@@ -843,9 +898,12 @@ function CohortSessionMain({
     if (!queryToDelete) return;
 
     try {
-      const response = await fetch(`/api/cohorts/${cohortId}/sessions/${sessionId}/queries?queryId=${queryToDelete}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/cohorts/${cohortId}/sessions/${sessionId}/queries?queryId=${queryToDelete}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (response.ok) {
         toast.success("Question deleted successfully");
@@ -862,7 +920,12 @@ function CohortSessionMain({
     }
   };
 
-  const sortOrder: string[] = ["live_session", "meet_mentor", "resources", "recording"];
+  const sortOrder: string[] = [
+    "live_session",
+    "meet_mentor",
+    "resources",
+    "recording",
+  ];
   const sortedContents = [...contents].sort((a, b) => {
     // First sort by the predefined section type order
     const indexA = sortOrder.indexOf(a.sectionType);
@@ -872,22 +935,25 @@ function CohortSessionMain({
   });
 
   const currentSession = sessions.find((s: any) => s.id === sessionId);
-  const isAccessible = currentSession ? currentSession.isAccessible !== false : true;
+  const isAccessible = currentSession
+    ? currentSession.isAccessible !== false
+    : true;
 
   if (!isAccessible) {
     return (
       <div className="space-y-6">
-        <div className="rounded-2xl border border-orange-200 bg-orange-50/80 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-orange-200 bg-orange-50/80 p-5 sm:flex-row sm:items-center">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-600 shrink-0">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-500/20 text-orange-600">
               <Lock className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-extrabold text-gray-900">
+              <h2 className="text-base font-extrabold text-gray-900 sm:text-lg">
                 {currentSession?.title || "Session Locked"} — Upgrade Required
               </h2>
-              <p className="text-xs text-gray-600 mt-0.5">
-                This session is not included in your current active plan. Choose an upgrade package below to get immediate access.
+              <p className="mt-0.5 text-xs text-gray-600">
+                This session is not included in your current active plan. Choose
+                an upgrade package below to get immediate access.
               </p>
             </div>
           </div>
@@ -915,7 +981,9 @@ function CohortSessionMain({
         sortedContents.map((content) => (
           <div key={content.id}>
             <div className="mb-4 flex items-center gap-2">
-              <h2 className="text-xl font-bold text-gray-900">{content.title}</h2>
+              <h2 className="text-xl font-bold text-gray-900">
+                {content.title}
+              </h2>
               {content.isUnlocked ? (
                 <Unlock className="h-5 w-5 text-green-500" />
               ) : (
@@ -924,265 +992,357 @@ function CohortSessionMain({
             </div>
             {content.isUnlocked ? (
               <div className="space-y-4">
-              {content.sectionType === "live_session" && (content.liveSessionLink || content.cdnVideoUrl) && (
-                <div className="rounded-lg border border-gray-200 bg-white p-6">
-                  {content.liveSessionLink && (
-                    <>
-                      <h3 className="mb-4 font-semibold text-gray-900">
-                        Live Session Link
-                      </h3>
-                      <a
-                        href={content.liveSessionLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-3 px-6 py-3.5 w-full sm:w-auto text-sm font-semibold rounded-xl bg-orange-600 text-white shadow-lg shadow-orange-600/20 transition-all duration-300 hover:bg-orange-700 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-orange-600/30 active:translate-y-0 cursor-pointer"
-                      >
-                        <span className="relative flex h-3.5 w-3.5">
-                          <span className="animate-ping motion-reduce:animate-none absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-400"></span>
-                        </span>
-                        <span>Join Live Session</span>
-                      </a>
-                    </>
-                  )}
-                  {content.cdnVideoUrl && (
-                    <CohortBunnyPlayer
-                      videoUrl={content.cdnVideoUrl}
-                      className={content.liveSessionLink ? "mt-3 shadow-sm" : "shadow-sm"}
-                    />
-                  )}
-                </div>
-              )}
-              {content.images && content.images.length > 0 && content.sectionType === "live_session" && (
-                <div className="rounded-lg border border-gray-200 bg-white p-6">
-                  <ImageCarousel images={content.images} />
-                </div>
-              )}
-              {content.sectionType === "recording" && (content.videoUrl || stripHtml(content.content)) && (
-                <div className="rounded-lg border border-gray-200 bg-white p-6">
-                  {content.videoUrl && (
-                    <div className="mb-4">
-                      <video
-                        src={content.videoUrl}
-                        controls
-                        className="w-full rounded-lg"
-                      />
+                {content.sectionType === "live_session" &&
+                  (content.liveSessionLink || content.cdnVideoUrl) && (
+                    <div className="rounded-lg border border-gray-200 bg-white p-6">
+                      {content.liveSessionLink && (
+                        <>
+                          <h3 className="mb-4 font-semibold text-gray-900">
+                            Live Session Link
+                          </h3>
+                          <a
+                            href={content.liveSessionLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex w-full cursor-pointer items-center justify-center gap-3 rounded-xl bg-orange-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-orange-600/20 transition-all duration-300 hover:-translate-y-0.5 hover:bg-orange-700 hover:shadow-xl hover:shadow-orange-600/30 active:translate-y-0 sm:w-auto"
+                          >
+                            <span className="relative flex h-3.5 w-3.5">
+                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75 motion-reduce:animate-none"></span>
+                              <span className="relative inline-flex h-3.5 w-3.5 rounded-full bg-emerald-400"></span>
+                            </span>
+                            <span>Join Live Session</span>
+                          </a>
+                        </>
+                      )}
+                      {content.cdnVideoUrl && (
+                        <CohortBunnyPlayer
+                          contentId={content.id}
+                          videoUrl={content.cdnVideoUrl}
+                          cohortId={cohortId}
+                          className={
+                            content.liveSessionLink
+                              ? "mt-3 shadow-sm"
+                              : "shadow-sm"
+                          }
+                        />
+                      )}
                     </div>
                   )}
-                  {stripHtml(content.content) && (
-                    <div className="prose prose-slate max-w-none">
+                {content.images &&
+                  content.images.length > 0 &&
+                  content.sectionType === "live_session" && (
+                    <div className="rounded-lg border border-gray-200 bg-white p-6">
+                      <ImageCarousel images={content.images} />
+                    </div>
+                  )}
+                {content.sectionType === "recording" &&
+                  (content.videoUrl || stripHtml(content.content)) && (
+                    <div className="rounded-lg border border-gray-200 bg-white p-6">
+                      {content.videoUrl && (
+                        <div className="mb-4">
+                          <video
+                            src={content.videoUrl}
+                            controls
+                            className="w-full rounded-lg"
+                          />
+                        </div>
+                      )}
+                      {stripHtml(content.content) && (
+                        <div className="prose prose-slate max-w-none">
+                          <HtmlRenderer content={content.content} />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                {content.images &&
+                  content.images.length > 0 &&
+                  content.sectionType === "recording" && (
+                    <div className="rounded-lg border border-gray-200 bg-white p-6">
+                      <ImageCarousel images={content.images} />
+                    </div>
+                  )}
+                {/* Only render content block for non-recording sections (live_session, meet_mentor, resources) */}
+                {stripHtml(content.content) &&
+                  content.sectionType !== "recording" && (
+                    <div className="prose prose-slate max-w-none rounded-lg border border-gray-200 bg-white p-6">
                       <HtmlRenderer content={content.content} />
                     </div>
                   )}
-                </div>
-              )}
-              {content.images && content.images.length > 0 && content.sectionType === "recording" && (
-                <div className="rounded-lg border border-gray-200 bg-white p-6">
-                  <ImageCarousel images={content.images} />
-                </div>
-              )}
-              {/* Only render content block for non-recording sections (live_session, meet_mentor, resources) */}
-              {stripHtml(content.content) && content.sectionType !== "recording" && (
-                <div className="prose prose-slate max-w-none rounded-lg border border-gray-200 bg-white p-6">
-                  <HtmlRenderer content={content.content} />
-                </div>
-              )}
-              {content.sectionType === "resources" &&
-                content.resources &&
-                content.resources.length > 0 && (
-                  <div className="rounded-lg border border-gray-200 bg-white p-6">
-                    <div className="space-y-4">
-                      {/* Image Carousel */}
-                      {content.resources.filter((r: CohortSessionResource) => r.type === "image").length > 0 && (
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                          {content.resources
-                            .filter((r: CohortSessionResource) => r.type === "image")
-                            .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
-                            .map((resource: CohortSessionResource) => (
-                              <div key={resource.id} className="relative group">
-                                <img
-                                  src={resource.url}
-                                  alt={resource.name}
-                                  className="w-full h-40 object-cover rounded-lg border border-gray-200"
-                                />
-                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
-                                  <a
-                                    href={resource.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="opacity-0 group-hover:opacity-100 transition-opacity bg-white px-3 py-1 rounded-full text-sm font-medium"
-                                  >
-                                    View
-                                  </a>
+                {content.sectionType === "resources" &&
+                  content.resources &&
+                  content.resources.length > 0 && (
+                    <div className="rounded-lg border border-gray-200 bg-white p-6">
+                      <div className="space-y-4">
+                        {/* Image Carousel */}
+                        {content.resources.filter(
+                          (r: CohortSessionResource) => r.type === "image"
+                        ).length > 0 && (
+                          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                            {content.resources
+                              .filter(
+                                (r: CohortSessionResource) => r.type === "image"
+                              )
+                              .sort(
+                                (
+                                  a: CohortSessionResource,
+                                  b: CohortSessionResource
+                                ) => a.orderIndex - b.orderIndex
+                              )
+                              .map((resource: CohortSessionResource) => (
+                                <div
+                                  key={resource.id}
+                                  className="group relative"
+                                >
+                                  <img
+                                    src={resource.url}
+                                    alt={resource.name}
+                                    className="h-40 w-full rounded-lg border border-gray-200 object-cover"
+                                  />
+                                  <div className="bg-opacity-0 group-hover:bg-opacity-30 absolute inset-0 flex items-center justify-center rounded-lg bg-black transition-all">
+                                    <a
+                                      href={resource.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="rounded-full bg-white px-3 py-1 text-sm font-medium opacity-0 transition-opacity group-hover:opacity-100"
+                                    >
+                                      View
+                                    </a>
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
-                        </div>
-                      )}
+                              ))}
+                          </div>
+                        )}
 
-                      {/* PDF Resources with Google Docs Viewer */}
-                      {content.resources.filter((r: CohortSessionResource) => r.type === "pdf").length > 0 && (
-                        <div className="space-y-6">
-                          {content.resources
-                            .filter((r: CohortSessionResource) => r.type === "pdf")
-                            .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
-                            .map((resource: CohortSessionResource) => (
-                              <EmbeddedResourceViewer key={resource.id} resource={resource} />
-                            ))}
-                        </div>
-                      )}
+                        {/* PDF Resources with Google Docs Viewer */}
+                        {content.resources.filter(
+                          (r: CohortSessionResource) => r.type === "pdf"
+                        ).length > 0 && (
+                          <div className="space-y-6">
+                            {content.resources
+                              .filter(
+                                (r: CohortSessionResource) => r.type === "pdf"
+                              )
+                              .sort(
+                                (
+                                  a: CohortSessionResource,
+                                  b: CohortSessionResource
+                                ) => a.orderIndex - b.orderIndex
+                              )
+                              .map((resource: CohortSessionResource) => (
+                                <EmbeddedResourceViewer
+                                  key={resource.id}
+                                  resource={resource}
+                                />
+                              ))}
+                          </div>
+                        )}
 
-                      {/* PPT Resources */}
-                      {content.resources.filter((r: CohortSessionResource) => r.type === "ppt").length > 0 && (
-                        <div className="space-y-6">
-                          {content.resources
-                            .filter((r: CohortSessionResource) => r.type === "ppt")
-                            .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
-                            .map((resource: CohortSessionResource) => (
-                              <EmbeddedResourceViewer key={resource.id} resource={resource} />
-                            ))}
-                        </div>
-                      )}
+                        {/* PPT Resources */}
+                        {content.resources.filter(
+                          (r: CohortSessionResource) => r.type === "ppt"
+                        ).length > 0 && (
+                          <div className="space-y-6">
+                            {content.resources
+                              .filter(
+                                (r: CohortSessionResource) => r.type === "ppt"
+                              )
+                              .sort(
+                                (
+                                  a: CohortSessionResource,
+                                  b: CohortSessionResource
+                                ) => a.orderIndex - b.orderIndex
+                              )
+                              .map((resource: CohortSessionResource) => (
+                                <EmbeddedResourceViewer
+                                  key={resource.id}
+                                  resource={resource}
+                                />
+                              ))}
+                          </div>
+                        )}
 
-                      {/* Link Resources */}
-                      {content.resources.filter((r: CohortSessionResource) => r.type === "link").length > 0 && (
-                        <div className="space-y-2">
-                          {content.resources
-                            .filter((r: CohortSessionResource) => r.type === "link")
-                            .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
-                            .map((resource: CohortSessionResource) => (
-                              <a
-                                key={resource.id}
-                                href={resource.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-700 hover:border-orange-500 hover:text-orange-700"
-                              >
-                                <span className="text-orange-500">🔗</span>
-                                <span className="font-medium">{resource.name}</span>
-                              </a>
-                            ))}
-                        </div>
-                      )}
-
-                      {/* Excel Resources */}
-                      {content.resources.filter((r: CohortSessionResource) => r.type === "excel").length > 0 && (
-                        <div className="space-y-6">
-                          {content.resources
-                            .filter((r: CohortSessionResource) => r.type === "excel")
-                            .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
-                            .map((resource: CohortSessionResource) => (
-                              <EmbeddedResourceViewer key={resource.id} resource={resource} />
-                            ))}
-                        </div>
-                      )}
-
-                      {/* Word Resources */}
-                      {content.resources.filter((r: CohortSessionResource) => r.type === "word").length > 0 && (
-                        <div className="space-y-6">
-                          {content.resources
-                            .filter((r: CohortSessionResource) => r.type === "word")
-                            .sort((a: CohortSessionResource, b: CohortSessionResource) => a.orderIndex - b.orderIndex)
-                            .map((resource: CohortSessionResource) => (
-                              <EmbeddedResourceViewer key={resource.id} resource={resource} />
-                            ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              {content.images && content.images.length > 0 && content.sectionType === "resources" && (
-                <div className="rounded-lg border border-gray-200 bg-white p-6">
-                  <ImageCarousel images={content.images} />
-                </div>
-              )}
-              {content.sectionType === "meet_mentor" &&
-                content.mentors &&
-                content.mentors.length > 0 && (
-                  <div className="rounded-lg border border-gray-200 bg-white p-6">
-                    <h3 className="mb-4 font-semibold text-gray-900">
-                      Mentors
-                    </h3>
-                    <div className="space-y-4">
-                      {content.mentors.map((mentor: CohortSessionMentor) => (
-                        <div
-                          key={mentor.id}
-                          className="flex gap-4 rounded-lg border border-gray-200 p-4"
-                        >
-                          {mentor.imageUrl && (
-                            <img
-                              src={mentor.imageUrl}
-                              alt={mentor.name}
-                              className="h-16 w-16 rounded-full object-cover"
-                            />
-                          )}
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900">
-                              {mentor.name}
-                            </h4>
-                            {mentor.role && (
-                              <p className="text-sm text-gray-500">
-                                {mentor.role}
-                              </p>
-                            )}
-                            {mentor.bio && (
-                              <p className="mt-2 text-sm text-gray-600">
-                                {mentor.bio}
-                              </p>
-                            )}
-                            <div className="mt-3 flex gap-2">
-                              {mentor.linkedinUrl && (
+                        {/* Link Resources */}
+                        {content.resources.filter(
+                          (r: CohortSessionResource) => r.type === "link"
+                        ).length > 0 && (
+                          <div className="space-y-2">
+                            {content.resources
+                              .filter(
+                                (r: CohortSessionResource) => r.type === "link"
+                              )
+                              .sort(
+                                (
+                                  a: CohortSessionResource,
+                                  b: CohortSessionResource
+                                ) => a.orderIndex - b.orderIndex
+                              )
+                              .map((resource: CohortSessionResource) => (
                                 <a
-                                  href={mentor.linkedinUrl}
+                                  key={resource.id}
+                                  href={resource.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-sm text-blue-600 hover:underline"
+                                  className="flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-700 hover:border-orange-500 hover:text-orange-700"
                                 >
-                                  LinkedIn
-                                </a>
-                              )}
-                              {mentor.otherLinks?.map((link, i) => (
-                                <a
-                                  key={i}
-                                  href={link.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-sm text-blue-600 hover:underline"
-                                >
-                                  {link.title}
+                                  <span className="text-orange-500">🔗</span>
+                                  <span className="font-medium">
+                                    {resource.name}
+                                  </span>
                                 </a>
                               ))}
+                          </div>
+                        )}
+
+                        {/* Excel Resources */}
+                        {content.resources.filter(
+                          (r: CohortSessionResource) => r.type === "excel"
+                        ).length > 0 && (
+                          <div className="space-y-6">
+                            {content.resources
+                              .filter(
+                                (r: CohortSessionResource) => r.type === "excel"
+                              )
+                              .sort(
+                                (
+                                  a: CohortSessionResource,
+                                  b: CohortSessionResource
+                                ) => a.orderIndex - b.orderIndex
+                              )
+                              .map((resource: CohortSessionResource) => (
+                                <EmbeddedResourceViewer
+                                  key={resource.id}
+                                  resource={resource}
+                                />
+                              ))}
+                          </div>
+                        )}
+
+                        {/* Word Resources */}
+                        {content.resources.filter(
+                          (r: CohortSessionResource) => r.type === "word"
+                        ).length > 0 && (
+                          <div className="space-y-6">
+                            {content.resources
+                              .filter(
+                                (r: CohortSessionResource) => r.type === "word"
+                              )
+                              .sort(
+                                (
+                                  a: CohortSessionResource,
+                                  b: CohortSessionResource
+                                ) => a.orderIndex - b.orderIndex
+                              )
+                              .map((resource: CohortSessionResource) => (
+                                <EmbeddedResourceViewer
+                                  key={resource.id}
+                                  resource={resource}
+                                />
+                              ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                {content.images &&
+                  content.images.length > 0 &&
+                  content.sectionType === "resources" && (
+                    <div className="rounded-lg border border-gray-200 bg-white p-6">
+                      <ImageCarousel images={content.images} />
+                    </div>
+                  )}
+                {content.sectionType === "meet_mentor" &&
+                  content.mentors &&
+                  content.mentors.length > 0 && (
+                    <div className="rounded-lg border border-gray-200 bg-white p-6">
+                      <h3 className="mb-4 font-semibold text-gray-900">
+                        Mentors
+                      </h3>
+                      <div className="space-y-4">
+                        {content.mentors.map((mentor: CohortSessionMentor) => (
+                          <div
+                            key={mentor.id}
+                            className="flex gap-4 rounded-lg border border-gray-200 p-4"
+                          >
+                            {mentor.imageUrl && (
+                              <img
+                                src={mentor.imageUrl}
+                                alt={mentor.name}
+                                className="h-16 w-16 rounded-full object-cover"
+                              />
+                            )}
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-900">
+                                {mentor.name}
+                              </h4>
+                              {mentor.role && (
+                                <p className="text-sm text-gray-500">
+                                  {mentor.role}
+                                </p>
+                              )}
+                              {mentor.bio && (
+                                <p className="mt-2 text-sm text-gray-600">
+                                  {mentor.bio}
+                                </p>
+                              )}
+                              <div className="mt-3 flex gap-2">
+                                {mentor.linkedinUrl && (
+                                  <a
+                                    href={mentor.linkedinUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-sm text-blue-600 hover:underline"
+                                  >
+                                    LinkedIn
+                                  </a>
+                                )}
+                                {mentor.otherLinks?.map((link, i) => (
+                                  <a
+                                    key={i}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-sm text-blue-600 hover:underline"
+                                  >
+                                    {link.title}
+                                  </a>
+                                ))}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              {content.images && content.images.length > 0 && content.sectionType === "meet_mentor" && (
-                <div className="rounded-lg border border-gray-200 bg-white p-6">
-                  <ImageCarousel images={content.images} />
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex h-40 items-center justify-center rounded-lg border-2 border-dashed border-orange-300 bg-orange-50">
-              <div className="text-center">
-                <Lock className="mx-auto h-8 w-8 text-orange-500" />
-                <p className="mt-2 text-sm font-medium text-orange-700">
-                  {content.lockedMessage || "This section is locked. It will be unlocked soon!"}
-                </p>
+                  )}
+                {content.images &&
+                  content.images.length > 0 &&
+                  content.sectionType === "meet_mentor" && (
+                    <div className="rounded-lg border border-gray-200 bg-white p-6">
+                      <ImageCarousel images={content.images} />
+                    </div>
+                  )}
               </div>
-            </div>
-          )}
-        </div>
-      )))}
+            ) : (
+              <div className="flex h-40 items-center justify-center rounded-lg border-2 border-dashed border-orange-300 bg-orange-50">
+                <div className="text-center">
+                  <Lock className="mx-auto h-8 w-8 text-orange-500" />
+                  <p className="mt-2 text-sm font-medium text-orange-700">
+                    {content.lockedMessage ||
+                      "This section is locked. It will be unlocked soon!"}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        ))
+      )}
 
       {/* Session Related Queries Section */}
       <div className="rounded-lg border border-gray-200 bg-white p-6">
         <div className="mb-4 flex items-center gap-2">
           <MessageCircle className="h-5 w-5 text-orange-600" />
-          <h3 className="text-base font-semibold text-gray-900 sm:text-lg">Session Related Queries</h3>
+          <h3 className="text-base font-semibold text-gray-900 sm:text-lg">
+            Session Related Queries
+          </h3>
         </div>
 
         <form onSubmit={handleSubmitQuestion} className="mb-6">
@@ -1195,8 +1355,13 @@ function CohortSessionMain({
               rows={3}
               className="resize-none sm:flex-1"
             />
-            <Button type="submit" disabled={isSubmitting || !newQuestion.trim()} className="sm:self-end" size="sm">
-              <Send className="h-4 w-4 mr-2" />
+            <Button
+              type="submit"
+              disabled={isSubmitting || !newQuestion.trim()}
+              className="sm:self-end"
+              size="sm"
+            >
+              <Send className="mr-2 h-4 w-4" />
               {isSubmitting ? "Submitting..." : "Submit"}
             </Button>
           </div>
@@ -1206,45 +1371,65 @@ function CohortSessionMain({
         {userQueries && userQueries.length > 0 && (
           <div className="space-y-4">
             {userQueries.map((query: any) => (
-              <div key={query.id} className="rounded-xl border border-gray-200 overflow-hidden">
+              <div
+                key={query.id}
+                className="overflow-hidden rounded-xl border border-gray-200"
+              >
                 {/* Question Section */}
-                <div className="bg-gradient-to-r from-orange-50 to-white p-4 border-b border-gray-200">
+                <div className="border-b border-gray-200 bg-gradient-to-r from-orange-50 to-white p-4">
                   <div className="flex items-start gap-2 sm:gap-3">
-                    <div className="hidden sm:flex flex-shrink-0 w-8 h-8 rounded-full bg-orange-100 items-center justify-center">
-                      <span className="text-orange-600 font-semibold text-sm">Q</span>
+                    <div className="hidden h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 sm:flex">
+                      <span className="text-sm font-semibold text-orange-600">
+                        Q
+                      </span>
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="min-w-0 flex-1">
                       {editingQueryId === query.id ? (
                         <div className="space-y-2">
                           <Textarea
                             value={editQuestionText}
-                            onChange={(e) => setEditQuestionText(e.target.value)}
+                            onChange={(e) =>
+                              setEditQuestionText(e.target.value)
+                            }
                             rows={2}
                             className="resize-none text-sm"
                           />
                           <div className="flex gap-2">
-                            <Button size="sm" onClick={() => handleEditQuestion(query.id)}>
+                            <Button
+                              size="sm"
+                              onClick={() => handleEditQuestion(query.id)}
+                            >
                               Save
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => {
-                              setEditingQueryId(null);
-                              setEditQuestionText("");
-                            }}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingQueryId(null);
+                                setEditQuestionText("");
+                              }}
+                            >
                               Cancel
                             </Button>
                           </div>
                         </div>
                       ) : (
                         <>
-                          <p className="text-xs sm:text-sm font-semibold text-gray-900 break-words">{query.question}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {new Date(query.createdAt).toLocaleDateString()} at {new Date(query.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          <p className="text-xs font-semibold break-words text-gray-900 sm:text-sm">
+                            {query.question}
+                          </p>
+                          <p className="mt-1 text-xs text-gray-500">
+                            {new Date(query.createdAt).toLocaleDateString()} at{" "}
+                            {new Date(query.createdAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
                           </p>
                         </>
                       )}
                     </div>
                     {editingQueryId !== query.id && (
-                      <div className="flex gap-0.5 flex-shrink-0">
+                      <div className="flex flex-shrink-0 gap-0.5">
                         <Button
                           size="sm"
                           variant="ghost"
@@ -1252,7 +1437,7 @@ function CohortSessionMain({
                             setEditingQueryId(query.id);
                             setEditQuestionText(query.question);
                           }}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          className="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
                         >
                           <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
@@ -1263,7 +1448,7 @@ function CohortSessionMain({
                             setQueryToDelete(query.id);
                             setDeleteDialogOpen(true);
                           }}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-600 hover:bg-red-50 hover:text-red-700"
                         >
                           <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
@@ -1276,23 +1461,28 @@ function CohortSessionMain({
                 {query.answer ? (
                   <div className="bg-green-50 p-4">
                     <div className="flex items-start gap-2 sm:gap-3">
-                      <div className="hidden sm:flex flex-shrink-0 w-8 h-8 rounded-full bg-green-100 items-center justify-center">
-                        <span className="text-green-600 font-semibold text-sm">A</span>
+                      <div className="hidden h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-green-100 sm:flex">
+                        <span className="text-sm font-semibold text-green-600">
+                          A
+                        </span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <span className="text-xs font-semibold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-600">
                             Fire in the Belly
                           </span>
                         </div>
-                        <p className="text-xs sm:text-sm font-semibold text-gray-700 leading-relaxed break-words">{query.answer}</p>
+                        <p className="text-xs leading-relaxed font-semibold break-words text-gray-700 sm:text-sm">
+                          {query.answer}
+                        </p>
                       </div>
                     </div>
                   </div>
                 ) : (
                   <div className="bg-gray-50 p-4">
                     <div className="text-xs text-gray-500 italic">
-                      We have received your response we will get back to you soon.
+                      We have received your response we will get back to you
+                      soon.
                     </div>
                   </div>
                 )}
@@ -1308,14 +1498,18 @@ function CohortSessionMain({
           <DialogHeader>
             <DialogTitle>Delete Question</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this question? This action cannot be undone.
+              Are you sure you want to delete this question? This action cannot
+              be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setDeleteDialogOpen(false);
-              setQueryToDelete(null);
-            }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setQueryToDelete(null);
+              }}
+            >
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDeleteQuestion}>
@@ -1331,7 +1525,9 @@ function CohortSessionMain({
           variant="outline"
           onClick={() => {
             if (currentAccessibleIndex > 0) {
-              onSessionSelect(accessibleSessions[currentAccessibleIndex - 1].id);
+              onSessionSelect(
+                accessibleSessions[currentAccessibleIndex - 1].id
+              );
             }
           }}
           disabled={currentAccessibleIndex <= 0}
@@ -1342,7 +1538,9 @@ function CohortSessionMain({
         <Button
           onClick={() => {
             if (currentAccessibleIndex < accessibleSessions.length - 1) {
-              onSessionSelect(accessibleSessions[currentAccessibleIndex + 1].id);
+              onSessionSelect(
+                accessibleSessions[currentAccessibleIndex + 1].id
+              );
             }
           }}
           disabled={currentAccessibleIndex >= accessibleSessions.length - 1}
@@ -1355,7 +1553,11 @@ function CohortSessionMain({
   );
 }
 
-function EmbeddedResourceViewer({ resource }: { resource: CohortSessionResource }) {
+function EmbeddedResourceViewer({
+  resource,
+}: {
+  resource: CohortSessionResource;
+}) {
   const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(resource.url)}&embedded=true`;
 
   return (

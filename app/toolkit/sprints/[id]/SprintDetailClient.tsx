@@ -9,6 +9,7 @@ import {
   Check,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
   ArrowRight,
   Loader2,
   Linkedin,
@@ -17,6 +18,10 @@ import {
   Gift,
   Copy,
   Play,
+  HelpCircle,
+  MessageSquare,
+  ExternalLink,
+  Users,
 } from "lucide-react";
 import { Drawer } from "vaul";
 import { cn } from "@/lib/utils";
@@ -79,6 +84,15 @@ interface Session {
   originalPrice?: number | null;
 }
 
+interface SprintFaqItem {
+  id: string;
+  question: string;
+  answer?: string | null;
+  imageUrl?: string | null;
+  orderIndex?: number;
+  isActive?: boolean;
+}
+
 interface SprintData {
   id: string;
   title: string;
@@ -97,12 +111,15 @@ interface SprintData {
   featuresHeading: string;
   sessionsHeading?: string | null;
   testimonialsHeading?: string | null;
+  faqsHeading?: string | null;
   whoIsThisForHeading?: string | null;
   whoIsThisForBullets?: string[] | null;
   investmentLabel: string;
   basePrice: number;
   originalPrice?: number | null;
   videoUrl?: string | null;
+  isBestSeller?: boolean;
+  isFillingFast?: boolean;
   hasEarlyBird?: boolean;
   showEarlyBirdCheckout?: boolean;
   showEarlyBirdMarqueeCheckout?: boolean;
@@ -114,6 +131,7 @@ interface SprintData {
   tiers: Tier[];
   addons: Addon[];
   sessions: Session[];
+  faqs?: SprintFaqItem[];
 }
 
 export default function SprintDetailClient() {
@@ -128,6 +146,8 @@ export default function SprintDetailClient() {
   const [isBuddyOfferGlobalEnabled, setIsBuddyOfferGlobalEnabled] = useState(false);
   const [buddyOfferTitle, setBuddyOfferTitle] = useState("Friendship Day Offer");
   const [buddyOfferText, setBuddyOfferText] = useState("Learning is better together! Enter your friend's email below so they can get access that too at 20% off");
+  const [activeCommunityTab, setActiveCommunityTab] = useState<"faqs" | "testimonials">("faqs");
+  const [openFaqId, setOpenFaqId] = useState<string | null>(null);
 
   // Upsell Modal / Bottom Sheet selections
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -169,7 +189,6 @@ export default function SprintDetailClient() {
 
   // Cover Image Carousel states
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isPlayingVideo, setIsPlayingVideo] = useState(false);
 
   useEffect(() => {
     if (!sprint || !sprint.coverImageUrls || sprint.coverImageUrls.length <= 1) return;
@@ -178,6 +197,12 @@ export default function SprintDetailClient() {
     }, 5000);
     return () => clearInterval(interval);
   }, [sprint]);
+
+  useEffect(() => {
+    if (sprint?.faqs && sprint.faqs.length > 0 && openFaqId === null) {
+      setOpenFaqId(sprint.faqs[0].id);
+    }
+  }, [sprint, openFaqId]);
 
   const handleCopyLink = () => {
     if (typeof window !== "undefined") {
@@ -188,29 +213,6 @@ export default function SprintDetailClient() {
     }
   };
 
-  // Mentors stacked animation states
-  const [mentorCards, setMentorCards] = useState<Mentor[]>([]);
-
-  const rotateMentorsForward = () => {
-    setMentorCards((prev) => {
-      if (prev.length === 0) return prev;
-      const newArray = [...prev];
-      const first = newArray.shift();
-      if (first) newArray.push(first);
-      return newArray;
-    });
-  };
-
-  const rotateMentorsBackward = () => {
-    setMentorCards((prev) => {
-      if (prev.length === 0) return prev;
-      const newArray = [...prev];
-      const last = newArray.pop();
-      if (last) newArray.unshift(last);
-      return newArray;
-    });
-  };
-
   // Load Sprint details and live toolkits
   useEffect(() => {
     const fetchSprintDetails = async () => {
@@ -218,9 +220,6 @@ export default function SprintDetailClient() {
         const response = await axios.get(`/api/sprints/${sprintId}`);
         const data = response.data;
         setSprint(data);
-        if (data.mentors && data.mentors.length > 0) {
-          setMentorCards(data.mentors);
-        }
 
         // Auto-select default tier
         const defaultTier = data.tiers?.find((t: Tier) => t.isDefault) || data.tiers?.[0];
@@ -515,7 +514,7 @@ export default function SprintDetailClient() {
         <div className="w-full bg-[#ff5e14] text-white py-2.5 overflow-hidden relative font-extrabold text-[10px] sm:text-xs uppercase tracking-widest border-b border-orange-600/20 shadow-sm select-none shrink-0 z-30">
           <div className="marquee-container flex">
             <div className="animate-marquee flex whitespace-nowrap gap-8">
-              {Array(10).fill("Early Bird Offer!! 🔥 Get 20% off with Buddy Referral").map((text, i) => (
+              {Array(10).fill("Early Bird Offer! Get 20% off with Buddy Referral").map((text, i) => (
                 <span key={i} className="flex items-center gap-4 shrink-0">
                   <span>{text}</span>
                   <span className="text-orange-300 font-black">•</span>
@@ -523,7 +522,7 @@ export default function SprintDetailClient() {
               ))}
             </div>
             <div className="animate-marquee flex whitespace-nowrap gap-8" aria-hidden="true">
-              {Array(10).fill("Early Bird Offer!! 🔥 Get 20% off with Buddy Referral").map((text, i) => (
+              {Array(10).fill("Early Bird Offer! Get 20% off with Buddy Referral").map((text, i) => (
                 <span key={i} className="flex items-center gap-4 shrink-0">
                   <span>{text}</span>
                   <span className="text-orange-300 font-black">•</span>
@@ -534,46 +533,100 @@ export default function SprintDetailClient() {
         </div>
       )}
 
-      {/* 1. Hero Section */}
+      {/* 1. Top Banner Section (Video Support with Cover Image Fallback) */}
       {(() => {
         const videoEmbed = sprint.videoUrl ? getVideoEmbedInfo(sprint.videoUrl) : null;
         return (
-          <section className="relative w-full aspect-[4/3] md:aspect-[21/9] overflow-hidden flex items-end">
-            {videoEmbed && isPlayingVideo ? (
-              <div className="absolute inset-0 w-full h-full bg-black flex items-center justify-center z-10">
-                {videoEmbed.provider === "youtube" ? (
-                  <iframe
-                    src={videoEmbed.embedUrl}
-                    title={`${sprint.title} Video Preview`}
-                    className="w-full h-full border-0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center p-2 sm:p-4">
-                    <iframe
-                      src={videoEmbed.embedUrl}
-                      title={`${sprint.title} Instagram Post`}
-                      className="w-full max-w-sm sm:max-w-md h-full rounded-lg border-0 shadow-2xl bg-white"
-                      allow="encrypted-media"
-                      allowFullScreen
-                    />
-                  </div>
+          <section className="relative w-full bg-black overflow-hidden">
+            {/* Top Bar (Back Button + Provider Tag + Share) */}
+            <div className="absolute top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 z-30 flex items-center justify-between pointer-events-none">
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== "undefined" && window.history.length > 1) {
+                    router.back();
+                  } else {
+                    router.push("/toolkit");
+                  }
+                }}
+                className="pointer-events-auto flex items-center gap-1.5 bg-black/70 hover:bg-black/90 text-white text-xs font-semibold px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full backdrop-blur-md transition duration-200 border border-white/20 shadow-lg group"
+                aria-label="Go back"
+              >
+                <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
+                <span>Back</span>
+              </button>
+
+              <div className="flex items-center gap-2 pointer-events-auto">
+                {videoEmbed && (
+                  <span className="bg-black/70 backdrop-blur-md text-white/90 border border-white/20 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold flex items-center gap-1.5 shadow-md">
+                    <Play className="w-3 h-3 text-[#ff5e14] fill-current" />
+                    <span className="capitalize">
+                      {videoEmbed.provider === "bunny"
+                        ? "Bunny CDN"
+                        : videoEmbed.provider === "youtube"
+                        ? "YouTube"
+                        : videoEmbed.provider === "instagram"
+                        ? "Instagram"
+                        : "Video"}
+                    </span>
+                  </span>
                 )}
 
-                {/* Close video / switch back to cover button */}
                 <button
                   type="button"
-                  onClick={() => setIsPlayingVideo(false)}
-                  className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-black/70 hover:bg-black/90 text-white text-xs font-semibold px-3 py-2 rounded-full backdrop-blur-md transition duration-200 border border-white/20 shadow-lg"
-                  aria-label="Close video preview"
+                  onClick={handleCopyLink}
+                  className="bg-black/70 hover:bg-black/90 text-white p-1.5 sm:p-2 rounded-full backdrop-blur-md transition duration-200 border border-white/20 shadow-lg"
+                  aria-label="Share Sprint"
+                  title="Share Sprint"
                 >
-                  <X className="w-4 h-4" />
-                  Close Video
+                  {copied ? (
+                    <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  )}
                 </button>
               </div>
+            </div>
+
+            {videoEmbed ? (
+              /* Top Banner Video Player (YouTube, Instagram, Bunny CDN, Direct) */
+              videoEmbed.provider === "instagram" ? (
+                <div className="relative w-full min-h-[420px] sm:min-h-[520px] md:min-h-[600px] bg-zinc-950 flex flex-col items-center justify-center py-4 sm:py-6 px-2 sm:px-4">
+                  <div className="w-full max-w-4xl h-[420px] sm:h-[520px] md:h-[600px] flex items-center justify-center">
+                    <iframe
+                      src={videoEmbed.embedUrl}
+                      title={`${sprint.title} Instagram Video`}
+                      className="w-full h-full rounded-xl sm:rounded-2xl border border-zinc-800 shadow-2xl bg-black"
+                      allow="encrypted-media; fullscreen"
+                      allowFullScreen
+                      scrolling="no"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="relative w-full aspect-video md:max-h-[580px] bg-black flex items-center justify-center">
+                  {videoEmbed.provider === "youtube" || videoEmbed.provider === "bunny" ? (
+                    <iframe
+                      src={videoEmbed.embedUrl}
+                      title={`${sprint.title} Video Player`}
+                      className="w-full h-full border-0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <video
+                      src={videoEmbed.embedUrl}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      className="w-full h-full object-contain bg-black"
+                    />
+                  )}
+                </div>
+              )
             ) : sprint.coverImageUrls && sprint.coverImageUrls.length > 0 ? (
-              <div className="absolute inset-0 w-full h-full">
+              /* Fallback Image Carousel */
+              <div className="relative w-full aspect-[4/3] md:aspect-[21/9] overflow-hidden flex items-end">
                 <AnimatePresence mode="wait">
                   <motion.img
                     key={currentSlide}
@@ -587,7 +640,6 @@ export default function SprintDetailClient() {
                   />
                 </AnimatePresence>
 
-                {/* Carousel navigation arrows */}
                 {sprint.coverImageUrls.length > 1 && (
                   <>
                     <button
@@ -615,7 +667,6 @@ export default function SprintDetailClient() {
                       <ChevronRight className="w-5 h-5" />
                     </button>
 
-                    {/* Dot Indicators */}
                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
                       {sprint.coverImageUrls.map((_, idx) => (
                         <button
@@ -632,79 +683,75 @@ export default function SprintDetailClient() {
                     </div>
                   </>
                 )}
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none" />
               </div>
             ) : sprint.coverImageUrl ? (
-              <img
-                src={sprint.coverImageUrl}
-                alt={sprint.title}
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            ) : (
-              <div className="absolute inset-0 bg-[#EFECE6]" />
-            )}
-
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none" />
-
-            {/* Back navigation button */}
-            <button
-              type="button"
-              onClick={() => {
-                if (typeof window !== "undefined" && window.history.length > 1) {
-                  router.back();
-                } else {
-                  router.push("/toolkit");
-                }
-              }}
-              className="absolute top-4 left-4 z-20 flex items-center gap-1.5 bg-black/40 hover:bg-black/60 text-white text-xs font-semibold px-3 py-2 rounded-full backdrop-blur-sm transition duration-200 group"
-              aria-label="Go back"
-            >
-              <ChevronLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
-              Back
-            </button>
-
-            {/* In-Banner Play Video Button Badge (when video is available and not currently playing) */}
-            {videoEmbed && !isPlayingVideo && (
-              <div className="absolute top-4 right-4 z-20">
-                <button
-                  type="button"
-                  onClick={() => setIsPlayingVideo(true)}
-                  className="flex items-center gap-2 bg-black/60 hover:bg-[#ff5e14] text-white text-xs font-bold px-3.5 py-2 rounded-full backdrop-blur-md transition-all duration-200 shadow-lg border border-white/20 hover:border-transparent hover:scale-105 active:scale-95 group"
-                  aria-label="Watch video preview"
-                >
-                  <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white group-hover:text-[#ff5e14] transition-colors">
-                    <Play className="w-3 h-3 fill-current ml-0.5" />
-                  </span>
-                  <span>{videoEmbed.provider === "instagram" ? "Watch Reel" : "Watch Preview"}</span>
-                </button>
+              <div className="relative w-full aspect-[4/3] md:aspect-[21/9] overflow-hidden flex items-end">
+                <img
+                  src={sprint.coverImageUrl}
+                  alt={sprint.title}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none" />
               </div>
+            ) : (
+              <div className="relative w-full aspect-[16/9] md:aspect-[21/9] bg-[#1A1A1A]" />
             )}
-
-            <div className="relative w-full max-w-lg md:max-w-3xl mx-auto px-4 py-8 md:py-16 text-white space-y-4">
-              <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight">
-                {sprint.title}
-              </h1>
-
-              {/* Large central play prompt in hero if banner video is set */}
-              {videoEmbed && !isPlayingVideo && (
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsPlayingVideo(true)}
-                    className="inline-flex items-center gap-2.5 bg-white/15 hover:bg-white/25 border border-white/30 text-white text-xs md:text-sm font-semibold px-4 py-2 rounded-full backdrop-blur-md transition duration-200 shadow-md hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    <Play className="w-4 h-4 fill-white" />
-                    <span>Watch {videoEmbed.provider === "instagram" ? "Instagram Reel" : "Intro Video"}</span>
-                  </button>
-                </div>
-              )}
-            </div>
           </section>
         );
       })()}
 
+      {/* Sprint Header Info Block */}
+      <div className="border-b border-gray-200 bg-white shadow-sm">
+        <div className="max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 py-6 sm:py-8 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-orange-100 text-[#ff5e14] border border-orange-200">
+              Sprint Program
+            </span>
+            {sprint.badge1 && (
+              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-blue-100 text-blue-700 border border-blue-200">
+                {sprint.badge1}
+              </span>
+            )}
+            {sprint.badge2 && (
+              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-purple-100 text-purple-700 border border-purple-200">
+                {sprint.badge2}
+              </span>
+            )}
+            {sprint.isBestSeller && (
+              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                Best Seller
+              </span>
+            )}
+            {sprint.isFillingFast && (
+              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-rose-100 text-rose-700 border border-rose-200">
+                Filling Fast
+              </span>
+            )}
+          </div>
+
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-gray-900 leading-tight">
+            {sprint.title}
+          </h1>
+
+          {sprint.subtitle && (
+            <p className="text-sm md:text-base text-gray-600 leading-relaxed">
+              {sprint.subtitle}
+            </p>
+          )}
+
+          {sprint.startDate && (
+            <div className="pt-1 text-xs md:text-sm font-semibold text-gray-500">
+              Starts on: <span className="text-gray-900 font-bold">{sprint.startDate}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Main Responsive Grid Container */}
       <main className="max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 py-8 space-y-12">
-        {/* 2. Meet Your Mentors Section */}
+        {/* 2. Meet Your Mentors Section (Max 2 Mentors, Opposing Tilt Cards, Full Image & LinkedIn Link) */}
         {sprint.mentors && sprint.mentors.length > 0 && (
           <section className="space-y-6">
             <div className="flex justify-between items-baseline">
@@ -713,156 +760,95 @@ export default function SprintDetailClient() {
               </h2>
             </div>
 
-            {mentorCards.length >= 3 ? (
-              <div className="flex flex-col items-center w-full">
-                <div className="relative h-[340px] sm:h-[380px] w-full mx-auto flex items-center justify-center overflow-hidden py-4">
-                  {/* Side Arrows */}
-                  <button
-                    onClick={rotateMentorsBackward}
-                    className="absolute left-2 sm:left-6 md:left-12 z-20 p-2.5 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 shadow-md border border-blue-200 text-blue-600 hover:text-blue-800 hover:shadow-lg transition-all active:scale-95"
-                    aria-label="Previous mentor"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
+            <div
+              className={cn(
+                "w-full py-4 px-1",
+                sprint.mentors.length === 1
+                  ? "flex justify-center max-w-sm mx-auto"
+                  : "grid grid-cols-2 gap-3 sm:gap-8 md:gap-10 max-w-2xl mx-auto"
+              )}
+            >
+              {sprint.mentors.slice(0, 2).map((mentor, index) => {
+                const isFirst = index === 0;
+                const tiltClass =
+                  sprint.mentors!.length > 1
+                    ? isFirst
+                      ? "-rotate-2 sm:-rotate-3 hover:rotate-0 hover:scale-[1.02] active:rotate-0"
+                      : "rotate-2 sm:rotate-3 hover:rotate-0 hover:scale-[1.02] active:rotate-0"
+                    : "hover:scale-[1.02]";
 
-                  {mentorCards.map((mentor, index) => {
-                    const isCenter = index === 0;
-                    const isRight = index === 1;
-                    const isLeft = index === mentorCards.length - 1;
-
-                    let animateState = { x: "0%", scale: 0.7, opacity: 0, zIndex: 0 };
-
-                    if (isCenter) {
-                      animateState = { x: "0%", scale: 1, opacity: 1, zIndex: 10 };
-                    } else if (isRight) {
-                      animateState = { x: "68%", scale: 0.85, opacity: 0.9, zIndex: 5 };
-                    } else if (isLeft) {
-                      animateState = { x: "-68%", scale: 0.85, opacity: 0.9, zIndex: 5 };
-                    }
-
-                    return (
-                      <motion.div
-                        key={mentor.id}
-                        layout
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={animateState}
-                        transition={{
-                          type: "spring",
-                          stiffness: 300,
-                          damping: 25,
-                        }}
-                        onClick={rotateMentorsForward}
-                        className={cn(
-                          "absolute w-[250px] min-h-[240px] sm:w-[310px] sm:min-h-[280px] rounded-2xl shadow-lg border border-gray-100 bg-white p-5 flex flex-col justify-between items-center text-center cursor-pointer transition-shadow hover:shadow-md",
-                          isCenter ? "" : "pointer-events-none md:pointer-events-auto"
-                        )}
-                      >
-                        <div className="flex flex-col items-center space-y-3 w-full">
-                          {mentor.imageUrl ? (
-                            <img
-                              src={mentor.imageUrl}
-                              alt={mentor.name}
-                              className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-2 border-gray-100"
-                            />
-                          ) : (
-                            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-100 flex items-center justify-center text-gray-300">
-                              <Linkedin className="w-6 h-6" />
-                            </div>
-                          )}
-                          <div className="space-y-1 w-full">
-                            <h3 className="font-bold text-gray-900 text-sm md:text-base leading-tight">
-                              {mentor.name}
-                            </h3>
-                            <p className="text-[10px] md:text-xs text-[#ff5e14] font-semibold uppercase tracking-wider">
-                              {mentor.role}
-                            </p>
-                            {mentor.bio && (
-                              <div
-                                className="w-full max-h-[72px] sm:max-h-[100px] overflow-y-auto pr-1 text-center scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent"
-                                onClick={(e) => e.stopPropagation()}
-                                onMouseDown={(e) => e.stopPropagation()}
-                              >
-                                <p className="text-[11px] md:text-xs text-gray-600 leading-relaxed max-w-[240px] mx-auto mt-1">
-                                  {mentor.bio}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        {mentor.link && isCenter && (
-                          <a
-                            href={mentor.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-gray-400 hover:text-gray-700 text-xs mt-3 flex items-center gap-0.5 font-medium border-t border-gray-100 w-full justify-center pt-2.5"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Linkedin className="w-3.5 h-3.5 text-blue-700" /> profile
-                          </a>
-                        )}
-                      </motion.div>
-                    );
-                  })}
-
-                  <button
-                    onClick={rotateMentorsForward}
-                    className="absolute right-2 sm:right-6 md:right-12 z-20 p-2.5 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 shadow-md border border-blue-200 text-blue-600 hover:text-blue-800 hover:shadow-lg transition-all active:scale-95"
-                    aria-label="Next mentor"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            ) : (
-              /* Fallback Grid for less than 3 mentors */
-              <div className="grid grid-cols-2 gap-4 justify-center max-w-lg mx-auto">
-                {mentorCards.map((mentor) => (
+                return (
                   <div
                     key={mentor.id}
-                    className="bg-white rounded-xl border border-gray-150 p-4 text-center flex flex-col justify-between items-center"
+                    className={cn(
+                      "group relative bg-white rounded-2xl sm:rounded-3xl border border-gray-200/90 shadow-md sm:shadow-lg overflow-hidden flex flex-col transition-all duration-300 transform-gpu",
+                      tiltClass
+                    )}
                   >
-                    <div className="flex flex-col items-center space-y-3">
+                    {/* Full Image Area */}
+                    <div className="relative w-full aspect-[4/5] bg-neutral-900 overflow-hidden flex items-center justify-center">
                       {mentor.imageUrl ? (
                         <img
                           src={mentor.imageUrl}
                           alt={mentor.name}
-                          className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-2 border-gray-100"
+                          className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (
-                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-100 flex items-center justify-center text-gray-300">
-                          <Linkedin className="w-6 h-6" />
+                        <div className="w-full h-full flex flex-col items-center justify-center text-neutral-500 gap-1.5 sm:gap-2 bg-gradient-to-b from-neutral-800 to-neutral-950">
+                          <Users className="w-10 h-10 sm:w-16 sm:h-16 opacity-40 text-white" />
+                          <span className="text-[10px] sm:text-xs font-semibold text-neutral-400">Mentor Photo</span>
                         </div>
                       )}
-                       <div className="space-y-1">
-                        <h3 className="font-bold text-gray-900 text-sm md:text-base leading-tight">
+
+                      {/* Subtle dark gradient overlay on image */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+
+                      {/* Floating Mentor Tag / Role */}
+                      {mentor.role && (
+                        <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-10 max-w-[85%]">
+                          <span className="px-2 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[11px] font-bold tracking-wide uppercase rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20 shadow-md truncate block">
+                            {mentor.role}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Bottom Area: Name & LinkedIn Profile */}
+                    <div className="p-3 sm:p-5 bg-white flex flex-col justify-between flex-1 space-y-2 sm:space-y-3">
+                      <div className="space-y-0.5 sm:space-y-1">
+                        <h3 className="font-black text-sm sm:text-xl text-gray-900 leading-tight tracking-tight truncate sm:whitespace-normal">
                           {mentor.name}
                         </h3>
-                        <p className="text-[10px] md:text-xs text-[#ff5e14] font-semibold uppercase tracking-wider">
-                          {mentor.role}
-                        </p>
                         {mentor.bio && (
-                          <div className="w-full max-h-[60px] sm:max-h-[90px] overflow-y-auto pr-1 text-center scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
-                            <p className="text-[11px] md:text-xs text-gray-500 leading-relaxed max-w-[240px] mx-auto mt-1">
-                              {mentor.bio}
-                            </p>
-                          </div>
+                          <p className="text-[11px] sm:text-xs text-gray-600 line-clamp-2 leading-relaxed hidden sm:block">
+                            {mentor.bio}
+                          </p>
                         )}
                       </div>
+
+                      {mentor.link ? (
+                        <a
+                          href={mentor.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full py-1.5 px-2 sm:py-2.5 sm:px-4 rounded-lg sm:rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[11px] sm:text-xs flex items-center justify-between transition-colors border border-blue-200/70 shadow-xs group/btn"
+                        >
+                          <span className="flex items-center gap-1.5 sm:gap-2 truncate">
+                            <Linkedin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#0077B5] fill-current shrink-0" />
+                            <span className="truncate">LinkedIn</span>
+                          </span>
+                          <ExternalLink className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600 shrink-0 ml-1 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
+                        </a>
+                      ) : (
+                        <div className="py-0.5 text-[10px] sm:text-[11px] text-gray-400 font-medium">
+                          Program Mentor
+                        </div>
+                      )}
                     </div>
-                    {mentor.link && (
-                      <a
-                        href={mentor.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-400 hover:text-gray-700 text-xs mt-3 flex items-center gap-0.5 font-medium border-t border-gray-100 w-full justify-center pt-2"
-                      >
-                        <Linkedin className="w-3.5 h-3.5 text-blue-700" /> profile
-                      </a>
-                    )}
                   </div>
-                ))}
-              </div>
-            )}
+                );
+              })}
+            </div>
           </section>
         )}
 
@@ -1077,15 +1063,193 @@ export default function SprintDetailClient() {
           </div>
         )}
 
-        {/* Testimonials Section */}
+        {/* FAQs & Testimonials Interactive Section */}
         <section className="space-y-6 pt-6">
-          <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-b-2 border-black pb-1 inline-block">
-            {sprint.testimonialsHeading || "What Members Say About Our Ecosystem"}
-          </h2>
-          <StackedTestimonials />
-          <div className="max-w-2xl mx-auto">
-            <ToolkitStudentFeedback />
+          {/* Quick Navigation Toggle */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-200/80 pb-4">
+            <div>
+              <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-b-2 border-black pb-1 inline-block">
+                {activeCommunityTab === "faqs"
+                  ? (sprint.faqsHeading || "Frequently Asked Questions")
+                  : (sprint.testimonialsHeading || "What Members Say About Our Ecosystem")}
+              </h2>
+            </div>
+
+            <div className="inline-flex p-1 bg-gray-100 rounded-xl border border-gray-200/90 shadow-inner self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setActiveCommunityTab("faqs")}
+                className={cn(
+                  "px-4 py-1.5 text-xs md:text-sm font-bold rounded-lg transition-all duration-150 flex items-center gap-1.5",
+                  activeCommunityTab === "faqs"
+                    ? "bg-white text-gray-900 shadow-sm border border-gray-200/60"
+                    : "text-gray-500 hover:text-gray-900"
+                )}
+              >
+                <HelpCircle className="w-4 h-4 text-[#ff5e14]" />
+                <span>FAQs</span>
+                {sprint.faqs && sprint.faqs.length > 0 && (
+                  <span
+                    className={cn(
+                      "px-1.5 py-0.2 text-[10px] font-bold rounded-full",
+                      activeCommunityTab === "faqs"
+                        ? "bg-orange-100 text-[#ff5e14]"
+                        : "bg-gray-200 text-gray-600"
+                    )}
+                  >
+                    {sprint.faqs.length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveCommunityTab("testimonials")}
+                className={cn(
+                  "px-4 py-1.5 text-xs md:text-sm font-bold rounded-lg transition-all duration-150 flex items-center gap-1.5",
+                  activeCommunityTab === "testimonials"
+                    ? "bg-white text-gray-900 shadow-sm border border-gray-200/60"
+                    : "text-gray-500 hover:text-gray-900"
+                )}
+              >
+                <MessageSquare className="w-4 h-4 text-emerald-600" />
+                <span>Testimonials</span>
+              </button>
+            </div>
           </div>
+
+          <AnimatePresence mode="wait">
+            {activeCommunityTab === "faqs" ? (
+              <motion.div
+                key="faqs-tab"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-3"
+              >
+                {!sprint.faqs || sprint.faqs.length === 0 ? (
+                  <div className="py-12 text-center text-sm text-gray-500 border border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
+                    <p className="font-medium">No frequently asked questions listed yet.</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Have questions? Feel free to enquire directly using the button below.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {sprint.faqs.map((faq, index) => {
+                      const isOpen = openFaqId === faq.id;
+                      return (
+                        <div
+                          key={faq.id || index}
+                          className={cn(
+                            "rounded-2xl border transition-all duration-200 overflow-hidden",
+                            isOpen
+                              ? "bg-white border-orange-200 shadow-md ring-1 ring-orange-200/50"
+                              : "bg-white border-gray-200/90 shadow-sm hover:border-gray-300"
+                          )}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setOpenFaqId(isOpen ? null : faq.id)}
+                            className="w-full py-4 px-5 flex items-center justify-between text-left gap-4"
+                            aria-expanded={isOpen}
+                          >
+                            <span className="text-sm md:text-base font-bold text-gray-900 leading-snug">
+                              {faq.question}
+                            </span>
+                            <span
+                              className={cn(
+                                "shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors duration-200",
+                                isOpen
+                                  ? "bg-orange-100 text-[#ff5e14]"
+                                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                              )}
+                            >
+                              <ChevronDown
+                                className={cn(
+                                  "w-4 h-4 transition-transform duration-200",
+                                  isOpen ? "rotate-180" : "rotate-0"
+                                )}
+                              />
+                            </span>
+                          </button>
+
+                          <AnimatePresence initial={false}>
+                            {isOpen && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.25, ease: "easeInOut" }}
+                                className="overflow-hidden"
+                              >
+                                <div className="px-5 pb-5 pt-1 border-t border-gray-100 space-y-3.5">
+                                  {faq.answer && (
+                                    <p className="text-xs md:text-sm leading-relaxed text-gray-600 whitespace-pre-line">
+                                      {faq.answer}
+                                    </p>
+                                  )}
+
+                                  {faq.imageUrl && (
+                                    <div className="rounded-xl overflow-hidden border border-gray-200/80 bg-gray-50 shadow-inner">
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img
+                                        src={faq.imageUrl}
+                                        alt={faq.question}
+                                        className="w-full object-contain max-h-[420px]"
+                                        loading="lazy"
+                                        onError={(e) => {
+                                          (e.currentTarget as HTMLElement).style.display = "none";
+                                        }}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })}
+
+                    {/* FAQ Schema for SEO */}
+                    <script
+                      type="application/ld+json"
+                      dangerouslySetInnerHTML={{
+                        __html: JSON.stringify({
+                          "@context": "https://schema.org",
+                          "@type": "FAQPage",
+                          mainEntity: sprint.faqs.map((f) => ({
+                            "@type": "Question",
+                            name: f.question,
+                            acceptedAnswer: {
+                              "@type": "Answer",
+                              text: f.answer || f.question,
+                            },
+                          })),
+                        }),
+                      }}
+                    />
+                  </div>
+                )}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="testimonials-tab"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
+                <StackedTestimonials />
+                <div className="max-w-2xl mx-auto">
+                  <ToolkitStudentFeedback />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </section>
       </main>
 
@@ -1139,7 +1303,7 @@ export default function SprintDetailClient() {
               <div className="w-full bg-black text-[#ff5e14] py-2 overflow-hidden relative font-extrabold text-[9px] uppercase tracking-widest select-none shrink-0 border-b border-gray-100">
                 <div className="marquee-container flex">
                   <div className="animate-marquee flex whitespace-nowrap gap-8">
-                    {Array(8).fill("Early Bird Offer!! 🔥 Get 20% off with Buddy Referral").map((text, i) => (
+                    {Array(8).fill("Early Bird Offer! Get 20% off with Buddy Referral").map((text, i) => (
                       <span key={i} className="flex items-center gap-4 shrink-0">
                         <span>{text}</span>
                         <span className="text-neutral-800 font-black">•</span>
@@ -1147,7 +1311,7 @@ export default function SprintDetailClient() {
                     ))}
                   </div>
                   <div className="animate-marquee flex whitespace-nowrap gap-8" aria-hidden="true">
-                    {Array(8).fill("Early Bird Offer!! 🔥 Get 20% off with Buddy Referral").map((text, i) => (
+                    {Array(8).fill("Early Bird Offer! Get 20% off with Buddy Referral").map((text, i) => (
                       <span key={i} className="flex items-center gap-4 shrink-0">
                         <span>{text}</span>
                         <span className="text-neutral-800 font-black">•</span>

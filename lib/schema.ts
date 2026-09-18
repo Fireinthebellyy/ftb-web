@@ -1176,6 +1176,7 @@ export const sprints = pgTable("sprints", {
   basePrice: integer("base_price").notNull(),
   originalPrice: integer("original_price"),
   videoUrl: text("video_url"),
+  faqsHeading: text("faqs_heading").default("Frequently Asked Questions"),
   toolkitId: uuid("toolkit_id").references(() => toolkits.id, { onDelete: "set null" }),
   isActive: boolean("is_active").default(true),
   isBestSeller: boolean("is_best_seller").default(false),
@@ -1232,6 +1233,18 @@ export const sprintAddOns = pgTable("sprint_addons", {
   description: text("description").notNull(),
   orderIndex: integer("order_index").default(0),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const sprintFaqs = pgTable("sprint_faqs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sprintId: uuid("sprint_id").references(() => sprints.id, { onDelete: "cascade" }),
+  question: text("question").notNull(),
+  answer: text("answer"),
+  imageUrl: text("image_url"),
+  orderIndex: integer("order_index").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const sprintUpgradePlans = pgTable("sprint_upgrade_plans", {
@@ -1432,6 +1445,13 @@ export const userSprintTargetPlansRelations = relations(userSprintTargetPlans, (
   }),
 }));
 
+export const sprintFaqsRelations = relations(sprintFaqs, ({ one }) => ({
+  sprint: one(sprints, {
+    fields: [sprintFaqs.sprintId],
+    references: [sprints.id],
+  }),
+}));
+
 export const schema = {
   user,
   userOnboardingProfiles,
@@ -1506,6 +1526,7 @@ export const schema = {
   sprintSessionMentors,
   sprintUpgradePlans,
   userSprintTargetPlans,
+  sprintFaqs,
   sprintSessionsRelations,
   sprintSessionContentsRelations,
   sprintSessionResourcesRelations,
@@ -1513,5 +1534,6 @@ export const schema = {
   sprintSessionMentorsRelations,
   sprintUpgradePlansRelations,
   userSprintTargetPlansRelations,
+  sprintFaqsRelations,
 };
 

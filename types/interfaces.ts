@@ -533,3 +533,15 @@ export type SprintSessionResponse = {
   contents: SprintSessionContent[];
 };
 
+export interface SprintFaq {
+  id: string;
+  sprintId: string;
+  question: string;
+  answer?: string | null;
+  imageUrl?: string | null;
+  orderIndex: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+

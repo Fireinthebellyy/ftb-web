@@ -8,6 +8,7 @@ import {
   sprintAddOns,
   sprintSessions,
   sprintUpgradePlans,
+  sprintFaqs,
 } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
@@ -74,6 +75,12 @@ export async function GET(
       .where(eq(sprintUpgradePlans.sprintId, id))
       .orderBy(sprintUpgradePlans.orderIndex);
 
+    const faqsList = await db
+      .select()
+      .from(sprintFaqs)
+      .where(eq(sprintFaqs.sprintId, id))
+      .orderBy(sprintFaqs.orderIndex);
+
     return NextResponse.json({
       ...sprint,
       mentors: mentorsList,
@@ -82,6 +89,7 @@ export async function GET(
       addons: addonsList,
       sessions: sessionsList,
       upgradePlans: upgradePlansList,
+      faqs: faqsList,
     });
   } catch (error) {
     console.error("Error fetching admin sprint details:", error);
@@ -127,6 +135,7 @@ export async function PUT(
       featuresHeading,
       sessionsHeading,
       testimonialsHeading,
+      faqsHeading,
       whoIsThisForHeading,
       whoIsThisForBullets,
       investmentLabel,
@@ -169,6 +178,7 @@ export async function PUT(
           featuresHeading,
           sessionsHeading: sessionsHeading || null,
           testimonialsHeading: testimonialsHeading || null,
+          faqsHeading: faqsHeading || "Frequently Asked Questions",
           whoIsThisForHeading: whoIsThisForHeading || null,
           whoIsThisForBullets: whoIsThisForBullets && Array.isArray(whoIsThisForBullets) ? whoIsThisForBullets.filter((b: any) => typeof b === 'string' && b.trim() !== '') : null,
           investmentLabel,

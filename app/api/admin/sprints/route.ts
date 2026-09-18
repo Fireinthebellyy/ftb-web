@@ -42,7 +42,40 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { title, slug, basePrice, badge1, badge2, subtitle, videoUrl, isBestSeller, isFillingFast, isVerificationRequired } = body;
+    const {
+      title,
+      slug,
+      basePrice,
+      originalPrice,
+      badge1,
+      badge2,
+      subtitle,
+      coverImageUrl,
+      coverImageUrls,
+      cardImageUrl,
+      startDate,
+      highlights,
+      mentorsHeading,
+      mentorsLinkTarget,
+      mentorsLimit,
+      featuresHeading,
+      sessionsHeading,
+      testimonialsHeading,
+      faqsHeading,
+      whoIsThisForHeading,
+      whoIsThisForBullets,
+      investmentLabel,
+      videoUrl,
+      toolkitId,
+      isActive,
+      isBestSeller,
+      isFillingFast,
+      hasEarlyBird,
+      isVerificationRequired,
+      showEarlyBirdCheckout,
+      showEarlyBirdMarqueeCheckout,
+      showAddonsCheckout,
+    } = body;
 
     if (!title || !slug || basePrice === undefined) {
       return NextResponse.json(
@@ -75,14 +108,51 @@ export async function POST(request: Request) {
         title,
         slug: sanitizedSlug,
         basePrice: parsedBasePrice,
-        ...(badge1 ? { badge1 } : {}),
-        ...(badge2 ? { badge2 } : {}),
-        ...(subtitle ? { subtitle } : {}),
-        ...(videoUrl ? { videoUrl: videoUrl.trim() } : {}),
-        isActive: true,
+        originalPrice: originalPrice ? Number(originalPrice) : null,
+        badge1: badge1 || null,
+        badge2: badge2 || null,
+        subtitle: subtitle || null,
+        coverImageUrl: coverImageUrl || null,
+        coverImageUrls:
+          coverImageUrls && Array.isArray(coverImageUrls)
+            ? coverImageUrls.filter(
+                (url: any) => typeof url === "string" && url.trim() !== ""
+              )
+            : null,
+        cardImageUrl: cardImageUrl || null,
+        startDate: startDate || null,
+        highlights: highlights || null,
+        mentorsHeading: mentorsHeading || "Meet Your Mentors",
+        mentorsLinkTarget: mentorsLinkTarget || null,
+        mentorsLimit: mentorsLimit ? Number(mentorsLimit) : 4,
+        featuresHeading: featuresHeading || "What You Get",
+        sessionsHeading: sessionsHeading || "Sprint Sessions & Curriculum",
+        testimonialsHeading:
+          testimonialsHeading || "What Members Say About Our Ecosystem",
+        faqsHeading: faqsHeading || "Frequently Asked Questions",
+        whoIsThisForHeading: whoIsThisForHeading || "Who Is This For?",
+        whoIsThisForBullets:
+          whoIsThisForBullets && Array.isArray(whoIsThisForBullets)
+            ? whoIsThisForBullets.filter(
+                (b: any) => typeof b === "string" && b.trim() !== ""
+              )
+            : null,
+        investmentLabel: investmentLabel || "Total Investment",
+        videoUrl: videoUrl ? videoUrl.trim() : null,
+        toolkitId: toolkitId || null,
+        isActive: isActive !== undefined ? Boolean(isActive) : true,
         isBestSeller: isBestSeller !== undefined ? Boolean(isBestSeller) : false,
         isFillingFast: isFillingFast !== undefined ? Boolean(isFillingFast) : false,
-        isVerificationRequired: isVerificationRequired !== undefined ? Boolean(isVerificationRequired) : true,
+        hasEarlyBird: hasEarlyBird !== undefined ? Boolean(hasEarlyBird) : false,
+        isVerificationRequired:
+          isVerificationRequired !== undefined
+            ? Boolean(isVerificationRequired)
+            : true,
+        showEarlyBirdCheckout: Boolean(showEarlyBirdCheckout ?? false),
+        showEarlyBirdMarqueeCheckout: Boolean(
+          showEarlyBirdMarqueeCheckout ?? false
+        ),
+        showAddonsCheckout: Boolean(showAddonsCheckout ?? true),
       })
       .returning();
 

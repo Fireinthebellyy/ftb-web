@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { sprints, sprintMentors, sprintFeatures, sprintTiers, sprintAddOns, sprintOrders, sprintSessions } from "@/lib/schema";
+import { sprints, sprintMentors, sprintFeatures, sprintTiers, sprintAddOns, sprintOrders, sprintSessions, sprintFaqs } from "@/lib/schema";
 import { eq, and, or } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -65,6 +65,15 @@ export async function GET(
       ))
       .orderBy(sprintSessions.orderIndex);
 
+    const faqsList = await db
+      .select()
+      .from(sprintFaqs)
+      .where(and(
+        eq(sprintFaqs.sprintId, sprint.id),
+        eq(sprintFaqs.isActive, true)
+      ))
+      .orderBy(sprintFaqs.orderIndex);
+
     let hasAccess = false;
     try {
       const session = await auth.api.getSession({
@@ -96,6 +105,7 @@ export async function GET(
       tiers: tiersList,
       addons: addonsList,
       sessions: sessionsList,
+      faqs: faqsList,
       hasAccess,
     });
   } catch (error) {

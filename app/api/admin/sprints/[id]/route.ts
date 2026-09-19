@@ -14,6 +14,8 @@ import { getCurrentUser } from "@/server/users";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { eq, and, notInArray } from "drizzle-orm";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -151,48 +153,67 @@ export async function PUT(
       showEarlyBirdCheckout,
       showEarlyBirdMarqueeCheckout,
       showAddonsCheckout,
-      mentors: incomingMentors = [],
-      features: incomingFeatures = [],
-      tiers: incomingTiers = [],
-      addons: incomingAddons = [],
-      sessions: incomingSessions = [],
+      features: incomingFeatures,
+      tiers: incomingTiers,
+      addons: incomingAddons,
     } = body;
 
     const result = await dbPool.transaction(async (tx) => {
       const updatedSprints = await tx
         .update(sprints)
         .set({
-          title,
-          slug: slug?.toLowerCase().replace(/[^a-z0-9-_]/g, ""),
-          badge1,
-          badge2,
-          subtitle,
+          ...(title !== undefined ? { title } : {}),
+          ...(slug !== undefined
+            ? { slug: slug?.toLowerCase().replace(/[^a-z0-9-_]/g, "") }
+            : {}),
+          badge1: badge1 || null,
+          badge2: badge2 || null,
+          subtitle: subtitle || null,
           coverImageUrl: coverImageUrl || null,
-          coverImageUrls: coverImageUrls && Array.isArray(coverImageUrls) ? coverImageUrls.filter((url: any) => typeof url === 'string' && url.trim() !== '') : null,
+          coverImageUrls:
+            coverImageUrls && Array.isArray(coverImageUrls)
+              ? coverImageUrls.filter(
+                  (url: any) => typeof url === "string" && url.trim() !== ""
+                )
+              : null,
           cardImageUrl: cardImageUrl || null,
           startDate: startDate || null,
           highlights: highlights || null,
-          mentorsHeading,
-          mentorsLinkTarget,
+          mentorsHeading: mentorsHeading || "Meet Your Mentors",
+          mentorsLinkTarget: mentorsLinkTarget || null,
           mentorsLimit: mentorsLimit ? Number(mentorsLimit) : 4,
-          featuresHeading,
-          sessionsHeading: sessionsHeading || null,
-          testimonialsHeading: testimonialsHeading || null,
+          featuresHeading: featuresHeading || "What You Get",
+          sessionsHeading: sessionsHeading || "Sprint Sessions & Curriculum",
+          testimonialsHeading:
+            testimonialsHeading || "What Members Say About Our Ecosystem",
           faqsHeading: faqsHeading || "Frequently Asked Questions",
-          whoIsThisForHeading: whoIsThisForHeading || null,
-          whoIsThisForBullets: whoIsThisForBullets && Array.isArray(whoIsThisForBullets) ? whoIsThisForBullets.filter((b: any) => typeof b === 'string' && b.trim() !== '') : null,
-          investmentLabel,
-          basePrice: Number(basePrice),
+          whoIsThisForHeading: whoIsThisForHeading || "Who Is This For?",
+          whoIsThisForBullets:
+            whoIsThisForBullets && Array.isArray(whoIsThisForBullets)
+              ? whoIsThisForBullets.filter(
+                  (b: any) => typeof b === "string" && b.trim() !== ""
+                )
+              : null,
+          investmentLabel: investmentLabel || "Total Investment",
+          ...(basePrice !== undefined ? { basePrice: Number(basePrice) } : {}),
           originalPrice: originalPrice ? Number(originalPrice) : null,
-          videoUrl: videoUrl !== undefined ? (videoUrl?.trim() || null) : undefined,
+          videoUrl: videoUrl !== undefined ? videoUrl?.trim() || null : undefined,
           toolkitId: toolkitId || null,
           isActive: isActive !== undefined ? Boolean(isActive) : true,
-          isBestSeller: isBestSeller !== undefined ? Boolean(isBestSeller) : false,
-          isFillingFast: isFillingFast !== undefined ? Boolean(isFillingFast) : false,
-          hasEarlyBird: hasEarlyBird !== undefined ? Boolean(hasEarlyBird) : false,
-          isVerificationRequired: isVerificationRequired !== undefined ? Boolean(isVerificationRequired) : true,
+          isBestSeller:
+            isBestSeller !== undefined ? Boolean(isBestSeller) : false,
+          isFillingFast:
+            isFillingFast !== undefined ? Boolean(isFillingFast) : false,
+          hasEarlyBird:
+            hasEarlyBird !== undefined ? Boolean(hasEarlyBird) : false,
+          isVerificationRequired:
+            isVerificationRequired !== undefined
+              ? Boolean(isVerificationRequired)
+              : true,
           showEarlyBirdCheckout: Boolean(showEarlyBirdCheckout ?? false),
-          showEarlyBirdMarqueeCheckout: Boolean(showEarlyBirdMarqueeCheckout ?? false),
+          showEarlyBirdMarqueeCheckout: Boolean(
+            showEarlyBirdMarqueeCheckout ?? false
+          ),
           showAddonsCheckout: Boolean(showAddonsCheckout ?? true),
           updatedAt: new Date(),
         })
@@ -203,125 +224,97 @@ export async function PUT(
         throw new Error("Sprint not found or update failed");
       }
 
-      // Sync Mentors
-      const incomingMentorIds = incomingMentors
-        .map((m: any) => m.id)
-        .filter(Boolean);
-      if (incomingMentorIds.length > 0) {
-        await tx
-          .delete(sprintMentors)
-          .where(
-            and(
-              eq(sprintMentors.sprintId, sprintId),
-              notInArray(sprintMentors.id, incomingMentorIds)
-            )
-          );
-      } else {
-        await tx
-          .delete(sprintMentors)
-          .where(eq(sprintMentors.sprintId, sprintId));
-      }
-
-      for (let i = 0; i < incomingMentors.length; i++) {
-        const m = incomingMentors[i];
-        if (m.id) {
+      // Sync Features ONLY if explicitly provided as an array
+      if (Array.isArray(incomingFeatures)) {
+        const incomingFeatureIds = incomingFeatures
+          .map((f: any) => f.id)
+          .filter(Boolean);
+        if (incomingFeatureIds.length > 0) {
           await tx
-            .update(sprintMentors)
-            .set({
-              name: m.name,
-              role: m.role,
-              imageUrl: m.imageUrl,
-              bio: m.bio,
-              link: m.link,
-              orderIndex: i,
-            })
-            .where(and(eq(sprintMentors.id, m.id), eq(sprintMentors.sprintId, sprintId)));
+            .delete(sprintFeatures)
+            .where(
+              and(
+                eq(sprintFeatures.sprintId, sprintId),
+                notInArray(sprintFeatures.id, incomingFeatureIds)
+              )
+            );
         } else {
-          await tx.insert(sprintMentors).values({
-            sprintId,
-            name: m.name,
-            role: m.role,
-            imageUrl: m.imageUrl,
-            bio: m.bio,
-            link: m.link,
-            orderIndex: i,
-          });
-        }
-      }
-
-      // Sync Features
-      const incomingFeatureIds = incomingFeatures
-        .map((f: any) => f.id)
-        .filter(Boolean);
-      if (incomingFeatureIds.length > 0) {
-        await tx
-          .delete(sprintFeatures)
-          .where(
-            and(
-              eq(sprintFeatures.sprintId, sprintId),
-              notInArray(sprintFeatures.id, incomingFeatureIds)
-            )
-          );
-      } else {
-        await tx
-          .delete(sprintFeatures)
-          .where(eq(sprintFeatures.sprintId, sprintId));
-      }
-
-      for (let i = 0; i < incomingFeatures.length; i++) {
-        const f = incomingFeatures[i];
-        if (f.id) {
           await tx
-            .update(sprintFeatures)
-            .set({
+            .delete(sprintFeatures)
+            .where(eq(sprintFeatures.sprintId, sprintId));
+        }
+
+        for (let i = 0; i < incomingFeatures.length; i++) {
+          const f = incomingFeatures[i];
+          if (f.id) {
+            await tx
+              .update(sprintFeatures)
+              .set({
+                icon: f.icon || "Check",
+                title: f.title,
+                description: f.description,
+                orderIndex: i,
+              })
+              .where(eq(sprintFeatures.id, f.id));
+          } else {
+            await tx.insert(sprintFeatures).values({
+              sprintId,
               icon: f.icon || "Check",
               title: f.title,
               description: f.description,
               orderIndex: i,
-            })
-            .where(eq(sprintFeatures.id, f.id));
-        } else {
-          await tx.insert(sprintFeatures).values({
-            sprintId,
-            icon: f.icon || "Check",
-            title: f.title,
-            description: f.description,
-            orderIndex: i,
-          });
+            });
+          }
         }
       }
 
-      // Sync Tiers
-      const incomingTierIds = incomingTiers
-        .map((t: any) => t.id)
-        .filter(Boolean);
-      if (incomingTierIds.length > 0) {
-        await tx
-          .delete(sprintTiers)
-          .where(
-            and(
-              eq(sprintTiers.sprintId, sprintId),
-              notInArray(sprintTiers.id, incomingTierIds)
-            )
-          );
-      } else {
-        await tx
-          .delete(sprintTiers)
-          .where(eq(sprintTiers.sprintId, sprintId));
-      }
-
-      for (let i = 0; i < incomingTiers.length; i++) {
-        const t = incomingTiers[i];
-        const whatIncludedArr = Array.isArray(t.whatIncluded)
-          ? t.whatIncluded
-          : typeof t.whatIncluded === "string"
-          ? t.whatIncluded.split(",").map((s: string) => s.trim()).filter(Boolean)
-          : [];
-
-        if (t.id) {
+      // Sync Tiers ONLY if explicitly provided as an array
+      if (Array.isArray(incomingTiers)) {
+        const incomingTierIds = incomingTiers
+          .map((t: any) => t.id)
+          .filter(Boolean);
+        if (incomingTierIds.length > 0) {
           await tx
-            .update(sprintTiers)
-            .set({
+            .delete(sprintTiers)
+            .where(
+              and(
+                eq(sprintTiers.sprintId, sprintId),
+                notInArray(sprintTiers.id, incomingTierIds)
+              )
+            );
+        } else {
+          await tx
+            .delete(sprintTiers)
+            .where(eq(sprintTiers.sprintId, sprintId));
+        }
+
+        for (let i = 0; i < incomingTiers.length; i++) {
+          const t = incomingTiers[i];
+          const whatIncludedArr = Array.isArray(t.whatIncluded)
+            ? t.whatIncluded
+            : typeof t.whatIncluded === "string"
+            ? t.whatIncluded
+                .split(",")
+                .map((s: string) => s.trim())
+                .filter(Boolean)
+            : [];
+
+          if (t.id) {
+            await tx
+              .update(sprintTiers)
+              .set({
+                name: t.name,
+                price: Number(t.price),
+                originalPrice: t.originalPrice ? Number(t.originalPrice) : null,
+                description: t.description,
+                whatIncluded: whatIncludedArr,
+                isDefault: Boolean(t.isDefault),
+                orderIndex: i,
+              })
+              .where(eq(sprintTiers.id, t.id));
+          } else {
+            await tx.insert(sprintTiers).values({
+              sprintId,
               name: t.name,
               price: Number(t.price),
               originalPrice: t.originalPrice ? Number(t.originalPrice) : null,
@@ -329,109 +322,52 @@ export async function PUT(
               whatIncluded: whatIncludedArr,
               isDefault: Boolean(t.isDefault),
               orderIndex: i,
-            })
-            .where(eq(sprintTiers.id, t.id));
-        } else {
-          await tx.insert(sprintTiers).values({
-            sprintId,
-            name: t.name,
-            price: Number(t.price),
-            originalPrice: t.originalPrice ? Number(t.originalPrice) : null,
-            description: t.description,
-            whatIncluded: whatIncludedArr,
-            isDefault: Boolean(t.isDefault),
-            orderIndex: i,
-          });
+            });
+          }
         }
       }
 
-      // Sync Addons
-      const incomingAddonIds = incomingAddons
-        .map((a: any) => a.id)
-        .filter(Boolean);
-      if (incomingAddonIds.length > 0) {
-        await tx
-          .delete(sprintAddOns)
-          .where(
-            and(
-              eq(sprintAddOns.sprintId, sprintId),
-              notInArray(sprintAddOns.id, incomingAddonIds)
-            )
-          );
-      } else {
-        await tx
-          .delete(sprintAddOns)
-          .where(eq(sprintAddOns.sprintId, sprintId));
-      }
-
-      for (let i = 0; i < incomingAddons.length; i++) {
-        const a = incomingAddons[i];
-        if (a.id) {
+      // Sync Addons ONLY if explicitly provided as an array
+      if (Array.isArray(incomingAddons)) {
+        const incomingAddonIds = incomingAddons
+          .map((a: any) => a.id)
+          .filter(Boolean);
+        if (incomingAddonIds.length > 0) {
           await tx
-            .update(sprintAddOns)
-            .set({
+            .delete(sprintAddOns)
+            .where(
+              and(
+                eq(sprintAddOns.sprintId, sprintId),
+                notInArray(sprintAddOns.id, incomingAddonIds)
+              )
+            );
+        } else {
+          await tx
+            .delete(sprintAddOns)
+            .where(eq(sprintAddOns.sprintId, sprintId));
+        }
+
+        for (let i = 0; i < incomingAddons.length; i++) {
+          const a = incomingAddons[i];
+          if (a.id) {
+            await tx
+              .update(sprintAddOns)
+              .set({
+                name: a.name,
+                priceDelta: Number(a.priceDelta),
+                description: a.description,
+                orderIndex: i,
+              })
+              .where(eq(sprintAddOns.id, a.id));
+          } else {
+            await tx.insert(sprintAddOns).values({
+              sprintId,
               name: a.name,
               priceDelta: Number(a.priceDelta),
               description: a.description,
               orderIndex: i,
-            })
-            .where(eq(sprintAddOns.id, a.id));
-        } else {
-          await tx.insert(sprintAddOns).values({
-            sprintId,
-            name: a.name,
-            priceDelta: Number(a.priceDelta),
-            description: a.description,
-            orderIndex: i,
-          });
-        }
-      }
-
-      // Sync Sessions
-      const incomingSessionIds = incomingSessions
-        .map((s: any) => s.id)
-        .filter(Boolean);
-      if (incomingSessionIds.length > 0) {
-        await tx
-          .delete(sprintSessions)
-          .where(
-            and(
-              eq(sprintSessions.sprintId, sprintId),
-              notInArray(sprintSessions.id, incomingSessionIds)
-            )
-          );
-      } else {
-        await tx
-          .delete(sprintSessions)
-          .where(eq(sprintSessions.sprintId, sprintId));
-      }
-
-      for (let i = 0; i < incomingSessions.length; i++) {
-        const s = incomingSessions[i];
-        if (s.id) {
-          await tx
-            .update(sprintSessions)
-            .set({
-              title: s.title,
-              description: s.description,
-              price: s.price ? Number(s.price) : null,
-              originalPrice: s.originalPrice ? Number(s.originalPrice) : null,
-              orderIndex: i,
-              showInDashboard: s.showInDashboard !== undefined ? Boolean(s.showInDashboard) : true,
-              showInHome: s.showInHome !== undefined ? Boolean(s.showInHome) : true,
-            })
-            .where(eq(sprintSessions.id, s.id));
-        } else {
-          await tx.insert(sprintSessions).values({
-            sprintId,
-            title: s.title,
-            description: s.description,
-            price: s.price ? Number(s.price) : null,
-            originalPrice: s.originalPrice ? Number(s.originalPrice) : null,
-            orderIndex: i,
-            showInDashboard: s.showInDashboard !== undefined ? Boolean(s.showInDashboard) : true,
-            showInHome: s.showInHome !== undefined ? Boolean(s.showInHome) : true,
-          });
+            });
+          }
         }
       }
 

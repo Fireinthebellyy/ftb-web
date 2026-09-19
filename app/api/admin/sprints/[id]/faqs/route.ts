@@ -5,6 +5,8 @@ import { getCurrentUser } from "@/server/users";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { eq, asc } from "drizzle-orm";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

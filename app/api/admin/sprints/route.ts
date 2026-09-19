@@ -4,6 +4,8 @@ import { sprints } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const currentUser = await getCurrentUser();

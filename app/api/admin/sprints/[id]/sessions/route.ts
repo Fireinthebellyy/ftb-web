@@ -7,6 +7,8 @@ import { sprintSessions, sprintSessionContents, sprintSessionMentors, sprintSess
 import { getCurrentUser } from "@/server/users";
 import { eq, asc, inArray, desc } from "drizzle-orm";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

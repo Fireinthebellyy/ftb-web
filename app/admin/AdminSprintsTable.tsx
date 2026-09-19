@@ -9,7 +9,6 @@ import {
   Trash2,
   Plus,
   Loader2,
-  Image as ImageIcon,
   X,
   ArrowUp,
   ArrowDown,
@@ -353,7 +352,9 @@ export default function AdminSprintsTable() {
     if (!editingSprint) return;
     setIsLoading(true);
     try {
-      await axios.put(`/api/admin/sprints/${editingSprint.id}`, editingSprint);
+      // Exclude mentors, sessions, faqs to ensure single source of truth and no accidental wipes
+      const { mentors: _mentors, sessions: _sessions, faqs: _faqs, ...payload } = editingSprint as any;
+      await axios.put(`/api/admin/sprints/${editingSprint.id}`, payload);
       toast.success("Sprint saved successfully!");
       setEditDialogOpen(false);
       fetchSprints();
@@ -1732,168 +1733,41 @@ export default function AdminSprintsTable() {
             {activeEditTab === "mentors" && (
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-md font-semibold">Sprint Mentors</h3>
+                  <div>
+                    <h3 className="text-md font-semibold">Sprint Mentors</h3>
+                    <p className="text-xs text-gray-500">
+                      Manage featured instructors and guest mentors for this sprint.
+                    </p>
+                  </div>
                   <Button
                     onClick={() => {
-                      const currentMentors = editingSprint.mentors || [];
-                      setEditingSprint({
-                        ...editingSprint,
-                        mentors: [
-                          ...currentMentors,
-                          { name: "", role: "", imageUrl: "", bio: "", link: "" },
-                        ],
-                      });
+                      setManagingSprint(editingSprint);
+                      setMentorManagerOpen(true);
                     }}
-                    className="bg-gray-100 text-gray-700 hover:bg-gray-200 border text-xs"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
                     size="sm"
                   >
-                    <Plus className="w-3.5 h-3.5 mr-1" /> Add Mentor Card
+                    <Users className="w-3.5 h-3.5 mr-1" /> Open Mentor Manager
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4">
-                  {(editingSprint.mentors || []).map((mentor, index) => (
-                    <div
-                      key={index}
-                      className="border p-4 rounded-lg bg-gray-50 flex flex-col md:flex-row gap-4 relative"
-                    >
-                      <button
-                        onClick={() => {
-                          const currentMentors = [...(editingSprint.mentors || [])];
-                          currentMentors.splice(index, 1);
-                          setEditingSprint({ ...editingSprint, mentors: currentMentors });
-                        }}
-                        className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-
-                      <div className="flex flex-col items-center gap-2">
-                        {mentor.imageUrl ? (
-                          <img
-                            src={mentor.imageUrl}
-                            alt="Mentor preview"
-                            className="w-16 h-16 rounded-full object-cover border"
-                          />
-                        ) : (
-                          <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
-                            <ImageIcon className="w-6 h-6 text-gray-400" />
-                          </div>
-                        )}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="w-28 text-xs cursor-pointer"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              handleImageUpload(file, (url) => {
-                                const currentMentors = [...(editingSprint.mentors || [])];
-                                currentMentors[index] = {
-                                  ...currentMentors[index],
-                                  imageUrl: url,
-                                };
-                                setEditingSprint({ ...editingSprint, mentors: currentMentors });
-                              });
-                            }
-                          }}
-                        />
-                      </div>
-
-                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                          <Label className="text-xs">Mentor Name</Label>
-                          <Input
-                            value={mentor.name}
-                            onChange={(e) => {
-                              const currentMentors = [...(editingSprint.mentors || [])];
-                              currentMentors[index] = {
-                                ...currentMentors[index],
-                                name: e.target.value,
-                              };
-                              setEditingSprint({ ...editingSprint, mentors: currentMentors });
-                            }}
-                            placeholder="e.g. John Doe"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">Title / Role</Label>
-                          <Input
-                            value={mentor.role}
-                            onChange={(e) => {
-                              const currentMentors = [...(editingSprint.mentors || [])];
-                              currentMentors[index] = {
-                                ...currentMentors[index],
-                                role: e.target.value,
-                              };
-                              setEditingSprint({ ...editingSprint, mentors: currentMentors });
-                            }}
-                            placeholder="e.g. Ex-Google PM, Stanford Alum"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">Linkedin URL</Label>
-                          <Input
-                            value={mentor.link || ""}
-                            onChange={(e) => {
-                              const currentMentors = [...(editingSprint.mentors || [])];
-                              currentMentors[index] = {
-                                ...currentMentors[index],
-                                link: e.target.value,
-                              };
-                              setEditingSprint({ ...editingSprint, mentors: currentMentors });
-                            }}
-                            placeholder="https://linkedin.com/in/..."
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">Bio Details</Label>
-                          <Input
-                            value={mentor.bio || ""}
-                            onChange={(e) => {
-                              const currentMentors = [...(editingSprint.mentors || [])];
-                              currentMentors[index] = {
-                                ...currentMentors[index],
-                                bio: e.target.value,
-                              };
-                              setEditingSprint({ ...editingSprint, mentors: currentMentors });
-                            }}
-                            placeholder="Short summary description"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Reorder Buttons */}
-                      <div className="flex md:flex-col justify-center gap-1">
-                        <button
-                          disabled={index === 0}
-                          onClick={() => {
-                            const currentMentors = [...(editingSprint.mentors || [])];
-                            const temp = currentMentors[index];
-                            currentMentors[index] = currentMentors[index - 1];
-                            currentMentors[index - 1] = temp;
-                            setEditingSprint({ ...editingSprint, mentors: currentMentors });
-                          }}
-                          className="p-1 hover:bg-gray-200 rounded disabled:opacity-50"
-                        >
-                          <ArrowUp className="w-4 h-4" />
-                        </button>
-                        <button
-                          disabled={index === (editingSprint.mentors?.length || 0) - 1}
-                          onClick={() => {
-                            const currentMentors = [...(editingSprint.mentors || [])];
-                            const temp = currentMentors[index];
-                            currentMentors[index] = currentMentors[index + 1];
-                            currentMentors[index + 1] = temp;
-                            setEditingSprint({ ...editingSprint, mentors: currentMentors });
-                          }}
-                          className="p-1 hover:bg-gray-200 rounded disabled:opacity-50"
-                        >
-                          <ArrowDown className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                <div className="border rounded-lg bg-gray-50 p-6 text-center text-sm text-gray-600">
+                  <p className="font-semibold text-gray-800 mb-1">
+                    {editingSprint.mentors?.length || 0} Mentors Configured
+                  </p>
+                  <p className="text-xs text-gray-500 mb-4">
+                    Use the dedicated Mentor Manager to add photos, titles, bios, and LinkedIn profiles safely.
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setManagingSprint(editingSprint);
+                      setMentorManagerOpen(true);
+                    }}
+                    className="text-xs border-gray-300"
+                  >
+                    Manage Mentors
+                  </Button>
                 </div>
               </div>
             )}

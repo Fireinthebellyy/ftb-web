@@ -15,6 +15,8 @@ import {
 } from "@/lib/bunny";
 import { getPaidCohortOrderForUser } from "@/lib/cohort-registration";
 
+export const dynamic = "force-dynamic";
+
 function resolveVideoResponse(rawVideo: string): NextResponse {
   if (isBunnyVideo(rawVideo)) {
     const details = extractBunnyVideoDetails(rawVideo);

@@ -2,9 +2,9 @@ import crypto from "crypto";
 
 export function getBunnyExpirySeconds(): number {
   const envValue = process.env.BUNNY_TOKEN_EXPIRY_SECONDS;
-  if (!envValue) return 900; // Default 15 mins
+  if (!envValue) return 86400; // Default 24 hours for seamless session viewing
   const parsed = parseInt(envValue, 10);
-  return isNaN(parsed) ? 900 : parsed;
+  return isNaN(parsed) ? 86400 : parsed;
 }
 
 const UUID_REGEX =
@@ -72,6 +72,15 @@ export function extractBunnyVideoDetails(input?: string | null): {
   }
 }
 
+export function cleanBunnyVideoUrl(input?: string | null): string | null {
+  const details = extractBunnyVideoDetails(input);
+  if (!details?.videoId) return input?.trim() || null;
+  if (details.libraryId) {
+    return `https://iframe.mediadelivery.net/embed/${details.libraryId}/${details.videoId}`;
+  }
+  return details.videoId;
+}
+
 export function isBunnyVideo(input?: string | null): boolean {
   return extractBunnyVideoDetails(input) !== null;
 }
@@ -82,7 +91,7 @@ export function generateBunnyEmbedUrl(
 ): string {
   const libraryId = customLibraryId || process.env.BUNNY_STREAM_LIBRARY_ID;
   const tokenSecret = process.env.BUNNY_TOKEN_SECRET;
-  const expirySeconds = Number(process.env.BUNNY_TOKEN_EXPIRY_SECONDS ?? 900);
+  const expirySeconds = getBunnyExpirySeconds();
 
   if (!libraryId || !tokenSecret) {
     throw new Error(

@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import { badRequest } from "@/lib/api-error";
 import { logAdminActivity } from "@/lib/admin-activity";
 import { canAccessAdminTab } from "@/lib/admin-permissions";
-import { extractBunnyVideoDetails } from "@/lib/bunny";
+import { extractBunnyVideoDetails, cleanBunnyVideoUrl } from "@/lib/bunny";
 import { db } from "@/lib/db";
 import { cohortSessionContents } from "@/lib/schema";
 import { normalizeAbsoluteUrl } from "@/lib/utils";
 import { getCurrentUser } from "@/server/users";
 import { eq } from "drizzle-orm";
+
+export const dynamic = "force-dynamic";
 
 export async function PUT(
   request: Request,
@@ -91,7 +93,7 @@ export async function PUT(
       } else {
         const bunnyDetails = extractBunnyVideoDetails(cdnVideoUrl);
         if (bunnyDetails?.videoId) {
-          updateData.cdnVideoUrl = cdnVideoUrl.trim();
+          updateData.cdnVideoUrl = cleanBunnyVideoUrl(cdnVideoUrl) || cdnVideoUrl.trim();
         } else {
           const norm = normalizeAbsoluteUrl(cdnVideoUrl);
           if (!norm.isValid) {

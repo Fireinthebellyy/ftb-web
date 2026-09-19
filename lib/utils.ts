@@ -58,42 +58,116 @@ export function toTitleCase(str: string | null | undefined): string {
 
   // Expanded list of words/acronyms that should always be fully capitalized when auto-formatting
   const acronyms = new Set([
-    "HR", "HRBP", "SDET", "SRE", "HOD", "CEO", "CTO", "CFO", "COO", "CMO", "VP", "PR",
-    "IT", "UI", "UX", "AI", "ML", "API", "PM", "QA", "SDE", "MERN", "MEAN", "LAMP", "PERN",
-    "CA", "CPA", "CS", "BBA", "MBA", "BCA", "MCA", "BTECH", "MTECH",
-    "SEO", "SMM", "GST", "AWS", "GCP", "AZURE", "IBM", "TCS", "CTS", "HCL", "WIPRO",
-    "NPCI", "ISRO", "DRDO", "NASA", "FAANG", "MAANG", "MNC", "SaaS", "PaaS", "IaaS",
-    "B2B", "B2C", "D2C", "SDK", "LLM", "NLP", "FTE", "PwC", "EY", "KPMG",
-    "IIT", "NIT", "BITS", "IIIT"
+    "HR",
+    "HRBP",
+    "SDET",
+    "SRE",
+    "HOD",
+    "CEO",
+    "CTO",
+    "CFO",
+    "COO",
+    "CMO",
+    "VP",
+    "PR",
+    "IT",
+    "UI",
+    "UX",
+    "AI",
+    "ML",
+    "API",
+    "PM",
+    "QA",
+    "SDE",
+    "MERN",
+    "MEAN",
+    "LAMP",
+    "PERN",
+    "CA",
+    "CPA",
+    "CS",
+    "BBA",
+    "MBA",
+    "BCA",
+    "MCA",
+    "BTECH",
+    "MTECH",
+    "SEO",
+    "SMM",
+    "GST",
+    "AWS",
+    "GCP",
+    "AZURE",
+    "IBM",
+    "TCS",
+    "CTS",
+    "HCL",
+    "WIPRO",
+    "NPCI",
+    "ISRO",
+    "DRDO",
+    "NASA",
+    "FAANG",
+    "MAANG",
+    "MNC",
+    "SaaS",
+    "PaaS",
+    "IaaS",
+    "B2B",
+    "B2C",
+    "D2C",
+    "SDK",
+    "LLM",
+    "NLP",
+    "FTE",
+    "PwC",
+    "EY",
+    "KPMG",
+    "IIT",
+    "NIT",
+    "BITS",
+    "IIIT",
   ]);
 
-  const minorWords = new Set(["at", "in", "of", "and", "for", "the", "on", "to", "with", "by", "or", "a", "an"]);
+  const minorWords = new Set([
+    "at",
+    "in",
+    "of",
+    "and",
+    "for",
+    "the",
+    "on",
+    "to",
+    "with",
+    "by",
+    "or",
+    "a",
+    "an",
+  ]);
 
-  return str.replace(
-    /[a-zA-Z0-9]+/g,
-    (text, offset) => {
-      const upper = text.toUpperCase();
-      // Check against acronyms using the uppercase version
-      if (acronyms.has(upper)) {
-        return upper;
-      }
-
-      const lower = text.toLowerCase();
-      // Keep minor prepositions/conjunctions lowercase if not at start of string
-      if (offset > 0 && minorWords.has(lower)) {
-        return lower;
-      }
-
-      return text.charAt(0).toUpperCase() + text.substring(1).toLowerCase();
+  return str.replace(/[a-zA-Z0-9]+/g, (text, offset) => {
+    const upper = text.toUpperCase();
+    // Check against acronyms using the uppercase version
+    if (acronyms.has(upper)) {
+      return upper;
     }
-  );
+
+    const lower = text.toLowerCase();
+    // Keep minor prepositions/conjunctions lowercase if not at start of string
+    if (offset > 0 && minorWords.has(lower)) {
+      return lower;
+    }
+
+    return text.charAt(0).toUpperCase() + text.substring(1).toLowerCase();
+  });
 }
 
 /**
  * Format stipend amount with currency and period
  */
 export function formatSalary(stipend: number | null | undefined): string {
-  if (stipend === null || stipend === undefined) return "Unpaid / Not disclosed";
+  if (stipend === null || stipend === undefined)
+    return "Unpaid / Not disclosed";
   if (stipend === 0) return "Unpaid";
   return `${stipend.toLocaleString()} / mo`;
 }
@@ -140,4 +214,34 @@ export function ensureAbsoluteUrl(url: string | null | undefined): string {
     return trimmed;
   }
   return `https://${trimmed}`;
+}
+
+/**
+ * Normalizes and validates an absolute URL.
+ * Returns null if blank/whitespace/null/undefined.
+ * Returns isValid: false if non-blank but not a valid absolute HTTP/HTTPS URL.
+ */
+export function normalizeAbsoluteUrl(url: unknown): {
+  isValid: boolean;
+  value: string | null;
+} {
+  if (url === undefined || url === null) {
+    return { isValid: true, value: null };
+  }
+  if (typeof url !== "string") {
+    return { isValid: false, value: null };
+  }
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return { isValid: true, value: null };
+  }
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return { isValid: false, value: null };
+    }
+    return { isValid: true, value: trimmed };
+  } catch {
+    return { isValid: false, value: null };
+  }
 }

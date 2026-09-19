@@ -53,38 +53,57 @@ const sessionSchema = z.object({
 
 // Schema for session content (4 sections per session)
 const sessionContentSchema = z.object({
-  sectionType: z.enum(["live_session", "meet_mentor", "resources", "recording"]),
+  sectionType: z.enum([
+    "live_session",
+    "meet_mentor",
+    "resources",
+    "recording",
+  ]),
   title: z.string().min(1, { message: "Title is required" }),
   content: z.string().optional(),
   isUnlocked: z.boolean().default(false),
   lockedMessage: z.string().optional(),
   liveSessionLink: z.string().optional(),
   videoUrl: z.string().optional(),
+  cdnVideoUrl: z.string().optional(),
   images: z.array(z.string()).optional(),
 });
 
 // Schema for mentor
-const mentorSchema = z.object({
-  contentId: z.string().min(1, { message: "Content ID is required" }),
-  cohortMentorId: z.string().optional().nullable(),
-  name: z.string().optional(),
-  role: z.string().optional(),
-  imageUrl: z.string().optional(),
-  bio: z.string().optional(),
-  linkedinUrl: z.string().optional(),
-  otherLinks: z.array(z.object({ title: z.string(), url: z.string() })).optional(),
-  orderIndex: z.coerce.number().int().min(0).default(0),
-}).refine(data => data.cohortMentorId || data.name?.trim(), {
-  message: "Mentor name is required when not selecting a cohort mentor",
-  path: ["name"],
-});
+const mentorSchema = z
+  .object({
+    contentId: z.string().min(1, { message: "Content ID is required" }),
+    cohortMentorId: z.string().optional().nullable(),
+    name: z.string().optional(),
+    role: z.string().optional(),
+    imageUrl: z.string().optional(),
+    bio: z.string().optional(),
+    linkedinUrl: z.string().optional(),
+    otherLinks: z
+      .array(z.object({ title: z.string(), url: z.string() }))
+      .optional(),
+    orderIndex: z.coerce.number().int().min(0).default(0),
+  })
+  .refine((data) => data.cohortMentorId || data.name?.trim(), {
+    message: "Mentor name is required when not selecting a cohort mentor",
+    path: ["name"],
+  });
 
 // Schema for resource
 const resourceSchema = z.object({
   contentId: z.string().min(1, { message: "Content ID is required" }),
   name: z.string().min(1, { message: "Resource name is required" }),
   url: z.string().min(1, { message: "Resource URL is required" }),
-  type: z.enum(["file", "video", "link", "image", "pdf", "ppt", "excel", "word"]),
+  type: z.enum([
+    "file",
+    "video",
+    "link",
+    "image",
+    "pdf",
+    "ppt",
+    "excel",
+    "word",
+  ]),
   orderIndex: z.coerce.number().int().min(0).default(0),
 });
 
@@ -113,6 +132,7 @@ interface CohortSessionContent {
   lockedMessage: string | null;
   liveSessionLink: string | null;
   videoUrl: string | null;
+  cdnVideoUrl: string | null;
   images: string[] | null;
   createdAt: string;
   updatedAt: string;
@@ -181,20 +201,28 @@ export default function CohortSessionManager({
   const [sessions, setSessions] = useState<CohortSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [sessionEditDialogOpen, setSessionEditDialogOpen] = useState(false);
-  const [editingSession, setEditingSession] = useState<CohortSession | null>(null);
+  const [editingSession, setEditingSession] = useState<CohortSession | null>(
+    null
+  );
   const [isAddingSession, setIsAddingSession] = useState(false);
   const [contentEditDialogOpen, setContentEditDialogOpen] = useState(false);
-  const [editingContent, setEditingContent] = useState<CohortSessionContent | null>(null);
+  const [editingContent, setEditingContent] =
+    useState<CohortSessionContent | null>(null);
   const [isAddingContent, setIsAddingContent] = useState(false);
-  const [selectedSessionForContent, setSelectedSessionForContent] = useState<CohortSession | null>(null);
+  const [selectedSessionForContent, setSelectedSessionForContent] =
+    useState<CohortSession | null>(null);
   const [mentorEditDialogOpen, setMentorEditDialogOpen] = useState(false);
-  const [editingMentor, setEditingMentor] = useState<CohortSessionMentor | null>(null);
+  const [editingMentor, setEditingMentor] =
+    useState<CohortSessionMentor | null>(null);
   const [isAddingMentor, setIsAddingMentor] = useState(false);
-  const [selectedContentForMentor, setSelectedContentForMentor] = useState<CohortSessionContent | null>(null);
+  const [selectedContentForMentor, setSelectedContentForMentor] =
+    useState<CohortSessionContent | null>(null);
   const [resourceEditDialogOpen, setResourceEditDialogOpen] = useState(false);
-  const [editingResource, setEditingResource] = useState<CohortSessionResource | null>(null);
+  const [editingResource, setEditingResource] =
+    useState<CohortSessionResource | null>(null);
   const [isAddingResource, setIsAddingResource] = useState(false);
-  const [selectedContentForResource, setSelectedContentForResource] = useState<CohortSessionContent | null>(null);
+  const [selectedContentForResource, setSelectedContentForResource] =
+    useState<CohortSessionContent | null>(null);
 
   const sessionForm = useForm<SessionFormValues>({
     resolver: zodResolver(sessionSchema),
@@ -213,6 +241,7 @@ export default function CohortSessionManager({
       isUnlocked: false,
       liveSessionLink: "",
       videoUrl: "",
+      cdnVideoUrl: "",
       images: [],
     },
   });
@@ -249,7 +278,9 @@ export default function CohortSessionManager({
     if (!open) return;
     try {
       setLoading(true);
-      const response = await axios.get(`/api/admin/cohorts/${cohortId}/sessions`);
+      const response = await axios.get(
+        `/api/admin/cohorts/${cohortId}/sessions`
+      );
       setSessions(response.data);
     } catch (error) {
       console.error("Error fetching sessions:", error);
@@ -293,7 +324,8 @@ export default function CohortSessionManager({
   };
 
   const handleAddSession = () => {
-    const maxOrder = sessions.length > 0 ? Math.max(...sessions.map((s) => s.orderIndex)) : -1;
+    const maxOrder =
+      sessions.length > 0 ? Math.max(...sessions.map((s) => s.orderIndex)) : -1;
     setEditingSession(null);
     setIsAddingSession(true);
     sessionForm.reset({
@@ -306,7 +338,10 @@ export default function CohortSessionManager({
   const handleSaveSession = async (data: SessionFormValues) => {
     try {
       if (editingSession) {
-        await axios.put(`/api/admin/cohort-sessions/${editingSession.id}`, data);
+        await axios.put(
+          `/api/admin/cohort-sessions/${editingSession.id}`,
+          data
+        );
         toast.success("Session updated successfully!");
       } else {
         await axios.post(`/api/admin/cohorts/${cohortId}/sessions`, data);
@@ -317,12 +352,18 @@ export default function CohortSessionManager({
       onUpdate();
     } catch (error) {
       console.error("Error saving session:", error);
-      toast.error(isAddingSession ? "Failed to add session" : "Failed to update session");
+      toast.error(
+        isAddingSession ? "Failed to add session" : "Failed to update session"
+      );
     }
   };
 
   const handleDeleteSession = async (id: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete session "${title}"? This action cannot be undone.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to delete session "${title}"? This action cannot be undone.`
+      )
+    ) {
       return;
     }
     try {
@@ -336,7 +377,10 @@ export default function CohortSessionManager({
     }
   };
 
-  const handleEditContent = (session: CohortSession, content: CohortSessionContent) => {
+  const handleEditContent = (
+    session: CohortSession,
+    content: CohortSessionContent
+  ) => {
     setSelectedSessionForContent(session);
     setEditingContent(content);
     setIsAddingContent(false);
@@ -348,6 +392,7 @@ export default function CohortSessionManager({
       lockedMessage: content.lockedMessage ?? "",
       liveSessionLink: content.liveSessionLink ?? "",
       videoUrl: content.videoUrl ?? "",
+      cdnVideoUrl: content.cdnVideoUrl ?? "",
       images: content.images ?? [],
     });
     setContentEditDialogOpen(true);
@@ -364,6 +409,7 @@ export default function CohortSessionManager({
       isUnlocked: false,
       liveSessionLink: "",
       videoUrl: "",
+      cdnVideoUrl: "",
       images: [],
     });
     setContentEditDialogOpen(true);
@@ -389,6 +435,9 @@ export default function CohortSessionManager({
         payload.liveSessionLink = data.liveSessionLink;
       }
 
+      if (data.sectionType === "live_session") {
+        payload.cdnVideoUrl = data.cdnVideoUrl || null;
+      }
       // Only include videoUrl if it has a value and it's a recording
       if (data.sectionType === "recording" && data.videoUrl) {
         payload.videoUrl = data.videoUrl;
@@ -400,10 +449,16 @@ export default function CohortSessionManager({
       }
 
       if (editingContent) {
-        await axios.put(`/api/admin/cohort-session-contents/${editingContent.id}`, payload);
+        await axios.put(
+          `/api/admin/cohort-session-contents/${editingContent.id}`,
+          payload
+        );
         toast.success("Content updated successfully!");
       } else {
-        await axios.post(`/api/admin/cohort-sessions/${selectedSessionForContent.id}/content`, payload);
+        await axios.post(
+          `/api/admin/cohort-sessions/${selectedSessionForContent.id}/content`,
+          payload
+        );
         toast.success("Content added successfully!");
       }
       setContentEditDialogOpen(false);
@@ -411,12 +466,21 @@ export default function CohortSessionManager({
       onUpdate();
     } catch (error) {
       console.error("Error saving content:", error);
-      toast.error(isAddingContent ? "Failed to add content" : "Failed to update content");
+      toast.error(
+        isAddingContent ? "Failed to add content" : "Failed to update content"
+      );
     }
   };
 
-  const handleDeleteContent = async (content: CohortSessionContent, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
+  const handleDeleteContent = async (
+    content: CohortSessionContent,
+    title: string
+  ) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete "${title}"? This action cannot be undone.`
+      )
+    ) {
       return;
     }
     try {
@@ -435,7 +499,9 @@ export default function CohortSessionManager({
       await axios.put(`/api/admin/cohort-session-contents/${content.id}`, {
         isUnlocked: !content.isUnlocked,
       });
-      toast.success(`Content ${!content.isUnlocked ? "unlocked" : "locked"} successfully!`);
+      toast.success(
+        `Content ${!content.isUnlocked ? "unlocked" : "locked"} successfully!`
+      );
       fetchSessions();
       onUpdate();
     } catch (error) {
@@ -444,7 +510,10 @@ export default function CohortSessionManager({
     }
   };
 
-  const handleEditMentor = (content: CohortSessionContent, mentor: CohortSessionMentor) => {
+  const handleEditMentor = (
+    content: CohortSessionContent,
+    mentor: CohortSessionMentor
+  ) => {
     setSelectedContentForMentor(content);
     setEditingMentor(mentor);
     setIsAddingMentor(false);
@@ -466,9 +535,10 @@ export default function CohortSessionManager({
     setSelectedContentForMentor(content);
     setEditingMentor(null);
     setIsAddingMentor(true);
-    const maxOrder = content.mentors && content.mentors.length > 0 
-      ? Math.max(...content.mentors.map((m) => m.orderIndex)) 
-      : -1;
+    const maxOrder =
+      content.mentors && content.mentors.length > 0
+        ? Math.max(...content.mentors.map((m) => m.orderIndex))
+        : -1;
     mentorForm.reset({
       contentId: content.id,
       cohortMentorId: "",
@@ -487,7 +557,10 @@ export default function CohortSessionManager({
     if (!selectedContentForMentor) return;
     try {
       if (editingMentor) {
-        await axios.put(`/api/admin/cohort-session-mentors/${editingMentor.id}`, data);
+        await axios.put(
+          `/api/admin/cohort-session-mentors/${editingMentor.id}`,
+          data
+        );
         toast.success("Mentor updated successfully!");
       } else {
         await axios.post("/api/admin/cohort-session-mentors", data);
@@ -498,12 +571,21 @@ export default function CohortSessionManager({
       onUpdate();
     } catch (error) {
       console.error("Error saving mentor:", error);
-      toast.error(isAddingMentor ? "Failed to add mentor" : "Failed to update mentor");
+      toast.error(
+        isAddingMentor ? "Failed to add mentor" : "Failed to update mentor"
+      );
     }
   };
 
-  const handleDeleteMentor = async (mentor: CohortSessionMentor, name: string) => {
-    if (!confirm(`Are you sure you want to delete mentor "${name}"? This action cannot be undone.`)) {
+  const handleDeleteMentor = async (
+    mentor: CohortSessionMentor,
+    name: string
+  ) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete mentor "${name}"? This action cannot be undone.`
+      )
+    ) {
       return;
     }
     try {
@@ -517,7 +599,10 @@ export default function CohortSessionManager({
     }
   };
 
-  const handleEditResource = (content: CohortSessionContent, resource: CohortSessionResource) => {
+  const handleEditResource = (
+    content: CohortSessionContent,
+    resource: CohortSessionResource
+  ) => {
     setSelectedContentForResource(content);
     setEditingResource(resource);
     setIsAddingResource(false);
@@ -535,9 +620,10 @@ export default function CohortSessionManager({
     setSelectedContentForResource(content);
     setEditingResource(null);
     setIsAddingResource(true);
-    const maxOrder = content.resources && content.resources.length > 0
-      ? Math.max(...content.resources.map((r) => r.orderIndex))
-      : -1;
+    const maxOrder =
+      content.resources && content.resources.length > 0
+        ? Math.max(...content.resources.map((r) => r.orderIndex))
+        : -1;
     resourceForm.reset({
       contentId: content.id,
       name: "",
@@ -552,11 +638,14 @@ export default function CohortSessionManager({
     if (!selectedContentForResource) return;
     try {
       if (editingResource) {
-        await axios.put(`/api/admin/cohort-session-resources/${editingResource.id}`, data);
+        await axios.put(
+          `/api/admin/cohort-session-resources/${editingResource.id}`,
+          data
+        );
         toast.success("Resource updated successfully!");
       } else {
         // Check if url contains multiple resources (JSON string)
-        if (data.url && data.url.startsWith('[')) {
+        if (data.url && data.url.startsWith("[")) {
           const multipleResources = JSON.parse(data.url);
           const hasCustomName = data.name && data.name.trim() !== "";
           const promises = multipleResources.map((resource: any) =>
@@ -568,7 +657,9 @@ export default function CohortSessionManager({
             })
           );
           await Promise.all(promises);
-          toast.success(`${multipleResources.length} resources added successfully!`);
+          toast.success(
+            `${multipleResources.length} resources added successfully!`
+          );
         } else {
           await axios.post("/api/admin/cohort-session-resources", data);
           toast.success("Resource added successfully!");
@@ -579,12 +670,23 @@ export default function CohortSessionManager({
       onUpdate();
     } catch (error) {
       console.error("Error saving resource:", error);
-      toast.error(isAddingResource ? "Failed to add resource" : "Failed to update resource");
+      toast.error(
+        isAddingResource
+          ? "Failed to add resource"
+          : "Failed to update resource"
+      );
     }
   };
 
-  const handleDeleteResource = async (resource: CohortSessionResource, name: string) => {
-    if (!confirm(`Are you sure you want to delete resource "${name}"? This action cannot be undone.`)) {
+  const handleDeleteResource = async (
+    resource: CohortSessionResource,
+    name: string
+  ) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete resource "${name}"? This action cannot be undone.`
+      )
+    ) {
       return;
     }
     try {
@@ -632,11 +734,14 @@ export default function CohortSessionManager({
               {sessions
                 .sort((a, b) => a.orderIndex - b.orderIndex)
                 .map((session) => (
-                  <div key={session.id} className="border rounded-lg p-4 space-y-4">
+                  <div
+                    key={session.id}
+                    className="space-y-4 rounded-lg border p-4"
+                  >
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
                         <GripVertical className="text-muted-foreground h-4 w-4" />
-                        <h3 className="font-medium text-lg">
+                        <h3 className="text-lg font-medium">
                           {session.orderIndex + 1}. {session.title}
                         </h3>
                       </div>
@@ -648,12 +753,16 @@ export default function CohortSessionManager({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEditSession(session)}>
+                            <DropdownMenuItem
+                              onClick={() => handleEditSession(session)}
+                            >
                               <Edit className="mr-2 h-4 w-4" />
                               Edit Session
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => handleDeleteSession(session.id, session.title)}
+                              onClick={() =>
+                                handleDeleteSession(session.id, session.title)
+                              }
                               className="text-destructive"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
@@ -666,96 +775,149 @@ export default function CohortSessionManager({
 
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm text-muted-foreground">Session Content</p>
+                        <p className="text-muted-foreground text-sm">
+                          Session Content
+                        </p>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {Object.entries(CONTENT_TYPE_LABELS).map(([key, label]) => {
-                          const existingContent = session.contents.find(c => c.sectionType === key);
-                          return (
-                            <div key={key} className="border rounded p-3 flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium">{label}</span>
-                                {existingContent && (
-                                  <span className={`text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700`}>
-                                    Added
+                      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                        {Object.entries(CONTENT_TYPE_LABELS).map(
+                          ([key, label]) => {
+                            const existingContent = session.contents.find(
+                              (c) => c.sectionType === key
+                            );
+                            return (
+                              <div
+                                key={key}
+                                className="flex items-center justify-between rounded border p-3"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium">
+                                    {label}
                                   </span>
-                                )}
-                              </div>
-                              {existingContent ? (
-                                <div className="flex items-center gap-1">
+                                  {existingContent && (
+                                    <span
+                                      className={`rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700`}
+                                    >
+                                      Added
+                                    </span>
+                                  )}
+                                </div>
+                                {existingContent ? (
+                                  <div className="flex items-center gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() =>
+                                        handleToggleLock(existingContent)
+                                      }
+                                      title={
+                                        existingContent.isUnlocked
+                                          ? "Lock content"
+                                          : "Unlock content"
+                                      }
+                                    >
+                                      {existingContent.isUnlocked ? (
+                                        <Unlock className="h-3 w-3" />
+                                      ) : (
+                                        <Lock className="h-3 w-3" />
+                                      )}
+                                    </Button>
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm">
+                                          <MoreVertical className="h-3 w-3" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuItem
+                                          onClick={() =>
+                                            handleEditContent(
+                                              session,
+                                              existingContent
+                                            )
+                                          }
+                                        >
+                                          <Edit className="mr-2 h-4 w-4" />
+                                          Edit
+                                        </DropdownMenuItem>
+                                        {existingContent.sectionType ===
+                                          "meet_mentor" && (
+                                          <DropdownMenuItem
+                                            onClick={() =>
+                                              handleAddMentor(existingContent)
+                                            }
+                                          >
+                                            <User className="mr-2 h-4 w-4" />
+                                            Add Mentor
+                                          </DropdownMenuItem>
+                                        )}
+                                        {existingContent.sectionType ===
+                                          "resources" && (
+                                          <DropdownMenuItem
+                                            onClick={() =>
+                                              handleAddResource(existingContent)
+                                            }
+                                          >
+                                            <FileText className="mr-2 h-4 w-4" />
+                                            Add Resource
+                                          </DropdownMenuItem>
+                                        )}
+                                        <DropdownMenuItem
+                                          onClick={() =>
+                                            handleDeleteContent(
+                                              existingContent,
+                                              existingContent.title
+                                            )
+                                          }
+                                          className="text-destructive"
+                                        >
+                                          <Trash2 className="mr-2 h-4 w-4" />
+                                          Delete
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
+                                ) : (
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => handleToggleLock(existingContent)}
-                                    title={existingContent.isUnlocked ? "Lock content" : "Unlock content"}
+                                    onClick={() =>
+                                      handleAddContent(session, key)
+                                    }
                                   >
-                                    {existingContent.isUnlocked ? (
-                                      <Unlock className="h-3 w-3" />
-                                    ) : (
-                                      <Lock className="h-3 w-3" />
-                                    )}
+                                    <Plus className="mr-1 h-3 w-3" />
+                                    Add
                                   </Button>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="sm">
-                                        <MoreVertical className="h-3 w-3" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuItem onClick={() => handleEditContent(session, existingContent)}>
-                                        <Edit className="mr-2 h-4 w-4" />
-                                        Edit
-                                      </DropdownMenuItem>
-                                      {existingContent.sectionType === "meet_mentor" && (
-                                        <DropdownMenuItem onClick={() => handleAddMentor(existingContent)}>
-                                          <User className="mr-2 h-4 w-4" />
-                                          Add Mentor
-                                        </DropdownMenuItem>
-                                      )}
-                                      {existingContent.sectionType === "resources" && (
-                                        <DropdownMenuItem onClick={() => handleAddResource(existingContent)}>
-                                          <FileText className="mr-2 h-4 w-4" />
-                                          Add Resource
-                                        </DropdownMenuItem>
-                                      )}
-                                      <DropdownMenuItem
-                                        onClick={() => handleDeleteContent(existingContent, existingContent.title)}
-                                        className="text-destructive"
-                                      >
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Delete
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </div>
-                              ) : (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleAddContent(session, key)}
-                                >
-                                  <Plus className="h-3 w-3 mr-1" />
-                                  Add
-                                </Button>
-                              )}
-                            </div>
-                          );
-                        })}
+                                )}
+                              </div>
+                            );
+                          }
+                        )}
                       </div>
                     </div>
 
                     {/* Display mentors for meet_mentor content */}
-                    {session.contents.some(c => c.sectionType === "meet_mentor" && c.mentors && c.mentors.length > 0) && (
+                    {session.contents.some(
+                      (c) =>
+                        c.sectionType === "meet_mentor" &&
+                        c.mentors &&
+                        c.mentors.length > 0
+                    ) && (
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm text-muted-foreground">Mentors</p>
+                          <p className="text-muted-foreground text-sm">
+                            Mentors
+                          </p>
                         </div>
                         <div className="space-y-2">
                           {session.contents
-                            .filter(c => c.sectionType === "meet_mentor")
-                            .flatMap(c => c.mentors || [])
+                            .filter((c) => c.sectionType === "meet_mentor")
+                            .flatMap((c) => c.mentors || [])
                             .map((mentor) => (
-                              <div key={mentor.id} className="border rounded p-3 flex items-center justify-between">
+                              <div
+                                key={mentor.id}
+                                className="flex items-center justify-between rounded border p-3"
+                              >
                                 <div className="flex items-center gap-3">
                                   {mentor.imageUrl && (
                                     <img
@@ -765,9 +927,13 @@ export default function CohortSessionManager({
                                     />
                                   )}
                                   <div>
-                                    <p className="text-sm font-medium">{mentor.name}</p>
+                                    <p className="text-sm font-medium">
+                                      {mentor.name}
+                                    </p>
                                     {mentor.role && (
-                                      <p className="text-xs text-muted-foreground">{mentor.role}</p>
+                                      <p className="text-muted-foreground text-xs">
+                                        {mentor.role}
+                                      </p>
                                     )}
                                   </div>
                                 </div>
@@ -778,12 +944,24 @@ export default function CohortSessionManager({
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => handleEditMentor(session.contents.find(c => c.sectionType === "meet_mentor")!, mentor)}>
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        handleEditMentor(
+                                          session.contents.find(
+                                            (c) =>
+                                              c.sectionType === "meet_mentor"
+                                          )!,
+                                          mentor
+                                        )
+                                      }
+                                    >
                                       <Edit className="mr-2 h-4 w-4" />
                                       Edit
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
-                                      onClick={() => handleDeleteMentor(mentor, mentor.name)}
+                                      onClick={() =>
+                                        handleDeleteMentor(mentor, mentor.name)
+                                      }
                                       className="text-destructive"
                                     >
                                       <Trash2 className="mr-2 h-4 w-4" />
@@ -798,22 +976,36 @@ export default function CohortSessionManager({
                     )}
 
                     {/* Display resources for resources content */}
-                    {session.contents.some(c => c.sectionType === "resources" && c.resources && c.resources.length > 0) && (
+                    {session.contents.some(
+                      (c) =>
+                        c.sectionType === "resources" &&
+                        c.resources &&
+                        c.resources.length > 0
+                    ) && (
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm text-muted-foreground">Resources</p>
+                          <p className="text-muted-foreground text-sm">
+                            Resources
+                          </p>
                         </div>
                         <div className="space-y-2">
                           {session.contents
-                            .filter(c => c.sectionType === "resources")
-                            .flatMap(c => c.resources || [])
+                            .filter((c) => c.sectionType === "resources")
+                            .flatMap((c) => c.resources || [])
                             .map((resource) => (
-                              <div key={resource.id} className="border rounded p-3 flex items-center justify-between">
+                              <div
+                                key={resource.id}
+                                className="flex items-center justify-between rounded border p-3"
+                              >
                                 <div className="flex items-center gap-3">
                                   <FileText className="h-5 w-5 text-gray-500" />
                                   <div>
-                                    <p className="text-sm font-medium">{resource.name}</p>
-                                    <p className="text-xs text-muted-foreground">{resource.type}</p>
+                                    <p className="text-sm font-medium">
+                                      {resource.name}
+                                    </p>
+                                    <p className="text-muted-foreground text-xs">
+                                      {resource.type}
+                                    </p>
                                   </div>
                                 </div>
                                 <DropdownMenu>
@@ -823,12 +1015,26 @@ export default function CohortSessionManager({
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => handleEditResource(session.contents.find(c => c.sectionType === "resources")!, resource)}>
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        handleEditResource(
+                                          session.contents.find(
+                                            (c) => c.sectionType === "resources"
+                                          )!,
+                                          resource
+                                        )
+                                      }
+                                    >
                                       <Edit className="mr-2 h-4 w-4" />
                                       Edit
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
-                                      onClick={() => handleDeleteResource(resource, resource.name)}
+                                      onClick={() =>
+                                        handleDeleteResource(
+                                          resource,
+                                          resource.name
+                                        )
+                                      }
                                       className="text-destructive"
                                     >
                                       <Trash2 className="mr-2 h-4 w-4" />
@@ -848,7 +1054,10 @@ export default function CohortSessionManager({
         </div>
 
         {/* Session Edit Dialog */}
-        <Dialog open={sessionEditDialogOpen} onOpenChange={setSessionEditDialogOpen}>
+        <Dialog
+          open={sessionEditDialogOpen}
+          onOpenChange={setSessionEditDialogOpen}
+        >
           <DialogContent className="max-h-[85vh] overflow-hidden sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>
@@ -856,7 +1065,10 @@ export default function CohortSessionManager({
               </DialogTitle>
             </DialogHeader>
             <Form {...sessionForm}>
-              <form onSubmit={sessionForm.handleSubmit(handleSaveSession)} className="space-y-4">
+              <form
+                onSubmit={sessionForm.handleSubmit(handleSaveSession)}
+                className="space-y-4"
+              >
                 <FormField
                   control={sessionForm.control}
                   name="title"
@@ -890,7 +1102,7 @@ export default function CohortSessionManager({
                     </FormItem>
                   )}
                 />
-                <div className="flex justify-end gap-2 pt-4 border-t">
+                <div className="flex justify-end gap-2 border-t pt-4">
                   <Button
                     type="button"
                     variant="outline"
@@ -908,7 +1120,10 @@ export default function CohortSessionManager({
         </Dialog>
 
         {/* Content Edit Dialog */}
-        <Dialog open={contentEditDialogOpen} onOpenChange={setContentEditDialogOpen}>
+        <Dialog
+          open={contentEditDialogOpen}
+          onOpenChange={setContentEditDialogOpen}
+        >
           <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-[600px]">
             <DialogHeader>
               <DialogTitle>
@@ -916,7 +1131,10 @@ export default function CohortSessionManager({
               </DialogTitle>
             </DialogHeader>
             <Form {...contentForm}>
-              <form onSubmit={contentForm.handleSubmit(handleSaveContent)} className="space-y-4">
+              <form
+                onSubmit={contentForm.handleSubmit(handleSaveContent)}
+                className="space-y-4"
+              >
                 <FormField
                   control={contentForm.control}
                   name="sectionType"
@@ -925,16 +1143,20 @@ export default function CohortSessionManager({
                       <FormLabel>Content Type</FormLabel>
                       <FormControl>
                         <select
-                          className="w-full border rounded px-3 py-2 bg-white"
+                          className="w-full rounded border bg-white px-3 py-2"
                           value={field.value}
-                          onChange={(e) => field.onChange(e.target.value as any)}
+                          onChange={(e) =>
+                            field.onChange(e.target.value as any)
+                          }
                           disabled={!isAddingContent}
                         >
-                          {Object.entries(CONTENT_TYPE_LABELS).map(([key, label]) => (
-                            <option key={key} value={key}>
-                              {label}
-                            </option>
-                          ))}
+                          {Object.entries(CONTENT_TYPE_LABELS).map(
+                            ([key, label]) => (
+                              <option key={key} value={key}>
+                                {label}
+                              </option>
+                            )
+                          )}
                         </select>
                       </FormControl>
                       <FormMessage />
@@ -969,12 +1191,52 @@ export default function CohortSessionManager({
                     )}
                   />
                 )}
+                {contentForm.watch("sectionType") === "live_session" && (
+                  <FormField
+                    control={contentForm.control}
+                    name="cdnVideoUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>CDN</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Paste full embed code or URL..."
+                            {...field}
+                            onChange={(
+                              e: React.ChangeEvent<HTMLInputElement>
+                            ) => {
+                              const value = e.target.value;
+                              let videoUrl = value;
+
+                              if (value.includes("<iframe")) {
+                                const match =
+                                  value.match(/src=["']([^"']*)["']/);
+                                if (match && match[1]) {
+                                  videoUrl = match[1];
+                                }
+                              }
+
+                              field.onChange(videoUrl);
+                            }}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                )}
                 {contentForm.watch("sectionType") === "recording" && (
                   <>
                     {editingContent && editingContent.videoUrl && (
-                      <div className="p-3 bg-gray-50 rounded border">
-                        <p className="text-sm text-gray-600 mb-2">Current video:</p>
-                        <a href={editingContent.videoUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline break-all">
+                      <div className="rounded border bg-gray-50 p-3">
+                        <p className="mb-2 text-sm text-gray-600">
+                          Current video:
+                        </p>
+                        <a
+                          href={editingContent.videoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm break-all text-blue-600 hover:underline"
+                        >
                           {editingContent.videoUrl}
                         </a>
                       </div>
@@ -994,26 +1256,36 @@ export default function CohortSessionManager({
                                 if (!file) return;
 
                                 try {
-                                  const response = await fetch("/api/storage/sign-upload", {
-                                    method: "POST",
-                                    headers: {
-                                      "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify({
-                                      domain: "opportunity-attachments",
-                                      fileName: file.name,
-                                      contentType: file.type,
-                                      fileSize: file.size,
-                                    }),
-                                  });
+                                  const response = await fetch(
+                                    "/api/storage/sign-upload",
+                                    {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({
+                                        domain: "opportunity-attachments",
+                                        fileName: file.name,
+                                        contentType: file.type,
+                                        fileSize: file.size,
+                                      }),
+                                    }
+                                  );
 
                                   if (!response.ok) {
                                     const errorData = await response.json();
-                                    console.error("Upload API error:", errorData);
-                                    throw new Error(errorData.error || "Failed to get upload URL");
+                                    console.error(
+                                      "Upload API error:",
+                                      errorData
+                                    );
+                                    throw new Error(
+                                      errorData.error ||
+                                        "Failed to get upload URL"
+                                    );
                                   }
 
-                                  const { uploadUrl, publicUrl } = await response.json();
+                                  const { uploadUrl, publicUrl } =
+                                    await response.json();
 
                                   const putResponse = await fetch(uploadUrl, {
                                     method: "PUT",
@@ -1024,12 +1296,17 @@ export default function CohortSessionManager({
                                   });
 
                                   if (!putResponse.ok) {
-                                    throw new Error(`Upload failed with status ${putResponse.status}`);
+                                    throw new Error(
+                                      `Upload failed with status ${putResponse.status}`
+                                    );
                                   }
 
                                   field.onChange(publicUrl);
                                 } catch (error) {
-                                  console.error("Error uploading video:", error);
+                                  console.error(
+                                    "Error uploading video:",
+                                    error
+                                  );
                                   toast.error("Failed to upload video");
                                 }
                               }}
@@ -1085,7 +1362,9 @@ export default function CohortSessionManager({
                     name="lockedMessage"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Locked Message (shown to users when content is locked)</FormLabel>
+                        <FormLabel>
+                          Locked Message (shown to users when content is locked)
+                        </FormLabel>
                         <FormControl>
                           <Textarea
                             placeholder="This section is locked. It will be unlocked soon!"
@@ -1114,45 +1393,63 @@ export default function CohortSessionManager({
                             if (!files || files.length === 0) return;
 
                             try {
-                              const uploadPromises = Array.from(files).map(async (file) => {
-                                const response = await fetch("/api/storage/sign-upload", {
-                                  method: "POST",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                  },
-                                  body: JSON.stringify({
-                                    domain: "opportunity-attachments",
-                                    fileName: file.name,
-                                    contentType: file.type,
-                                    fileSize: file.size,
-                                  }),
-                                });
+                              const uploadPromises = Array.from(files).map(
+                                async (file) => {
+                                  const response = await fetch(
+                                    "/api/storage/sign-upload",
+                                    {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({
+                                        domain: "opportunity-attachments",
+                                        fileName: file.name,
+                                        contentType: file.type,
+                                        fileSize: file.size,
+                                      }),
+                                    }
+                                  );
 
-                                if (!response.ok) {
-                                  const errorData = await response.json();
-                                  console.error("Upload API error:", errorData);
-                                  throw new Error(errorData.error || "Failed to get upload URL");
+                                  if (!response.ok) {
+                                    const errorData = await response.json();
+                                    console.error(
+                                      "Upload API error:",
+                                      errorData
+                                    );
+                                    throw new Error(
+                                      errorData.error ||
+                                        "Failed to get upload URL"
+                                    );
+                                  }
+
+                                  const { uploadUrl, publicUrl } =
+                                    await response.json();
+
+                                  const putResponse = await fetch(uploadUrl, {
+                                    method: "PUT",
+                                    body: file,
+                                    headers: {
+                                      "Content-Type": file.type,
+                                    },
+                                  });
+
+                                  if (!putResponse.ok) {
+                                    throw new Error(
+                                      `Upload failed with status ${putResponse.status}`
+                                    );
+                                  }
+
+                                  return publicUrl as string;
                                 }
+                              );
 
-                                const { uploadUrl, publicUrl } = await response.json();
-
-                                const putResponse = await fetch(uploadUrl, {
-                                  method: "PUT",
-                                  body: file,
-                                  headers: {
-                                    "Content-Type": file.type,
-                                  },
-                                });
-
-                                if (!putResponse.ok) {
-                                  throw new Error(`Upload failed with status ${putResponse.status}`);
-                                }
-
-                                return publicUrl as string;
-                              });
-
-                              const uploadedImages = await Promise.all(uploadPromises);
-                              field.onChange([...(field.value || []), ...uploadedImages]);
+                              const uploadedImages =
+                                await Promise.all(uploadPromises);
+                              field.onChange([
+                                ...(field.value || []),
+                                ...uploadedImages,
+                              ]);
                             } catch (error) {
                               console.error("Error uploading images:", error);
                               toast.error("Failed to upload images");
@@ -1161,7 +1458,10 @@ export default function CohortSessionManager({
                         />
                       </FormControl>
                       <FormMessage />
-                      <p className="text-xs text-muted-foreground">You can select multiple images. They will be displayed in carousel in the order selected.</p>
+                      <p className="text-muted-foreground text-xs">
+                        You can select multiple images. They will be displayed
+                        in carousel in the order selected.
+                      </p>
                       {field.value && field.value.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-2">
                           {field.value.map((url, index) => (
@@ -1169,7 +1469,7 @@ export default function CohortSessionManager({
                               <img
                                 src={url}
                                 alt={`Uploaded ${index + 1}`}
-                                className="h-16 w-16 object-cover rounded border"
+                                className="h-16 w-16 rounded border object-cover"
                               />
                               <button
                                 type="button"
@@ -1178,7 +1478,7 @@ export default function CohortSessionManager({
                                   newImages.splice(index, 1);
                                   field.onChange(newImages);
                                 }}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                                className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white hover:bg-red-600"
                               >
                                 ×
                               </button>
@@ -1189,7 +1489,7 @@ export default function CohortSessionManager({
                     </FormItem>
                   )}
                 />
-                <div className="flex justify-end gap-2 pt-4 border-t">
+                <div className="flex justify-end gap-2 border-t pt-4">
                   <Button
                     type="button"
                     variant="outline"
@@ -1207,7 +1507,10 @@ export default function CohortSessionManager({
         </Dialog>
 
         {/* Mentor Edit Dialog */}
-        <Dialog open={mentorEditDialogOpen} onOpenChange={setMentorEditDialogOpen}>
+        <Dialog
+          open={mentorEditDialogOpen}
+          onOpenChange={setMentorEditDialogOpen}
+        >
           <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-[600px]">
             <DialogHeader>
               <DialogTitle>
@@ -1215,7 +1518,10 @@ export default function CohortSessionManager({
               </DialogTitle>
             </DialogHeader>
             <Form {...mentorForm}>
-              <form onSubmit={mentorForm.handleSubmit(handleSaveMentor)} className="space-y-4">
+              <form
+                onSubmit={mentorForm.handleSubmit(handleSaveMentor)}
+                className="space-y-4"
+              >
                 <FormField
                   control={mentorForm.control}
                   name="cohortMentorId"
@@ -1224,29 +1530,51 @@ export default function CohortSessionManager({
                       <FormLabel>Link to Cohort Mentor (Optional)</FormLabel>
                       <FormControl>
                         {cohortMentors.length === 0 ? (
-                          <p className="text-xs text-muted-foreground py-2 px-3 border rounded bg-gray-50">
-                            No mentors found for this cohort. Add mentors in the cohort&apos;s &quot;Meet your mentors&quot; section first, then they will appear here.
+                          <p className="text-muted-foreground rounded border bg-gray-50 px-3 py-2 text-xs">
+                            No mentors found for this cohort. Add mentors in the
+                            cohort&apos;s &quot;Meet your mentors&quot; section
+                            first, then they will appear here.
                           </p>
                         ) : (
                           <select
-                            className="border rounded px-3 py-2 w-full bg-white"
+                            className="w-full rounded border bg-white px-3 py-2"
                             value={field.value || ""}
                             onChange={(e) => {
                               const val = e.target.value;
                               field.onChange(val);
                               if (val) {
-                                const selected = cohortMentors.find(m => m.id === val);
+                                const selected = cohortMentors.find(
+                                  (m) => m.id === val
+                                );
                                 if (selected) {
-                                  mentorForm.setValue("name", selected.name || "");
-                                  mentorForm.setValue("role", selected.role || "");
-                                  mentorForm.setValue("imageUrl", selected.imageUrl || "");
-                                  mentorForm.setValue("bio", selected.bio || "");
-                                  mentorForm.setValue("linkedinUrl", selected.link || "");
+                                  mentorForm.setValue(
+                                    "name",
+                                    selected.name || ""
+                                  );
+                                  mentorForm.setValue(
+                                    "role",
+                                    selected.role || ""
+                                  );
+                                  mentorForm.setValue(
+                                    "imageUrl",
+                                    selected.imageUrl || ""
+                                  );
+                                  mentorForm.setValue(
+                                    "bio",
+                                    selected.bio || ""
+                                  );
+                                  mentorForm.setValue(
+                                    "linkedinUrl",
+                                    selected.link || ""
+                                  );
                                 }
                               }
                             }}
                           >
-                            <option value="">-- Select Cohort Mentor (or fill details below manually) --</option>
+                            <option value="">
+                              -- Select Cohort Mentor (or fill details below
+                              manually) --
+                            </option>
                             {cohortMentors.map((m) => (
                               <option key={m.id} value={m.id}>
                                 {m.name} ({m.role})
@@ -1279,7 +1607,10 @@ export default function CohortSessionManager({
                     <FormItem>
                       <FormLabel>Role</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Senior Developer, Product Manager" {...field} />
+                        <Input
+                          placeholder="e.g., Senior Developer, Product Manager"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1300,26 +1631,32 @@ export default function CohortSessionManager({
                             if (!file) return;
 
                             try {
-                              const response = await fetch("/api/storage/sign-upload", {
-                                method: "POST",
-                                headers: {
-                                  "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify({
-                                  domain: "avatar-images",
-                                  fileName: file.name,
-                                  contentType: file.type,
-                                  fileSize: file.size,
-                                }),
-                              });
+                              const response = await fetch(
+                                "/api/storage/sign-upload",
+                                {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({
+                                    domain: "avatar-images",
+                                    fileName: file.name,
+                                    contentType: file.type,
+                                    fileSize: file.size,
+                                  }),
+                                }
+                              );
 
                               if (!response.ok) {
                                 const errorData = await response.json();
                                 console.error("Upload API error:", errorData);
-                                throw new Error(errorData.error || "Failed to get upload URL");
+                                throw new Error(
+                                  errorData.error || "Failed to get upload URL"
+                                );
                               }
 
-                              const { uploadUrl, publicUrl } = await response.json();
+                              const { uploadUrl, publicUrl } =
+                                await response.json();
 
                               const putResponse = await fetch(uploadUrl, {
                                 method: "PUT",
@@ -1330,7 +1667,9 @@ export default function CohortSessionManager({
                               });
 
                               if (!putResponse.ok) {
-                                throw new Error(`Upload failed with status ${putResponse.status}`);
+                                throw new Error(
+                                  `Upload failed with status ${putResponse.status}`
+                                );
                               }
 
                               field.onChange(publicUrl);
@@ -1346,7 +1685,7 @@ export default function CohortSessionManager({
                           <img
                             src={field.value}
                             alt="Mentor preview"
-                            className="h-20 w-20 rounded-full object-cover border"
+                            className="h-20 w-20 rounded-full border object-cover"
                           />
                         </div>
                       )}
@@ -1378,7 +1717,10 @@ export default function CohortSessionManager({
                     <FormItem>
                       <FormLabel>LinkedIn URL</FormLabel>
                       <FormControl>
-                        <Input placeholder="https://linkedin.com/in/..." {...field} />
+                        <Input
+                          placeholder="https://linkedin.com/in/..."
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1404,7 +1746,7 @@ export default function CohortSessionManager({
                     </FormItem>
                   )}
                 />
-                <div className="flex justify-end gap-2 pt-4 border-t">
+                <div className="flex justify-end gap-2 border-t pt-4">
                   <Button
                     type="button"
                     variant="outline"
@@ -1422,7 +1764,10 @@ export default function CohortSessionManager({
         </Dialog>
 
         {/* Resource Edit Dialog */}
-        <Dialog open={resourceEditDialogOpen} onOpenChange={setResourceEditDialogOpen}>
+        <Dialog
+          open={resourceEditDialogOpen}
+          onOpenChange={setResourceEditDialogOpen}
+        >
           <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-[600px]">
             <DialogHeader>
               <DialogTitle>
@@ -1430,7 +1775,10 @@ export default function CohortSessionManager({
               </DialogTitle>
             </DialogHeader>
             <Form {...resourceForm}>
-              <form onSubmit={resourceForm.handleSubmit(handleSaveResource)} className="space-y-4">
+              <form
+                onSubmit={resourceForm.handleSubmit(handleSaveResource)}
+                className="space-y-4"
+              >
                 <FormField
                   control={resourceForm.control}
                   name="name"
@@ -1452,9 +1800,11 @@ export default function CohortSessionManager({
                       <FormLabel>Resource Type</FormLabel>
                       <FormControl>
                         <select
-                          className="w-full border rounded px-3 py-2 bg-white"
+                          className="w-full rounded border bg-white px-3 py-2"
                           value={field.value}
-                          onChange={(e) => field.onChange(e.target.value as any)}
+                          onChange={(e) =>
+                            field.onChange(e.target.value as any)
+                          }
                         >
                           <option value="pdf">PDF</option>
                           <option value="ppt">Presentation (PPT)</option>
@@ -1495,12 +1845,12 @@ export default function CohortSessionManager({
                               resourceForm.watch("type") === "pdf"
                                 ? ".pdf"
                                 : resourceForm.watch("type") === "ppt"
-                                ? ".ppt,.pptx"
-                                : resourceForm.watch("type") === "excel"
-                                ? ".xls,.xlsx"
-                                : resourceForm.watch("type") === "word"
-                                ? ".doc,.docx"
-                                : "*"
+                                  ? ".ppt,.pptx"
+                                  : resourceForm.watch("type") === "excel"
+                                    ? ".xls,.xlsx"
+                                    : resourceForm.watch("type") === "word"
+                                      ? ".doc,.docx"
+                                      : "*"
                             }
                             multiple
                             onChange={async (e) => {
@@ -1508,49 +1858,66 @@ export default function CohortSessionManager({
                               if (!files || files.length === 0) return;
 
                               try {
-                                const uploadPromises = Array.from(files).map(async (file) => {
-                                  const response = await fetch("/api/storage/sign-upload", {
-                                    method: "POST",
-                                    headers: {
-                                      "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify({
-                                      domain: "opportunity-attachments",
-                                      fileName: file.name,
-                                      contentType: file.type,
-                                      fileSize: file.size,
-                                    }),
-                                  });
+                                const uploadPromises = Array.from(files).map(
+                                  async (file) => {
+                                    const response = await fetch(
+                                      "/api/storage/sign-upload",
+                                      {
+                                        method: "POST",
+                                        headers: {
+                                          "Content-Type": "application/json",
+                                        },
+                                        body: JSON.stringify({
+                                          domain: "opportunity-attachments",
+                                          fileName: file.name,
+                                          contentType: file.type,
+                                          fileSize: file.size,
+                                        }),
+                                      }
+                                    );
 
-                                  if (!response.ok) {
-                                    const errorData = await response.json();
-                                    console.error("Upload API error:", errorData);
-                                    throw new Error(errorData.error || "Failed to get upload URL");
+                                    if (!response.ok) {
+                                      const errorData = await response.json();
+                                      console.error(
+                                        "Upload API error:",
+                                        errorData
+                                      );
+                                      throw new Error(
+                                        errorData.error ||
+                                          "Failed to get upload URL"
+                                      );
+                                    }
+
+                                    const { uploadUrl, publicUrl } =
+                                      await response.json();
+
+                                    const putResponse = await fetch(uploadUrl, {
+                                      method: "PUT",
+                                      body: file,
+                                      headers: {
+                                        "Content-Type": file.type,
+                                      },
+                                    });
+
+                                    if (!putResponse.ok) {
+                                      throw new Error(
+                                        `Upload failed with status ${putResponse.status}`
+                                      );
+                                    }
+
+                                    return {
+                                      name: file.name,
+                                      url: publicUrl,
+                                      type: resourceForm.watch("type"),
+                                    };
                                   }
+                                );
 
-                                  const { uploadUrl, publicUrl } = await response.json();
-
-                                  const putResponse = await fetch(uploadUrl, {
-                                    method: "PUT",
-                                    body: file,
-                                    headers: {
-                                      "Content-Type": file.type,
-                                    },
-                                  });
-
-                                  if (!putResponse.ok) {
-                                    throw new Error(`Upload failed with status ${putResponse.status}`);
-                                  }
-
-                                  return {
-                                    name: file.name,
-                                    url: publicUrl,
-                                    type: resourceForm.watch("type"),
-                                  };
-                                });
-
-                                const uploadedResources = await Promise.all(uploadPromises);
-                                field.onChange(JSON.stringify(uploadedResources));
+                                const uploadedResources =
+                                  await Promise.all(uploadPromises);
+                                field.onChange(
+                                  JSON.stringify(uploadedResources)
+                                );
                               } catch (error) {
                                 console.error("Error uploading files:", error);
                                 toast.error("Failed to upload files");
@@ -1559,20 +1926,25 @@ export default function CohortSessionManager({
                           />
                         </FormControl>
                         {field.value && !field.value.startsWith("[") && (
-                          <div className="mt-2 p-3 bg-gray-50 rounded border">
-                            <p className="text-xs text-gray-500 mb-1">Current file:</p>
+                          <div className="mt-2 rounded border bg-gray-50 p-3">
+                            <p className="mb-1 text-xs text-gray-500">
+                              Current file:
+                            </p>
                             <a
                               href={field.value}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm text-blue-600 hover:underline break-all"
+                              className="text-sm break-all text-blue-600 hover:underline"
                             >
                               {field.value}
                             </a>
                           </div>
                         )}
                         <FormMessage />
-                        <p className="text-xs text-muted-foreground">You can select multiple files (leave empty to keep current file when editing)</p>
+                        <p className="text-muted-foreground text-xs">
+                          You can select multiple files (leave empty to keep
+                          current file when editing)
+                        </p>
                       </FormItem>
                     )}
                   />
@@ -1597,7 +1969,7 @@ export default function CohortSessionManager({
                     </FormItem>
                   )}
                 />
-                <div className="flex justify-end gap-2 pt-4 border-t">
+                <div className="flex justify-end gap-2 border-t pt-4">
                   <Button
                     type="button"
                     variant="outline"

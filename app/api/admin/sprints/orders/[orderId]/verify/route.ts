@@ -42,3 +42,5 @@ export async function PATCH(
     );
   }
 }
+
+export { PATCH as PUT };

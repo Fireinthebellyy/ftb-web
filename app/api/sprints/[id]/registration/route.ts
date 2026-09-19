@@ -79,6 +79,7 @@ export async function GET(
       toolkitId: sprint.toolkitId,
       completed,
       sessions,
+      isVerificationRequired: Boolean(sprint.isVerificationRequired),
       registration: completed
         ? {
             name: order.registrationName,
@@ -126,6 +127,14 @@ export async function POST(
       );
     }
 
+    if (isSprintRegistrationComplete(order)) {
+      return NextResponse.json({
+        success: true,
+        alreadyCompleted: true,
+        toolkitId: sprint.toolkitId,
+      });
+    }
+
     const body = await request.json();
     const result = registrationSchema.safeParse(body);
     if (!result.success) {
@@ -137,6 +146,16 @@ export async function POST(
 
     const { name, college, course, year, expectations } = result.data;
 
+    // Check if sprint has any active sessions
+    const sprintSessionsData = await db.query.sprintSessions.findMany({
+      where: and(
+        eq(sprintSessions.sprintId, sprint.id),
+        eq(sprintSessions.isActive, true)
+      ),
+    });
+
+    const hasActiveSessions = sprintSessionsData.length > 0;
+
     await db
       .update(sprintOrders)
       .set({
@@ -145,14 +164,17 @@ export async function POST(
         registrationCourse: course,
         registrationYear: year,
         registrationExpectations: expectations,
-        registrationCompletedAt: new Date(),
+        ...(hasActiveSessions ? {} : { registrationCompletedAt: new Date() }),
       })
-      .where(eq(sprintOrders.id, order.id));
+      .where(
+        and(eq(sprintOrders.id, order.id), eq(sprintOrders.userId, session.user.id))
+      );
 
     return NextResponse.json({
       success: true,
-      message: "Registration completed successfully",
-      sprintId: sprint.id,
+      toolkitId: sprint.toolkitId,
+      isVerificationRequired: Boolean(sprint.isVerificationRequired),
+      registrationComplete: !hasActiveSessions,
     });
   } catch (error) {
     console.error("Error submitting sprint registration:", error);

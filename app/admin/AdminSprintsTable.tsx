@@ -8,18 +8,19 @@ import {
   Edit,
   Trash2,
   Plus,
+  Loader2,
+  Image as ImageIcon,
+  X,
+  ArrowUp,
+  ArrowDown,
+  Download,
   FolderCog,
+  Gift,
   Layers,
+  Users,
   HelpCircle,
   Video,
   Play,
-  X,
-  Users,
-  UploadCloud,
-  CheckCircle,
-  Sparkles,
-  ExternalLink,
-  Image as ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -84,6 +85,12 @@ interface Session {
   showInHome?: boolean;
 }
 
+interface Faq {
+  id?: string;
+  question: string;
+  answer: string;
+}
+
 interface Sprint {
   id: string;
   title: string;
@@ -92,1469 +99,2346 @@ interface Sprint {
   badge2?: string;
   subtitle?: string;
   coverImageUrl?: string;
-  coverImageUrls?: string[];
-  cardImageUrl?: string;
-  startDate?: string;
-  highlights?: string[];
+  coverImageUrls?: string[] | null;
+  cardImageUrl?: string | null;
+  videoUrl?: string | null;
+  startDate?: string | null;
+  highlights?: string[] | null;
   mentorsHeading?: string;
   mentorsLinkTarget?: string;
   mentorsLimit?: number;
   featuresHeading?: string;
-  sessionsHeading?: string;
-  testimonialsHeading?: string;
-  faqsHeading?: string;
-  whoIsThisForHeading?: string;
-  whoIsThisForBullets?: string[];
+  sessionsHeading?: string | null;
+  testimonialsHeading?: string | null;
+  faqsHeading?: string | null;
+  whoIsThisForHeading?: string | null;
+  whoIsThisForBullets?: string[] | null;
   investmentLabel?: string;
   basePrice: number;
   originalPrice?: number | null;
-  videoUrl?: string | null;
-  toolkitId?: string;
+  toolkitId?: string | null;
   isActive: boolean;
-  isBestSeller?: boolean;
-  isFillingFast?: boolean;
-  hasEarlyBird?: boolean;
-  isVerificationRequired?: boolean;
-  showEarlyBirdCheckout?: boolean;
-  showEarlyBirdMarqueeCheckout?: boolean;
-  showAddonsCheckout?: boolean;
-  createdAt: string;
-  updatedAt?: string;
+  isBestSeller?: boolean | null;
+  isFillingFast?: boolean | null;
+  hasEarlyBird?: boolean | null;
+  isVerificationRequired: boolean;
+  showEarlyBirdCheckout?: boolean | null;
+  showEarlyBirdMarqueeCheckout?: boolean | null;
+  showAddonsCheckout?: boolean | null;
   mentors?: Mentor[];
   features?: Feature[];
   tiers?: Tier[];
   addons?: Addon[];
   sessions?: Session[];
+  faqs?: Faq[];
 }
 
-interface SprintOrder {
+interface Order {
   id: string;
-  sprintId: string;
-  sprintTitle?: string;
+  userId?: string | null;
   buyerName: string;
   buyerEmail: string;
-  buyerPhone?: string;
-  buddyEmail?: string;
-  tierName?: string;
-  selectedUpgradePlanId?: string;
-  upgradePlanTitle?: string;
+  buyerPhone: string | null;
+  buddyEmail?: string | null;
   amountPaid: number;
+  razorpayOrderId: string;
+  razorpayPaymentId: string | null;
   status: string;
-  isVerified?: boolean;
   createdAt: string;
-  userId?: string;
+  sprintTitle: string | null;
+  sprintId: string | null;
+  tierName: string | null;
+  isVerified: boolean;
+  registrationName: string | null;
+  registrationCollege: string | null;
+  registrationCourse: string | null;
+  registrationYear: string | null;
+  registrationExpectations: string | null;
+  registrationCompletedAt: string | null;
+  selectedSessionIds: string[] | null;
+  selectedAddOnIds: string[] | null;
+  selectedUpgradePlanId?: string | null;
+  upgradePlanTitle?: string | null;
+  upgradePlanPrice?: number | null;
+  upgradePlanSectionLabel?: string | null;
+  upgradePlanIsAllInOne?: boolean | null;
+  couponId: string | null;
+  couponCode: string | null;
 }
 
-type EditTab = "details" | "headings" | "audience" | "features" | "managers";
-
 export default function AdminSprintsTable() {
-  const [sprints, setSprints] = useState<Sprint[]>([]);
-  const [orders, setOrders] = useState<SprintOrder[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"sprints" | "orders">("sprints");
+  const [view, setView] = useState<"sprints" | "orders" | "registrations">("sprints");
+  const [sprintsList, setSprintsList] = useState<Sprint[]>([]);
+  const [ordersList, setOrdersList] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Sprint creation state
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [newSprintTitle, setNewSprintTitle] = useState("");
+  const [newSprintSlug, setNewSprintSlug] = useState("");
+  const [newSprintPrice, setNewSprintPrice] = useState(4999);
+
+  // Sprint editing state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingSprint, setEditingSprint] = useState<Sprint | null>(null);
+  const [activeEditTab, setActiveEditTab] = useState<
+    "details" | "mentors" | "features" | "pricing" | "curriculum" | "faqs"
+  >("details");
+
+  // File upload state
+  const [isUploading, setIsUploading] = useState(false);
   const [toolkits, setToolkits] = useState<any[]>([]);
 
-  // Modal states
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeEditTab, setActiveEditTab] = useState<EditTab>("details");
-  const [editingSprint, setEditingSprint] = useState<Sprint | null>(null);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-
   // Managers modal states
-  const [sessionManagerSprint, setSessionManagerSprint] = useState<{ id: string; title: string } | null>(null);
-  const [upgradePlansSprint, setUpgradePlansSprint] = useState<{ id: string; title: string } | null>(null);
-  const [faqManagerSprint, setFaqManagerSprint] = useState<{ id: string; title: string } | null>(null);
-  const [mentorManagerSprint, setMentorManagerSprint] = useState<{ id: string; title: string } | null>(null);
-  const [packageTargetModal, setPackageTargetModal] = useState<{
+  const [sessionManagerOpen, setSessionManagerOpen] = useState(false);
+  const [upgradePlansOpen, setUpgradePlansOpen] = useState(false);
+  const [mentorManagerOpen, setMentorManagerOpen] = useState(false);
+  const [faqManagerOpen, setFaqManagerOpen] = useState(false);
+  const [managingSprint, setManagingSprint] = useState<Sprint | null>(null);
+
+  // User package targeting modal state
+  const [managePackagesModalState, setManagePackagesModalState] = useState<{
     open: boolean;
     sprintId: string;
     userId: string;
     userName: string;
     userEmail: string;
     userTierName?: string;
-  } | null>(null);
-
-  // Form states
-  const [formData, setFormData] = useState({
-    title: "",
-    slug: "",
-    badge1: "",
-    badge2: "",
-    subtitle: "",
-    coverImageUrl: "",
-    coverImageUrls: [] as string[],
-    cardImageUrl: "",
-    videoUrl: "",
-    startDate: "",
-    highlights: [] as string[],
-    mentorsHeading: "Meet Your Mentors",
-    mentorsLinkTarget: "",
-    mentorsLimit: 2,
-    featuresHeading: "What You Get",
-    sessionsHeading: "Sprint Sessions & Curriculum",
-    testimonialsHeading: "What Members Say About Our Ecosystem",
-    faqsHeading: "Frequently Asked Questions",
-    whoIsThisForHeading: "Who Is This For?",
-    whoIsThisForBullets: [] as string[],
-    investmentLabel: "Total Investment",
-    basePrice: 0,
-    originalPrice: "" as string | number,
-    toolkitId: "",
-    isActive: true,
-    isBestSeller: false,
-    isFillingFast: false,
-    hasEarlyBird: false,
-    isVerificationRequired: true,
-    showEarlyBirdCheckout: false,
-    showEarlyBirdMarqueeCheckout: false,
-    showAddonsCheckout: true,
-    features: [] as Feature[],
+    isBundleUser?: boolean;
+  }>({
+    open: false,
+    sprintId: "",
+    userId: "",
+    userName: "",
+    userEmail: "",
   });
 
+  // Sessions data for registration details
+  const [sessionsData, setSessionsData] = useState<Record<string, any[]>>({});
+
+  // Load Initial Data
   useEffect(() => {
     fetchSprints();
-    fetchOrders();
     fetchToolkits();
   }, []);
 
+  useEffect(() => {
+    if (sprintsList.length > 0) {
+      fetchOrders();
+    }
+  }, [sprintsList]);
+
   const fetchToolkits = async () => {
     try {
-      const res = await axios.get("/api/toolkits");
-      setToolkits(res.data || []);
+      const response = await axios.get("/api/admin/toolkits");
+      setToolkits(response.data);
     } catch (err) {
-      console.error("Failed to load toolkits:", err);
+      console.error("Failed to load toolkits list:", err);
     }
   };
 
   const fetchSprints = async () => {
+    setIsLoading(true);
     try {
-      setLoading(true);
-      const res = await axios.get("/api/admin/sprints");
-      setSprints(res.data || []);
+      const response = await axios.get("/api/admin/sprints");
+      setSprintsList(response.data);
     } catch (err) {
-      console.error("Error fetching sprints:", err);
+      console.error(err);
       toast.error("Failed to load sprints");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get("/api/admin/sprints/orders");
-      setOrders(res.data || []);
+      const response = await axios.get("/api/admin/sprints/orders");
+      setOrdersList(response.data);
+
+      // Fetch sessions for each sprint
+      const sessionsMap: Record<string, any[]> = {};
+
+      for (const sprint of sprintsList) {
+        try {
+          const sessionsResponse = await axios.get(`/api/admin/sprints/${sprint.id}/sessions`);
+          sessionsMap[sprint.id] = sessionsResponse.data;
+        } catch (err) {
+          console.error(`Failed to load sessions for sprint ${sprint.id}:`, err);
+          sessionsMap[sprint.id] = [];
+        }
+      }
+
+      setSessionsData(sessionsMap);
     } catch (err) {
-      console.error("Error fetching sprint orders:", err);
+      console.error(err);
+      toast.error("Failed to load orders log");
     }
   };
 
-  const handleOpenCreate = () => {
-    setEditingSprint(null);
-    setActiveEditTab("details");
-    setFormData({
-      title: "",
-      slug: "",
-      badge1: "",
-      badge2: "",
-      subtitle: "",
-      coverImageUrl: "",
-      coverImageUrls: [],
-      cardImageUrl: "",
-      videoUrl: "",
-      startDate: "",
-      highlights: [],
-      mentorsHeading: "Meet Your Mentors",
-      mentorsLinkTarget: "",
-      mentorsLimit: 2,
-      featuresHeading: "What You Get",
-      sessionsHeading: "Sprint Sessions & Curriculum",
-      testimonialsHeading: "What Members Say About Our Ecosystem",
-      faqsHeading: "Frequently Asked Questions",
-      whoIsThisForHeading: "Who Is This For?",
-      whoIsThisForBullets: [],
-      investmentLabel: "Total Investment",
-      basePrice: 0,
-      originalPrice: "",
-      toolkitId: "",
-      isActive: true,
-      isBestSeller: false,
-      isFillingFast: false,
-      hasEarlyBird: false,
-      isVerificationRequired: true,
-      showEarlyBirdCheckout: false,
-      showEarlyBirdMarqueeCheckout: false,
-      showAddonsCheckout: true,
-      features: [],
-    });
-    setIsModalOpen(true);
-  };
-
-  const handleOpenEdit = async (sprint: Sprint) => {
+  const handleVerifyOrder = async (orderId: string) => {
     try {
-      const res = await axios.get(`/api/admin/sprints/${sprint.id}`);
-      const full = res.data;
-      setEditingSprint(full);
-      setActiveEditTab("details");
-      setFormData({
-        title: full.title || "",
-        slug: full.slug || "",
-        badge1: full.badge1 || "",
-        badge2: full.badge2 || "",
-        subtitle: full.subtitle || "",
-        coverImageUrl: full.coverImageUrl || "",
-        coverImageUrls: full.coverImageUrls || [],
-        cardImageUrl: full.cardImageUrl || "",
-        videoUrl: full.videoUrl || "",
-        startDate: full.startDate || "",
-        highlights: full.highlights || [],
-        mentorsHeading: full.mentorsHeading || "Meet Your Mentors",
-        mentorsLinkTarget: full.mentorsLinkTarget || "",
-        mentorsLimit: full.mentorsLimit || 2,
-        featuresHeading: full.featuresHeading || "What You Get",
-        sessionsHeading: full.sessionsHeading || "Sprint Sessions & Curriculum",
-        testimonialsHeading: full.testimonialsHeading || "What Members Say About Our Ecosystem",
-        faqsHeading: full.faqsHeading || "Frequently Asked Questions",
-        whoIsThisForHeading: full.whoIsThisForHeading || "Who Is This For?",
-        whoIsThisForBullets: full.whoIsThisForBullets || [],
-        investmentLabel: full.investmentLabel || "Total Investment",
-        basePrice: full.basePrice || 0,
-        originalPrice: full.originalPrice || "",
-        toolkitId: full.toolkitId || "",
-        isActive: full.isActive !== undefined ? full.isActive : true,
-        isBestSeller: full.isBestSeller || false,
-        isFillingFast: full.isFillingFast || false,
-        hasEarlyBird: full.hasEarlyBird || false,
-        isVerificationRequired: full.isVerificationRequired !== undefined ? full.isVerificationRequired : true,
-        showEarlyBirdCheckout: full.showEarlyBirdCheckout || false,
-        showEarlyBirdMarqueeCheckout: full.showEarlyBirdMarqueeCheckout || false,
-        showAddonsCheckout: full.showAddonsCheckout !== undefined ? full.showAddonsCheckout : true,
-        features: full.features || [],
-      });
-      setIsModalOpen(true);
-    } catch (err) {
-      console.error("Error loading sprint for edit:", err);
-      toast.error("Failed to load sprint details");
+      const response = await axios.patch(`/api/admin/sprints/orders/${orderId}/verify`);
+      const { isVerified } = response.data;
+      toast.success(isVerified ? "Order verified!" : "Order unverified!");
+      fetchOrders();
+    } catch (err: unknown) {
+      console.error(err);
+      if (axios.isAxiosError(err)) {
+        toast.error(err.response?.data?.error || "Failed to update verification status");
+      } else {
+        toast.error("Failed to update verification status");
+      }
     }
   };
 
-  const handleImageUpload = async (file: File, onUploaded: (url: string) => void) => {
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please upload a valid image file");
+  const handleCreateSprint = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSprintTitle || !newSprintSlug) {
+      toast.error("Please fill in all fields");
       return;
     }
+
     try {
-      setIsUploadingImage(true);
-      const uploaded = await uploadFileViaSignedUrl({
-        domain: "opportunity-images",
-        file,
+      await axios.post("/api/admin/sprints", {
+        title: newSprintTitle,
+        slug: newSprintSlug,
+        basePrice: newSprintPrice,
       });
-      onUploaded(uploaded.publicUrl);
-      toast.success("Image uploaded successfully");
-    } catch (err: any) {
+      toast.success("Sprint created successfully!");
+      setCreateDialogOpen(false);
+      setNewSprintTitle("");
+      setNewSprintSlug("");
+      setNewSprintPrice(4999);
+      fetchSprints();
+    } catch (err: unknown) {
       console.error(err);
-      toast.error(err.message || "Failed to upload image");
+      const errorMessage =
+        axios.isAxiosError(err) && err.response?.data?.error
+          ? err.response.data.error
+          : "Failed to create sprint";
+      toast.error(errorMessage);
+    }
+  };
+
+  const startEditSprint = async (sprintId: string) => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`/api/admin/sprints/${sprintId}`);
+      const data = response.data;
+      const urls = data.coverImageUrls || [];
+      const coverImageUrls = [
+        urls[0] || data.coverImageUrl || "",
+        urls[1] || "",
+        urls[2] || "",
+      ];
+      setEditingSprint({
+        ...data,
+        coverImageUrls,
+        sessionsHeading: data.sessionsHeading || "Sprint Sessions & Curriculum",
+        testimonialsHeading: data.testimonialsHeading || "What Members Say About Our Ecosystem",
+        faqsHeading: data.faqsHeading || "Frequently Asked Questions",
+        whoIsThisForHeading: data.whoIsThisForHeading || "Who Is This For?",
+      });
+      setActiveEditTab("details");
+      setEditDialogOpen(true);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load sprint details");
     } finally {
-      setIsUploadingImage(false);
+      setIsLoading(false);
     }
   };
 
   const handleSaveSprint = async () => {
-    if (!formData.title || !formData.slug || formData.basePrice < 0) {
-      toast.error("Please fill in all required fields (title, slug, base price)");
-      return;
-    }
-
-    const payload = {
-      ...formData,
-      highlights: formData.highlights.map((s) => s.trim()).filter(Boolean),
-      whoIsThisForBullets: formData.whoIsThisForBullets.map((s) => s.trim()).filter(Boolean),
-      originalPrice: formData.originalPrice ? Number(formData.originalPrice) : null,
-    };
-
+    if (!editingSprint) return;
+    setIsLoading(true);
     try {
-      if (editingSprint) {
-        await axios.put(`/api/admin/sprints/${editingSprint.id}`, payload);
-        toast.success("Sprint updated successfully");
-      } else {
-        await axios.post("/api/admin/sprints", payload);
-        toast.success("Sprint created successfully");
-      }
-      setIsModalOpen(false);
+      await axios.put(`/api/admin/sprints/${editingSprint.id}`, editingSprint);
+      toast.success("Sprint saved successfully!");
+      setEditDialogOpen(false);
       fetchSprints();
     } catch (err: any) {
-      console.error("Error saving sprint:", err);
+      console.error(err);
       toast.error(err.response?.data?.error || "Failed to save sprint");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleDeleteSprint = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this sprint?")) return;
+    if (!confirm("Are you sure you want to delete this sprint? This cannot be undone.")) {
+      return;
+    }
+
     try {
       await axios.delete(`/api/admin/sprints/${id}`);
-      toast.success("Sprint deleted successfully");
+      toast.success("Sprint deleted");
       fetchSprints();
     } catch (err) {
-      console.error("Error deleting sprint:", err);
+      console.error(err);
       toast.error("Failed to delete sprint");
     }
   };
 
-  const handleToggleVerifyOrder = async (orderId: string) => {
+  const handleImageUpload = async (file: File, callback: (url: string) => void) => {
+    setIsUploading(true);
     try {
-      const res = await axios.put(`/api/admin/sprints/orders/${orderId}/verify`);
-      toast.success(res.data.isVerified ? "Order verified" : "Order unverified");
-      fetchOrders();
+      const { publicUrl } = await uploadFileViaSignedUrl({
+        domain: "ungatekeep-images",
+        file,
+      });
+      callback(publicUrl);
+      toast.success("Image uploaded successfully!");
     } catch (err) {
       console.error(err);
-      toast.error("Failed to update order status");
+      toast.error("Failed to upload image");
+    } finally {
+      setIsUploading(false);
     }
+  };
+
+  // Export to CSV for Orders Log
+  const exportOrdersCSV = () => {
+    if (ordersList.length === 0) {
+      toast.error("No orders to export");
+      return;
+    }
+
+    const headers = [
+      "Order ID",
+      "Buyer Name",
+      "Buyer Email",
+      "Buyer Phone",
+      "Buddy Email",
+      "Sprint Title",
+      "Selected Tier / Upgrade Plan",
+      "Amount Paid (INR)",
+      "Coupon Code",
+      "Razorpay Order ID",
+      "Razorpay Payment ID",
+      "Status",
+      "Date",
+    ];
+
+    const rows = ordersList.map((order) => [
+      order.id,
+      order.buyerName,
+      order.buyerEmail,
+      order.buyerPhone || "",
+      order.buddyEmail || "",
+      order.sprintTitle || "",
+      order.upgradePlanTitle
+        ? `Upgrade: ${order.upgradePlanTitle}`
+        : (order.tierName || "Base price"),
+      (order.amountPaid / 100).toFixed(2),
+      order.couponCode || "",
+      order.razorpayOrderId,
+      order.razorpayPaymentId || "",
+      order.status,
+      new Date(order.createdAt).toLocaleString(),
+    ]);
+
+    const sanitizeCSV = (val: string): string => {
+      if (/^[=+\-@]/.test(val)) return `\t${val}`;
+      return val;
+    };
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((e) => e.map((val) => `"${sanitizeCSV(String(val)).replace(/"/g, '""')}"`).join(","))].join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `sprint_orders_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Export to CSV for Registration Details
+  const exportRegistrationsCSV = () => {
+    const registrations = ordersList.filter((order) => order.registrationName || order.buyerName);
+    if (registrations.length === 0) {
+      toast.error("No registration details to export");
+      return;
+    }
+
+    const headers = [
+      "Name",
+      "College",
+      "Course",
+      "Year",
+      "Expectations",
+      "Opted Plan / Upgrade",
+      "Selected Sessions",
+      "Individual Sessions",
+      "Sprint",
+      "Email",
+      "Date",
+    ];
+
+    const rows = registrations.map((order) => {
+      const sessionTitles =
+        order.selectedSessionIds && order.selectedSessionIds.length > 0
+          ? order.selectedSessionIds
+              .map((sessionId) => {
+                const session = order.sprintId
+                  ? sessionsData[order.sprintId]?.find((s: any) => s.id === sessionId)
+                  : null;
+                return session ? session.title : "";
+              })
+              .filter(Boolean)
+              .join(", ")
+          : "";
+
+      const individualSessionTitles =
+        order.selectedAddOnIds && order.selectedAddOnIds.length > 0
+          ? order.selectedAddOnIds
+              .map((sessionId) => {
+                const session = order.sprintId
+                  ? sessionsData[order.sprintId]?.find((s: any) => s.id === sessionId)
+                  : null;
+                return session ? session.title : "";
+              })
+              .filter(Boolean)
+              .join(", ")
+          : "";
+
+      const optedPlanLabel = order.upgradePlanTitle
+        ? `Upgrade: ${order.upgradePlanTitle} (Paid: ₹${(order.amountPaid / 100).toFixed(2)})`
+        : `${order.tierName || "Base Plan"} (Paid: ₹${(order.amountPaid / 100).toFixed(2)})`;
+
+      return [
+        order.registrationName || order.buyerName,
+        order.registrationCollege || "",
+        order.registrationCourse || "",
+        order.registrationYear || "",
+        order.registrationExpectations || "",
+        optedPlanLabel,
+        sessionTitles,
+        individualSessionTitles,
+        order.sprintTitle || "Unknown",
+        order.buyerEmail,
+        order.registrationCompletedAt
+          ? new Date(order.registrationCompletedAt).toLocaleString()
+          : new Date(order.createdAt).toLocaleString(),
+      ];
+    });
+
+    const sanitizeCSV = (val: string): string => {
+      if (/^[=+\-@]/.test(val)) return `\t${val}`;
+      return val;
+    };
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((e) => e.map((val) => `"${sanitizeCSV(String(val)).replace(/"/g, '""')}"`).join(","))].join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `sprint_registrations_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
     <div className="space-y-6">
-      {/* Header & View Switcher */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-zinc-900/40 p-4 rounded-xl border border-zinc-800">
-        <div>
-          <h2 className="text-xl font-bold text-white tracking-tight">Sprint Programs Management</h2>
-          <p className="text-xs text-zinc-400">
-            Manage sprints, curriculum sessions, mentors, upgrade plans, FAQs, and participant orders.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="inline-flex p-1 bg-zinc-950 rounded-lg border border-zinc-800">
-            <button
-              onClick={() => setActiveTab("sprints")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition ${
-                activeTab === "sprints"
-                  ? "bg-[#ff5e14] text-white"
-                  : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              Sprints ({sprints.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("orders")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition ${
-                activeTab === "orders"
-                  ? "bg-[#ff5e14] text-white"
-                  : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              Registrations & Orders ({orders.length})
-            </button>
-          </div>
-          {activeTab === "sprints" && (
-            <Button
-              onClick={handleOpenCreate}
-              className="bg-[#ff5e14] hover:bg-[#e04f0b] text-white text-xs gap-1.5 shadow"
-            >
-              <Plus className="w-4 h-4" /> Create Sprint
-            </Button>
-          )}
-        </div>
+      {/* View Switcher */}
+      <div className="flex border-b">
+        <button
+          onClick={() => setView("sprints")}
+          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${
+            view === "sprints"
+              ? "border-[#ff5e14] text-[#ff5e14]"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Sprints ({sprintsList.length})
+        </button>
+        <button
+          onClick={() => setView("orders")}
+          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${
+            view === "orders"
+              ? "border-[#ff5e14] text-[#ff5e14]"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Orders Log ({ordersList.length})
+        </button>
+        <button
+          onClick={() => setView("registrations")}
+          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${
+            view === "registrations"
+              ? "border-[#ff5e14] text-[#ff5e14]"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Registration Details ({ordersList.filter((order) => order.registrationName).length})
+        </button>
       </div>
 
-      {/* Main Content Area */}
-      {activeTab === "sprints" ? (
-        loading ? (
-          <div className="py-20 text-center text-zinc-400">Loading sprints...</div>
-        ) : sprints.length === 0 ? (
-          <div className="py-20 text-center text-zinc-500 border border-dashed border-zinc-800 rounded-xl">
-            No sprint programs created yet. Click &quot;Create Sprint&quot; to begin.
+      {view === "sprints" ? (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Sprint Management</h2>
+            <Button
+              onClick={() => setCreateDialogOpen(true)}
+              className="bg-[#ff5e14] hover:bg-[#e04f0f] text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" /> Create Sprint
+            </Button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sprints.map((sprint) => (
-              <div
-                key={sprint.id}
-                className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex flex-col justify-between hover:border-zinc-700 transition space-y-4"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded ${
-                        sprint.isActive
-                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                          : "bg-zinc-800 text-zinc-500 border border-zinc-700"
-                      }`}
-                    >
-                      {sprint.isActive ? "Active" : "Draft"}
-                    </span>
-                    {sprint.startDate && (
-                      <span className="text-[11px] text-zinc-400 font-medium">
-                        {sprint.startDate}
-                      </span>
-                    )}
-                  </div>
 
-                  <h3 className="font-bold text-base text-white leading-tight">
-                    {sprint.title}
-                  </h3>
-                  <p className="text-xs text-zinc-400 line-clamp-2">
-                    {sprint.subtitle || "No description provided."}
-                  </p>
-
-                  <div className="text-xs font-mono text-emerald-400 pt-1">
-                    Base: ₹{sprint.basePrice.toLocaleString("en-IN")}
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-zinc-800 space-y-2">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        setMentorManagerSprint({ id: sprint.id, title: sprint.title })
-                      }
-                      className="border-zinc-700 text-blue-400 hover:text-blue-300 text-[11px] px-1.5 gap-1"
-                    >
-                      <Users className="w-3.5 h-3.5" /> Mentors
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        setSessionManagerSprint({ id: sprint.id, title: sprint.title })
-                      }
-                      className="border-zinc-700 text-zinc-300 text-[11px] px-1.5 gap-1"
-                    >
-                      <FolderCog className="w-3.5 h-3.5" /> Curriculum
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        setUpgradePlansSprint({ id: sprint.id, title: sprint.title })
-                      }
-                      className="border-zinc-700 text-amber-400 hover:text-amber-300 text-[11px] px-1.5 gap-1"
-                    >
-                      <Layers className="w-3.5 h-3.5" /> Packages
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        setFaqManagerSprint({ id: sprint.id, title: sprint.title })
-                      }
-                      className="border-zinc-700 text-cyan-400 hover:text-cyan-300 text-[11px] px-1.5 gap-1"
-                    >
-                      <HelpCircle className="w-3.5 h-3.5" /> FAQs
-                    </Button>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleOpenEdit(sprint)}
-                      className="text-zinc-300 hover:text-white text-xs gap-1"
-                    >
-                      <Edit className="w-3.5 h-3.5" /> Full Dashboard
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleDeleteSprint(sprint.id)}
-                      className="text-red-400 hover:text-red-300 text-xs gap-1"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" /> Delete
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900/60">
-          <table className="w-full text-left text-sm text-zinc-300">
-            <thead className="bg-zinc-950 text-xs uppercase text-zinc-400 border-b border-zinc-800">
-              <tr>
-                <th className="p-3">Buyer Name</th>
-                <th className="p-3">Email / Phone</th>
-                <th className="p-3">Sprint</th>
-                <th className="p-3">Amount</th>
-                <th className="p-3">Status</th>
-                <th className="p-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-800">
-              {orders.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="p-8 text-center text-zinc-500">
-                    No orders found.
-                  </td>
-                </tr>
-              ) : (
-                orders.map((o) => (
-                  <tr key={o.id} className="hover:bg-zinc-800/40">
-                    <td className="p-3 font-semibold text-white">{o.buyerName}</td>
-                    <td className="p-3 text-xs">
-                      <div>{o.buyerEmail}</div>
-                      {o.buyerPhone && <div className="text-zinc-500">{o.buyerPhone}</div>}
-                    </td>
-                    <td className="p-3 text-xs font-medium text-amber-400">
-                      {o.sprintTitle || "Sprint"}
-                    </td>
-                    <td className="p-3 font-mono text-emerald-400">
-                      ₹{Math.round(o.amountPaid / 100).toLocaleString("en-IN")}
-                    </td>
-                    <td className="p-3">
-                      <span
-                        className={`px-2 py-0.5 text-xs font-semibold rounded ${
-                          o.isVerified
-                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                            : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                        }`}
-                      >
-                        {o.isVerified ? "Verified" : "Pending Verification"}
-                      </span>
-                    </td>
-                    <td className="p-3 text-right space-x-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleToggleVerifyOrder(o.id)}
-                        className="text-xs border-zinc-700"
-                      >
-                        {o.isVerified ? "Unverify" : "Verify Order"}
-                      </Button>
-
-                      {o.userId && (
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() =>
-                            setPackageTargetModal({
-                              open: true,
-                              sprintId: o.sprintId,
-                              userId: o.userId!,
-                              userName: o.buyerName,
-                              userEmail: o.buyerEmail,
-                              userTierName: o.tierName,
-                            })
-                          }
-                          className="text-xs"
-                        >
-                          Target Packages
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Unified Sprint Management Dashboard Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-4xl bg-zinc-900 border-zinc-800 text-white max-h-[90vh] overflow-y-auto flex flex-col">
-          <DialogHeader>
-            <div className="flex items-center justify-between pr-6 border-b border-zinc-800 pb-3">
-              <div>
-                <DialogTitle className="text-xl font-black flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-[#ff5e14]" />
-                  {editingSprint ? `Sprint Dashboard: ${editingSprint.title}` : "Create New Sprint"}
-                </DialogTitle>
-                <p className="text-xs text-zinc-400 mt-0.5">
-                  Configure details, headings, target audience, features, and linked managers.
-                </p>
-              </div>
-
-              {editingSprint && (
-                <a
-                  href={`/toolkit/sprints/${editingSprint.slug || editingSprint.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-semibold text-[#ff5e14] hover:underline flex items-center gap-1 bg-orange-500/10 px-3 py-1.5 rounded-lg border border-orange-500/20"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" /> View Public Page
-                </a>
-              )}
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-[#ff5e14]" />
             </div>
-          </DialogHeader>
-
-          {/* Tab Navigation */}
-          <div className="flex gap-2 border-b border-zinc-800 my-3 overflow-x-auto pb-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => setActiveEditTab("details")}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                activeEditTab === "details"
-                  ? "bg-[#ff5e14] text-white shadow"
-                  : "bg-zinc-800/80 hover:bg-zinc-800 text-zinc-400 hover:text-white"
-              }`}
+          ) : sprintsList.length === 0 ? (
+            <div className="border bg-white rounded-lg p-12 text-center">
+              <p className="text-gray-500 mb-4">No sprints built yet.</p>
+              <Button
+                onClick={() => setCreateDialogOpen(true)}
+                variant="outline"
+                className="border-[#ff5e14] text-[#ff5e14] hover:bg-orange-50"
+              >
+                Create your first sprint
+              </Button>
+            </div>
+          ) : (
+            <div className="border bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="overflow-x-auto w-full">
+                <table className="w-full text-left border-collapse text-sm min-w-[600px]">
+                  <thead>
+                    <tr className="bg-gray-50 border-b">
+                      <th className="p-4 font-semibold text-gray-700">Sprint Title</th>
+                      <th className="p-4 font-semibold text-gray-700">Slug (URL)</th>
+                      <th className="p-4 font-semibold text-gray-700">Base Price</th>
+                      <th className="p-4 font-semibold text-gray-700">Status</th>
+                      <th className="p-4 font-semibold text-gray-700 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {sprintsList.map((s) => (
+                      <tr key={s.id} className="hover:bg-gray-50">
+                        <td className="p-4 font-medium text-gray-900">{s.title}</td>
+                        <td className="p-4 text-gray-500">/toolkit/sprints/{s.slug}</td>
+                        <td className="p-4 font-semibold text-gray-900">₹{s.basePrice}</td>
+                        <td className="p-4">
+                          <span
+                            className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
+                              s.isActive
+                                ? "bg-green-100 text-green-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {s.isActive ? "Active" : "Draft"}
+                          </span>
+                        </td>
+                        <td className="p-4 text-right flex justify-end gap-1.5 flex-wrap">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setManagingSprint(s);
+                              setSessionManagerOpen(true);
+                            }}
+                            className="text-gray-600 hover:text-gray-900 text-xs"
+                          >
+                            <FolderCog className="w-4 h-4 mr-1" /> Sessions
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setManagingSprint(s);
+                              setUpgradePlansOpen(true);
+                            }}
+                            className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 text-xs"
+                          >
+                            <Layers className="w-4 h-4 mr-1" /> Upgrade Plans
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setManagingSprint(s);
+                              setMentorManagerOpen(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 text-xs"
+                          >
+                            <Users className="w-4 h-4 mr-1" /> Mentors
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setManagingSprint(s);
+                              setFaqManagerOpen(true);
+                            }}
+                            className="text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 text-xs"
+                          >
+                            <HelpCircle className="w-4 h-4 mr-1" /> FAQs
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => startEditSprint(s.id)}
+                            className="text-gray-600 hover:text-gray-900 text-xs"
+                          >
+                            <Edit className="w-4 h-4 mr-1" /> Edit
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteSprint(s.id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" /> Delete
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : view === "orders" ? (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Orders Log</h2>
+            <Button
+              onClick={exportOrdersCSV}
+              variant="outline"
+              className="flex gap-1.5 items-center border-gray-300 hover:bg-gray-50 text-gray-700"
             >
-              Page Details & Hero
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveEditTab("headings")}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                activeEditTab === "headings"
-                  ? "bg-[#ff5e14] text-white shadow"
-                  : "bg-zinc-800/80 hover:bg-zinc-800 text-zinc-400 hover:text-white"
-              }`}
-            >
-              Section Headings
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveEditTab("audience")}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                activeEditTab === "audience"
-                  ? "bg-[#ff5e14] text-white shadow"
-                  : "bg-zinc-800/80 hover:bg-zinc-800 text-zinc-400 hover:text-white"
-              }`}
-            >
-              Who Is This For? ({formData.whoIsThisForBullets.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveEditTab("features")}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                activeEditTab === "features"
-                  ? "bg-[#ff5e14] text-white shadow"
-                  : "bg-zinc-800/80 hover:bg-zinc-800 text-zinc-400 hover:text-white"
-              }`}
-            >
-              What You Get ({formData.features.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveEditTab("managers")}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                activeEditTab === "managers"
-                  ? "bg-[#ff5e14] text-white shadow"
-                  : "bg-zinc-800/80 hover:bg-zinc-800 text-zinc-400 hover:text-white"
-              }`}
-            >
-              Linked Managers
-            </button>
+              <Download className="w-4 h-4" /> Export CSV
+            </Button>
           </div>
 
-          {/* Tab 1: Page Details & Hero */}
-          {activeEditTab === "details" && (
-            <div className="space-y-5 py-2 flex-1">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs text-zinc-400">Sprint Title *</Label>
-                  <Input
-                    placeholder="e.g. 10-Day UI/UX Growth Sprint"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="bg-zinc-950 border-zinc-800 mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-zinc-400">URL Slug *</Label>
-                  <Input
-                    placeholder="e.g. uiux-growth-sprint"
-                    value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    className="bg-zinc-950 border-zinc-800 mt-1"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label className="text-xs text-zinc-400">Base Price (₹) *</Label>
-                  <Input
-                    type="number"
-                    value={formData.basePrice}
-                    onChange={(e) => setFormData({ ...formData, basePrice: Number(e.target.value) })}
-                    className="bg-zinc-950 border-zinc-800 mt-1 font-mono"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-zinc-400">Original Price (Strikethrough ₹)</Label>
-                  <Input
-                    type="number"
-                    value={formData.originalPrice}
-                    onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value })}
-                    placeholder="Optional"
-                    className="bg-zinc-950 border-zinc-800 mt-1 font-mono"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-zinc-400">Start Date / Timeline</Label>
-                  <Input
-                    placeholder="e.g. Starts 20th Oct • 2 Weeks"
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="bg-zinc-950 border-zinc-800 mt-1"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-xs text-zinc-400">Sprint Subtitle / Description</Label>
-                <Textarea
-                  rows={2}
-                  placeholder="Brief overview of sprint goals and outcomes..."
-                  value={formData.subtitle}
-                  onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                  className="bg-zinc-950 border-zinc-800 mt-1"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label className="text-xs text-zinc-400">Badge 1</Label>
-                  <Input
-                    placeholder="e.g. Live Cohort"
-                    value={formData.badge1}
-                    onChange={(e) => setFormData({ ...formData, badge1: e.target.value })}
-                    className="bg-zinc-950 border-zinc-800 mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-zinc-400">Badge 2</Label>
-                  <Input
-                    placeholder="e.g. Limited Seats"
-                    value={formData.badge2}
-                    onChange={(e) => setFormData({ ...formData, badge2: e.target.value })}
-                    className="bg-zinc-950 border-zinc-800 mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-zinc-400">Linked Content Toolkit</Label>
-                  <select
-                    value={formData.toolkitId}
-                    onChange={(e) => setFormData({ ...formData, toolkitId: e.target.value })}
-                    className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-200 mt-1"
-                  >
-                    <option value="">-- None (Standalone sprint) --</option>
-                    {toolkits.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.title} ({t.category || "General"})
-                      </option>
+          {ordersList.length === 0 ? (
+            <div className="border bg-white rounded-lg p-12 text-center">
+              <p className="text-gray-500">No applications or purchases recorded yet.</p>
+            </div>
+          ) : (
+            <div className="border bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="overflow-x-auto w-full">
+                <table className="w-full text-left border-collapse text-xs md:text-sm min-w-[800px]">
+                  <thead>
+                    <tr className="bg-gray-50 border-b">
+                      <th className="p-4 font-semibold text-gray-700">Buyer</th>
+                      <th className="p-4 font-semibold text-gray-700">Buddy (Referral)</th>
+                      <th className="p-4 font-semibold text-gray-700">Sprint &amp; Tier / Upgrade Plan</th>
+                      <th className="p-4 font-semibold text-gray-700">Paid</th>
+                      <th className="p-4 font-semibold text-gray-700">Coupon</th>
+                      <th className="p-4 font-semibold text-gray-700">Razorpay Info</th>
+                      <th className="p-4 font-semibold text-gray-700">Status</th>
+                      <th className="p-4 font-semibold text-gray-700">Verified</th>
+                      <th className="p-4 font-semibold text-gray-700">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {ordersList.map((order) => (
+                      <tr key={order.id} className="hover:bg-gray-50">
+                        <td className="p-4">
+                          <div className="font-semibold text-gray-900">{order.buyerName}</div>
+                          <div className="text-xs text-gray-500">{order.buyerEmail}</div>
+                          {order.buyerPhone && (
+                            <div className="text-xs text-gray-400">{order.buyerPhone}</div>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          {order.buddyEmail ? (
+                            <div>
+                              <span className="inline-flex items-center gap-1 mb-1 px-2 py-0.5 rounded-full border border-orange-100 bg-orange-50 text-[10px] font-bold text-[#ff5e14]">
+                                <Gift className="w-3 h-3" /> Buddy Added
+                              </span>
+                              <div className="select-all text-xs font-medium text-gray-600">
+                                {order.buddyEmail}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-xs font-normal italic text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          <div className="font-medium text-gray-950">{order.sprintTitle || "Unknown"}</div>
+                          {order.upgradePlanTitle ? (
+                            <div className="mt-1">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-amber-200 bg-amber-50 text-[11px] font-bold text-amber-800">
+                                Upgrade: {order.upgradePlanTitle}
+                              </span>
+                              {order.upgradePlanSectionLabel && (
+                                <div className="mt-0.5 text-[10px] text-gray-500">
+                                  {order.upgradePlanSectionLabel}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-xs text-[#ff5e14]">{order.tierName || "Base price"}</div>
+                          )}
+                        </td>
+                        <td className="p-4 font-semibold text-gray-900">
+                          ₹{(order.amountPaid / 100).toFixed(2)}
+                        </td>
+                        <td className="p-4 text-gray-600">
+                          {order.couponId ? (
+                            <div>
+                              <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-medium">
+                                Yes
+                              </span>
+                              {order.couponCode && (
+                                <span className="ml-2 text-xs text-gray-500">
+                                  ({order.couponCode})
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="inline-block bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded">
+                              No
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4 text-xs text-gray-500">
+                          <div>Order: {order.razorpayOrderId}</div>
+                          {order.razorpayPaymentId && (
+                            <div className="text-emerald-700 font-medium">
+                              Pay ID: {order.razorpayPaymentId}
+                            </div>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          <span
+                            className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
+                              order.status === "paid"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-amber-100 text-amber-800"
+                            }`}
+                          >
+                            {order.status}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <Button
+                            onClick={() => handleVerifyOrder(order.id)}
+                            variant={order.isVerified ? "outline" : "default"}
+                            size="sm"
+                            className={`text-xs ${
+                              order.isVerified
+                                ? "border-red-200 text-red-600 hover:bg-red-50"
+                                : "bg-green-600 hover:bg-green-700 text-white"
+                            }`}
+                          >
+                            {order.isVerified ? "Unverify" : "Verify"}
+                          </Button>
+                        </td>
+                        <td className="p-4 text-xs text-gray-500 whitespace-nowrap">
+                          {new Date(order.createdAt).toLocaleDateString()}{" "}
+                          {new Date(order.createdAt).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </td>
+                      </tr>
                     ))}
-                  </select>
-                </div>
+                  </tbody>
+                </table>
               </div>
+            </div>
+          )}
+        </div>
+      ) : view === "registrations" ? (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Registration Details</h2>
+            <Button
+              onClick={exportRegistrationsCSV}
+              variant="outline"
+              className="flex gap-1.5 items-center border-gray-300 hover:bg-gray-50 text-gray-700"
+            >
+              <Download className="w-4 h-4" /> Export CSV
+            </Button>
+          </div>
 
-              {/* Top Banner Video Configuration with Live Preview */}
-              <div className="space-y-3 p-4 rounded-xl border border-zinc-800 bg-zinc-950/70">
-                <div className="flex items-center justify-between">
-                  <Label className="flex items-center gap-1.5 font-bold text-zinc-200 text-xs uppercase tracking-wider">
-                    <Video className="w-4 h-4 text-[#ff5e14]" />
-                    Top Banner Video (Priority over Image)
-                  </Label>
-                  {formData.videoUrl && (
+          {ordersList.length === 0 ? (
+            <div className="border bg-white rounded-lg p-12 text-center">
+              <p className="text-gray-500">No registration details available yet.</p>
+            </div>
+          ) : (
+            <div className="border bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="overflow-x-auto w-full">
+                <table className="w-full text-left border-collapse text-xs md:text-sm min-w-[1000px]">
+                  <thead>
+                    <tr className="bg-gray-50 border-b">
+                      <th className="p-4 font-semibold text-gray-700">Name</th>
+                      <th className="p-4 font-semibold text-gray-700">College</th>
+                      <th className="p-4 font-semibold text-gray-700">Course</th>
+                      <th className="p-4 font-semibold text-gray-700">Year</th>
+                      <th className="p-4 font-semibold text-gray-700">Expectations</th>
+                      <th className="p-4 font-semibold text-gray-700">Opted Plan / Upgrade</th>
+                      <th className="p-4 font-semibold text-gray-700">Selected Sessions</th>
+                      <th className="p-4 font-semibold text-gray-700">Individual Sessions</th>
+                      <th className="p-4 font-semibold text-gray-700">Sprint</th>
+                      <th className="p-4 font-semibold text-gray-700">Email</th>
+                      <th className="p-4 font-semibold text-gray-700">Date</th>
+                      <th className="p-4 font-semibold text-gray-700">Manage Packages</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {ordersList
+                      .filter((order) => order.registrationName)
+                      .map((order) => (
+                        <tr key={order.id} className="hover:bg-gray-50">
+                          <td className="p-4 font-medium text-gray-900">
+                            {order.registrationName || order.buyerName}
+                          </td>
+                          <td className="p-4 text-gray-600">{order.registrationCollege || "-"}</td>
+                          <td className="p-4 text-gray-600">{order.registrationCourse || "-"}</td>
+                          <td className="p-4 text-gray-600">{order.registrationYear || "-"}</td>
+                          <td className="p-4 text-gray-600">
+                            {order.registrationExpectations || "-"}
+                          </td>
+                          <td className="p-4 text-gray-900">
+                            {order.upgradePlanTitle ? (
+                              <div>
+                                <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 text-xs font-bold rounded">
+                                  Upgrade: {order.upgradePlanTitle}
+                                </span>
+                                <div className="text-[11px] font-semibold text-emerald-700 mt-0.5">
+                                  Paid: ₹{(order.amountPaid / 100).toFixed(2)}
+                                </div>
+                              </div>
+                            ) : (
+                              <div>
+                                <span className="inline-block bg-orange-50 text-[#ff5e14] border border-orange-200 text-xs px-2 py-0.5 rounded font-semibold">
+                                  {order.tierName || "Base Plan"}
+                                </span>
+                                <div className="text-[11px] text-gray-500 mt-0.5">
+                                  Paid: ₹{(order.amountPaid / 100).toFixed(2)}
+                                </div>
+                              </div>
+                            )}
+                          </td>
+                          <td className="p-4 text-gray-600">
+                            {order.selectedSessionIds && order.selectedSessionIds.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {order.selectedSessionIds.map((sessionId) => {
+                                  const session = order.sprintId
+                                    ? sessionsData[order.sprintId]?.find(
+                                        (s: any) => s.id === sessionId
+                                      )
+                                    : null;
+                                  return session ? (
+                                    <span
+                                      key={sessionId}
+                                      className="inline-block bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded"
+                                    >
+                                      {session.title}
+                                    </span>
+                                  ) : null;
+                                })}
+                              </div>
+                            ) : (
+                              "-"
+                            )}
+                          </td>
+                          <td className="p-4 text-gray-600">
+                            {order.selectedAddOnIds && order.selectedAddOnIds.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {order.selectedAddOnIds.map((sessionId) => {
+                                  const session = order.sprintId
+                                    ? sessionsData[order.sprintId]?.find(
+                                        (s: any) => s.id === sessionId
+                                      )
+                                    : null;
+                                  return session ? (
+                                    <span
+                                      key={sessionId}
+                                      className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded"
+                                    >
+                                      {session.title}
+                                    </span>
+                                  ) : null;
+                                })}
+                              </div>
+                            ) : (
+                              "-"
+                            )}
+                          </td>
+                          <td className="p-4 text-gray-900">{order.sprintTitle || "Unknown"}</td>
+                          <td className="p-4 text-gray-500 text-xs">{order.buyerEmail}</td>
+                          <td className="p-4 text-xs text-gray-500 whitespace-nowrap">
+                            {order.registrationCompletedAt
+                              ? new Date(order.registrationCompletedAt).toLocaleDateString()
+                              : new Date(order.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="p-4 whitespace-nowrap">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={!order.sprintId}
+                              onClick={() =>
+                                setManagePackagesModalState({
+                                  open: true,
+                                  sprintId: order.sprintId || "",
+                                  userId: order.userId || "",
+                                  userName: order.registrationName || order.buyerName,
+                                  userEmail: order.buyerEmail,
+                                  userTierName: order.tierName || undefined,
+                                  isBundleUser: Boolean(
+                                    order.tierName ||
+                                      !order.selectedAddOnIds ||
+                                      order.selectedAddOnIds.length === 0
+                                  ),
+                                })
+                              }
+                              className="text-xs font-semibold border-gray-300 hover:bg-gray-50 text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              Manage Packages
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    {ordersList.filter((order) => order.registrationName).length === 0 && (
+                      <tr>
+                        <td colSpan={12} className="p-12 text-center text-gray-500">
+                          No registration forms completed yet.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {/* Sprint Creation Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>New Sprint Program</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreateSprint} className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="title">Program Title</Label>
+              <Input
+                id="title"
+                placeholder="e.g. 10-Day UI/UX Growth Sprint"
+                value={newSprintTitle}
+                onChange={(e) => {
+                  setNewSprintTitle(e.target.value);
+                  setNewSprintSlug(
+                    e.target.value
+                      .toLowerCase()
+                      .replace(/[^a-z0-9]+/g, "-")
+                      .replace(/(^-|-$)/g, "")
+                  );
+                }}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="slug">Custom URL Slug</Label>
+              <Input
+                id="slug"
+                placeholder="e.g. uiux-growth-sprint"
+                value={newSprintSlug}
+                onChange={(e) => setNewSprintSlug(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="price">Base Price (INR)</Label>
+              <Input
+                id="price"
+                type="number"
+                value={newSprintPrice}
+                onChange={(e) => setNewSprintPrice(Number(e.target.value))}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setCreateDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" className="bg-[#ff5e14] hover:bg-[#e04f0f] text-white">
+                Create
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sprint Editing Dialog */}
+      {editingSprint && (
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="max-w-[95vw] md:max-w-4xl max-h-[90vh] overflow-y-auto p-4 md:p-6">
+            <DialogHeader className="flex flex-row justify-between items-center border-b pb-4 mb-4">
+              <div>
+                <DialogTitle className="text-xl">Configure Program: {editingSprint.title}</DialogTitle>
+                <p className="text-sm text-gray-500">Edit page sections, pricing tiers, and mentors</p>
+              </div>
+            </DialogHeader>
+
+            {/* Modal Tabs */}
+            <div className="flex gap-2 border-b mb-6 overflow-x-auto pb-2">
+              <button
+                onClick={() => setActiveEditTab("details")}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  activeEditTab === "details"
+                    ? "bg-[#ff5e14] text-white"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                }`}
+              >
+                Page Details &amp; Hero
+              </button>
+              <button
+                onClick={() => setActiveEditTab("mentors")}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  activeEditTab === "mentors"
+                    ? "bg-[#ff5e14] text-white"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                }`}
+              >
+                Mentors ({editingSprint.mentors?.length || 0})
+              </button>
+              <button
+                onClick={() => setActiveEditTab("features")}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  activeEditTab === "features"
+                    ? "bg-[#ff5e14] text-white"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                }`}
+              >
+                What You Get ({editingSprint.features?.length || 0})
+              </button>
+              <button
+                onClick={() => setActiveEditTab("pricing")}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  activeEditTab === "pricing"
+                    ? "bg-[#ff5e14] text-white"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                }`}
+              >
+                Pricing, Tiers &amp; Add-ons
+              </button>
+              <button
+                onClick={() => setActiveEditTab("curriculum")}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  activeEditTab === "curriculum"
+                    ? "bg-[#ff5e14] text-white"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                }`}
+              >
+                Curriculum ({editingSprint.sessions?.length || 0})
+              </button>
+              <button
+                onClick={() => setActiveEditTab("faqs")}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  activeEditTab === "faqs"
+                    ? "bg-[#ff5e14] text-white"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                }`}
+              >
+                FAQs ({editingSprint.faqs?.length || 0})
+              </button>
+            </div>
+
+            {/* details Tab */}
+            {activeEditTab === "details" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label>Title</Label>
+                    <Input
+                      value={editingSprint.title}
+                      onChange={(e) => setEditingSprint({ ...editingSprint, title: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Slug</Label>
+                    <Input
+                      value={editingSprint.slug}
+                      onChange={(e) => setEditingSprint({ ...editingSprint, slug: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label>Description / Subtitle</Label>
+                    <Textarea
+                      rows={3}
+                      value={editingSprint.subtitle || ""}
+                      onChange={(e) =>
+                        setEditingSprint({ ...editingSprint, subtitle: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Linked Content Toolkit</Label>
+                    <select
+                      value={editingSprint.toolkitId || ""}
+                      onChange={(e) =>
+                        setEditingSprint({ ...editingSprint, toolkitId: e.target.value || null })
+                      }
+                      className="w-full px-3 py-2 border rounded-lg text-sm bg-white"
+                    >
+                      <option value="">-- None (No toolkit content linked) --</option>
+                      {toolkits.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.title} ({t.category || "No Category"})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Sprint Start Date / Dates</Label>
+                    <Input
+                      value={editingSprint.startDate || ""}
+                      onChange={(e) =>
+                        setEditingSprint({ ...editingSprint, startDate: e.target.value })
+                      }
+                      placeholder="e.g. Starts 20th Oct • 2 Weeks"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold">Card Highlights / Key Features</Label>
+                    <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
+                      {(editingSprint.highlights || []).map((highlight, idx) => (
+                        <div key={idx} className="flex gap-2 items-center">
+                          <Input
+                            value={highlight}
+                            onChange={(e) => {
+                              const newHighlights = [...(editingSprint.highlights || [])];
+                              newHighlights[idx] = e.target.value;
+                              setEditingSprint({ ...editingSprint, highlights: newHighlights });
+                            }}
+                            placeholder={`Feature #${idx + 1}`}
+                            className="flex-1 text-sm h-8"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newHighlights = (editingSprint.highlights || []).filter(
+                                (_, i) => i !== idx
+                              );
+                              setEditingSprint({ ...editingSprint, highlights: newHighlights });
+                            }}
+                            className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-md transition shrink-0"
+                            title="Remove"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                     <button
                       type="button"
-                      onClick={() => setFormData({ ...formData, videoUrl: "" })}
-                      className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1"
+                      onClick={() => {
+                        const newHighlights = [...(editingSprint.highlights || []), ""];
+                        setEditingSprint({ ...editingSprint, highlights: newHighlights });
+                      }}
+                      className="text-xs font-bold text-[#ff5e14] hover:underline flex items-center gap-1.5 pt-1"
                     >
-                      <X className="w-3 h-3" /> Clear Video
+                      + Add Key Feature
                     </button>
-                  )}
+                  </div>
+
+                  <div className="space-y-2 border-t pt-3">
+                    <Label className="text-xs font-semibold">Who Is This For? - Section Heading</Label>
+                    <Input
+                      value={editingSprint.whoIsThisForHeading || ""}
+                      onChange={(e) =>
+                        setEditingSprint({
+                          ...editingSprint,
+                          whoIsThisForHeading: e.target.value,
+                        })
+                      }
+                      placeholder="e.g. Who Is This For?"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold">Who Is This For? - Bullet Points</Label>
+                    <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
+                      {(editingSprint.whoIsThisForBullets || []).map((bullet, idx) => (
+                        <div key={idx} className="flex gap-2 items-center">
+                          <Input
+                            value={bullet}
+                            onChange={(e) => {
+                              const newBullets = [...(editingSprint.whoIsThisForBullets || [])];
+                              newBullets[idx] = e.target.value;
+                              setEditingSprint({
+                                ...editingSprint,
+                                whoIsThisForBullets: newBullets,
+                              });
+                            }}
+                            placeholder={`Point #${idx + 1}`}
+                            className="flex-1 text-sm h-8"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newBullets = (
+                                editingSprint.whoIsThisForBullets || []
+                              ).filter((_, i) => i !== idx);
+                              setEditingSprint({
+                                ...editingSprint,
+                                whoIsThisForBullets: newBullets,
+                              });
+                            }}
+                            className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-md transition shrink-0"
+                            title="Remove"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newBullets = [...(editingSprint.whoIsThisForBullets || []), ""];
+                        setEditingSprint({
+                          ...editingSprint,
+                          whoIsThisForBullets: newBullets,
+                        });
+                      }}
+                      className="text-xs font-bold text-[#ff5e14] hover:underline flex items-center gap-1.5 pt-1"
+                    >
+                      + Add Target Audience Point
+                    </button>
+                  </div>
                 </div>
 
-                <Input
-                  placeholder="Paste YouTube link, Instagram Reel URL, or Bunny CDN stream URL..."
-                  value={formData.videoUrl}
-                  onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                  className="bg-zinc-900 border-zinc-800 text-sm"
-                />
-
-                <p className="text-[11px] text-zinc-400">
-                  Supported: YouTube videos/shorts, Instagram Reels/posts, Bunny CDN streams (<code className="text-zinc-300">iframe.mediadelivery.net/...</code>), or direct video files (.mp4).
-                </p>
-
-                {/* Live Preview */}
-                {(() => {
-                  const embed = formData.videoUrl ? getVideoEmbedInfo(formData.videoUrl) : null;
-                  if (!formData.videoUrl.trim()) return null;
-
-                  if (!embed) {
-                    return (
-                      <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-300 text-xs flex items-center gap-2">
-                        <HelpCircle className="w-4 h-4 shrink-0 text-amber-400" />
-                        <span>URL entered is not recognized as a supported YouTube, Instagram, or Bunny CDN link.</span>
-                      </div>
-                    );
-                  }
-
-                  const providerLabel = {
-                    youtube: "YouTube Video",
-                    instagram: "Instagram Reel",
-                    bunny: "Bunny CDN Stream",
-                    direct: "Direct Video",
-                  }[embed.provider];
-
-                  return (
-                    <div className="space-y-2 pt-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                          <Play className="w-3 h-3" /> Detected: {providerLabel}
-                        </span>
-                      </div>
-
-                      <div className={`relative w-full ${embed.provider === "instagram" ? "h-80 sm:h-96" : "aspect-video"} rounded-lg overflow-hidden border border-zinc-800 bg-black shadow-lg`}>
-                        {embed.provider === "youtube" || embed.provider === "bunny" ? (
-                          <iframe
-                            src={embed.embedUrl}
-                            title="Banner Video Preview"
-                            className="w-full h-full border-0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-                            allowFullScreen
-                          />
-                        ) : embed.provider === "instagram" ? (
-                          <div className="w-full h-full flex items-center justify-center p-2 bg-zinc-950">
-                            <iframe
-                              src={embed.embedUrl}
-                              title="Instagram Preview"
-                              className="w-full max-w-xs h-full rounded-lg border-0 bg-white"
-                              allow="encrypted-media; fullscreen"
-                              allowFullScreen
-                              scrolling="no"
-                            />
+                <div className="space-y-4 border-t pt-4 md:border-t-0 md:pt-0 md:border-l md:pl-4">
+                  {/* Top Banner Video Preview */}
+                  <div className="border p-3 rounded-xl bg-gray-50/50 space-y-2">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
+                        <Video className="w-4 h-4 text-[#ff5e14]" /> Top Banner Video URL (Optional)
+                      </Label>
+                      {editingSprint.videoUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingSprint({ ...editingSprint, videoUrl: "" })}
+                          className="text-[10px] text-red-500 hover:underline"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <Input
+                      placeholder="YouTube, Instagram Reel, or Bunny CDN stream URL"
+                      value={editingSprint.videoUrl || ""}
+                      onChange={(e) =>
+                        setEditingSprint({ ...editingSprint, videoUrl: e.target.value })
+                      }
+                      className="text-xs"
+                    />
+                    {(() => {
+                      if (!editingSprint.videoUrl?.trim()) return null;
+                      const embed = getVideoEmbedInfo(editingSprint.videoUrl);
+                      if (!embed) {
+                        return (
+                          <p className="text-[11px] text-amber-600">
+                            URL entered is not recognized as a supported YouTube, Instagram, or Bunny CDN video.
+                          </p>
+                        );
+                      }
+                      return (
+                        <div className="pt-1">
+                          <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 inline-flex items-center gap-1 mb-1">
+                            <Play className="w-3 h-3" /> Detected: {embed.provider}
+                          </span>
+                          <div className="relative w-full aspect-video rounded-lg overflow-hidden border bg-black">
+                            {embed.provider === "youtube" || embed.provider === "bunny" ? (
+                              <iframe
+                                src={embed.embedUrl}
+                                title="Preview"
+                                className="w-full h-full border-0"
+                                allowFullScreen
+                              />
+                            ) : (
+                              <video
+                                src={embed.embedUrl}
+                                controls
+                                className="w-full h-full object-contain"
+                              />
+                            )}
                           </div>
-                        ) : (
-                          <video
-                            src={embed.embedUrl}
-                            controls
-                            playsInline
-                            preload="metadata"
-                            className="w-full h-full object-contain"
-                          />
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  <div className="space-y-4">
+                    <Label className="text-sm font-bold text-gray-800 block">
+                      Hero Banner Images (Max 3 for Carousel)
+                    </Label>
+
+                    {/* Banner 1 */}
+                    <div className="border p-3 rounded-xl bg-gray-50/50 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-semibold text-gray-700">
+                          1. Hero Banner Image (Primary)
+                        </span>
+                        {editingSprint.coverImageUrl && (
+                          <span className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded border border-green-150">
+                            Active
+                          </span>
                         )}
+                      </div>
+                      {editingSprint.coverImageUrl && (
+                        <img
+                          src={editingSprint.coverImageUrl}
+                          alt="Primary banner preview"
+                          className="w-full h-20 object-cover rounded-lg border"
+                        />
+                      )}
+                      <div className="space-y-1">
+                        <Label className="text-[10px] text-gray-500 font-bold block uppercase tracking-wider">
+                          Upload Image File
+                        </Label>
+                        <div className="flex gap-2 items-center">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleImageUpload(file, (url) => {
+                                  const urls = [...(editingSprint.coverImageUrls || [])];
+                                  urls[0] = url;
+                                  setEditingSprint({
+                                    ...editingSprint,
+                                    coverImageUrl: url,
+                                    coverImageUrls: urls,
+                                  });
+                                });
+                              }
+                            }}
+                          />
+                          {isUploading && <Loader2 className="w-5 h-5 animate-spin shrink-0" />}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] text-gray-500 font-bold block uppercase tracking-wider">
+                          Or Image URL
+                        </Label>
+                        <Input
+                          value={editingSprint.coverImageUrl || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const urls = [...(editingSprint.coverImageUrls || [])];
+                            urls[0] = val;
+                            setEditingSprint({
+                              ...editingSprint,
+                              coverImageUrl: val,
+                              coverImageUrls: urls,
+                            });
+                          }}
+                          placeholder="https://example.com/banner-primary.jpg"
+                        />
                       </div>
                     </div>
-                  );
-                })()}
-              </div>
 
-              {/* Hero Banner Images (Fallback Carousel) */}
-              <div className="space-y-3 p-4 rounded-xl border border-zinc-800 bg-zinc-950/70">
-                <Label className="flex items-center gap-1.5 font-bold text-zinc-200 text-xs uppercase tracking-wider">
-                  <ImageIcon className="w-4 h-4 text-blue-400" />
-                  Hero Banner Images (Fallback when no video is set)
-                </Label>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {[0, 1, 2].map((slotIdx) => {
-                    const currentImg = formData.coverImageUrls[slotIdx] || (slotIdx === 0 ? formData.coverImageUrl : "");
-                    return (
-                      <div key={slotIdx} className="p-3 border border-zinc-800 rounded-xl bg-zinc-900/60 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-zinc-300">
-                            {slotIdx === 0 ? "1. Primary Cover" : `Slot ${slotIdx + 1} (Carousel)`}
+                    {/* Banner 2 */}
+                    <div className="border p-3 rounded-xl bg-gray-50/50 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-semibold text-gray-700">
+                          2. Hero Banner Image 2 (Optional)
+                        </span>
+                        {editingSprint.coverImageUrls?.[1] && (
+                          <span className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded border border-green-150">
+                            Active
                           </span>
-                          {currentImg && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const newUrls = [...formData.coverImageUrls];
-                                newUrls.splice(slotIdx, 1);
-                                setFormData({
-                                  ...formData,
-                                  coverImageUrl: slotIdx === 0 ? newUrls[0] || "" : formData.coverImageUrl,
-                                  coverImageUrls: newUrls,
-                                });
-                              }}
-                              className="text-xs text-red-400 hover:text-red-300"
-                            >
-                              Remove
-                            </button>
-                          )}
-                        </div>
-
-                        {currentImg ? (
-                          <div className="relative w-full h-24 rounded-lg overflow-hidden border border-zinc-800 bg-black">
-                            <img src={currentImg} alt={`Banner ${slotIdx + 1}`} className="w-full h-full object-cover" />
-                          </div>
-                        ) : (
-                          <label className="border border-dashed border-zinc-800 hover:border-zinc-600 rounded-lg h-24 flex flex-col items-center justify-center cursor-pointer bg-zinc-950/40 transition">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  handleImageUpload(file, (url) => {
-                                    const newUrls = [...formData.coverImageUrls];
-                                    newUrls[slotIdx] = url;
-                                    setFormData({
-                                      ...formData,
-                                      coverImageUrl: slotIdx === 0 ? url : formData.coverImageUrl,
-                                      coverImageUrls: newUrls,
-                                    });
-                                  });
-                                }
-                              }}
-                            />
-                            <UploadCloud className="w-5 h-5 text-zinc-500 mb-1" />
-                            <span className="text-[11px] text-zinc-400 font-medium">Upload Image</span>
-                          </label>
                         )}
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Switches & Settings */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 border border-zinc-800 rounded-xl bg-zinc-950/60">
-                <div className="space-y-1">
-                  <Label className="text-xs text-zinc-300">Active Status</Label>
-                  <div className="pt-1">
-                    <Switch
-                      checked={formData.isActive}
-                      onCheckedChange={(val) => setFormData({ ...formData, isActive: val })}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-zinc-300">Best Seller Badge</Label>
-                  <div className="pt-1">
-                    <Switch
-                      checked={formData.isBestSeller}
-                      onCheckedChange={(val) => setFormData({ ...formData, isBestSeller: val })}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-zinc-300">Filling Fast Badge</Label>
-                  <div className="pt-1">
-                    <Switch
-                      checked={formData.isFillingFast}
-                      onCheckedChange={(val) => setFormData({ ...formData, isFillingFast: val })}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-zinc-300">Early Bird Offer</Label>
-                  <div className="pt-1">
-                    <Switch
-                      checked={formData.hasEarlyBird}
-                      onCheckedChange={(val) => setFormData({ ...formData, hasEarlyBird: val })}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Tab 2: Section Headings */}
-          {activeEditTab === "headings" && (
-            <div className="space-y-4 py-2 flex-1">
-              <div className="bg-zinc-950/60 p-4 rounded-xl border border-zinc-800">
-                <p className="text-xs text-zinc-400 mb-4">
-                  Customize the heading titles for each section on the Sprint Detail page.
-                </p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-xs text-zinc-300">Mentors Section Heading</Label>
-                    <Input
-                      placeholder="e.g. Meet Your Mentors"
-                      value={formData.mentorsHeading}
-                      onChange={(e) => setFormData({ ...formData, mentorsHeading: e.target.value })}
-                      className="bg-zinc-900 border-zinc-800 text-sm mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-xs text-zinc-300">Sessions & Curriculum Heading</Label>
-                    <Input
-                      placeholder="e.g. Sprint Sessions & Curriculum"
-                      value={formData.sessionsHeading}
-                      onChange={(e) => setFormData({ ...formData, sessionsHeading: e.target.value })}
-                      className="bg-zinc-900 border-zinc-800 text-sm mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-xs text-zinc-300">What You Get / Features Heading</Label>
-                    <Input
-                      placeholder="e.g. What You Get"
-                      value={formData.featuresHeading}
-                      onChange={(e) => setFormData({ ...formData, featuresHeading: e.target.value })}
-                      className="bg-zinc-900 border-zinc-800 text-sm mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-xs text-zinc-300">Who Is This For? Heading</Label>
-                    <Input
-                      placeholder="e.g. Who Is This For?"
-                      value={formData.whoIsThisForHeading}
-                      onChange={(e) => setFormData({ ...formData, whoIsThisForHeading: e.target.value })}
-                      className="bg-zinc-900 border-zinc-800 text-sm mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-xs text-zinc-300">Testimonials / Community Buzz Heading</Label>
-                    <Input
-                      placeholder="e.g. What Members Say About Our Ecosystem"
-                      value={formData.testimonialsHeading}
-                      onChange={(e) => setFormData({ ...formData, testimonialsHeading: e.target.value })}
-                      className="bg-zinc-900 border-zinc-800 text-sm mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-xs text-zinc-300">FAQs Section Heading</Label>
-                    <Input
-                      placeholder="e.g. Frequently Asked Questions"
-                      value={formData.faqsHeading}
-                      onChange={(e) => setFormData({ ...formData, faqsHeading: e.target.value })}
-                      className="bg-zinc-900 border-zinc-800 text-sm mt-1"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <Label className="text-xs text-zinc-300">Investment Summary Label</Label>
-                    <Input
-                      placeholder="e.g. Total Investment"
-                      value={formData.investmentLabel}
-                      onChange={(e) => setFormData({ ...formData, investmentLabel: e.target.value })}
-                      className="bg-zinc-900 border-zinc-800 text-sm mt-1 max-w-md"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Tab 3: Who Is This For? & Highlights */}
-          {activeEditTab === "audience" && (
-            <div className="space-y-5 py-2 flex-1">
-              <div className="bg-zinc-950/60 p-4 rounded-xl border border-zinc-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-sm font-bold text-white">Who Is This For? - Target Audience Points</h4>
-                    <p className="text-xs text-zinc-400">
-                      Renders as numbered circular pills (1, 2, 3...) on the Sprint Detail page.
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => {
-                      setFormData({
-                        ...formData,
-                        whoIsThisForBullets: [...formData.whoIsThisForBullets, ""],
-                      });
-                    }}
-                    className="bg-[#ff5e14] hover:bg-[#e04f0b] text-xs gap-1"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Add Point
-                  </Button>
-                </div>
-
-                {formData.whoIsThisForBullets.length === 0 ? (
-                  <p className="text-xs text-zinc-500 py-4 text-center border border-dashed border-zinc-800 rounded-lg">
-                    No target audience points added yet. Click &quot;Add Point&quot; above.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {formData.whoIsThisForBullets.map((bullet, idx) => (
-                      <div key={idx} className="flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-orange-500/20 text-[#ff5e14] font-bold text-xs flex items-center justify-center shrink-0 border border-orange-500/30">
-                          {idx + 1}
-                        </span>
-                        <Input
-                          value={bullet}
-                          onChange={(e) => {
-                            const newBullets = [...formData.whoIsThisForBullets];
-                            newBullets[idx] = e.target.value;
-                            setFormData({ ...formData, whoIsThisForBullets: newBullets });
-                          }}
-                          placeholder={`Point #${idx + 1}: e.g. Designers wanting to transition to Product Management`}
-                          className="bg-zinc-900 border-zinc-800 text-sm flex-1"
+                      {editingSprint.coverImageUrls?.[1] && (
+                        <img
+                          src={editingSprint.coverImageUrls[1]}
+                          alt="Banner 2 preview"
+                          className="w-full h-20 object-cover rounded-lg border"
                         />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newBullets = formData.whoIsThisForBullets.filter((_, i) => i !== idx);
-                            setFormData({ ...formData, whoIsThisForBullets: newBullets });
-                          }}
-                          className="p-2 text-zinc-400 hover:text-red-400"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Card Highlights */}
-              <div className="bg-zinc-950/60 p-4 rounded-xl border border-zinc-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-sm font-bold text-white">Catalog Card Highlights</h4>
-                    <p className="text-xs text-zinc-400">
-                      Short bullet points shown on the sprint card in /toolkit.
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setFormData({
-                        ...formData,
-                        highlights: [...formData.highlights, ""],
-                      });
-                    }}
-                    className="border-zinc-700 text-zinc-300 text-xs gap-1"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Add Highlight
-                  </Button>
-                </div>
-
-                {formData.highlights.length === 0 ? (
-                  <p className="text-xs text-zinc-500 py-3 text-center border border-dashed border-zinc-800 rounded-lg">
-                    No highlights added yet.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {formData.highlights.map((h, idx) => (
-                      <div key={idx} className="flex items-center gap-2">
-                        <Input
-                          value={h}
-                          onChange={(e) => {
-                            const newHighlights = [...formData.highlights];
-                            newHighlights[idx] = e.target.value;
-                            setFormData({ ...formData, highlights: newHighlights });
-                          }}
-                          placeholder={`Highlight #${idx + 1}: e.g. 5 Hands-on Projects`}
-                          className="bg-zinc-900 border-zinc-800 text-sm flex-1"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newHighlights = formData.highlights.filter((_, i) => i !== idx);
-                            setFormData({ ...formData, highlights: newHighlights });
-                          }}
-                          className="p-2 text-zinc-400 hover:text-red-400"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Tab 4: What You Get (Features) */}
-          {activeEditTab === "features" && (
-            <div className="space-y-4 py-2 flex-1">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-sm font-bold text-white">Features List</h4>
-                  <p className="text-xs text-zinc-400">
-                    Displays in the &quot;What You Get&quot; section on the detail page.
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => {
-                    setFormData({
-                      ...formData,
-                      features: [
-                        ...formData.features,
-                        { icon: "Check", title: "", description: "" },
-                      ],
-                    });
-                  }}
-                  className="bg-[#ff5e14] hover:bg-[#e04f0b] text-xs gap-1"
-                >
-                  <Plus className="w-3.5 h-3.5" /> Add Feature Card
-                </Button>
-              </div>
-
-              {formData.features.length === 0 ? (
-                <div className="py-12 text-center text-zinc-500 border border-dashed border-zinc-800 rounded-xl space-y-2">
-                  <CheckCircle className="w-8 h-8 text-zinc-600 mx-auto" />
-                  <p className="text-sm font-medium">No feature cards added yet</p>
-                  <p className="text-xs text-zinc-500">
-                    Click &quot;Add Feature Card&quot; to describe program deliverables.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {formData.features.map((feat, idx) => (
-                    <div
-                      key={idx}
-                      className="p-4 bg-zinc-950 border border-zinc-800 rounded-xl space-y-3"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-[#ff5e14] uppercase tracking-wider">
-                          Feature #{idx + 1}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newFeatures = formData.features.filter((_, i) => i !== idx);
-                            setFormData({ ...formData, features: newFeatures });
-                          }}
-                          className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Remove
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                          <Label className="text-xs text-zinc-400">Feature Title *</Label>
+                      )}
+                      <div className="space-y-1">
+                        <Label className="text-[10px] text-gray-500 font-bold block uppercase tracking-wider">
+                          Upload Image File
+                        </Label>
+                        <div className="flex gap-2 items-center">
                           <Input
-                            placeholder="e.g. 1-on-1 Portfolio Reviews"
-                            value={feat.title}
+                            type="file"
+                            accept="image/*"
                             onChange={(e) => {
-                              const newFeatures = [...formData.features];
-                              newFeatures[idx] = { ...newFeatures[idx], title: e.target.value };
-                              setFormData({ ...formData, features: newFeatures });
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleImageUpload(file, (url) => {
+                                  const urls = [...(editingSprint.coverImageUrls || [])];
+                                  urls[1] = url;
+                                  setEditingSprint({
+                                    ...editingSprint,
+                                    coverImageUrls: urls,
+                                  });
+                                });
+                              }
                             }}
-                            className="bg-zinc-900 border-zinc-800 text-sm mt-1"
+                          />
+                          {isUploading && <Loader2 className="w-5 h-5 animate-spin shrink-0" />}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] text-gray-500 font-bold block uppercase tracking-wider">
+                          Or Image URL
+                        </Label>
+                        <Input
+                          value={editingSprint.coverImageUrls?.[1] || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const urls = [...(editingSprint.coverImageUrls || [])];
+                            urls[1] = val;
+                            setEditingSprint({
+                              ...editingSprint,
+                              coverImageUrls: urls,
+                            });
+                          }}
+                          placeholder="https://example.com/banner-2.jpg"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Banner 3 */}
+                    <div className="border p-3 rounded-xl bg-gray-50/50 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-semibold text-gray-700">
+                          3. Hero Banner Image 3 (Optional)
+                        </span>
+                        {editingSprint.coverImageUrls?.[2] && (
+                          <span className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded border border-green-150">
+                            Active
+                          </span>
+                        )}
+                      </div>
+                      {editingSprint.coverImageUrls?.[2] && (
+                        <img
+                          src={editingSprint.coverImageUrls[2]}
+                          alt="Banner 3 preview"
+                          className="w-full h-20 object-cover rounded-lg border"
+                        />
+                      )}
+                      <div className="space-y-1">
+                        <Label className="text-[10px] text-gray-500 font-bold block uppercase tracking-wider">
+                          Upload Image File
+                        </Label>
+                        <div className="flex gap-2 items-center">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleImageUpload(file, (url) => {
+                                  const urls = [...(editingSprint.coverImageUrls || [])];
+                                  urls[2] = url;
+                                  setEditingSprint({
+                                    ...editingSprint,
+                                    coverImageUrls: urls,
+                                  });
+                                });
+                              }
+                            }}
+                          />
+                          {isUploading && <Loader2 className="w-5 h-5 animate-spin shrink-0" />}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] text-gray-500 font-bold block uppercase tracking-wider">
+                          Or Image URL
+                        </Label>
+                        <Input
+                          value={editingSprint.coverImageUrls?.[2] || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const urls = [...(editingSprint.coverImageUrls || [])];
+                            urls[2] = val;
+                            setEditingSprint({
+                              ...editingSprint,
+                              coverImageUrls: urls,
+                            });
+                          }}
+                          placeholder="https://example.com/banner-3.jpg"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label>Card Cover Image (Optional - fallback to Hero)</Label>
+                    {editingSprint.cardImageUrl && (
+                      <img
+                        src={editingSprint.cardImageUrl}
+                        alt="Card cover preview"
+                        className="w-full h-32 object-cover rounded-lg border mb-2"
+                      />
+                    )}
+                    <div className="flex gap-2">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleImageUpload(file, (url) =>
+                              setEditingSprint({ ...editingSprint, cardImageUrl: url })
+                            );
+                          }
+                        }}
+                      />
+                      {isUploading && <Loader2 className="w-5 h-5 animate-spin" />}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label>Mentors Section Heading</Label>
+                    <Input
+                      value={editingSprint.mentorsHeading || "Meet Your Mentors"}
+                      onChange={(e) =>
+                        setEditingSprint({ ...editingSprint, mentorsHeading: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1.5">
+                      <Label>Mentors Show Limit</Label>
+                      <Input
+                        type="number"
+                        value={editingSprint.mentorsLimit ?? 2}
+                        onChange={(e) =>
+                          setEditingSprint({
+                            ...editingSprint,
+                            mentorsLimit: Number(e.target.value),
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Mentors View All Link</Label>
+                      <Input
+                        value={editingSprint.mentorsLinkTarget || ""}
+                        onChange={(e) =>
+                          setEditingSprint({ ...editingSprint, mentorsLinkTarget: e.target.value })
+                        }
+                        placeholder="/mentors or #all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label>Features Section Heading</Label>
+                    <Input
+                      value={editingSprint.featuresHeading || "What You Get"}
+                      onChange={(e) =>
+                        setEditingSprint({ ...editingSprint, featuresHeading: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label>Curriculum / Sessions Section Heading</Label>
+                    <Input
+                      value={editingSprint.sessionsHeading || ""}
+                      onChange={(e) =>
+                        setEditingSprint({ ...editingSprint, sessionsHeading: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label>Testimonials Section Heading</Label>
+                    <Input
+                      value={editingSprint.testimonialsHeading || ""}
+                      onChange={(e) =>
+                        setEditingSprint({
+                          ...editingSprint,
+                          testimonialsHeading: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label>FAQs Section Heading</Label>
+                    <Input
+                      value={editingSprint.faqsHeading || "Frequently Asked Questions"}
+                      onChange={(e) =>
+                        setEditingSprint({ ...editingSprint, faqsHeading: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-4 pt-2">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="sprint-active"
+                        checked={editingSprint.isActive}
+                        onCheckedChange={(val) =>
+                          setEditingSprint({ ...editingSprint, isActive: val })
+                        }
+                      />
+                      <Label htmlFor="sprint-active">Active (Visible to public)</Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="sprint-best-seller"
+                        checked={!!editingSprint.isBestSeller}
+                        onCheckedChange={(val) =>
+                          setEditingSprint({ ...editingSprint, isBestSeller: val })
+                        }
+                      />
+                      <Label htmlFor="sprint-best-seller">Best Seller Tag</Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="sprint-filling-fast"
+                        checked={!!editingSprint.isFillingFast}
+                        onCheckedChange={(val) =>
+                          setEditingSprint({ ...editingSprint, isFillingFast: val })
+                        }
+                      />
+                      <Label htmlFor="sprint-filling-fast">Filling Fast Tag</Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="sprint-verification-required"
+                        checked={editingSprint.isVerificationRequired}
+                        onCheckedChange={(val) =>
+                          setEditingSprint({ ...editingSprint, isVerificationRequired: val })
+                        }
+                      />
+                      <Label htmlFor="sprint-verification-required">
+                        Require Admin Verification Before Access
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* mentors Tab */}
+            {activeEditTab === "mentors" && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-md font-semibold">Sprint Mentors</h3>
+                  <Button
+                    onClick={() => {
+                      const currentMentors = editingSprint.mentors || [];
+                      setEditingSprint({
+                        ...editingSprint,
+                        mentors: [
+                          ...currentMentors,
+                          { name: "", role: "", imageUrl: "", bio: "", link: "" },
+                        ],
+                      });
+                    }}
+                    className="bg-gray-100 text-gray-700 hover:bg-gray-200 border text-xs"
+                    size="sm"
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1" /> Add Mentor Card
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  {(editingSprint.mentors || []).map((mentor, index) => (
+                    <div
+                      key={index}
+                      className="border p-4 rounded-lg bg-gray-50 flex flex-col md:flex-row gap-4 relative"
+                    >
+                      <button
+                        onClick={() => {
+                          const currentMentors = [...(editingSprint.mentors || [])];
+                          currentMentors.splice(index, 1);
+                          setEditingSprint({ ...editingSprint, mentors: currentMentors });
+                        }}
+                        className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+
+                      <div className="flex flex-col items-center gap-2">
+                        {mentor.imageUrl ? (
+                          <img
+                            src={mentor.imageUrl}
+                            alt="Mentor preview"
+                            className="w-16 h-16 rounded-full object-cover border"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
+                            <ImageIcon className="w-6 h-6 text-gray-400" />
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="w-28 text-xs cursor-pointer"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleImageUpload(file, (url) => {
+                                const currentMentors = [...(editingSprint.mentors || [])];
+                                currentMentors[index] = {
+                                  ...currentMentors[index],
+                                  imageUrl: url,
+                                };
+                                setEditingSprint({ ...editingSprint, mentors: currentMentors });
+                              });
+                            }
+                          }}
+                        />
+                      </div>
+
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Mentor Name</Label>
+                          <Input
+                            value={mentor.name}
+                            onChange={(e) => {
+                              const currentMentors = [...(editingSprint.mentors || [])];
+                              currentMentors[index] = {
+                                ...currentMentors[index],
+                                name: e.target.value,
+                              };
+                              setEditingSprint({ ...editingSprint, mentors: currentMentors });
+                            }}
+                            placeholder="e.g. John Doe"
                           />
                         </div>
-                        <div>
-                          <Label className="text-xs text-zinc-400">Icon</Label>
-                          <select
-                            value={feat.icon || "Check"}
+                        <div className="space-y-1">
+                          <Label className="text-xs">Title / Role</Label>
+                          <Input
+                            value={mentor.role}
                             onChange={(e) => {
-                              const newFeatures = [...formData.features];
-                              newFeatures[idx] = { ...newFeatures[idx], icon: e.target.value };
-                              setFormData({ ...formData, features: newFeatures });
+                              const currentMentors = [...(editingSprint.mentors || [])];
+                              currentMentors[index] = {
+                                ...currentMentors[index],
+                                role: e.target.value,
+                              };
+                              setEditingSprint({ ...editingSprint, mentors: currentMentors });
                             }}
-                            className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-200 mt-1"
-                          >
-                            <option value="Check">Checkmark</option>
-                            <option value="Video">Video</option>
-                            <option value="FileText">Document</option>
-                            <option value="Users">Community / Mentorship</option>
-                            <option value="Zap">Zap / Fast Track</option>
-                            <option value="Award">Certification / Trophy</option>
-                            <option value="Sparkles">Sparkles</option>
-                          </select>
+                            placeholder="e.g. Ex-Google PM, Stanford Alum"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Linkedin URL</Label>
+                          <Input
+                            value={mentor.link || ""}
+                            onChange={(e) => {
+                              const currentMentors = [...(editingSprint.mentors || [])];
+                              currentMentors[index] = {
+                                ...currentMentors[index],
+                                link: e.target.value,
+                              };
+                              setEditingSprint({ ...editingSprint, mentors: currentMentors });
+                            }}
+                            placeholder="https://linkedin.com/in/..."
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Bio Details</Label>
+                          <Input
+                            value={mentor.bio || ""}
+                            onChange={(e) => {
+                              const currentMentors = [...(editingSprint.mentors || [])];
+                              currentMentors[index] = {
+                                ...currentMentors[index],
+                                bio: e.target.value,
+                              };
+                              setEditingSprint({ ...editingSprint, mentors: currentMentors });
+                            }}
+                            placeholder="Short summary description"
+                          />
                         </div>
                       </div>
 
-                      <div>
-                        <Label className="text-xs text-zinc-400">Feature Description</Label>
-                        <Input
-                          placeholder="e.g. Direct feedback and teardown from lead designers to polish your case studies."
-                          value={feat.description}
-                          onChange={(e) => {
-                            const newFeatures = [...formData.features];
-                            newFeatures[idx] = { ...newFeatures[idx], description: e.target.value };
-                            setFormData({ ...formData, features: newFeatures });
+                      {/* Reorder Buttons */}
+                      <div className="flex md:flex-col justify-center gap-1">
+                        <button
+                          disabled={index === 0}
+                          onClick={() => {
+                            const currentMentors = [...(editingSprint.mentors || [])];
+                            const temp = currentMentors[index];
+                            currentMentors[index] = currentMentors[index - 1];
+                            currentMentors[index - 1] = temp;
+                            setEditingSprint({ ...editingSprint, mentors: currentMentors });
                           }}
-                          className="bg-zinc-900 border-zinc-800 text-sm mt-1"
-                        />
+                          className="p-1 hover:bg-gray-200 rounded disabled:opacity-50"
+                        >
+                          <ArrowUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          disabled={index === (editingSprint.mentors?.length || 0) - 1}
+                          onClick={() => {
+                            const currentMentors = [...(editingSprint.mentors || [])];
+                            const temp = currentMentors[index];
+                            currentMentors[index] = currentMentors[index + 1];
+                            currentMentors[index + 1] = temp;
+                            setEditingSprint({ ...editingSprint, mentors: currentMentors });
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded disabled:opacity-50"
+                        >
+                          <ArrowDown className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
 
-          {/* Tab 5: Linked Managers */}
-          {activeEditTab === "managers" && (
-            <div className="space-y-4 py-2 flex-1">
-              <p className="text-xs text-zinc-400">
-                Launch specialized managers for mentors, curriculum sessions, upgrade packages, and FAQs.
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Mentors Card */}
-                <div className="p-4 bg-zinc-950 border border-zinc-800 rounded-xl flex flex-col justify-between space-y-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-blue-400 font-bold text-sm">
-                      <Users className="w-4 h-4" />
-                      Sprint Mentors (Max 2)
-                    </div>
-                    <p className="text-xs text-zinc-400">
-                      Add up to 2 mentors with direct photo uploads and LinkedIn profiles. Renders with opposing tilt effect.
-                    </p>
-                  </div>
+            {/* features Tab */}
+            {activeEditTab === "features" && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-md font-semibold">Features &amp; Deliverables</h3>
                   <Button
-                    type="button"
-                    variant="outline"
                     onClick={() => {
-                      if (editingSprint) {
-                        setMentorManagerSprint({ id: editingSprint.id, title: editingSprint.title });
-                      } else {
-                        toast.info("Save sprint first to manage mentors");
-                      }
+                      const currentFeatures = editingSprint.features || [];
+                      setEditingSprint({
+                        ...editingSprint,
+                        features: [
+                          ...currentFeatures,
+                          { icon: "Check", title: "", description: "" },
+                        ],
+                      });
                     }}
-                    className="border-zinc-700 text-blue-300 hover:text-white text-xs w-full"
+                    className="bg-gray-100 text-gray-700 hover:bg-gray-200 border text-xs"
+                    size="sm"
                   >
-                    Open Mentors Manager
+                    <Plus className="w-3.5 h-3.5 mr-1" /> Add Feature Card
                   </Button>
                 </div>
 
-                {/* Curriculum Sessions Card */}
-                <div className="p-4 bg-zinc-950 border border-zinc-800 rounded-xl flex flex-col justify-between space-y-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-zinc-200 font-bold text-sm">
-                      <FolderCog className="w-4 h-4 text-[#ff5e14]" />
-                      Curriculum & Sessions
+                <div className="grid grid-cols-1 gap-4">
+                  {(editingSprint.features || []).map((feature, index) => (
+                    <div
+                      key={index}
+                      className="border p-4 rounded-lg bg-gray-50 flex gap-4 relative"
+                    >
+                      <button
+                        onClick={() => {
+                          const currentFeatures = [...(editingSprint.features || [])];
+                          currentFeatures.splice(index, 1);
+                          setEditingSprint({ ...editingSprint, features: currentFeatures });
+                        }}
+                        className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Icon Name</Label>
+                          <Input
+                            value={feature.icon}
+                            onChange={(e) => {
+                              const currentFeatures = [...(editingSprint.features || [])];
+                              currentFeatures[index] = {
+                                ...currentFeatures[index],
+                                icon: e.target.value,
+                              };
+                              setEditingSprint({ ...editingSprint, features: currentFeatures });
+                            }}
+                            placeholder="e.g. Video, FileText, Check"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Feature Title</Label>
+                          <Input
+                            value={feature.title}
+                            onChange={(e) => {
+                              const currentFeatures = [...(editingSprint.features || [])];
+                              currentFeatures[index] = {
+                                ...currentFeatures[index],
+                                title: e.target.value,
+                              };
+                              setEditingSprint({ ...editingSprint, features: currentFeatures });
+                            }}
+                            placeholder="e.g. 1-on-1 Portfolio Reviews"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Description</Label>
+                          <Input
+                            value={feature.description}
+                            onChange={(e) => {
+                              const currentFeatures = [...(editingSprint.features || [])];
+                              currentFeatures[index] = {
+                                ...currentFeatures[index],
+                                description: e.target.value,
+                              };
+                              setEditingSprint({ ...editingSprint, features: currentFeatures });
+                            }}
+                            placeholder="e.g. Detailed feedback on assignments"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Reorder Buttons */}
+                      <div className="flex flex-col justify-center gap-1">
+                        <button
+                          disabled={index === 0}
+                          onClick={() => {
+                            const currentFeatures = [...(editingSprint.features || [])];
+                            const temp = currentFeatures[index];
+                            currentFeatures[index] = currentFeatures[index - 1];
+                            currentFeatures[index - 1] = temp;
+                            setEditingSprint({ ...editingSprint, features: currentFeatures });
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded disabled:opacity-50"
+                        >
+                          <ArrowUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          disabled={index === (editingSprint.features?.length || 0) - 1}
+                          onClick={() => {
+                            const currentFeatures = [...(editingSprint.features || [])];
+                            const temp = currentFeatures[index];
+                            currentFeatures[index] = currentFeatures[index + 1];
+                            currentFeatures[index + 1] = temp;
+                            setEditingSprint({ ...editingSprint, features: currentFeatures });
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded disabled:opacity-50"
+                        >
+                          <ArrowDown className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                    <p className="text-xs text-zinc-400">
-                      Manage live session dates, descriptions, Bunny CDN recordings, and resources.
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* pricing Tab */}
+            {activeEditTab === "pricing" && (
+              <div className="space-y-6">
+                <div className="border p-4 rounded-lg bg-gray-50 space-y-4">
+                  <h3 className="text-md font-semibold">Base Price Setup</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-1.5">
+                      <Label>Investment Section Heading</Label>
+                      <Input
+                        value={editingSprint.investmentLabel || "Total Investment"}
+                        onChange={(e) =>
+                          setEditingSprint({ ...editingSprint, investmentLabel: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Standard Base Price (INR)</Label>
+                      <Input
+                        type="number"
+                        value={editingSprint.basePrice}
+                        onChange={(e) =>
+                          setEditingSprint({
+                            ...editingSprint,
+                            basePrice: Number(e.target.value),
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Original Price (Strikethrough - Optional)</Label>
+                      <Input
+                        type="number"
+                        value={editingSprint.originalPrice || ""}
+                        onChange={(e) =>
+                          setEditingSprint({
+                            ...editingSprint,
+                            originalPrice: e.target.value ? Number(e.target.value) : null,
+                          })
+                        }
+                        placeholder="e.g. 9999"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-3 pt-2">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="sprint-early-bird"
+                        checked={!!editingSprint.hasEarlyBird}
+                        onCheckedChange={(val) =>
+                          setEditingSprint({ ...editingSprint, hasEarlyBird: val })
+                        }
+                      />
+                      <Label htmlFor="sprint-early-bird">Enable Early Bird Top Marquee Banner</Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="sprint-early-bird-checkout"
+                        checked={!!editingSprint.showEarlyBirdCheckout}
+                        onCheckedChange={(val) =>
+                          setEditingSprint({ ...editingSprint, showEarlyBirdCheckout: val })
+                        }
+                      />
+                      <Label htmlFor="sprint-early-bird-checkout">
+                        Show Early Bird Tag in Checkout Drawer
+                      </Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="sprint-early-bird-marquee-checkout"
+                        checked={!!editingSprint.showEarlyBirdMarqueeCheckout}
+                        onCheckedChange={(val) =>
+                          setEditingSprint({
+                            ...editingSprint,
+                            showEarlyBirdMarqueeCheckout: val,
+                          })
+                        }
+                      />
+                      <Label htmlFor="sprint-early-bird-marquee-checkout">
+                        Show Top Marquee Bar inside Checkout Drawer
+                      </Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="sprint-addons-checkout"
+                        checked={editingSprint.showAddonsCheckout !== false}
+                        onCheckedChange={(val) =>
+                          setEditingSprint({ ...editingSprint, showAddonsCheckout: val })
+                        }
+                      />
+                      <Label htmlFor="sprint-addons-checkout">
+                        Show Toolkit Upsells &amp; Add-ons in Checkout Drawer
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tiers Management */}
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-md font-semibold">Tier Packages</h3>
+                    <Button
+                      onClick={() => {
+                        const currentTiers = editingSprint.tiers || [];
+                        setEditingSprint({
+                          ...editingSprint,
+                          tiers: [
+                            ...currentTiers,
+                            {
+                              name: "",
+                              price: 0,
+                              description: "",
+                              whatIncluded: [],
+                              isDefault: false,
+                            },
+                          ],
+                        });
+                      }}
+                      className="bg-gray-100 text-gray-700 hover:bg-gray-200 border text-xs"
+                      size="sm"
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1" /> Add Tier
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4">
+                    {(editingSprint.tiers || []).map((tier, index) => (
+                      <div
+                        key={index}
+                        className="border p-4 rounded-lg bg-gray-50 flex flex-col gap-4 relative"
+                      >
+                        <button
+                          onClick={() => {
+                            const currentTiers = [...(editingSprint.tiers || [])];
+                            currentTiers.splice(index, 1);
+                            setEditingSprint({ ...editingSprint, tiers: currentTiers });
+                          }}
+                          className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Tier Name</Label>
+                            <Input
+                              value={tier.name}
+                              onChange={(e) => {
+                                const currentTiers = [...(editingSprint.tiers || [])];
+                                currentTiers[index] = {
+                                  ...currentTiers[index],
+                                  name: e.target.value,
+                                };
+                                setEditingSprint({ ...editingSprint, tiers: currentTiers });
+                              }}
+                              placeholder="e.g. Standard, Pro, VIP"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Price (INR)</Label>
+                            <Input
+                              type="number"
+                              value={tier.price}
+                              onChange={(e) => {
+                                const currentTiers = [...(editingSprint.tiers || [])];
+                                currentTiers[index] = {
+                                  ...currentTiers[index],
+                                  price: Number(e.target.value),
+                                };
+                                setEditingSprint({ ...editingSprint, tiers: currentTiers });
+                              }}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Original Strikethrough Price (INR)</Label>
+                            <Input
+                              type="number"
+                              value={tier.originalPrice || ""}
+                              onChange={(e) => {
+                                const currentTiers = [...(editingSprint.tiers || [])];
+                                currentTiers[index] = {
+                                  ...currentTiers[index],
+                                  originalPrice: e.target.value ? Number(e.target.value) : null,
+                                };
+                                setEditingSprint({ ...editingSprint, tiers: currentTiers });
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <Label className="text-xs">Short Description</Label>
+                          <Input
+                            value={tier.description}
+                            onChange={(e) => {
+                              const currentTiers = [...(editingSprint.tiers || [])];
+                              currentTiers[index] = {
+                                ...currentTiers[index],
+                                description: e.target.value,
+                              };
+                              setEditingSprint({ ...editingSprint, tiers: currentTiers });
+                            }}
+                            placeholder="e.g. Complete bundle with mentorship"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <Label className="text-xs">What&apos;s Included (Comma-separated)</Label>
+                          <Input
+                            value={
+                              Array.isArray(tier.whatIncluded)
+                                ? tier.whatIncluded.join(", ")
+                                : tier.whatIncluded
+                            }
+                            onChange={(e) => {
+                              const currentTiers = [...(editingSprint.tiers || [])];
+                              currentTiers[index] = {
+                                ...currentTiers[index],
+                                whatIncluded: e.target.value.split(",").map((s) => s.trim()),
+                              };
+                              setEditingSprint({ ...editingSprint, tiers: currentTiers });
+                            }}
+                            placeholder="All Live Sessions, Toolkit Content, Community Access"
+                          />
+                        </div>
+
+                        <div className="flex items-center space-x-2 pt-1">
+                          <Switch
+                            id={`tier-default-${index}`}
+                            checked={tier.isDefault}
+                            onCheckedChange={(val) => {
+                              const currentTiers = [...(editingSprint.tiers || [])];
+                              currentTiers.forEach((t, i) => (t.isDefault = i === index ? val : false));
+                              setEditingSprint({ ...editingSprint, tiers: currentTiers });
+                            }}
+                          />
+                          <Label htmlFor={`tier-default-${index}`} className="text-xs">
+                            Default Selected Plan
+                          </Label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* curriculum Tab */}
+            {activeEditTab === "curriculum" && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-md font-semibold">Sprint Curriculum Sessions</h3>
+                    <p className="text-xs text-gray-500">
+                      Configure live session links, recordings, mentors, and resources.
                     </p>
                   </div>
                   <Button
-                    type="button"
-                    variant="outline"
                     onClick={() => {
-                      if (editingSprint) {
-                        setSessionManagerSprint({ id: editingSprint.id, title: editingSprint.title });
-                      } else {
-                        toast.info("Save sprint first to manage curriculum");
-                      }
+                      setManagingSprint(editingSprint);
+                      setSessionManagerOpen(true);
                     }}
-                    className="border-zinc-700 text-zinc-200 hover:text-white text-xs w-full"
+                    className="bg-[#ff5e14] hover:bg-[#e04f0f] text-white text-xs"
+                    size="sm"
                   >
-                    Open Curriculum Manager
+                    <FolderCog className="w-3.5 h-3.5 mr-1" /> Open Session Manager
                   </Button>
                 </div>
 
-                {/* Upgrade Packages Card */}
-                <div className="p-4 bg-zinc-950 border border-zinc-800 rounded-xl flex flex-col justify-between space-y-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
-                      <Layers className="w-4 h-4" />
-                      Upgrade Plans & Tiers
-                    </div>
-                    <p className="text-xs text-zinc-400">
-                      Configure custom bundle tiers, upsell add-ons, and targeted user upgrade packages.
-                    </p>
-                  </div>
+                <div className="border rounded-lg bg-gray-50 p-6 text-center text-sm text-gray-600">
+                  <p className="font-semibold text-gray-800 mb-1">
+                    {editingSprint.sessions?.length || 0} Sessions Configured
+                  </p>
+                  <p className="text-xs text-gray-500 mb-4">
+                    Use the full Session Manager tool to customize lessons, video recordings, mentor assignments, and section attachments.
+                  </p>
                   <Button
-                    type="button"
                     variant="outline"
                     onClick={() => {
-                      if (editingSprint) {
-                        setUpgradePlansSprint({ id: editingSprint.id, title: editingSprint.title });
-                      } else {
-                        toast.info("Save sprint first to manage upgrade packages");
-                      }
+                      setManagingSprint(editingSprint);
+                      setSessionManagerOpen(true);
                     }}
-                    className="border-zinc-700 text-amber-300 hover:text-white text-xs w-full"
+                    className="text-xs border-gray-300"
                   >
-                    Open Packages Manager
-                  </Button>
-                </div>
-
-                {/* FAQs Card */}
-                <div className="p-4 bg-zinc-950 border border-zinc-800 rounded-xl flex flex-col justify-between space-y-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-cyan-400 font-bold text-sm">
-                      <HelpCircle className="w-4 h-4" />
-                      FAQs Manager
-                    </div>
-                    <p className="text-xs text-zinc-400">
-                      Create accordion questions, rich text answers, and separately attached image banners.
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      if (editingSprint) {
-                        setFaqManagerSprint({ id: editingSprint.id, title: editingSprint.title });
-                      } else {
-                        toast.info("Save sprint first to manage FAQs");
-                      }
-                    }}
-                    className="border-zinc-700 text-cyan-300 hover:text-white text-xs w-full"
-                  >
-                    Open FAQs Manager
+                    Manage Sessions &amp; Curriculum Content
                   </Button>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          <DialogFooter className="border-t border-zinc-800 pt-3 mt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsModalOpen(false)}
-              className="border-zinc-700 text-zinc-300"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSaveSprint}
-              disabled={isUploadingImage}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs"
-            >
-              {editingSprint ? "Save All Changes" : "Create Sprint"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            {/* faqs Tab */}
+            {activeEditTab === "faqs" && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-md font-semibold">Frequently Asked Questions</h3>
+                    <p className="text-xs text-gray-500">
+                      Manage FAQs displayed on the sprint details page.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setManagingSprint(editingSprint);
+                      setFaqManagerOpen(true);
+                    }}
+                    className="bg-cyan-600 hover:bg-cyan-700 text-white text-xs"
+                    size="sm"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5 mr-1" /> Open FAQ Manager
+                  </Button>
+                </div>
 
-      {/* Embedded Manager Modals */}
-      {sessionManagerSprint && (
+                <div className="border rounded-lg bg-gray-50 p-6 text-center text-sm text-gray-600">
+                  <p className="font-semibold text-gray-800 mb-1">
+                    {editingSprint.faqs?.length || 0} FAQs Configured
+                  </p>
+                  <p className="text-xs text-gray-500 mb-4">
+                    Click below to add, edit, or reorder questions and answers for this sprint.
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setManagingSprint(editingSprint);
+                      setFaqManagerOpen(true);
+                    }}
+                    className="text-xs border-gray-300"
+                  >
+                    Manage FAQs
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="mt-6 border-t pt-4">
+              <Button type="button" variant="ghost" onClick={() => setEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSaveSprint}
+                disabled={isLoading}
+                className="bg-[#ff5e14] hover:bg-[#e04f0f] text-white"
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Linked Managers Modals */}
+      {sessionManagerOpen && managingSprint && (
         <SprintSessionManager
-          open={Boolean(sessionManagerSprint)}
-          onClose={() => setSessionManagerSprint(null)}
-          sprintId={sessionManagerSprint.id}
-          sprintTitle={sessionManagerSprint.title}
+          sprintId={managingSprint.id}
+          sprintTitle={managingSprint.title}
+          open={sessionManagerOpen}
+          onClose={() => {
+            setSessionManagerOpen(false);
+            fetchSprints();
+          }}
           onUpdate={fetchSprints}
         />
       )}
 
-      {upgradePlansSprint && (
+      {upgradePlansOpen && managingSprint && (
         <SprintUpgradePlansManager
-          open={Boolean(upgradePlansSprint)}
-          onClose={() => setUpgradePlansSprint(null)}
-          sprintId={upgradePlansSprint.id}
-          sprintTitle={upgradePlansSprint.title}
+          sprintId={managingSprint.id}
+          sprintTitle={managingSprint.title}
+          open={upgradePlansOpen}
+          onClose={() => {
+            setUpgradePlansOpen(false);
+            fetchSprints();
+          }}
           onUpdate={fetchSprints}
         />
       )}
 
-      {faqManagerSprint && (
-        <SprintFaqManager
-          open={Boolean(faqManagerSprint)}
-          onClose={() => setFaqManagerSprint(null)}
-          sprintId={faqManagerSprint.id}
-          sprintTitle={faqManagerSprint.title}
-          onUpdate={fetchSprints}
-        />
-      )}
-
-      {mentorManagerSprint && (
+      {mentorManagerOpen && managingSprint && (
         <SprintMentorManager
-          open={Boolean(mentorManagerSprint)}
-          onClose={() => setMentorManagerSprint(null)}
-          sprintId={mentorManagerSprint.id}
-          sprintTitle={mentorManagerSprint.title}
+          sprintId={managingSprint.id}
+          sprintTitle={managingSprint.title}
+          open={mentorManagerOpen}
+          onClose={() => {
+            setMentorManagerOpen(false);
+            fetchSprints();
+          }}
           onUpdate={fetchSprints}
         />
       )}
 
-      {packageTargetModal && (
+      {faqManagerOpen && managingSprint && (
+        <SprintFaqManager
+          sprintId={managingSprint.id}
+          sprintTitle={managingSprint.title}
+          open={faqManagerOpen}
+          onClose={() => {
+            setFaqManagerOpen(false);
+            fetchSprints();
+          }}
+          onUpdate={fetchSprints}
+        />
+      )}
+
+      {managePackagesModalState.open && (
         <ManageUserSprintPackagesModal
-          open={packageTargetModal.open}
-          onClose={() => setPackageTargetModal(null)}
-          sprintId={packageTargetModal.sprintId}
-          userId={packageTargetModal.userId}
-          userName={packageTargetModal.userName}
-          userEmail={packageTargetModal.userEmail}
-          userTierName={packageTargetModal.userTierName}
+          open={managePackagesModalState.open}
+          onClose={() =>
+            setManagePackagesModalState((prev) => ({ ...prev, open: false }))
+          }
+          sprintId={managePackagesModalState.sprintId}
+          userId={managePackagesModalState.userId}
+          userName={managePackagesModalState.userName}
+          userEmail={managePackagesModalState.userEmail}
+          userTierName={managePackagesModalState.userTierName}
+          isBundleUser={managePackagesModalState.isBundleUser}
         />
       )}
     </div>

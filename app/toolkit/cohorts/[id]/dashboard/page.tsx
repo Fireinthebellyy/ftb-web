@@ -1036,9 +1036,19 @@ function CohortSessionMain({
                     </div>
                   )}
                 {content.sectionType === "recording" &&
-                  (content.videoUrl || stripHtml(content.content)) && (
+                  (content.cdnVideoUrl || content.videoUrl || stripHtml(content.content)) && (
                     <div className="rounded-lg border border-gray-200 bg-white p-6">
-                      {content.videoUrl && (
+                      {content.cdnVideoUrl && (
+                        <div className="mb-4">
+                          <CohortBunnyPlayer
+                            contentId={content.id}
+                            videoUrl={content.cdnVideoUrl}
+                            cohortId={cohortId}
+                            className="shadow-sm"
+                          />
+                        </div>
+                      )}
+                      {!content.cdnVideoUrl && content.videoUrl && (
                         <div className="mb-4">
                           <video
                             src={content.videoUrl}

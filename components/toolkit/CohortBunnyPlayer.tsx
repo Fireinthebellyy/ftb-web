@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import React, { useEffect, useState, useCallback } from "react";
+import { Loader2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface CohortBunnyPlayerProps {
   videoUrl?: string | null;
@@ -29,82 +30,59 @@ export default function CohortBunnyPlayer({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
+  const loadSecureVideo = useCallback(async () => {
+    if (!videoUrl && !contentId) {
+      setError("No video URL or ID provided");
+      setLoading(false);
+      return;
+    }
 
-    async function loadVideo() {
-      if (!videoUrl && !contentId) {
-        setError("No video URL or ID provided");
-        setLoading(false);
-        return;
+    try {
+      setLoading(true);
+      setError(null);
+
+      const params = new URLSearchParams();
+      if (contentId) {
+        params.set("cohortContentId", contentId);
+      }
+      if (videoUrl) {
+        params.set("videoUrl", videoUrl);
+      }
+      if (cohortId) {
+        params.set("cohortId", cohortId);
       }
 
-      // If videoUrl is already a fully signed URL with token & expires, we can use it directly
+      // Always request fresh, authenticated signed URL from backend
+      const response = await fetch(`/api/video-access?${params.toString()}`);
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to load secure video player");
+      }
+
+      const data = await response.json();
+      setError(null);
+      setResolvedVideoUrl(data.videoUrl);
+    } catch (err) {
       if (
         videoUrl &&
         videoUrl.startsWith("http") &&
-        videoUrl.includes("token=") &&
-        videoUrl.includes("expires=")
+        !videoUrl.includes("mediadelivery.net")
       ) {
-        setError(null);
         setResolvedVideoUrl(videoUrl);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
         setError(null);
-
-        const params = new URLSearchParams();
-        if (contentId) {
-          params.set("cohortContentId", contentId);
-        }
-        if (videoUrl) {
-          params.set("videoUrl", videoUrl);
-        }
-        if (cohortId) {
-          params.set("cohortId", cohortId);
-        }
-
-        const response = await fetch(`/api/video-access?${params.toString()}`);
-        if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
-          throw new Error(data.error || "Failed to load secure video player");
-        }
-
-        const data = await response.json();
-        if (isMounted) {
-          setError(null);
-          setResolvedVideoUrl(data.videoUrl);
-        }
-      } catch (err) {
-        if (isMounted) {
-          if (
-            videoUrl &&
-            videoUrl.startsWith("http") &&
-            !videoUrl.includes("mediadelivery.net")
-          ) {
-            setResolvedVideoUrl(videoUrl);
-          } else {
-            setError(
-              err instanceof Error ? err.message : "Failed to load video"
-            );
-          }
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+      } else {
+        setError(
+          err instanceof Error ? err.message : "Failed to load video"
+        );
       }
+    } finally {
+      setLoading(false);
     }
-
-    loadVideo();
-
-    return () => {
-      isMounted = false;
-    };
   }, [videoUrl, contentId, cohortId]);
+
+  useEffect(() => {
+    loadSecureVideo();
+  }, [loadSecureVideo]);
 
   const getEmbedSrc = () => {
     if (!resolvedVideoUrl) return "";
@@ -136,8 +114,9 @@ export default function CohortBunnyPlayer({
           )}
           style={{ paddingBottom: "56.25%" }}
         >
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
             <Loader2 className="h-8 w-8 animate-spin text-white" />
+            <span className="text-xs text-gray-300">Authenticating video access...</span>
           </div>
         </div>
       </div>
@@ -154,8 +133,16 @@ export default function CohortBunnyPlayer({
           )}
           style={{ paddingBottom: "56.25%" }}
         >
-          <div className="absolute inset-0 flex items-center justify-center p-4 text-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center gap-3">
             <p className="text-sm font-medium text-red-600">{error}</p>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => loadSecureVideo()}
+              className="text-xs border-red-300 text-red-700 hover:bg-red-100"
+            >
+              <RefreshCw className="w-3.5 h-3.5 mr-1" /> Retry Access
+            </Button>
           </div>
         </div>
       </div>

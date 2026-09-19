@@ -1206,14 +1206,18 @@ export default function CohortSessionManager({
                               e: React.ChangeEvent<HTMLInputElement>
                             ) => {
                               const value = e.target.value;
-                              let videoUrl = value;
+                              let videoUrl = value.trim();
 
                               if (value.includes("<iframe")) {
                                 const match =
                                   value.match(/src=["']([^"']*)["']/);
                                 if (match && match[1]) {
-                                  videoUrl = match[1];
+                                  videoUrl = match[1].trim();
                                 }
+                              }
+
+                              if (videoUrl.includes("mediadelivery.net/embed/") && videoUrl.includes("?")) {
+                                videoUrl = videoUrl.split("?")[0];
                               }
 
                               field.onChange(videoUrl);

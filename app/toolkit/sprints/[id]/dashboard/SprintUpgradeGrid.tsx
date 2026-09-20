@@ -123,12 +123,24 @@ export default function SprintUpgradeGrid({
         selectedAddOnIds: overrideSelectedSessionIds || [],
       });
 
-      const { orderId, amount, currency, key, freeOrder } = res.data;
-
-      if (freeOrder) {
+      const isFree = Boolean(res.data.free || res.data.freeOrder);
+      if (isFree) {
         toast.success("Free upgrade package unlocked!");
         setSessionPickerPlan(null);
         onUpgradeSuccess();
+        return;
+      }
+
+      const order = res.data.order || {
+        id: res.data.orderId,
+        amount: res.data.amount,
+        currency: res.data.currency || "INR",
+      };
+
+      const razorpayKey = res.data.key || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+
+      if (!razorpayKey || !order.id) {
+        toast.error("Payment configuration error. Please contact support.");
         return;
       }
 
@@ -139,12 +151,12 @@ export default function SprintUpgradeGrid({
       }
 
       const options: RazorpayCheckoutOptions = {
-        key,
-        amount,
-        currency,
-        name: "Fire in the Belly",
+        key: razorpayKey,
+        amount: order.amount,
+        currency: order.currency || "INR",
+        name: "Fire In The Belly",
         description: `Upgrade Pass: ${plan.title}`,
-        order_id: orderId,
+        order_id: order.id,
         handler: async (response: RazorpayResponse) => {
           try {
             await axios.post(`/api/sprints/${sprintId}/checkout/verify`, response);

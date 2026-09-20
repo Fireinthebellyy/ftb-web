@@ -258,35 +258,35 @@ export default function SprintUpgradePlansManager({
   return (
     <>
       <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
-        <DialogContent className="max-w-4xl bg-zinc-900 border-zinc-800 text-white max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <div className="flex items-center justify-between pr-4">
+        <DialogContent className="w-full max-w-[96vw] sm:max-w-2xl md:max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden bg-white text-gray-900 border border-gray-200 shadow-xl rounded-2xl">
+          <DialogHeader className="px-5 sm:px-6 py-4 border-b border-gray-100 shrink-0 bg-white">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pr-6 sm:pr-8">
               <div>
-                <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                  <Layers className="w-5 h-5 text-amber-400" />
+                <DialogTitle className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-orange-600 shrink-0" />
                   Upgrade Packages — {sprintTitle}
                 </DialogTitle>
-                <p className="text-xs text-zinc-400 mt-1">
+                <p className="text-xs text-gray-500 mt-0.5">
                   Manage add-on passes, bundles, and full-access plans for sprint students.
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 {plans.length === 0 && !loading && (
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={handleInitPresets}
                     disabled={isSubmitting}
-                    className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10 text-xs"
+                    className="border-orange-200 text-orange-700 hover:bg-orange-50 text-xs font-semibold"
                   >
-                    <LayoutGrid className="w-3.5 h-3.5 mr-1" />
+                    <LayoutGrid className="w-3.5 h-3.5 mr-1 text-orange-600" />
                     Load Presets
                   </Button>
                 )}
                 <Button
                   size="sm"
                   onClick={handleOpenAdd}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs gap-1"
+                  className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold gap-1 shadow-xs"
                 >
                   <Plus className="w-4 h-4" /> Add Package
                 </Button>
@@ -294,94 +294,170 @@ export default function SprintUpgradePlansManager({
             </div>
           </DialogHeader>
 
-          <div className="py-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-gray-50/40">
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[1, 2].map((i) => (
-                  <Skeleton key={i} className="h-32 bg-zinc-800 rounded-lg" />
+                {[1, 2, 3, 4].map((i) => (
+                  <Skeleton key={i} className="h-36 bg-gray-200/70 rounded-xl" />
                 ))}
               </div>
             ) : plans.length === 0 ? (
-              <div className="py-12 text-center border border-dashed border-zinc-800 rounded-lg">
-                <Layers className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
-                <p className="text-sm font-medium text-zinc-300">
-                  No upgrade packages found
+              <div className="rounded-2xl border-2 border-dashed border-gray-200 p-8 sm:p-12 text-center bg-white shadow-xs">
+                <div className="w-12 h-12 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center mx-auto mb-3 text-orange-600">
+                  <Layers className="w-6 h-6" />
+                </div>
+                <h4 className="text-sm font-bold text-gray-900">No upgrade packages found</h4>
+                <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto leading-relaxed">
+                  Click &ldquo;Load Presets&rdquo; to populate standard sprint passes or create a custom upgrade plan.
                 </p>
-                <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
-                  Click &ldquo;Load Presets&rdquo; to populate standard packages or create a custom upgrade plan.
-                </p>
+                <div className="mt-5 flex items-center justify-center gap-2.5">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleInitPresets}
+                    disabled={isSubmitting}
+                    className="border-gray-300 text-gray-700 hover:bg-gray-50 text-xs font-medium"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5 mr-1 text-gray-500" />
+                    Initialize Presets
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleOpenAdd}
+                    className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold gap-1"
+                  >
+                    <Plus className="w-4 h-4" /> Create Custom Plan
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {plans.map((plan) => (
-                  <div
-                    key={plan.id}
-                    className={cn(
-                      "p-4 rounded-xl border flex flex-col justify-between transition-colors bg-zinc-950/80 border-zinc-800",
-                      !plan.isActive && "opacity-60"
-                    )}
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          {plan.badgeText && (
-                            <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded inline-block mb-1">
-                              {plan.badgeText}
+                {plans.map((plan, idx) => {
+                  const pType = planTypeFromPlan(plan);
+                  return (
+                    <div
+                      key={plan.id}
+                      className={cn(
+                        "p-4 sm:p-5 rounded-xl border flex flex-col justify-between transition-all duration-200 shadow-xs",
+                        plan.isActive
+                          ? "bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm"
+                          : "bg-gray-50/80 border-gray-200 opacity-65"
+                      )}
+                    >
+                      <div className="space-y-2.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[11px] font-bold font-mono text-gray-400">
+                                #{idx + 1}
+                              </span>
+                              {plan.badgeText && (
+                                <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60 rounded-full inline-block">
+                                  {plan.badgeText}
+                                </span>
+                              )}
+                              <span
+                                className={cn(
+                                  "px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full shrink-0 border",
+                                  pType === "all_in_one"
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200/60"
+                                    : pType === "custom"
+                                    ? "bg-blue-50 text-blue-700 border-blue-200/60"
+                                    : "bg-orange-50 text-orange-700 border-orange-200/60"
+                                )}
+                              >
+                                {pType === "all_in_one"
+                                  ? "Full Pass"
+                                  : pType === "custom"
+                                  ? "Custom"
+                                  : "Session-Based"}
+                              </span>
+                            </div>
+                            <h4 className="text-sm sm:text-base font-bold text-gray-900 leading-snug truncate">
+                              {plan.title}
+                            </h4>
+                          </div>
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleOpenEdit(plan)}
+                              className="h-8 w-8 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+                              title="Edit package"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleDeletePlan(plan.id)}
+                              className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg"
+                              title="Delete package"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {plan.description && (
+                          <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+                            {plan.description}
+                          </p>
+                        )}
+
+                        <div className="pt-1 flex items-baseline gap-2">
+                          <span className="text-base sm:text-lg font-extrabold text-gray-900">
+                            ₹{plan.price.toLocaleString("en-IN")}
+                          </span>
+                          {plan.originalPrice && (
+                            <span className="text-xs text-gray-400 line-through">
+                              ₹{plan.originalPrice.toLocaleString("en-IN")}
                             </span>
                           )}
-                          <h4 className="text-base font-bold text-white leading-tight">
-                            {plan.title}
-                          </h4>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => handleOpenEdit(plan)}
-                            className="h-7 w-7 text-zinc-400 hover:text-white"
-                          >
-                            <Edit className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => handleDeletePlan(plan.id)}
-                            className="h-7 w-7 text-red-400 hover:text-red-300"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                      </div>
 
-                      {plan.description && (
-                        <p className="text-xs text-zinc-400 line-clamp-2">
-                          {plan.description}
-                        </p>
-                      )}
-
-                      <div className="pt-2 flex items-baseline gap-2">
-                        <span className="text-lg font-bold text-emerald-400">
-                          ₹{plan.price.toLocaleString("en-IN")}
-                        </span>
-                        {plan.originalPrice && (
-                          <span className="text-xs text-zinc-500 line-through">
-                            ₹{plan.originalPrice.toLocaleString("en-IN")}
-                          </span>
+                        {plan.features && plan.features.length > 0 && (
+                          <div className="pt-1 flex items-center gap-2 text-[11px] text-gray-500">
+                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            <span>{plan.features.length} features included</span>
+                          </div>
                         )}
                       </div>
-                    </div>
 
-                    <div className="pt-4 border-t border-zinc-800/60 mt-3 flex items-center justify-between text-xs text-zinc-400">
-                      <span>{plan.isActive ? "Active" : "Disabled"}</span>
-                      <Switch
-                        checked={plan.isActive}
-                        onCheckedChange={() => handleToggleActive(plan)}
-                      />
+                      <div className="pt-3 border-t border-gray-100 mt-3.5 flex items-center justify-between text-xs text-gray-600">
+                        <span className="font-medium flex items-center gap-1.5">
+                          <span
+                            className={cn(
+                              "w-2 h-2 rounded-full",
+                              plan.isActive ? "bg-emerald-500" : "bg-gray-300"
+                            )}
+                          />
+                          {plan.isActive ? "Active on Checkout" : "Disabled (Draft)"}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={plan.isActive}
+                            onCheckedChange={() => handleToggleActive(plan)}
+                          />
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
+          </div>
+
+          <div className="px-6 py-3.5 border-t border-gray-100 bg-gray-50/70 flex items-center justify-end shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+              className="border-gray-300 text-gray-700 hover:bg-white text-xs"
+            >
+              Close
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -29,6 +29,7 @@ import {
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { uploadFileViaSignedUrl } from "@/lib/storage/client";
+import { cn } from "@/lib/utils";
 
 export interface SprintMentorItem {
   id: string;
@@ -260,58 +261,62 @@ export default function SprintMentorManager({
   return (
     <>
       <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
-        <DialogContent className="max-w-3xl bg-zinc-900 border-zinc-800 text-white max-h-[85vh] overflow-y-auto flex flex-col">
-          <DialogHeader>
-            <div className="flex items-center justify-between pr-6">
+        <DialogContent className="w-full max-w-[96vw] sm:max-w-2xl md:max-w-3xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden bg-white text-gray-900 border border-gray-200 shadow-xl rounded-2xl">
+          <DialogHeader className="px-5 sm:px-6 py-4 border-b border-gray-100 shrink-0 bg-white">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pr-6 sm:pr-8">
               <div>
-                <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                  <Users className="w-5 h-5 text-blue-400" />
+                <DialogTitle className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-blue-600 shrink-0" />
                   Sprint Mentors
                 </DialogTitle>
-                <p className="text-xs text-zinc-400 mt-1">
-                  Managing mentors for: <span className="text-white font-medium">{sprintTitle}</span>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Managing mentors for: <span className="text-gray-900 font-semibold">{sprintTitle}</span>
                 </p>
               </div>
-              <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${
-                mentors.length === 2
-                  ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                  : mentors.length === 1
-                  ? "bg-blue-500/10 text-blue-400 border-blue-500/30"
-                  : "bg-zinc-800 text-zinc-400 border-zinc-700"
-              }`}>
+              <span
+                className={cn(
+                  "px-2.5 py-1 text-xs font-semibold rounded-full border self-start sm:self-auto shrink-0",
+                  mentors.length === 2
+                    ? "bg-amber-50 text-amber-700 border-amber-200"
+                    : mentors.length === 1
+                    ? "bg-blue-50 text-blue-700 border-blue-200"
+                    : "bg-gray-100 text-gray-600 border-gray-200"
+                )}
+              >
                 {mentors.length} / 2 Mentors Added (Max 2)
               </span>
             </div>
           </DialogHeader>
 
           {/* Action Bar */}
-          <div className="flex items-center justify-between py-3 border-b border-zinc-800">
-            <div className="text-xs text-zinc-400">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 sm:px-6 py-3 border-b border-gray-100 bg-gray-50/50">
+            <div className="text-xs text-gray-500">
               {mentors.length === 0 ? (
                 <span>No mentors added yet. Click &quot;Add Mentor&quot; to begin.</span>
               ) : mentors.length === 1 ? (
                 <span>1 mentor added (will appear centered or tilted). You can add 1 more.</span>
               ) : (
-                <span>2 mentors added. Card 1 tilts left, Card 2 tilts right on the detail page.</span>
+                <span>2 mentors added. Card 1 tilts left (-2°), Card 2 tilts right (+2°) on the detail page.</span>
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
               <Button
                 size="sm"
                 variant="outline"
                 onClick={fetchMentors}
                 disabled={loading}
-                className="border-zinc-700 text-zinc-300 hover:text-white"
+                className="border-gray-300 text-gray-700 hover:bg-white text-xs h-8"
                 title="Refresh"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+                <RefreshCw className={`w-3.5 h-3.5 mr-1 ${loading ? "animate-spin" : ""}`} />
+                Refresh
               </Button>
               <Button
                 size="sm"
                 onClick={handleOpenCreate}
                 disabled={mentors.length >= 2}
-                className="bg-[#ff5e14] hover:bg-[#e04f0b] text-white text-xs gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold gap-1.5 h-8 shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus className="w-3.5 h-3.5" /> Add Mentor
               </Button>
@@ -319,56 +324,73 @@ export default function SprintMentorManager({
           </div>
 
           {/* Mentors List */}
-          <div className="space-y-3 py-4 flex-1">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 bg-gray-50/40">
             {loading && mentors.length === 0 ? (
               <div className="space-y-3">
-                <Skeleton className="h-24 w-full bg-zinc-800" />
-                <Skeleton className="h-24 w-full bg-zinc-800" />
+                <Skeleton className="h-28 w-full bg-gray-200/70 rounded-xl" />
+                <Skeleton className="h-28 w-full bg-gray-200/70 rounded-xl" />
               </div>
             ) : mentors.length === 0 ? (
-              <div className="py-12 text-center text-zinc-500 border border-dashed border-zinc-800 rounded-xl space-y-2">
-                <Users className="w-8 h-8 text-zinc-600 mx-auto" />
-                <p className="text-sm font-medium">No mentors added for this sprint yet</p>
-                <p className="text-xs text-zinc-500">
+              <div className="py-12 px-4 text-center border-2 border-dashed border-gray-200 rounded-2xl bg-white shadow-xs space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mx-auto text-blue-600">
+                  <Users className="w-6 h-6" />
+                </div>
+                <h4 className="text-sm font-bold text-gray-900">No mentors added for this sprint yet</h4>
+                <p className="text-xs text-gray-500 max-w-sm mx-auto leading-relaxed">
                   Add up to 2 mentors. The cards will display on the sprint detail page with dynamic opposing tilts.
                 </p>
+                <div className="pt-2">
+                  <Button
+                    size="sm"
+                    onClick={handleOpenCreate}
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold gap-1.5"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add First Mentor
+                  </Button>
+                </div>
               </div>
             ) : (
               mentors.map((mentor, index) => (
                 <div
                   key={mentor.id}
-                  className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-zinc-700 transition"
+                  className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-gray-300 hover:shadow-xs transition-all"
                 >
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
                     {/* Position & Tilt Badge */}
                     <div className="flex flex-col items-center justify-center shrink-0 w-16 text-center">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
                         {index === 0 ? "Left Card" : "Right Card"}
                       </span>
-                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded mt-0.5 ${
-                        index === 0 ? "bg-blue-500/20 text-blue-300" : "bg-purple-500/20 text-purple-300"
-                      }`}>
+                      <span
+                        className={cn(
+                          "text-[10px] font-mono font-bold px-2 py-0.5 rounded-full mt-1 border",
+                          index === 0
+                            ? "bg-blue-50 text-blue-700 border-blue-200"
+                            : "bg-purple-50 text-purple-700 border-purple-200"
+                        )}
+                      >
                         {index === 0 ? "Tilt -2°" : "Tilt +2°"}
                       </span>
                     </div>
 
                     {/* Mentor Image Preview */}
-                    <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 shrink-0 flex items-center justify-center">
+                    <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-gray-100 border border-gray-200 shrink-0 flex items-center justify-center shadow-xs">
                       {mentor.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={mentor.imageUrl}
                           alt={mentor.name}
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <Users className="w-6 h-6 text-zinc-600" />
+                        <Users className="w-6 h-6 text-gray-400" />
                       )}
                     </div>
 
                     {/* Mentor Details */}
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-sm text-white truncate">
+                        <h4 className="font-bold text-sm sm:text-base text-gray-900 truncate">
                           {mentor.name}
                         </h4>
                         {mentor.link && (
@@ -376,7 +398,7 @@ export default function SprintMentorManager({
                             href={mentor.link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-400 hover:text-blue-300"
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-1 rounded-md transition"
                             title="LinkedIn Profile"
                           >
                             <Linkedin className="w-3.5 h-3.5" />
@@ -384,12 +406,12 @@ export default function SprintMentorManager({
                         )}
                       </div>
                       {mentor.role && (
-                        <p className="text-xs text-[#ff5e14] font-medium truncate">
+                        <p className="text-xs text-orange-600 font-semibold truncate">
                           {mentor.role}
                         </p>
                       )}
                       {mentor.bio && (
-                        <p className="text-xs text-zinc-400 line-clamp-1">
+                        <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
                           {mentor.bio}
                         </p>
                       )}
@@ -397,13 +419,13 @@ export default function SprintMentorManager({
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0">
+                  <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100 w-full sm:w-auto justify-end">
                     <Button
                       size="sm"
                       variant="ghost"
                       disabled={index === 0}
                       onClick={() => handleMove(index, "up")}
-                      className="h-8 w-8 p-0 text-zinc-400 hover:text-white disabled:opacity-30"
+                      className="h-8 w-8 p-0 text-gray-500 hover:text-gray-900 hover:bg-gray-100 disabled:opacity-30 rounded-lg"
                       title="Move Up (Left Card)"
                     >
                       <ArrowUp className="w-3.5 h-3.5" />
@@ -413,7 +435,7 @@ export default function SprintMentorManager({
                       variant="ghost"
                       disabled={index === mentors.length - 1}
                       onClick={() => handleMove(index, "down")}
-                      className="h-8 w-8 p-0 text-zinc-400 hover:text-white disabled:opacity-30"
+                      className="h-8 w-8 p-0 text-gray-500 hover:text-gray-900 hover:bg-gray-100 disabled:opacity-30 rounded-lg"
                       title="Move Down (Right Card)"
                     >
                       <ArrowDown className="w-3.5 h-3.5" />
@@ -422,7 +444,7 @@ export default function SprintMentorManager({
                       size="sm"
                       variant="outline"
                       onClick={() => handleOpenEdit(mentor)}
-                      className="h-8 text-xs border-zinc-700 text-zinc-300 hover:text-white gap-1"
+                      className="h-8 text-xs border-gray-300 text-gray-700 hover:bg-gray-50 gap-1 rounded-lg"
                     >
                       <Edit className="w-3 h-3" /> Edit
                     </Button>
@@ -430,7 +452,7 @@ export default function SprintMentorManager({
                       size="sm"
                       variant="ghost"
                       onClick={() => handleDeleteMentor(mentor.id)}
-                      className="h-8 text-xs text-red-400 hover:text-red-300 hover:bg-red-950/40 p-2"
+                      className="h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg"
                       title="Delete Mentor"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -441,59 +463,69 @@ export default function SprintMentorManager({
             )}
           </div>
 
-          <DialogFooter className="border-t border-zinc-800 pt-4">
-            <Button variant="outline" onClick={onClose} className="border-zinc-700 text-zinc-300">
+          <div className="px-6 py-3.5 border-t border-gray-100 bg-gray-50/70 flex items-center justify-end shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+              className="border-gray-300 text-gray-700 hover:bg-white text-xs"
+            >
               Close
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Add / Edit Mentor Dialog */}
       <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
-        <DialogContent className="max-w-lg bg-zinc-900 border-zinc-800 text-white">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold">
+        <DialogContent className="w-full max-w-[96vw] sm:max-w-lg max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden bg-white text-gray-900 border border-gray-200 shadow-xl rounded-2xl">
+          <DialogHeader className="px-5 sm:px-6 py-4 border-b border-gray-100 shrink-0 bg-white">
+            <DialogTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <Users className="w-4 h-4 text-blue-600" />
               {editingMentor ? "Edit Sprint Mentor" : "Add Sprint Mentor"}
             </DialogTitle>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Fill in mentor details to display on the sprint registration page.
+            </p>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
+          <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-4">
             <div>
-              <Label className="text-xs text-zinc-400">Mentor Name *</Label>
+              <Label className="text-xs font-semibold text-gray-700">Mentor Name *</Label>
               <Input
                 placeholder="e.g., Alex Rivera"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="bg-zinc-950 border-zinc-800 text-sm mt-1"
+                className="mt-1 bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-500/20 text-sm"
               />
             </div>
 
             <div>
-              <Label className="text-xs text-zinc-400">Role / Tagline</Label>
+              <Label className="text-xs font-semibold text-gray-700">Role / Tagline</Label>
               <Input
                 placeholder="e.g., Growth Lead, Ex-Swiggy"
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="bg-zinc-950 border-zinc-800 text-sm mt-1"
+                className="mt-1 bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-500/20 text-sm"
               />
             </div>
 
             {/* Mentor Image Upload */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="text-xs text-zinc-400">Mentor Photo (Full Card Image)</Label>
+                <Label className="text-xs font-semibold text-gray-700">Mentor Photo (Full Card Image)</Label>
                 <button
                   type="button"
                   onClick={() => setShowUrlInput(!showUrlInput)}
-                  className="text-[11px] text-zinc-400 hover:text-zinc-200 underline"
+                  className="text-[11px] text-blue-600 hover:text-blue-700 underline font-medium"
                 >
                   {showUrlInput ? "Use File Upload" : "Or enter Image URL"}
                 </button>
               </div>
 
               {formData.imageUrl && (
-                <div className="relative w-full h-44 rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 group flex items-center justify-center">
+                <div className="relative w-full h-44 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 group flex items-center justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={formData.imageUrl}
                     alt="Mentor preview"
@@ -505,7 +537,7 @@ export default function SprintMentorManager({
                       size="sm"
                       variant="secondary"
                       onClick={() => fileInputRef.current?.click()}
-                      className="text-xs"
+                      className="text-xs bg-white text-gray-900 hover:bg-gray-100"
                     >
                       Replace Image
                     </Button>
@@ -525,9 +557,10 @@ export default function SprintMentorManager({
               {!formData.imageUrl && !showUrlInput && (
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className={`border-2 border-dashed border-zinc-800 hover:border-zinc-600 rounded-xl p-6 text-center cursor-pointer bg-zinc-950/60 transition ${
-                    isUploadingImage ? "opacity-50 pointer-events-none" : ""
-                  }`}
+                  className={cn(
+                    "border-2 border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50/20 rounded-xl p-6 text-center cursor-pointer bg-gray-50/60 transition",
+                    isUploadingImage && "opacity-50 pointer-events-none"
+                  )}
                 >
                   <input
                     ref={fileInputRef}
@@ -538,18 +571,20 @@ export default function SprintMentorManager({
                   />
                   {isUploadingImage ? (
                     <div className="space-y-2 flex flex-col items-center">
-                      <Loader2 className="w-7 h-7 text-[#ff5e14] animate-spin" />
-                      <p className="text-xs text-zinc-400">
+                      <Loader2 className="w-7 h-7 text-blue-600 animate-spin" />
+                      <p className="text-xs text-gray-600 font-medium">
                         Uploading photo... {uploadProgress > 0 ? `${uploadProgress}%` : ""}
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-2 flex flex-col items-center">
-                      <UploadCloud className="w-8 h-8 text-zinc-500" />
-                      <p className="text-xs font-semibold text-zinc-300">
+                      <div className="w-10 h-10 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+                        <UploadCloud className="w-5 h-5" />
+                      </div>
+                      <p className="text-xs font-semibold text-gray-800">
                         Click to upload mentor photo
                       </p>
-                      <p className="text-[11px] text-zinc-500">
+                      <p className="text-[11px] text-gray-500">
                         PNG, JPG, WebP up to 5MB (Portrait/Vertical image recommended)
                       </p>
                     </div>
@@ -563,14 +598,14 @@ export default function SprintMentorManager({
                     placeholder="https://..."
                     value={formData.imageUrl}
                     onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                    className="bg-zinc-950 border-zinc-800 text-sm"
+                    className="bg-white border-gray-300 text-gray-900 text-sm"
                   />
                   {formData.imageUrl && (
                     <a
                       href={formData.imageUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 text-zinc-400 hover:text-white"
+                      className="p-2 text-gray-500 hover:text-gray-900"
                       title="Open image in new tab"
                     >
                       <ExternalLink className="w-4 h-4" />
@@ -581,44 +616,46 @@ export default function SprintMentorManager({
             </div>
 
             <div>
-              <Label className="text-xs text-zinc-400 flex items-center gap-1.5">
-                <Linkedin className="w-3.5 h-3.5 text-blue-400" />
+              <Label className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
+                <Linkedin className="w-3.5 h-3.5 text-blue-600" />
                 LinkedIn Profile URL
               </Label>
               <Input
                 placeholder="https://www.linkedin.com/in/username"
                 value={formData.link}
                 onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-                className="bg-zinc-950 border-zinc-800 text-sm mt-1"
+                className="mt-1 bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-500/20 text-sm"
               />
             </div>
 
             <div>
-              <Label className="text-xs text-zinc-400">Bio (Optional brief intro)</Label>
+              <Label className="text-xs font-semibold text-gray-700">Bio (Optional brief intro)</Label>
               <Textarea
                 placeholder="Brief summary of mentor's background and achievements..."
                 value={formData.bio}
                 onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                rows={2}
-                className="bg-zinc-950 border-zinc-800 text-sm mt-1"
+                rows={3}
+                className="mt-1 bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-500/20 text-sm resize-y"
               />
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="px-5 sm:px-6 py-3.5 border-t border-gray-100 bg-gray-50/70 flex items-center justify-end gap-2 shrink-0">
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={() => setFormDialogOpen(false)}
-              className="border-zinc-700 text-zinc-300"
+              className="border-gray-300 text-gray-700 hover:bg-white text-xs"
             >
               Cancel
             </Button>
             <Button
               type="button"
+              size="sm"
               onClick={handleSaveMentor}
               disabled={saving || isUploadingImage}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs gap-1.5 shadow-xs"
             >
               {saving ? (
                 <>

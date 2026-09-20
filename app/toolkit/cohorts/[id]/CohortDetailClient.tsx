@@ -494,6 +494,20 @@ export default function CohortDetailClient() {
       // block interaction with the payment popup (rage-click fix).
       setIsDrawerOpen(false);
       const rzp = new (window as any).Razorpay(options);
+
+      rzp.on("payment.failed", async function (failureData: any) {
+        console.error("Razorpay payment failed:", failureData);
+        toast.error(failureData?.error?.description || "Payment failed");
+        try {
+          await axios.post(`/api/cohorts/${cohort.id}/checkout/failed`, {
+            razorpay_order_id: order.id,
+            reason: failureData?.error?.description || "Payment failed",
+          });
+        } catch (logErr) {
+          console.error("Failed to log payment failure:", logErr);
+        }
+      });
+
       rzp.open();
     } catch (err: any) {
       console.error(err);

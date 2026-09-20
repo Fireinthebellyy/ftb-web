@@ -54,7 +54,6 @@ export async function GET() {
       .leftJoin(cohortTiers, eq(cohortOrders.selectedTierId, cohortTiers.id))
       .leftJoin(cohortUpgradePlans, eq(cohortOrders.selectedUpgradePlanId, cohortUpgradePlans.id))
       .leftJoin(coupons, eq(cohortOrders.couponId, coupons.id))
-      .where(eq(cohortOrders.status, "paid"))
       .orderBy(desc(cohortOrders.createdAt));
 
     return NextResponse.json(orders);

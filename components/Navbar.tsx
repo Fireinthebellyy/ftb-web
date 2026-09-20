@@ -194,7 +194,10 @@ export default function Navbar() {
     return null;
   }
 
-  if (/\/toolkit\/cohorts\/[^/]+\/registration$/.test(pathname || "")) {
+  if (
+    /\/toolkit\/cohorts\/[^/]+\/registration$/.test(pathname || "") ||
+    /\/toolkit\/sprints\/[^/]+\/registration$/.test(pathname || "")
+  ) {
     return null;
   }
 

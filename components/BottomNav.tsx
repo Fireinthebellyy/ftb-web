@@ -27,7 +27,7 @@ export default function BottomNav() {
     return null;
   }
 
-  if (normalizedPathname.startsWith("/toolkit/cohorts/")) {
+  if (normalizedPathname.startsWith("/toolkit/cohorts/") || normalizedPathname.startsWith("/toolkit/sprints/")) {
     return null;
   }
 

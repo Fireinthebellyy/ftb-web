@@ -20,7 +20,6 @@ import {
   Play,
   HelpCircle,
   MessageSquare,
-  ExternalLink,
   Users,
 } from "lucide-react";
 import { Drawer } from "vaul";

@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import ToolkitPageClient from "./ToolkitPageClient";
+import { db } from "@/lib/db";
+import { toolkitTestimonialImages } from "@/lib/schema";
+import { asc, eq } from "drizzle-orm";
 
 export const metadata: Metadata = {
   title: "Toolkits — Career Playbooks That Actually Work",
@@ -26,6 +29,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ToolkitPage() {
-  return <ToolkitPageClient />;
+export default async function ToolkitPage() {
+  const testimonialImages = await db
+    .select({
+      imageUrl: toolkitTestimonialImages.imageUrl,
+    })
+    .from(toolkitTestimonialImages)
+    .where(eq(toolkitTestimonialImages.isActive, true))
+    .orderBy(asc(toolkitTestimonialImages.orderIndex));
+
+  return (
+    <ToolkitPageClient
+      testimonialImages={testimonialImages.map((item) => item.imageUrl)}
+    />
+  );
 }

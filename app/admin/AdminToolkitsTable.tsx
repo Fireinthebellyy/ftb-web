@@ -23,6 +23,8 @@ import ToolkitCommunityManager from "./ToolkitCommunityManager";
 import ToolkitContentManager from "./ToolkitContentManager";
 import { TestimonialCarouselManager } from "@/components/admin/TestimonialCarouselManager";
 import { MentorshipCarouselManager } from "@/components/admin/MentorshipCarouselManager";
+import { ToolkitMainTestimonialsManager } from "@/components/admin/ToolkitMainTestimonialsManager";
+import { ToolkitPosterManager } from "@/components/admin/ToolkitPosterManager";
 import ToolkitTabsEditDialog from "./ToolkitTabsEditDialog";
 import SessionApplicationsManager from "@/components/admin/SessionApplicationsManager";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
@@ -70,6 +72,9 @@ export default function AdminToolkitsTable() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [carouselManagerOpen, setCarouselManagerOpen] = useState(false);
   const [testimonialManagerOpen, setTestimonialManagerOpen] = useState(false);
+  const [toolkitMainTestimonialsOpen, setToolkitMainTestimonialsOpen] =
+  useState(false);
+  const [toolkitPosterOpen, setToolkitPosterOpen] = useState(false);
   const [editingToolkit, setEditingToolkit] = useState<Toolkit | null>(null);
   const [contentManagerOpen, setContentManagerOpen] = useState(false);
   const [communityManagerOpen, setCommunityManagerOpen] = useState(false);
@@ -673,6 +678,20 @@ export default function AdminToolkitsTable() {
           <Button variant="outline" className="gap-2 bg-white" onClick={() => setTestimonialManagerOpen(true)}>
             Testimonial Images
           </Button>
+          <Button
+            variant="outline"
+            className="gap-2 bg-white"
+            onClick={() => setToolkitMainTestimonialsOpen(true)}
+            >
+            Toolkit Main Testimonials
+          </Button>
+          <Button
+            variant="outline"
+            className="gap-2 bg-white"
+            onClick={() => setToolkitPosterOpen(true)}
+          >
+           Poster
+          </Button>
           <ToolkitTabsEditDialog />
           <NewBundleModal
             onSuccess={() =>
@@ -813,6 +832,14 @@ export default function AdminToolkitsTable() {
       <TestimonialCarouselManager
         open={testimonialManagerOpen}
         onClose={() => setTestimonialManagerOpen(false)}
+      />
+      <ToolkitMainTestimonialsManager
+      open={toolkitMainTestimonialsOpen}
+      onClose={() => setToolkitMainTestimonialsOpen(false)}
+      />
+      <ToolkitPosterManager
+      open={toolkitPosterOpen}
+      onClose={() => setToolkitPosterOpen(false)}
       />
     </AdminTabLayout>
   );

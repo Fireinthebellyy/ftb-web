@@ -28,9 +28,17 @@ import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/use-session";
 import { extractRichTextPlainText } from "@/lib/rich-text";
 import { motion, AnimatePresence } from "framer-motion";
-import { StackedTestimonials } from "@/components/toolkit/StackedTestimonials";
+import { StackedTestimonials } from "@/components/toolkit/StackedTestimonials"; 
+import { ToolkitTestimonials } from "@/components/toolkit/ToolkitTestimonials";
 import ToolkitStudentFeedback from "@/components/toolkit/ToolkitStudentFeedback";
 import { getVideoEmbedInfo } from "@/lib/video-embed";
+import { Caveat } from "next/font/google";
+
+const caveat = Caveat({
+  weight: ["400", "700"],
+  variable: "--font-caveat",
+  subsets: ["latin"],
+});
 
 export function getDuoPricing(singlePrice: number) {
   if (!singlePrice || singlePrice <= 0) {
@@ -142,6 +150,13 @@ export default function SprintDetailClient() {
 
   const [sprint, setSprint] = useState<SprintData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const loadingMessages = [
+  'Becoming the "Zomato" of Marketing',
+  "The marketing headstart you deserve",
+  "Let's build something banger in marketing",
+  
+  ];
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [showSeatsPop, setShowSeatsPop] = useState(false);
   const [isBuddyOfferGlobalEnabled, setIsBuddyOfferGlobalEnabled] = useState(false);
   const [buddyOfferTitle, setBuddyOfferTitle] = useState("Friendship Day Offer");
@@ -189,6 +204,7 @@ export default function SprintDetailClient() {
 
   // Cover Image Carousel states
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [lastCohortPoster, setLastCohortPoster] = useState<string | null>(null);
 
   useEffect(() => {
     if (!sprint || !sprint.coverImageUrls || sprint.coverImageUrls.length <= 1) return;
@@ -220,6 +236,8 @@ export default function SprintDetailClient() {
         const response = await axios.get(`/api/sprints/${sprintId}`);
         const data = response.data;
         setSprint(data);
+        const posterResponse = await axios.get("/api/toolkit-last-cohort-poster");
+        setLastCohortPoster(posterResponse.data?.imageUrl ?? null);
 
         // Auto-select default tier
         const defaultTier = data.tiers?.find((t: Tier) => t.isDefault) || data.tiers?.[0];
@@ -230,8 +248,8 @@ export default function SprintDetailClient() {
         console.error(err);
         toast.error("Failed to load sprint details");
       } finally {
-        setIsLoading(false);
-      }
+  setIsLoading(false);
+}
     };
 
     const fetchLiveToolkits = async () => {
@@ -275,6 +293,23 @@ export default function SprintDetailClient() {
     }
   }, [session]);
 
+  useEffect(() => {
+  if (!isLoading && !sessionPending) return;
+
+  let timeout: NodeJS.Timeout;
+
+  const cycleMessage = (index: number) => {
+    timeout = setTimeout(() => {
+      const nextIndex = (index + 1) % loadingMessages.length;
+      setLoadingMessageIndex(nextIndex);
+      cycleMessage(nextIndex);
+    }, 1800);
+  };
+
+  cycleMessage(0);
+
+  return () => clearTimeout(timeout);
+}, [isLoading, sessionPending]);
 
 
   if (isLoading || sessionPending) {
@@ -282,7 +317,9 @@ export default function SprintDetailClient() {
       <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center">
         <div className="text-center space-y-2">
           <Loader2 className="w-8 h-8 animate-spin text-[#ff5e14] mx-auto" />
-          <p className="text-sm font-semibold text-gray-500">Saath milke phodoge? Lessgooo...</p>
+          <p className="text-sm font-semibold text-gray-500">
+  {loadingMessages[loadingMessageIndex]}
+</p>
         </div>
       </div>
     );
@@ -527,29 +564,21 @@ export default function SprintDetailClient() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] text-[#1A1A1A] pb-24 font-sans antialiased">
-      {/* Marquee Banner */}
-      {sprint.hasEarlyBird && (
-        <div className="w-full bg-[#ff5e14] text-white py-2.5 overflow-hidden relative font-extrabold text-[10px] sm:text-xs uppercase tracking-widest border-b border-orange-600/20 shadow-sm select-none shrink-0 z-30">
-          <div className="marquee-container flex">
-            <div className="animate-marquee flex whitespace-nowrap gap-8">
-              {Array(10).fill("Early Bird Offer! Get 20% off with Buddy Referral").map((text, i) => (
-                <span key={i} className="flex items-center gap-4 shrink-0">
-                  <span>{text}</span>
-                  <span className="text-orange-300 font-black">•</span>
-                </span>
-              ))}
-            </div>
-            <div className="animate-marquee flex whitespace-nowrap gap-8" aria-hidden="true">
-              {Array(10).fill("Early Bird Offer! Get 20% off with Buddy Referral").map((text, i) => (
-                <span key={i} className="flex items-center gap-4 shrink-0">
-                  <span>{text}</span>
-                  <span className="text-orange-300 font-black">•</span>
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Sprint Category Label */}
+      <div className="bg-white px-4 py-4 sm:py-5 overflow-hidden">
+        <motion.div
+          initial={{ x: -80, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+          className="w-fit ml-4 md:ml-4 lg:ml-8 flex items-center gap-3"
+        >
+          <div className="h-7 w-1 bg-[#ff5e14] rounded-full shrink-0" />
+
+          <h2 className="text-lg sm:text-2xl font-bold tracking-tight text-gray-900">
+            {sprint.title}
+          </h2>
+        </motion.div>
+      </div>
 
       {/* 1. Top Banner Section (Video Support with Cover Image Fallback) */}
       {(() => {
@@ -723,38 +752,8 @@ export default function SprintDetailClient() {
       {/* Sprint Header Info Block */}
       <div className="border-b border-gray-200 bg-white shadow-sm">
         <div className="max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 py-6 sm:py-8 space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-orange-100 text-[#ff5e14] border border-orange-200">
-              Sprint Program
-            </span>
-            {sprint.badge1 && (
-              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-blue-100 text-blue-700 border border-blue-200">
-                {sprint.badge1}
-              </span>
-            )}
-            {sprint.badge2 && (
-              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-purple-100 text-purple-700 border border-purple-200">
-                {sprint.badge2}
-              </span>
-            )}
-            {sprint.isBestSeller && (
-              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200">
-                Best Seller
-              </span>
-            )}
-            {sprint.isFillingFast && (
-              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-rose-100 text-rose-700 border border-rose-200">
-                Filling Fast
-              </span>
-            )}
-          </div>
-
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-gray-900 leading-tight">
-            {sprint.title}
-          </h1>
-
           {sprint.subtitle && (
-            <p className="text-sm md:text-base text-gray-600 leading-relaxed">
+            <p className="text-sm sm:text-sm md:text-base tracking-tight text-gray-600 leading-tight italic">
               {sprint.subtitle}
             </p>
           )}
@@ -764,17 +763,114 @@ export default function SprintDetailClient() {
               Starts on: <span className="text-gray-900 font-bold">{sprint.startDate}</span>
             </div>
           )}
+          
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-orange-100 text-[#ff5e14] border border-orange-200 ">
+              Sprint Program
+            </span>
+            {sprint.badge1 && (
+              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-blue-100 text-blue-700 border border-blue-200">
+                {sprint.badge1}
+              </span>
+            )}
+            {sprint.badge2 && (
+              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-purple-100 text-purple-700 border border-purple-200 ">
+                {sprint.badge2}
+              </span>
+            )}
+            {sprint.isBestSeller && (
+              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200 animate-pulse">
+                Best Seller
+              </span>
+            )}
+            {sprint.isFillingFast && (
+              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-red-200 text-red-900 border border-red-300 animate-pulse">
+                Filling Fast
+              </span>
+            )}
+          </div>
+
         </div>
       </div>
 
       {/* Main Responsive Grid Container */}
       <main className="max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 py-8 space-y-12">
+
+          {/* What's The Buzz Section */}
+          {sprint.features && sprint.features.length > 0 && (
+            <section className="space-y-4">
+              <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900">
+                What&apos;s The {" "}
+                <span className={` text-[#ff5e14] `}>
+                  Buzz?
+                </span>
+              </h2>
+
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+              {sprint.features?.slice(0, 3).map((feature) => {
+              const descriptionPoints = Array.isArray(feature.description)
+                ? feature.description
+                : [feature.description];
+
+              return (
+                <div
+                  key={feature.id || feature.title}
+                  className="relative overflow-hidden rounded-2xl border border-orange-200 bg-white shadow-sm"
+                >
+                  <div className="p-5 md:p-6">
+                    <h3 className="text-sm md:text-base font-bold text-gray-900 leading-snug pl-1">
+                      {feature.title}
+                    </h3>
+
+                    <div className="mt-2 space-y-1 text-xs md:text-base text-gray-600 leading-relaxed pl-1">
+                      {descriptionPoints.map((point, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-[#ff5e14]" />
+                          <span className="-mt-2" >{point}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                );
+              })}
+              </div>
+            </section>
+          )}
+
+        {/* Who Is This For Section */}
+        {sprint.whoIsThisForBullets && sprint.whoIsThisForBullets.length > 0 && (
+          <section className="space-y-4">
+            <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-black pb-1 inline-block">
+              Who Is This For?{" "}
+              <span className={`${caveat.className} text-[#ff5e14] text-2xl md:text-3xl`}>
+                (You, obviously.)
+              </span>
+            </h2>
+
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm">
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {sprint.whoIsThisForBullets.map((bullet, index) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-100 text-[#ff5e14] text-xs font-bold mt-0.5">
+                      {index + 1}
+                    </span>
+                    <span className="text-sm text-gray-650 leading-relaxed text-justify">
+                      {bullet}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
+
         {/* 2. Meet Your Mentors Section (Max 2 Mentors, Opposing Tilt Cards, Full Image & LinkedIn Link) */}
         {sprint.mentors && sprint.mentors.length > 0 && (
-          <section className="space-y-6">
+          <section className="space-y-4">
             <div className="flex justify-between items-baseline">
-              <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-b-2 border-black pb-1">
-                {sprint.mentorsHeading || "Meet Your Mentors"}
+              <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900">
+                Meet Your <span className={` text-[#ff5e14] `}>Mentors</span>
               </h2>
             </div>
 
@@ -844,23 +940,15 @@ export default function SprintDetailClient() {
                         )}
                       </div>
 
-                      {mentor.link ? (
+                      {mentor.link && (
                         <a
                           href={mentor.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-full py-1.5 px-2 sm:py-2.5 sm:px-4 rounded-lg sm:rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[11px] sm:text-xs flex items-center justify-between transition-colors border border-blue-200/70 shadow-xs group/btn"
+                          className="text-gray-400 hover:text-gray-700 text-sm mt-3 flex items-center gap-0.5 font-medium border-t border-gray-100 w-full justify-center pt-2.5"
                         >
-                          <span className="flex items-center gap-1.5 sm:gap-2 truncate">
-                            <Linkedin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#0077B5] fill-current shrink-0" />
-                            <span className="truncate">LinkedIn</span>
-                          </span>
-                          <ExternalLink className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600 shrink-0 ml-1 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
+                          <Linkedin className="w-4 h-4 text-blue-700" /> profile
                         </a>
-                      ) : (
-                        <div className="py-0.5 text-[10px] sm:text-[11px] text-gray-400 font-medium">
-                          Program Mentor
-                        </div>
                       )}
                     </div>
                   </div>
@@ -870,94 +958,7 @@ export default function SprintDetailClient() {
           </section>
         )}
 
-        {/* Sprint Curriculum / Sessions Section */}
-        {sprint.sessions && sprint.sessions.length > 0 && (
-          <section className="space-y-6">
-            <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-b-2 border-black pb-1 inline-block">
-              {sprint.sessionsHeading || "Sprint Sessions & Curriculum"}
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {sprint.sessions.map((session, index) => (
-                <div
-                  key={session.id}
-                  className="relative overflow-hidden bg-white rounded-xl border border-gray-100 p-5 pt-7 flex gap-4 items-start shadow-sm hover:shadow transition"
-                >
-                  <div className="absolute top-0 right-0 z-10">
-                    <span className="bg-[#ff5e14] text-white rounded-tr-none rounded-bl-xl px-3 py-1 text-[10px] font-bold uppercase tracking-wider">
-                      Session {index + 1}
-                    </span>
-                  </div>
-                  <div className="space-y-1.5 flex-1">
-                    <div className="flex justify-between items-start gap-2">
-                      <h3 className="font-bold text-gray-900 text-sm md:text-base leading-snug pr-16">
-                        {session.title}
-                      </h3>
-                    </div>
-                    <p className="text-xs md:text-sm text-gray-500 leading-relaxed">
-                      {session.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* What You Get Section */}
-        {sprint.features && sprint.features.length > 0 && (
-          <section className="space-y-6">
-            <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-b-2 border-black pb-1 inline-block">
-              {sprint.featuresHeading || "What You Get"}
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {sprint.features.map((feature) => (
-                <div
-                  key={feature.id}
-                  className="bg-white rounded-xl border border-gray-100 p-4 flex gap-4 items-start shadow-sm hover:shadow transition"
-                >
-                  <div className="bg-orange-50 text-[#ff5e14] p-2.5 rounded-full shrink-0">
-                    <CheckCircle className="w-5 h-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-gray-900 text-sm md:text-base">
-                      {feature.title}
-                    </h3>
-                    <p className="text-xs md:text-sm text-gray-500 leading-relaxed">
-                      {feature.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Who Is This For Section */}
-        {sprint.whoIsThisForBullets && sprint.whoIsThisForBullets.length > 0 && (
-          <section className="space-y-6">
-            <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-b-2 border-black pb-1 inline-block">
-              {sprint.whoIsThisForHeading || "Who Is This For?"}
-            </h2>
-
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm">
-              <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {sprint.whoIsThisForBullets.map((bullet, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-100 text-[#ff5e14] text-xs font-bold mt-0.5">
-                      {index + 1}
-                    </span>
-                    <span className="text-sm text-gray-650 leading-relaxed text-justify">
-                      {bullet}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </section>
-        )}
-
+        
         {/* Buddy Program Referral Card */}
         {isBuddyOfferGlobalEnabled && (
           <section className="bg-gradient-to-r from-orange-500 to-[#ff5e14] rounded-2xl p-6 md:p-8 text-white shadow-lg flex flex-col md:flex-row justify-between items-center gap-6 mt-8">
@@ -1082,26 +1083,20 @@ export default function SprintDetailClient() {
         )}
 
         {/* FAQs & Testimonials Interactive Section */}
-        <section className="space-y-6 pt-6">
+        <section className="space-y-4 pt-6">
           {/* Quick Navigation Toggle */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-200/80 pb-4">
-            <div>
-              <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-b-2 border-black pb-1 inline-block">
-                {activeCommunityTab === "faqs"
-                  ? (sprint.faqsHeading || "Frequently Asked Questions")
-                  : (sprint.testimonialsHeading || "What Members Say About Our Ecosystem")}
-              </h2>
-            </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-center gap-4 border-b border-gray-200/80 pb-4">
+          
 
-            <div className="inline-flex p-1 bg-gray-100 rounded-xl border border-gray-200/90 shadow-inner self-start sm:self-auto">
+            <div className="inline-flex p-1.5 bg-gray-500 rounded-2xl border border-gray-200/90 shadow-inner">
               <button
                 type="button"
                 onClick={() => setActiveCommunityTab("faqs")}
                 className={cn(
-                  "px-4 py-1.5 text-xs md:text-sm font-bold rounded-lg transition-all duration-150 flex items-center gap-1.5",
-                  activeCommunityTab === "faqs"
-                    ? "bg-white text-gray-900 shadow-sm border border-gray-200/60"
-                    : "text-gray-500 hover:text-gray-900"
+                "px-5 py-2.5 text-sm md:text-base font-bold rounded-xl transition-all duration-200 flex items-center gap-2",
+                activeCommunityTab === "faqs"
+                ? "bg-black text-[#ff5e14] shadow-sm"
+                : "text-black hover:bg-white/70"
                 )}
               >
                 <HelpCircle className="w-4 h-4 text-[#ff5e14]" />
@@ -1109,7 +1104,7 @@ export default function SprintDetailClient() {
                 {sprint.faqs && sprint.faqs.length > 0 && (
                   <span
                     className={cn(
-                      "px-1.5 py-0.2 text-[10px] font-bold rounded-full",
+                      "px-1.5 py-0.5 text-[10px] font-bold rounded-full",
                       activeCommunityTab === "faqs"
                         ? "bg-orange-100 text-[#ff5e14]"
                         : "bg-gray-200 text-gray-600"
@@ -1124,13 +1119,13 @@ export default function SprintDetailClient() {
                 type="button"
                 onClick={() => setActiveCommunityTab("testimonials")}
                 className={cn(
-                  "px-4 py-1.5 text-xs md:text-sm font-bold rounded-lg transition-all duration-150 flex items-center gap-1.5",
+                  "px-5 py-2.5 text-sm md:text-base font-bold rounded-xl transition-all duration-200 flex items-center gap-2",
                   activeCommunityTab === "testimonials"
-                    ? "bg-white text-gray-900 shadow-sm border border-gray-200/60"
-                    : "text-gray-500 hover:text-gray-900"
+                     ? "bg-black text-[#ff5e14] shadow-sm"
+                     : "text-black hover:bg-white/70"
                 )}
               >
-                <MessageSquare className="w-4 h-4 text-emerald-600" />
+                <MessageSquare className="w-4 h-4 text-[#ff5e14]" />
                 <span>Testimonials</span>
               </button>
             </div>
@@ -1209,20 +1204,7 @@ export default function SprintDetailClient() {
                                     </p>
                                   )}
 
-                                  {faq.imageUrl && (
-                                    <div className="rounded-xl overflow-hidden border border-gray-200/80 bg-gray-50 shadow-inner">
-                                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                                      <img
-                                        src={faq.imageUrl}
-                                        alt={faq.question}
-                                        className="w-full object-contain max-h-[420px]"
-                                        loading="lazy"
-                                        onError={(e) => {
-                                          (e.currentTarget as HTMLElement).style.display = "none";
-                                        }}
-                                      />
-                                    </div>
-                                  )}
+                                  
                                 </div>
                               </motion.div>
                             )}
@@ -1259,15 +1241,33 @@ export default function SprintDetailClient() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2 }}
-                className="space-y-6"
+                className="space-y-4"
               >
                 <StackedTestimonials />
-                <div className="max-w-2xl mx-auto">
-                  <ToolkitStudentFeedback />
-                </div>
               </motion.div>
             )}
           </AnimatePresence>
+
+          <div className="space-y-4">
+            {lastCohortPoster && (
+              <section className=" relative left-1/2 -translate-x-1/2 md:w-full md:left-0 md:translate-x-0">
+                <div className="relative w-full md:w-[85%] lg:w-[75%] xl:w-[70%] mx-auto aspect-video overflow-hidden bg-black">
+                  <img
+                    src={lastCohortPoster}
+                    alt="Last cohort"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </section>
+            )}
+
+            <ToolkitTestimonials images={[]} />
+
+            <div className="max-w-2xl mx-auto">
+              <ToolkitStudentFeedback />
+            </div>
+          </div>
+
         </section>
       </main>
 
@@ -1353,7 +1353,7 @@ export default function SprintDetailClient() {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {/* Tiers/Bundles Selection */}
               {sprint.tiers && sprint.tiers.length > 0 && (
                 <div className="space-y-3">

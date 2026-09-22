@@ -8,7 +8,7 @@ import axios from "axios";
 import { MentorshipCarousel } from "@/components/toolkit/MentorshipCarousel";
 // import ToolkitComingSoonCard from "@/components/toolkit/ToolkitComingSoonCard";
 import ToolkitStudentFeedback from "@/components/toolkit/ToolkitStudentFeedback";
-import { StackedTestimonials } from "@/components/toolkit/StackedTestimonials";
+import { ToolkitTestimonials } from "@/components/toolkit/ToolkitTestimonials";
 import { Toolkit } from "@/types/interfaces";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/hooks/use-session";
@@ -35,7 +35,13 @@ interface CohortCard {
   isFillingFast?: boolean | null;
 }
 
-export default function ToolkitPageClient() {
+interface ToolkitPageClientProps {
+  testimonialImages: string[];
+}
+
+export default function ToolkitPageClient({
+  testimonialImages,
+}: ToolkitPageClientProps) {
   const { data: session, isPending: sessionPending } = useSession();
   const router = useRouter();
   // const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -705,21 +711,34 @@ export default function ToolkitPageClient() {
               ))}
               {filteredToolkits.length === 1 && <ToolkitComingSoonCard />}
             </div>
-        )} */}
+        )}
 
-        <div className="mt-16">
-          <div className="text-center space-y-2 mb-[25px]">
-            <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">What students feel about us</h2>
-            <p className="text-gray-500">Real experiences from students who leveled up their careers with us.</p>
-          </div>
 
-          <StackedTestimonials />
-
-          <div className="max-w-2xl mx-auto mt-8">
-            <ToolkitStudentFeedback />
-          </div>
-        </div>
-      </div>
+    {/* Testimonials */}
+    <div className="relative z-10 mt-8 sm:mt-10">
+      <ToolkitTestimonials images={testimonialImages} />
     </div>
+  {/* </div> */}
+
+  {/* STUDENT FEEDBACK — SEPARATE FROM DARK SECTION */}
+  <div
+    className="
+      relative
+      z-20
+      mx-auto
+      mt-16
+      max-w-2xl
+      px-4
+
+      sm:mt-16
+      md:mt-20
+    "
+  >
+    <ToolkitStudentFeedback />
+  </div>
+
+</div>
+      </div>
+    // </div>
   );
 }

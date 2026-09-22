@@ -24,6 +24,7 @@ import { extractRichTextPlainText } from "@/lib/rich-text";
 import { motion, AnimatePresence } from "framer-motion";
 import { StackedTestimonials } from "@/components/toolkit/StackedTestimonials";
 import ToolkitStudentFeedback from "@/components/toolkit/ToolkitStudentFeedback";
+import { ToolkitTestimonials } from "@/components/toolkit/ToolkitTestimonials";
 
 export function getDuoPricing(singlePrice: number) {
   if (!singlePrice || singlePrice <= 0) {
@@ -165,6 +166,7 @@ export default function CohortDetailClient() {
 
   // Cover Image Carousel states
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [lastCohortPoster, setLastCohortPoster] = useState<string | null>(null);
 
   useEffect(() => {
     if (!cohort || !cohort.coverImageUrls || cohort.coverImageUrls.length <= 1) return;
@@ -213,6 +215,8 @@ export default function CohortDetailClient() {
         const response = await axios.get(`/api/cohorts/${cohortId}`);
         const data = response.data;
         setCohort(data);
+        const posterResponse = await axios.get("/api/toolkit-last-cohort-poster");
+        setLastCohortPoster(posterResponse.data?.imageUrl ?? null);
         if (data.mentors && data.mentors.length > 0) {
           setMentorCards(data.mentors);
         }
@@ -1023,6 +1027,24 @@ export default function CohortDetailClient() {
             {cohort.testimonialsHeading || "What Members Say About Our Ecosystem"}
           </h2>
           <StackedTestimonials />
+          <div
+            id="cohort-proof"
+            className="space-y-6 scroll-mt-6"
+          >
+            {lastCohortPoster && (
+              <section className="w-screen relative left-1/2 -translate-x-1/2 md:w-full md:left-0 md:translate-x-0">
+                <div className="relative w-full md:w-[85%] lg:w-[75%] xl:w-[70%] mx-auto aspect-video overflow-hidden bg-black">
+                  <img
+                    src={lastCohortPoster}
+                    alt="Last cohort"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </section>
+            )}
+
+            <ToolkitTestimonials images={[]} />
+          </div>
           <div className="max-w-2xl mx-auto">
             <ToolkitStudentFeedback />
           </div>
@@ -1061,10 +1083,10 @@ export default function CohortDetailClient() {
               <button
                 type="button"
                 onClick={() => {
-                  setIsBuddyDialogOpen(false);
-                  router.push(
-                    "/toolkit/sprints/fc936f44-08f7-4cd7-814d-a9cd6a9d0f3f"
-                  );
+                  document.getElementById("cohort-proof")?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
                 }}
                 className="flex-1 bg-gradient-to-r from-[#ff5e14] to-[#ff7a3d] hover:from-[#e04f0f] hover:to-[#ff5e14] text-white font-bold text-xs py-3 px-2 rounded-xl transition duration-200 shadow-md hover:shadow-lg h-11 flex items-center justify-center text-center leading-none"
               >

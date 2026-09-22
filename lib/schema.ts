@@ -453,6 +453,24 @@ export const toolkitTestimonialImages = pgTable("toolkit_testimonial_images", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+export const toolkitMainTestimonials = pgTable("toolkit_main_testimonials", {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  imageUrl: text("image_url").notNull(),
+  orderIndex: integer("order_index").default(0).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at", { mode: "string" }).defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow(),
+});
+
+export const toolkitLastCohortPoster = pgTable("toolkit_last_cohort_poster", {
+  id: uuid().defaultRandom().primaryKey().notNull(),
+  imageUrl: text("image_url").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at", { mode: "string" }).defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow(),
+});
+
 // Toolkit tables for monetization
 export const toolkits = pgTable("toolkits", {
   id: uuid("id").primaryKey().defaultRandom(),

@@ -290,16 +290,19 @@ export async function POST(
       });
 
       return NextResponse.json({
+        success: true,
+        free: true,
+        freeOrder: true,
         orderId: dummyOrderId,
         amount: 0,
         currency: "INR",
-        freeOrder: true,
         sprintOrderId: newOrder[0].id,
+        orderRecord: newOrder[0],
       });
     }
 
     const razorpayOrder = await createOrder({
-      amount: finalAmount,
+      amount: finalAmount * 100, // In paise
       currency: "INR",
       receipt: `receipt_sprint_${Date.now()}`,
     });
@@ -327,11 +330,19 @@ export async function POST(
       .returning();
 
     return NextResponse.json({
+      success: true,
+      free: false,
+      order: {
+        id: razorpayOrder.id,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+      },
       orderId: razorpayOrder.id,
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
-      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      key: process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
       sprintOrderId: newOrder[0].id,
+      orderRecord: newOrder[0],
     });
   } catch (error) {
     console.error("Error creating sprint checkout:", error);

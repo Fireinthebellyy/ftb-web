@@ -146,7 +146,7 @@ export default function SprintDetailClient() {
   const [isBuddyOfferGlobalEnabled, setIsBuddyOfferGlobalEnabled] = useState(false);
   const [buddyOfferTitle, setBuddyOfferTitle] = useState("Friendship Day Offer");
   const [buddyOfferText, setBuddyOfferText] = useState("Learning is better together! Enter your friend's email below so they can get access that too at 20% off");
-  const [activeCommunityTab, setActiveCommunityTab] = useState<"faqs" | "testimonials">("faqs");
+  const [activeCommunityTab, setActiveCommunityTab] = useState<"faqs" | "testimonials">("testimonials");
   const [openFaqId, setOpenFaqId] = useState<string | null>(null);
 
   // Upsell Modal / Bottom Sheet selections
@@ -412,7 +412,7 @@ export default function SprintDetailClient() {
         couponCode: couponCode || null,
       });
 
-      if (response.data.freeOrder) {
+      if (response.data.free || response.data.freeOrder) {
         toast.success("Registration Successful! Welcome to the sprint.");
         setIsDrawerOpen(false);
         router.push(`/toolkit/sprints/${sprintId}/registration`);
@@ -435,11 +435,15 @@ export default function SprintDetailClient() {
         return;
       }
 
-      // Sprint checkout returns { orderId, amount, currency, key } directly (not { order })
-      const orderId = response.data.orderId;
-      const razorpayKey = response.data.key;
+      const order = response.data.order || {
+        id: response.data.orderId,
+        amount: response.data.amount,
+        currency: response.data.currency || "INR",
+      };
 
-      if (!razorpayKey) {
+      const razorpayKey = response.data.key || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+
+      if (!razorpayKey || !order.id) {
         toast.error("Payment configuration error. Please contact support.");
         setIsProcessingCheckout(false);
         return;
@@ -448,11 +452,11 @@ export default function SprintDetailClient() {
       // 3. Open Razorpay Widget
       const options = {
         key: razorpayKey,
-        amount: response.data.amount,
-        currency: response.data.currency,
+        amount: order.amount,
+        currency: order.currency || "INR",
         name: "Fire In The Belly",
         description: sprint.title,
-        order_id: orderId,
+        order_id: order.id,
         handler: async function (razorpayResponse: any) {
           setIsProcessingCheckout(true);
           try {
@@ -499,6 +503,20 @@ export default function SprintDetailClient() {
       // block interaction with the payment popup (rage-click fix).
       setIsDrawerOpen(false);
       const rzp = new (window as any).Razorpay(options);
+
+      rzp.on("payment.failed", async function (failureData: any) {
+        console.error("Razorpay payment failed:", failureData);
+        toast.error(failureData?.error?.description || "Payment failed");
+        try {
+          await axios.post(`/api/sprints/${sprint.id}/checkout/failed`, {
+            razorpay_order_id: order.id,
+            reason: failureData?.error?.description || "Payment failed",
+          });
+        } catch (logErr) {
+          console.error("Failed to log payment failure:", logErr);
+        }
+      });
+
       rzp.open();
     } catch (err: any) {
       console.error(err);

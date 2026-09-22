@@ -54,7 +54,7 @@ interface Feature {
   id?: string;
   icon: string;
   title: string;
-  description: string;
+  description: string[];
 }
 
 interface Tier {
@@ -169,6 +169,9 @@ export default function AdminSprintsTable() {
   const [view, setView] = useState<"sprints" | "orders" | "registrations">("sprints");
   const [sprintsList, setSprintsList] = useState<Sprint[]>([]);
   const [ordersList, setOrdersList] = useState<Order[]>([]);
+  const [orderStatusFilter, setOrderStatusFilter] = useState<"all" | "paid" | "created" | "failed">("all");
+  const [orderSearchTerm, setOrderSearchTerm] = useState("");
+  const [registrationSearchTerm, setRegistrationSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   // Sprint creation state
@@ -483,27 +486,27 @@ export default function AdminSprintsTable() {
       const sessionTitles =
         order.selectedSessionIds && order.selectedSessionIds.length > 0
           ? order.selectedSessionIds
-              .map((sessionId) => {
-                const session = order.sprintId
-                  ? sessionsData[order.sprintId]?.find((s: any) => s.id === sessionId)
-                  : null;
-                return session ? session.title : "";
-              })
-              .filter(Boolean)
-              .join(", ")
+            .map((sessionId) => {
+              const session = order.sprintId
+                ? sessionsData[order.sprintId]?.find((s: any) => s.id === sessionId)
+                : null;
+              return session ? session.title : "";
+            })
+            .filter(Boolean)
+            .join(", ")
           : "";
 
       const individualSessionTitles =
         order.selectedAddOnIds && order.selectedAddOnIds.length > 0
           ? order.selectedAddOnIds
-              .map((sessionId) => {
-                const session = order.sprintId
-                  ? sessionsData[order.sprintId]?.find((s: any) => s.id === sessionId)
-                  : null;
-                return session ? session.title : "";
-              })
-              .filter(Boolean)
-              .join(", ")
+            .map((sessionId) => {
+              const session = order.sprintId
+                ? sessionsData[order.sprintId]?.find((s: any) => s.id === sessionId)
+                : null;
+              return session ? session.title : "";
+            })
+            .filter(Boolean)
+            .join(", ")
           : "";
 
       const optedPlanLabel = order.upgradePlanTitle
@@ -551,31 +554,28 @@ export default function AdminSprintsTable() {
       <div className="flex border-b">
         <button
           onClick={() => setView("sprints")}
-          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${
-            view === "sprints"
-              ? "border-[#ff5e14] text-[#ff5e14]"
-              : "border-transparent text-gray-500 hover:text-gray-700"
-          }`}
+          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${view === "sprints"
+            ? "border-[#ff5e14] text-[#ff5e14]"
+            : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
         >
           Sprints ({sprintsList.length})
         </button>
         <button
           onClick={() => setView("orders")}
-          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${
-            view === "orders"
-              ? "border-[#ff5e14] text-[#ff5e14]"
-              : "border-transparent text-gray-500 hover:text-gray-700"
-          }`}
+          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${view === "orders"
+            ? "border-[#ff5e14] text-[#ff5e14]"
+            : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
         >
           Orders Log ({ordersList.length})
         </button>
         <button
           onClick={() => setView("registrations")}
-          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${
-            view === "registrations"
-              ? "border-[#ff5e14] text-[#ff5e14]"
-              : "border-transparent text-gray-500 hover:text-gray-700"
-          }`}
+          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${view === "registrations"
+            ? "border-[#ff5e14] text-[#ff5e14]"
+            : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
         >
           Registration Details ({ordersList.filter((order) => order.registrationName).length})
         </button>
@@ -629,11 +629,10 @@ export default function AdminSprintsTable() {
                         <td className="p-4 font-semibold text-gray-900">₹{s.basePrice}</td>
                         <td className="p-4">
                           <span
-                            className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
-                              s.isActive
-                                ? "bg-green-100 text-green-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}
+                            className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${s.isActive
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-800"
+                              }`}
                           >
                             {s.isActive ? "Active" : "Draft"}
                           </span>
@@ -710,189 +709,342 @@ export default function AdminSprintsTable() {
         </div>
       ) : view === "orders" ? (
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Orders Log</h2>
-            <Button
-              onClick={exportOrdersCSV}
-              variant="outline"
-              className="flex gap-1.5 items-center border-gray-300 hover:bg-gray-50 text-gray-700"
-            >
-              <Download className="w-4 h-4" /> Export CSV
-            </Button>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-semibold">Orders Log</h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                All purchase attempts, successful payments, and transaction logs.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={exportOrdersCSV}
+                variant="outline"
+                className="flex gap-1.5 items-center border-gray-300 hover:bg-gray-50 text-gray-700 text-xs"
+              >
+                <Download className="w-4 h-4" /> Export CSV
+              </Button>
+            </div>
           </div>
 
-          {ordersList.length === 0 ? (
-            <div className="border bg-white rounded-lg p-12 text-center">
-              <p className="text-gray-500">No applications or purchases recorded yet.</p>
+          {/* Orders Filter & Search Bar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-gray-50/70 p-3 rounded-xl border border-gray-200">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setOrderStatusFilter("all")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${orderStatusFilter === "all"
+                  ? "bg-gray-900 text-white shadow-xs"
+                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                  }`}
+              >
+                All ({ordersList.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setOrderStatusFilter("paid")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${orderStatusFilter === "paid"
+                  ? "bg-green-600 text-white shadow-xs"
+                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                  }`}
+              >
+                Paid ({ordersList.filter((o) => o.status === "paid").length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setOrderStatusFilter("created")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${orderStatusFilter === "created"
+                  ? "bg-amber-600 text-white shadow-xs"
+                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                  }`}
+              >
+                Pending / Created ({ordersList.filter((o) => o.status === "created" || o.status === "pending").length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setOrderStatusFilter("failed")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${orderStatusFilter === "failed"
+                  ? "bg-red-600 text-white shadow-xs"
+                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                  }`}
+              >
+                Failed ({ordersList.filter((o) => o.status === "failed").length})
+              </button>
             </div>
-          ) : (
-            <div className="border bg-white rounded-lg shadow-sm overflow-hidden">
-              <div className="overflow-x-auto w-full">
-                <table className="w-full text-left border-collapse text-xs md:text-sm min-w-[800px]">
-                  <thead>
-                    <tr className="bg-gray-50 border-b">
-                      <th className="p-4 font-semibold text-gray-700">Buyer</th>
-                      <th className="p-4 font-semibold text-gray-700">Buddy (Referral)</th>
-                      <th className="p-4 font-semibold text-gray-700">Sprint &amp; Tier / Upgrade Plan</th>
-                      <th className="p-4 font-semibold text-gray-700">Paid</th>
-                      <th className="p-4 font-semibold text-gray-700">Coupon</th>
-                      <th className="p-4 font-semibold text-gray-700">Razorpay Info</th>
-                      <th className="p-4 font-semibold text-gray-700">Status</th>
-                      <th className="p-4 font-semibold text-gray-700">Verified</th>
-                      <th className="p-4 font-semibold text-gray-700">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {ordersList.map((order) => (
-                      <tr key={order.id} className="hover:bg-gray-50">
-                        <td className="p-4">
-                          <div className="font-semibold text-gray-900">{order.buyerName}</div>
-                          <div className="text-xs text-gray-500">{order.buyerEmail}</div>
-                          {order.buyerPhone && (
-                            <div className="text-xs text-gray-400">{order.buyerPhone}</div>
-                          )}
-                        </td>
-                        <td className="p-4">
-                          {order.buddyEmail ? (
-                            <div>
-                              <span className="inline-flex items-center gap-1 mb-1 px-2 py-0.5 rounded-full border border-orange-100 bg-orange-50 text-[10px] font-bold text-[#ff5e14]">
-                                <Gift className="w-3 h-3" /> Buddy Added
-                              </span>
-                              <div className="select-all text-xs font-medium text-gray-600">
-                                {order.buddyEmail}
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="text-xs font-normal italic text-gray-400">-</span>
-                          )}
-                        </td>
-                        <td className="p-4">
-                          <div className="font-medium text-gray-950">{order.sprintTitle || "Unknown"}</div>
-                          {order.upgradePlanTitle ? (
-                            <div className="mt-1">
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-amber-200 bg-amber-50 text-[11px] font-bold text-amber-800">
-                                Upgrade: {order.upgradePlanTitle}
-                              </span>
-                              {order.upgradePlanSectionLabel && (
-                                <div className="mt-0.5 text-[10px] text-gray-500">
-                                  {order.upgradePlanSectionLabel}
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="text-xs text-[#ff5e14]">{order.tierName || "Base price"}</div>
-                          )}
-                        </td>
-                        <td className="p-4 font-semibold text-gray-900">
-                          ₹{(order.amountPaid / 100).toFixed(2)}
-                        </td>
-                        <td className="p-4 text-gray-600">
-                          {order.couponId ? (
-                            <div>
-                              <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-medium">
-                                Yes
-                              </span>
-                              {order.couponCode && (
-                                <span className="ml-2 text-xs text-gray-500">
-                                  ({order.couponCode})
+
+            <div className="w-full sm:w-64">
+              <Input
+                placeholder="Search buyer, email, order ID..."
+                value={orderSearchTerm}
+                onChange={(e) => setOrderSearchTerm(e.target.value)}
+                className="bg-white text-xs h-8"
+              />
+            </div>
+          </div>
+
+          {(() => {
+            const filteredOrders = ordersList.filter((order) => {
+              if (orderStatusFilter === "paid" && order.status !== "paid") return false;
+              if (orderStatusFilter === "created" && order.status !== "created" && order.status !== "pending") return false;
+              if (orderStatusFilter === "failed" && order.status !== "failed") return false;
+
+              if (orderSearchTerm.trim()) {
+                const term = orderSearchTerm.toLowerCase();
+                const matchesBuyer = order.buyerName?.toLowerCase().includes(term);
+                const matchesEmail = order.buyerEmail?.toLowerCase().includes(term);
+                const matchesOrder = order.razorpayOrderId?.toLowerCase().includes(term);
+                const matchesPay = order.razorpayPaymentId?.toLowerCase().includes(term);
+                const matchesSprint = order.sprintTitle?.toLowerCase().includes(term);
+                if (!matchesBuyer && !matchesEmail && !matchesOrder && !matchesPay && !matchesSprint) {
+                  return false;
+                }
+              }
+              return true;
+            });
+
+            if (filteredOrders.length === 0) {
+              return (
+                <div className="border bg-white rounded-lg p-12 text-center">
+                  <p className="text-gray-500">No orders found matching the selected filter.</p>
+                </div>
+              );
+            }
+
+            return (
+              <div className="border bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full text-left border-collapse text-xs md:text-sm min-w-[800px]">
+                    <thead>
+                      <tr className="bg-gray-50 border-b">
+                        <th className="p-4 font-semibold text-gray-700">Buyer</th>
+                        <th className="p-4 font-semibold text-gray-700">Buddy (Referral)</th>
+                        <th className="p-4 font-semibold text-gray-700">Sprint &amp; Tier / Upgrade Plan</th>
+                        <th className="p-4 font-semibold text-gray-700">Paid</th>
+                        <th className="p-4 font-semibold text-gray-700">Coupon</th>
+                        <th className="p-4 font-semibold text-gray-700">Razorpay Info</th>
+                        <th className="p-4 font-semibold text-gray-700">Status</th>
+                        <th className="p-4 font-semibold text-gray-700">Registration</th>
+                        <th className="p-4 font-semibold text-gray-700">Verified</th>
+                        <th className="p-4 font-semibold text-gray-700">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {filteredOrders.map((order) => (
+                        <tr key={order.id} className="hover:bg-gray-50">
+                          <td className="p-4">
+                            <div className="font-semibold text-gray-900">{order.buyerName}</div>
+                            <div className="text-xs text-gray-500">{order.buyerEmail}</div>
+                            {order.buyerPhone && (
+                              <div className="text-xs text-gray-400">{order.buyerPhone}</div>
+                            )}
+                          </td>
+                          <td className="p-4">
+                            {order.buddyEmail ? (
+                              <div>
+                                <span className="inline-flex items-center gap-1 mb-1 px-2 py-0.5 rounded-full border border-orange-100 bg-orange-50 text-[10px] font-bold text-[#ff5e14]">
+                                  <Gift className="w-3 h-3" /> Buddy Added
                                 </span>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="inline-block bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded">
-                              No
+                                <div className="select-all text-xs font-medium text-gray-600">
+                                  {order.buddyEmail}
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-xs font-normal italic text-gray-400">-</span>
+                            )}
+                          </td>
+                          <td className="p-4">
+                            <div className="font-medium text-gray-950">{order.sprintTitle || "Unknown"}</div>
+                            {order.upgradePlanTitle ? (
+                              <div className="mt-1">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-amber-200 bg-amber-50 text-[11px] font-bold text-amber-800">
+                                  Upgrade: {order.upgradePlanTitle}
+                                </span>
+                                {order.upgradePlanSectionLabel && (
+                                  <div className="mt-0.5 text-[10px] text-gray-500">
+                                    {order.upgradePlanSectionLabel}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-xs text-[#ff5e14]">{order.tierName || "Base price"}</div>
+                            )}
+                          </td>
+                          <td className="p-4 font-semibold text-gray-900">
+                            ₹{(order.amountPaid / 100).toFixed(2)}
+                          </td>
+                          <td className="p-4 text-gray-600">
+                            {order.couponId ? (
+                              <div>
+                                <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-medium">
+                                  Yes
+                                </span>
+                                {order.couponCode && (
+                                  <span className="ml-2 text-xs text-gray-500">
+                                    ({order.couponCode})
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="inline-block bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded">
+                                No
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-4 text-xs text-gray-500">
+                            <div>Order: {order.razorpayOrderId}</div>
+                            {order.razorpayPaymentId && (
+                              <div className="text-emerald-700 font-medium">
+                                Pay ID: {order.razorpayPaymentId}
+                              </div>
+                            )}
+                          </td>
+                          <td className="p-4">
+                            <span
+                              className={`inline-flex px-2.5 py-0.5 text-xs font-bold rounded-full ${order.status === "paid"
+                                ? "bg-green-100 text-green-800 border border-green-200"
+                                : order.status === "failed"
+                                  ? "bg-red-100 text-red-800 border border-red-200"
+                                  : "bg-amber-100 text-amber-800 border border-amber-200"
+                                }`}
+                            >
+                              {order.status === "paid"
+                                ? "Paid"
+                                : order.status === "failed"
+                                  ? "Failed"
+                                  : "Pending"}
                             </span>
-                          )}
-                        </td>
-                        <td className="p-4 text-xs text-gray-500">
-                          <div>Order: {order.razorpayOrderId}</div>
-                          {order.razorpayPaymentId && (
-                            <div className="text-emerald-700 font-medium">
-                              Pay ID: {order.razorpayPaymentId}
-                            </div>
-                          )}
-                        </td>
-                        <td className="p-4">
-                          <span
-                            className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
-                              order.status === "paid"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-amber-100 text-amber-800"
-                            }`}
-                          >
-                            {order.status}
-                          </span>
-                        </td>
-                        <td className="p-4">
-                          <Button
-                            onClick={() => handleVerifyOrder(order.id)}
-                            variant={order.isVerified ? "outline" : "default"}
-                            size="sm"
-                            className={`text-xs ${
-                              order.isVerified
+                          </td>
+                          <td className="p-4 text-xs">
+                            {order.registrationName ? (
+                              <div className="space-y-0.5">
+                                <span className="inline-flex px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                                  Registered
+                                </span>
+                                <div className="text-gray-900 font-medium truncate max-w-[140px]">{order.registrationName}</div>
+                                <div className="text-gray-500 truncate max-w-[140px]">{order.registrationCollege}</div>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400 italic text-[11px]">Not Submitted</span>
+                            )}
+                          </td>
+                          <td className="p-4">
+                            <Button
+                              onClick={() => handleVerifyOrder(order.id)}
+                              variant={order.isVerified ? "outline" : "default"}
+                              size="sm"
+                              disabled={order.status !== "paid"}
+                              className={`text-xs ${order.isVerified
                                 ? "border-red-200 text-red-600 hover:bg-red-50"
                                 : "bg-green-600 hover:bg-green-700 text-white"
-                            }`}
-                          >
-                            {order.isVerified ? "Unverify" : "Verify"}
-                          </Button>
-                        </td>
-                        <td className="p-4 text-xs text-gray-500 whitespace-nowrap">
-                          {new Date(order.createdAt).toLocaleDateString()}{" "}
-                          {new Date(order.createdAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                                }`}
+                            >
+                              {order.isVerified ? "Unverify" : "Verify"}
+                            </Button>
+                          </td>
+                          <td className="p-4 text-xs text-gray-500 whitespace-nowrap">
+                            {new Date(order.createdAt).toLocaleDateString()}{" "}
+                            {new Date(order.createdAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       ) : view === "registrations" ? (
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Registration Details</h2>
-            <Button
-              onClick={exportRegistrationsCSV}
-              variant="outline"
-              className="flex gap-1.5 items-center border-gray-300 hover:bg-gray-50 text-gray-700"
-            >
-              <Download className="w-4 h-4" /> Export CSV
-            </Button>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-semibold">Registration Details</h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Detailed demographics and responses from students who completed their registration form.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={exportRegistrationsCSV}
+                variant="outline"
+                className="flex gap-1.5 items-center border-gray-300 hover:bg-gray-50 text-gray-700 text-xs"
+              >
+                <Download className="w-4 h-4" /> Export CSV
+              </Button>
+            </div>
           </div>
 
-          {ordersList.length === 0 ? (
-            <div className="border bg-white rounded-lg p-12 text-center">
-              <p className="text-gray-500">No registration details available yet.</p>
+          {/* Registration Search Bar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-gray-50/70 p-3 rounded-xl border border-gray-200">
+            <div className="text-xs font-semibold text-gray-700">
+              Completed Registrations ({ordersList.filter((o) => o.registrationName).length})
             </div>
-          ) : (
-            <div className="border bg-white rounded-lg shadow-sm overflow-hidden">
-              <div className="overflow-x-auto w-full">
-                <table className="w-full text-left border-collapse text-xs md:text-sm min-w-[1000px]">
-                  <thead>
-                    <tr className="bg-gray-50 border-b">
-                      <th className="p-4 font-semibold text-gray-700">Name</th>
-                      <th className="p-4 font-semibold text-gray-700">College</th>
-                      <th className="p-4 font-semibold text-gray-700">Course</th>
-                      <th className="p-4 font-semibold text-gray-700">Year</th>
-                      <th className="p-4 font-semibold text-gray-700">Expectations</th>
-                      <th className="p-4 font-semibold text-gray-700">Opted Plan / Upgrade</th>
-                      <th className="p-4 font-semibold text-gray-700">Selected Sessions</th>
-                      <th className="p-4 font-semibold text-gray-700">Individual Sessions</th>
-                      <th className="p-4 font-semibold text-gray-700">Sprint</th>
-                      <th className="p-4 font-semibold text-gray-700">Email</th>
-                      <th className="p-4 font-semibold text-gray-700">Date</th>
-                      <th className="p-4 font-semibold text-gray-700">Manage Packages</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {ordersList
-                      .filter((order) => order.registrationName)
-                      .map((order) => (
+            <div className="w-full sm:w-80">
+              <Input
+                placeholder="Search student, college, email, course..."
+                value={registrationSearchTerm}
+                onChange={(e) => setRegistrationSearchTerm(e.target.value)}
+                className="bg-white text-xs h-8"
+              />
+            </div>
+          </div>
+
+          {(() => {
+            const allRegistrations = ordersList.filter((order) => order.registrationName);
+
+            if (allRegistrations.length === 0) {
+              return (
+                <div className="border bg-white rounded-lg p-12 text-center">
+                  <p className="text-gray-500">No registration details available yet.</p>
+                </div>
+              );
+            }
+
+            const filteredRegistrations = allRegistrations.filter((order) => {
+              if (!registrationSearchTerm.trim()) return true;
+              const term = registrationSearchTerm.toLowerCase();
+              const matchesName = (order.registrationName || order.buyerName)?.toLowerCase().includes(term);
+              const matchesEmail = order.buyerEmail?.toLowerCase().includes(term);
+              const matchesCollege = order.registrationCollege?.toLowerCase().includes(term);
+              const matchesCourse = order.registrationCourse?.toLowerCase().includes(term);
+              const matchesSprint = order.sprintTitle?.toLowerCase().includes(term);
+              const matchesPlan = order.upgradePlanTitle?.toLowerCase().includes(term) || order.tierName?.toLowerCase().includes(term);
+              return matchesName || matchesEmail || matchesCollege || matchesCourse || matchesSprint || matchesPlan;
+            });
+
+            if (filteredRegistrations.length === 0) {
+              return (
+                <div className="border bg-white rounded-lg p-12 text-center">
+                  <p className="text-gray-500">No registered students found matching your search.</p>
+                </div>
+              );
+            }
+
+            return (
+              <div className="border bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full text-left border-collapse text-xs md:text-sm min-w-[1000px]">
+                    <thead>
+                      <tr className="bg-gray-50 border-b">
+                        <th className="p-4 font-semibold text-gray-700">Name</th>
+                        <th className="p-4 font-semibold text-gray-700">College</th>
+                        <th className="p-4 font-semibold text-gray-700">Course</th>
+                        <th className="p-4 font-semibold text-gray-700">Year</th>
+                        <th className="p-4 font-semibold text-gray-700">Expectations</th>
+                        <th className="p-4 font-semibold text-gray-700">Opted Plan / Upgrade</th>
+                        <th className="p-4 font-semibold text-gray-700">Selected Sessions</th>
+                        <th className="p-4 font-semibold text-gray-700">Individual Sessions</th>
+                        <th className="p-4 font-semibold text-gray-700">Sprint</th>
+                        <th className="p-4 font-semibold text-gray-700">Email</th>
+                        <th className="p-4 font-semibold text-gray-700">Date</th>
+                        <th className="p-4 font-semibold text-gray-700">Manage Packages</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {filteredRegistrations.map((order) => (
                         <tr key={order.id} className="hover:bg-gray-50">
                           <td className="p-4 font-medium text-gray-900">
                             {order.registrationName || order.buyerName}
@@ -930,8 +1082,8 @@ export default function AdminSprintsTable() {
                                 {order.selectedSessionIds.map((sessionId) => {
                                   const session = order.sprintId
                                     ? sessionsData[order.sprintId]?.find(
-                                        (s: any) => s.id === sessionId
-                                      )
+                                      (s: any) => s.id === sessionId
+                                    )
                                     : null;
                                   return session ? (
                                     <span
@@ -953,8 +1105,8 @@ export default function AdminSprintsTable() {
                                 {order.selectedAddOnIds.map((sessionId) => {
                                   const session = order.sprintId
                                     ? sessionsData[order.sprintId]?.find(
-                                        (s: any) => s.id === sessionId
-                                      )
+                                      (s: any) => s.id === sessionId
+                                    )
                                     : null;
                                   return session ? (
                                     <span
@@ -992,8 +1144,8 @@ export default function AdminSprintsTable() {
                                   userTierName: order.tierName || undefined,
                                   isBundleUser: Boolean(
                                     order.tierName ||
-                                      !order.selectedAddOnIds ||
-                                      order.selectedAddOnIds.length === 0
+                                    !order.selectedAddOnIds ||
+                                    order.selectedAddOnIds.length === 0
                                   ),
                                 })
                               }
@@ -1004,18 +1156,12 @@ export default function AdminSprintsTable() {
                           </td>
                         </tr>
                       ))}
-                    {ordersList.filter((order) => order.registrationName).length === 0 && (
-                      <tr>
-                        <td colSpan={12} className="p-12 text-center text-gray-500">
-                          No registration forms completed yet.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       ) : null}
 
@@ -1088,61 +1234,55 @@ export default function AdminSprintsTable() {
             <div className="flex gap-2 border-b mb-6 overflow-x-auto pb-2">
               <button
                 onClick={() => setActiveEditTab("details")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                  activeEditTab === "details"
-                    ? "bg-[#ff5e14] text-white"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                }`}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEditTab === "details"
+                  ? "bg-[#ff5e14] text-white"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  }`}
               >
                 Page Details &amp; Hero
               </button>
               <button
                 onClick={() => setActiveEditTab("mentors")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                  activeEditTab === "mentors"
-                    ? "bg-[#ff5e14] text-white"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                }`}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEditTab === "mentors"
+                  ? "bg-[#ff5e14] text-white"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  }`}
               >
                 Mentors ({editingSprint.mentors?.length || 0})
               </button>
               <button
                 onClick={() => setActiveEditTab("features")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                  activeEditTab === "features"
-                    ? "bg-[#ff5e14] text-white"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                }`}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEditTab === "features"
+                  ? "bg-[#ff5e14] text-white"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  }`}
               >
                 What You Get ({editingSprint.features?.length || 0})
               </button>
               <button
                 onClick={() => setActiveEditTab("pricing")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                  activeEditTab === "pricing"
-                    ? "bg-[#ff5e14] text-white"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                }`}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEditTab === "pricing"
+                  ? "bg-[#ff5e14] text-white"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  }`}
               >
                 Pricing, Tiers &amp; Add-ons
               </button>
               <button
                 onClick={() => setActiveEditTab("curriculum")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                  activeEditTab === "curriculum"
-                    ? "bg-[#ff5e14] text-white"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                }`}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEditTab === "curriculum"
+                  ? "bg-[#ff5e14] text-white"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  }`}
               >
                 Curriculum ({editingSprint.sessions?.length || 0})
               </button>
               <button
                 onClick={() => setActiveEditTab("faqs")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                  activeEditTab === "faqs"
-                    ? "bg-[#ff5e14] text-white"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                }`}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEditTab === "faqs"
+                  ? "bg-[#ff5e14] text-white"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  }`}
               >
                 FAQs ({editingSprint.faqs?.length || 0})
               </button>
@@ -1784,7 +1924,7 @@ export default function AdminSprintsTable() {
                         ...editingSprint,
                         features: [
                           ...currentFeatures,
-                          { icon: "Check", title: "", description: "" },
+                          { icon: "Check", title: "", description: [""] },
                         ],
                       });
                     }}
@@ -1845,18 +1985,64 @@ export default function AdminSprintsTable() {
                         </div>
                         <div className="space-y-1">
                           <Label className="text-xs">Description</Label>
-                          <Input
-                            value={feature.description}
-                            onChange={(e) => {
-                              const currentFeatures = [...(editingSprint.features || [])];
-                              currentFeatures[index] = {
-                                ...currentFeatures[index],
-                                description: e.target.value,
-                              };
-                              setEditingSprint({ ...editingSprint, features: currentFeatures });
+                          {feature.description.map((el, idx) => (
+                            <div className="flex items-center gap-2 max-w-md" key={idx}>
+                              <Input
+                                className="flex-1"
+                                value={el}
+                                onChange={(e) => {
+                                  const currentFeatures = [...(editingSprint.features || [])];
+                                  const updatedDescription = [...(currentFeatures[index].description || [])];
+                                  updatedDescription[idx] = e.target.value;
+                                  currentFeatures[index] = {
+                                    ...currentFeatures[index],
+                                    description: [...updatedDescription],
+                                  };
+                                  setEditingSprint({ ...editingSprint, features: currentFeatures });
+                                }}
+                                placeholder="e.g. Additional Description Pointer"
+                              />
+                              <button
+                                type="button"
+                                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-500 transition-colors hover:border-red-300 hover:bg-red-100 hover:text-red-600"
+                                aria-label="Delete description point"
+                                onClick={() => {
+                                  const currentFeatures = [...(editingSprint.features) || []];
+                                  const updatedDescription = ([...currentFeatures[index].description || []]).filter((el, idxPointer) => idxPointer !== idx);
+                                  currentFeatures[index] = { ...currentFeatures[index], description: updatedDescription };
+                                  setEditingSprint(prev => ({ ...prev, features: currentFeatures }));
+                                }}>
+                                <Trash2 className="h-4 w-4" ></Trash2>
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingSprint((prev) => {
+                                if (!prev) return prev;
+
+                                const currentFeatures = [...prev.features];
+
+                                currentFeatures[index] = {
+                                  ...currentFeatures[index],
+                                  description: [
+                                    ...(currentFeatures[index].description || []),
+                                    "",
+                                  ],
+                                };
+
+                                return {
+                                  ...prev,
+                                  features: currentFeatures,
+                                };
+                              });
                             }}
-                            placeholder="e.g. Detailed feedback on assignments"
-                          />
+                            className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-dashed border-blue-300 px-3 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                            Add Description Point
+                          </button>
                         </div>
                       </div>
 

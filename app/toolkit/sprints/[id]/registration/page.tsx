@@ -36,11 +36,11 @@ const yearOptions = [
   "Other",
 ];
 
-interface SprintSession {
-  id: string;
-  title: string;
-  description: string;
-}
+// interface SprintSession {
+//   id: string;
+//   title: string;
+//   description: string;
+// }
 
 export default function SprintRegistrationPage() {
   const params = useParams();
@@ -54,16 +54,20 @@ export default function SprintRegistrationPage() {
   const [sprintTitle, setSprintTitle] = useState("");
   const [_toolkitId, setToolkitId] = useState<string | null>(null);
 
-  const [sessions, setSessions] = useState<SprintSession[]>([]);
+  // const [sessions, setSessions] = useState<SprintSession[]>([]);
   const [name, setName] = useState("");
   const [college, setCollege] = useState("");
+  const [mobileNumber,setMobileNumber] = useState("+91 ");
   const [course, setCourse] = useState("");
   const [year, setYear] = useState("");
+  const [city,setCity] = useState("");
   const [expectations, setExpectations] = useState("");
+  const [consent,setConsent] = useState(false);
+  const [showRegistration,setShowRegistration]= useState(true);
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
-  const [showSessionSelectionDialog, setShowSessionSelectionDialog] = useState(false);
-  const [selectedSessionIds, setSelectedSessionIds] = useState<string[]>([]);
-  const [isSubmittingSessions, setIsSubmittingSessions] = useState(false);
+  // const [showSessionSelectionDialog, setShowSessionSelectionDialog] = useState(false);
+  // const [selectedSessionIds, setSelectedSessionIds] = useState<string[]>([]);
+  // const [isSubmittingSessions, setIsSubmittingSessions] = useState(false);
 
   const fetchRegistrationStatus = useCallback(async () => {
     setLoadError(null);
@@ -75,7 +79,7 @@ export default function SprintRegistrationPage() {
 
       setSprintTitle(data.sprintTitle);
       setToolkitId(data.toolkitId ?? null);
-      setSessions(data.sessions || []);
+      // setSessions(data.sessions || []);
 
       if (data.completed) {
         if (data.toolkitId) {
@@ -133,14 +137,16 @@ export default function SprintRegistrationPage() {
       return;
     }
 
-    setIsSubmitting(true);
     try {
       const response = await axios.post(`/api/sprints/${sprintId}/registration`, {
         name: name.trim(),
+        mobileNumber,
         college: college.trim(),
         course: course.trim(),
         year,
+        city: city.trim(),
         expectations: expectations.trim(),
+        consent
       });
 
       // If registration is complete (no active sessions to select)
@@ -156,8 +162,11 @@ export default function SprintRegistrationPage() {
         return;
       }
 
-      // Show session selection dialog if there are sessions
-      setShowSessionSelectionDialog(true);
+      // //Show session selection dialog if there are sessions
+      // setShowSessionSelectionDialog(true);
+      setShowRegistration(false);
+      setShowVerificationDialog(true);
+      setIsSubmitting(true);
     } catch (error: unknown) {
       console.error(error);
       const message =
@@ -170,41 +179,41 @@ export default function SprintRegistrationPage() {
     }
   };
 
-  const handleSessionSubmit = async () => {
-    if (selectedSessionIds.length === 0) {
-      toast.error("Please select at least one session");
-      return;
-    }
+  // const handleSessionSubmit = async () => {
+  //   if (selectedSessionIds.length === 0) {
+  //     toast.error("Please select at least one session");
+  //     return;
+  //   }
 
-    setIsSubmittingSessions(true);
-    try {
-      await axios.post(`/api/sprints/${sprintId}/registration/sessions`, {
-        selectedSessionIds,
-      });
+  //   setIsSubmittingSessions(true);
+  //   try {
+  //     await axios.post(`/api/sprints/${sprintId}/registration/sessions`, {
+  //       selectedSessionIds,
+  //     });
 
-      const sprintResponse = await axios.get(`/api/sprints/${sprintId}/registration`);
-      if (sprintResponse.data.isVerificationRequired) {
-        setShowSessionSelectionDialog(false);
-        setShowVerificationDialog(true);
-      } else {
-        toast.success("Sessions selected! Welcome to the sprint.");
-        if (_toolkitId) {
-          router.replace(`/toolkit/${_toolkitId}/content`);
-        } else {
-          router.replace(`/toolkit/sprints/${sprintId}/dashboard`);
-        }
-      }
-    } catch (error: unknown) {
-      console.error(error);
-      const message =
-        axios.isAxiosError(error) && error.response?.data?.error
-          ? error.response.data.error
-          : "Failed to save sessions";
-      toast.error(message);
-    } finally {
-      setIsSubmittingSessions(false);
-    }
-  };
+  //     const sprintResponse = await axios.get(`/api/sprints/${sprintId}/registration`);
+  //     if (sprintResponse.data.isVerificationRequired) {
+  //       setShowSessionSelectionDialog(false);
+  //       setShowVerificationDialog(true);
+  //     } else {
+  //       toast.success("Sessions selected! Welcome to the sprint.");
+  //       if (_toolkitId) {
+  //         router.replace(`/toolkit/${_toolkitId}/content`);
+  //       } else {
+  //         router.replace(`/toolkit/sprints/${sprintId}/dashboard`);
+  //       }
+  //     }
+  //   } catch (error: unknown) {
+  //     console.error(error);
+  //     const message =
+  //       axios.isAxiosError(error) && error.response?.data?.error
+  //         ? error.response.data.error
+  //         : "Failed to save sessions";
+  //     toast.error(message);
+  //   } finally {
+  //     setIsSubmittingSessions(false);
+  //   }
+  // };
 
   if (isLoading || sessionPending) {
     return (
@@ -232,7 +241,7 @@ export default function SprintRegistrationPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-neutral-50 px-4 py-10">
+      {showRegistration && <div className="min-h-screen bg-neutral-50 px-4 py-10">
         <div className="mx-auto w-full max-w-xl">
           <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm md:p-8">
             <div className="mb-8">
@@ -272,6 +281,17 @@ export default function SprintRegistrationPage() {
               </div>
 
               <div className="space-y-1.5 md:space-y-2">
+                <Label htmlFor="mobileNumber">Mobile Number(Whatsapp)</Label>
+                <Input
+                  id="mobileNumber"
+                  value={mobileNumber}
+                  onChange={(event) => setMobileNumber(event.target.value)}
+                  placeholder="Your Mobile Number"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5 md:space-y-2">
                 <Label htmlFor="course">Degree / Course</Label>
                 <Input
                   id="course"
@@ -299,6 +319,17 @@ export default function SprintRegistrationPage() {
               </div>
 
               <div className="space-y-1.5 md:space-y-2">
+                <Label htmlFor="city">City</Label>
+                <Input
+                  id="city"
+                  value={city}
+                  onChange={(event) => setCity(event.target.value)}
+                  placeholder="Your City"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5 md:space-y-2">
                 <Label htmlFor="expectations">
                   What are you expecting from this sprint &amp; sessions (we are all ears &lt;3)?
                 </Label>
@@ -313,6 +344,26 @@ export default function SprintRegistrationPage() {
                 />
               </div>
 
+              <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 md:p-4">
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="consent"
+                    checked={consent}
+                    onChange={(event) => setConsent(event.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-neutral-300 accent-neutral-900 focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1"
+                    required
+                  />
+
+                  <Label
+                    htmlFor="consent"
+                    className="cursor-pointer text-sm font-medium leading-5 text-[#c2410c] md:text-base md:leading-6"
+                  >
+                    I consent to actively participate throughout the sprint and share a
+                    testimonial/feedback with the team after the sprint is completed.
+                  </Label>
+                </div>
+              </div>
               <Button
                 type="submit"
                 disabled={isSubmitting}
@@ -330,22 +381,48 @@ export default function SprintRegistrationPage() {
             </form>
           </div>
         </div>
-      </div>
+      </div>}
 
       <Dialog open={showVerificationDialog} onOpenChange={setShowVerificationDialog}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-center gap-2">
+        <DialogHeader>
+            <DialogTitle className="flex flex-col items-center justify-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
                 <Lock className="h-6 w-6 text-[#ff5e14]" />
               </div>
-              <span>Access Verification</span>
+
+              <span>Access Coming Soon</span>
             </DialogTitle>
-            <DialogDescription className="text-center text-gray-600 pt-2">
-              It will unlock in a few hours after verification. You will get contacted &amp; get added to a WhatsApp community for access as well.
+
+            <DialogDescription className="pt-3 text-center text-gray-600">
+              <span className="block">
+                You will get access to the dashboard and be added to our exclusive
+                Marketing Sprint WhatsApp community
+              </span>
+
+              <span className="mt-1 block">
+                by{" "}
+                <span className="font-semibold text-[#ff5e14]">
+                  1st October
+                </span>
+                .
+              </span>
             </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-center pt-4">
+          <div className="flex flex-col items-center gap-3 pt-4 w-full">
+            <Button className="w-full max-w-md p-0 overflow-hidden">
+            <a
+            href={`https://wa.me/916377492042?text=Hi!%20I have%20joined%20the cohort and would like to%20enquire%20about%20the%20sprint%20program:%20${encodeURIComponent(sprintTitle)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm md:text-base py-3 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-1.5"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 shrink-0 md:w-5 md:h-5" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 0 0 1.333 4.982L2 22l5.202-1.362a9.923 9.923 0 0 0 4.808 1.236h.005c5.505 0 9.99-4.477 9.99-9.985C22.005 6.478 17.518 2 12.012 2Zm5.845 14.285c-.244.686-1.42 1.328-1.948 1.41-.478.077-1.101.144-3.187-.723-2.667-1.108-4.37-3.816-4.502-3.992-.133-.176-1.077-1.43-1.077-2.729 0-1.298.679-1.937.922-2.202.244-.265.533-.332.71-.332.178 0 .356.006.51.013.162.008.38-.06.593.453.22.532.753 1.836.82 1.968.067.133.11.288.022.465-.088.177-.133.288-.266.443-.133.155-.28.347-.4.493-.133.16-.272.336-.117.6.155.265.686 1.132 1.47 1.831.99.885 1.823 1.157 2.08 1.288.254.133.403.11.553-.066.15-.177.643-.753.815-.996.172-.244.344-.2.58-.112.235.088 1.492.703 1.748.83.256.128.427.194.49.305.061.11.061.643-.183 1.329Z" />
+            </svg>
+            Directly Connect With The Team
+          </a>
+            </Button>
             <Button
               onClick={() => router.push("/")}
               className="w-full max-w-xs bg-neutral-900 hover:bg-neutral-800 text-white"
@@ -356,7 +433,7 @@ export default function SprintRegistrationPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showSessionSelectionDialog} onOpenChange={() => {}}>
+      {/* <Dialog open={showSessionSelectionDialog} onOpenChange={() => {}}>
         <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto" showCloseButton={false}>
           <DialogHeader>
             <DialogTitle className="text-xl">
@@ -419,7 +496,7 @@ export default function SprintRegistrationPage() {
             </Button>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </>
   );
 }

@@ -54,7 +54,7 @@ interface Feature {
   id?: string;
   icon: string;
   title: string;
-  description: string;
+  description: string[];
 }
 
 interface Tier {
@@ -486,27 +486,27 @@ export default function AdminSprintsTable() {
       const sessionTitles =
         order.selectedSessionIds && order.selectedSessionIds.length > 0
           ? order.selectedSessionIds
-              .map((sessionId) => {
-                const session = order.sprintId
-                  ? sessionsData[order.sprintId]?.find((s: any) => s.id === sessionId)
-                  : null;
-                return session ? session.title : "";
-              })
-              .filter(Boolean)
-              .join(", ")
+            .map((sessionId) => {
+              const session = order.sprintId
+                ? sessionsData[order.sprintId]?.find((s: any) => s.id === sessionId)
+                : null;
+              return session ? session.title : "";
+            })
+            .filter(Boolean)
+            .join(", ")
           : "";
 
       const individualSessionTitles =
         order.selectedAddOnIds && order.selectedAddOnIds.length > 0
           ? order.selectedAddOnIds
-              .map((sessionId) => {
-                const session = order.sprintId
-                  ? sessionsData[order.sprintId]?.find((s: any) => s.id === sessionId)
-                  : null;
-                return session ? session.title : "";
-              })
-              .filter(Boolean)
-              .join(", ")
+            .map((sessionId) => {
+              const session = order.sprintId
+                ? sessionsData[order.sprintId]?.find((s: any) => s.id === sessionId)
+                : null;
+              return session ? session.title : "";
+            })
+            .filter(Boolean)
+            .join(", ")
           : "";
 
       const optedPlanLabel = order.upgradePlanTitle
@@ -554,31 +554,28 @@ export default function AdminSprintsTable() {
       <div className="flex border-b">
         <button
           onClick={() => setView("sprints")}
-          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${
-            view === "sprints"
-              ? "border-[#ff5e14] text-[#ff5e14]"
-              : "border-transparent text-gray-500 hover:text-gray-700"
-          }`}
+          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${view === "sprints"
+            ? "border-[#ff5e14] text-[#ff5e14]"
+            : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
         >
           Sprints ({sprintsList.length})
         </button>
         <button
           onClick={() => setView("orders")}
-          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${
-            view === "orders"
-              ? "border-[#ff5e14] text-[#ff5e14]"
-              : "border-transparent text-gray-500 hover:text-gray-700"
-          }`}
+          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${view === "orders"
+            ? "border-[#ff5e14] text-[#ff5e14]"
+            : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
         >
           Orders Log ({ordersList.length})
         </button>
         <button
           onClick={() => setView("registrations")}
-          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${
-            view === "registrations"
-              ? "border-[#ff5e14] text-[#ff5e14]"
-              : "border-transparent text-gray-500 hover:text-gray-700"
-          }`}
+          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${view === "registrations"
+            ? "border-[#ff5e14] text-[#ff5e14]"
+            : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
         >
           Registration Details ({ordersList.filter((order) => order.registrationName).length})
         </button>
@@ -632,11 +629,10 @@ export default function AdminSprintsTable() {
                         <td className="p-4 font-semibold text-gray-900">₹{s.basePrice}</td>
                         <td className="p-4">
                           <span
-                            className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
-                              s.isActive
-                                ? "bg-green-100 text-green-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}
+                            className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${s.isActive
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-800"
+                              }`}
                           >
                             {s.isActive ? "Active" : "Draft"}
                           </span>
@@ -737,44 +733,40 @@ export default function AdminSprintsTable() {
               <button
                 type="button"
                 onClick={() => setOrderStatusFilter("all")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                  orderStatusFilter === "all"
-                    ? "bg-gray-900 text-white shadow-xs"
-                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${orderStatusFilter === "all"
+                  ? "bg-gray-900 text-white shadow-xs"
+                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                  }`}
               >
                 All ({ordersList.length})
               </button>
               <button
                 type="button"
                 onClick={() => setOrderStatusFilter("paid")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                  orderStatusFilter === "paid"
-                    ? "bg-green-600 text-white shadow-xs"
-                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${orderStatusFilter === "paid"
+                  ? "bg-green-600 text-white shadow-xs"
+                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                  }`}
               >
                 Paid ({ordersList.filter((o) => o.status === "paid").length})
               </button>
               <button
                 type="button"
                 onClick={() => setOrderStatusFilter("created")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                  orderStatusFilter === "created"
-                    ? "bg-amber-600 text-white shadow-xs"
-                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${orderStatusFilter === "created"
+                  ? "bg-amber-600 text-white shadow-xs"
+                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                  }`}
               >
                 Pending / Created ({ordersList.filter((o) => o.status === "created" || o.status === "pending").length})
               </button>
               <button
                 type="button"
                 onClick={() => setOrderStatusFilter("failed")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                  orderStatusFilter === "failed"
-                    ? "bg-red-600 text-white shadow-xs"
-                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${orderStatusFilter === "failed"
+                  ? "bg-red-600 text-white shadow-xs"
+                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                  }`}
               >
                 Failed ({ordersList.filter((o) => o.status === "failed").length})
               </button>
@@ -908,19 +900,18 @@ export default function AdminSprintsTable() {
                           </td>
                           <td className="p-4">
                             <span
-                              className={`inline-flex px-2.5 py-0.5 text-xs font-bold rounded-full ${
-                                order.status === "paid"
-                                  ? "bg-green-100 text-green-800 border border-green-200"
-                                  : order.status === "failed"
+                              className={`inline-flex px-2.5 py-0.5 text-xs font-bold rounded-full ${order.status === "paid"
+                                ? "bg-green-100 text-green-800 border border-green-200"
+                                : order.status === "failed"
                                   ? "bg-red-100 text-red-800 border border-red-200"
                                   : "bg-amber-100 text-amber-800 border border-amber-200"
-                              }`}
+                                }`}
                             >
                               {order.status === "paid"
                                 ? "Paid"
                                 : order.status === "failed"
-                                ? "Failed"
-                                : "Pending"}
+                                  ? "Failed"
+                                  : "Pending"}
                             </span>
                           </td>
                           <td className="p-4 text-xs">
@@ -942,11 +933,10 @@ export default function AdminSprintsTable() {
                               variant={order.isVerified ? "outline" : "default"}
                               size="sm"
                               disabled={order.status !== "paid"}
-                              className={`text-xs ${
-                                order.isVerified
-                                  ? "border-red-200 text-red-600 hover:bg-red-50"
-                                  : "bg-green-600 hover:bg-green-700 text-white"
-                              }`}
+                              className={`text-xs ${order.isVerified
+                                ? "border-red-200 text-red-600 hover:bg-red-50"
+                                : "bg-green-600 hover:bg-green-700 text-white"
+                                }`}
                             >
                               {order.isVerified ? "Unverify" : "Verify"}
                             </Button>
@@ -1092,8 +1082,8 @@ export default function AdminSprintsTable() {
                                 {order.selectedSessionIds.map((sessionId) => {
                                   const session = order.sprintId
                                     ? sessionsData[order.sprintId]?.find(
-                                        (s: any) => s.id === sessionId
-                                      )
+                                      (s: any) => s.id === sessionId
+                                    )
                                     : null;
                                   return session ? (
                                     <span
@@ -1115,8 +1105,8 @@ export default function AdminSprintsTable() {
                                 {order.selectedAddOnIds.map((sessionId) => {
                                   const session = order.sprintId
                                     ? sessionsData[order.sprintId]?.find(
-                                        (s: any) => s.id === sessionId
-                                      )
+                                      (s: any) => s.id === sessionId
+                                    )
                                     : null;
                                   return session ? (
                                     <span
@@ -1154,8 +1144,8 @@ export default function AdminSprintsTable() {
                                   userTierName: order.tierName || undefined,
                                   isBundleUser: Boolean(
                                     order.tierName ||
-                                      !order.selectedAddOnIds ||
-                                      order.selectedAddOnIds.length === 0
+                                    !order.selectedAddOnIds ||
+                                    order.selectedAddOnIds.length === 0
                                   ),
                                 })
                               }
@@ -1244,61 +1234,55 @@ export default function AdminSprintsTable() {
             <div className="flex gap-2 border-b mb-6 overflow-x-auto pb-2">
               <button
                 onClick={() => setActiveEditTab("details")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                  activeEditTab === "details"
-                    ? "bg-[#ff5e14] text-white"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                }`}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEditTab === "details"
+                  ? "bg-[#ff5e14] text-white"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  }`}
               >
                 Page Details &amp; Hero
               </button>
               <button
                 onClick={() => setActiveEditTab("mentors")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                  activeEditTab === "mentors"
-                    ? "bg-[#ff5e14] text-white"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                }`}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEditTab === "mentors"
+                  ? "bg-[#ff5e14] text-white"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  }`}
               >
                 Mentors ({editingSprint.mentors?.length || 0})
               </button>
               <button
                 onClick={() => setActiveEditTab("features")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                  activeEditTab === "features"
-                    ? "bg-[#ff5e14] text-white"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                }`}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEditTab === "features"
+                  ? "bg-[#ff5e14] text-white"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  }`}
               >
                 What You Get ({editingSprint.features?.length || 0})
               </button>
               <button
                 onClick={() => setActiveEditTab("pricing")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                  activeEditTab === "pricing"
-                    ? "bg-[#ff5e14] text-white"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                }`}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEditTab === "pricing"
+                  ? "bg-[#ff5e14] text-white"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  }`}
               >
                 Pricing, Tiers &amp; Add-ons
               </button>
               <button
                 onClick={() => setActiveEditTab("curriculum")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                  activeEditTab === "curriculum"
-                    ? "bg-[#ff5e14] text-white"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                }`}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEditTab === "curriculum"
+                  ? "bg-[#ff5e14] text-white"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  }`}
               >
                 Curriculum ({editingSprint.sessions?.length || 0})
               </button>
               <button
                 onClick={() => setActiveEditTab("faqs")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                  activeEditTab === "faqs"
-                    ? "bg-[#ff5e14] text-white"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                }`}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEditTab === "faqs"
+                  ? "bg-[#ff5e14] text-white"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  }`}
               >
                 FAQs ({editingSprint.faqs?.length || 0})
               </button>
@@ -1940,7 +1924,7 @@ export default function AdminSprintsTable() {
                         ...editingSprint,
                         features: [
                           ...currentFeatures,
-                          { icon: "Check", title: "", description: "" },
+                          { icon: "Check", title: "", description: [""] },
                         ],
                       });
                     }}
@@ -2001,18 +1985,64 @@ export default function AdminSprintsTable() {
                         </div>
                         <div className="space-y-1">
                           <Label className="text-xs">Description</Label>
-                          <Input
-                            value={feature.description}
-                            onChange={(e) => {
-                              const currentFeatures = [...(editingSprint.features || [])];
-                              currentFeatures[index] = {
-                                ...currentFeatures[index],
-                                description: e.target.value,
-                              };
-                              setEditingSprint({ ...editingSprint, features: currentFeatures });
+                          {feature.description.map((el, idx) => (
+                            <div className="flex items-center gap-2 max-w-md" key={idx}>
+                              <Input
+                                className="flex-1"
+                                value={el}
+                                onChange={(e) => {
+                                  const currentFeatures = [...(editingSprint.features || [])];
+                                  const updatedDescription = [...(currentFeatures[index].description || [])];
+                                  updatedDescription[idx] = e.target.value;
+                                  currentFeatures[index] = {
+                                    ...currentFeatures[index],
+                                    description: [...updatedDescription],
+                                  };
+                                  setEditingSprint({ ...editingSprint, features: currentFeatures });
+                                }}
+                                placeholder="e.g. Additional Description Pointer"
+                              />
+                              <button
+                                type="button"
+                                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-500 transition-colors hover:border-red-300 hover:bg-red-100 hover:text-red-600"
+                                aria-label="Delete description point"
+                                onClick={() => {
+                                  const currentFeatures = [...(editingSprint.features) || []];
+                                  const updatedDescription = ([...currentFeatures[index].description || []]).filter((el, idxPointer) => idxPointer !== idx);
+                                  currentFeatures[index] = { ...currentFeatures[index], description: updatedDescription };
+                                  setEditingSprint(prev => ({ ...prev, features: currentFeatures }));
+                                }}>
+                                <Trash2 className="h-4 w-4" ></Trash2>
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingSprint((prev) => {
+                                if (!prev) return prev;
+
+                                const currentFeatures = [...prev.features];
+
+                                currentFeatures[index] = {
+                                  ...currentFeatures[index],
+                                  description: [
+                                    ...(currentFeatures[index].description || []),
+                                    "",
+                                  ],
+                                };
+
+                                return {
+                                  ...prev,
+                                  features: currentFeatures,
+                                };
+                              });
                             }}
-                            placeholder="e.g. Detailed feedback on assignments"
-                          />
+                            className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-dashed border-blue-300 px-3 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                            Add Description Point
+                          </button>
                         </div>
                       </div>
 

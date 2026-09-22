@@ -1208,7 +1208,7 @@ export const sprintFeatures = pgTable("sprint_features", {
   sprintId: uuid("sprint_id").references(() => sprints.id, { onDelete: "cascade" }),
   icon: text("icon").notNull(),
   title: text("title").notNull(),
-  description: text("description").notNull(),
+  description: text("description").array().notNull(),
   orderIndex: integer("order_index").default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -1313,12 +1313,18 @@ export const sprintOrders = pgTable("sprint_orders", {
   registrationName: text("registration_name"),
   registrationCollege: text("registration_college"),
   registrationCourse: text("registration_course"),
+  registrationMobileNumber: text("registration_mobile_number"),
   registrationYear: text("registration_year"),
+  registrationCity: text("registration_city"),
   registrationExpectations: text("registration_expectations"),
+  registrationConsent: boolean("registration_consent"),
   registrationCompletedAt: timestamp("registration_completed_at"),
   isVerified: boolean("is_verified").default(false),
   createdAt: timestamp("created_at").defaultNow(),
-});
+},(table)=>[
+  check("registration_mobile_number_len_check",sql`LENGTH(${table.registrationMobileNumber})=14`)
+]
+);
 
 export const sprintSessions = pgTable("sprint_sessions", {
   id: uuid("id").primaryKey().defaultRandom(),

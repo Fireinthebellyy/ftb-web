@@ -146,7 +146,7 @@ export default function SprintDetailClient() {
   const [isBuddyOfferGlobalEnabled, setIsBuddyOfferGlobalEnabled] = useState(false);
   const [buddyOfferTitle, setBuddyOfferTitle] = useState("Friendship Day Offer");
   const [buddyOfferText, setBuddyOfferText] = useState("Learning is better together! Enter your friend's email below so they can get access that too at 20% off");
-  const [activeCommunityTab, setActiveCommunityTab] = useState<"faqs" | "testimonials">("faqs");
+  const [activeCommunityTab, setActiveCommunityTab] = useState<"faqs" | "testimonials">("testimonials");
   const [openFaqId, setOpenFaqId] = useState<string | null>(null);
 
   // Upsell Modal / Bottom Sheet selections

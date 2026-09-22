@@ -16,12 +16,17 @@ const UUID_REGEX =
 const registrationSchema = z.object({
   name: z.string().trim().min(2, "Name is required"),
   college: z.string().trim().min(2, "College is required"),
+  mobileNumber: z.string().trim().min(14,"Mobile number must be followed by 10 digits after +91 "),
   course: z.string().trim().min(2, "Course is required"),
   year: z.string().trim().min(1, "Year is required"),
+  city: z.string().trim().min(2,"City is required"),
   expectations: z
     .string()
     .trim()
     .min(1, "Please share what you are expecting from this sprint"),
+  consent: z.boolean().refine((value) => value === true, {
+      message: "Consent is required",
+    })
 });
 
 async function resolveSprint(identifier: string) {
@@ -84,9 +89,12 @@ export async function GET(
         ? {
             name: order.registrationName,
             college: order.registrationCollege,
+            mobileNumber: order.registrationMobileNumber,
             course: order.registrationCourse,
             year: order.registrationYear,
+            city: order.registrationCity,
             expectations: order.registrationExpectations,
+            consent: order.registrationConsent
           }
         : null,
       prefilledName: order.buyerName,
@@ -144,27 +152,31 @@ export async function POST(
       );
     }
 
-    const { name, college, course, year, expectations } = result.data;
+    const { name, college, mobileNumber, course, year, city, expectations, consent } = result.data;
 
     // Check if sprint has any active sessions
-    const sprintSessionsData = await db.query.sprintSessions.findMany({
-      where: and(
-        eq(sprintSessions.sprintId, sprint.id),
-        eq(sprintSessions.isActive, true)
-      ),
-    });
+    // const sprintSessionsData = await db.query.sprintSessions.findMany({
+    //   where: and(
+    //     eq(sprintSessions.sprintId, sprint.id),
+    //     eq(sprintSessions.isActive, true)
+    //   ),
+    // });
 
-    const hasActiveSessions = sprintSessionsData.length > 0;
+    // const hasActiveSessions = sprintSessionsData.length > 0;
 
     await db
       .update(sprintOrders)
       .set({
         registrationName: name,
         registrationCollege: college,
+        registrationMobileNumber: mobileNumber,
         registrationCourse: course,
         registrationYear: year,
+        registrationCity: city,
         registrationExpectations: expectations,
-        ...(hasActiveSessions ? {} : { registrationCompletedAt: new Date() }),
+        registrationConsent: consent,
+        // ...(hasActiveSessions ? {} : { registrationCompletedAt: new Date() }),
+        registrationCompletedAt: new Date(),
       })
       .where(
         and(eq(sprintOrders.id, order.id), eq(sprintOrders.userId, session.user.id))
@@ -174,7 +186,8 @@ export async function POST(
       success: true,
       toolkitId: sprint.toolkitId,
       isVerificationRequired: Boolean(sprint.isVerificationRequired),
-      registrationComplete: !hasActiveSessions,
+      // registrationComplete: !hasActiveSessions,
+      registrationComplete: true
     });
   } catch (error) {
     console.error("Error submitting sprint registration:", error);

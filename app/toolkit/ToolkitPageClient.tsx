@@ -8,7 +8,7 @@ import axios from "axios";
 import { MentorshipCarousel } from "@/components/toolkit/MentorshipCarousel";
 // import ToolkitComingSoonCard from "@/components/toolkit/ToolkitComingSoonCard";
 import ToolkitStudentFeedback from "@/components/toolkit/ToolkitStudentFeedback";
-import { ToolkitTestimonials } from "@/components/toolkit/ToolkitTestimonials";
+import { StackedTestimonials } from "@/components/toolkit/StackedTestimonials";
 import { Toolkit } from "@/types/interfaces";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/hooks/use-session";
@@ -17,6 +17,7 @@ import { useEffect } from "react";
 // import { cn } from "@/lib/utils";
 import { Check, Share2 } from "lucide-react";
 import Link from "next/link";
+import { canAccessAdminPanel } from "@/lib/admin-permissions";
 
 interface CohortCard {
   id: string;
@@ -35,18 +36,12 @@ interface CohortCard {
   isFillingFast?: boolean | null;
 }
 
-interface ToolkitPageClientProps {
-  testimonialImages: string[];
-}
-
-export default function ToolkitPageClient({
-  testimonialImages,
-}: ToolkitPageClientProps) {
+export default function ToolkitPageClient() {
   const { data: session, isPending: sessionPending } = useSession();
   const router = useRouter();
   // const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const selectedCategory = "all";
-
+  const selectedCategory = "all";   
+  const isAdmin = canAccessAdminPanel(session?.user?.role);
   // const { data: settings } = useQuery({
   //   queryKey: ["site_settings"],
   //   queryFn: async () => {
@@ -205,7 +200,7 @@ export default function ToolkitPageClient({
             <>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {// showing sprints 
-                sprintsData.length > 0 && (
+                isAdmin && sprintsData.length > 0 && (
                   <>
                     {sprintsData.map((sprint) => (
                       <div
@@ -316,7 +311,7 @@ export default function ToolkitPageClient({
                       </div>
                     ))}
                   </>
-                )}
+              )}
 
               {// showing cohorts
                 cohortsData.length > 0 && (
@@ -711,34 +706,21 @@ export default function ToolkitPageClient({
               ))}
               {filteredToolkits.length === 1 && <ToolkitComingSoonCard />}
             </div>
-        )}
+        )} */}
 
+        <div className="mt-16">
+          <div className="text-center space-y-2 mb-[25px]">
+            <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">What students feel about us</h2>
+            <p className="text-gray-500">Real experiences from students who leveled up their careers with us.</p>
+          </div>
 
-    {/* Testimonials */}
-    <div className="relative z-10 mt-8 sm:mt-10">
-      <ToolkitTestimonials images={testimonialImages} />
-    </div>
-  {/* </div> */}
+          <StackedTestimonials />
 
-  {/* STUDENT FEEDBACK — SEPARATE FROM DARK SECTION */}
-  <div
-    className="
-      relative
-      z-20
-      mx-auto
-      mt-16
-      max-w-2xl
-      px-4
-
-      sm:mt-16
-      md:mt-20
-    "
-  >
-    <ToolkitStudentFeedback />
-  </div>
-
-</div>
+          <div className="max-w-2xl mx-auto mt-8">
+            <ToolkitStudentFeedback />
+          </div>
+        </div>
       </div>
-    // </div>
+    </div>
   );
 }

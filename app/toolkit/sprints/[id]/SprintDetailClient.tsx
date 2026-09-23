@@ -107,7 +107,8 @@ interface SprintData {
   slug: string;
   badge1: string;
   badge2: string;
-  subtitle: string;
+  innerSubtitle: string;
+  outerSubtitle: string;
   coverImageUrl: string;
   coverImageUrls?: string[] | null;
   cardImageUrl?: string | null;
@@ -763,9 +764,9 @@ useEffect(() => {
       {/* Sprint Header Info Block */}
       <div className="border-b border-gray-200 bg-white shadow-sm">
         <div className="max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 py-6 sm:py-8 space-y-3">
-          {sprint.subtitle && (
+          {sprint.innerSubtitle && (
             <p className="text-sm sm:text-sm md:text-base tracking-tight text-gray-600 leading-tight italic">
-              {sprint.subtitle}
+              {sprint.innerSubtitle}
             </p>
           )}
 
@@ -836,8 +837,8 @@ useEffect(() => {
                     <div className="mt-2 space-y-1 text-xs md:text-base text-gray-600 leading-relaxed pl-1">
                       {descriptionPoints.map((point, index) => (
                         <div key={index} className="flex items-start gap-2">
-                          <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-[#ff5e14]" />
-                          <span className="-mt-2" >{point}</span>
+                          <span className="mt-[8px] h-1 w-1 shrink-0 rounded-full bg-[#ff5e14]" />
+                          <span className="text-sm" >{point}</span>
                         </div>
                       ))}
                     </div>

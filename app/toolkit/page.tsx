@@ -30,13 +30,19 @@ export const metadata: Metadata = {
 };
 
 export default async function ToolkitPage() {
-  const testimonialImages = await db
-    .select({
-      imageUrl: toolkitTestimonialImages.imageUrl,
-    })
-    .from(toolkitTestimonialImages)
-    .where(eq(toolkitTestimonialImages.isActive, true))
-    .orderBy(asc(toolkitTestimonialImages.orderIndex));
+  let testimonialImages: { imageUrl: string }[] = [];
+
+  try {
+    testimonialImages = await db
+      .select({
+        imageUrl: toolkitTestimonialImages.imageUrl,
+      })
+      .from(toolkitTestimonialImages)
+      .where(eq(toolkitTestimonialImages.isActive, true))
+      .orderBy(asc(toolkitTestimonialImages.orderIndex));
+  } catch (error) {
+    console.error("Failed to load toolkit testimonial images:", error);
+  }
 
   return (
     <ToolkitPageClient

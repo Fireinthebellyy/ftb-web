@@ -33,6 +33,7 @@ import ToolkitStudentFeedback from "@/components/toolkit/ToolkitStudentFeedback"
 import { getVideoEmbedInfo } from "@/lib/video-embed";
 import { Caveat } from "next/font/google";
 
+
 const caveat = Caveat({
   weight: ["400", "700"],
   variable: "--font-caveat",
@@ -140,6 +141,11 @@ interface SprintData {
   sessions: Session[];
   faqs?: SprintFaqItem[];
 }
+const loadingMessages = [
+  'Becoming the "Zomato" of Marketing',
+  "The marketing headstart you deserve",
+  "Let's build something banger in marketing",
+];
 
 export default function SprintDetailClient() {
   const params = useParams();
@@ -149,12 +155,7 @@ export default function SprintDetailClient() {
 
   const [sprint, setSprint] = useState<SprintData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const loadingMessages = [
-  'Becoming the "Zomato" of Marketing',
-  "The marketing headstart you deserve",
-  "Let's build something banger in marketing",
   
-  ];
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [showSeatsPop, setShowSeatsPop] = useState(false);
   const [isBuddyOfferGlobalEnabled, setIsBuddyOfferGlobalEnabled] = useState(false);
@@ -229,27 +230,38 @@ export default function SprintDetailClient() {
   };
 
   // Load Sprint details and live toolkits
-  useEffect(() => {
-    const fetchSprintDetails = async () => {
-      try {
-        const response = await axios.get(`/api/sprints/${sprintId}`);
-        const data = response.data;
-        setSprint(data);
-        const posterResponse = await axios.get("/api/toolkit-last-cohort-poster");
-        setLastCohortPoster(posterResponse.data?.imageUrl ?? null);
+useEffect(() => {
+  const fetchSprintDetails = async () => {
+    try {
+      const response = await axios.get(`/api/sprints/${sprintId}`);
+      const data = response.data;
+      setSprint(data);
 
-        // Auto-select default tier
-        const defaultTier = data.tiers?.find((t: Tier) => t.isDefault) || data.tiers?.[0];
-        if (defaultTier) {
-          setSelectedTierId(defaultTier.id);
-        }
-      } catch (err) {
-        console.error(err);
-        toast.error("Failed to load sprint details");
-      } finally {
-  setIsLoading(false);
-}
-    };
+      // Auto-select default tier
+      const defaultTier =
+        data.tiers?.find((t: Tier) => t.isDefault) || data.tiers?.[0];
+
+      if (defaultTier) {
+        setSelectedTierId(defaultTier.id);
+      }
+
+      // Poster is optional
+      try {
+        const posterResponse = await axios.get(
+          "/api/toolkit-last-cohort-poster"
+        );
+        setLastCohortPoster(posterResponse.data?.imageUrl ?? null);
+      } catch (posterErr) {
+        console.error("Failed to load cohort poster:", posterErr);
+        setLastCohortPoster(null);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load sprint details");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
     const fetchLiveToolkits = async () => {
       try {
@@ -1227,7 +1239,7 @@ export default function SprintDetailClient() {
                               text: f.answer || f.question,
                             },
                           })),
-                        }),
+                        }).replace(/</g, "\\u003c"),
                       }}
                     />
                   </div>

@@ -1498,6 +1498,8 @@ export const schema = {
   digitalProductSections,
   mentorshipCarouselSlides,
   toolkitTestimonialImages,
+  toolkitMainTestimonials,
+  toolkitLastCohortPoster,
   toolkitContentItems,
   toolkitCommunityPosts,
   toolkitCommunityResponses,

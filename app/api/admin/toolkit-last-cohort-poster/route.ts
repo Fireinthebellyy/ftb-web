@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { db } from "@/lib/db";
+import { db, dbPool } from "@/lib/db";
 import { toolkitLastCohortPoster } from "@/lib/schema";
 
 import { eq } from "drizzle-orm";
@@ -55,23 +55,25 @@ export async function POST(req: Request) {
     );
   }
 
-  // Deactivate the existing poster
-  await db
-    .update(toolkitLastCohortPoster)
-    .set({
-      isActive: false,
-      updatedAt: new Date().toISOString(),
-    })
-    .where(eq(toolkitLastCohortPoster.isActive, true));
+    const newPoster = await dbPool.transaction(async (tx) => {
+    await tx
+      .update(toolkitLastCohortPoster)
+      .set({
+        isActive: false,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(toolkitLastCohortPoster.isActive, true));
 
-  // Add the new poster
-  const [newPoster] = await db
-    .insert(toolkitLastCohortPoster)
-    .values({
-      imageUrl: parsed.data.imageUrl,
-      isActive: parsed.data.isActive ?? true,
-    })
-    .returning();
+    const [poster] = await tx
+      .insert(toolkitLastCohortPoster)
+      .values({
+        imageUrl: parsed.data.imageUrl,
+        isActive: parsed.data.isActive ?? true,
+      })
+      .returning();
+
+    return poster;
+  });
 
   return NextResponse.json(newPoster);
 }

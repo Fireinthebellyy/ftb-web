@@ -215,8 +215,13 @@ export default function CohortDetailClient() {
         const response = await axios.get(`/api/cohorts/${cohortId}`);
         const data = response.data;
         setCohort(data);
+       try {
         const posterResponse = await axios.get("/api/toolkit-last-cohort-poster");
         setLastCohortPoster(posterResponse.data?.imageUrl ?? null);
+      } catch (posterErr) {
+        console.error("Failed to load cohort poster:", posterErr);
+        setLastCohortPoster(null);
+      }
         if (data.mentors && data.mentors.length > 0) {
           setMentorCards(data.mentors);
         }

@@ -1,3 +1,5 @@
+"use client";
+
 /* eslint-disable @next/next/no-img-element */
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -139,7 +141,7 @@ export function ToolkitPosterManager({
                   <img
                     src={poster.imageUrl}
                     alt="Last cohort poster"
-                    className="aspect-[4/3]] w-full object-cover"
+                    className="aspect-[4/3] w-full object-cover"
                   />
                 </div>
 

@@ -9,6 +9,7 @@ import { MentorshipCarousel } from "@/components/toolkit/MentorshipCarousel";
 // import ToolkitComingSoonCard from "@/components/toolkit/ToolkitComingSoonCard";
 import ToolkitStudentFeedback from "@/components/toolkit/ToolkitStudentFeedback";
 import { ToolkitTestimonials } from "@/components/toolkit/ToolkitTestimonials";
+import { StackedTestimonials } from "@/components/toolkit/StackedTestimonials";
 import { Toolkit } from "@/types/interfaces";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/hooks/use-session";
@@ -23,6 +24,7 @@ interface CohortCard {
   title: string;
   slug: string;
   subtitle?: string | null;
+  cardSubtitle?: string | null;
   badge1?: string | null;
   badge2?: string | null;
   cardImageUrl?: string | null;
@@ -255,6 +257,12 @@ export default function ToolkitPageClient({
                           <h3 className="font-bold text-gray-900 text-base leading-snug line-clamp-2">
                             {sprint.title}
                           </h3>
+
+                          {sprint.cardSubtitle && (
+                            <p className="text-sm text-gray-600 leading-relaxed">
+                              {sprint.cardSubtitle}
+                            </p>
+                          )}
 
                           {sprint.startDate && (
                             <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 uppercase tracking-wider bg-emerald-50 w-fit px-2.5 py-1 rounded-lg border border-emerald-100">
@@ -715,6 +723,11 @@ export default function ToolkitPageClient({
 
 
     {/* Testimonials */}
+
+    <div className="relative z-10 mt-8 sm:mt-10">
+      <StackedTestimonials type="main" />
+    </div>
+
     <div className="relative z-10 mt-8 sm:mt-10">
       <ToolkitTestimonials images={testimonialImages} />
     </div>

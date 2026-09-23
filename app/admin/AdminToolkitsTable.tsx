@@ -683,7 +683,7 @@ export default function AdminToolkitsTable() {
             className="gap-2 bg-white"
             onClick={() => setToolkitMainTestimonialsOpen(true)}
             >
-            Toolkit Main Testimonials
+            Screenshot Wall
           </Button>
           <Button
             variant="outline"

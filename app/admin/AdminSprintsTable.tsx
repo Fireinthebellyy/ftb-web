@@ -97,6 +97,7 @@ interface Sprint {
   badge1?: string;
   badge2?: string;
   subtitle?: string;
+  cardSubtitle?: string;
   coverImageUrl?: string;
   coverImageUrls?: string[] | null;
   cardImageUrl?: string | null;
@@ -1317,6 +1318,21 @@ export default function AdminSprintsTable() {
                       }
                     />
                   </div>
+
+                  <div className="space-y-1.5">
+                    <Label>Card Description / Subtitle</Label>
+                    <Textarea
+                      rows={3}
+                      value={editingSprint.cardSubtitle || ""}
+                      onChange={(e) =>
+                        setEditingSprint({
+                          ...editingSprint,
+                          cardSubtitle: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  
                   <div className="space-y-1.5">
                     <Label>Linked Content Toolkit</Label>
                     <select

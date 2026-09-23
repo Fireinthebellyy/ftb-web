@@ -18,14 +18,25 @@ const PLACEHOLDER_CARDS = [
   { id: 6, src: "", alt: "Screenshot 6", bg: "bg-yellow-50" },
 ];
 
-export function StackedTestimonials() {
-  const { data: fetchedImages, isLoading } = useQuery({
-    queryKey: ["testimonial-images"],
-    queryFn: async () => {
-      const res = await axios.get("/api/testimonial-images");
-      return res.data as { id: string; imageUrl: string }[];
-    },
-  });
+export function StackedTestimonials({
+  type = "pages",
+}: {
+  type?: "main" | "pages";
+}) {
+  const isMain = type === "main";
+
+const { data: fetchedImages, isLoading } = useQuery({
+  queryKey: ["testimonial-images", type],
+  queryFn: async () => {
+    const endpoint = isMain
+      ? "/api/main-stacked-testimonials"
+      : "/api/testimonial-images";
+
+    const res = await axios.get(endpoint);
+
+    return res.data as { id: string; imageUrl: string }[];
+  },
+});
 
   const [cards, setCards] = useState<any[]>(PLACEHOLDER_CARDS);
   const [isPlaying, setIsPlaying] = useState(true);

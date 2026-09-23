@@ -454,6 +454,18 @@ export const toolkitTestimonialImages = pgTable("toolkit_testimonial_images", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const toolkitMainStackedTestimonials = pgTable(
+  "toolkit_main_stacked_testimonials",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    imageUrl: text("image_url").notNull(),
+    orderIndex: integer("order_index").notNull().default(0),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  }
+);
+
 export const toolkitMainTestimonials = pgTable("toolkit_main_testimonials", {
   id: uuid().defaultRandom().primaryKey().notNull(),
   imageUrl: text("image_url").notNull(),
@@ -1178,6 +1190,7 @@ export const sprints = pgTable("sprints", {
   badge1: text("badge1"),
   badge2: text("badge2"),
   subtitle: text("subtitle"),
+  cardSubtitle: text("card_subtitle"),
   coverImageUrl: text("cover_image_url"),
   coverImageUrls: text("cover_image_urls").array(),
   cardImageUrl: text("card_image_url"),

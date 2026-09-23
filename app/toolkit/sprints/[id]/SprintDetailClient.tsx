@@ -581,7 +581,7 @@ useEffect(() => {
           initial={{ x: -80, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
-          className="w-fit ml-4 md:ml-4 lg:ml-8 flex items-center gap-3"
+          className="w-fit ml-6 md:ml-6 lg:ml-8 flex items-center gap-3"
         >
           <div className="h-7 w-1 bg-[#ff5e14] rounded-full shrink-0" />
 
@@ -595,7 +595,7 @@ useEffect(() => {
       {(() => {
         const videoEmbed = sprint.videoUrl ? getVideoEmbedInfo(sprint.videoUrl) : null;
         return (
-          <section className="relative w-full bg-black overflow-hidden">
+          <section className="relative w-full bg-white overflow-hidden">
             {/* Top Bar (Back Button + Provider Tag + Share) */}
             <div className="absolute top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 z-30 flex items-center justify-between pointer-events-none">
               <button
@@ -662,7 +662,14 @@ useEffect(() => {
                   </div>
                 </div>
               ) : (
-                <div className="relative w-full aspect-video md:max-h-[580px] bg-black flex items-center justify-center">
+                <div
+  className="relative aspect-video md:max-h-[580px] bg-black flex items-center justify-center"
+  style={{
+    width: "calc(100% - 30px)",
+    marginLeft: "15px",
+    marginRight: "15px",
+  }}
+>
                   {videoEmbed.provider === "youtube" || videoEmbed.provider === "bunny" ? (
                     <iframe
                       src={videoEmbed.embedUrl}
@@ -1096,7 +1103,7 @@ useEffect(() => {
         {/* FAQs & Testimonials Interactive Section */}
         <section className="space-y-4 pt-6">
           {/* Quick Navigation Toggle */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-center gap-4 border-b border-gray-200/80 pb-4">
+          <div className="flex flex-col sm:flex-row items-center sm:items-center justify-center gap-4 border-b border-gray-200/80 pb-4">
           
 
             <div className="inline-flex p-1.5 bg-gray-500 rounded-2xl border border-gray-200/90 shadow-inner">

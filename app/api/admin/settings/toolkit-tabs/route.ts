@@ -24,6 +24,7 @@ export async function GET(_req: NextRequest) {
 
     return NextResponse.json({
       toolkitCohortsTabLabel: settings[0]?.toolkitCohortsTabLabel ?? "Live Cohorts",
+      toolkitSprintsTabLabel: settings[0]?.toolkitSprintsTabLabel ?? "Sprints",
       toolkitSessionsTabLabel: settings[0]?.toolkitSessionsTabLabel ?? "Sessions",
       toolkitMentorshipTabLabel: settings[0]?.toolkitMentorshipTabLabel ?? "1:1 Mentorship",
       toolkitDigitalProductsTabLabel: settings[0]?.toolkitDigitalProductsTabLabel ?? "Digital products",
@@ -50,6 +51,7 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json();
     const {
       toolkitCohortsTabLabel,
+      toolkitSprintsTabLabel,
       toolkitSessionsTabLabel,
       toolkitMentorshipTabLabel,
       toolkitDigitalProductsTabLabel,
@@ -65,6 +67,7 @@ export async function PATCH(req: NextRequest) {
       await db.insert(siteSettings).values({
         id: "global",
         toolkitCohortsTabLabel,
+        toolkitSprintsTabLabel,
         toolkitSessionsTabLabel,
         toolkitMentorshipTabLabel,
         toolkitDigitalProductsTabLabel,
@@ -74,6 +77,7 @@ export async function PATCH(req: NextRequest) {
         .update(siteSettings)
         .set({
           toolkitCohortsTabLabel,
+          toolkitSprintsTabLabel,
           toolkitSessionsTabLabel,
           toolkitMentorshipTabLabel,
           toolkitDigitalProductsTabLabel,

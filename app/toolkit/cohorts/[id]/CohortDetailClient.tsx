@@ -24,6 +24,7 @@ import { extractRichTextPlainText } from "@/lib/rich-text";
 import { motion, AnimatePresence } from "framer-motion";
 import { StackedTestimonials } from "@/components/toolkit/StackedTestimonials";
 import ToolkitStudentFeedback from "@/components/toolkit/ToolkitStudentFeedback";
+import { ToolkitTestimonials } from "@/components/toolkit/ToolkitTestimonials";
 
 export function getDuoPricing(singlePrice: number) {
   if (!singlePrice || singlePrice <= 0) {
@@ -165,6 +166,7 @@ export default function CohortDetailClient() {
 
   // Cover Image Carousel states
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [lastCohortPoster, setLastCohortPoster] = useState<string | null>(null);
 
   useEffect(() => {
     if (!cohort || !cohort.coverImageUrls || cohort.coverImageUrls.length <= 1) return;
@@ -213,6 +215,13 @@ export default function CohortDetailClient() {
         const response = await axios.get(`/api/cohorts/${cohortId}`);
         const data = response.data;
         setCohort(data);
+       try {
+        const posterResponse = await axios.get("/api/toolkit-last-cohort-poster");
+        setLastCohortPoster(posterResponse.data?.imageUrl ?? null);
+      } catch (posterErr) {
+        console.error("Failed to load cohort poster:", posterErr);
+        setLastCohortPoster(null);
+      }
         if (data.mentors && data.mentors.length > 0) {
           setMentorCards(data.mentors);
         }
@@ -494,6 +503,20 @@ export default function CohortDetailClient() {
       // block interaction with the payment popup (rage-click fix).
       setIsDrawerOpen(false);
       const rzp = new (window as any).Razorpay(options);
+
+      rzp.on("payment.failed", async function (failureData: any) {
+        console.error("Razorpay payment failed:", failureData);
+        toast.error(failureData?.error?.description || "Payment failed");
+        try {
+          await axios.post(`/api/cohorts/${cohort.id}/checkout/failed`, {
+            razorpay_order_id: order.id,
+            reason: failureData?.error?.description || "Payment failed",
+          });
+        } catch (logErr) {
+          console.error("Failed to log payment failure:", logErr);
+        }
+      });
+
       rzp.open();
     } catch (err: any) {
       console.error(err);
@@ -502,6 +525,8 @@ export default function CohortDetailClient() {
     }
   };
 
+  const cohortEndDate = new Date("2026-09-15T23:59:59");
+  const today = new Date();
   return (
     <div className="min-h-screen bg-[#FAF9F6] text-[#1A1A1A] pb-24 font-sans antialiased">
       {/* Marquee Banner */}
@@ -757,7 +782,7 @@ export default function CohortDetailClient() {
                           <Linkedin className="w-6 h-6" />
                         </div>
                       )}
-                       <div className="space-y-1">
+                      <div className="space-y-1">
                         <h3 className="font-bold text-gray-900 text-sm md:text-base leading-tight">
                           {mentor.name}
                         </h3>
@@ -1007,6 +1032,24 @@ export default function CohortDetailClient() {
             {cohort.testimonialsHeading || "What Members Say About Our Ecosystem"}
           </h2>
           <StackedTestimonials />
+          <div
+            id="cohort-proof"
+            className="space-y-6 scroll-mt-6"
+          >
+            {lastCohortPoster && (
+              <section className="w-screen relative left-1/2 -translate-x-1/2 md:w-full md:left-0 md:translate-x-0">
+                <div className="relative w-full md:w-[85%] lg:w-[75%] xl:w-[70%] mx-auto aspect-video overflow-hidden bg-black">
+                  <img
+                    src={lastCohortPoster}
+                    alt="Last cohort"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </section>
+            )}
+
+            <ToolkitTestimonials images={[]} />
+          </div>
           <div className="max-w-2xl mx-auto">
             <ToolkitStudentFeedback />
           </div>
@@ -1015,39 +1058,83 @@ export default function CohortDetailClient() {
 
       {/* 4. Sticky Bottom Bar */}
       <footer className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 py-3.5 px-4 shadow-xl z-30">
-        <div className="max-w-md md:max-w-lg mx-auto flex gap-3 items-center justify-between">
+        <div
+          className={`${today > cohortEndDate ? "max-w-2xl" : "max-w-md"
+            } mx-auto flex gap-3 items-center justify-between w-full`}
+        >
+          {/* Button 1: Enquire Now */}
           <a
-            href={`https://wa.me/916377492042?text=Hi!%20I'd%20like%20to%20enquire%20about%20the%20cohort%20program:%20${encodeURIComponent(cohort.title)}`}
+            href={`https://wa.me/916377492042?text=Hi!%20I'd%20like%20to%20enquire%20about%20the%20cohort%20program:%20${encodeURIComponent(
+              cohort.title
+            )}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm md:text-base py-3 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-1.5"
+            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3 px-2 rounded-xl transition shadow-lg flex items-center justify-center gap-1.5 h-11 text-center leading-none"
           >
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 shrink-0 md:w-5 md:h-5" xmlns="http://www.w3.org/2000/svg">
+            <svg
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="w-4 h-4 shrink-0"
+              xmlns="http://www.w3.org/2000/svg"
+            >
               <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 0 0 1.333 4.982L2 22l5.202-1.362a9.923 9.923 0 0 0 4.808 1.236h.005c5.505 0 9.99-4.477 9.99-9.985C22.005 6.478 17.518 2 12.012 2Zm5.845 14.285c-.244.686-1.42 1.328-1.948 1.41-.478.077-1.101.144-3.187-.723-2.667-1.108-4.37-3.816-4.502-3.992-.133-.176-1.077-1.43-1.077-2.729 0-1.298.679-1.937.922-2.202.244-.265.533-.332.71-.332.178 0 .356.006.51.013.162.008.38-.06.593.453.22.532.753 1.836.82 1.968.067.133.11.288.022.465-.088.177-.133.288-.266.443-.133.155-.28.347-.4.493-.133.16-.272.336-.117.6.155.265.686 1.132 1.47 1.831.99.885 1.823 1.157 2.08 1.288.254.133.403.11.553-.066.15-.177.643-.753.815-.996.172-.244.344-.2.58-.112.235.088 1.492.703 1.748.83.256.128.427.194.49.305.061.11.061.643-.183 1.329Z" />
             </svg>
-            Enquire Now
+            <span>Enquire Now</span>
           </a>
 
-          {cohort.hasAccess ? (
+          {today > cohortEndDate ? (
+            <>
+              {/* Button 2: View Cohort Profile */}
+              <button
+                type="button"
+                onClick={() => {
+                  document.getElementById("cohort-proof")?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                }}
+                className="flex-1 bg-gradient-to-r from-[#ff5e14] to-[#ff7a3d] hover:from-[#e04f0f] hover:to-[#ff5e14] text-white font-bold text-xs py-3 px-2 rounded-xl transition duration-200 shadow-md hover:shadow-lg h-11 flex items-center justify-center text-center leading-none"
+              >
+                View Cohort Profile
+              </button>
+
+              {/* Button 3: Join The Next One */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsBuddyDialogOpen(false);
+                  router.push(
+                    "/toolkit/sprints/fc936f44-08f7-4cd7-814d-a9cd6a9d0f3f"
+                  );
+                }}
+                className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-3 px-2 rounded-xl transition duration-200 shadow-md hover:shadow-lg h-11 flex items-center justify-center text-center leading-none"
+              >
+                Join The Next One
+              </button>
+            </>
+          ) : cohort.hasAccess ? (
             <button
               onClick={() => {
                 if (cohort.toolkitId) {
                   router.push(`/toolkit/${cohort.toolkitId}/content`);
                 } else {
-                  // Redirect to cohort dashboard if no toolkit id
                   router.push(`/toolkit/cohorts/${cohortId}/dashboard`);
                 }
               }}
-              className="flex-1 bg-green-600 hover:bg-green-750 text-white font-bold text-sm md:text-base py-3 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-1.5"
+              className="flex-1 bg-green-600 hover:bg-green-750 text-white font-bold text-xs py-3 px-2 rounded-xl transition shadow-lg flex items-center justify-center gap-1.5 h-11 text-center leading-none"
             >
               View Cohort <ChevronRight className="w-4 h-4" />
             </button>
           ) : (
             <button
-              onClick={() => setIsDrawerOpen(true)}
-              className="flex-1 bg-[#ff5e14] hover:bg-[#e04f0f] text-white font-bold text-sm md:text-base py-3 px-4 rounded-xl transition shadow-lg shadow-orange-500/10 flex items-center justify-center gap-1.5"
+              type="button"
+              onClick={() => {
+                setIsBuddyDialogOpen(false);
+                setIsDrawerOpen(true);
+              }}
+              className="flex-1 bg-gradient-to-r from-[#ff5e14] to-[#ff7a3d] hover:from-[#e04f0f] hover:to-[#ff5e14] text-white font-bold text-xs py-3 px-2 rounded-xl transition duration-200 shadow-md hover:shadow-lg h-11 flex items-center justify-center text-center leading-none"
             >
-              Apply Now <ChevronRight className="w-4 h-4" />
+              Apply Now
             </button>
           )}
         </div>
@@ -1216,7 +1303,7 @@ export default function CohortDetailClient() {
                             <input
                               type="checkbox"
                               checked={isSelected}
-                              onChange={() => {}} // toggled by parent div
+                              onChange={() => { }} // toggled by parent div
                               className="rounded border-gray-300 text-[#ff5e14] focus:ring-[#ff5e14] mt-0.5 h-4 w-4"
                             />
                             <div>
@@ -1276,7 +1363,7 @@ export default function CohortDetailClient() {
                             <input
                               type="checkbox"
                               checked={isSelected}
-                              onChange={() => {}} // toggled by parent div
+                              onChange={() => { }} // toggled by parent div
                               className="rounded border-gray-300 text-[#ff5e14] focus:ring-[#ff5e14] mt-0.5 h-4 w-4"
                             />
                             <div>
@@ -1473,7 +1560,7 @@ export default function CohortDetailClient() {
             <p className="text-[9px] uppercase font-bold tracking-widest text-orange-200 leading-none mb-1">Attention</p>
             <h4 className="font-extrabold text-xs md:text-sm leading-snug">Limited Seats! Cohort is Live</h4>
           </div>
-          <button 
+          <button
             onClick={() => setShowSeatsPop(false)}
             className="hover:bg-white/20 p-1 rounded-full transition-colors shrink-0"
           >

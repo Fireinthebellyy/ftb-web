@@ -22,6 +22,7 @@ export default function ToolkitTabsEditDialog() {
 
   const [localTabs, setLocalTabs] = useState({
     toolkitCohortsTabLabel: "Live Cohorts",
+    toolkitSprintsTabLabel: "Sprints",
     toolkitSessionsTabLabel: "Sessions",
     toolkitMentorshipTabLabel: "1:1 Mentorship",
     toolkitDigitalProductsTabLabel: "Digital products",
@@ -40,6 +41,7 @@ export default function ToolkitTabsEditDialog() {
     if (tabsSettings) {
       setLocalTabs({
         toolkitCohortsTabLabel: tabsSettings.toolkitCohortsTabLabel ?? "Live Cohorts",
+        toolkitSprintsTabLabel: tabsSettings.toolkitSprintsTabLabel ?? "Sprints",
         toolkitSessionsTabLabel: tabsSettings.toolkitSessionsTabLabel ?? "Sessions",
         toolkitMentorshipTabLabel: tabsSettings.toolkitMentorshipTabLabel ?? "1:1 Mentorship",
         toolkitDigitalProductsTabLabel: tabsSettings.toolkitDigitalProductsTabLabel ?? "Digital products",
@@ -95,6 +97,17 @@ export default function ToolkitTabsEditDialog() {
                   setLocalTabs({ ...localTabs, toolkitCohortsTabLabel: e.target.value })
                 }
                 placeholder="e.g. Live Cohorts"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="sprints">Sprints Tab</Label>
+              <Input
+                id="sprints"
+                value={localTabs.toolkitSprintsTabLabel}
+                onChange={(e) =>
+                  setLocalTabs({ ...localTabs, toolkitSprintsTabLabel: e.target.value })
+                }
+                placeholder="e.g. Sprints"
               />
             </div>
             <div className="grid gap-2">

@@ -29,8 +29,10 @@ import OpportunityManagementTable from "./OpportunityManagementTable";
 import InternshipManagementTable from "./InternshipManagementTable";
 import AdminMentorsTable from "./AdminMentorsTable";
 import AdminCohortsTable from "./AdminCohortsTable";
+import AdminSprintsTable from "./AdminSprintsTable";
 import AdminPopupsTable from "./popups/AdminPopupsTable";
 import SessionQueriesManager from "./SessionQueriesManager";
+import SprintSessionQueriesManager from "./SprintSessionQueriesManager";
 
 const _TAB_VALUES = [
   "opportunities",
@@ -42,8 +44,10 @@ const _TAB_VALUES = [
   "ungatekeep",
   "mentors",
   "cohorts",
+  "sprints",
   "popups",
   "session-queries",
+  "sprint-session-queries",
 ] as const;
 type TabValue = (typeof _TAB_VALUES)[number];
 
@@ -115,6 +119,12 @@ const adminCards: Array<{
     icon: BookOpen,
   },
   {
+    key: "sprints",
+    title: "Sprint Management",
+    description: "Create and configure sprint landing pages, curriculum, packages and mentors",
+    icon: BookOpen,
+  },
+  {
     key: "popups",
     title: "Global Popups",
     description: "Manage global popups (text or image) shown to users",
@@ -122,8 +132,14 @@ const adminCards: Array<{
   },
   {
     key: "session-queries",
-    title: "Session Queries",
-    description: "Manage and answer questions from all cohort sessions",
+    title: "Cohort Session Queries",
+    description: "Manage and answer questions from cohort sessions",
+    icon: MessageSquare,
+  },
+  {
+    key: "sprint-session-queries",
+    title: "Sprint Session Queries",
+    description: "Manage and answer questions from sprint sessions",
     icon: MessageSquare,
   },
 ];
@@ -200,8 +216,11 @@ export function AdminTabs({
       {activeTab === "ungatekeep" ? <AdminUngatekeepTable /> : null}
       {activeTab === "mentors" ? <AdminMentorsTable /> : null}
       {activeTab === "cohorts" ? <AdminCohortsTable /> : null}
+      {activeTab === "sprints" ? <AdminSprintsTable /> : null}
       {activeTab === "popups" ? <AdminPopupsTable /> : null}
       {activeTab === "session-queries" ? <SessionQueriesManager /> : null}
+      {activeTab === "sprint-session-queries" ? <SprintSessionQueriesManager /> : null}
     </div>
   );
 }
+

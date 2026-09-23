@@ -51,7 +51,8 @@ export async function POST(request: Request) {
       originalPrice,
       badge1,
       badge2,
-      subtitle,
+      innerSubtitle,
+      outerSubtitle,
       coverImageUrl,
       coverImageUrls,
       cardImageUrl,
@@ -113,7 +114,8 @@ export async function POST(request: Request) {
         originalPrice: originalPrice ? Number(originalPrice) : null,
         badge1: badge1 || null,
         badge2: badge2 || null,
-        subtitle: subtitle || null,
+        innerSubtitle: innerSubtitle || null,
+        outerSubtitle: outerSubtitle || null,
         coverImageUrl: coverImageUrl || null,
         coverImageUrls:
           coverImageUrls && Array.isArray(coverImageUrls)

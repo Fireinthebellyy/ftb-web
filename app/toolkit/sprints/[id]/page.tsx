@@ -17,7 +17,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const result = await db
       .select({
         title: sprints.title,
-        subtitle: sprints.subtitle,
+        innerSubtitle: sprints.innerSubtitle,
+        outerSubtitle: sprints.outerSubtitle,
         coverImageUrl: sprints.coverImageUrl,
         cardImageUrl: sprints.cardImageUrl,
       })
@@ -39,7 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     const imageUrl = sprint.coverImageUrl ?? sprint.cardImageUrl ?? null;
     const description =
-      sprint.subtitle ??
+      (sprint.innerSubtitle || sprint.outerSubtitle) ??
       `Join the ${sprint.title} sprint — live sessions, mentors, and community for ambitious Indian students.`;
 
     return {

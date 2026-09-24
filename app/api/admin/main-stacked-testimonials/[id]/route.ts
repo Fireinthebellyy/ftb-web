@@ -9,7 +9,7 @@ import { z } from "zod";
 
 const updateSchema = z.object({
   imageUrl: z.string().min(1, "Image URL is required").optional(),
-  orderIndex: z.number().optional(),
+  orderIndex: z.number().int().optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -36,7 +36,27 @@ export async function PUT(
   }
 
   const { id } = await params;
-  const json = await req.json();
+
+  const idResult = z.string().uuid().safeParse(id);
+
+  if (!idResult.success) {
+    return NextResponse.json(
+      { error: "Invalid testimonial ID" },
+      { status: 400 }
+    );
+  }
+
+  let json: unknown;
+
+  try {
+    json = await req.json();
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid JSON body" },
+      { status: 400 }
+    );
+  }
+
   const parsed = updateSchema.safeParse(json);
 
   if (!parsed.success) {
@@ -77,17 +97,26 @@ export async function DELETE(
 
   const { id } = await params;
 
-  const [deletedTestimonial] = await db
-    .delete(toolkitMainStackedTestimonials)
-    .where(eq(toolkitMainStackedTestimonials.id, id))
-    .returning();
+  const idResult = z.string().uuid().safeParse(id);
 
-  if (!deletedTestimonial) {
+  if (!idResult.success) {
     return NextResponse.json(
-      { error: "Testimonial not found" },
-      { status: 404 }
+      { error: "Invalid testimonial ID" },
+      { status: 400 }
     );
   }
+
+  const [deletedTestimonial] = await db
+      .delete(toolkitMainStackedTestimonials)
+      .where(eq(toolkitMainStackedTestimonials.id, id))
+      .returning();
+
+    if (!deletedTestimonial) {
+      return NextResponse.json(
+        { error: "Testimonial not found" },
+        { status: 404 }
+      );
+    }
 
   return NextResponse.json(deletedTestimonial);
 }

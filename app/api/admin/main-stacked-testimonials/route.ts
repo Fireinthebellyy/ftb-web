@@ -9,7 +9,7 @@ import { z } from "zod";
 
 const testimonialSchema = z.object({
   imageUrl: z.string().min(1, "Image URL is required"),
-  orderIndex: z.number().default(0),
+  orderIndex: z.number().int().default(0),
   isActive: z.boolean().default(true),
 });
 
@@ -47,7 +47,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const json = await req.json();
+  let json: unknown;
+  try {
+    json = await req.json();
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid JSON body" },
+      { status: 400 }
+    );
+  }
   const parsed = testimonialSchema.safeParse(json);
 
   if (!parsed.success) {

@@ -96,8 +96,8 @@ interface Sprint {
   slug: string;
   badge1?: string;
   badge2?: string;
-  subtitle?: string;
-  cardSubtitle?: string;
+  innerSubtitle?: string;
+  outerSubtitle?: string;
   coverImageUrl?: string;
   coverImageUrls?: string[] | null;
   cardImageUrl?: string | null;
@@ -1309,30 +1309,26 @@ export default function AdminSprintsTable() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label>Description / Subtitle</Label>
+                    <Label>Inner Description / Inner Subtitle</Label>
                     <Textarea
                       rows={3}
-                      value={editingSprint.subtitle || ""}
+                      value={editingSprint.innerSubtitle || ""}
                       onChange={(e) =>
-                        setEditingSprint({ ...editingSprint, subtitle: e.target.value })
+                        setEditingSprint({ ...editingSprint, innerSubtitle: e.target.value })
                       }
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label>Card Description / Subtitle</Label>
+                    <Label>Outer Description / Outer Subtitle</Label>
                     <Textarea
                       rows={3}
-                      value={editingSprint.cardSubtitle || ""}
+                      value={editingSprint.outerSubtitle || ""}
                       onChange={(e) =>
-                        setEditingSprint({
-                          ...editingSprint,
-                          cardSubtitle: e.target.value,
-                        })
+                        setEditingSprint({ ...editingSprint, outerSubtitle: e.target.value })
                       }
                     />
                   </div>
-                  
                   <div className="space-y-1.5">
                     <Label>Linked Content Toolkit</Label>
                     <select

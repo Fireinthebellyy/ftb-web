@@ -125,7 +125,8 @@ export async function PUT(
       slug,
       badge1,
       badge2,
-      subtitle,
+      innerSubtitle,
+      outerSubtitle,
       coverImageUrl,
       coverImageUrls,
       cardImageUrl,
@@ -168,7 +169,8 @@ export async function PUT(
             : {}),
           badge1: badge1 || null,
           badge2: badge2 || null,
-          subtitle: subtitle || null,
+          innerSubtitle: innerSubtitle || null,
+          outerSubtitle: outerSubtitle || null,
           coverImageUrl: coverImageUrl || null,
           coverImageUrls:
             coverImageUrls && Array.isArray(coverImageUrls)

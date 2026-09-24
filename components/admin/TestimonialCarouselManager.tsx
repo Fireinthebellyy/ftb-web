@@ -49,15 +49,29 @@ export function TestimonialCarouselManager({
   open: boolean;
   onClose: () => void;
 }) {
-  const [editingImage, setEditingImage] = useState<TestimonialImage | null>(null);
+  const [testimonialType, setTestimonialType] = useState<"main" | "pages">(
+    "pages"
+  );
+  const [editingImage, setEditingImage] =
+    useState<TestimonialImage | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const queryClient = useQueryClient();
 
-  const { data: images = [], isLoading } = useQuery({
-    queryKey: ["admin", "testimonial-images"],
-    queryFn: async () => (await axios.get<TestimonialImage[]>("/api/admin/testimonial-images")).data,
-    enabled: open,
-  });
+  const isMain = testimonialType === "main";
+
+const apiBase = isMain
+  ? "/api/admin/main-stacked-testimonials"
+  : "/api/admin/testimonial-images";
+
+const { data: images = [], isLoading } = useQuery({
+  queryKey: ["admin", "testimonial-images", testimonialType],
+  queryFn: async () => {
+    return (
+      await axios.get<TestimonialImage[]>(apiBase)
+    ).data;
+  },
+  enabled: open,
+});
 
   const form = useForm<SlideFormValues>({
     resolver: zodResolver(slideFormSchema),
@@ -69,13 +83,13 @@ export function TestimonialCarouselManager({
   });
 
   const saveMutation = useMutation({
-    mutationFn: async (payload: Partial<TestimonialImage>) => {
-      if (editingImage) {
-        return axios.put(`/api/admin/testimonial-images/${editingImage.id}`, payload);
-      } else {
-        return axios.post("/api/admin/testimonial-images", payload);
-      }
-    },
+  mutationFn: async (payload: Partial<TestimonialImage>) => {
+    if (editingImage) {
+      return axios.put(`${apiBase}/${editingImage.id}`, payload);
+    }
+
+    return axios.post(apiBase, payload);
+  },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "testimonial-images"] });
       toast.success(`Testimonial image ${editingImage ? "updated" : "created"}`);
@@ -88,23 +102,33 @@ export function TestimonialCarouselManager({
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await axios.delete(`/api/admin/testimonial-images/${id}`);
-    },
-    onSuccess: () => {
-      toast.success("Testimonial image deleted");
-      queryClient.invalidateQueries({ queryKey: ["admin", "testimonial-images"] });
-    },
-  });
+  mutationFn: async (id: string) => {
+    await axios.delete(`${apiBase}/${id}`);
+  },
+  onSuccess: () => {
+    toast.success("Testimonial image deleted");
+    queryClient.invalidateQueries({
+      queryKey: ["admin", "testimonial-images", testimonialType],
+    });
+  },
+});
 
   const toggleStatusMutation = useMutation({
-    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      await axios.put(`/api/admin/testimonial-images/${id}`, { isActive });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "testimonial-images"] });
-    },
-  });
+  mutationFn: async ({
+    id,
+    isActive,
+  }: {
+    id: string;
+    isActive: boolean;
+  }) => {
+    await axios.put(`${apiBase}/${id}`, { isActive });
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({
+      queryKey: ["admin", "testimonial-images", testimonialType],
+    });
+  },
+});
 
   const onSubmit = async (data: SlideFormValues) => {
     try {
@@ -157,8 +181,48 @@ export function TestimonialCarouselManager({
     }}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[700px]">
         <DialogHeader>
-          <DialogTitle>What Students Feel About Us Images</DialogTitle>
-        </DialogHeader>
+  <DialogTitle>Testimonial Images</DialogTitle>
+</DialogHeader>
+
+<div className="flex gap-2 rounded-lg bg-gray-100 p-1">
+  <Button
+    type="button"
+    variant={testimonialType === "main" ? "default" : "ghost"}
+    size="sm"
+    className="flex-1"
+    onClick={() => {
+      setTestimonialType("main");
+      setEditingImage(null);
+      setImageFile(null);
+      form.reset({
+        imageUrl: "",
+        isActive: true,
+        orderIndex: 0,
+      });
+    }}
+  >
+    Main
+  </Button>
+
+  <Button
+    type="button"
+    variant={testimonialType === "pages" ? "default" : "ghost"}
+    size="sm"
+    className="flex-1"
+    onClick={() => {
+      setTestimonialType("pages");
+      setEditingImage(null);
+      setImageFile(null);
+      form.reset({
+        imageUrl: "",
+        isActive: true,
+        orderIndex: 0,
+      });
+    }}
+  >
+    Pages
+  </Button>
+</div>
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Form Section */}
@@ -223,7 +287,9 @@ export function TestimonialCarouselManager({
 
           {/* List Section */}
           <div className="space-y-3 rounded-lg border p-4">
-            <h3 className="font-medium text-sm">Existing Images</h3>
+            <h3 className="font-medium text-sm">
+  Existing {testimonialType === "main" ? "Main" : "Pages"} Images
+</h3>
             {isLoading ? (
               <div className="flex justify-center p-4"><Loader2 className="h-5 w-5 animate-spin text-gray-400" /></div>
             ) : images.length === 0 ? (

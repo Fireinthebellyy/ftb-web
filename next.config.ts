@@ -34,6 +34,7 @@ const r2RemotePatterns = r2BaseUrlEnvVars
   );
 
 const nextConfig: NextConfig = {
+  devIndicators: false,
   turbopack: {
     root: __dirname,
   },

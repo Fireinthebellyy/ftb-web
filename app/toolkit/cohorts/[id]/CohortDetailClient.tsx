@@ -122,6 +122,8 @@ export default function CohortDetailClient() {
   const [cohort, setCohort] = useState<CohortData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showSeatsPop, setShowSeatsPop] = useState(false);
+  const [isDashboardDialogOpen, setIsDashboardDialogOpen] = useState(false);
+  const [dashboardDialogMessage, setDashboardDialogMessage] = useState("");
   const [isBuddyOfferGlobalEnabled, setIsBuddyOfferGlobalEnabled] = useState(false);
   const [buddyOfferTitle, setBuddyOfferTitle] = useState("Friendship Day Offer");
   const [buddyOfferText, setBuddyOfferText] = useState("Learning is better together! Enter your friend's email below so they can get access that too at 20% off");
@@ -347,6 +349,33 @@ export default function CohortDetailClient() {
         return prev.filter((id) => id !== addonId);
       }
     });
+  };
+  
+  const handleViewDashboard = async () => {
+    try {
+      const response = await axios.get(`/api/cohorts/${cohortId}/dashboard`);
+
+      if (response.data?.hasAccess) {
+        if (response.data?.hasExtendedResourceAccess) {
+          router.push(`/toolkit/cohorts/${cohortId}/dashboard`);
+        } else {
+          setDashboardDialogMessage(
+            "Your 30-day access to the cohort resources has now ended. You can join our one."
+          );
+          setIsDashboardDialogOpen(true);
+        }
+      }
+    } catch (error: any) {
+      if (error.response?.status === 403) {
+        setDashboardDialogMessage(
+          "This cohort has ended and registrations are now closed. You can join our next one"
+        );
+        setIsDashboardDialogOpen(true);
+        return;
+      }
+
+      toast.error("Unable to check your cohort access. Please try again.");
+    }
   };
 
   // Razorpay Checkout handler
@@ -1063,24 +1092,13 @@ export default function CohortDetailClient() {
             } mx-auto flex gap-3 items-center justify-between w-full`}
         >
           {/* Button 1: Enquire Now */}
-          <a
-            href={`https://wa.me/916377492042?text=Hi!%20I'd%20like%20to%20enquire%20about%20the%20cohort%20program:%20${encodeURIComponent(
-              cohort.title
-            )}`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={handleViewDashboard}
             className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3 px-2 rounded-xl transition shadow-lg flex items-center justify-center gap-1.5 h-11 text-center leading-none"
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="w-4 h-4 shrink-0"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 0 0 1.333 4.982L2 22l5.202-1.362a9.923 9.923 0 0 0 4.808 1.236h.005c5.505 0 9.99-4.477 9.99-9.985C22.005 6.478 17.518 2 12.012 2Zm5.845 14.285c-.244.686-1.42 1.328-1.948 1.41-.478.077-1.101.144-3.187-.723-2.667-1.108-4.37-3.816-4.502-3.992-.133-.176-1.077-1.43-1.077-2.729 0-1.298.679-1.937.922-2.202.244-.265.533-.332.71-.332.178 0 .356.006.51.013.162.008.38-.06.593.453.22.532.753 1.836.82 1.968.067.133.11.288.022.465-.088.177-.133.288-.266.443-.133.155-.28.347-.4.493-.133.16-.272.336-.117.6.155.265.686 1.132 1.47 1.831.99.885 1.823 1.157 2.08 1.288.254.133.403.11.553-.066.15-.177.643-.753.815-.996.172-.244.344-.2.58-.112.235.088 1.492.703 1.748.83.256.128.427.194.49.305.061.11.061.643-.183 1.329Z" />
-            </svg>
-            <span>Enquire Now</span>
-          </a>
+            <span>View Dashboard</span>
+          </button>
 
           {today > cohortEndDate ? (
             <>
@@ -1551,7 +1569,31 @@ export default function CohortDetailClient() {
         </Drawer.Portal>
       </Drawer.Root>
 
+      {/* Dashboard Access Dialog */}
+      {isDashboardDialogOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4">
+          <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+            <button
+              onClick={() => setIsDashboardDialogOpen(false)}
+              className="absolute right-4 top-4 rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
 
+            <div className="pr-6">
+              <h3 className="text-lg font-black text-gray-900">
+                Access Update
+              </h3>
+
+              <p className="mt-2 text-sm leading-relaxed text-gray-600">
+                {dashboardDialogMessage}
+              </p>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* Floating Limited Seats Notification */}
       {showSeatsPop && (

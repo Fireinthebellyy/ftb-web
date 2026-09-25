@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/use-session";
 import { extractRichTextPlainText } from "@/lib/rich-text";
 import { motion, AnimatePresence } from "framer-motion";
-import { StackedTestimonials } from "@/components/toolkit/StackedTestimonials"; 
+import { StackedTestimonials } from "@/components/toolkit/StackedTestimonials";
 import { ToolkitTestimonials } from "@/components/toolkit/ToolkitTestimonials";
 import ToolkitStudentFeedback from "@/components/toolkit/ToolkitStudentFeedback";
 import { getVideoEmbedInfo } from "@/lib/video-embed";
@@ -73,7 +73,7 @@ interface Tier {
   price: number;
   originalPrice?: number | null;
   description: string;
-  features: string[];
+  whatIncluded: string[];
   isDefault: boolean;
 }
 
@@ -156,7 +156,7 @@ export default function SprintDetailClient() {
 
   const [sprint, setSprint] = useState<SprintData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [showSeatsPop, setShowSeatsPop] = useState(false);
   const [isBuddyOfferGlobalEnabled, setIsBuddyOfferGlobalEnabled] = useState(false);
@@ -231,38 +231,38 @@ export default function SprintDetailClient() {
   };
 
   // Load Sprint details and live toolkits
-useEffect(() => {
-  const fetchSprintDetails = async () => {
-    try {
-      const response = await axios.get(`/api/sprints/${sprintId}`);
-      const data = response.data;
-      setSprint(data);
-
-      // Auto-select default tier
-      const defaultTier =
-        data.tiers?.find((t: Tier) => t.isDefault) || data.tiers?.[0];
-
-      if (defaultTier) {
-        setSelectedTierId(defaultTier.id);
-      }
-
-      // Poster is optional
+  useEffect(() => {
+    const fetchSprintDetails = async () => {
       try {
-        const posterResponse = await axios.get(
-          "/api/toolkit-last-cohort-poster"
-        );
-        setLastCohortPoster(posterResponse.data?.imageUrl ?? null);
-      } catch (posterErr) {
-        console.error("Failed to load cohort poster:", posterErr);
-        setLastCohortPoster(null);
+        const response = await axios.get(`/api/sprints/${sprintId}`);
+        const data = response.data;
+        setSprint(data);
+
+        // Auto-select default tier
+        const defaultTier =
+          data.tiers?.find((t: Tier) => t.isDefault) || data.tiers?.[0];
+
+        if (defaultTier) {
+          setSelectedTierId(defaultTier.id);
+        }
+
+        // Poster is optional
+        try {
+          const posterResponse = await axios.get(
+            "/api/toolkit-last-cohort-poster"
+          );
+          setLastCohortPoster(posterResponse.data?.imageUrl ?? null);
+        } catch (posterErr) {
+          console.error("Failed to load cohort poster:", posterErr);
+          setLastCohortPoster(null);
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to load sprint details");
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load sprint details");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
     const fetchLiveToolkits = async () => {
       try {
@@ -306,22 +306,22 @@ useEffect(() => {
   }, [session]);
 
   useEffect(() => {
-  if (!isLoading && !sessionPending) return;
+    if (!isLoading && !sessionPending) return;
 
-  let timeout: NodeJS.Timeout;
+    let timeout: NodeJS.Timeout;
 
-  const cycleMessage = (index: number) => {
-    timeout = setTimeout(() => {
-      const nextIndex = (index + 1) % loadingMessages.length;
-      setLoadingMessageIndex(nextIndex);
-      cycleMessage(nextIndex);
-    }, 1800);
-  };
+    const cycleMessage = (index: number) => {
+      timeout = setTimeout(() => {
+        const nextIndex = (index + 1) % loadingMessages.length;
+        setLoadingMessageIndex(nextIndex);
+        cycleMessage(nextIndex);
+      }, 1800);
+    };
 
-  cycleMessage(0);
+    cycleMessage(0);
 
-  return () => clearTimeout(timeout);
-}, [isLoading, sessionPending]);
+    return () => clearTimeout(timeout);
+  }, [isLoading, sessionPending]);
 
 
   if (isLoading || sessionPending) {
@@ -330,8 +330,8 @@ useEffect(() => {
         <div className="text-center space-y-2">
           <Loader2 className="w-8 h-8 animate-spin text-[#ff5e14] mx-auto" />
           <p className="text-sm font-semibold text-gray-500">
-  {loadingMessages[loadingMessageIndex]}
-</p>
+            {loadingMessages[loadingMessageIndex]}
+          </p>
         </div>
       </div>
     );
@@ -623,10 +623,10 @@ useEffect(() => {
                       {videoEmbed.provider === "bunny"
                         ? "Bunny CDN"
                         : videoEmbed.provider === "youtube"
-                        ? "YouTube"
-                        : videoEmbed.provider === "instagram"
-                        ? "Instagram"
-                        : "Video"}
+                          ? "YouTube"
+                          : videoEmbed.provider === "instagram"
+                            ? "Instagram"
+                            : "Video"}
                     </span>
                   </span>
                 )}
@@ -664,13 +664,13 @@ useEffect(() => {
                 </div>
               ) : (
                 <div
-  className="relative aspect-video md:max-h-[580px] bg-black flex items-center justify-center"
-  style={{
-    width: "calc(100% - 30px)",
-    marginLeft: "15px",
-    marginRight: "15px",
-  }}
->
+                  className="relative aspect-video md:max-h-[580px] bg-black flex items-center justify-center"
+                  style={{
+                    width: "calc(100% - 30px)",
+                    marginLeft: "15px",
+                    marginRight: "15px",
+                  }}
+                >
                   {videoEmbed.provider === "youtube" || videoEmbed.provider === "bunny" ? (
                     <iframe
                       src={videoEmbed.embedUrl}
@@ -782,7 +782,7 @@ useEffect(() => {
               Starts on: <span className="text-gray-900 font-bold">{sprint.startDate}</span>
             </div>
           )}
-          
+
           <div className="flex flex-wrap items-center gap-2">
             <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-orange-100 text-[#ff5e14] border border-orange-200 ">
               Sprint Program
@@ -1106,17 +1106,17 @@ useEffect(() => {
         <section className="space-y-4 pt-6">
           {/* Quick Navigation Toggle */}
           <div className="flex flex-col sm:flex-row items-center sm:items-center justify-center gap-4 border-b border-gray-200/80 pb-4">
-          
+
 
             <div className="inline-flex p-1.5 bg-gray-500 rounded-2xl border border-gray-200/90 shadow-inner">
               <button
                 type="button"
                 onClick={() => setActiveCommunityTab("faqs")}
                 className={cn(
-                "px-5 py-2.5 text-sm md:text-base font-bold rounded-xl transition-all duration-200 flex items-center gap-2",
-                activeCommunityTab === "faqs"
-                ? "bg-black text-[#ff5e14] shadow-sm"
-                : "text-black hover:bg-white/70"
+                  "px-5 py-2.5 text-sm md:text-base font-bold rounded-xl transition-all duration-200 flex items-center gap-2",
+                  activeCommunityTab === "faqs"
+                    ? "bg-black text-[#ff5e14] shadow-sm"
+                    : "text-black hover:bg-white/70"
                 )}
               >
                 <HelpCircle className="w-4 h-4 text-[#ff5e14]" />
@@ -1141,8 +1141,8 @@ useEffect(() => {
                 className={cn(
                   "px-5 py-2.5 text-sm md:text-base font-bold rounded-xl transition-all duration-200 flex items-center gap-2",
                   activeCommunityTab === "testimonials"
-                     ? "bg-black text-[#ff5e14] shadow-sm"
-                     : "text-black hover:bg-white/70"
+                    ? "bg-black text-[#ff5e14] shadow-sm"
+                    : "text-black hover:bg-white/70"
                 )}
               >
                 <MessageSquare className="w-4 h-4 text-[#ff5e14]" />
@@ -1224,7 +1224,7 @@ useEffect(() => {
                                     </p>
                                   )}
 
-                                  
+
                                 </div>
                               </motion.div>
                             )}
@@ -1405,11 +1405,11 @@ useEffect(() => {
                               )}
                             </div>
                             <p className="text-xs text-gray-500">{tier.description}</p>
-                            {tier.features && tier.features.length > 0 && (
+                            {tier.whatIncluded && tier.whatIncluded.length > 0 && (
                               <ul className="text-[10px] text-gray-400 space-y-0.5 pt-1.5">
-                                {tier.features.map((inc, i) => (
+                                {tier.whatIncluded.map((inc, i) => (
                                   <li key={i} className="flex items-center gap-1">
-                                    <Check className="w-3 h-3 text-[#ff5e14]" /> {inc}
+                                    <Check className="w-3 h-3 text-[#ff5e14] shrink-0" />{inc}
                                   </li>
                                 ))}
                               </ul>
@@ -1494,7 +1494,7 @@ useEffect(() => {
                             <input
                               type="checkbox"
                               checked={isSelected}
-                              onChange={() => {}} // toggled by parent div
+                              onChange={() => { }} // toggled by parent div
                               className="rounded border-gray-300 text-[#ff5e14] focus:ring-[#ff5e14] mt-0.5 h-4 w-4"
                             />
                             <div>
@@ -1554,7 +1554,7 @@ useEffect(() => {
                             <input
                               type="checkbox"
                               checked={isSelected}
-                              onChange={() => {}} // toggled by parent div
+                              onChange={() => { }} // toggled by parent div
                               className="rounded border-gray-300 text-[#ff5e14] focus:ring-[#ff5e14] mt-0.5 h-4 w-4"
                             />
                             <div>

@@ -354,6 +354,13 @@ export default function AdminSprintsTable() {
 
   const handleSaveSprint = async () => {
     if (!editingSprint) return;
+
+    editingSprint.tiers.length>0 && (
+      editingSprint.tiers.map((tier,idx)=>{
+        const currentWhatIncluded = String(tier.whatIncluded);
+        editingSprint.tiers[idx].whatIncluded = currentWhatIncluded.split(",").map(s=>s.trim()).filter(Boolean);
+      })
+    )
     setIsLoading(true);
     try {
       // Exclude mentors, sessions, faqs to ensure single source of truth and no accidental wipes
@@ -2304,7 +2311,7 @@ export default function AdminSprintsTable() {
 
                         <div className="space-y-1">
                           <Label className="text-xs">What&apos;s Included (Comma-separated)</Label>
-                          <Input
+                        <Input
                             value={
                               Array.isArray(tier.whatIncluded)
                                 ? tier.whatIncluded.join(", ")
@@ -2314,7 +2321,7 @@ export default function AdminSprintsTable() {
                               const currentTiers = [...(editingSprint.tiers || [])];
                               currentTiers[index] = {
                                 ...currentTiers[index],
-                                whatIncluded: e.target.value.split(",").map((s) => s.trim()),
+                                whatIncluded: e.target.value,
                               };
                               setEditingSprint({ ...editingSprint, tiers: currentTiers });
                             }}

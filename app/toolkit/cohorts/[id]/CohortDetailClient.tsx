@@ -350,33 +350,55 @@ export default function CohortDetailClient() {
       }
     });
   };
-  
+  const STANDARD_ACCESS_EXPIRY = new Date("2026-09-25T23:59:59");
+  const EXTENDED_ACCESS_EXPIRY = new Date("2026-10-25T23:59:59");
   const handleViewDashboard = async () => {
-    try {
-      const response = await axios.get(`/api/cohorts/${cohortId}/dashboard`);
+  try {
+    const response = await axios.get(`/api/cohorts/${cohortId}/dashboard`);
+    const data = response.data;
 
-      if (response.data?.hasAccess) {
-        if (response.data?.hasExtendedResourceAccess) {
-          router.push(`/toolkit/cohorts/${cohortId}/dashboard`);
-        } else {
-          setDashboardDialogMessage(
-            "Your 30-day access to the cohort resources has now ended. You can join our one."
-          );
-          setIsDashboardDialogOpen(true);
-        }
-      }
-    } catch (error: any) {
-      if (error.response?.status === 403) {
-        setDashboardDialogMessage(
-          "This cohort has ended and registrations are now closed. You can join our next one"
-        );
-        setIsDashboardDialogOpen(true);
+    // Payment is still under verification
+    if (data?.isLocked) {
+      setDashboardDialogMessage(
+        "Your payment is currently being verified. Dashboard access will be available once verification is complete."
+      );
+      setIsDashboardDialogOpen(true);
+      return;
+    }
+
+    if (data?.hasAccess) {
+      const expiryDate = data.hasExtendedResourceAccess
+        ? EXTENDED_ACCESS_EXPIRY
+        : STANDARD_ACCESS_EXPIRY;
+
+      const today = new Date();
+
+      if (today <= expiryDate) {
+        router.push(`/toolkit/cohorts/${cohortId}/dashboard`);
         return;
       }
 
-      toast.error("Unable to check your cohort access. Please try again.");
+      setDashboardDialogMessage(
+        data.hasExtendedResourceAccess
+          ? "Your 60-day access to the cohort resources has now ended. You can join our next one."
+          : "Your 30-day access to the cohort resources has now ended. You can join our next one."
+      );
+      setIsDashboardDialogOpen(true);
+      return;
     }
-  };
+  } catch (error: any) {
+    // User has not paid for this cohort
+    if (error.response?.status === 403) {
+      setDashboardDialogMessage(
+        "You don't have access to this cohort dashboard. You can join our next one."
+      );
+      setIsDashboardDialogOpen(true);
+      return;
+    }
+
+    toast.error("Unable to check your cohort access. Please try again.");
+  }
+};
 
   // Razorpay Checkout handler
   const handleCheckout = async (e: React.FormEvent) => {

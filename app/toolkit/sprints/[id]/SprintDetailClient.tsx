@@ -815,75 +815,6 @@ export default function SprintDetailClient() {
       {/* Main Responsive Grid Container */}
       <main className="max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 py-8 space-y-12">
 
-        {/* What's The Buzz Section */}
-        {sprint.features && sprint.features.length > 0 && (
-          <section className="space-y-4">
-            <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900">
-              What&apos;s The {" "}
-              <span className={` text-[#ff5e14] `}>
-                Buzz?
-              </span>
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-              {sprint.features?.slice(0, 3).map((feature) => {
-                const descriptionPoints = Array.isArray(feature.description)
-                  ? feature.description
-                  : [feature.description];
-
-                return (
-                  <div
-                    key={feature.id || feature.title}
-                    className="relative overflow-hidden rounded-2xl border border-orange-200 bg-white shadow-sm"
-                  >
-                    <div className="p-5 md:p-6">
-                      <h3 className="text-sm md:text-base font-bold text-gray-900 leading-snug pl-1">
-                        {feature.title}
-                      </h3>
-
-                      <div className="mt-2 space-y-1 text-xs md:text-base text-gray-600 leading-relaxed pl-1">
-                        {descriptionPoints.map((point, index) => (
-                          <div key={index} className="flex items-start gap-2">
-                            <span className="mt-[8px] h-1 w-1 shrink-0 rounded-full bg-[#ff5e14]" />
-                            <span className="text-sm" >{point}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* Who Is This For Section */}
-        {sprint.whoIsThisForBullets && sprint.whoIsThisForBullets.length > 0 && (
-          <section className="space-y-4">
-            <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-black pb-1 inline-block">
-              Who Is This For?{" "}
-              <span className={`${caveat.className} text-[#ff5e14] text-2xl md:text-3xl`}>
-                (You, obviously.)
-              </span>
-            </h2>
-
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm">
-              <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {sprint.whoIsThisForBullets.map((bullet, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-100 text-[#ff5e14] text-xs font-bold mt-0.5">
-                      {index + 1}
-                    </span>
-                    <span className="text-sm text-gray-650 leading-relaxed text-justify">
-                      {bullet}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </section>
-        )}
-
         {/* 2. Meet Your Mentors Section (Max 2 Mentors, Opposing Tilt Cards, Full Image & LinkedIn Link) */}
         {sprint.mentors && sprint.mentors.length > 0 && (
           <section className="space-y-4">
@@ -953,7 +884,7 @@ export default function SprintDetailClient() {
                           {mentor.name}
                         </h3>
                         {mentor.bio && (
-                          <p className="text-[11px] sm:text-xs text-gray-600 line-clamp-2 leading-relaxed hidden sm:block">
+                          <p className="text-[11px] sm:text-xs text-gray-600 line-clamp-2 leading-relaxed">
                             {mentor.bio}
                           </p>
                         )}
@@ -977,7 +908,77 @@ export default function SprintDetailClient() {
           </section>
         )}
 
+        {/* What's The Buzz Section */}
+          {sprint.features && sprint.features.length > 0 && (
+            <section className="space-y-4">
+              <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900">
+                What&apos;s The {" "}
+                <span className={` text-[#ff5e14] `}>
+                  Buzz?
+                </span>
+              </h2>
 
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+              {sprint.features?.slice(0, 3).map((feature) => {
+              const descriptionPoints = Array.isArray(feature.description)
+                ? feature.description
+                : [feature.description];
+
+              return (
+                <div
+                  key={feature.id || feature.title}
+                  className="relative overflow-hidden rounded-2xl border border-orange-200 bg-white shadow-sm"
+                >
+                  <div className="p-5 md:p-6">
+                    <h3 className="text-sm md:text-base font-bold text-gray-900 leading-snug pl-1">
+                      {feature.title}
+                    </h3>
+
+                    <div className="mt-2 space-y-1 text-xs md:text-base text-gray-600 leading-relaxed pl-1">
+                      {descriptionPoints.map((point, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <span className="mt-[8px] h-1 w-1 shrink-0 rounded-full bg-[#ff5e14]" />
+                          <span className="text-sm" >{point}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                );
+              })}
+              </div>
+            </section>
+          )}
+
+        {/* Who Is This For Section */}
+        {sprint.whoIsThisForBullets && sprint.whoIsThisForBullets.length > 0 && (
+          <section className="space-y-4">
+            <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-black pb-1 inline-block">
+              Who Is This For?{" "}
+              <span className={`${caveat.className} text-[#ff5e14] text-2xl md:text-3xl`}>
+                (You, obviously.)
+              </span>
+            </h2>
+
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm">
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {sprint.whoIsThisForBullets.map((bullet, index) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-100 text-[#ff5e14] text-xs font-bold mt-0.5">
+                      {index + 1}
+                    </span>
+                    <span className="text-sm text-gray-650 leading-relaxed text-justify">
+                      {bullet}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
+
+
+        
         {/* Buddy Program Referral Card */}
         {isBuddyOfferGlobalEnabled && (
           <section className="bg-gradient-to-r from-orange-500 to-[#ff5e14] rounded-2xl p-6 md:p-8 text-white shadow-lg flex flex-col md:flex-row justify-between items-center gap-6 mt-8">

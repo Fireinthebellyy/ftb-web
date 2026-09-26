@@ -12,7 +12,6 @@ import {
   ChevronDown,
   ArrowRight,
   Loader2,
-  LinkedinIcon,
   CheckCircle,
   X,
   Gift,

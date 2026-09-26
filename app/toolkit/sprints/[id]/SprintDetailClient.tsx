@@ -12,7 +12,7 @@ import {
   ChevronDown,
   ArrowRight,
   Loader2,
-  Linkedin,
+  LinkedinIcon,
   CheckCircle,
   X,
   Gift,
@@ -22,6 +22,7 @@ import {
   MessageSquare,
   Users,
 } from "lucide-react";
+import { FaLinkedinIn } from "react-icons/fa";
 import { Drawer } from "vaul";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/use-session";
@@ -158,6 +159,7 @@ export default function SprintDetailClient() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [showSeatsPop, setShowSeatsPop] = useState(false);
   const [isBuddyOfferGlobalEnabled, setIsBuddyOfferGlobalEnabled] = useState(false);
   const [buddyOfferTitle, setBuddyOfferTitle] = useState("Friendship Day Offer");
@@ -179,6 +181,7 @@ export default function SprintDetailClient() {
   const [couponError, setCouponError] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
+  
 
   // Clear coupon when cart dependencies change
   useEffect(() => {
@@ -845,7 +848,7 @@ export default function SprintDetailClient() {
                   <div
                     key={mentor.id}
                     className={cn(
-                      "group relative bg-white rounded-2xl sm:rounded-3xl border border-gray-200/90 shadow-md sm:shadow-lg overflow-hidden flex flex-col transition-all duration-300 transform-gpu",
+                      "group relative self-start bg-white rounded-2xl sm:rounded-3xl border border-gray-200/90 shadow-md sm:shadow-lg overflow-hidden flex flex-col transition-all duration-300 transform-gpu",
                       tiltClass
                     )}
                   >
@@ -877,30 +880,58 @@ export default function SprintDetailClient() {
                       )}
                     </div>
 
-                    {/* Bottom Area: Name & LinkedIn Profile */}
-                    <div className="p-3 sm:p-5 bg-white flex flex-col justify-between flex-1 space-y-2 sm:space-y-3">
-                      <div className="space-y-0.5 sm:space-y-1">
-                        <h3 className="font-black text-sm sm:text-xl text-gray-900 leading-tight tracking-tight truncate sm:whitespace-normal">
-                          {mentor.name}
-                        </h3>
-                        {mentor.bio && (
-                          <p className="text-[11px] sm:text-xs text-gray-600 line-clamp-2 leading-relaxed">
-                            {mentor.bio}
-                          </p>
-                        )}
-                      </div>
+                    {/* Bottom Area: Name, LinkedIn & Bio */}
+<div className="p-3 sm:p-5 bg-white flex flex-col flex-1">
+  {/* Name + LinkedIn */}
+  <div className="flex items-center justify-between gap-2">
+    <h3 className="font-black text-sm sm:text-xl text-gray-900 leading-tight tracking-tight truncate">
+      {mentor.name}
+    </h3>
 
-                      {mentor.link && (
-                        <a
-                          href={mentor.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-gray-400 hover:text-gray-700 text-sm mt-3 flex items-center gap-0.5 font-medium border-t border-gray-100 w-full justify-center pt-2.5"
-                        >
-                          <Linkedin className="w-4 h-4 text-blue-700" /> profile
-                        </a>
-                      )}
-                    </div>
+    {mentor.link && (
+      <a
+  href={mentor.link}
+  target="_blank"
+  rel="noopener noreferrer"
+  aria-label={`${mentor.name}'s LinkedIn profile`}
+  className="shrink-0"
+>
+  <FaLinkedinIn
+    className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5"
+    style={{ color: "#146aff" }}
+  />
+</a>
+    )}
+  </div>
+
+  {/* Bio */}
+  {mentor.bio && (
+    <button
+      type="button"
+      onClick={() =>
+        setSelectedMentor(
+          selectedMentor?.id === mentor.id ? null : mentor
+        )
+      }
+      className="text-left w-full mt-1.5 sm:mt-2"
+    >
+      <p
+        className={cn(
+          "text-[11px] sm:text-xs text-gray-600 leading-relaxed",
+          selectedMentor?.id !== mentor.id && "line-clamp-3"
+        )}
+      >
+        {mentor.bio}
+      </p>
+
+      {selectedMentor?.id !== mentor.id && (
+        <span className="text-[9px] sm:text-xs font-semibold text-[#ff5e14]">
+          ... Read more
+        </span>
+      )}
+    </button>
+  )}
+</div>
                   </div>
                 );
               })}
@@ -1741,8 +1772,6 @@ export default function SprintDetailClient() {
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>
-
-
 
       {/* Floating Limited Seats Notification */}
       {showSeatsPop && (

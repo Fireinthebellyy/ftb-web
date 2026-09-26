@@ -390,7 +390,7 @@ export default function CohortDetailClient() {
     // User has not paid for this cohort
     if (error.response?.status === 403) {
       setDashboardDialogMessage(
-        "You don't have access to this cohort dashboard. You can join our next one."
+        "This Cohort got SOLD OUT and has been concluded now! The dashboard will be accessible only to the cohort mentees. We'll be happy to host you in our next one. Keep hustling!!"
       );
       setIsDashboardDialogOpen(true);
       return;

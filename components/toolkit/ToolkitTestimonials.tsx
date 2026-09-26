@@ -39,7 +39,7 @@ function TestimonialRow({
 
         gsap.to(track, {
           x: reverse ? 0 : -loopWidth,
-          duration: secondRow ? 58 : 55,
+          duration: secondRow ? 250 : 250,
           ease: "none",
           repeat: -1,
         });

@@ -251,7 +251,7 @@ export default function ToolkitPageClient({
                               {sprint.isFillingFast ? (
                                 <div className="bg-red-600 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
                                   <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-                                  Filling Fast
+                                  Limited Seats
                                 </div>
                               ) : (
                                 <div className="bg-gray-700 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">

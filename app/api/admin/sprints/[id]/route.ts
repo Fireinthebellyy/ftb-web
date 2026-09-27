@@ -311,6 +311,8 @@ export async function PUT(
                 description: t.description,
                 whatIncluded: whatIncludedArr,
                 isDefault: Boolean(t.isDefault),
+                isFillingFast: Boolean(t.isFillingFast),
+                isTrending: Boolean(t.isTrending),
                 orderIndex: i,
               })
               .where(eq(sprintTiers.id, t.id));
@@ -323,6 +325,8 @@ export async function PUT(
               description: t.description,
               whatIncluded: whatIncludedArr,
               isDefault: Boolean(t.isDefault),
+              isFillingFast: Boolean(t.isFillingFast),
+              isTrending: Boolean(t.isTrending),
               orderIndex: i,
             });
           }

@@ -65,6 +65,8 @@ interface Tier {
   description: string;
   whatIncluded: string[] | string;
   isDefault: boolean;
+  isFillingFast: boolean;
+  isTrending: boolean;
 }
 
 interface Addon {
@@ -2217,6 +2219,8 @@ export default function AdminSprintsTable() {
                               description: "",
                               whatIncluded: [],
                               isDefault: false,
+                              isFillingFast: false,
+                              isTrending: false,
                             },
                           ],
                         });
@@ -2343,6 +2347,40 @@ export default function AdminSprintsTable() {
                             Default Selected Plan
                           </Label>
                         </div>
+
+                        <div className="flex items-center space-x-2 pt-1">
+  <Switch
+    id={`tier-filling-fast-${index}`}
+    checked={!!tier.isFillingFast}
+    onCheckedChange={(val) => {
+      const currentTiers = [...(editingSprint.tiers || [])];
+      currentTiers.forEach(
+        (t, i) => (t.isFillingFast = i === index ? val : false)
+      );
+      setEditingSprint({ ...editingSprint, tiers: currentTiers });
+    }}
+  />
+  <Label htmlFor={`tier-filling-fast-${index}`} className="text-xs">
+    Filling Fast
+  </Label>
+</div>
+
+<div className="flex items-center space-x-2 pt-1">
+  <Switch
+    id={`tier-trending-${index}`}
+    checked={!!tier.isTrending}
+    onCheckedChange={(val) => {
+      const currentTiers = [...(editingSprint.tiers || [])];
+      currentTiers.forEach(
+        (t, i) => (t.isTrending = i === index ? val : false)
+      );
+      setEditingSprint({ ...editingSprint, tiers: currentTiers });
+    }}
+  />
+  <Label htmlFor={`tier-trending-${index}`} className="text-xs">
+    Trending
+  </Label>
+</div>
                       </div>
                     ))}
                   </div>

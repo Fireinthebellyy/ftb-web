@@ -358,6 +358,13 @@
       "when": 1790214838980,
       "tag": "0061_add_toolkit_main_stacked_testimonials",
       "breakpoints": true
-    }
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1790455986334,
+      "tag": "0062_add_tier_badges",
+      "breakpoints": true
+     }
   ]
 }

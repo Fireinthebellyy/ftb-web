@@ -75,6 +75,8 @@ interface Tier {
   description: string;
   whatIncluded: string[];
   isDefault: boolean;
+  isFillingFast?: boolean;
+  isTrending?: boolean;
 }
 
 interface Addon {
@@ -1302,11 +1304,16 @@ export default function SprintDetailClient() {
             {lastCohortPoster && (
               <section className=" relative left-1/2 -translate-x-1/2 md:w-full md:left-0 md:translate-x-0">
                 <div className="relative w-full md:w-[85%] lg:w-[75%] xl:w-[70%] mx-auto aspect-video overflow-hidden bg-black">
-                  <img
-                    src={lastCohortPoster}
-                    alt="Last cohort"
-                    className="w-full h-full object-cover"
-                  />
+                  <a
+  href="https://www.ftbhustle.com/toolkit/cohorts/3608f9b4-4f7a-46dc-abb3-93dd29873cc3"
+  className="block cursor-pointer"
+>
+  <img
+    src={lastCohortPoster}
+    alt="Last cohort"
+    className="w-full h-full object-cover"
+  />
+</a>
                 </div>
               </section>
             )}
@@ -1426,14 +1433,21 @@ export default function SprintDetailClient() {
                           )}
                         >
                           <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <h5 className="font-bold text-sm text-gray-900">{tier.name}</h5>
-                              {tier.isDefault && (
-                                <span className="bg-orange-100 text-[#ff5e14] text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
-                                  Default
-                                </span>
-                              )}
-                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+  <h5 className="font-bold text-sm text-gray-900">{tier.name}</h5>
+
+  {tier.isFillingFast && (
+    <span className="bg-orange-100 text-[#ff5e14] text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full animate-pulse">
+      Filling Fast
+    </span>
+  )}
+
+  {tier.isTrending && (
+    <span className="bg-blue-100 text-blue-600 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full animate-pulse">
+      Trending
+    </span>
+  )}
+</div>
                             <p className="text-xs text-gray-500">{tier.description}</p>
                             {tier.whatIncluded && tier.whatIncluded.length > 0 && (
                               <ul className="text-[10px] text-gray-400 space-y-0.5 pt-1.5">

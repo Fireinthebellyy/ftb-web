@@ -1374,7 +1374,7 @@ export default function SprintDetailClient() {
           <Drawer.Overlay className="fixed inset-0 bg-black/40 z-40" />
           <Drawer.Content className="bg-white flex flex-col rounded-t-[20px] h-[85vh] fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto overflow-hidden">
             {/* Drawer Marquee Banner */}
-            {sprint.showEarlyBirdMarqueeCheckout && (
+            {/* {sprint.showEarlyBirdMarqueeCheckout && (
               <div className="w-full bg-black text-[#ff5e14] py-2 overflow-hidden relative font-extrabold text-[9px] uppercase tracking-widest select-none shrink-0 border-b border-gray-100">
                 <div className="marquee-container flex">
                   <div className="animate-marquee flex whitespace-nowrap gap-8">
@@ -1395,7 +1395,7 @@ export default function SprintDetailClient() {
                   </div>
                 </div>
               </div>
-            )}
+            )} */}
 
             <div className="p-4 bg-gray-50 border-b flex justify-between items-center shrink-0">
               <div>
@@ -1733,7 +1733,7 @@ export default function SprintDetailClient() {
               <div className="flex flex-col">
                 <span className="text-[9px] text-gray-400 font-bold uppercase">Payable Price</span>
                 <div className="flex items-baseline gap-2 flex-wrap">
-                  <span className="font-black text-gray-900 text-lg">₹{runningTotal}</span>
+                  <span className="font-black text-gray-900 text-lg">₹{runningTotal}/-</span>
                   {couponDiscount > 0 && (
                     <>
                       <span className="line-through text-xs text-gray-400 font-medium">₹{totalOriginalPrice}</span>

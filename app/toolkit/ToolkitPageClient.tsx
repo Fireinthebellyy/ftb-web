@@ -18,7 +18,6 @@ import { useEffect } from "react";
 // import { cn } from "@/lib/utils";
 import { Check, Share2 } from "lucide-react";
 import Link from "next/link";
-import { canAccessAdminPanel } from "@/lib/admin-permissions";
 
 interface CohortCard {
   id: string;
@@ -67,7 +66,7 @@ export default function ToolkitPageClient({
   const router = useRouter();
   // const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const selectedCategory = "all";
-  const isAdmin = canAccessAdminPanel(session?.user?.role);
+
   // const { data: settings } = useQuery({
   //   queryKey: ["site_settings"],
   //   queryFn: async () => {
@@ -226,7 +225,7 @@ export default function ToolkitPageClient({
             <>
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {// showing sprints 
-                  isAdmin && sprintsData.length > 0 && (
+                  sprintsData.length > 0 && (
                     <>
                       {sprintsData.map((sprint) => (
                         <div

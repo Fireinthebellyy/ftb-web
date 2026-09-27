@@ -1253,6 +1253,8 @@ export const sprintTiers = pgTable("sprint_tiers", {
   description: text("description").notNull(),
   whatIncluded: jsonb("what_included").$type<string[]>().default([]),
   isDefault: boolean("is_default").default(false),
+  isFillingFast: boolean("is_filling_fast").default(false),
+  isTrending: boolean("is_trending").default(false),
   orderIndex: integer("order_index").default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });

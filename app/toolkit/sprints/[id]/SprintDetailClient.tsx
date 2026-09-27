@@ -25,7 +25,7 @@ import { FaLinkedinIn } from "react-icons/fa";
 import { Drawer } from "vaul";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/use-session";
-import { extractRichTextPlainText } from "@/lib/rich-text";
+// import { extractRichTextPlainText } from "@/lib/rich-text";
 import { motion, AnimatePresence } from "framer-motion";
 import { StackedTestimonials } from "@/components/toolkit/StackedTestimonials";
 import { ToolkitTestimonials } from "@/components/toolkit/ToolkitTestimonials";
@@ -172,7 +172,7 @@ export default function SprintDetailClient() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedTierId, setSelectedTierId] = useState<string>("");
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
-  const [selectedToolkitIds, setSelectedToolkitIds] = useState<string[]>([]);
+  const [selectedToolkitIds, _setSelectedToolkitIds] = useState<string[]>([]);
   const [liveToolkits, setLiveToolkits] = useState<any[]>([]);
   const [buyerName, setBuyerName] = useState("");
   const [buyerEmail, setBuyerEmail] = useState("");

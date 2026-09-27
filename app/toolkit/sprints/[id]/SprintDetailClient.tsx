@@ -1400,7 +1400,7 @@ export default function SprintDetailClient() {
             <div className="p-4 bg-gray-50 border-b flex justify-between items-center shrink-0">
               <div>
                 <Drawer.Title className="text-base font-bold">Select Your Sprint Plan</Drawer.Title>
-                <Drawer.Description className="text-xs text-gray-500">Pick packages &amp; optional career add-ons</Drawer.Description>
+                <Drawer.Description className="text-xs text-gray-500">Pick packages</Drawer.Description>
               </div>
               <button
                 onClick={() => setIsDrawerOpen(false)}
@@ -1570,7 +1570,7 @@ export default function SprintDetailClient() {
               )}
 
               {/* Toolkit Add-ons Selection */}
-              {sprint.showAddonsCheckout !== false && liveToolkits && liveToolkits.filter(t => t.id !== sprint.toolkitId).length > 0 && (
+              {/* {sprint.showAddonsCheckout !== false && liveToolkits && liveToolkits.filter(t => t.id !== sprint.toolkitId).length > 0 && (
                 <div className="space-y-3 border-t pt-4">
                   <div className="flex flex-col gap-0.5">
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Optional Add-Ons</h4>
@@ -1614,7 +1614,7 @@ export default function SprintDetailClient() {
                     })}
                   </div>
                 </div>
-              )}
+              )} */}
 
 
 

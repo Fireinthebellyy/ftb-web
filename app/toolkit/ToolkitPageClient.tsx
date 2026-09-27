@@ -249,7 +249,7 @@ export default function ToolkitPageClient({
 
                             <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-10">
                               {sprint.isFillingFast ? (
-                                <div className="bg-red-600 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
+                                <div className="bg-red-600 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1 animate-pulse">
                                   <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
                                   Limited Seats
                                 </div>
@@ -260,12 +260,12 @@ export default function ToolkitPageClient({
                                 </div>
                               )}
                               {sprint.isBestSeller ? (
-                                <div className="bg-black text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
+                                <div className="bg-black text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1 animate-pulse">
                                   <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
                                   Best Seller
                                 </div>
                               ) : (
-                                <div className="bg-emerald-600 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
+                                <div className="bg-emerald-600 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1 animate-pulse">
                                   <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
                                   Sprint Live
                                 </div>

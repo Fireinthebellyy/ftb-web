@@ -25,7 +25,7 @@ import { FaLinkedinIn } from "react-icons/fa";
 import { Drawer } from "vaul";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/use-session";
-import { extractRichTextPlainText } from "@/lib/rich-text";
+// import { extractRichTextPlainText } from "@/lib/rich-text";
 import { motion, AnimatePresence } from "framer-motion";
 import { StackedTestimonials } from "@/components/toolkit/StackedTestimonials";
 import { ToolkitTestimonials } from "@/components/toolkit/ToolkitTestimonials";
@@ -172,7 +172,7 @@ export default function SprintDetailClient() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedTierId, setSelectedTierId] = useState<string>("");
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
-  const [selectedToolkitIds, setSelectedToolkitIds] = useState<string[]>([]);
+  const [selectedToolkitIds, _setSelectedToolkitIds] = useState<string[]>([]);
   const [liveToolkits, setLiveToolkits] = useState<any[]>([]);
   const [buyerName, setBuyerName] = useState("");
   const [buyerEmail, setBuyerEmail] = useState("");
@@ -1374,7 +1374,7 @@ export default function SprintDetailClient() {
           <Drawer.Overlay className="fixed inset-0 bg-black/40 z-40" />
           <Drawer.Content className="bg-white flex flex-col rounded-t-[20px] h-[85vh] fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto overflow-hidden">
             {/* Drawer Marquee Banner */}
-            {sprint.showEarlyBirdMarqueeCheckout && (
+            {/* {sprint.showEarlyBirdMarqueeCheckout && (
               <div className="w-full bg-black text-[#ff5e14] py-2 overflow-hidden relative font-extrabold text-[9px] uppercase tracking-widest select-none shrink-0 border-b border-gray-100">
                 <div className="marquee-container flex">
                   <div className="animate-marquee flex whitespace-nowrap gap-8">
@@ -1395,12 +1395,12 @@ export default function SprintDetailClient() {
                   </div>
                 </div>
               </div>
-            )}
+            )} */}
 
             <div className="p-4 bg-gray-50 border-b flex justify-between items-center shrink-0">
               <div>
                 <Drawer.Title className="text-base font-bold">Select Your Sprint Plan</Drawer.Title>
-                <Drawer.Description className="text-xs text-gray-500">Pick packages &amp; optional career add-ons</Drawer.Description>
+                <Drawer.Description className="text-xs text-gray-500">Pick packages</Drawer.Description>
               </div>
               <button
                 onClick={() => setIsDrawerOpen(false)}
@@ -1570,7 +1570,7 @@ export default function SprintDetailClient() {
               )}
 
               {/* Toolkit Add-ons Selection */}
-              {sprint.showAddonsCheckout !== false && liveToolkits && liveToolkits.filter(t => t.id !== sprint.toolkitId).length > 0 && (
+              {/* {sprint.showAddonsCheckout !== false && liveToolkits && liveToolkits.filter(t => t.id !== sprint.toolkitId).length > 0 && (
                 <div className="space-y-3 border-t pt-4">
                   <div className="flex flex-col gap-0.5">
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Optional Add-Ons</h4>
@@ -1614,7 +1614,7 @@ export default function SprintDetailClient() {
                     })}
                   </div>
                 </div>
-              )}
+              )} */}
 
 
 
@@ -1733,7 +1733,7 @@ export default function SprintDetailClient() {
               <div className="flex flex-col">
                 <span className="text-[9px] text-gray-400 font-bold uppercase">Payable Price</span>
                 <div className="flex items-baseline gap-2 flex-wrap">
-                  <span className="font-black text-gray-900 text-lg">₹{runningTotal}</span>
+                  <span className="font-black text-gray-900 text-lg">₹{runningTotal}/-</span>
                   {couponDiscount > 0 && (
                     <>
                       <span className="line-through text-xs text-gray-400 font-medium">₹{totalOriginalPrice}</span>

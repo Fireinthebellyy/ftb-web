@@ -106,6 +106,8 @@ interface CohortData {
   showAddonsCheckout?: boolean;
   toolkitId?: string | null;
   hasAccess?: boolean;
+  standardAccessExpiry?: string | null;
+  extendedAccessExpiry?: string | null;
   mentors: Mentor[];
   features: Feature[];
   tiers: Tier[];
@@ -350,43 +352,54 @@ export default function CohortDetailClient() {
       }
     });
   };
-  const STANDARD_ACCESS_EXPIRY = new Date("2026-09-25T23:59:59");
-  const EXTENDED_ACCESS_EXPIRY = new Date("2026-10-25T23:59:59");
   const handleViewDashboard = async () => {
-  try {
-    const response = await axios.get(`/api/cohorts/${cohortId}/dashboard`);
-    const data = response.data;
+    try {
+      const response = await axios.get(`/api/cohorts/${cohortId}/dashboard`);
+      const data = response.data;
 
-    // Payment is still under verification
-    if (data?.isLocked) {
-      setDashboardDialogMessage(
-        "Your payment is currently being verified. Dashboard access will be available once verification is complete."
-      );
-      setIsDashboardDialogOpen(true);
-      return;
-    }
-
-    if (data?.hasAccess) {
-      const expiryDate = data.hasExtendedResourceAccess
-        ? EXTENDED_ACCESS_EXPIRY
-        : STANDARD_ACCESS_EXPIRY;
-
-      const today = new Date();
-
-      if (today <= expiryDate) {
-        router.push(`/toolkit/cohorts/${cohortId}/dashboard`);
+      // Payment is still under verification
+      if (data?.isLocked) {
+        setDashboardDialogMessage(
+          "Your payment is currently being verified. Dashboard access will be available once verification is complete."
+        );
+        setIsDashboardDialogOpen(true);
         return;
       }
 
-      setDashboardDialogMessage(
-        data.hasExtendedResourceAccess
-          ? "Your 60-day access to the cohort resources has now ended. You can join our next one."
-          : "Your 30-day access to the cohort resources has now ended. You can join our next one."
-      );
-      setIsDashboardDialogOpen(true);
-      return;
-    }
-  } catch (error: any) {
+      if (data?.hasAccess) {
+        const rawStandardExpiry =
+          data.standardAccessExpiry ||
+          cohort?.standardAccessExpiry ||
+          "2026-10-07T23:59:59";
+        const rawExtendedExpiry =
+          data.extendedAccessExpiry ||
+          cohort?.extendedAccessExpiry ||
+          "2026-11-07T23:59:59";
+
+        const expiryDate = data.hasExtendedResourceAccess
+          ? new Date(rawExtendedExpiry)
+          : new Date(rawStandardExpiry);
+
+        const today = new Date();
+
+        if (today <= expiryDate) {
+          router.push(`/toolkit/cohorts/${cohortId}/dashboard`);
+          return;
+        }
+
+        const formattedExpiryDate = expiryDate.toLocaleDateString("en-US", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+
+        setDashboardDialogMessage(
+          `Your access to the cohort resources ended on ${formattedExpiryDate}. You can join our next one!`
+        );
+        setIsDashboardDialogOpen(true);
+        return;
+      }
+    } catch (error: any) {
     // User has not paid for this cohort
     if (error.response?.status === 403) {
       setDashboardDialogMessage(

@@ -223,6 +223,43 @@ export default function CohortDashboardPage() {
     );
   }
 
+  const rawStandardExpiry =
+    cohortData?.standardAccessExpiry || "2026-10-07T23:59:59";
+  const rawExtendedExpiry =
+    cohortData?.extendedAccessExpiry || "2026-11-07T23:59:59";
+  const userExpiryDate = hasExtendedResourceAccess
+    ? new Date(rawExtendedExpiry)
+    : new Date(rawStandardExpiry);
+  const isAccessExpired = new Date() > userExpiryDate;
+
+  if (isAccessExpired) {
+    const formattedExpiry = userExpiryDate.toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+        <Card className="w-full max-w-md text-center">
+          <CardContent className="pt-6">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100">
+              <Lock className="h-8 w-8 text-orange-500" />
+            </div>
+            <h2 className="mb-2 text-2xl font-bold text-gray-900">
+              Access Ended
+            </h2>
+            <p className="mb-6 text-sm text-gray-600">
+              Your access to the cohort resources ended on {formattedExpiry}. You can join our next cohort!
+            </p>
+            <Button onClick={() => router.push("/")} className="w-full">
+              Back to Home
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 z-10 border-b bg-white/95 backdrop-blur supports-backdrop-filter:bg-white/60">
@@ -271,6 +308,8 @@ export default function CohortDashboardPage() {
                 sessions={sessions}
                 currentSessionId={currentSessionId}
                 hasExtendedResourceAccess={hasExtendedResourceAccess}
+                standardAccessExpiry={cohortData?.standardAccessExpiry}
+                extendedAccessExpiry={cohortData?.extendedAccessExpiry}
                 onSessionSelect={(id) => {
                   handleSessionSelect(id);
                   setSidebarOpen(false);
@@ -326,6 +365,8 @@ export default function CohortDashboardPage() {
               sessions={sessions}
               currentSessionId={currentSessionId}
               hasExtendedResourceAccess={hasExtendedResourceAccess}
+              standardAccessExpiry={cohortData?.standardAccessExpiry}
+              extendedAccessExpiry={cohortData?.extendedAccessExpiry}
               onSessionSelect={handleSessionSelect}
               onOpenUpgrade={() => setUpgradeModalOpen(true)}
             />
@@ -367,22 +408,29 @@ function CohortSessionSidebar({
   sessions,
   currentSessionId,
   hasExtendedResourceAccess,
+  standardAccessExpiry,
+  extendedAccessExpiry,
   onSessionSelect,
   onOpenUpgrade,
 }: {
   sessions: CohortSessionItem[];
   currentSessionId: string | null;
   hasExtendedResourceAccess: boolean;
+  standardAccessExpiry?: string | Date | null;
+  extendedAccessExpiry?: string | Date | null;
   onSessionSelect: (id: string) => void;
   onOpenUpgrade?: () => void;
 }) {
   const isExtendedAccess = hasExtendedResourceAccess;
 
-  // Extended access ends on 25 October 2026
-  const extendedAccessDate = new Date("2026-11-01T23:59:59");
-  const standardAccessDate = new Date("2026-10-01T23:59:59");
+  const extendedAccessDate = extendedAccessExpiry
+    ? new Date(extendedAccessExpiry)
+    : new Date("2026-11-07T23:59:59");
+  const standardAccessDate = standardAccessExpiry
+    ? new Date(standardAccessExpiry)
+    : new Date("2026-10-07T23:59:59");
 
-  const getOrdinal = (date) => {
+  const getOrdinal = (date: number) => {
     switch (date % 10) {
       case 1:
         return "st";
@@ -409,17 +457,19 @@ function CohortSessionSidebar({
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Remove time from extended access date
-  const extendedEndDate = new Date(extendedAccessDate);
-  extendedEndDate.setHours(0, 0, 0, 0);
+  // Target end date based on access level
+  const targetEndDate = isExtendedAccess
+    ? new Date(extendedAccessDate)
+    : new Date(standardAccessDate);
+  targetEndDate.setHours(0, 0, 0, 0);
   // Milliseconds in one day
   const millisecondsPerDay = 1000 * 60 * 60 * 24;
 
-  // Days remaining until 25 October
+  // Days remaining
   const daysLeft = Math.max(
     0,
     Math.ceil(
-      (extendedEndDate.getTime() - today.getTime()) / millisecondsPerDay
+      (targetEndDate.getTime() - today.getTime()) / millisecondsPerDay
     )
   );
 

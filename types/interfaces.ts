@@ -419,6 +419,8 @@ export type CohortDetailResponse = {
   };
   upgradePlans?: CohortUpgradePlan[];
   hasExtendedResourceAccess:boolean;
+  standardAccessExpiry?: string | Date | null;
+  extendedAccessExpiry?: string | Date | null;
 };
 
 export type CohortSessionResponse = {

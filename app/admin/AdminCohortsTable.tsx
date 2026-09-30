@@ -110,6 +110,8 @@ interface Cohort {
   showEarlyBirdCheckout?: boolean | null;
   showEarlyBirdMarqueeCheckout?: boolean | null;
   showAddonsCheckout?: boolean | null;
+  standardAccessExpiry?: string | null;
+  extendedAccessExpiry?: string | null;
   mentors?: Mentor[];
   features?: Feature[];
   tiers?: Tier[];
@@ -1282,6 +1284,68 @@ export default function AdminCohortsTable() {
                       onChange={(e) => setEditingCohort({ ...editingCohort, startDate: e.target.value })}
                       placeholder="e.g. Starts 15th July • 8 Weeks"
                     />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label>Standard Access Expiry Date</Label>
+                      <Input
+                        type="datetime-local"
+                        value={
+                          editingCohort.standardAccessExpiry
+                            ? (() => {
+                                try {
+                                  const d = new Date(editingCohort.standardAccessExpiry);
+                                  const pad = (n: number) => n.toString().padStart(2, "0");
+                                  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                                } catch {
+                                  return "";
+                                }
+                              })()
+                            : ""
+                        }
+                        onChange={(e) =>
+                          setEditingCohort({
+                            ...editingCohort,
+                            standardAccessExpiry: e.target.value
+                              ? new Date(e.target.value).toISOString()
+                              : null,
+                          })
+                        }
+                      />
+                      <p className="text-[11px] text-gray-500">
+                        Access cutoff for regular purchasers (default: 7th October 2026).
+                      </p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Extended Access Expiry Date</Label>
+                      <Input
+                        type="datetime-local"
+                        value={
+                          editingCohort.extendedAccessExpiry
+                            ? (() => {
+                                try {
+                                  const d = new Date(editingCohort.extendedAccessExpiry);
+                                  const pad = (n: number) => n.toString().padStart(2, "0");
+                                  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                                } catch {
+                                  return "";
+                                }
+                              })()
+                            : ""
+                        }
+                        onChange={(e) =>
+                          setEditingCohort({
+                            ...editingCohort,
+                            extendedAccessExpiry: e.target.value
+                              ? new Date(e.target.value).toISOString()
+                              : null,
+                          })
+                        }
+                      />
+                      <p className="text-[11px] text-gray-500">
+                        Access cutoff for upgraded purchasers (default: 7th November 2026).
+                      </p>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs font-semibold">Card Highlights / Key Features</Label>

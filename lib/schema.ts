@@ -884,6 +884,8 @@ export const cohorts = pgTable("cohorts", {
   showEarlyBirdCheckout: boolean("show_early_bird_checkout").default(false),
   showEarlyBirdMarqueeCheckout: boolean("show_early_bird_marquee_checkout").default(false),
   showAddonsCheckout: boolean("show_addons_checkout").default(true),
+  standardAccessExpiry: timestamp("standard_access_expiry"),
+  extendedAccessExpiry: timestamp("extended_access_expiry"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

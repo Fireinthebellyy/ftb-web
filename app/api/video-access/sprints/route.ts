@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { isBunnyVideo, extractBunnyVideoDetails, generateBunnyEmbedUrl } from "@/lib/bunny";
 import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";

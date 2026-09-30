@@ -50,8 +50,7 @@ export async function GET(req: NextRequest) {
     }
 
     const videoIdParam = req.nextUrl.searchParams.get("videoId");
-    const cohortContentIdParam =
-      req.nextUrl.searchParams.get("cohortContentId");
+    const cohortContentIdParam = req.nextUrl.searchParams.get("cohortContentId");
     const cohortIdParam = req.nextUrl.searchParams.get("cohortId");
     const videoUrlParam = req.nextUrl.searchParams.get("videoUrl");
 
@@ -207,7 +206,7 @@ export async function GET(req: NextRequest) {
               (c.cdnVideoUrl === videoUrlParam ||
                 (targetVideoId &&
                   extractBunnyVideoDetails(c.cdnVideoUrl)?.videoId ===
-                    targetVideoId))
+                  targetVideoId))
             ) {
               return true;
             }
@@ -216,7 +215,7 @@ export async function GET(req: NextRequest) {
               (c.videoUrl === videoUrlParam ||
                 (targetVideoId &&
                   extractBunnyVideoDetails(c.videoUrl)?.videoId ===
-                    targetVideoId))
+                  targetVideoId))
             ) {
               return true;
             }

@@ -32,6 +32,8 @@ import { ToolkitTestimonials } from "@/components/toolkit/ToolkitTestimonials";
 import ToolkitStudentFeedback from "@/components/toolkit/ToolkitStudentFeedback";
 import { getVideoEmbedInfo } from "@/lib/video-embed";
 import { Caveat } from "next/font/google";
+import SprintBunnyPlayer from "@/components/toolkit/SprintBunnyPlayer";
+
 
 
 const caveat = Caveat({
@@ -182,7 +184,6 @@ export default function SprintDetailClient() {
   const [couponError, setCouponError] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
-  
 
   // Clear coupon when cart dependencies change
   useEffect(() => {
@@ -668,20 +669,27 @@ export default function SprintDetailClient() {
                 </div>
               ) : (
                 <div
-                  className="relative aspect-video md:max-h-[580px] bg-black flex items-center justify-center"
+                  className="relative w-[calc(100%-30px)] mx-[15px] bg-black overflow-hidden rounded-xl"
                   style={{
                     width: "calc(100% - 30px)",
                     marginLeft: "15px",
                     marginRight: "15px",
                   }}
                 >
-                  {videoEmbed.provider === "youtube" || videoEmbed.provider === "bunny" ? (
+                  {videoEmbed.provider === "youtube" ? (
                     <iframe
                       src={videoEmbed.embedUrl}
                       title={`${sprint.title} Video Player`}
                       className="w-full h-full border-0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
                       allowFullScreen
+                    />
+                  ) : videoEmbed.provider === "bunny" ? (
+                    <SprintBunnyPlayer
+                    videoUrl={sprint.videoUrl}
+                    sprintId={sprint.id}
+                    title={`${sprint.title} Video Player`}
+                    className="w-full"
                     />
                   ) : (
                     <video
@@ -882,57 +890,57 @@ export default function SprintDetailClient() {
                     </div>
 
                     {/* Bottom Area: Name, LinkedIn & Bio */}
-<div className="p-3 sm:p-5 bg-white flex flex-col flex-1">
-  {/* Name + LinkedIn */}
-  <div className="flex items-center justify-between gap-2">
-    <h3 className="font-black text-sm sm:text-xl text-gray-900 leading-tight tracking-tight truncate">
-      {mentor.name}
-    </h3>
+                    <div className="p-3 sm:p-5 bg-white flex flex-col flex-1">
+                      {/* Name + LinkedIn */}
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="font-black text-sm sm:text-xl text-gray-900 leading-tight tracking-tight truncate">
+                          {mentor.name}
+                        </h3>
 
-    {mentor.link && (
-      <a
-  href={mentor.link}
-  target="_blank"
-  rel="noopener noreferrer"
-  aria-label={`${mentor.name}'s LinkedIn profile`}
-  className="shrink-0"
->
-  <FaLinkedinIn
-    className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5"
-    style={{ color: "#146aff" }}
-  />
-</a>
-    )}
-  </div>
+                        {mentor.link && (
+                          <a
+                            href={mentor.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`${mentor.name}'s LinkedIn profile`}
+                            className="shrink-0"
+                          >
+                            <FaLinkedinIn
+                              className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5"
+                              style={{ color: "#146aff" }}
+                            />
+                          </a>
+                        )}
+                      </div>
 
-  {/* Bio */}
-  {mentor.bio && (
-    <button
-      type="button"
-      onClick={() =>
-        setSelectedMentor(
-          selectedMentor?.id === mentor.id ? null : mentor
-        )
-      }
-      className="text-left w-full mt-1.5 sm:mt-2"
-    >
-      <p
-        className={cn(
-          "text-[11px] sm:text-xs text-gray-600 leading-relaxed",
-          selectedMentor?.id !== mentor.id && "line-clamp-3"
-        )}
-      >
-        {mentor.bio}
-      </p>
+                      {/* Bio */}
+                      {mentor.bio && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedMentor(
+                              selectedMentor?.id === mentor.id ? null : mentor
+                            )
+                          }
+                          className="text-left w-full mt-1.5 sm:mt-2"
+                        >
+                          <p
+                            className={cn(
+                              "text-[11px] sm:text-xs text-gray-600 leading-relaxed",
+                              selectedMentor?.id !== mentor.id && "line-clamp-3"
+                            )}
+                          >
+                            {mentor.bio}
+                          </p>
 
-      {selectedMentor?.id !== mentor.id && (
-        <span className="text-[9px] sm:text-xs font-semibold text-[#ff5e14]">
-          ... Read more
-        </span>
-      )}
-    </button>
-  )}
-</div>
+                          {selectedMentor?.id !== mentor.id && (
+                            <span className="text-[9px] sm:text-xs font-semibold text-[#ff5e14]">
+                              ... Read more
+                            </span>
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -941,46 +949,46 @@ export default function SprintDetailClient() {
         )}
 
         {/* What's The Buzz Section */}
-          {sprint.features && sprint.features.length > 0 && (
-            <section className="space-y-4">
-              <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900">
-                What&apos;s The {" "}
-                <span className={` text-[#ff5e14] `}>
-                  Buzz?
-                </span>
-              </h2>
+        {sprint.features && sprint.features.length > 0 && (
+          <section className="space-y-4">
+            <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900">
+              What&apos;s The {" "}
+              <span className={` text-[#ff5e14] `}>
+                Buzz?
+              </span>
+            </h2>
 
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
               {sprint.features?.slice(0, 3).map((feature) => {
-              const descriptionPoints = Array.isArray(feature.description)
-                ? feature.description
-                : [feature.description];
+                const descriptionPoints = Array.isArray(feature.description)
+                  ? feature.description
+                  : [feature.description];
 
-              return (
-                <div
-                  key={feature.id || feature.title}
-                  className="relative overflow-hidden rounded-2xl border border-orange-200 bg-white shadow-sm"
-                >
-                  <div className="p-5 md:p-6">
-                    <h3 className="text-sm md:text-base font-bold text-gray-900 leading-snug pl-1">
-                      {feature.title}
-                    </h3>
+                return (
+                  <div
+                    key={feature.id || feature.title}
+                    className="relative overflow-hidden rounded-2xl border border-orange-200 bg-white shadow-sm"
+                  >
+                    <div className="p-5 md:p-6">
+                      <h3 className="text-sm md:text-base font-bold text-gray-900 leading-snug pl-1">
+                        {feature.title}
+                      </h3>
 
-                    <div className="mt-2 space-y-1 text-xs md:text-base text-gray-600 leading-relaxed pl-1">
-                      {descriptionPoints.map((point, index) => (
-                        <div key={index} className="flex items-start gap-2">
-                          <span className="mt-[8px] h-1 w-1 shrink-0 rounded-full bg-[#ff5e14]" />
-                          <span className="text-sm" >{point}</span>
-                        </div>
-                      ))}
+                      <div className="mt-2 space-y-1 text-xs md:text-base text-gray-600 leading-relaxed pl-1">
+                        {descriptionPoints.map((point, index) => (
+                          <div key={index} className="flex items-start gap-2">
+                            <span className="mt-[8px] h-1 w-1 shrink-0 rounded-full bg-[#ff5e14]" />
+                            <span className="text-sm" >{point}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
                 );
               })}
-              </div>
-            </section>
-          )}
+            </div>
+          </section>
+        )}
 
         {/* Who Is This For Section */}
         {sprint.whoIsThisForBullets && sprint.whoIsThisForBullets.length > 0 && (
@@ -1010,7 +1018,7 @@ export default function SprintDetailClient() {
         )}
 
 
-        
+
         {/* Buddy Program Referral Card */}
         {isBuddyOfferGlobalEnabled && (
           <section className="bg-gradient-to-r from-orange-500 to-[#ff5e14] rounded-2xl p-6 md:p-8 text-white shadow-lg flex flex-col md:flex-row justify-between items-center gap-6 mt-8">
@@ -1305,15 +1313,15 @@ export default function SprintDetailClient() {
               <section className=" relative left-1/2 -translate-x-1/2 md:w-full md:left-0 md:translate-x-0">
                 <div className="relative w-full md:w-[85%] lg:w-[75%] xl:w-[70%] mx-auto aspect-video overflow-hidden bg-black">
                   <a
-  href="https://www.ftbhustle.com/toolkit/cohorts/3608f9b4-4f7a-46dc-abb3-93dd29873cc3"
-  className="block cursor-pointer"
->
-  <img
-    src={lastCohortPoster}
-    alt="Last cohort"
-    className="w-full h-full object-cover"
-  />
-</a>
+                    href="https://www.ftbhustle.com/toolkit/cohorts/3608f9b4-4f7a-46dc-abb3-93dd29873cc3"
+                    className="block cursor-pointer"
+                  >
+                    <img
+                      src={lastCohortPoster}
+                      alt="Last cohort"
+                      className="w-full h-full object-cover"
+                    />
+                  </a>
                 </div>
               </section>
             )}
@@ -1434,20 +1442,20 @@ export default function SprintDetailClient() {
                         >
                           <div className="space-y-1">
                             <div className="flex items-center gap-2 flex-wrap">
-  <h5 className="font-bold text-sm text-gray-900">{tier.name}</h5>
+                              <h5 className="font-bold text-sm text-gray-900">{tier.name}</h5>
 
-  {tier.isFillingFast && (
-    <span className="bg-orange-100 text-[#ff5e14] text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full animate-pulse">
-      Filling Fast
-    </span>
-  )}
+                              {tier.isFillingFast && (
+                                <span className="bg-orange-100 text-[#ff5e14] text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full animate-pulse">
+                                  Filling Fast
+                                </span>
+                              )}
 
-  {tier.isTrending && (
-    <span className="bg-blue-100 text-blue-600 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full animate-pulse">
-      Trending
-    </span>
-  )}
-</div>
+                              {tier.isTrending && (
+                                <span className="bg-blue-100 text-blue-600 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full animate-pulse">
+                                  Trending
+                                </span>
+                              )}
+                            </div>
                             <p className="text-xs text-gray-500">{tier.description}</p>
                             {tier.whatIncluded && tier.whatIncluded.length > 0 && (
                               <ul className="text-[10px] text-gray-400 space-y-0.5 pt-1.5">

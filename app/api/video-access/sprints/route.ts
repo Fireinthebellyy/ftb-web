@@ -31,11 +31,6 @@ function resolveVideoResponse(rawVideo: string): NextResponse {
 
 export async function GET(req: NextRequest) {
     try {
-        const session = await auth.api.getSession({ headers: req.headers });
-        if (!session?.user?.id) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
         const videoUrlParam = req.nextUrl.searchParams.get("videoUrl");
         const sprintIdParam = req.nextUrl.searchParams.get("sprintId");
 
@@ -51,7 +46,7 @@ export async function GET(req: NextRequest) {
                 );
             }
 
-            const rawVideo = videoUrlParam || sprint.videoUrl || null;
+            const rawVideo = (videoUrlParam ===sprint.videoUrl? videoUrlParam : sprint.videoUrl) || null;
             if (!rawVideo) {
                 return NextResponse.json(
                     { error: "No video id available for this sprint" },

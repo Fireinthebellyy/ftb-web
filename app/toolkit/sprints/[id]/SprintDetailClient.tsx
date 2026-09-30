@@ -669,7 +669,9 @@ export default function SprintDetailClient() {
                 </div>
               ) : (
                 <div
-                  className="relative w-[calc(100%-30px)] mx-[15px] bg-black overflow-hidden rounded-xl"
+                className={cn( 
+                  "relative w-[calc(100%-30px)] mx-[15px] bg-black overflow-hidden rounded-xl",
+                   videoEmbed.provider !== "bunny" && "aspect-video" )}
                   style={{
                     width: "calc(100% - 30px)",
                     marginLeft: "15px",

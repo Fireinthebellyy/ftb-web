@@ -376,7 +376,7 @@ export default function ToolkitPageClient({
                                 ) : (
                                   <div className="bg-gray-700 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
                                     <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-                                    Registration Closed
+                                    Sold Out
                                   </div>
                                 )}
                                 {cohort.isBestSeller ? (
@@ -385,9 +385,9 @@ export default function ToolkitPageClient({
                                     Best Seller
                                   </div>
                                 ) : (
-                                  <div className="bg-emerald-600 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
+                                  <div className="bg-red-600 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
                                     <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-                                    Cohort Live
+                                    Cohort Concluded
                                   </div>
                                 )}
                               </div>
@@ -503,7 +503,7 @@ export default function ToolkitPageClient({
                       ) : (
                         <div className="bg-gray-700 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
                           <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-                          Registration Closed
+                          Sold Out
                         </div>
                       )}
                       {cohort.isBestSeller ? (
@@ -512,9 +512,9 @@ export default function ToolkitPageClient({
                           Best Seller
                         </div>
                       ) : (
-                        <div className="bg-emerald-600 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
+                        <div className="bg-red-600 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
                           <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-                          Cohort Live
+                          Cohort Concluded
                         </div>
                       )}
                     </div>

@@ -797,31 +797,20 @@ export default function SprintDetailClient() {
             </div>
           )}
 
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-orange-100 text-[#ff5e14] border border-orange-200 ">
-              Sprint Program
-            </span>
-            {sprint.badge1 && (
-              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-blue-100 text-blue-700 border border-blue-200">
-                {sprint.badge1}
-              </span>
-            )}
-            {sprint.badge2 && (
-              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-purple-100 text-purple-700 border border-purple-200 ">
-                {sprint.badge2}
-              </span>
-            )}
-            {sprint.isBestSeller && (
-              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200 animate-pulse">
-                Best Seller
-              </span>
-            )}
-            {sprint.isFillingFast && (
-              <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-red-200 text-red-900 border border-red-300 animate-pulse">
-                Filling Fast
-              </span>
-            )}
-          </div>
+          {(sprint.badge1 || sprint.badge2) && (
+            <div className="flex flex-wrap items-center gap-2">
+              {sprint.badge1 && (
+                <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-blue-100 text-blue-700 border border-blue-200">
+                  {sprint.badge1}
+                </span>
+              )}
+              {sprint.badge2 && (
+                <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-purple-100 text-purple-700 border border-purple-200 ">
+                  {sprint.badge2}
+                </span>
+              )}
+            </div>
+          )}
 
         </div>
       </div>

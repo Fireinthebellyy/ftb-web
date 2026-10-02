@@ -32,16 +32,8 @@ import { StackedTestimonials } from "@/components/toolkit/StackedTestimonials";
 import { ToolkitTestimonials } from "@/components/toolkit/ToolkitTestimonials";
 import ToolkitStudentFeedback from "@/components/toolkit/ToolkitStudentFeedback";
 import { getVideoEmbedInfo } from "@/lib/video-embed";
-import { Caveat } from "next/font/google";
+import { caveat } from "@/lib/fonts";
 import SprintBunnyPlayer from "@/components/toolkit/SprintBunnyPlayer";
-
-
-
-const caveat = Caveat({
-  weight: ["400", "700"],
-  variable: "--font-caveat",
-  subsets: ["latin"],
-});
 
 export function getDuoPricing(singlePrice: number) {
   if (!singlePrice || singlePrice <= 0) {
@@ -165,10 +157,17 @@ export default function SprintDetailClient() {
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [showSeatsPop, setShowSeatsPop] = useState(false);
-  const [isBuddyOfferGlobalEnabled, setIsBuddyOfferGlobalEnabled] = useState(false);
-  const [buddyOfferTitle, setBuddyOfferTitle] = useState("Friendship Day Offer");
-  const [buddyOfferText, setBuddyOfferText] = useState("Learning is better together! Enter your friend's email below so they can get access that too at 20% off");
-  const [activeCommunityTab, setActiveCommunityTab] = useState<"faqs" | "testimonials">("testimonials");
+  const [isBuddyOfferGlobalEnabled, setIsBuddyOfferGlobalEnabled] =
+    useState(false);
+  const [buddyOfferTitle, setBuddyOfferTitle] = useState(
+    "Friendship Day Offer"
+  );
+  const [buddyOfferText, setBuddyOfferText] = useState(
+    "Learning is better together! Enter your friend's email below so they can get access that too at 20% off"
+  );
+  const [activeCommunityTab, setActiveCommunityTab] = useState<
+    "faqs" | "testimonials"
+  >("testimonials");
   const [openFaqId, setOpenFaqId] = useState<string | null>(null);
 
   // Upsell Modal / Bottom Sheet selections
@@ -214,7 +213,8 @@ export default function SprintDetailClient() {
   const [lastCohortPoster, setLastCohortPoster] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!sprint || !sprint.coverImageUrls || sprint.coverImageUrls.length <= 1) return;
+    if (!sprint || !sprint.coverImageUrls || sprint.coverImageUrls.length <= 1)
+      return;
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % sprint.coverImageUrls!.length);
     }, 5000);
@@ -236,11 +236,11 @@ export default function SprintDetailClient() {
     }
   };
   const handleLastCohortClick = () => {
-  document.getElementById("last-cohort-poster")?.scrollIntoView({
-    behavior: "smooth",
-    block: "start",
-  });
-};
+    document.getElementById("last-cohort-poster")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
 
   // Load Sprint details and live toolkits
   useEffect(() => {
@@ -289,8 +289,10 @@ export default function SprintDetailClient() {
       try {
         const response = await axios.get("/api/settings");
         setIsBuddyOfferGlobalEnabled(response.data.isBuddyOfferEnabled);
-        if (response.data.buddyOfferTitle) setBuddyOfferTitle(response.data.buddyOfferTitle);
-        if (response.data.buddyOfferText) setBuddyOfferText(response.data.buddyOfferText);
+        if (response.data.buddyOfferTitle)
+          setBuddyOfferTitle(response.data.buddyOfferTitle);
+        if (response.data.buddyOfferText)
+          setBuddyOfferText(response.data.buddyOfferText);
       } catch (err) {
         console.error("Failed to load buddy settings", err);
       }
@@ -335,12 +337,11 @@ export default function SprintDetailClient() {
     return () => clearTimeout(timeout);
   }, [isLoading, sessionPending]);
 
-
   if (isLoading || sessionPending) {
     return (
-      <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center">
-        <div className="text-center space-y-2">
-          <Loader2 className="w-8 h-8 animate-spin text-[#ff5e14] mx-auto" />
+      <div className="flex min-h-screen items-center justify-center bg-[#FAF9F6]">
+        <div className="space-y-2 text-center">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-[#ff5e14]" />
           <p className="text-sm font-semibold text-gray-500">
             {loadingMessages[loadingMessageIndex]}
           </p>
@@ -351,13 +352,18 @@ export default function SprintDetailClient() {
 
   if (!sprint) {
     return (
-      <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center p-4">
-        <div className="text-center space-y-4 max-w-md">
-          <h2 className="text-2xl font-bold text-gray-900">Program Not Found</h2>
-          <p className="text-gray-600">The sprint program you&apos;re trying to view might have ended or is no longer available.</p>
+      <div className="flex min-h-screen items-center justify-center bg-[#FAF9F6] p-4">
+        <div className="max-w-md space-y-4 text-center">
+          <h2 className="text-2xl font-bold text-gray-900">
+            Program Not Found
+          </h2>
+          <p className="text-gray-600">
+            The sprint program you&apos;re trying to view might have ended or is
+            no longer available.
+          </p>
           <button
             onClick={() => router.push("/toolkit")}
-            className="bg-black hover:bg-neutral-800 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"
+            className="rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
           >
             Back to Toolkit
           </button>
@@ -371,26 +377,38 @@ export default function SprintDetailClient() {
   const activeTier = sprint.tiers?.find((t) => t.id === selectedTierId);
   const basePrice = activeTier ? activeTier.price : 0;
   // Duo: double the current price, then apply 20% off the combined total
-  const finalBasePrice = isDuoActive ? getDuoPricing(basePrice).final : basePrice;
+  const finalBasePrice = isDuoActive
+    ? getDuoPricing(basePrice).final
+    : basePrice;
 
-  const sessionsTotal = sprint.sessions
-    ?.filter((s) => s.price && selectedAddonIds.includes(s.id))
-    .reduce((acc, current) => acc + (current.price || 0), 0) || 0;
-  const finalSessionsTotal = isDuoActive ? getDuoPricing(sessionsTotal).final : sessionsTotal;
+  const sessionsTotal =
+    sprint.sessions
+      ?.filter((s) => s.price && selectedAddonIds.includes(s.id))
+      .reduce((acc, current) => acc + (current.price || 0), 0) || 0;
+  const finalSessionsTotal = isDuoActive
+    ? getDuoPricing(sessionsTotal).final
+    : sessionsTotal;
 
-  const toolkitsTotal = liveToolkits
-    ?.filter((t) => selectedToolkitIds.includes(t.id))
-    .reduce((acc, current) => acc + current.price, 0) || 0;
+  const toolkitsTotal =
+    liveToolkits
+      ?.filter((t) => selectedToolkitIds.includes(t.id))
+      .reduce((acc, current) => acc + current.price, 0) || 0;
 
   const subtotal = finalBasePrice + finalSessionsTotal + toolkitsTotal;
   const runningTotal = Math.max(0, subtotal - couponDiscount);
 
-  const baseOriginalPrice = activeTier ? (activeTier.originalPrice || activeTier.price) : 0;
-  const sessionsOriginalTotal = sprint.sessions
-    ?.filter((s) => s.price && selectedAddonIds.includes(s.id))
-    .reduce((acc, current) => acc + (current.originalPrice || current.price || 0), 0) || 0;
-  const totalOriginalPrice = baseOriginalPrice + sessionsOriginalTotal + toolkitsTotal;
-
+  const baseOriginalPrice = activeTier
+    ? activeTier.originalPrice || activeTier.price
+    : 0;
+  const sessionsOriginalTotal =
+    sprint.sessions
+      ?.filter((s) => s.price && selectedAddonIds.includes(s.id))
+      .reduce(
+        (acc, current) => acc + (current.originalPrice || current.price || 0),
+        0
+      ) || 0;
+  const totalOriginalPrice =
+    baseOriginalPrice + sessionsOriginalTotal + toolkitsTotal;
 
   const toggleAddon = (addonId: string) => {
     setSelectedAddonIds((prev) => {
@@ -427,17 +445,20 @@ export default function SprintDetailClient() {
     if (couponCode.trim()) {
       setIsApplyingCoupon(true);
       try {
-        const validateResponse = await axios.post(`/api/sprints/${sprint.id}/checkout`, {
-          selectedTierId: selectedTierId || null,
-          selectedAddOnIds: selectedAddonIds,
-          selectedToolkitIds: selectedToolkitIds,
-          buyerName,
-          buyerEmail,
-          buyerPhone: "",
-          buddyEmail: buddyEmail || null,
-          couponCode: couponCode.trim(),
-          validateCouponOnly: true,
-        });
+        const validateResponse = await axios.post(
+          `/api/sprints/${sprint.id}/checkout`,
+          {
+            selectedTierId: selectedTierId || null,
+            selectedAddOnIds: selectedAddonIds,
+            selectedToolkitIds: selectedToolkitIds,
+            buyerName,
+            buyerEmail,
+            buyerPhone: "",
+            buddyEmail: buddyEmail || null,
+            couponCode: couponCode.trim(),
+            validateCouponOnly: true,
+          }
+        );
         if (validateResponse.data.discountAmount) {
           setCouponDiscount(validateResponse.data.discountAmount);
         } else {
@@ -502,7 +523,8 @@ export default function SprintDetailClient() {
         currency: response.data.currency || "INR",
       };
 
-      const razorpayKey = response.data.key || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+      const razorpayKey =
+        response.data.key || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
 
       if (!razorpayKey || !order.id) {
         toast.error("Payment configuration error. Please contact support.");
@@ -522,11 +544,14 @@ export default function SprintDetailClient() {
           setIsProcessingCheckout(true);
           try {
             // 4. Verify payment server-side
-            const verifyRes = await axios.post(`/api/sprints/${sprint.id}/checkout/verify`, {
-              razorpay_order_id: razorpayResponse.razorpay_order_id,
-              razorpay_payment_id: razorpayResponse.razorpay_payment_id,
-              razorpay_signature: razorpayResponse.razorpay_signature,
-            });
+            const verifyRes = await axios.post(
+              `/api/sprints/${sprint.id}/checkout/verify`,
+              {
+                razorpay_order_id: razorpayResponse.razorpay_order_id,
+                razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+                razorpay_signature: razorpayResponse.razorpay_signature,
+              }
+            );
 
             if (verifyRes.data.success) {
               toast.success("Registration Successful! Welcome to the sprint.");
@@ -587,85 +612,88 @@ export default function SprintDetailClient() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] text-[#1A1A1A] pb-24 font-sans antialiased">
+    <div className="min-h-screen bg-[#FAF9F6] pb-24 font-sans text-[#1A1A1A] antialiased">
       {/* Sprint Category Label */}
-      <div className="relative bg-white px-4 py-3 sm:py-4 overflow-hidden">
-  <div className="w-full flex items-center ml-4 md:ml-4 lg:ml-8 pr-2">
+      <div className="relative overflow-hidden bg-white px-4 py-3 sm:py-4">
+        <div className="ml-4 flex w-full items-center pr-2 md:ml-4 lg:ml-8">
+          {/* Animated Sprint Title */}
+          <motion.div
+            initial={{ x: -80, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+            className="flex min-w-0 flex-1 items-center gap-3"
+          >
+            <div className="h-7 w-1 shrink-0 rounded-full bg-[#ff5e14]" />
 
-    {/* Animated Sprint Title */}
-    <motion.div
-      initial={{ x: -80, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ duration: 0.7, ease: "easeOut" }}
-      className="flex items-center gap-3 min-w-0 flex-1"
-    >
-      <div className="h-7 w-1 bg-[#ff5e14] rounded-full shrink-0" />
+            <h2 className="truncate text-lg font-bold tracking-tight text-gray-900 sm:text-2xl">
+              {sprint.title}
+            </h2>
+          </motion.div>
 
-      <h2 className="text-lg sm:text-2xl font-bold tracking-tight text-gray-900 truncate">
-        {sprint.title}
-      </h2>
-    </motion.div>
+          {/* Static Actions */}
+          <div className="mr-4 ml-auto flex shrink-0 -translate-y-1 items-center gap-1.5">
+            {/* Share */}
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="shrink-0 rounded-full p-1 text-gray-800 transition duration-200 hover:bg-gray-200"
+              aria-label="Share Sprint"
+              title="Share Sprint"
+            >
+              {copied ? (
+                <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+              ) : (
+                <Share2 className="h-3.5 w-3.5" />
+              )}
+            </button>
 
-    {/* Static Actions */}
-    <div className="ml-auto flex items-center gap-1.5 mr-4 shrink-0 -translate-y-1">
-      {/* Share */}
-      <button
-        type="button"
-        onClick={handleCopyLink}
-        className=" hover:bg-gray-200 text-gray-800 p-1 rounded-full transition duration-200 shrink-0"
-        aria-label="Share Sprint"
-        title="Share Sprint"
-      >
-        {copied ? (
-          <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-        ) : (
-          <Share2 className="w-3.5 h-3.5" />
-        )}
-      </button>
-
-      {/* Last Cohort */}
-      {lastCohortPoster && (
-        <button
-          type="button"
-          onClick={handleLastCohortClick}
-          className="bg-emerald-500 hover:bg-emerald-600 text-white text-[9px] font-semibold px-2 py-1.5 rounded-full transition duration-200 shadow-sm shrink-0 whitespace-nowrap"
-          aria-label="View last cohort"
-        >
-          Last Cohort
-        </button>
-      )}
-    </div>
-
-  </div>
-</div>
+            {/* Last Cohort */}
+            {lastCohortPoster && (
+              <button
+                type="button"
+                onClick={handleLastCohortClick}
+                className="shrink-0 rounded-full bg-emerald-500 px-2 py-1.5 text-[9px] font-semibold whitespace-nowrap text-white shadow-sm transition duration-200 hover:bg-emerald-600"
+                aria-label="View last cohort"
+              >
+                Last Cohort
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* 1. Top Banner Section (Video Support with Cover Image Fallback) */}
       {(() => {
-        const videoEmbed = sprint.videoUrl ? getVideoEmbedInfo(sprint.videoUrl) : null;
+        const videoEmbed = sprint.videoUrl
+          ? getVideoEmbedInfo(sprint.videoUrl)
+          : null;
         return (
-          <section className="relative w-full bg-white overflow-hidden">
+          <section className="relative w-full overflow-hidden bg-white">
             {/* Top Bar (Back Button + Provider Tag + Share) */}
-            <div className="absolute top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 z-30 flex items-center justify-between pointer-events-none">
+            <div className="pointer-events-none absolute top-3 right-3 left-3 z-30 flex items-center justify-between sm:top-4 sm:right-4 sm:left-4">
               <button
                 type="button"
                 onClick={() => {
-                  if (typeof window !== "undefined" && window.history.length > 1) {
+                  if (
+                    typeof window !== "undefined" &&
+                    window.history.length > 1
+                  ) {
                     router.back();
                   } else {
                     router.push("/toolkit");
                   }
                 }}
-                className="pointer-events-auto flex items-center gap-1.5 bg-black/70 hover:bg-black/90 text-white text-xs font-semibold px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full backdrop-blur-md transition duration-200 border border-white/20 shadow-lg group"
+                className="group pointer-events-auto flex items-center gap-1.5 rounded-full border border-white/20 bg-black/70 px-3 py-1.5 text-xs font-semibold text-white shadow-lg backdrop-blur-md transition duration-200 hover:bg-black/90 sm:px-3.5 sm:py-2"
                 aria-label="Go back"
               >
-                <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
+                <ChevronLeft className="h-3.5 w-3.5 transition-transform duration-200 group-hover:-translate-x-0.5 sm:h-4 sm:w-4" />
                 <span>Back</span>
               </button>
 
-              <div className="flex items-center gap-2 pointer-events-auto">
+              <div className="pointer-events-auto flex items-center gap-2">
                 {videoEmbed && (
-                  <span className="bg-black/70 backdrop-blur-md text-white/90 border border-white/20 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold flex items-center gap-1.5 shadow-md">
-                    <Play className="w-3 h-3 text-[#ff5e14] fill-current" />
+                  <span className="flex items-center gap-1.5 rounded-full border border-white/20 bg-black/70 px-2.5 py-1 text-[11px] font-semibold text-white/90 shadow-md backdrop-blur-md sm:px-3 sm:py-1.5 sm:text-xs">
+                    <Play className="h-3 w-3 fill-current text-[#ff5e14]" />
                     <span className="capitalize">
                       {videoEmbed.provider === "bunny"
                         ? "Bunny CDN"
@@ -677,19 +705,18 @@ export default function SprintDetailClient() {
                     </span>
                   </span>
                 )}
-
               </div>
             </div>
 
             {videoEmbed ? (
               /* Top Banner Video Player (YouTube, Instagram, Bunny CDN, Direct) */
               videoEmbed.provider === "instagram" ? (
-                <div className="relative w-full min-h-[420px] sm:min-h-[520px] md:min-h-[600px] bg-zinc-950 flex flex-col items-center justify-center py-4 sm:py-6 px-2 sm:px-4">
-                  <div className="w-full max-w-4xl h-[420px] sm:h-[520px] md:h-[600px] flex items-center justify-center">
+                <div className="relative flex min-h-[420px] w-full flex-col items-center justify-center bg-zinc-950 px-2 py-4 sm:min-h-[520px] sm:px-4 sm:py-6 md:min-h-[600px]">
+                  <div className="flex h-[420px] w-full max-w-4xl items-center justify-center sm:h-[520px] md:h-[600px]">
                     <iframe
                       src={videoEmbed.embedUrl}
                       title={`${sprint.title} Instagram Video`}
-                      className="w-full h-full rounded-xl sm:rounded-2xl border border-zinc-800 shadow-2xl bg-black"
+                      className="h-full w-full rounded-xl border border-zinc-800 bg-black shadow-2xl sm:rounded-2xl"
                       allow="encrypted-media; fullscreen"
                       allowFullScreen
                       scrolling="no"
@@ -698,9 +725,10 @@ export default function SprintDetailClient() {
                 </div>
               ) : (
                 <div
-                className={cn( 
-                  "relative w-[calc(100%-30px)] mx-[15px] bg-black overflow-hidden rounded-xl",
-                   videoEmbed.provider !== "bunny" && "aspect-video" )}
+                  className={cn(
+                    "relative mx-[15px] w-[calc(100%-30px)] overflow-hidden rounded-xl bg-black",
+                    videoEmbed.provider !== "bunny" && "aspect-video"
+                  )}
                   style={{
                     width: "calc(100% - 30px)",
                     marginLeft: "15px",
@@ -711,16 +739,16 @@ export default function SprintDetailClient() {
                     <iframe
                       src={videoEmbed.embedUrl}
                       title={`${sprint.title} Video Player`}
-                      className="w-full h-full border-0"
+                      className="h-full w-full border-0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
                       allowFullScreen
                     />
                   ) : videoEmbed.provider === "bunny" ? (
                     <SprintBunnyPlayer
-                    videoUrl={sprint.videoUrl}
-                    sprintId={sprint.id}
-                    title={`${sprint.title} Video Player`}
-                    className="w-full"
+                      videoUrl={sprint.videoUrl}
+                      sprintId={sprint.id}
+                      title={`${sprint.title} Video Player`}
+                      className="w-full"
                     />
                   ) : (
                     <video
@@ -728,14 +756,14 @@ export default function SprintDetailClient() {
                       controls
                       playsInline
                       preload="metadata"
-                      className="w-full h-full object-contain bg-black"
+                      className="h-full w-full bg-black object-contain"
                     />
                   )}
                 </div>
               )
             ) : sprint.coverImageUrls && sprint.coverImageUrls.length > 0 ? (
               /* Fallback Image Carousel */
-              <div className="relative w-full aspect-[4/3] md:aspect-[21/9] overflow-hidden flex items-end">
+              <div className="relative flex aspect-[4/3] w-full items-end overflow-hidden md:aspect-[21/9]">
                 <AnimatePresence mode="wait">
                   <motion.img
                     key={currentSlide}
@@ -745,7 +773,7 @@ export default function SprintDetailClient() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.7 }}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 h-full w-full object-cover"
                   />
                 </AnimatePresence>
 
@@ -755,36 +783,40 @@ export default function SprintDetailClient() {
                       type="button"
                       onClick={() =>
                         setCurrentSlide((prev) =>
-                          prev === 0 ? sprint.coverImageUrls!.length - 1 : prev - 1
+                          prev === 0
+                            ? sprint.coverImageUrls!.length - 1
+                            : prev - 1
                         )
                       }
-                      className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm transition duration-200"
+                      className="absolute top-1/2 left-4 z-10 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white backdrop-blur-sm transition duration-200 hover:bg-black/60"
                       aria-label="Previous slide"
                     >
-                      <ChevronLeft className="w-5 h-5" />
+                      <ChevronLeft className="h-5 w-5" />
                     </button>
                     <button
                       type="button"
                       onClick={() =>
-                        setCurrentSlide((prev) =>
-                          (prev + 1) % sprint.coverImageUrls!.length
+                        setCurrentSlide(
+                          (prev) => (prev + 1) % sprint.coverImageUrls!.length
                         )
                       }
-                      className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm transition duration-200"
+                      className="absolute top-1/2 right-4 z-10 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white backdrop-blur-sm transition duration-200 hover:bg-black/60"
                       aria-label="Next slide"
                     >
-                      <ChevronRight className="w-5 h-5" />
+                      <ChevronRight className="h-5 w-5" />
                     </button>
 
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+                    <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2">
                       {sprint.coverImageUrls.map((_, idx) => (
                         <button
                           key={idx}
                           type="button"
                           onClick={() => setCurrentSlide(idx)}
                           className={cn(
-                            "w-2 h-2 rounded-full transition-all duration-300",
-                            idx === currentSlide ? "bg-white w-4" : "bg-white/50"
+                            "h-2 w-2 rounded-full transition-all duration-300",
+                            idx === currentSlide
+                              ? "w-4 bg-white"
+                              : "bg-white/50"
                           )}
                           aria-label={`Go to slide ${idx + 1}`}
                         />
@@ -793,19 +825,19 @@ export default function SprintDetailClient() {
                   </>
                 )}
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
               </div>
             ) : sprint.coverImageUrl ? (
-              <div className="relative w-full aspect-[4/3] md:aspect-[21/9] overflow-hidden flex items-end">
+              <div className="relative flex aspect-[4/3] w-full items-end overflow-hidden md:aspect-[21/9]">
                 <img
                   src={sprint.coverImageUrl}
                   alt={sprint.title}
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 h-full w-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
               </div>
             ) : (
-              <div className="relative w-full aspect-[16/9] md:aspect-[21/9] bg-[#1A1A1A]" />
+              <div className="relative aspect-[16/9] w-full bg-[#1A1A1A] md:aspect-[21/9]" />
             )}
           </section>
         );
@@ -813,55 +845,56 @@ export default function SprintDetailClient() {
 
       {/* Sprint Header Info Block */}
       <div className="border-b border-gray-200 bg-white shadow-sm">
-        <div className="max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 py-6 sm:py-8 space-y-3">
+        <div className="mx-auto max-w-md space-y-3 px-4 py-6 sm:py-8 md:max-w-2xl lg:max-w-4xl xl:max-w-5xl">
           {sprint.innerSubtitle && (
-            <p className="text-sm sm:text-sm md:text-base tracking-tight text-gray-600 leading-tight italic">
+            <p className="text-sm leading-tight tracking-tight text-gray-600 italic sm:text-sm md:text-base">
               {sprint.innerSubtitle}
             </p>
           )}
 
           {sprint.startDate && (
-            <div className="pt-1 text-xs md:text-sm font-semibold text-gray-500">
-              Starts on: <span className="text-gray-900 font-bold">{sprint.startDate}</span>
+            <div className="pt-1 text-xs font-semibold text-gray-500 md:text-sm">
+              Starts on:{" "}
+              <span className="font-bold text-gray-900">
+                {sprint.startDate}
+              </span>
             </div>
           )}
 
           {(sprint.badge1 || sprint.badge2) && (
             <div className="flex flex-wrap items-center gap-2">
               {sprint.badge1 && (
-                <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-blue-100 text-blue-700 border border-blue-200">
+                <span className="rounded-full border border-blue-200 bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
                   {sprint.badge1}
                 </span>
               )}
               {sprint.badge2 && (
-                <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-purple-100 text-purple-700 border border-purple-200 ">
+                <span className="rounded-full border border-purple-200 bg-purple-100 px-2.5 py-0.5 text-xs font-bold text-purple-700">
                   {sprint.badge2}
                 </span>
               )}
             </div>
           )}
-
         </div>
       </div>
 
       {/* Main Responsive Grid Container */}
-      <main className="max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 py-8 space-y-12">
-
+      <main className="mx-auto max-w-md space-y-12 px-4 py-8 md:max-w-2xl lg:max-w-4xl xl:max-w-5xl">
         {/* 2. Meet Your Mentors Section (Max 2 Mentors, Opposing Tilt Cards, Full Image & LinkedIn Link) */}
         {sprint.mentors && sprint.mentors.length > 0 && (
           <section className="space-y-4">
-            <div className="flex justify-between items-baseline">
-              <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900">
-                Meet Your <span className={` text-[#ff5e14] `}>Mentors</span>
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-xl font-black tracking-tight text-gray-900 md:text-2xl">
+                Meet Your <span className={`text-[#ff5e14]`}>Mentors</span>
               </h2>
             </div>
 
             <div
               className={cn(
-                "w-full py-4 px-1",
+                "w-full px-1 py-4",
                 sprint.mentors.length === 1
-                  ? "flex justify-center max-w-sm mx-auto"
-                  : "grid grid-cols-2 gap-3 sm:gap-8 md:gap-10 max-w-2xl mx-auto"
+                  ? "mx-auto flex max-w-sm justify-center"
+                  : "mx-auto grid max-w-2xl grid-cols-2 gap-3 sm:gap-8 md:gap-10"
               )}
             >
               {sprint.mentors.slice(0, 2).map((mentor, index) => {
@@ -877,32 +910,34 @@ export default function SprintDetailClient() {
                   <div
                     key={mentor.id}
                     className={cn(
-                      "group relative self-start bg-white rounded-2xl sm:rounded-3xl border border-gray-200/90 shadow-md sm:shadow-lg overflow-hidden flex flex-col transition-all duration-300 transform-gpu",
+                      "group relative flex transform-gpu flex-col self-start overflow-hidden rounded-2xl border border-gray-200/90 bg-white shadow-md transition-all duration-300 sm:rounded-3xl sm:shadow-lg",
                       tiltClass
                     )}
                   >
                     {/* Full Image Area */}
-                    <div className="relative w-full aspect-[4/5] bg-neutral-900 overflow-hidden flex items-center justify-center">
+                    <div className="relative flex aspect-[4/5] w-full items-center justify-center overflow-hidden bg-neutral-900">
                       {mentor.imageUrl ? (
                         <img
                           src={mentor.imageUrl}
                           alt={mentor.name}
-                          className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                          className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
                         />
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-neutral-500 gap-1.5 sm:gap-2 bg-gradient-to-b from-neutral-800 to-neutral-950">
-                          <Users className="w-10 h-10 sm:w-16 sm:h-16 opacity-40 text-white" />
-                          <span className="text-[10px] sm:text-xs font-semibold text-neutral-400">Mentor Photo</span>
+                        <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 bg-gradient-to-b from-neutral-800 to-neutral-950 text-neutral-500 sm:gap-2">
+                          <Users className="h-10 w-10 text-white opacity-40 sm:h-16 sm:w-16" />
+                          <span className="text-[10px] font-semibold text-neutral-400 sm:text-xs">
+                            Mentor Photo
+                          </span>
                         </div>
                       )}
 
                       {/* Subtle dark gradient overlay on image */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
                       {/* Floating Mentor Tag / Role */}
                       {mentor.role && (
-                        <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-10 max-w-[85%]">
-                          <span className="px-2 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[11px] font-bold tracking-wide uppercase rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20 shadow-md truncate block">
+                        <div className="absolute top-2 left-2 z-10 max-w-[85%] sm:top-3 sm:left-3">
+                          <span className="block truncate rounded-full border border-white/20 bg-black/60 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white uppercase shadow-md backdrop-blur-md sm:px-3 sm:py-1 sm:text-[11px]">
                             {mentor.role}
                           </span>
                         </div>
@@ -910,10 +945,10 @@ export default function SprintDetailClient() {
                     </div>
 
                     {/* Bottom Area: Name, LinkedIn & Bio */}
-                    <div className="p-3 sm:p-5 bg-white flex flex-col flex-1">
+                    <div className="flex flex-1 flex-col bg-white p-3 sm:p-5">
                       {/* Name + LinkedIn */}
                       <div className="flex items-center justify-between gap-2">
-                        <h3 className="font-black text-sm sm:text-xl text-gray-900 leading-tight tracking-tight truncate">
+                        <h3 className="truncate text-sm leading-tight font-black tracking-tight text-gray-900 sm:text-xl">
                           {mentor.name}
                         </h3>
 
@@ -926,7 +961,7 @@ export default function SprintDetailClient() {
                             className="shrink-0"
                           >
                             <FaLinkedinIn
-                              className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5"
+                              className="h-3.5 w-3.5 sm:h-4.5 sm:w-4.5"
                               style={{ color: "#146aff" }}
                             />
                           </a>
@@ -942,11 +977,11 @@ export default function SprintDetailClient() {
                               selectedMentor?.id === mentor.id ? null : mentor
                             )
                           }
-                          className="text-left w-full mt-1.5 sm:mt-2"
+                          className="mt-1.5 w-full text-left sm:mt-2"
                         >
                           <p
                             className={cn(
-                              "text-[11px] sm:text-xs text-gray-600 leading-relaxed",
+                              "text-[11px] leading-relaxed text-gray-600 sm:text-xs",
                               selectedMentor?.id !== mentor.id && "line-clamp-3"
                             )}
                           >
@@ -954,7 +989,7 @@ export default function SprintDetailClient() {
                           </p>
 
                           {selectedMentor?.id !== mentor.id && (
-                            <span className="text-[9px] sm:text-xs font-semibold text-[#ff5e14]">
+                            <span className="text-[9px] font-semibold text-[#ff5e14] sm:text-xs">
                               ... Read more
                             </span>
                           )}
@@ -971,14 +1006,11 @@ export default function SprintDetailClient() {
         {/* What's The Buzz Section */}
         {sprint.features && sprint.features.length > 0 && (
           <section className="space-y-4">
-            <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900">
-              What&apos;s The {" "}
-              <span className={` text-[#ff5e14] `}>
-                Buzz?
-              </span>
+            <h2 className="text-xl font-black tracking-tight text-gray-900 md:text-2xl">
+              What&apos;s The <span className={`text-[#ff5e14]`}>Buzz?</span>
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
               {sprint.features?.slice(0, 3).map((feature) => {
                 const descriptionPoints = Array.isArray(feature.description)
                   ? feature.description
@@ -990,15 +1022,15 @@ export default function SprintDetailClient() {
                     className="relative overflow-hidden rounded-2xl border border-orange-200 bg-white shadow-sm"
                   >
                     <div className="p-5 md:p-6">
-                      <h3 className="text-sm md:text-base font-bold text-gray-900 leading-snug pl-1">
+                      <h3 className="pl-1 text-sm leading-snug font-bold text-gray-900 md:text-base">
                         {feature.title}
                       </h3>
 
-                      <div className="mt-2 space-y-1 text-xs md:text-base text-gray-600 leading-relaxed pl-1">
+                      <div className="mt-2 space-y-1 pl-1 text-xs leading-relaxed text-gray-600 md:text-base">
                         {descriptionPoints.map((point, index) => (
                           <div key={index} className="flex items-start gap-2">
                             <span className="mt-[8px] h-1 w-1 shrink-0 rounded-full bg-[#ff5e14]" />
-                            <span className="text-sm" >{point}</span>
+                            <span className="text-sm">{point}</span>
                           </div>
                         ))}
                       </div>
@@ -1011,54 +1043,57 @@ export default function SprintDetailClient() {
         )}
 
         {/* Who Is This For Section */}
-        {sprint.whoIsThisForBullets && sprint.whoIsThisForBullets.length > 0 && (
-          <section className="space-y-4">
-            <h2 className="text-xl md:text-2xl font-black tracking-tight text-gray-900 border-black pb-1 inline-block">
-              Who Is This For?{" "}
-              <span className={`${caveat.className} text-[#ff5e14] text-2xl md:text-3xl`}>
-                (You, obviously.)
-              </span>
-            </h2>
+        {sprint.whoIsThisForBullets &&
+          sprint.whoIsThisForBullets.length > 0 && (
+            <section className="space-y-4">
+              <h2 className="inline-block border-black pb-1 text-xl font-black tracking-tight text-gray-900 md:text-2xl">
+                Who Is This For?{" "}
+                <span
+                  className={`${caveat.className} text-2xl text-[#ff5e14] md:text-3xl`}
+                >
+                  (You, obviously.)
+                </span>
+              </h2>
 
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm">
-              <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {sprint.whoIsThisForBullets.map((bullet, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-100 text-[#ff5e14] text-xs font-bold mt-0.5">
-                      {index + 1}
-                    </span>
-                    <span className="text-sm text-gray-650 leading-relaxed text-justify">
-                      {bullet}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </section>
-        )}
-
-
+              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
+                <ul className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  {sprint.whoIsThisForBullets.map((bullet, index) => (
+                    <li key={index} className="flex items-start gap-3">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-[#ff5e14]">
+                        {index + 1}
+                      </span>
+                      <span className="text-gray-650 text-justify text-sm leading-relaxed">
+                        {bullet}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          )}
 
         {/* Buddy Program Referral Card */}
         {isBuddyOfferGlobalEnabled && (
-          <section className="bg-gradient-to-r from-orange-500 to-[#ff5e14] rounded-2xl p-6 md:p-8 text-white shadow-lg flex flex-col md:flex-row justify-between items-center gap-6 mt-8">
+          <section className="mt-8 flex flex-col items-center justify-between gap-6 rounded-2xl bg-gradient-to-r from-orange-500 to-[#ff5e14] p-6 text-white shadow-lg md:flex-row md:p-8">
             <div className="space-y-2 text-center md:text-left">
-              <div className="inline-flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider">
-                <Gift className="w-3.5 h-3.5" /> Buddy Program
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold tracking-wider uppercase md:text-xs">
+                <Gift className="h-3.5 w-3.5" /> Buddy Program
               </div>
-              <h2 className="text-xl md:text-2xl font-black tracking-tight leading-tight">
+              <h2 className="text-xl leading-tight font-black tracking-tight md:text-2xl">
                 Enjoy Sprint with a friend &lt;3!
               </h2>
-              <p className="text-xs md:text-sm text-orange-50/95 max-w-md leading-relaxed">
-                We absolutely love ungatekeepers. So, here is something for you. Enroll with a friend - get straight up 20% off &amp; a partner to level up with (ek teer se do nishaane, lessgoo!)
+              <p className="max-w-md text-xs leading-relaxed text-orange-50/95 md:text-sm">
+                We absolutely love ungatekeepers. So, here is something for you.
+                Enroll with a friend - get straight up 20% off &amp; a partner
+                to level up with (ek teer se do nishaane, lessgoo!)
               </p>
             </div>
             <button
               type="button"
               onClick={() => setIsBuddyDialogOpen(true)}
-              className="w-full md:w-auto bg-white hover:bg-neutral-100 text-[#ff5e14] font-bold text-xs md:text-sm py-3 px-6 rounded-xl transition shadow-md whitespace-nowrap shrink-0 flex items-center justify-center gap-2"
+              className="flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-xs font-bold whitespace-nowrap text-[#ff5e14] shadow-md transition hover:bg-neutral-100 md:w-auto md:text-sm"
             >
-              <Gift className="w-4 h-4" />
+              <Gift className="h-4 w-4" />
               Invite Buddy Now
             </button>
           </section>
@@ -1068,57 +1103,69 @@ export default function SprintDetailClient() {
         {isBuddyDialogOpen && (
           <div
             className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-            onClick={(e) => { if (e.target === e.currentTarget) setIsBuddyDialogOpen(false); }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setIsBuddyDialogOpen(false);
+            }}
             style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
           >
-            <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-md p-6 relative overflow-hidden">
+            <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-gray-100 bg-white p-6 shadow-2xl">
               {/* Decorative blob */}
-              <div className="absolute top-0 right-0 w-40 h-40 bg-orange-50 rounded-full blur-3xl -z-10 translate-x-10 -translate-y-10 pointer-events-none" />
+              <div className="pointer-events-none absolute top-0 right-0 -z-10 h-40 w-40 translate-x-10 -translate-y-10 rounded-full bg-orange-50 blur-3xl" />
 
               {/* Close X button */}
               <button
                 type="button"
                 onClick={() => setIsBuddyDialogOpen(false)}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-800 transition"
+                className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 hover:text-gray-800"
               >
-                <X className="w-4 h-4" />
+                <X className="h-4 w-4" />
               </button>
 
               {/* Header */}
-              <div className="flex flex-col items-center text-center space-y-3 mb-6">
-                <span className="bg-orange-50 text-[#ff5e14] text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-orange-100">
+              <div className="mb-6 flex flex-col items-center space-y-3 text-center">
+                <span className="rounded-full border border-orange-100 bg-orange-50 px-3 py-1 text-[10px] font-black tracking-widest text-[#ff5e14] uppercase">
                   Buddy Benefit
                 </span>
-                <div className="bg-gradient-to-br from-orange-100 to-orange-200 text-[#ff5e14] p-3.5 rounded-2xl w-fit shadow-inner">
-                  <Gift className="w-6 h-6 animate-bounce" />
+                <div className="w-fit rounded-2xl bg-gradient-to-br from-orange-100 to-orange-200 p-3.5 text-[#ff5e14] shadow-inner">
+                  <Gift className="h-6 w-6 animate-bounce" />
                 </div>
-                <h3 className="text-xl font-extrabold text-gray-900 leading-tight">
+                <h3 className="text-xl leading-tight font-extrabold text-gray-900">
                   Enjoy Sprint with a friend &lt;3!
                 </h3>
-                <p className="text-xs text-gray-500 max-w-sm leading-relaxed">
-                  We absolutely love ungatekeepers. So, here is something for you. Enroll with a friend - get straight up 20% off &amp; a partner to level up with (ek teer se do nishaane, lessgoo!)
+                <p className="max-w-sm text-xs leading-relaxed text-gray-500">
+                  We absolutely love ungatekeepers. So, here is something for
+                  you. Enroll with a friend - get straight up 20% off &amp; a
+                  partner to level up with (ek teer se do nishaane, lessgoo!)
                 </p>
               </div>
 
               {/* Share link */}
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">
+                  <label className="block text-[10px] font-bold tracking-widest text-gray-400 uppercase">
                     Sprint Share Link
                   </label>
-                  <div className="flex gap-2 bg-gray-50 border border-gray-200 rounded-2xl p-2 items-center">
-                    <span className="text-xs text-gray-600 truncate flex-1 pl-2 font-medium select-all">
-                      {typeof window !== "undefined" ? window.location.href : ""}
+                  <div className="flex items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-2">
+                    <span className="flex-1 truncate pl-2 text-xs font-medium text-gray-600 select-all">
+                      {typeof window !== "undefined"
+                        ? window.location.href
+                        : ""}
                     </span>
                     <button
                       type="button"
                       onClick={handleCopyLink}
-                      className="bg-black hover:bg-neutral-800 text-white text-xs font-bold px-4 py-2 rounded-xl transition duration-200 shrink-0 flex items-center gap-1.5 shadow"
+                      className="flex shrink-0 items-center gap-1.5 rounded-xl bg-black px-4 py-2 text-xs font-bold text-white shadow transition duration-200 hover:bg-neutral-800"
                     >
                       {copied ? (
-                        <><Check className="w-3.5 h-3.5 text-emerald-400" /> Copied!</>
+                        <>
+                          <Check className="h-3.5 w-3.5 text-emerald-400" />{" "}
+                          Copied!
+                        </>
                       ) : (
-                        <><Copy className="w-3.5 h-3.5 text-gray-300" /> Copy Link</>
+                        <>
+                          <Copy className="h-3.5 w-3.5 text-gray-300" /> Copy
+                          Link
+                        </>
                       )}
                     </button>
                   </div>
@@ -1129,9 +1176,14 @@ export default function SprintDetailClient() {
                   href={`https://wa.me/?text=${encodeURIComponent(`Hey! I was checking out this amazing sprint program: "${sprint?.title}". Let's apply and do it together! Check it out here: ${typeof window !== "undefined" ? window.location.href : ""}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-3.5 px-4 rounded-2xl transition duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3.5 text-xs font-bold text-white shadow-md transition duration-200 hover:bg-emerald-700 hover:shadow-lg"
                 >
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 shrink-0" xmlns="http://www.w3.org/2000/svg">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="h-4 w-4 shrink-0"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
                     <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 0 0 1.333 4.982L2 22l5.202-1.362a9.923 9.923 0 0 0 4.808 1.236h.005c5.505 0 9.99-4.477 9.99-9.985C22.005 6.478 17.518 2 12.012 2Zm5.845 14.285c-.244.686-1.42 1.328-1.948 1.41-.478.077-1.101.144-3.187-.723-2.667-1.108-4.37-3.816-4.502-3.992-.133-.176-1.077-1.43-1.077-2.729 0-1.298.679-1.937.922-2.202.244-.265.533-.332.71-.332.178 0 .356.006.51.013.162.008.38-.06.593.453.22.532.753 1.836.82 1.968.067.133.11.288.022.465-.088.177-.133.288-.266.443-.133.155-.28.347-.4.493-.133.16-.272.336-.117.6.155.265.686 1.132 1.47 1.831.99.885 1.823 1.157 2.08 1.288.254.133.403.11.553-.066.15-.177.643-.753.815-.996.172-.244.344-.2.58-.112.235.088 1.492.703 1.748.83.256.128.427.194.49.305.061.11.061.643-.183 1.329Z" />
                   </svg>
                   Share via WhatsApp
@@ -1139,11 +1191,11 @@ export default function SprintDetailClient() {
               </div>
 
               {/* Footer Actions */}
-              <div className="flex gap-2 pt-4 mt-4 border-t border-gray-100">
+              <div className="mt-4 flex gap-2 border-t border-gray-100 pt-4">
                 <button
                   type="button"
                   onClick={() => setIsBuddyDialogOpen(false)}
-                  className="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-xs py-3 rounded-2xl transition duration-200"
+                  className="flex-1 rounded-2xl border border-gray-200 py-3 text-xs font-bold text-gray-700 transition duration-200 hover:bg-gray-50"
                 >
                   Close
                 </button>
@@ -1153,7 +1205,7 @@ export default function SprintDetailClient() {
                     setIsBuddyDialogOpen(false);
                     setIsDrawerOpen(true);
                   }}
-                  className="flex-1 bg-gradient-to-r from-[#ff5e14] to-[#ff7a3d] hover:from-[#e04f0f] hover:to-[#ff5e14] text-white font-bold text-xs py-3 rounded-2xl transition duration-200 shadow-md hover:shadow-lg"
+                  className="flex-1 rounded-2xl bg-gradient-to-r from-[#ff5e14] to-[#ff7a3d] py-3 text-xs font-bold text-white shadow-md transition duration-200 hover:from-[#e04f0f] hover:to-[#ff5e14] hover:shadow-lg"
                 >
                   Apply Now
                 </button>
@@ -1165,26 +1217,24 @@ export default function SprintDetailClient() {
         {/* FAQs & Testimonials Interactive Section */}
         <section className="space-y-4 pt-6">
           {/* Quick Navigation Toggle */}
-          <div className="flex flex-col sm:flex-row items-center sm:items-center justify-center gap-4 border-b border-gray-200/80 pb-4">
-
-
-            <div className="inline-flex p-1.5 bg-gray-500 rounded-2xl border border-gray-200/90 shadow-inner">
+          <div className="flex flex-col items-center justify-center gap-4 border-b border-gray-200/80 pb-4 sm:flex-row sm:items-center">
+            <div className="inline-flex rounded-2xl border border-gray-200/90 bg-gray-500 p-1.5 shadow-inner">
               <button
                 type="button"
                 onClick={() => setActiveCommunityTab("faqs")}
                 className={cn(
-                  "px-5 py-2.5 text-sm md:text-base font-bold rounded-xl transition-all duration-200 flex items-center gap-2",
+                  "flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-200 md:text-base",
                   activeCommunityTab === "faqs"
                     ? "bg-black text-[#ff5e14] shadow-sm"
                     : "text-black hover:bg-white/70"
                 )}
               >
-                <HelpCircle className="w-4 h-4 text-[#ff5e14]" />
+                <HelpCircle className="h-4 w-4 text-[#ff5e14]" />
                 <span>FAQs</span>
                 {sprint.faqs && sprint.faqs.length > 0 && (
                   <span
                     className={cn(
-                      "px-1.5 py-0.5 text-[10px] font-bold rounded-full",
+                      "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
                       activeCommunityTab === "faqs"
                         ? "bg-orange-100 text-[#ff5e14]"
                         : "bg-gray-200 text-gray-600"
@@ -1199,13 +1249,13 @@ export default function SprintDetailClient() {
                 type="button"
                 onClick={() => setActiveCommunityTab("testimonials")}
                 className={cn(
-                  "px-5 py-2.5 text-sm md:text-base font-bold rounded-xl transition-all duration-200 flex items-center gap-2",
+                  "flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-200 md:text-base",
                   activeCommunityTab === "testimonials"
                     ? "bg-black text-[#ff5e14] shadow-sm"
                     : "text-black hover:bg-white/70"
                 )}
               >
-                <MessageSquare className="w-4 h-4 text-[#ff5e14]" />
+                <MessageSquare className="h-4 w-4 text-[#ff5e14]" />
                 <span>Testimonials</span>
               </button>
             </div>
@@ -1222,10 +1272,13 @@ export default function SprintDetailClient() {
                 className="space-y-3"
               >
                 {!sprint.faqs || sprint.faqs.length === 0 ? (
-                  <div className="py-12 text-center text-sm text-gray-500 border border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
-                    <p className="font-medium">No frequently asked questions listed yet.</p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Have questions? Feel free to enquire directly using the button below.
+                  <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 py-12 text-center text-sm text-gray-500">
+                    <p className="font-medium">
+                      No frequently asked questions listed yet.
+                    </p>
+                    <p className="mt-1 text-xs text-gray-400">
+                      Have questions? Feel free to enquire directly using the
+                      button below.
                     </p>
                   </div>
                 ) : (
@@ -1236,24 +1289,24 @@ export default function SprintDetailClient() {
                         <div
                           key={faq.id || index}
                           className={cn(
-                            "rounded-2xl border transition-all duration-200 overflow-hidden",
+                            "overflow-hidden rounded-2xl border transition-all duration-200",
                             isOpen
-                              ? "bg-white border-orange-200 shadow-md ring-1 ring-orange-200/50"
-                              : "bg-white border-gray-200/90 shadow-sm hover:border-gray-300"
+                              ? "border-orange-200 bg-white shadow-md ring-1 ring-orange-200/50"
+                              : "border-gray-200/90 bg-white shadow-sm hover:border-gray-300"
                           )}
                         >
                           <button
                             type="button"
                             onClick={() => setOpenFaqId(isOpen ? null : faq.id)}
-                            className="w-full py-4 px-5 flex items-center justify-between text-left gap-4"
+                            className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
                             aria-expanded={isOpen}
                           >
-                            <span className="text-sm md:text-base font-bold text-gray-900 leading-snug">
+                            <span className="text-sm leading-snug font-bold text-gray-900 md:text-base">
                               {faq.question}
                             </span>
                             <span
                               className={cn(
-                                "shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors duration-200",
+                                "flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors duration-200",
                                 isOpen
                                   ? "bg-orange-100 text-[#ff5e14]"
                                   : "bg-gray-100 text-gray-500 hover:bg-gray-200"
@@ -1261,7 +1314,7 @@ export default function SprintDetailClient() {
                             >
                               <ChevronDown
                                 className={cn(
-                                  "w-4 h-4 transition-transform duration-200",
+                                  "h-4 w-4 transition-transform duration-200",
                                   isOpen ? "rotate-180" : "rotate-0"
                                 )}
                               />
@@ -1274,17 +1327,18 @@ export default function SprintDetailClient() {
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: "auto", opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.25, ease: "easeInOut" }}
+                                transition={{
+                                  duration: 0.25,
+                                  ease: "easeInOut",
+                                }}
                                 className="overflow-hidden"
                               >
-                                <div className="px-5 pb-5 pt-1 border-t border-gray-100 space-y-3.5">
+                                <div className="space-y-3.5 border-t border-gray-100 px-5 pt-1 pb-5">
                                   {faq.answer && (
-                                    <p className="text-xs md:text-sm leading-relaxed text-gray-600 whitespace-pre-line">
+                                    <p className="text-xs leading-relaxed whitespace-pre-line text-gray-600 md:text-sm">
                                       {faq.answer}
                                     </p>
                                   )}
-
-
                                 </div>
                               </motion.div>
                             )}
@@ -1330,10 +1384,11 @@ export default function SprintDetailClient() {
 
           <div className="space-y-4">
             {lastCohortPoster && (
-              <section 
-              id="last-cohort-poster"
-              className=" relative left-1/2 -translate-x-1/2 md:w-full md:left-0 md:translate-x-0">
-                <div className="relative w-full md:w-[85%] lg:w-[75%] xl:w-[70%] mx-auto aspect-video overflow-hidden bg-black">
+              <section
+                id="last-cohort-poster"
+                className="relative left-1/2 -translate-x-1/2 md:left-0 md:w-full md:translate-x-0"
+              >
+                <div className="relative mx-auto aspect-video w-full overflow-hidden bg-black md:w-[85%] lg:w-[75%] xl:w-[70%]">
                   <a
                     href="https://www.ftbhustle.com/toolkit/cohorts/3608f9b4-4f7a-46dc-abb3-93dd29873cc3"
                     className="block cursor-pointer"
@@ -1341,7 +1396,7 @@ export default function SprintDetailClient() {
                     <img
                       src={lastCohortPoster}
                       alt="Last cohort"
-                      className="w-full h-full object-cover"
+                      className="h-full w-full object-cover"
                     />
                   </a>
                 </div>
@@ -1350,24 +1405,28 @@ export default function SprintDetailClient() {
 
             <ToolkitTestimonials images={[]} />
 
-            <div className="max-w-2xl mx-auto">
+            <div className="mx-auto max-w-2xl">
               <ToolkitStudentFeedback />
             </div>
           </div>
-
         </section>
       </main>
 
       {/* 4. Sticky Bottom Bar */}
-      <footer className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 py-3.5 px-4 shadow-xl z-30">
-        <div className="max-w-md md:max-w-lg mx-auto flex gap-3 items-center justify-between">
+      <footer className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white px-4 py-3.5 shadow-xl">
+        <div className="mx-auto flex max-w-md items-center justify-between gap-3 md:max-w-lg">
           <a
             href={`https://wa.me/916377492042?text=Hi!%20I'd%20like%20to%20enquire%20about%20the%20sprint%20program:%20${encodeURIComponent(sprint.title)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm md:text-base py-3 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-1.5"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-3 text-center text-sm font-bold text-white shadow-lg transition hover:bg-emerald-700 md:text-base"
           >
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 shrink-0 md:w-5 md:h-5" xmlns="http://www.w3.org/2000/svg">
+            <svg
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="h-4 w-4 shrink-0 md:h-5 md:w-5"
+              xmlns="http://www.w3.org/2000/svg"
+            >
               <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 0 0 1.333 4.982L2 22l5.202-1.362a9.923 9.923 0 0 0 4.808 1.236h.005c5.505 0 9.99-4.477 9.99-9.985C22.005 6.478 17.518 2 12.012 2Zm5.845 14.285c-.244.686-1.42 1.328-1.948 1.41-.478.077-1.101.144-3.187-.723-2.667-1.108-4.37-3.816-4.502-3.992-.133-.176-1.077-1.43-1.077-2.729 0-1.298.679-1.937.922-2.202.244-.265.533-.332.71-.332.178 0 .356.006.51.013.162.008.38-.06.593.453.22.532.753 1.836.82 1.968.067.133.11.288.022.465-.088.177-.133.288-.266.443-.133.155-.28.347-.4.493-.133.16-.272.336-.117.6.155.265.686 1.132 1.47 1.831.99.885 1.823 1.157 2.08 1.288.254.133.403.11.553-.066.15-.177.643-.753.815-.996.172-.244.344-.2.58-.112.235.088 1.492.703 1.748.83.256.128.427.194.49.305.061.11.061.643-.183 1.329Z" />
             </svg>
             Enquire Now
@@ -1383,16 +1442,16 @@ export default function SprintDetailClient() {
                   router.push(`/toolkit/sprints/${sprintId}/dashboard`);
                 }
               }}
-              className="flex-1 bg-green-600 hover:bg-green-750 text-white font-bold text-sm md:text-base py-3 px-4 rounded-xl transition shadow-lg flex items-center justify-center gap-1.5"
+              className="hover:bg-green-750 flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-green-600 px-4 py-3 text-sm font-bold text-white shadow-lg transition md:text-base"
             >
-              View Sprint <ChevronRight className="w-4 h-4" />
+              View Sprint <ChevronRight className="h-4 w-4" />
             </button>
           ) : (
             <button
               onClick={() => setIsDrawerOpen(true)}
-              className="flex-1 bg-[#ff5e14] hover:bg-[#e04f0f] text-white font-bold text-sm md:text-base py-3 px-4 rounded-xl transition shadow-lg shadow-orange-500/10 flex items-center justify-center gap-1.5"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#ff5e14] px-4 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/10 transition hover:bg-[#e04f0f] md:text-base"
             >
-              Apply Now <ChevronRight className="w-4 h-4" />
+              Apply Now <ChevronRight className="h-4 w-4" />
             </button>
           )}
         </div>
@@ -1401,8 +1460,8 @@ export default function SprintDetailClient() {
       {/* Upsell Bottom Sheet */}
       <Drawer.Root open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
         <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 bg-black/40 z-40" />
-          <Drawer.Content className="bg-white flex flex-col rounded-t-[20px] h-[85vh] fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto overflow-hidden">
+          <Drawer.Overlay className="fixed inset-0 z-40 bg-black/40" />
+          <Drawer.Content className="fixed right-0 bottom-0 left-0 z-50 mx-auto flex h-[85vh] max-w-lg flex-col overflow-hidden rounded-t-[20px] bg-white">
             {/* Drawer Marquee Banner */}
             {/* {sprint.showEarlyBirdMarqueeCheckout && (
               <div className="w-full bg-black text-[#ff5e14] py-2 overflow-hidden relative font-extrabold text-[9px] uppercase tracking-widest select-none shrink-0 border-b border-gray-100">
@@ -1427,24 +1486,30 @@ export default function SprintDetailClient() {
               </div>
             )} */}
 
-            <div className="p-4 bg-gray-50 border-b flex justify-between items-center shrink-0">
+            <div className="flex shrink-0 items-center justify-between border-b bg-gray-50 p-4">
               <div>
-                <Drawer.Title className="text-base font-bold">Select Your Sprint Plan</Drawer.Title>
-                <Drawer.Description className="text-xs text-gray-500">Pick packages</Drawer.Description>
+                <Drawer.Title className="text-base font-bold">
+                  Select Your Sprint Plan
+                </Drawer.Title>
+                <Drawer.Description className="text-xs text-gray-500">
+                  Pick packages
+                </Drawer.Description>
               </div>
               <button
                 onClick={() => setIsDrawerOpen(false)}
-                className="p-1 hover:bg-gray-200 rounded-full"
+                className="rounded-full p-1 hover:bg-gray-200"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="h-5 w-5 text-gray-500" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 space-y-4 overflow-y-auto p-4">
               {/* Tiers/Bundles Selection */}
               {sprint.tiers && sprint.tiers.length > 0 && (
                 <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Choose a Bundle Tier</h4>
+                  <h4 className="text-xs font-bold tracking-wider text-gray-400 uppercase">
+                    Choose a Bundle Tier
+                  </h4>
                   <div className="space-y-2">
                     {sprint.tiers.map((tier) => {
                       const isSelected = selectedTierId === tier.id;
@@ -1456,52 +1521,72 @@ export default function SprintDetailClient() {
                             setSelectedAddonIds([]);
                           }}
                           className={cn(
-                            "border-2 rounded-xl p-4 cursor-pointer transition flex justify-between items-start",
+                            "flex cursor-pointer items-start justify-between rounded-xl border-2 p-4 transition",
                             isSelected
                               ? "border-[#ff5e14] bg-orange-50/20"
-                              : "border-gray-200 hover:border-gray-300 bg-white"
+                              : "border-gray-200 bg-white hover:border-gray-300"
                           )}
                         >
                           <div className="space-y-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h5 className="font-bold text-sm text-gray-900">{tier.name}</h5>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h5 className="text-sm font-bold text-gray-900">
+                                {tier.name}
+                              </h5>
 
                               {tier.isFillingFast && (
-                                <span className="bg-orange-100 text-[#ff5e14] text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full animate-pulse">
+                                <span className="animate-pulse rounded-full bg-orange-100 px-2 py-0.5 text-[9px] font-bold tracking-wider text-[#ff5e14] uppercase">
                                   Filling Fast
                                 </span>
                               )}
 
                               {tier.isTrending && (
-                                <span className="bg-blue-100 text-blue-600 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full animate-pulse">
+                                <span className="animate-pulse rounded-full bg-blue-100 px-2 py-0.5 text-[9px] font-bold tracking-wider text-blue-600 uppercase">
                                   Trending
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-gray-500">{tier.description}</p>
-                            {tier.whatIncluded && tier.whatIncluded.length > 0 && (
-                              <ul className="text-[10px] text-gray-400 space-y-0.5 pt-1.5">
-                                {tier.whatIncluded.map((inc, i) => (
-                                  <li key={i} className="flex items-center gap-1">
-                                    <Check className="w-3 h-3 text-[#ff5e14] shrink-0" />{inc}
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
+                            <p className="text-xs text-gray-500">
+                              {tier.description}
+                            </p>
+                            {tier.whatIncluded &&
+                              tier.whatIncluded.length > 0 && (
+                                <ul className="space-y-0.5 pt-1.5 text-[10px] text-gray-400">
+                                  {tier.whatIncluded.map((inc, i) => (
+                                    <li
+                                      key={i}
+                                      className="flex items-center gap-1"
+                                    >
+                                      <Check className="h-3 w-3 shrink-0 text-[#ff5e14]" />
+                                      {inc}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
                           </div>
                           <div className="flex flex-col items-end">
                             {isDuoActive ? (
                               <>
-                                <span className="font-bold text-sm text-[#ff5e14]">₹{Math.round(tier.price * 0.8)}</span>
-                                <span className="line-through text-gray-400 text-[10px]">₹{tier.price}</span>
-                                <span className="text-[9px] text-emerald-600 font-medium whitespace-nowrap">≈ ₹{Math.round(tier.price * 0.8 / 2)}/head</span>
+                                <span className="text-sm font-bold text-[#ff5e14]">
+                                  ₹{Math.round(tier.price * 0.8)}
+                                </span>
+                                <span className="text-[10px] text-gray-400 line-through">
+                                  ₹{tier.price}
+                                </span>
+                                <span className="text-[9px] font-medium whitespace-nowrap text-emerald-600">
+                                  ≈ ₹{Math.round((tier.price * 0.8) / 2)}/head
+                                </span>
                               </>
                             ) : (
                               <>
-                                <span className="font-bold text-sm text-[#ff5e14]">₹{tier.price}</span>
-                                {(tier as any).originalPrice && (tier as any).originalPrice > tier.price && (
-                                  <span className="line-through text-gray-400 text-xs mt-0.5">₹{(tier as any).originalPrice}</span>
-                                )}
+                                <span className="text-sm font-bold text-[#ff5e14]">
+                                  ₹{tier.price}
+                                </span>
+                                {(tier as any).originalPrice &&
+                                  (tier as any).originalPrice > tier.price && (
+                                    <span className="mt-0.5 text-xs text-gray-400 line-through">
+                                      ₹{(tier as any).originalPrice}
+                                    </span>
+                                  )}
                               </>
                             )}
                           </div>
@@ -1516,16 +1601,17 @@ export default function SprintDetailClient() {
               {isBuddyOfferGlobalEnabled && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <Gift className="w-3.5 h-3.5 text-[#ff5e14]" /> {buddyOfferTitle}
+                    <h4 className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-gray-400 uppercase">
+                      <Gift className="h-3.5 w-3.5 text-[#ff5e14]" />{" "}
+                      {buddyOfferTitle}
                     </h4>
-                    <span className="text-[#ff5e14] text-[9px] font-bold uppercase tracking-wider">
+                    <span className="text-[9px] font-bold tracking-wider text-[#ff5e14] uppercase">
                       Optional Referral
                     </span>
                   </div>
-                  <div className="relative group overflow-hidden p-[1.5px] rounded-xl bg-gradient-to-r from-orange-300 via-[#ff5e14] to-yellow-400 animate-gradient hover:shadow-[0_0_15px_rgba(255,94,20,0.25)] transition-all duration-300">
-                    <div className="relative bg-white/95 backdrop-blur-sm p-3 rounded-[10px] space-y-2 z-10 h-full">
-                      <p className="text-[11px] text-gray-600 font-medium leading-relaxed">
+                  <div className="group animate-gradient relative overflow-hidden rounded-xl bg-gradient-to-r from-orange-300 via-[#ff5e14] to-yellow-400 p-[1.5px] transition-all duration-300 hover:shadow-[0_0_15px_rgba(255,94,20,0.25)]">
+                    <div className="relative z-10 h-full space-y-2 rounded-[10px] bg-white/95 p-3 backdrop-blur-sm">
+                      <p className="text-[11px] leading-relaxed font-medium text-gray-600">
                         {buddyOfferText}
                       </p>
                       <div className="relative">
@@ -1534,9 +1620,9 @@ export default function SprintDetailClient() {
                           value={buddyEmail}
                           onChange={(e) => setBuddyEmail(e.target.value)}
                           placeholder="buddy@example.com"
-                          className="w-full pl-8 pr-3 py-2 border-2 border-orange-100 focus:border-[#ff5e14] focus:ring-4 focus:ring-orange-500/20 rounded-lg text-xs transition-all bg-white outline-none"
+                          className="w-full rounded-lg border-2 border-orange-100 bg-white py-2 pr-3 pl-8 text-xs transition-all outline-none focus:border-[#ff5e14] focus:ring-4 focus:ring-orange-500/20"
                         />
-                        <Gift className="w-3.5 h-3.5 text-orange-300 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none group-focus-within:text-[#ff5e14] transition-colors" />
+                        <Gift className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-orange-300 transition-colors group-focus-within:text-[#ff5e14]" />
                       </div>
                     </div>
                   </div>
@@ -1544,60 +1630,92 @@ export default function SprintDetailClient() {
               )}
 
               {/* Add-ons Selection (Individual Sessions) */}
-              {sprint.sessions && sprint.sessions.filter(s => s.price && s.price > 0).length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex flex-col gap-0.5">
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Select Individual Sessions</h4>
-                    <p className="text-[10px] text-gray-500">Choosing an individual session will deselect the bundle tier.</p>
-                  </div>
-                  <div className="space-y-2">
-                    {sprint.sessions.filter(s => s.price && s.price > 0).map((session, index) => {
-                      const isSelected = selectedAddonIds.includes(session.id);
-                      return (
-                        <div
-                          key={session.id}
-                          onClick={() => toggleAddon(session.id)}
-                          className={cn(
-                            "border-2 rounded-xl p-3.5 cursor-pointer transition flex items-center justify-between",
-                            isSelected
-                              ? "border-[#ff5e14] bg-orange-50/10"
-                              : "border-gray-200 hover:border-gray-300 bg-white"
-                          )}
-                        >
-                          <div className="flex gap-3 items-start">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => { }} // toggled by parent div
-                              className="rounded border-gray-300 text-[#ff5e14] focus:ring-[#ff5e14] mt-0.5 h-4 w-4"
-                            />
-                            <div>
-                              <h5 className="font-bold text-xs text-gray-900">Session {index + 1}: {session.title}</h5>
-                              <p className="text-[10px] text-gray-500">{session.description}</p>
-                            </div>
-                          </div>
-                          <div className="text-right whitespace-nowrap">
-                            {isDuoActive ? (
-                              <>
-                                <span className="font-bold text-xs text-[#ff5e14] block">+ ₹{Math.round((session.price || 0) * 0.8)}</span>
-                                <span className="line-through text-gray-400 text-[10px] block">₹{session.price}</span>
-                                <span className="text-[9px] text-emerald-600 font-medium block">≈ ₹{Math.round((session.price || 0) * 0.8 / 2)}/head</span>
-                              </>
-                            ) : (
-                              <>
-                                <span className="font-bold text-xs text-[#ff5e14] block">+ ₹{session.price}</span>
-                                {session.originalPrice && session.originalPrice > (session.price || 0) && (
-                                  <span className="line-through text-gray-400 text-[10px] block">₹{session.originalPrice}</span>
+              {sprint.sessions &&
+                sprint.sessions.filter((s) => s.price && s.price > 0).length >
+                  0 && (
+                  <div className="space-y-3">
+                    <div className="flex flex-col gap-0.5">
+                      <h4 className="text-xs font-bold tracking-wider text-gray-400 uppercase">
+                        Select Individual Sessions
+                      </h4>
+                      <p className="text-[10px] text-gray-500">
+                        Choosing an individual session will deselect the bundle
+                        tier.
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      {sprint.sessions
+                        .filter((s) => s.price && s.price > 0)
+                        .map((session, index) => {
+                          const isSelected = selectedAddonIds.includes(
+                            session.id
+                          );
+                          return (
+                            <div
+                              key={session.id}
+                              onClick={() => toggleAddon(session.id)}
+                              className={cn(
+                                "flex cursor-pointer items-center justify-between rounded-xl border-2 p-3.5 transition",
+                                isSelected
+                                  ? "border-[#ff5e14] bg-orange-50/10"
+                                  : "border-gray-200 bg-white hover:border-gray-300"
+                              )}
+                            >
+                              <div className="flex items-start gap-3">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => {}} // toggled by parent div
+                                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#ff5e14] focus:ring-[#ff5e14]"
+                                />
+                                <div>
+                                  <h5 className="text-xs font-bold text-gray-900">
+                                    Session {index + 1}: {session.title}
+                                  </h5>
+                                  <p className="text-[10px] text-gray-500">
+                                    {session.description}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right whitespace-nowrap">
+                                {isDuoActive ? (
+                                  <>
+                                    <span className="block text-xs font-bold text-[#ff5e14]">
+                                      + ₹
+                                      {Math.round((session.price || 0) * 0.8)}
+                                    </span>
+                                    <span className="block text-[10px] text-gray-400 line-through">
+                                      ₹{session.price}
+                                    </span>
+                                    <span className="block text-[9px] font-medium text-emerald-600">
+                                      ≈ ₹
+                                      {Math.round(
+                                        ((session.price || 0) * 0.8) / 2
+                                      )}
+                                      /head
+                                    </span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className="block text-xs font-bold text-[#ff5e14]">
+                                      + ₹{session.price}
+                                    </span>
+                                    {session.originalPrice &&
+                                      session.originalPrice >
+                                        (session.price || 0) && (
+                                        <span className="block text-[10px] text-gray-400 line-through">
+                                          ₹{session.originalPrice}
+                                        </span>
+                                      )}
+                                  </>
                                 )}
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Toolkit Add-ons Selection */}
               {/* {sprint.showAddonsCheckout !== false && liveToolkits && liveToolkits.filter(t => t.id !== sprint.toolkitId).length > 0 && (
@@ -1646,11 +1764,11 @@ export default function SprintDetailClient() {
                 </div>
               )} */}
 
-
-
               {/* Coupon Code */}
               <div className="space-y-3 border-t pt-4">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Discount Coupon</h4>
+                <h4 className="text-xs font-bold tracking-wider text-gray-400 uppercase">
+                  Discount Coupon
+                </h4>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <input
@@ -1662,7 +1780,7 @@ export default function SprintDetailClient() {
                         setCouponDiscount(0);
                       }}
                       placeholder="Enter coupon code"
-                      className="w-full px-3 py-2 pr-10 border rounded-lg text-sm uppercase"
+                      className="w-full rounded-lg border px-3 py-2 pr-10 text-sm uppercase"
                     />
                     {couponCode && (
                       <button
@@ -1672,9 +1790,9 @@ export default function SprintDetailClient() {
                           setCouponDiscount(0);
                           setCouponError("");
                         }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute top-1/2 right-2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="h-4 w-4" />
                       </button>
                     )}
                   </div>
@@ -1688,126 +1806,174 @@ export default function SprintDetailClient() {
                       setIsApplyingCoupon(true);
                       setCouponError("");
                       try {
-                        const response = await axios.post(`/api/sprints/${sprint.id}/checkout`, {
-                          selectedTierId: selectedTierId || null,
-                          selectedAddOnIds: selectedAddonIds,
-                          selectedToolkitIds: selectedToolkitIds,
-                          buyerName,
-                          buyerEmail,
-                          buyerPhone: "",
-                          buddyEmail: buddyEmail || null,
-                          couponCode: couponCode.trim(),
-                          validateCouponOnly: true,
-                        });
+                        const response = await axios.post(
+                          `/api/sprints/${sprint.id}/checkout`,
+                          {
+                            selectedTierId: selectedTierId || null,
+                            selectedAddOnIds: selectedAddonIds,
+                            selectedToolkitIds: selectedToolkitIds,
+                            buyerName,
+                            buyerEmail,
+                            buyerPhone: "",
+                            buddyEmail: buddyEmail || null,
+                            couponCode: couponCode.trim(),
+                            validateCouponOnly: true,
+                          }
+                        );
                         if (response.data.discountAmount) {
                           setCouponDiscount(response.data.discountAmount);
-                          toast.success(`Coupon applied! ₹${response.data.discountAmount} discount`);
+                          toast.success(
+                            `Coupon applied! ₹${response.data.discountAmount} discount`
+                          );
                         } else {
                           setCouponError("Invalid or expired coupon");
                           setCouponDiscount(0);
                         }
                       } catch (err: any) {
-                        setCouponError(err.response?.data?.error || "Invalid coupon");
+                        setCouponError(
+                          err.response?.data?.error || "Invalid coupon"
+                        );
                         setCouponDiscount(0);
                       } finally {
                         setIsApplyingCoupon(false);
                       }
                     }}
                     disabled={isApplyingCoupon}
-                    className="px-4 py-2 bg-[#ff5e14] text-white rounded-lg text-sm font-medium hover:bg-[#e04f0f] disabled:opacity-50"
+                    className="rounded-lg bg-[#ff5e14] px-4 py-2 text-sm font-medium text-white hover:bg-[#e04f0f] disabled:opacity-50"
                   >
-                    {isApplyingCoupon ? <Loader2 className="w-4 h-4 animate-spin" /> : "Apply"}
+                    {isApplyingCoupon ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Apply"
+                    )}
                   </button>
                 </div>
-                {couponError && <p className="text-xs text-red-500">{couponError}</p>}
+                {couponError && (
+                  <p className="text-xs text-red-500">{couponError}</p>
+                )}
                 {couponDiscount > 0 && (
-                  <p className="text-xs text-green-600 font-medium">Coupon applied: ₹{couponDiscount} discount</p>
+                  <p className="text-xs font-medium text-green-600">
+                    Coupon applied: ₹{couponDiscount} discount
+                  </p>
                 )}
               </div>
 
               {/* Buyer Contact info */}
               <div className="space-y-3 border-t pt-4">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Contact Details</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <h4 className="text-xs font-bold tracking-wider text-gray-400 uppercase">
+                  Contact Details
+                </h4>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase">Your Name</label>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase">
+                      Your Name
+                    </label>
                     <input
                       type="text"
                       value={buyerName}
                       onChange={(e) => setBuyerName(e.target.value)}
                       placeholder="Enter name"
-                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                      className="w-full rounded-lg border px-3 py-2 text-sm"
                       required
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase">Email Address</label>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase">
+                      Email Address
+                    </label>
                     <input
                       type="email"
                       value={buyerEmail}
                       onChange={(e) => setBuyerEmail(e.target.value)}
                       placeholder="Enter email"
-                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                      className="w-full rounded-lg border px-3 py-2 text-sm"
                       required
                     />
                   </div>
-                  <div className="hidden">
-                    {/* buddy email moved to top */}
-                  </div>
+                  <div className="hidden">{/* buddy email moved to top */}</div>
                 </div>
               </div>
             </div>
 
             {/* Bottom Checkout Action */}
-            <div className="p-4 bg-gray-50 border-t flex items-center justify-between shrink-0">
+            <div className="flex shrink-0 items-center justify-between border-t bg-gray-50 p-4">
               <div className="flex flex-col">
-                <span className="text-[9px] text-gray-400 font-bold uppercase">Payable Price</span>
-                <div className="flex items-baseline gap-2 flex-wrap">
-                  <span className="font-black text-gray-900 text-lg">₹{runningTotal}/-</span>
+                <span className="text-[9px] font-bold text-gray-400 uppercase">
+                  Payable Price
+                </span>
+                <div className="flex flex-wrap items-baseline gap-2">
+                  <span className="text-lg font-black text-gray-900">
+                    ₹{runningTotal}/-
+                  </span>
                   {couponDiscount > 0 && (
                     <>
-                      <span className="line-through text-xs text-gray-400 font-medium">₹{totalOriginalPrice}</span>
-                      <span className="bg-green-50 text-green-600 border border-green-200 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+                      <span className="text-xs font-medium text-gray-400 line-through">
+                        ₹{totalOriginalPrice}
+                      </span>
+                      <span className="rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[10px] font-bold whitespace-nowrap text-green-600">
                         Coupon Applied
                       </span>
                     </>
                   )}
-                  {sprint.showEarlyBirdCheckout && totalOriginalPrice > runningTotal && couponDiscount === 0 && (
-                    <>
-                      <span className="line-through text-xs text-gray-400 font-medium">₹{totalOriginalPrice}</span>
-                      <span className="bg-blue-50 text-blue-600 border border-blue-200 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
-                        Early Bird offer
+                  {sprint.showEarlyBirdCheckout &&
+                    totalOriginalPrice > runningTotal &&
+                    couponDiscount === 0 && (
+                      <>
+                        <span className="text-xs font-medium text-gray-400 line-through">
+                          ₹{totalOriginalPrice}
+                        </span>
+                        <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold whitespace-nowrap text-blue-600">
+                          Early Bird offer
+                        </span>
+                      </>
+                    )}
+                  {!sprint.showEarlyBirdCheckout &&
+                    isDuoActive &&
+                    (selectedTierId || selectedAddonIds.length > 0) &&
+                    couponDiscount === 0 && (
+                      <span className="text-xs font-medium text-gray-400 line-through">
+                        ₹
+                        {selectedTierId
+                          ? basePrice * 2 + toolkitsTotal
+                          : sessionsTotal * 2 + toolkitsTotal}
                       </span>
-                    </>
-                  )}
-                  {!sprint.showEarlyBirdCheckout && isDuoActive && (selectedTierId || selectedAddonIds.length > 0) && couponDiscount === 0 && (
-                    <span className="line-through text-xs text-gray-400 font-medium">₹{
-                      selectedTierId ? basePrice * 2 + toolkitsTotal : sessionsTotal * 2 + toolkitsTotal
-                    }</span>
-                  )}
+                    )}
                 </div>
-                {isDuoActive && (selectedTierId || selectedAddonIds.length > 0) && (
-                  <span className="text-[10px] text-emerald-600 font-semibold mt-0.5">
-                    ≈ ₹{Math.round((selectedTierId ? finalBasePrice : finalSessionsTotal) / 2) + Math.round(toolkitsTotal / 2)} per person (Duo Discount Applied)
-                  </span>
-                )}
+                {isDuoActive &&
+                  (selectedTierId || selectedAddonIds.length > 0) && (
+                    <span className="mt-0.5 text-[10px] font-semibold text-emerald-600">
+                      ≈ ₹
+                      {Math.round(
+                        (selectedTierId ? finalBasePrice : finalSessionsTotal) /
+                          2
+                      ) + Math.round(toolkitsTotal / 2)}{" "}
+                      per person (Duo Discount Applied)
+                    </span>
+                  )}
                 {!(selectedTierId || selectedAddonIds.length > 0) && (
-                  <span className="text-[9px] text-red-500 font-semibold mt-0.5">Please select a tier or session</span>
+                  <span className="mt-0.5 text-[9px] font-semibold text-red-500">
+                    Please select a tier or session
+                  </span>
                 )}
               </div>
 
               <button
                 onClick={handleCheckout}
-                disabled={isProcessingCheckout || !(selectedTierId || selectedAddonIds.length > 0)}
-                className="bg-black hover:bg-neutral-800 text-white font-bold text-xs py-3 px-6 rounded-xl transition flex items-center gap-1.5 shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={
+                  isProcessingCheckout ||
+                  !(selectedTierId || selectedAddonIds.length > 0)
+                }
+                className="flex items-center gap-1.5 rounded-xl bg-black px-6 py-3 text-xs font-bold text-white shadow transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isProcessingCheckout ? (
                   <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Verifying...
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />{" "}
+                    Verifying...
                   </>
                 ) : (
                   <>
-                    Confirm &amp; Checkout <ArrowRight className="w-3.5 h-3.5" />
+                    Confirm &amp; Checkout{" "}
+                    <ArrowRight className="h-3.5 w-3.5" />
                   </>
                 )}
               </button>
@@ -1818,16 +1984,20 @@ export default function SprintDetailClient() {
 
       {/* Floating Limited Seats Notification */}
       {showSeatsPop && (
-        <div className="fixed top-4 right-4 z-50 max-w-xs bg-gradient-to-r from-[#ff5e14] to-orange-600 text-white rounded-xl shadow-2xl p-3.5 border border-orange-400/30 flex items-center justify-between gap-3 animate-in slide-in-from-top-5 duration-300">
+        <div className="animate-in slide-in-from-top-5 fixed top-4 right-4 z-50 flex max-w-xs items-center justify-between gap-3 rounded-xl border border-orange-400/30 bg-gradient-to-r from-[#ff5e14] to-orange-600 p-3.5 text-white shadow-2xl duration-300">
           <div>
-            <p className="text-[9px] uppercase font-bold tracking-widest text-orange-200 leading-none mb-1">Attention</p>
-            <h4 className="font-extrabold text-xs md:text-sm leading-snug">Limited Seats! Sprint is Live</h4>
+            <p className="mb-1 text-[9px] leading-none font-bold tracking-widest text-orange-200 uppercase">
+              Attention
+            </p>
+            <h4 className="text-xs leading-snug font-extrabold md:text-sm">
+              Limited Seats! Sprint is Live
+            </h4>
           </div>
           <button
             onClick={() => setShowSeatsPop(false)}
-            className="hover:bg-white/20 p-1 rounded-full transition-colors shrink-0"
+            className="shrink-0 rounded-full p-1 transition-colors hover:bg-white/20"
           >
-            <X className="w-4 h-4" />
+            <X className="h-4 w-4" />
           </button>
         </div>
       )}

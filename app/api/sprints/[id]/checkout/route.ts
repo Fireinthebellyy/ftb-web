@@ -1,14 +1,24 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { eq, and, inArray } from "drizzle-orm";
-import { sprints, sprintTiers, sprintOrders, coupons, userToolkits, toolkits, sprintSessions, siteSettings, sprintUpgradePlans } from "@/lib/schema";
+import {
+  sprints,
+  sprintTiers,
+  sprintOrders,
+  coupons,
+  userToolkits,
+  toolkits,
+  sprintSessions,
+  siteSettings,
+  sprintUpgradePlans,
+} from "@/lib/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { createOrder } from "@/lib/razorpay";
 import { getPaidSprintOrderForUser } from "@/lib/sprint-registration";
 import { sendSprintPaymentConfirmationEmail } from "@/lib/sprint-payment-email";
 
-export function getDuoPricing(singlePrice: number) {
+function getDuoPricing(singlePrice: number) {
   if (!singlePrice || singlePrice <= 0) {
     return { reference: 0, final: 0, perHead: 0 };
   }
@@ -48,11 +58,12 @@ export async function POST(
       couponCode,
       validateCouponOnly = false,
     } = body;
-    
+
     let selectedAddOnIds = [...rawAddOns];
     let { buddyEmail } = body;
 
-    const effectiveBuyerName = buyerName?.trim() || session.user.name || "Learner";
+    const effectiveBuyerName =
+      buyerName?.trim() || session.user.name || "Learner";
     const effectiveBuyerEmail = buyerEmail?.trim() || session.user.email;
 
     if (!effectiveBuyerName || !effectiveBuyerEmail) {
@@ -63,7 +74,7 @@ export async function POST(
     }
 
     const settings = await db.query.siteSettings.findFirst({
-      where: eq(siteSettings.id, "global")
+      where: eq(siteSettings.id, "global"),
     });
 
     if (!settings?.isBuddyOfferEnabled) {
@@ -95,9 +106,15 @@ export async function POST(
       _isUpgradePlanAllInOne = Boolean(upgradePlan.isAllInOne);
       _upgradePlanIncludedSessionCount = upgradePlan.includedSessionCount;
 
-      if (upgradePlan.includedSessionIds && upgradePlan.includedSessionIds.length > 0) {
+      if (
+        upgradePlan.includedSessionIds &&
+        upgradePlan.includedSessionIds.length > 0
+      ) {
         upgradePlanIncludedSessionIds = upgradePlan.includedSessionIds;
-        const merged = new Set([...selectedAddOnIds, ...upgradePlan.includedSessionIds]);
+        const merged = new Set([
+          ...selectedAddOnIds,
+          ...upgradePlan.includedSessionIds,
+        ]);
         selectedAddOnIds = Array.from(merged);
       }
     }
@@ -285,7 +302,7 @@ export async function POST(
         }
       }
 
-      void sendSprintPaymentConfirmationEmail(newOrder[0].id).catch(err => {
+      void sendSprintPaymentConfirmationEmail(newOrder[0].id).catch((err) => {
         console.error("Failed to send zero-amount sprint email async:", err);
       });
 
@@ -340,7 +357,8 @@ export async function POST(
       orderId: razorpayOrder.id,
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
-      key: process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      key:
+        process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
       sprintOrderId: newOrder[0].id,
       orderRecord: newOrder[0],
     });

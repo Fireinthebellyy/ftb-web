@@ -2,14 +2,12 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Outfit } from "next/font/google";
+import { outfit } from "@/lib/fonts";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, usePathname } from "next/navigation";
 import { useSession } from "@/hooks/use-session";
 
 import Image from "next/image";
-
-const outfit = Outfit({ subsets: ["latin"], weight: ["400", "600", "700"] });
 
 const imgVector2 = "/images/walkthrough-pointer.svg";
 

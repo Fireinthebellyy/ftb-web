@@ -18,7 +18,6 @@ import { useEffect } from "react";
 // import { cn } from "@/lib/utils";
 import { Check, Share2 } from "lucide-react";
 import Link from "next/link";
-import { canAccessAdminPanel } from "@/lib/admin-permissions";
 
 interface CohortCard {
   id: string;
@@ -67,7 +66,7 @@ export default function ToolkitPageClient({
   const router = useRouter();
   // const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const selectedCategory = "all";
-  const isAdmin = canAccessAdminPanel(session?.user?.role);
+
   // const { data: settings } = useQuery({
   //   queryKey: ["site_settings"],
   //   queryFn: async () => {
@@ -226,7 +225,7 @@ export default function ToolkitPageClient({
             <>
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {// showing sprints 
-                  isAdmin && sprintsData.length > 0 && (
+                  sprintsData.length > 0 && (
                     <>
                       {sprintsData.map((sprint) => (
                         <div
@@ -377,7 +376,7 @@ export default function ToolkitPageClient({
                                 ) : (
                                   <div className="bg-gray-700 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
                                     <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-                                    Registration Closed
+                                    Sold Out
                                   </div>
                                 )}
                                 {cohort.isBestSeller ? (
@@ -386,9 +385,9 @@ export default function ToolkitPageClient({
                                     Best Seller
                                   </div>
                                 ) : (
-                                  <div className="bg-emerald-600 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
+                                  <div className="bg-red-600 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
                                     <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-                                    Cohort Live
+                                    Cohort Concluded
                                   </div>
                                 )}
                               </div>
@@ -504,7 +503,7 @@ export default function ToolkitPageClient({
                       ) : (
                         <div className="bg-gray-700 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
                           <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-                          Registration Closed
+                          Sold Out
                         </div>
                       )}
                       {cohort.isBestSeller ? (
@@ -513,9 +512,9 @@ export default function ToolkitPageClient({
                           Best Seller
                         </div>
                       ) : (
-                        <div className="bg-emerald-600 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
+                        <div className="bg-red-600 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
                           <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-                          Cohort Live
+                          Cohort Concluded
                         </div>
                       )}
                     </div>

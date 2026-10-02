@@ -35,13 +35,13 @@ export function extractInstagramId(url?: string | null): string | null {
  * - https://iframe.mediadelivery.net/embed/12345/abc-def-123
  * - https://video.bunnycdn.com/play/12345/abc-def-123
  */
-export function extractBunnyEmbed(url?: string | null): { embedUrl: string; videoId?: string } | null {
+export function extractBunnyEmbed(url?: string | null): { embedUrl: string;  videoId?: string } | null {
   if (!url) return null;
   const trimmed = url.trim();
 
   // Pattern: iframe.mediadelivery.net/embed/{libraryId}/{videoId}
   const mediaDeliveryMatch = trimmed.match(
-    /(?:iframe\.mediadelivery\.net\/embed\/)(\d+)\/([a-zA-Z0-9_-]+)/i
+    /(?:player\.mediadelivery\.net\/embed\/)(\d+)\/([a-zA-Z0-9_-]+)/i
   );
   if (mediaDeliveryMatch) {
     const libraryId = mediaDeliveryMatch[1];
@@ -61,7 +61,7 @@ export function extractBunnyEmbed(url?: string | null): { embedUrl: string; vide
     const videoId = bunnyPlayMatch[2];
     return {
       embedUrl: `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&responsive=true`,
-      videoId,
+      videoId ,
     };
   }
 

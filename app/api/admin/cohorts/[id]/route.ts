@@ -141,6 +141,8 @@ export async function PUT(
       showEarlyBirdCheckout,
       showEarlyBirdMarqueeCheckout,
       showAddonsCheckout,
+      standardAccessExpiry,
+      extendedAccessExpiry,
       mentors: incomingMentors = [],
       features: incomingFeatures = [],
       tiers: incomingTiers = [],
@@ -184,6 +186,8 @@ export async function PUT(
           showEarlyBirdCheckout: Boolean(showEarlyBirdCheckout ?? false),
           showEarlyBirdMarqueeCheckout: Boolean(showEarlyBirdMarqueeCheckout ?? false),
           showAddonsCheckout: Boolean(showAddonsCheckout ?? true),
+          standardAccessExpiry: standardAccessExpiry ? new Date(standardAccessExpiry) : null,
+          extendedAccessExpiry: extendedAccessExpiry ? new Date(extendedAccessExpiry) : null,
           updatedAt: new Date(),
         })
         .where(eq(cohorts.id, cohortId))

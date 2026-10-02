@@ -20,6 +20,8 @@ import {
   HelpCircle,
   MessageSquare,
   Users,
+  Send,
+  Share2,
 } from "lucide-react";
 import { FaLinkedinIn } from "react-icons/fa";
 import { Drawer } from "vaul";
@@ -233,6 +235,12 @@ export default function SprintDetailClient() {
       setTimeout(() => setCopied(false), 2000);
     }
   };
+  const handleLastCohortClick = () => {
+  document.getElementById("last-cohort-poster")?.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+};
 
   // Load Sprint details and live toolkits
   useEffect(() => {
@@ -581,20 +589,53 @@ export default function SprintDetailClient() {
   return (
     <div className="min-h-screen bg-[#FAF9F6] text-[#1A1A1A] pb-24 font-sans antialiased">
       {/* Sprint Category Label */}
-      <div className="bg-white px-4 py-4 sm:py-5 overflow-hidden">
-        <motion.div
-          initial={{ x: -80, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.7, ease: "easeOut" }}
-          className="w-fit ml-4 md:ml-4 lg:ml-8 flex items-center gap-3"
-        >
-          <div className="h-7 w-1 bg-[#ff5e14] rounded-full shrink-0" />
+      <div className="relative bg-white px-4 py-3 sm:py-4 overflow-hidden">
+  <div className="w-full flex items-center ml-4 md:ml-4 lg:ml-8 pr-2">
 
-          <h2 className="text-lg sm:text-2xl font-bold tracking-tight text-gray-900">
-            {sprint.title}
-          </h2>
-        </motion.div>
-      </div>
+    {/* Animated Sprint Title */}
+    <motion.div
+      initial={{ x: -80, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ duration: 0.7, ease: "easeOut" }}
+      className="flex items-center gap-3 shrink-0"
+    >
+      <div className="h-7 w-1 bg-[#ff5e14] rounded-full shrink-0" />
+
+      <h2 className="text-lg sm:text-2xl font-bold tracking-tight text-gray-900 whitespace-nowrap">
+        {sprint.title}
+      </h2>
+    </motion.div>
+
+    {/* Static Actions */}
+    <div className="ml-auto flex items-center gap-1.5 mr-4 -translate-y-1">
+      {/* Share */}
+      <button
+        type="button"
+        onClick={handleCopyLink}
+        className=" hover:bg-gray-200 text-gray-800 p-1 rounded-full transition duration-200 shrink-0"
+        aria-label="Share Sprint"
+        title="Share Sprint"
+      >
+        {copied ? (
+          <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+        ) : (
+          <Share2 className="w-3.5 h-3.5" />
+        )}
+      </button>
+
+      {/* Last Cohort */}
+      <button
+        type="button"
+        onClick={handleLastCohortClick}
+        className="bg-emerald-500 hover:bg-emerald-600 text-white text-[9px] font-semibold px-2 py-1 rounded-l-xl transition duration-200 shadow-sm shrink-0 whitespace-nowrap"
+        aria-label="View last cohort"
+      >
+        Last Cohort
+      </button>
+    </div>
+
+  </div>
+</div>
 
       {/* 1. Top Banner Section (Video Support with Cover Image Fallback) */}
       {(() => {
@@ -635,19 +676,6 @@ export default function SprintDetailClient() {
                   </span>
                 )}
 
-                <button
-                  type="button"
-                  onClick={handleCopyLink}
-                  className="bg-black/70 hover:bg-black/90 text-white p-1.5 sm:p-2 rounded-full backdrop-blur-md transition duration-200 border border-white/20 shadow-lg"
-                  aria-label="Share Sprint"
-                  title="Share Sprint"
-                >
-                  {copied ? (
-                    <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
-                  ) : (
-                    <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  )}
-                </button>
               </div>
             </div>
 
@@ -1302,18 +1330,20 @@ export default function SprintDetailClient() {
 
           <div className="space-y-4">
             {lastCohortPoster && (
-              <section className=" relative left-1/2 -translate-x-1/2 md:w-full md:left-0 md:translate-x-0">
+              <section 
+              id="last-cohort-poster"
+              className=" relative left-1/2 -translate-x-1/2 md:w-full md:left-0 md:translate-x-0">
                 <div className="relative w-full md:w-[85%] lg:w-[75%] xl:w-[70%] mx-auto aspect-video overflow-hidden bg-black">
                   <a
-  href="https://www.ftbhustle.com/toolkit/cohorts/3608f9b4-4f7a-46dc-abb3-93dd29873cc3"
-  className="block cursor-pointer"
->
-  <img
-    src={lastCohortPoster}
-    alt="Last cohort"
-    className="w-full h-full object-cover"
-  />
-</a>
+                    href="https://www.ftbhustle.com/toolkit/cohorts/3608f9b4-4f7a-46dc-abb3-93dd29873cc3"
+                    className="block cursor-pointer"
+                  >
+                    <img
+                      src={lastCohortPoster}
+                      alt="Last cohort"
+                      className="w-full h-full object-cover"
+                    />
+                  </a>
                 </div>
               </section>
             )}

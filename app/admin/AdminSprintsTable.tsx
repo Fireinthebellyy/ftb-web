@@ -40,6 +40,7 @@ import SprintUpgradePlansManager from "./SprintUpgradePlansManager";
 import SprintFaqManager from "./SprintFaqManager";
 import ManageUserSprintPackagesModal from "./ManageUserSprintPackagesModal";
 import { getVideoEmbedInfo } from "@/lib/video-embed";
+import SprintBunnyPlayer from "@/components/toolkit/SprintBunnyPlayer";
 
 interface Mentor {
   id?: string;
@@ -169,10 +170,14 @@ interface Order {
 }
 
 export default function AdminSprintsTable() {
-  const [view, setView] = useState<"sprints" | "orders" | "registrations">("sprints");
+  const [view, setView] = useState<"sprints" | "orders" | "registrations">(
+    "sprints"
+  );
   const [sprintsList, setSprintsList] = useState<Sprint[]>([]);
   const [ordersList, setOrdersList] = useState<Order[]>([]);
-  const [orderStatusFilter, setOrderStatusFilter] = useState<"all" | "paid" | "created" | "failed">("all");
+  const [orderStatusFilter, setOrderStatusFilter] = useState<
+    "all" | "paid" | "created" | "failed"
+  >("all");
   const [orderSearchTerm, setOrderSearchTerm] = useState("");
   const [registrationSearchTerm, setRegistrationSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -265,10 +270,15 @@ export default function AdminSprintsTable() {
 
       for (const sprint of sprintsList) {
         try {
-          const sessionsResponse = await axios.get(`/api/admin/sprints/${sprint.id}/sessions`);
+          const sessionsResponse = await axios.get(
+            `/api/admin/sprints/${sprint.id}/sessions`
+          );
           sessionsMap[sprint.id] = sessionsResponse.data;
         } catch (err) {
-          console.error(`Failed to load sessions for sprint ${sprint.id}:`, err);
+          console.error(
+            `Failed to load sessions for sprint ${sprint.id}:`,
+            err
+          );
           sessionsMap[sprint.id] = [];
         }
       }
@@ -282,14 +292,18 @@ export default function AdminSprintsTable() {
 
   const handleVerifyOrder = async (orderId: string) => {
     try {
-      const response = await axios.patch(`/api/admin/sprints/orders/${orderId}/verify`);
+      const response = await axios.patch(
+        `/api/admin/sprints/orders/${orderId}/verify`
+      );
       const { isVerified } = response.data;
       toast.success(isVerified ? "Order verified!" : "Order unverified!");
       fetchOrders();
     } catch (err: unknown) {
       console.error(err);
       if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.error || "Failed to update verification status");
+        toast.error(
+          err.response?.data?.error || "Failed to update verification status"
+        );
       } else {
         toast.error("Failed to update verification status");
       }
@@ -340,7 +354,8 @@ export default function AdminSprintsTable() {
         ...data,
         coverImageUrls,
         sessionsHeading: data.sessionsHeading || "Sprint Sessions & Curriculum",
-        testimonialsHeading: data.testimonialsHeading || "What Members Say About Our Ecosystem",
+        testimonialsHeading:
+          data.testimonialsHeading || "What Members Say About Our Ecosystem",
         faqsHeading: data.faqsHeading || "Frequently Asked Questions",
         whoIsThisForHeading: data.whoIsThisForHeading || "Who Is This For?",
       });
@@ -357,16 +372,23 @@ export default function AdminSprintsTable() {
   const handleSaveSprint = async () => {
     if (!editingSprint) return;
 
-    editingSprint.tiers.length>0 && (
-      editingSprint.tiers.map((tier,idx)=>{
+    editingSprint.tiers.length > 0 &&
+      editingSprint.tiers.map((tier, idx) => {
         const currentWhatIncluded = String(tier.whatIncluded);
-        editingSprint.tiers[idx].whatIncluded = currentWhatIncluded.split(",").map(s=>s.trim()).filter(Boolean);
-      })
-    )
+        editingSprint.tiers[idx].whatIncluded = currentWhatIncluded
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+      });
     setIsLoading(true);
     try {
       // Exclude mentors, sessions, faqs to ensure single source of truth and no accidental wipes
-      const { mentors: _mentors, sessions: _sessions, faqs: _faqs, ...payload } = editingSprint as any;
+      const {
+        mentors: _mentors,
+        sessions: _sessions,
+        faqs: _faqs,
+        ...payload
+      } = editingSprint as any;
       await axios.put(`/api/admin/sprints/${editingSprint.id}`, payload);
       toast.success("Sprint saved successfully!");
       setEditDialogOpen(false);
@@ -380,7 +402,11 @@ export default function AdminSprintsTable() {
   };
 
   const handleDeleteSprint = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this sprint? This cannot be undone.")) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this sprint? This cannot be undone."
+      )
+    ) {
       return;
     }
 
@@ -394,7 +420,10 @@ export default function AdminSprintsTable() {
     }
   };
 
-  const handleImageUpload = async (file: File, callback: (url: string) => void) => {
+  const handleImageUpload = async (
+    file: File,
+    callback: (url: string) => void
+  ) => {
     setIsUploading(true);
     try {
       const { publicUrl } = await uploadFileViaSignedUrl({
@@ -443,7 +472,7 @@ export default function AdminSprintsTable() {
       order.sprintTitle || "",
       order.upgradePlanTitle
         ? `Upgrade: ${order.upgradePlanTitle}`
-        : (order.tierName || "Base price"),
+        : order.tierName || "Base price",
       (order.amountPaid / 100).toFixed(2),
       order.couponCode || "",
       order.razorpayOrderId,
@@ -459,7 +488,14 @@ export default function AdminSprintsTable() {
 
     const csvContent =
       "data:text/csv;charset=utf-8," +
-      [headers.join(","), ...rows.map((e) => e.map((val) => `"${sanitizeCSV(String(val)).replace(/"/g, '""')}"`).join(","))].join("\n");
+      [
+        headers.join(","),
+        ...rows.map((e) =>
+          e
+            .map((val) => `"${sanitizeCSV(String(val)).replace(/"/g, '""')}"`)
+            .join(",")
+        ),
+      ].join("\n");
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -472,7 +508,9 @@ export default function AdminSprintsTable() {
 
   // Export to CSV for Registration Details
   const exportRegistrationsCSV = () => {
-    const registrations = ordersList.filter((order) => order.registrationName || order.buyerName);
+    const registrations = ordersList.filter(
+      (order) => order.registrationName || order.buyerName
+    );
     if (registrations.length === 0) {
       toast.error("No registration details to export");
       return;
@@ -496,27 +534,31 @@ export default function AdminSprintsTable() {
       const sessionTitles =
         order.selectedSessionIds && order.selectedSessionIds.length > 0
           ? order.selectedSessionIds
-            .map((sessionId) => {
-              const session = order.sprintId
-                ? sessionsData[order.sprintId]?.find((s: any) => s.id === sessionId)
-                : null;
-              return session ? session.title : "";
-            })
-            .filter(Boolean)
-            .join(", ")
+              .map((sessionId) => {
+                const session = order.sprintId
+                  ? sessionsData[order.sprintId]?.find(
+                      (s: any) => s.id === sessionId
+                    )
+                  : null;
+                return session ? session.title : "";
+              })
+              .filter(Boolean)
+              .join(", ")
           : "";
 
       const individualSessionTitles =
         order.selectedAddOnIds && order.selectedAddOnIds.length > 0
           ? order.selectedAddOnIds
-            .map((sessionId) => {
-              const session = order.sprintId
-                ? sessionsData[order.sprintId]?.find((s: any) => s.id === sessionId)
-                : null;
-              return session ? session.title : "";
-            })
-            .filter(Boolean)
-            .join(", ")
+              .map((sessionId) => {
+                const session = order.sprintId
+                  ? sessionsData[order.sprintId]?.find(
+                      (s: any) => s.id === sessionId
+                    )
+                  : null;
+                return session ? session.title : "";
+              })
+              .filter(Boolean)
+              .join(", ")
           : "";
 
       const optedPlanLabel = order.upgradePlanTitle
@@ -547,7 +589,14 @@ export default function AdminSprintsTable() {
 
     const csvContent =
       "data:text/csv;charset=utf-8," +
-      [headers.join(","), ...rows.map((e) => e.map((val) => `"${sanitizeCSV(String(val)).replace(/"/g, '""')}"`).join(","))].join("\n");
+      [
+        headers.join(","),
+        ...rows.map((e) =>
+          e
+            .map((val) => `"${sanitizeCSV(String(val)).replace(/"/g, '""')}"`)
+            .join(",")
+        ),
+      ].join("\n");
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -564,52 +613,56 @@ export default function AdminSprintsTable() {
       <div className="flex border-b">
         <button
           onClick={() => setView("sprints")}
-          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${view === "sprints"
-            ? "border-[#ff5e14] text-[#ff5e14]"
-            : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
+          className={`border-b-2 px-4 py-2 text-sm font-medium transition-all ${
+            view === "sprints"
+              ? "border-[#ff5e14] text-[#ff5e14]"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
         >
           Sprints ({sprintsList.length})
         </button>
         <button
           onClick={() => setView("orders")}
-          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${view === "orders"
-            ? "border-[#ff5e14] text-[#ff5e14]"
-            : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
+          className={`border-b-2 px-4 py-2 text-sm font-medium transition-all ${
+            view === "orders"
+              ? "border-[#ff5e14] text-[#ff5e14]"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
         >
           Orders Log ({ordersList.length})
         </button>
         <button
           onClick={() => setView("registrations")}
-          className={`px-4 py-2 font-medium border-b-2 text-sm transition-all ${view === "registrations"
-            ? "border-[#ff5e14] text-[#ff5e14]"
-            : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
+          className={`border-b-2 px-4 py-2 text-sm font-medium transition-all ${
+            view === "registrations"
+              ? "border-[#ff5e14] text-[#ff5e14]"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
         >
-          Registration Details ({ordersList.filter((order) => order.registrationName).length})
+          Registration Details (
+          {ordersList.filter((order) => order.registrationName).length})
         </button>
       </div>
 
       {view === "sprints" ? (
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Sprint Management</h2>
             <Button
               onClick={() => setCreateDialogOpen(true)}
-              className="bg-[#ff5e14] hover:bg-[#e04f0f] text-white"
+              className="bg-[#ff5e14] text-white hover:bg-[#e04f0f]"
             >
-              <Plus className="w-4 h-4 mr-2" /> Create Sprint
+              <Plus className="mr-2 h-4 w-4" /> Create Sprint
             </Button>
           </div>
 
           {isLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-[#ff5e14]" />
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-[#ff5e14]" />
             </div>
           ) : sprintsList.length === 0 ? (
-            <div className="border bg-white rounded-lg p-12 text-center">
-              <p className="text-gray-500 mb-4">No sprints built yet.</p>
+            <div className="rounded-lg border bg-white p-12 text-center">
+              <p className="mb-4 text-gray-500">No sprints built yet.</p>
               <Button
                 onClick={() => setCreateDialogOpen(true)}
                 variant="outline"
@@ -619,35 +672,52 @@ export default function AdminSprintsTable() {
               </Button>
             </div>
           ) : (
-            <div className="border bg-white rounded-lg shadow-sm overflow-hidden">
-              <div className="overflow-x-auto w-full">
-                <table className="w-full text-left border-collapse text-sm min-w-[600px]">
+            <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
+              <div className="w-full overflow-x-auto">
+                <table className="w-full min-w-[600px] border-collapse text-left text-sm">
                   <thead>
-                    <tr className="bg-gray-50 border-b">
-                      <th className="p-4 font-semibold text-gray-700">Sprint Title</th>
-                      <th className="p-4 font-semibold text-gray-700">Slug (URL)</th>
-                      <th className="p-4 font-semibold text-gray-700">Base Price</th>
-                      <th className="p-4 font-semibold text-gray-700">Status</th>
-                      <th className="p-4 font-semibold text-gray-700 text-right">Actions</th>
+                    <tr className="border-b bg-gray-50">
+                      <th className="p-4 font-semibold text-gray-700">
+                        Sprint Title
+                      </th>
+                      <th className="p-4 font-semibold text-gray-700">
+                        Slug (URL)
+                      </th>
+                      <th className="p-4 font-semibold text-gray-700">
+                        Base Price
+                      </th>
+                      <th className="p-4 font-semibold text-gray-700">
+                        Status
+                      </th>
+                      <th className="p-4 text-right font-semibold text-gray-700">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
                     {sprintsList.map((s) => (
                       <tr key={s.id} className="hover:bg-gray-50">
-                        <td className="p-4 font-medium text-gray-900">{s.title}</td>
-                        <td className="p-4 text-gray-500">/toolkit/sprints/{s.slug}</td>
-                        <td className="p-4 font-semibold text-gray-900">₹{s.basePrice}</td>
+                        <td className="p-4 font-medium text-gray-900">
+                          {s.title}
+                        </td>
+                        <td className="p-4 text-gray-500">
+                          /toolkit/sprints/{s.slug}
+                        </td>
+                        <td className="p-4 font-semibold text-gray-900">
+                          ₹{s.basePrice}
+                        </td>
                         <td className="p-4">
                           <span
-                            className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${s.isActive
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
-                              }`}
+                            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
+                              s.isActive
+                                ? "bg-green-100 text-green-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
                           >
                             {s.isActive ? "Active" : "Draft"}
                           </span>
                         </td>
-                        <td className="p-4 text-right flex justify-end gap-1.5 flex-wrap">
+                        <td className="flex flex-wrap justify-end gap-1.5 p-4 text-right">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -655,9 +725,9 @@ export default function AdminSprintsTable() {
                               setManagingSprint(s);
                               setSessionManagerOpen(true);
                             }}
-                            className="text-gray-600 hover:text-gray-900 text-xs"
+                            className="text-xs text-gray-600 hover:text-gray-900"
                           >
-                            <FolderCog className="w-4 h-4 mr-1" /> Sessions
+                            <FolderCog className="mr-1 h-4 w-4" /> Sessions
                           </Button>
                           <Button
                             variant="ghost"
@@ -666,9 +736,9 @@ export default function AdminSprintsTable() {
                               setManagingSprint(s);
                               setUpgradePlansOpen(true);
                             }}
-                            className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 text-xs"
+                            className="text-xs text-orange-600 hover:bg-orange-50 hover:text-orange-700"
                           >
-                            <Layers className="w-4 h-4 mr-1" /> Upgrade Plans
+                            <Layers className="mr-1 h-4 w-4" /> Upgrade Plans
                           </Button>
                           <Button
                             variant="ghost"
@@ -677,9 +747,9 @@ export default function AdminSprintsTable() {
                               setManagingSprint(s);
                               setMentorManagerOpen(true);
                             }}
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 text-xs"
+                            className="text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-700"
                           >
-                            <Users className="w-4 h-4 mr-1" /> Mentors
+                            <Users className="mr-1 h-4 w-4" /> Mentors
                           </Button>
                           <Button
                             variant="ghost"
@@ -688,25 +758,25 @@ export default function AdminSprintsTable() {
                               setManagingSprint(s);
                               setFaqManagerOpen(true);
                             }}
-                            className="text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 text-xs"
+                            className="text-xs text-cyan-600 hover:bg-cyan-50 hover:text-cyan-700"
                           >
-                            <HelpCircle className="w-4 h-4 mr-1" /> FAQs
+                            <HelpCircle className="mr-1 h-4 w-4" /> FAQs
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => startEditSprint(s.id)}
-                            className="text-gray-600 hover:text-gray-900 text-xs"
+                            className="text-xs text-gray-600 hover:text-gray-900"
                           >
-                            <Edit className="w-4 h-4 mr-1" /> Edit
+                            <Edit className="mr-1 h-4 w-4" /> Edit
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteSprint(s.id)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
+                            className="text-xs text-red-600 hover:bg-red-50 hover:text-red-700"
                           >
-                            <Trash2 className="w-4 h-4 mr-1" /> Delete
+                            <Trash2 className="mr-1 h-4 w-4" /> Delete
                           </Button>
                         </td>
                       </tr>
@@ -719,66 +789,78 @@ export default function AdminSprintsTable() {
         </div>
       ) : view === "orders" ? (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div>
               <h2 className="text-xl font-semibold">Orders Log</h2>
-              <p className="text-xs text-gray-500 mt-0.5">
-                All purchase attempts, successful payments, and transaction logs.
+              <p className="mt-0.5 text-xs text-gray-500">
+                All purchase attempts, successful payments, and transaction
+                logs.
               </p>
             </div>
             <div className="flex items-center gap-2">
               <Button
                 onClick={exportOrdersCSV}
                 variant="outline"
-                className="flex gap-1.5 items-center border-gray-300 hover:bg-gray-50 text-gray-700 text-xs"
+                className="flex items-center gap-1.5 border-gray-300 text-xs text-gray-700 hover:bg-gray-50"
               >
-                <Download className="w-4 h-4" /> Export CSV
+                <Download className="h-4 w-4" /> Export CSV
               </Button>
             </div>
           </div>
 
           {/* Orders Filter & Search Bar */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-gray-50/70 p-3 rounded-xl border border-gray-200">
-            <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex flex-col items-stretch justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50/70 p-3 sm:flex-row sm:items-center">
+            <div className="flex flex-wrap items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setOrderStatusFilter("all")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${orderStatusFilter === "all"
-                  ? "bg-gray-900 text-white shadow-xs"
-                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                  }`}
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                  orderStatusFilter === "all"
+                    ? "bg-gray-900 text-white shadow-xs"
+                    : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-100"
+                }`}
               >
                 All ({ordersList.length})
               </button>
               <button
                 type="button"
                 onClick={() => setOrderStatusFilter("paid")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${orderStatusFilter === "paid"
-                  ? "bg-green-600 text-white shadow-xs"
-                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                  }`}
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                  orderStatusFilter === "paid"
+                    ? "bg-green-600 text-white shadow-xs"
+                    : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-100"
+                }`}
               >
                 Paid ({ordersList.filter((o) => o.status === "paid").length})
               </button>
               <button
                 type="button"
                 onClick={() => setOrderStatusFilter("created")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${orderStatusFilter === "created"
-                  ? "bg-amber-600 text-white shadow-xs"
-                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                  }`}
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                  orderStatusFilter === "created"
+                    ? "bg-amber-600 text-white shadow-xs"
+                    : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-100"
+                }`}
               >
-                Pending / Created ({ordersList.filter((o) => o.status === "created" || o.status === "pending").length})
+                Pending / Created (
+                {
+                  ordersList.filter(
+                    (o) => o.status === "created" || o.status === "pending"
+                  ).length
+                }
+                )
               </button>
               <button
                 type="button"
                 onClick={() => setOrderStatusFilter("failed")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${orderStatusFilter === "failed"
-                  ? "bg-red-600 text-white shadow-xs"
-                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                  }`}
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                  orderStatusFilter === "failed"
+                    ? "bg-red-600 text-white shadow-xs"
+                    : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-100"
+                }`}
               >
-                Failed ({ordersList.filter((o) => o.status === "failed").length})
+                Failed ({ordersList.filter((o) => o.status === "failed").length}
+                )
               </button>
             </div>
 
@@ -787,25 +869,48 @@ export default function AdminSprintsTable() {
                 placeholder="Search buyer, email, order ID..."
                 value={orderSearchTerm}
                 onChange={(e) => setOrderSearchTerm(e.target.value)}
-                className="bg-white text-xs h-8"
+                className="h-8 bg-white text-xs"
               />
             </div>
           </div>
 
           {(() => {
             const filteredOrders = ordersList.filter((order) => {
-              if (orderStatusFilter === "paid" && order.status !== "paid") return false;
-              if (orderStatusFilter === "created" && order.status !== "created" && order.status !== "pending") return false;
-              if (orderStatusFilter === "failed" && order.status !== "failed") return false;
+              if (orderStatusFilter === "paid" && order.status !== "paid")
+                return false;
+              if (
+                orderStatusFilter === "created" &&
+                order.status !== "created" &&
+                order.status !== "pending"
+              )
+                return false;
+              if (orderStatusFilter === "failed" && order.status !== "failed")
+                return false;
 
               if (orderSearchTerm.trim()) {
                 const term = orderSearchTerm.toLowerCase();
-                const matchesBuyer = order.buyerName?.toLowerCase().includes(term);
-                const matchesEmail = order.buyerEmail?.toLowerCase().includes(term);
-                const matchesOrder = order.razorpayOrderId?.toLowerCase().includes(term);
-                const matchesPay = order.razorpayPaymentId?.toLowerCase().includes(term);
-                const matchesSprint = order.sprintTitle?.toLowerCase().includes(term);
-                if (!matchesBuyer && !matchesEmail && !matchesOrder && !matchesPay && !matchesSprint) {
+                const matchesBuyer = order.buyerName
+                  ?.toLowerCase()
+                  .includes(term);
+                const matchesEmail = order.buyerEmail
+                  ?.toLowerCase()
+                  .includes(term);
+                const matchesOrder = order.razorpayOrderId
+                  ?.toLowerCase()
+                  .includes(term);
+                const matchesPay = order.razorpayPaymentId
+                  ?.toLowerCase()
+                  .includes(term);
+                const matchesSprint = order.sprintTitle
+                  ?.toLowerCase()
+                  .includes(term);
+                if (
+                  !matchesBuyer &&
+                  !matchesEmail &&
+                  !matchesOrder &&
+                  !matchesPay &&
+                  !matchesSprint
+                ) {
                   return false;
                 }
               }
@@ -814,59 +919,91 @@ export default function AdminSprintsTable() {
 
             if (filteredOrders.length === 0) {
               return (
-                <div className="border bg-white rounded-lg p-12 text-center">
-                  <p className="text-gray-500">No orders found matching the selected filter.</p>
+                <div className="rounded-lg border bg-white p-12 text-center">
+                  <p className="text-gray-500">
+                    No orders found matching the selected filter.
+                  </p>
                 </div>
               );
             }
 
             return (
-              <div className="border bg-white rounded-lg shadow-sm overflow-hidden">
-                <div className="overflow-x-auto w-full">
-                  <table className="w-full text-left border-collapse text-xs md:text-sm min-w-[800px]">
+              <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
+                <div className="w-full overflow-x-auto">
+                  <table className="w-full min-w-[800px] border-collapse text-left text-xs md:text-sm">
                     <thead>
-                      <tr className="bg-gray-50 border-b">
-                        <th className="p-4 font-semibold text-gray-700">Buyer</th>
-                        <th className="p-4 font-semibold text-gray-700">Buddy (Referral)</th>
-                        <th className="p-4 font-semibold text-gray-700">Sprint &amp; Tier / Upgrade Plan</th>
-                        <th className="p-4 font-semibold text-gray-700">Paid</th>
-                        <th className="p-4 font-semibold text-gray-700">Coupon</th>
-                        <th className="p-4 font-semibold text-gray-700">Razorpay Info</th>
-                        <th className="p-4 font-semibold text-gray-700">Status</th>
-                        <th className="p-4 font-semibold text-gray-700">Registration</th>
-                        <th className="p-4 font-semibold text-gray-700">Verified</th>
-                        <th className="p-4 font-semibold text-gray-700">Date</th>
+                      <tr className="border-b bg-gray-50">
+                        <th className="p-4 font-semibold text-gray-700">
+                          Buyer
+                        </th>
+                        <th className="p-4 font-semibold text-gray-700">
+                          Buddy (Referral)
+                        </th>
+                        <th className="p-4 font-semibold text-gray-700">
+                          Sprint &amp; Tier / Upgrade Plan
+                        </th>
+                        <th className="p-4 font-semibold text-gray-700">
+                          Paid
+                        </th>
+                        <th className="p-4 font-semibold text-gray-700">
+                          Coupon
+                        </th>
+                        <th className="p-4 font-semibold text-gray-700">
+                          Razorpay Info
+                        </th>
+                        <th className="p-4 font-semibold text-gray-700">
+                          Status
+                        </th>
+                        <th className="p-4 font-semibold text-gray-700">
+                          Registration
+                        </th>
+                        <th className="p-4 font-semibold text-gray-700">
+                          Verified
+                        </th>
+                        <th className="p-4 font-semibold text-gray-700">
+                          Date
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
                       {filteredOrders.map((order) => (
                         <tr key={order.id} className="hover:bg-gray-50">
                           <td className="p-4">
-                            <div className="font-semibold text-gray-900">{order.buyerName}</div>
-                            <div className="text-xs text-gray-500">{order.buyerEmail}</div>
+                            <div className="font-semibold text-gray-900">
+                              {order.buyerName}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {order.buyerEmail}
+                            </div>
                             {order.buyerPhone && (
-                              <div className="text-xs text-gray-400">{order.buyerPhone}</div>
+                              <div className="text-xs text-gray-400">
+                                {order.buyerPhone}
+                              </div>
                             )}
                           </td>
                           <td className="p-4">
                             {order.buddyEmail ? (
                               <div>
-                                <span className="inline-flex items-center gap-1 mb-1 px-2 py-0.5 rounded-full border border-orange-100 bg-orange-50 text-[10px] font-bold text-[#ff5e14]">
-                                  <Gift className="w-3 h-3" /> Buddy Added
+                                <span className="mb-1 inline-flex items-center gap-1 rounded-full border border-orange-100 bg-orange-50 px-2 py-0.5 text-[10px] font-bold text-[#ff5e14]">
+                                  <Gift className="h-3 w-3" /> Buddy Added
                                 </span>
-                                <div className="select-all text-xs font-medium text-gray-600">
+                                <div className="text-xs font-medium text-gray-600 select-all">
                                   {order.buddyEmail}
                                 </div>
                               </div>
                             ) : (
-                              <span className="text-xs font-normal italic text-gray-400">-</span>
+                              <span className="text-xs font-normal text-gray-400 italic">
+                                -
+                              </span>
                             )}
                           </td>
                           <td className="p-4">
-                            <div className="font-medium text-gray-950">{order.sprintTitle || "Unknown"}</div>
+                            <div className="font-medium text-gray-950">
+                              {order.sprintTitle || "Unknown"}
+                            </div>
                             {order.upgradePlanTitle ? (
                               <div className="mt-1">
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-amber-200 bg-amber-50 text-[11px] font-bold text-amber-800">
+                                <span className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800">
                                   Upgrade: {order.upgradePlanTitle}
                                 </span>
                                 {order.upgradePlanSectionLabel && (
@@ -876,7 +1013,9 @@ export default function AdminSprintsTable() {
                                 )}
                               </div>
                             ) : (
-                              <div className="text-xs text-[#ff5e14]">{order.tierName || "Base price"}</div>
+                              <div className="text-xs text-[#ff5e14]">
+                                {order.tierName || "Base price"}
+                              </div>
                             )}
                           </td>
                           <td className="p-4 font-semibold text-gray-900">
@@ -885,7 +1024,7 @@ export default function AdminSprintsTable() {
                           <td className="p-4 text-gray-600">
                             {order.couponId ? (
                               <div>
-                                <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-medium">
+                                <span className="inline-block rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
                                   Yes
                                 </span>
                                 {order.couponCode && (
@@ -895,7 +1034,7 @@ export default function AdminSprintsTable() {
                                 )}
                               </div>
                             ) : (
-                              <span className="inline-block bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded">
+                              <span className="inline-block rounded bg-gray-100 px-2 py-1 text-xs text-gray-500">
                                 No
                               </span>
                             )}
@@ -903,19 +1042,20 @@ export default function AdminSprintsTable() {
                           <td className="p-4 text-xs text-gray-500">
                             <div>Order: {order.razorpayOrderId}</div>
                             {order.razorpayPaymentId && (
-                              <div className="text-emerald-700 font-medium">
+                              <div className="font-medium text-emerald-700">
                                 Pay ID: {order.razorpayPaymentId}
                               </div>
                             )}
                           </td>
                           <td className="p-4">
                             <span
-                              className={`inline-flex px-2.5 py-0.5 text-xs font-bold rounded-full ${order.status === "paid"
-                                ? "bg-green-100 text-green-800 border border-green-200"
-                                : order.status === "failed"
-                                  ? "bg-red-100 text-red-800 border border-red-200"
-                                  : "bg-amber-100 text-amber-800 border border-amber-200"
-                                }`}
+                              className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                                order.status === "paid"
+                                  ? "border border-green-200 bg-green-100 text-green-800"
+                                  : order.status === "failed"
+                                    ? "border border-red-200 bg-red-100 text-red-800"
+                                    : "border border-amber-200 bg-amber-100 text-amber-800"
+                              }`}
                             >
                               {order.status === "paid"
                                 ? "Paid"
@@ -927,14 +1067,20 @@ export default function AdminSprintsTable() {
                           <td className="p-4 text-xs">
                             {order.registrationName ? (
                               <div className="space-y-0.5">
-                                <span className="inline-flex px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                                <span className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
                                   Registered
                                 </span>
-                                <div className="text-gray-900 font-medium truncate max-w-[140px]">{order.registrationName}</div>
-                                <div className="text-gray-500 truncate max-w-[140px]">{order.registrationCollege}</div>
+                                <div className="max-w-[140px] truncate font-medium text-gray-900">
+                                  {order.registrationName}
+                                </div>
+                                <div className="max-w-[140px] truncate text-gray-500">
+                                  {order.registrationCollege}
+                                </div>
                               </div>
                             ) : (
-                              <span className="text-gray-400 italic text-[11px]">Not Submitted</span>
+                              <span className="text-[11px] text-gray-400 italic">
+                                Not Submitted
+                              </span>
                             )}
                           </td>
                           <td className="p-4">
@@ -943,15 +1089,16 @@ export default function AdminSprintsTable() {
                               variant={order.isVerified ? "outline" : "default"}
                               size="sm"
                               disabled={order.status !== "paid"}
-                              className={`text-xs ${order.isVerified
-                                ? "border-red-200 text-red-600 hover:bg-red-50"
-                                : "bg-green-600 hover:bg-green-700 text-white"
-                                }`}
+                              className={`text-xs ${
+                                order.isVerified
+                                  ? "border-red-200 text-red-600 hover:bg-red-50"
+                                  : "bg-green-600 text-white hover:bg-green-700"
+                              }`}
                             >
                               {order.isVerified ? "Unverify" : "Verify"}
                             </Button>
                           </td>
-                          <td className="p-4 text-xs text-gray-500 whitespace-nowrap">
+                          <td className="p-4 text-xs whitespace-nowrap text-gray-500">
                             {new Date(order.createdAt).toLocaleDateString()}{" "}
                             {new Date(order.createdAt).toLocaleTimeString([], {
                               hour: "2-digit",
@@ -969,46 +1116,52 @@ export default function AdminSprintsTable() {
         </div>
       ) : view === "registrations" ? (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div>
               <h2 className="text-xl font-semibold">Registration Details</h2>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Detailed demographics and responses from students who completed their registration form.
+              <p className="mt-0.5 text-xs text-gray-500">
+                Detailed demographics and responses from students who completed
+                their registration form.
               </p>
             </div>
             <div className="flex items-center gap-2">
               <Button
                 onClick={exportRegistrationsCSV}
                 variant="outline"
-                className="flex gap-1.5 items-center border-gray-300 hover:bg-gray-50 text-gray-700 text-xs"
+                className="flex items-center gap-1.5 border-gray-300 text-xs text-gray-700 hover:bg-gray-50"
               >
-                <Download className="w-4 h-4" /> Export CSV
+                <Download className="h-4 w-4" /> Export CSV
               </Button>
             </div>
           </div>
 
           {/* Registration Search Bar */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-gray-50/70 p-3 rounded-xl border border-gray-200">
+          <div className="flex flex-col items-stretch justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50/70 p-3 sm:flex-row sm:items-center">
             <div className="text-xs font-semibold text-gray-700">
-              Completed Registrations ({ordersList.filter((o) => o.registrationName).length})
+              Completed Registrations (
+              {ordersList.filter((o) => o.registrationName).length})
             </div>
             <div className="w-full sm:w-80">
               <Input
                 placeholder="Search student, college, email, course..."
                 value={registrationSearchTerm}
                 onChange={(e) => setRegistrationSearchTerm(e.target.value)}
-                className="bg-white text-xs h-8"
+                className="h-8 bg-white text-xs"
               />
             </div>
           </div>
 
           {(() => {
-            const allRegistrations = ordersList.filter((order) => order.registrationName);
+            const allRegistrations = ordersList.filter(
+              (order) => order.registrationName
+            );
 
             if (allRegistrations.length === 0) {
               return (
-                <div className="border bg-white rounded-lg p-12 text-center">
-                  <p className="text-gray-500">No registration details available yet.</p>
+                <div className="rounded-lg border bg-white p-12 text-center">
+                  <p className="text-gray-500">
+                    No registration details available yet.
+                  </p>
                 </div>
               );
             }
@@ -1016,41 +1169,86 @@ export default function AdminSprintsTable() {
             const filteredRegistrations = allRegistrations.filter((order) => {
               if (!registrationSearchTerm.trim()) return true;
               const term = registrationSearchTerm.toLowerCase();
-              const matchesName = (order.registrationName || order.buyerName)?.toLowerCase().includes(term);
-              const matchesEmail = order.buyerEmail?.toLowerCase().includes(term);
-              const matchesCollege = order.registrationCollege?.toLowerCase().includes(term);
-              const matchesCourse = order.registrationCourse?.toLowerCase().includes(term);
-              const matchesSprint = order.sprintTitle?.toLowerCase().includes(term);
-              const matchesPlan = order.upgradePlanTitle?.toLowerCase().includes(term) || order.tierName?.toLowerCase().includes(term);
-              return matchesName || matchesEmail || matchesCollege || matchesCourse || matchesSprint || matchesPlan;
+              const matchesName = (order.registrationName || order.buyerName)
+                ?.toLowerCase()
+                .includes(term);
+              const matchesEmail = order.buyerEmail
+                ?.toLowerCase()
+                .includes(term);
+              const matchesCollege = order.registrationCollege
+                ?.toLowerCase()
+                .includes(term);
+              const matchesCourse = order.registrationCourse
+                ?.toLowerCase()
+                .includes(term);
+              const matchesSprint = order.sprintTitle
+                ?.toLowerCase()
+                .includes(term);
+              const matchesPlan =
+                order.upgradePlanTitle?.toLowerCase().includes(term) ||
+                order.tierName?.toLowerCase().includes(term);
+              return (
+                matchesName ||
+                matchesEmail ||
+                matchesCollege ||
+                matchesCourse ||
+                matchesSprint ||
+                matchesPlan
+              );
             });
 
             if (filteredRegistrations.length === 0) {
               return (
-                <div className="border bg-white rounded-lg p-12 text-center">
-                  <p className="text-gray-500">No registered students found matching your search.</p>
+                <div className="rounded-lg border bg-white p-12 text-center">
+                  <p className="text-gray-500">
+                    No registered students found matching your search.
+                  </p>
                 </div>
               );
             }
 
             return (
-              <div className="border bg-white rounded-lg shadow-sm overflow-hidden">
-                <div className="overflow-x-auto w-full">
-                  <table className="w-full text-left border-collapse text-xs md:text-sm min-w-[1000px]">
+              <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
+                <div className="w-full overflow-x-auto">
+                  <table className="w-full min-w-[1000px] border-collapse text-left text-xs md:text-sm">
                     <thead>
-                      <tr className="bg-gray-50 border-b">
-                        <th className="p-4 font-semibold text-gray-700">Name</th>
-                        <th className="p-4 font-semibold text-gray-700">College</th>
-                        <th className="p-4 font-semibold text-gray-700">Course</th>
-                        <th className="p-4 font-semibold text-gray-700">Year</th>
-                        <th className="p-4 font-semibold text-gray-700">Expectations</th>
-                        <th className="p-4 font-semibold text-gray-700">Opted Plan / Upgrade</th>
-                        <th className="p-4 font-semibold text-gray-700">Selected Sessions</th>
-                        <th className="p-4 font-semibold text-gray-700">Individual Sessions</th>
-                        <th className="p-4 font-semibold text-gray-700">Sprint</th>
-                        <th className="p-4 font-semibold text-gray-700">Email</th>
-                        <th className="p-4 font-semibold text-gray-700">Date</th>
-                        <th className="p-4 font-semibold text-gray-700">Manage Packages</th>
+                      <tr className="border-b bg-gray-50">
+                        <th className="p-4 font-semibold text-gray-700">
+                          Name
+                        </th>
+                        <th className="p-4 font-semibold text-gray-700">
+                          College
+                        </th>
+                        <th className="p-4 font-semibold text-gray-700">
+                          Course
+                        </th>
+                        <th className="p-4 font-semibold text-gray-700">
+                          Year
+                        </th>
+                        <th className="p-4 font-semibold text-gray-700">
+                          Expectations
+                        </th>
+                        <th className="p-4 font-semibold text-gray-700">
+                          Opted Plan / Upgrade
+                        </th>
+                        <th className="p-4 font-semibold text-gray-700">
+                          Selected Sessions
+                        </th>
+                        <th className="p-4 font-semibold text-gray-700">
+                          Individual Sessions
+                        </th>
+                        <th className="p-4 font-semibold text-gray-700">
+                          Sprint
+                        </th>
+                        <th className="p-4 font-semibold text-gray-700">
+                          Email
+                        </th>
+                        <th className="p-4 font-semibold text-gray-700">
+                          Date
+                        </th>
+                        <th className="p-4 font-semibold text-gray-700">
+                          Manage Packages
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -1059,46 +1257,53 @@ export default function AdminSprintsTable() {
                           <td className="p-4 font-medium text-gray-900">
                             {order.registrationName || order.buyerName}
                           </td>
-                          <td className="p-4 text-gray-600">{order.registrationCollege || "-"}</td>
-                          <td className="p-4 text-gray-600">{order.registrationCourse || "-"}</td>
-                          <td className="p-4 text-gray-600">{order.registrationYear || "-"}</td>
+                          <td className="p-4 text-gray-600">
+                            {order.registrationCollege || "-"}
+                          </td>
+                          <td className="p-4 text-gray-600">
+                            {order.registrationCourse || "-"}
+                          </td>
+                          <td className="p-4 text-gray-600">
+                            {order.registrationYear || "-"}
+                          </td>
                           <td className="p-4 text-gray-600">
                             {order.registrationExpectations || "-"}
                           </td>
                           <td className="p-4 text-gray-900">
                             {order.upgradePlanTitle ? (
                               <div>
-                                <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 text-xs font-bold rounded">
+                                <span className="inline-flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-800">
                                   Upgrade: {order.upgradePlanTitle}
                                 </span>
-                                <div className="text-[11px] font-semibold text-emerald-700 mt-0.5">
+                                <div className="mt-0.5 text-[11px] font-semibold text-emerald-700">
                                   Paid: ₹{(order.amountPaid / 100).toFixed(2)}
                                 </div>
                               </div>
                             ) : (
                               <div>
-                                <span className="inline-block bg-orange-50 text-[#ff5e14] border border-orange-200 text-xs px-2 py-0.5 rounded font-semibold">
+                                <span className="inline-block rounded border border-orange-200 bg-orange-50 px-2 py-0.5 text-xs font-semibold text-[#ff5e14]">
                                   {order.tierName || "Base Plan"}
                                 </span>
-                                <div className="text-[11px] text-gray-500 mt-0.5">
+                                <div className="mt-0.5 text-[11px] text-gray-500">
                                   Paid: ₹{(order.amountPaid / 100).toFixed(2)}
                                 </div>
                               </div>
                             )}
                           </td>
                           <td className="p-4 text-gray-600">
-                            {order.selectedSessionIds && order.selectedSessionIds.length > 0 ? (
+                            {order.selectedSessionIds &&
+                            order.selectedSessionIds.length > 0 ? (
                               <div className="flex flex-wrap gap-1">
                                 {order.selectedSessionIds.map((sessionId) => {
                                   const session = order.sprintId
                                     ? sessionsData[order.sprintId]?.find(
-                                      (s: any) => s.id === sessionId
-                                    )
+                                        (s: any) => s.id === sessionId
+                                      )
                                     : null;
                                   return session ? (
                                     <span
                                       key={sessionId}
-                                      className="inline-block bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded"
+                                      className="inline-block rounded bg-orange-100 px-2 py-1 text-xs text-orange-700"
                                     >
                                       {session.title}
                                     </span>
@@ -1110,18 +1315,19 @@ export default function AdminSprintsTable() {
                             )}
                           </td>
                           <td className="p-4 text-gray-600">
-                            {order.selectedAddOnIds && order.selectedAddOnIds.length > 0 ? (
+                            {order.selectedAddOnIds &&
+                            order.selectedAddOnIds.length > 0 ? (
                               <div className="flex flex-wrap gap-1">
                                 {order.selectedAddOnIds.map((sessionId) => {
                                   const session = order.sprintId
                                     ? sessionsData[order.sprintId]?.find(
-                                      (s: any) => s.id === sessionId
-                                    )
+                                        (s: any) => s.id === sessionId
+                                      )
                                     : null;
                                   return session ? (
                                     <span
                                       key={sessionId}
-                                      className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded"
+                                      className="inline-block rounded bg-green-100 px-2 py-1 text-xs text-green-700"
                                     >
                                       {session.title}
                                     </span>
@@ -1132,11 +1338,17 @@ export default function AdminSprintsTable() {
                               "-"
                             )}
                           </td>
-                          <td className="p-4 text-gray-900">{order.sprintTitle || "Unknown"}</td>
-                          <td className="p-4 text-gray-500 text-xs">{order.buyerEmail}</td>
-                          <td className="p-4 text-xs text-gray-500 whitespace-nowrap">
+                          <td className="p-4 text-gray-900">
+                            {order.sprintTitle || "Unknown"}
+                          </td>
+                          <td className="p-4 text-xs text-gray-500">
+                            {order.buyerEmail}
+                          </td>
+                          <td className="p-4 text-xs whitespace-nowrap text-gray-500">
                             {order.registrationCompletedAt
-                              ? new Date(order.registrationCompletedAt).toLocaleDateString()
+                              ? new Date(
+                                  order.registrationCompletedAt
+                                ).toLocaleDateString()
                               : new Date(order.createdAt).toLocaleDateString()}
                           </td>
                           <td className="p-4 whitespace-nowrap">
@@ -1149,7 +1361,8 @@ export default function AdminSprintsTable() {
                                   open: true,
                                   sprintId: order.sprintId || "",
                                   userId: order.userId || "",
-                                  userName: order.registrationName || order.buyerName,
+                                  userName:
+                                    order.registrationName || order.buyerName,
                                   userEmail: order.buyerEmail,
                                   userTierName: order.tierName || undefined,
                                   isBundleUser: Boolean(
@@ -1159,7 +1372,7 @@ export default function AdminSprintsTable() {
                                   ),
                                 })
                               }
-                              className="text-xs font-semibold border-gray-300 hover:bg-gray-50 text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
                             >
                               Manage Packages
                             </Button>
@@ -1218,10 +1431,17 @@ export default function AdminSprintsTable() {
               />
             </div>
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setCreateDialogOpen(false)}>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setCreateDialogOpen(false)}
+              >
                 Cancel
               </Button>
-              <Button type="submit" className="bg-[#ff5e14] hover:bg-[#e04f0f] text-white">
+              <Button
+                type="submit"
+                className="bg-[#ff5e14] text-white hover:bg-[#e04f0f]"
+              >
                 Create
               </Button>
             </DialogFooter>
@@ -1232,67 +1452,77 @@ export default function AdminSprintsTable() {
       {/* Sprint Editing Dialog */}
       {editingSprint && (
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className="max-w-[95vw] md:max-w-4xl max-h-[90vh] overflow-y-auto p-4 md:p-6">
-            <DialogHeader className="flex flex-row justify-between items-center border-b pb-4 mb-4">
+          <DialogContent className="max-h-[90vh] max-w-[95vw] overflow-y-auto p-4 md:max-w-4xl md:p-6">
+            <DialogHeader className="mb-4 flex flex-row items-center justify-between border-b pb-4">
               <div>
-                <DialogTitle className="text-xl">Configure Program: {editingSprint.title}</DialogTitle>
-                <p className="text-sm text-gray-500">Edit page sections, pricing tiers, and mentors</p>
+                <DialogTitle className="text-xl">
+                  Configure Program: {editingSprint.title}
+                </DialogTitle>
+                <p className="text-sm text-gray-500">
+                  Edit page sections, pricing tiers, and mentors
+                </p>
               </div>
             </DialogHeader>
 
             {/* Modal Tabs */}
-            <div className="flex gap-2 border-b mb-6 overflow-x-auto pb-2">
+            <div className="mb-6 flex gap-2 overflow-x-auto border-b pb-2">
               <button
                 onClick={() => setActiveEditTab("details")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEditTab === "details"
-                  ? "bg-[#ff5e14] text-white"
-                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                  }`}
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                  activeEditTab === "details"
+                    ? "bg-[#ff5e14] text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
               >
                 Page Details &amp; Hero
               </button>
               <button
                 onClick={() => setActiveEditTab("mentors")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEditTab === "mentors"
-                  ? "bg-[#ff5e14] text-white"
-                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                  }`}
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                  activeEditTab === "mentors"
+                    ? "bg-[#ff5e14] text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
               >
                 Mentors ({editingSprint.mentors?.length || 0})
               </button>
               <button
                 onClick={() => setActiveEditTab("features")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEditTab === "features"
-                  ? "bg-[#ff5e14] text-white"
-                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                  }`}
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                  activeEditTab === "features"
+                    ? "bg-[#ff5e14] text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
               >
                 What You Get ({editingSprint.features?.length || 0})
               </button>
               <button
                 onClick={() => setActiveEditTab("pricing")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEditTab === "pricing"
-                  ? "bg-[#ff5e14] text-white"
-                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                  }`}
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                  activeEditTab === "pricing"
+                    ? "bg-[#ff5e14] text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
               >
                 Pricing, Tiers &amp; Add-ons
               </button>
               <button
                 onClick={() => setActiveEditTab("curriculum")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEditTab === "curriculum"
-                  ? "bg-[#ff5e14] text-white"
-                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                  }`}
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                  activeEditTab === "curriculum"
+                    ? "bg-[#ff5e14] text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
               >
                 Curriculum ({editingSprint.sessions?.length || 0})
               </button>
               <button
                 onClick={() => setActiveEditTab("faqs")}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEditTab === "faqs"
-                  ? "bg-[#ff5e14] text-white"
-                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                  }`}
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                  activeEditTab === "faqs"
+                    ? "bg-[#ff5e14] text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
               >
                 FAQs ({editingSprint.faqs?.length || 0})
               </button>
@@ -1300,20 +1530,30 @@ export default function AdminSprintsTable() {
 
             {/* details Tab */}
             {activeEditTab === "details" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-4">
                   <div className="space-y-1.5">
                     <Label>Title</Label>
                     <Input
                       value={editingSprint.title}
-                      onChange={(e) => setEditingSprint({ ...editingSprint, title: e.target.value })}
+                      onChange={(e) =>
+                        setEditingSprint({
+                          ...editingSprint,
+                          title: e.target.value,
+                        })
+                      }
                     />
                   </div>
                   <div className="space-y-1.5">
                     <Label>Slug</Label>
                     <Input
                       value={editingSprint.slug}
-                      onChange={(e) => setEditingSprint({ ...editingSprint, slug: e.target.value })}
+                      onChange={(e) =>
+                        setEditingSprint({
+                          ...editingSprint,
+                          slug: e.target.value,
+                        })
+                      }
                     />
                   </div>
 
@@ -1323,7 +1563,10 @@ export default function AdminSprintsTable() {
                       rows={3}
                       value={editingSprint.innerSubtitle || ""}
                       onChange={(e) =>
-                        setEditingSprint({ ...editingSprint, innerSubtitle: e.target.value })
+                        setEditingSprint({
+                          ...editingSprint,
+                          innerSubtitle: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -1334,7 +1577,10 @@ export default function AdminSprintsTable() {
                       rows={3}
                       value={editingSprint.outerSubtitle || ""}
                       onChange={(e) =>
-                        setEditingSprint({ ...editingSprint, outerSubtitle: e.target.value })
+                        setEditingSprint({
+                          ...editingSprint,
+                          outerSubtitle: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -1343,11 +1589,16 @@ export default function AdminSprintsTable() {
                     <select
                       value={editingSprint.toolkitId || ""}
                       onChange={(e) =>
-                        setEditingSprint({ ...editingSprint, toolkitId: e.target.value || null })
+                        setEditingSprint({
+                          ...editingSprint,
+                          toolkitId: e.target.value || null,
+                        })
                       }
-                      className="w-full px-3 py-2 border rounded-lg text-sm bg-white"
+                      className="w-full rounded-lg border bg-white px-3 py-2 text-sm"
                     >
-                      <option value="">-- None (No toolkit content linked) --</option>
+                      <option value="">
+                        -- None (No toolkit content linked) --
+                      </option>
                       {toolkits.map((t) => (
                         <option key={t.id} value={t.id}>
                           {t.title} ({t.category || "No Category"})
@@ -1360,56 +1611,79 @@ export default function AdminSprintsTable() {
                     <Input
                       value={editingSprint.startDate || ""}
                       onChange={(e) =>
-                        setEditingSprint({ ...editingSprint, startDate: e.target.value })
+                        setEditingSprint({
+                          ...editingSprint,
+                          startDate: e.target.value,
+                        })
                       }
                       placeholder="e.g. Starts 20th Oct • 2 Weeks"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold">Card Highlights / Key Features</Label>
-                    <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
-                      {(editingSprint.highlights || []).map((highlight, idx) => (
-                        <div key={idx} className="flex gap-2 items-center">
-                          <Input
-                            value={highlight}
-                            onChange={(e) => {
-                              const newHighlights = [...(editingSprint.highlights || [])];
-                              newHighlights[idx] = e.target.value;
-                              setEditingSprint({ ...editingSprint, highlights: newHighlights });
-                            }}
-                            placeholder={`Feature #${idx + 1}`}
-                            className="flex-1 text-sm h-8"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newHighlights = (editingSprint.highlights || []).filter(
-                                (_, i) => i !== idx
-                              );
-                              setEditingSprint({ ...editingSprint, highlights: newHighlights });
-                            }}
-                            className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-md transition shrink-0"
-                            title="Remove"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
+                    <Label className="text-xs font-semibold">
+                      Card Highlights / Key Features
+                    </Label>
+                    <div className="max-h-[160px] space-y-1.5 overflow-y-auto pr-1">
+                      {(editingSprint.highlights || []).map(
+                        (highlight, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <Input
+                              value={highlight}
+                              onChange={(e) => {
+                                const newHighlights = [
+                                  ...(editingSprint.highlights || []),
+                                ];
+                                newHighlights[idx] = e.target.value;
+                                setEditingSprint({
+                                  ...editingSprint,
+                                  highlights: newHighlights,
+                                });
+                              }}
+                              placeholder={`Feature #${idx + 1}`}
+                              className="h-8 flex-1 text-sm"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newHighlights = (
+                                  editingSprint.highlights || []
+                                ).filter((_, i) => i !== idx);
+                                setEditingSprint({
+                                  ...editingSprint,
+                                  highlights: newHighlights,
+                                });
+                              }}
+                              className="shrink-0 rounded-md p-1.5 text-rose-500 transition hover:bg-rose-50 hover:text-rose-700"
+                              title="Remove"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )
+                      )}
                     </div>
                     <button
                       type="button"
                       onClick={() => {
-                        const newHighlights = [...(editingSprint.highlights || []), ""];
-                        setEditingSprint({ ...editingSprint, highlights: newHighlights });
+                        const newHighlights = [
+                          ...(editingSprint.highlights || []),
+                          "",
+                        ];
+                        setEditingSprint({
+                          ...editingSprint,
+                          highlights: newHighlights,
+                        });
                       }}
-                      className="text-xs font-bold text-[#ff5e14] hover:underline flex items-center gap-1.5 pt-1"
+                      className="flex items-center gap-1.5 pt-1 text-xs font-bold text-[#ff5e14] hover:underline"
                     >
                       + Add Key Feature
                     </button>
                   </div>
 
                   <div className="space-y-2 border-t pt-3">
-                    <Label className="text-xs font-semibold">Who Is This For? - Section Heading</Label>
+                    <Label className="text-xs font-semibold">
+                      Who Is This For? - Section Heading
+                    </Label>
                     <Input
                       value={editingSprint.whoIsThisForHeading || ""}
                       onChange={(e) =>
@@ -1422,69 +1696,81 @@ export default function AdminSprintsTable() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold">Who Is This For? - Bullet Points</Label>
-                    <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
-                      {(editingSprint.whoIsThisForBullets || []).map((bullet, idx) => (
-                        <div key={idx} className="flex gap-2 items-center">
-                          <Input
-                            value={bullet}
-                            onChange={(e) => {
-                              const newBullets = [...(editingSprint.whoIsThisForBullets || [])];
-                              newBullets[idx] = e.target.value;
-                              setEditingSprint({
-                                ...editingSprint,
-                                whoIsThisForBullets: newBullets,
-                              });
-                            }}
-                            placeholder={`Point #${idx + 1}`}
-                            className="flex-1 text-sm h-8"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newBullets = (
-                                editingSprint.whoIsThisForBullets || []
-                              ).filter((_, i) => i !== idx);
-                              setEditingSprint({
-                                ...editingSprint,
-                                whoIsThisForBullets: newBullets,
-                              });
-                            }}
-                            className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-md transition shrink-0"
-                            title="Remove"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
+                    <Label className="text-xs font-semibold">
+                      Who Is This For? - Bullet Points
+                    </Label>
+                    <div className="max-h-[160px] space-y-1.5 overflow-y-auto pr-1">
+                      {(editingSprint.whoIsThisForBullets || []).map(
+                        (bullet, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <Input
+                              value={bullet}
+                              onChange={(e) => {
+                                const newBullets = [
+                                  ...(editingSprint.whoIsThisForBullets || []),
+                                ];
+                                newBullets[idx] = e.target.value;
+                                setEditingSprint({
+                                  ...editingSprint,
+                                  whoIsThisForBullets: newBullets,
+                                });
+                              }}
+                              placeholder={`Point #${idx + 1}`}
+                              className="h-8 flex-1 text-sm"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newBullets = (
+                                  editingSprint.whoIsThisForBullets || []
+                                ).filter((_, i) => i !== idx);
+                                setEditingSprint({
+                                  ...editingSprint,
+                                  whoIsThisForBullets: newBullets,
+                                });
+                              }}
+                              className="shrink-0 rounded-md p-1.5 text-rose-500 transition hover:bg-rose-50 hover:text-rose-700"
+                              title="Remove"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )
+                      )}
                     </div>
                     <button
                       type="button"
                       onClick={() => {
-                        const newBullets = [...(editingSprint.whoIsThisForBullets || []), ""];
+                        const newBullets = [
+                          ...(editingSprint.whoIsThisForBullets || []),
+                          "",
+                        ];
                         setEditingSprint({
                           ...editingSprint,
                           whoIsThisForBullets: newBullets,
                         });
                       }}
-                      className="text-xs font-bold text-[#ff5e14] hover:underline flex items-center gap-1.5 pt-1"
+                      className="flex items-center gap-1.5 pt-1 text-xs font-bold text-[#ff5e14] hover:underline"
                     >
                       + Add Target Audience Point
                     </button>
                   </div>
                 </div>
 
-                <div className="space-y-4 border-t pt-4 md:border-t-0 md:pt-0 md:border-l md:pl-4">
+                <div className="space-y-4 border-t pt-4 md:border-t-0 md:border-l md:pt-0 md:pl-4">
                   {/* Top Banner Video Preview */}
-                  <div className="border p-3 rounded-xl bg-gray-50/50 space-y-2">
-                    <div className="flex justify-between items-center">
-                      <Label className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
-                        <Video className="w-4 h-4 text-[#ff5e14]" /> Top Banner Video URL (Optional)
+                  <div className="space-y-2 rounded-xl border bg-gray-50/50 p-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700">
+                        <Video className="h-4 w-4 text-[#ff5e14]" /> Top Banner
+                        Video URL (Optional)
                       </Label>
                       {editingSprint.videoUrl && (
                         <button
                           type="button"
-                          onClick={() => setEditingSprint({ ...editingSprint, videoUrl: "" })}
+                          onClick={() =>
+                            setEditingSprint({ ...editingSprint, videoUrl: "" })
+                          }
                           className="text-[10px] text-red-500 hover:underline"
                         >
                           Clear
@@ -1494,9 +1780,26 @@ export default function AdminSprintsTable() {
                     <Input
                       placeholder="YouTube, Instagram Reel, or Bunny CDN stream URL"
                       value={editingSprint.videoUrl || ""}
-                      onChange={(e) =>
-                        setEditingSprint({ ...editingSprint, videoUrl: e.target.value })
-                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        let videoUrl = value.trim();
+
+                        if (value.includes("<iframe")) {
+                          const match = value.match(/src=["']([^"']*)["']/i);
+                          if (match && match[1]) {
+                            videoUrl = match[1].trim();
+                          }
+                        }
+
+                        if (
+                          videoUrl.includes("mediadelivery.net/embed/") &&
+                          videoUrl.includes("?")
+                        ) {
+                          videoUrl = videoUrl.split("?")[0];
+                        }
+
+                        setEditingSprint({ ...editingSprint, videoUrl });
+                      }}
                       className="text-xs"
                     />
                     {(() => {
@@ -1505,28 +1808,38 @@ export default function AdminSprintsTable() {
                       if (!embed) {
                         return (
                           <p className="text-[11px] text-amber-600">
-                            URL entered is not recognized as a supported YouTube, Instagram, or Bunny CDN video.
+                            URL entered is not recognized as a supported
+                            YouTube, Instagram, or Bunny CDN video.
                           </p>
                         );
                       }
                       return (
                         <div className="pt-1">
-                          <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 inline-flex items-center gap-1 mb-1">
-                            <Play className="w-3 h-3" /> Detected: {embed.provider}
+                          <span className="mb-1 inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+                            <Play className="h-3 w-3" /> Detected:{" "}
+                            {embed.provider}
                           </span>
-                          <div className="relative w-full aspect-video rounded-lg overflow-hidden border bg-black">
-                            {embed.provider === "youtube" || embed.provider === "bunny" ? (
+                          <div className="relative aspect-video w-full overflow-hidden rounded-lg border bg-black">
+                            {embed.provider === "bunny" ? (
+                              <SprintBunnyPlayer
+                                videoUrl={editingSprint.videoUrl}
+                                sprintId={editingSprint.id || null}
+                                title="Preview"
+                                className="h-full w-full"
+                                controls={true}
+                              />
+                            ) : embed.provider === "youtube" ? (
                               <iframe
                                 src={embed.embedUrl}
                                 title="Preview"
-                                className="w-full h-full border-0"
+                                className="h-full w-full border-0"
                                 allowFullScreen
                               />
                             ) : (
                               <video
                                 src={embed.embedUrl}
                                 controls
-                                className="w-full h-full object-contain"
+                                className="h-full w-full object-contain"
                               />
                             )}
                           </div>
@@ -1536,18 +1849,18 @@ export default function AdminSprintsTable() {
                   </div>
 
                   <div className="space-y-4">
-                    <Label className="text-sm font-bold text-gray-800 block">
+                    <Label className="block text-sm font-bold text-gray-800">
                       Hero Banner Images (Max 3 for Carousel)
                     </Label>
 
                     {/* Banner 1 */}
-                    <div className="border p-3 rounded-xl bg-gray-50/50 space-y-3">
-                      <div className="flex justify-between items-center">
+                    <div className="space-y-3 rounded-xl border bg-gray-50/50 p-3">
+                      <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-gray-700">
                           1. Hero Banner Image (Primary)
                         </span>
                         {editingSprint.coverImageUrl && (
-                          <span className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded border border-green-150">
+                          <span className="border-green-150 rounded border bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-600">
                             Active
                           </span>
                         )}
@@ -1556,14 +1869,14 @@ export default function AdminSprintsTable() {
                         <img
                           src={editingSprint.coverImageUrl}
                           alt="Primary banner preview"
-                          className="w-full h-20 object-cover rounded-lg border"
+                          className="h-20 w-full rounded-lg border object-cover"
                         />
                       )}
                       <div className="space-y-1">
-                        <Label className="text-[10px] text-gray-500 font-bold block uppercase tracking-wider">
+                        <Label className="block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
                           Upload Image File
                         </Label>
-                        <div className="flex gap-2 items-center">
+                        <div className="flex items-center gap-2">
                           <Input
                             type="file"
                             accept="image/*"
@@ -1571,7 +1884,9 @@ export default function AdminSprintsTable() {
                               const file = e.target.files?.[0];
                               if (file) {
                                 handleImageUpload(file, (url) => {
-                                  const urls = [...(editingSprint.coverImageUrls || [])];
+                                  const urls = [
+                                    ...(editingSprint.coverImageUrls || []),
+                                  ];
                                   urls[0] = url;
                                   setEditingSprint({
                                     ...editingSprint,
@@ -1582,18 +1897,22 @@ export default function AdminSprintsTable() {
                               }
                             }}
                           />
-                          {isUploading && <Loader2 className="w-5 h-5 animate-spin shrink-0" />}
+                          {isUploading && (
+                            <Loader2 className="h-5 w-5 shrink-0 animate-spin" />
+                          )}
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-[10px] text-gray-500 font-bold block uppercase tracking-wider">
+                        <Label className="block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
                           Or Image URL
                         </Label>
                         <Input
                           value={editingSprint.coverImageUrl || ""}
                           onChange={(e) => {
                             const val = e.target.value;
-                            const urls = [...(editingSprint.coverImageUrls || [])];
+                            const urls = [
+                              ...(editingSprint.coverImageUrls || []),
+                            ];
                             urls[0] = val;
                             setEditingSprint({
                               ...editingSprint,
@@ -1607,13 +1926,13 @@ export default function AdminSprintsTable() {
                     </div>
 
                     {/* Banner 2 */}
-                    <div className="border p-3 rounded-xl bg-gray-50/50 space-y-3">
-                      <div className="flex justify-between items-center">
+                    <div className="space-y-3 rounded-xl border bg-gray-50/50 p-3">
+                      <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-gray-700">
                           2. Hero Banner Image 2 (Optional)
                         </span>
                         {editingSprint.coverImageUrls?.[1] && (
-                          <span className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded border border-green-150">
+                          <span className="border-green-150 rounded border bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-600">
                             Active
                           </span>
                         )}
@@ -1622,14 +1941,14 @@ export default function AdminSprintsTable() {
                         <img
                           src={editingSprint.coverImageUrls[1]}
                           alt="Banner 2 preview"
-                          className="w-full h-20 object-cover rounded-lg border"
+                          className="h-20 w-full rounded-lg border object-cover"
                         />
                       )}
                       <div className="space-y-1">
-                        <Label className="text-[10px] text-gray-500 font-bold block uppercase tracking-wider">
+                        <Label className="block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
                           Upload Image File
                         </Label>
-                        <div className="flex gap-2 items-center">
+                        <div className="flex items-center gap-2">
                           <Input
                             type="file"
                             accept="image/*"
@@ -1637,7 +1956,9 @@ export default function AdminSprintsTable() {
                               const file = e.target.files?.[0];
                               if (file) {
                                 handleImageUpload(file, (url) => {
-                                  const urls = [...(editingSprint.coverImageUrls || [])];
+                                  const urls = [
+                                    ...(editingSprint.coverImageUrls || []),
+                                  ];
                                   urls[1] = url;
                                   setEditingSprint({
                                     ...editingSprint,
@@ -1647,18 +1968,22 @@ export default function AdminSprintsTable() {
                               }
                             }}
                           />
-                          {isUploading && <Loader2 className="w-5 h-5 animate-spin shrink-0" />}
+                          {isUploading && (
+                            <Loader2 className="h-5 w-5 shrink-0 animate-spin" />
+                          )}
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-[10px] text-gray-500 font-bold block uppercase tracking-wider">
+                        <Label className="block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
                           Or Image URL
                         </Label>
                         <Input
                           value={editingSprint.coverImageUrls?.[1] || ""}
                           onChange={(e) => {
                             const val = e.target.value;
-                            const urls = [...(editingSprint.coverImageUrls || [])];
+                            const urls = [
+                              ...(editingSprint.coverImageUrls || []),
+                            ];
                             urls[1] = val;
                             setEditingSprint({
                               ...editingSprint,
@@ -1671,13 +1996,13 @@ export default function AdminSprintsTable() {
                     </div>
 
                     {/* Banner 3 */}
-                    <div className="border p-3 rounded-xl bg-gray-50/50 space-y-3">
-                      <div className="flex justify-between items-center">
+                    <div className="space-y-3 rounded-xl border bg-gray-50/50 p-3">
+                      <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-gray-700">
                           3. Hero Banner Image 3 (Optional)
                         </span>
                         {editingSprint.coverImageUrls?.[2] && (
-                          <span className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded border border-green-150">
+                          <span className="border-green-150 rounded border bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-600">
                             Active
                           </span>
                         )}
@@ -1686,14 +2011,14 @@ export default function AdminSprintsTable() {
                         <img
                           src={editingSprint.coverImageUrls[2]}
                           alt="Banner 3 preview"
-                          className="w-full h-20 object-cover rounded-lg border"
+                          className="h-20 w-full rounded-lg border object-cover"
                         />
                       )}
                       <div className="space-y-1">
-                        <Label className="text-[10px] text-gray-500 font-bold block uppercase tracking-wider">
+                        <Label className="block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
                           Upload Image File
                         </Label>
-                        <div className="flex gap-2 items-center">
+                        <div className="flex items-center gap-2">
                           <Input
                             type="file"
                             accept="image/*"
@@ -1701,7 +2026,9 @@ export default function AdminSprintsTable() {
                               const file = e.target.files?.[0];
                               if (file) {
                                 handleImageUpload(file, (url) => {
-                                  const urls = [...(editingSprint.coverImageUrls || [])];
+                                  const urls = [
+                                    ...(editingSprint.coverImageUrls || []),
+                                  ];
                                   urls[2] = url;
                                   setEditingSprint({
                                     ...editingSprint,
@@ -1711,18 +2038,22 @@ export default function AdminSprintsTable() {
                               }
                             }}
                           />
-                          {isUploading && <Loader2 className="w-5 h-5 animate-spin shrink-0" />}
+                          {isUploading && (
+                            <Loader2 className="h-5 w-5 shrink-0 animate-spin" />
+                          )}
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-[10px] text-gray-500 font-bold block uppercase tracking-wider">
+                        <Label className="block text-[10px] font-bold tracking-wider text-gray-500 uppercase">
                           Or Image URL
                         </Label>
                         <Input
                           value={editingSprint.coverImageUrls?.[2] || ""}
                           onChange={(e) => {
                             const val = e.target.value;
-                            const urls = [...(editingSprint.coverImageUrls || [])];
+                            const urls = [
+                              ...(editingSprint.coverImageUrls || []),
+                            ];
                             urls[2] = val;
                             setEditingSprint({
                               ...editingSprint,
@@ -1736,12 +2067,14 @@ export default function AdminSprintsTable() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label>Card Cover Image (Optional - fallback to Hero)</Label>
+                    <Label>
+                      Card Cover Image (Optional - fallback to Hero)
+                    </Label>
                     {editingSprint.cardImageUrl && (
                       <img
                         src={editingSprint.cardImageUrl}
                         alt="Card cover preview"
-                        className="w-full h-32 object-cover rounded-lg border mb-2"
+                        className="mb-2 h-32 w-full rounded-lg border object-cover"
                       />
                     )}
                     <div className="flex gap-2">
@@ -1752,21 +2085,31 @@ export default function AdminSprintsTable() {
                           const file = e.target.files?.[0];
                           if (file) {
                             handleImageUpload(file, (url) =>
-                              setEditingSprint({ ...editingSprint, cardImageUrl: url })
+                              setEditingSprint({
+                                ...editingSprint,
+                                cardImageUrl: url,
+                              })
                             );
                           }
                         }}
                       />
-                      {isUploading && <Loader2 className="w-5 h-5 animate-spin" />}
+                      {isUploading && (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      )}
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
                     <Label>Mentors Section Heading</Label>
                     <Input
-                      value={editingSprint.mentorsHeading || "Meet Your Mentors"}
+                      value={
+                        editingSprint.mentorsHeading || "Meet Your Mentors"
+                      }
                       onChange={(e) =>
-                        setEditingSprint({ ...editingSprint, mentorsHeading: e.target.value })
+                        setEditingSprint({
+                          ...editingSprint,
+                          mentorsHeading: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -1789,7 +2132,10 @@ export default function AdminSprintsTable() {
                       <Input
                         value={editingSprint.mentorsLinkTarget || ""}
                         onChange={(e) =>
-                          setEditingSprint({ ...editingSprint, mentorsLinkTarget: e.target.value })
+                          setEditingSprint({
+                            ...editingSprint,
+                            mentorsLinkTarget: e.target.value,
+                          })
                         }
                         placeholder="/mentors or #all"
                       />
@@ -1801,7 +2147,10 @@ export default function AdminSprintsTable() {
                     <Input
                       value={editingSprint.featuresHeading || "What You Get"}
                       onChange={(e) =>
-                        setEditingSprint({ ...editingSprint, featuresHeading: e.target.value })
+                        setEditingSprint({
+                          ...editingSprint,
+                          featuresHeading: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -1811,7 +2160,10 @@ export default function AdminSprintsTable() {
                     <Input
                       value={editingSprint.sessionsHeading || ""}
                       onChange={(e) =>
-                        setEditingSprint({ ...editingSprint, sessionsHeading: e.target.value })
+                        setEditingSprint({
+                          ...editingSprint,
+                          sessionsHeading: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -1832,9 +2184,15 @@ export default function AdminSprintsTable() {
                   <div className="space-y-1.5">
                     <Label>FAQs Section Heading</Label>
                     <Input
-                      value={editingSprint.faqsHeading || "Frequently Asked Questions"}
+                      value={
+                        editingSprint.faqsHeading ||
+                        "Frequently Asked Questions"
+                      }
                       onChange={(e) =>
-                        setEditingSprint({ ...editingSprint, faqsHeading: e.target.value })
+                        setEditingSprint({
+                          ...editingSprint,
+                          faqsHeading: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -1848,7 +2206,9 @@ export default function AdminSprintsTable() {
                           setEditingSprint({ ...editingSprint, isActive: val })
                         }
                       />
-                      <Label htmlFor="sprint-active">Active (Visible to public)</Label>
+                      <Label htmlFor="sprint-active">
+                        Active (Visible to public)
+                      </Label>
                     </div>
 
                     <div className="flex items-center space-x-2">
@@ -1856,10 +2216,15 @@ export default function AdminSprintsTable() {
                         id="sprint-best-seller"
                         checked={!!editingSprint.isBestSeller}
                         onCheckedChange={(val) =>
-                          setEditingSprint({ ...editingSprint, isBestSeller: val })
+                          setEditingSprint({
+                            ...editingSprint,
+                            isBestSeller: val,
+                          })
                         }
                       />
-                      <Label htmlFor="sprint-best-seller">Best Seller Tag</Label>
+                      <Label htmlFor="sprint-best-seller">
+                        Best Seller Tag
+                      </Label>
                     </div>
 
                     <div className="flex items-center space-x-2">
@@ -1867,10 +2232,15 @@ export default function AdminSprintsTable() {
                         id="sprint-filling-fast"
                         checked={!!editingSprint.isFillingFast}
                         onCheckedChange={(val) =>
-                          setEditingSprint({ ...editingSprint, isFillingFast: val })
+                          setEditingSprint({
+                            ...editingSprint,
+                            isFillingFast: val,
+                          })
                         }
                       />
-                      <Label htmlFor="sprint-filling-fast">Filling Fast Tag</Label>
+                      <Label htmlFor="sprint-filling-fast">
+                        Filling Fast Tag
+                      </Label>
                     </div>
 
                     <div className="flex items-center space-x-2">
@@ -1878,7 +2248,10 @@ export default function AdminSprintsTable() {
                         id="sprint-verification-required"
                         checked={editingSprint.isVerificationRequired}
                         onCheckedChange={(val) =>
-                          setEditingSprint({ ...editingSprint, isVerificationRequired: val })
+                          setEditingSprint({
+                            ...editingSprint,
+                            isVerificationRequired: val,
+                          })
                         }
                       />
                       <Label htmlFor="sprint-verification-required">
@@ -1893,11 +2266,12 @@ export default function AdminSprintsTable() {
             {/* mentors Tab */}
             {activeEditTab === "mentors" && (
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-md font-semibold">Sprint Mentors</h3>
                     <p className="text-xs text-gray-500">
-                      Manage featured instructors and guest mentors for this sprint.
+                      Manage featured instructors and guest mentors for this
+                      sprint.
                     </p>
                   </div>
                   <Button
@@ -1905,19 +2279,20 @@ export default function AdminSprintsTable() {
                       setManagingSprint(editingSprint);
                       setMentorManagerOpen(true);
                     }}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+                    className="bg-emerald-600 text-xs text-white hover:bg-emerald-700"
                     size="sm"
                   >
-                    <Users className="w-3.5 h-3.5 mr-1" /> Open Mentor Manager
+                    <Users className="mr-1 h-3.5 w-3.5" /> Open Mentor Manager
                   </Button>
                 </div>
 
-                <div className="border rounded-lg bg-gray-50 p-6 text-center text-sm text-gray-600">
-                  <p className="font-semibold text-gray-800 mb-1">
+                <div className="rounded-lg border bg-gray-50 p-6 text-center text-sm text-gray-600">
+                  <p className="mb-1 font-semibold text-gray-800">
                     {editingSprint.mentors?.length || 0} Mentors Configured
                   </p>
-                  <p className="text-xs text-gray-500 mb-4">
-                    Use the dedicated Mentor Manager to add photos, titles, bios, and LinkedIn profiles safely.
+                  <p className="mb-4 text-xs text-gray-500">
+                    Use the dedicated Mentor Manager to add photos, titles,
+                    bios, and LinkedIn profiles safely.
                   </p>
                   <Button
                     variant="outline"
@@ -1925,7 +2300,7 @@ export default function AdminSprintsTable() {
                       setManagingSprint(editingSprint);
                       setMentorManagerOpen(true);
                     }}
-                    className="text-xs border-gray-300"
+                    className="border-gray-300 text-xs"
                   >
                     Manage Mentors
                   </Button>
@@ -1936,8 +2311,10 @@ export default function AdminSprintsTable() {
             {/* features Tab */}
             {activeEditTab === "features" && (
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-md font-semibold">Features &amp; Deliverables</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-md font-semibold">
+                    Features &amp; Deliverables
+                  </h3>
                   <Button
                     onClick={() => {
                       const currentFeatures = editingSprint.features || [];
@@ -1949,10 +2326,10 @@ export default function AdminSprintsTable() {
                         ],
                       });
                     }}
-                    className="bg-gray-100 text-gray-700 hover:bg-gray-200 border text-xs"
+                    className="border bg-gray-100 text-xs text-gray-700 hover:bg-gray-200"
                     size="sm"
                   >
-                    <Plus className="w-3.5 h-3.5 mr-1" /> Add Feature Card
+                    <Plus className="mr-1 h-3.5 w-3.5" /> Add Feature Card
                   </Button>
                 </div>
 
@@ -1960,31 +2337,41 @@ export default function AdminSprintsTable() {
                   {(editingSprint.features || []).map((feature, index) => (
                     <div
                       key={index}
-                      className="border p-4 rounded-lg bg-gray-50 flex gap-4 relative"
+                      className="relative flex gap-4 rounded-lg border bg-gray-50 p-4"
                     >
                       <button
                         onClick={() => {
-                          const currentFeatures = [...(editingSprint.features || [])];
+                          const currentFeatures = [
+                            ...(editingSprint.features || []),
+                          ];
                           currentFeatures.splice(index, 1);
-                          setEditingSprint({ ...editingSprint, features: currentFeatures });
+                          setEditingSprint({
+                            ...editingSprint,
+                            features: currentFeatures,
+                          });
                         }}
                         className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="h-4 w-4" />
                       </button>
 
-                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-3">
                         <div className="space-y-1">
                           <Label className="text-xs">Icon Name</Label>
                           <Input
                             value={feature.icon}
                             onChange={(e) => {
-                              const currentFeatures = [...(editingSprint.features || [])];
+                              const currentFeatures = [
+                                ...(editingSprint.features || []),
+                              ];
                               currentFeatures[index] = {
                                 ...currentFeatures[index],
                                 icon: e.target.value,
                               };
-                              setEditingSprint({ ...editingSprint, features: currentFeatures });
+                              setEditingSprint({
+                                ...editingSprint,
+                                features: currentFeatures,
+                              });
                             }}
                             placeholder="e.g. Video, FileText, Check"
                           />
@@ -1994,12 +2381,17 @@ export default function AdminSprintsTable() {
                           <Input
                             value={feature.title}
                             onChange={(e) => {
-                              const currentFeatures = [...(editingSprint.features || [])];
+                              const currentFeatures = [
+                                ...(editingSprint.features || []),
+                              ];
                               currentFeatures[index] = {
                                 ...currentFeatures[index],
                                 title: e.target.value,
                               };
-                              setEditingSprint({ ...editingSprint, features: currentFeatures });
+                              setEditingSprint({
+                                ...editingSprint,
+                                features: currentFeatures,
+                              });
                             }}
                             placeholder="e.g. 1-on-1 Portfolio Reviews"
                           />
@@ -2007,19 +2399,30 @@ export default function AdminSprintsTable() {
                         <div className="space-y-1">
                           <Label className="text-xs">Description</Label>
                           {feature.description.map((el, idx) => (
-                            <div className="flex items-center gap-2 max-w-md" key={idx}>
+                            <div
+                              className="flex max-w-md items-center gap-2"
+                              key={idx}
+                            >
                               <Input
                                 className="flex-1"
                                 value={el}
                                 onChange={(e) => {
-                                  const currentFeatures = [...(editingSprint.features || [])];
-                                  const updatedDescription = [...(currentFeatures[index].description || [])];
+                                  const currentFeatures = [
+                                    ...(editingSprint.features || []),
+                                  ];
+                                  const updatedDescription = [
+                                    ...(currentFeatures[index].description ||
+                                      []),
+                                  ];
                                   updatedDescription[idx] = e.target.value;
                                   currentFeatures[index] = {
                                     ...currentFeatures[index],
                                     description: [...updatedDescription],
                                   };
-                                  setEditingSprint({ ...editingSprint, features: currentFeatures });
+                                  setEditingSprint({
+                                    ...editingSprint,
+                                    features: currentFeatures,
+                                  });
                                 }}
                                 placeholder="e.g. Additional Description Pointer"
                               />
@@ -2028,12 +2431,26 @@ export default function AdminSprintsTable() {
                                 className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-500 transition-colors hover:border-red-300 hover:bg-red-100 hover:text-red-600"
                                 aria-label="Delete description point"
                                 onClick={() => {
-                                  const currentFeatures = [...(editingSprint.features) || []];
-                                  const updatedDescription = ([...currentFeatures[index].description || []]).filter((el, idxPointer) => idxPointer !== idx);
-                                  currentFeatures[index] = { ...currentFeatures[index], description: updatedDescription };
-                                  setEditingSprint(prev => ({ ...prev, features: currentFeatures }));
-                                }}>
-                                <Trash2 className="h-4 w-4" ></Trash2>
+                                  const currentFeatures = [
+                                    ...(editingSprint.features || []),
+                                  ];
+                                  const updatedDescription = [
+                                    ...(currentFeatures[index].description ||
+                                      []),
+                                  ].filter(
+                                    (el, idxPointer) => idxPointer !== idx
+                                  );
+                                  currentFeatures[index] = {
+                                    ...currentFeatures[index],
+                                    description: updatedDescription,
+                                  };
+                                  setEditingSprint((prev) => ({
+                                    ...prev,
+                                    features: currentFeatures,
+                                  }));
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4"></Trash2>
                               </button>
                             </div>
                           ))}
@@ -2048,7 +2465,8 @@ export default function AdminSprintsTable() {
                                 currentFeatures[index] = {
                                   ...currentFeatures[index],
                                   description: [
-                                    ...(currentFeatures[index].description || []),
+                                    ...(currentFeatures[index].description ||
+                                      []),
                                     "",
                                   ],
                                 };
@@ -2072,28 +2490,40 @@ export default function AdminSprintsTable() {
                         <button
                           disabled={index === 0}
                           onClick={() => {
-                            const currentFeatures = [...(editingSprint.features || [])];
+                            const currentFeatures = [
+                              ...(editingSprint.features || []),
+                            ];
                             const temp = currentFeatures[index];
                             currentFeatures[index] = currentFeatures[index - 1];
                             currentFeatures[index - 1] = temp;
-                            setEditingSprint({ ...editingSprint, features: currentFeatures });
+                            setEditingSprint({
+                              ...editingSprint,
+                              features: currentFeatures,
+                            });
                           }}
-                          className="p-1 hover:bg-gray-200 rounded disabled:opacity-50"
+                          className="rounded p-1 hover:bg-gray-200 disabled:opacity-50"
                         >
-                          <ArrowUp className="w-4 h-4" />
+                          <ArrowUp className="h-4 w-4" />
                         </button>
                         <button
-                          disabled={index === (editingSprint.features?.length || 0) - 1}
+                          disabled={
+                            index === (editingSprint.features?.length || 0) - 1
+                          }
                           onClick={() => {
-                            const currentFeatures = [...(editingSprint.features || [])];
+                            const currentFeatures = [
+                              ...(editingSprint.features || []),
+                            ];
                             const temp = currentFeatures[index];
                             currentFeatures[index] = currentFeatures[index + 1];
                             currentFeatures[index + 1] = temp;
-                            setEditingSprint({ ...editingSprint, features: currentFeatures });
+                            setEditingSprint({
+                              ...editingSprint,
+                              features: currentFeatures,
+                            });
                           }}
-                          className="p-1 hover:bg-gray-200 rounded disabled:opacity-50"
+                          className="rounded p-1 hover:bg-gray-200 disabled:opacity-50"
                         >
-                          <ArrowDown className="w-4 h-4" />
+                          <ArrowDown className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
@@ -2105,15 +2535,20 @@ export default function AdminSprintsTable() {
             {/* pricing Tab */}
             {activeEditTab === "pricing" && (
               <div className="space-y-6">
-                <div className="border p-4 rounded-lg bg-gray-50 space-y-4">
+                <div className="space-y-4 rounded-lg border bg-gray-50 p-4">
                   <h3 className="text-md font-semibold">Base Price Setup</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <div className="space-y-1.5">
                       <Label>Investment Section Heading</Label>
                       <Input
-                        value={editingSprint.investmentLabel || "Total Investment"}
+                        value={
+                          editingSprint.investmentLabel || "Total Investment"
+                        }
                         onChange={(e) =>
-                          setEditingSprint({ ...editingSprint, investmentLabel: e.target.value })
+                          setEditingSprint({
+                            ...editingSprint,
+                            investmentLabel: e.target.value,
+                          })
                         }
                       />
                     </div>
@@ -2138,7 +2573,9 @@ export default function AdminSprintsTable() {
                         onChange={(e) =>
                           setEditingSprint({
                             ...editingSprint,
-                            originalPrice: e.target.value ? Number(e.target.value) : null,
+                            originalPrice: e.target.value
+                              ? Number(e.target.value)
+                              : null,
                           })
                         }
                         placeholder="e.g. 9999"
@@ -2152,10 +2589,15 @@ export default function AdminSprintsTable() {
                         id="sprint-early-bird"
                         checked={!!editingSprint.hasEarlyBird}
                         onCheckedChange={(val) =>
-                          setEditingSprint({ ...editingSprint, hasEarlyBird: val })
+                          setEditingSprint({
+                            ...editingSprint,
+                            hasEarlyBird: val,
+                          })
                         }
                       />
-                      <Label htmlFor="sprint-early-bird">Enable Early Bird Top Marquee Banner</Label>
+                      <Label htmlFor="sprint-early-bird">
+                        Enable Early Bird Top Marquee Banner
+                      </Label>
                     </div>
 
                     <div className="flex items-center space-x-2">
@@ -2163,7 +2605,10 @@ export default function AdminSprintsTable() {
                         id="sprint-early-bird-checkout"
                         checked={!!editingSprint.showEarlyBirdCheckout}
                         onCheckedChange={(val) =>
-                          setEditingSprint({ ...editingSprint, showEarlyBirdCheckout: val })
+                          setEditingSprint({
+                            ...editingSprint,
+                            showEarlyBirdCheckout: val,
+                          })
                         }
                       />
                       <Label htmlFor="sprint-early-bird-checkout">
@@ -2192,7 +2637,10 @@ export default function AdminSprintsTable() {
                         id="sprint-addons-checkout"
                         checked={editingSprint.showAddonsCheckout !== false}
                         onCheckedChange={(val) =>
-                          setEditingSprint({ ...editingSprint, showAddonsCheckout: val })
+                          setEditingSprint({
+                            ...editingSprint,
+                            showAddonsCheckout: val,
+                          })
                         }
                       />
                       <Label htmlFor="sprint-addons-checkout">
@@ -2204,7 +2652,7 @@ export default function AdminSprintsTable() {
 
                 {/* Tiers Management */}
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center">
+                  <div className="flex items-center justify-between">
                     <h3 className="text-md font-semibold">Tier Packages</h3>
                     <Button
                       onClick={() => {
@@ -2225,10 +2673,10 @@ export default function AdminSprintsTable() {
                           ],
                         });
                       }}
-                      className="bg-gray-100 text-gray-700 hover:bg-gray-200 border text-xs"
+                      className="border bg-gray-100 text-xs text-gray-700 hover:bg-gray-200"
                       size="sm"
                     >
-                      <Plus className="w-3.5 h-3.5 mr-1" /> Add Tier
+                      <Plus className="mr-1 h-3.5 w-3.5" /> Add Tier
                     </Button>
                   </div>
 
@@ -2236,31 +2684,41 @@ export default function AdminSprintsTable() {
                     {(editingSprint.tiers || []).map((tier, index) => (
                       <div
                         key={index}
-                        className="border p-4 rounded-lg bg-gray-50 flex flex-col gap-4 relative"
+                        className="relative flex flex-col gap-4 rounded-lg border bg-gray-50 p-4"
                       >
                         <button
                           onClick={() => {
-                            const currentTiers = [...(editingSprint.tiers || [])];
+                            const currentTiers = [
+                              ...(editingSprint.tiers || []),
+                            ];
                             currentTiers.splice(index, 1);
-                            setEditingSprint({ ...editingSprint, tiers: currentTiers });
+                            setEditingSprint({
+                              ...editingSprint,
+                              tiers: currentTiers,
+                            });
                           }}
                           className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
                         >
-                          <X className="w-4 h-4" />
+                          <X className="h-4 w-4" />
                         </button>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                           <div className="space-y-1">
                             <Label className="text-xs">Tier Name</Label>
                             <Input
                               value={tier.name}
                               onChange={(e) => {
-                                const currentTiers = [...(editingSprint.tiers || [])];
+                                const currentTiers = [
+                                  ...(editingSprint.tiers || []),
+                                ];
                                 currentTiers[index] = {
                                   ...currentTiers[index],
                                   name: e.target.value,
                                 };
-                                setEditingSprint({ ...editingSprint, tiers: currentTiers });
+                                setEditingSprint({
+                                  ...editingSprint,
+                                  tiers: currentTiers,
+                                });
                               }}
                               placeholder="e.g. Standard, Pro, VIP"
                             />
@@ -2271,27 +2729,41 @@ export default function AdminSprintsTable() {
                               type="number"
                               value={tier.price}
                               onChange={(e) => {
-                                const currentTiers = [...(editingSprint.tiers || [])];
+                                const currentTiers = [
+                                  ...(editingSprint.tiers || []),
+                                ];
                                 currentTiers[index] = {
                                   ...currentTiers[index],
                                   price: Number(e.target.value),
                                 };
-                                setEditingSprint({ ...editingSprint, tiers: currentTiers });
+                                setEditingSprint({
+                                  ...editingSprint,
+                                  tiers: currentTiers,
+                                });
                               }}
                             />
                           </div>
                           <div className="space-y-1">
-                            <Label className="text-xs">Original Strikethrough Price (INR)</Label>
+                            <Label className="text-xs">
+                              Original Strikethrough Price (INR)
+                            </Label>
                             <Input
                               type="number"
                               value={tier.originalPrice || ""}
                               onChange={(e) => {
-                                const currentTiers = [...(editingSprint.tiers || [])];
+                                const currentTiers = [
+                                  ...(editingSprint.tiers || []),
+                                ];
                                 currentTiers[index] = {
                                   ...currentTiers[index],
-                                  originalPrice: e.target.value ? Number(e.target.value) : null,
+                                  originalPrice: e.target.value
+                                    ? Number(e.target.value)
+                                    : null,
                                 };
-                                setEditingSprint({ ...editingSprint, tiers: currentTiers });
+                                setEditingSprint({
+                                  ...editingSprint,
+                                  tiers: currentTiers,
+                                });
                               }}
                             />
                           </div>
@@ -2302,32 +2774,44 @@ export default function AdminSprintsTable() {
                           <Input
                             value={tier.description}
                             onChange={(e) => {
-                              const currentTiers = [...(editingSprint.tiers || [])];
+                              const currentTiers = [
+                                ...(editingSprint.tiers || []),
+                              ];
                               currentTiers[index] = {
                                 ...currentTiers[index],
                                 description: e.target.value,
                               };
-                              setEditingSprint({ ...editingSprint, tiers: currentTiers });
+                              setEditingSprint({
+                                ...editingSprint,
+                                tiers: currentTiers,
+                              });
                             }}
                             placeholder="e.g. Complete bundle with mentorship"
                           />
                         </div>
 
                         <div className="space-y-1">
-                          <Label className="text-xs">What&apos;s Included (Comma-separated)</Label>
-                        <Input
+                          <Label className="text-xs">
+                            What&apos;s Included (Comma-separated)
+                          </Label>
+                          <Input
                             value={
                               Array.isArray(tier.whatIncluded)
                                 ? tier.whatIncluded.join(", ")
                                 : tier.whatIncluded
                             }
                             onChange={(e) => {
-                              const currentTiers = [...(editingSprint.tiers || [])];
+                              const currentTiers = [
+                                ...(editingSprint.tiers || []),
+                              ];
                               currentTiers[index] = {
                                 ...currentTiers[index],
                                 whatIncluded: e.target.value,
                               };
-                              setEditingSprint({ ...editingSprint, tiers: currentTiers });
+                              setEditingSprint({
+                                ...editingSprint,
+                                tiers: currentTiers,
+                              });
                             }}
                             placeholder="All Live Sessions, Toolkit Content, Community Access"
                           />
@@ -2338,49 +2822,78 @@ export default function AdminSprintsTable() {
                             id={`tier-default-${index}`}
                             checked={tier.isDefault}
                             onCheckedChange={(val) => {
-                              const currentTiers = [...(editingSprint.tiers || [])];
-                              currentTiers.forEach((t, i) => (t.isDefault = i === index ? val : false));
-                              setEditingSprint({ ...editingSprint, tiers: currentTiers });
+                              const currentTiers = [
+                                ...(editingSprint.tiers || []),
+                              ];
+                              currentTiers.forEach(
+                                (t, i) =>
+                                  (t.isDefault = i === index ? val : false)
+                              );
+                              setEditingSprint({
+                                ...editingSprint,
+                                tiers: currentTiers,
+                              });
                             }}
                           />
-                          <Label htmlFor={`tier-default-${index}`} className="text-xs">
+                          <Label
+                            htmlFor={`tier-default-${index}`}
+                            className="text-xs"
+                          >
                             Default Selected Plan
                           </Label>
                         </div>
 
                         <div className="flex items-center space-x-2 pt-1">
-  <Switch
-    id={`tier-filling-fast-${index}`}
-    checked={!!tier.isFillingFast}
-    onCheckedChange={(val) => {
-      const currentTiers = [...(editingSprint.tiers || [])];
-      currentTiers.forEach(
-        (t, i) => (t.isFillingFast = i === index ? val : false)
-      );
-      setEditingSprint({ ...editingSprint, tiers: currentTiers });
-    }}
-  />
-  <Label htmlFor={`tier-filling-fast-${index}`} className="text-xs">
-    Filling Fast
-  </Label>
-</div>
+                          <Switch
+                            id={`tier-filling-fast-${index}`}
+                            checked={!!tier.isFillingFast}
+                            onCheckedChange={(val) => {
+                              const currentTiers = [
+                                ...(editingSprint.tiers || []),
+                              ];
+                              currentTiers.forEach(
+                                (t, i) =>
+                                  (t.isFillingFast = i === index ? val : false)
+                              );
+                              setEditingSprint({
+                                ...editingSprint,
+                                tiers: currentTiers,
+                              });
+                            }}
+                          />
+                          <Label
+                            htmlFor={`tier-filling-fast-${index}`}
+                            className="text-xs"
+                          >
+                            Filling Fast
+                          </Label>
+                        </div>
 
-<div className="flex items-center space-x-2 pt-1">
-  <Switch
-    id={`tier-trending-${index}`}
-    checked={!!tier.isTrending}
-    onCheckedChange={(val) => {
-      const currentTiers = [...(editingSprint.tiers || [])];
-      currentTiers.forEach(
-        (t, i) => (t.isTrending = i === index ? val : false)
-      );
-      setEditingSprint({ ...editingSprint, tiers: currentTiers });
-    }}
-  />
-  <Label htmlFor={`tier-trending-${index}`} className="text-xs">
-    Trending
-  </Label>
-</div>
+                        <div className="flex items-center space-x-2 pt-1">
+                          <Switch
+                            id={`tier-trending-${index}`}
+                            checked={!!tier.isTrending}
+                            onCheckedChange={(val) => {
+                              const currentTiers = [
+                                ...(editingSprint.tiers || []),
+                              ];
+                              currentTiers.forEach(
+                                (t, i) =>
+                                  (t.isTrending = i === index ? val : false)
+                              );
+                              setEditingSprint({
+                                ...editingSprint,
+                                tiers: currentTiers,
+                              });
+                            }}
+                          />
+                          <Label
+                            htmlFor={`tier-trending-${index}`}
+                            className="text-xs"
+                          >
+                            Trending
+                          </Label>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -2391,11 +2904,14 @@ export default function AdminSprintsTable() {
             {/* curriculum Tab */}
             {activeEditTab === "curriculum" && (
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-md font-semibold">Sprint Curriculum Sessions</h3>
+                    <h3 className="text-md font-semibold">
+                      Sprint Curriculum Sessions
+                    </h3>
                     <p className="text-xs text-gray-500">
-                      Configure live session links, recordings, mentors, and resources.
+                      Configure live session links, recordings, mentors, and
+                      resources.
                     </p>
                   </div>
                   <Button
@@ -2403,19 +2919,22 @@ export default function AdminSprintsTable() {
                       setManagingSprint(editingSprint);
                       setSessionManagerOpen(true);
                     }}
-                    className="bg-[#ff5e14] hover:bg-[#e04f0f] text-white text-xs"
+                    className="bg-[#ff5e14] text-xs text-white hover:bg-[#e04f0f]"
                     size="sm"
                   >
-                    <FolderCog className="w-3.5 h-3.5 mr-1" /> Open Session Manager
+                    <FolderCog className="mr-1 h-3.5 w-3.5" /> Open Session
+                    Manager
                   </Button>
                 </div>
 
-                <div className="border rounded-lg bg-gray-50 p-6 text-center text-sm text-gray-600">
-                  <p className="font-semibold text-gray-800 mb-1">
+                <div className="rounded-lg border bg-gray-50 p-6 text-center text-sm text-gray-600">
+                  <p className="mb-1 font-semibold text-gray-800">
                     {editingSprint.sessions?.length || 0} Sessions Configured
                   </p>
-                  <p className="text-xs text-gray-500 mb-4">
-                    Use the full Session Manager tool to customize lessons, video recordings, mentor assignments, and section attachments.
+                  <p className="mb-4 text-xs text-gray-500">
+                    Use the full Session Manager tool to customize lessons,
+                    video recordings, mentor assignments, and section
+                    attachments.
                   </p>
                   <Button
                     variant="outline"
@@ -2423,7 +2942,7 @@ export default function AdminSprintsTable() {
                       setManagingSprint(editingSprint);
                       setSessionManagerOpen(true);
                     }}
-                    className="text-xs border-gray-300"
+                    className="border-gray-300 text-xs"
                   >
                     Manage Sessions &amp; Curriculum Content
                   </Button>
@@ -2434,9 +2953,11 @@ export default function AdminSprintsTable() {
             {/* faqs Tab */}
             {activeEditTab === "faqs" && (
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-md font-semibold">Frequently Asked Questions</h3>
+                    <h3 className="text-md font-semibold">
+                      Frequently Asked Questions
+                    </h3>
                     <p className="text-xs text-gray-500">
                       Manage FAQs displayed on the sprint details page.
                     </p>
@@ -2446,19 +2967,20 @@ export default function AdminSprintsTable() {
                       setManagingSprint(editingSprint);
                       setFaqManagerOpen(true);
                     }}
-                    className="bg-cyan-600 hover:bg-cyan-700 text-white text-xs"
+                    className="bg-cyan-600 text-xs text-white hover:bg-cyan-700"
                     size="sm"
                   >
-                    <HelpCircle className="w-3.5 h-3.5 mr-1" /> Open FAQ Manager
+                    <HelpCircle className="mr-1 h-3.5 w-3.5" /> Open FAQ Manager
                   </Button>
                 </div>
 
-                <div className="border rounded-lg bg-gray-50 p-6 text-center text-sm text-gray-600">
-                  <p className="font-semibold text-gray-800 mb-1">
+                <div className="rounded-lg border bg-gray-50 p-6 text-center text-sm text-gray-600">
+                  <p className="mb-1 font-semibold text-gray-800">
                     {editingSprint.faqs?.length || 0} FAQs Configured
                   </p>
-                  <p className="text-xs text-gray-500 mb-4">
-                    Click below to add, edit, or reorder questions and answers for this sprint.
+                  <p className="mb-4 text-xs text-gray-500">
+                    Click below to add, edit, or reorder questions and answers
+                    for this sprint.
                   </p>
                   <Button
                     variant="outline"
@@ -2466,7 +2988,7 @@ export default function AdminSprintsTable() {
                       setManagingSprint(editingSprint);
                       setFaqManagerOpen(true);
                     }}
-                    className="text-xs border-gray-300"
+                    className="border-gray-300 text-xs"
                   >
                     Manage FAQs
                   </Button>
@@ -2475,16 +2997,23 @@ export default function AdminSprintsTable() {
             )}
 
             <DialogFooter className="mt-6 border-t pt-4">
-              <Button type="button" variant="ghost" onClick={() => setEditDialogOpen(false)}>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setEditDialogOpen(false)}
+              >
                 Cancel
               </Button>
               <Button
                 type="button"
                 onClick={handleSaveSprint}
                 disabled={isLoading}
-                className="bg-[#ff5e14] hover:bg-[#e04f0f] text-white"
+                className="bg-[#ff5e14] text-white hover:bg-[#e04f0f]"
               >
-                {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} Save Changes
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}{" "}
+                Save Changes
               </Button>
             </DialogFooter>
           </DialogContent>

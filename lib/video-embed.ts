@@ -35,19 +35,48 @@ export function extractInstagramId(url?: string | null): string | null {
  * - https://iframe.mediadelivery.net/embed/12345/abc-def-123
  * - https://video.bunnycdn.com/play/12345/abc-def-123
  */
-export function extractBunnyEmbed(url?: string | null): { embedUrl: string;  videoId?: string } | null {
+export function extractBunnyEmbed(
+  url?: string | null
+): { embedUrl: string; videoId?: string } | null {
   if (!url) return null;
-  const trimmed = url.trim();
+  let trimmed = url.trim();
 
-  // Pattern: iframe.mediadelivery.net/embed/{libraryId}/{videoId}
+  // If iframe snippet was provided, extract src
+  if (trimmed.includes("<iframe")) {
+    const match = trimmed.match(/src=["']([^"']*)["']/i);
+    if (match && match[1]) {
+      trimmed = match[1].trim();
+    }
+  }
+
+  // Extract any existing token parameters to preserve if present
+  let tokenQuery = "";
+  try {
+    const parsed = new URL(
+      trimmed.startsWith("//")
+        ? `https:${trimmed}`
+        : trimmed.startsWith("http")
+          ? trimmed
+          : `https://${trimmed}`
+    );
+    const token = parsed.searchParams.get("token");
+    const expires = parsed.searchParams.get("expires");
+    if (token && expires) {
+      tokenQuery = `&token=${token}&expires=${expires}`;
+    }
+  } catch {
+    // Ignore URL parse error
+  }
+
+  // Pattern: (player|iframe|anything).mediadelivery.net/embed/{libraryId}/{videoId}
   const mediaDeliveryMatch = trimmed.match(
-    /(?:player\.mediadelivery\.net\/embed\/)(\d+)\/([a-zA-Z0-9_-]+)/i
+    /(?:(?:[a-zA-Z0-9-]+\.)?mediadelivery\.net\/embed\/)(\d+)\/([a-zA-Z0-9_-]+)/i
   );
   if (mediaDeliveryMatch) {
     const libraryId = mediaDeliveryMatch[1];
     const videoId = mediaDeliveryMatch[2];
     return {
-      embedUrl: `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&responsive=true`,
+      embedUrl: `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&responsive=true${tokenQuery}`,
       videoId,
     };
   }
@@ -60,13 +89,16 @@ export function extractBunnyEmbed(url?: string | null): { embedUrl: string;  vid
     const libraryId = bunnyPlayMatch[1];
     const videoId = bunnyPlayMatch[2];
     return {
-      embedUrl: `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&responsive=true`,
-      videoId ,
+      embedUrl: `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&responsive=true${tokenQuery}`,
+      videoId,
     };
   }
 
   // If URL already points to mediadelivery.net or bunnycdn stream iframe
-  if (trimmed.includes("mediadelivery.net") || trimmed.includes("bunnycdn.com")) {
+  if (
+    trimmed.includes("mediadelivery.net") ||
+    trimmed.includes("bunnycdn.com")
+  ) {
     return {
       embedUrl: trimmed,
     };

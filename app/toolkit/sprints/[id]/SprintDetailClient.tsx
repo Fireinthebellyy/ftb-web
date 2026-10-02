@@ -597,17 +597,17 @@ export default function SprintDetailClient() {
       initial={{ x: -80, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.7, ease: "easeOut" }}
-      className="flex items-center gap-3 shrink-0"
+      className="flex items-center gap-3 min-w-0 flex-1"
     >
       <div className="h-7 w-1 bg-[#ff5e14] rounded-full shrink-0" />
 
-      <h2 className="text-lg sm:text-2xl font-bold tracking-tight text-gray-900 whitespace-nowrap">
+      <h2 className="text-lg sm:text-2xl font-bold tracking-tight text-gray-900 truncate">
         {sprint.title}
       </h2>
     </motion.div>
 
     {/* Static Actions */}
-    <div className="ml-auto flex items-center gap-1.5 mr-4 -translate-y-1">
+    <div className="ml-auto flex items-center gap-1.5 mr-4 shrink-0 -translate-y-1">
       {/* Share */}
       <button
         type="button"
@@ -624,14 +624,16 @@ export default function SprintDetailClient() {
       </button>
 
       {/* Last Cohort */}
-      <button
-        type="button"
-        onClick={handleLastCohortClick}
-        className="bg-emerald-500 hover:bg-emerald-600 text-white text-[9px] font-semibold px-2 py-1 rounded-l-xl transition duration-200 shadow-sm shrink-0 whitespace-nowrap"
-        aria-label="View last cohort"
-      >
-        Last Cohort
-      </button>
+      {lastCohortPoster && (
+        <button
+          type="button"
+          onClick={handleLastCohortClick}
+          className="bg-emerald-500 hover:bg-emerald-600 text-white text-[9px] font-semibold px-2 py-1.5 rounded-full transition duration-200 shadow-sm shrink-0 whitespace-nowrap"
+          aria-label="View last cohort"
+        >
+          Last Cohort
+        </button>
+      )}
     </div>
 
   </div>

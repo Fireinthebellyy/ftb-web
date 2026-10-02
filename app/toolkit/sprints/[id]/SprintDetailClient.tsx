@@ -20,7 +20,6 @@ import {
   HelpCircle,
   MessageSquare,
   Users,
-  Send,
   Share2,
 } from "lucide-react";
 import { FaLinkedinIn } from "react-icons/fa";

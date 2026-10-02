@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { plusJakartaSans } from "@/lib/fonts";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import BottomNav from "@/components/BottomNav";
@@ -17,12 +17,6 @@ import InterestPromptGate from "@/components/InterestPromptGate";
 import { TrackerProvider } from "@/components/providers/TrackerProvider";
 import { CSPostHogProvider } from "./providers/posthog-provider";
 import GlobalPopup from "@/components/GlobalPopup";
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  weight: ["400", "700"], // or ["400", "700"] if multiple
-  variable: "--font-plus-jakarta-sans",
-  subsets: ["latin"],
-});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -132,7 +126,8 @@ export default function RootLayout({
                 "@type": "SearchAction",
                 target: {
                   "@type": "EntryPoint",
-                  urlTemplate: "https://www.ftbhustle.com/opportunities?q={search_term_string}",
+                  urlTemplate:
+                    "https://www.ftbhustle.com/opportunities?q={search_term_string}",
                 },
                 "query-input": "required name=search_term_string",
               },

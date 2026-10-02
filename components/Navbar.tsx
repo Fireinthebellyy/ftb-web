@@ -8,7 +8,7 @@ import { canAccessAdminPanel } from "@/lib/admin-permissions";
 import { useSession, useInvalidateSession } from "@/hooks/use-session";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
-import { Righteous } from "next/font/google";
+import { righteous } from "@/lib/fonts";
 import { Shield } from "lucide-react";
 import { LoginStreakBadge } from "@/components/navbar/LoginStreakBadge";
 import posthog from "posthog-js";
@@ -40,12 +40,6 @@ function useLogout() {
 
   return signOut;
 }
-
-const righteous = Righteous({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-righteous",
-});
 
 const FEATURE_ENABLE_BOTTOM_NAV = true;
 
@@ -210,7 +204,10 @@ export default function Navbar() {
     "/toolkit",
     "/ungatekeep",
     "/tracker",
-  ].some((p) => normalizedPath === p || (p !== "/" && normalizedPath?.startsWith(`${p}/`)));
+  ].some(
+    (p) =>
+      normalizedPath === p || (p !== "/" && normalizedPath?.startsWith(`${p}/`))
+  );
 
   return (
     <motion.header
@@ -220,7 +217,7 @@ export default function Navbar() {
       className="fixed top-0 right-0 left-0 z-50 flex-none border-b border-gray-200/50 bg-neutral-50/80 backdrop-blur-md"
     >
       {showWalkthrough && (
-        <div className="absolute top-[66px] left-0 right-0 z-50 hidden md:flex justify-center pointer-events-none">
+        <div className="pointer-events-none absolute top-[66px] right-0 left-0 z-50 hidden justify-center md:flex">
           <div className="pointer-events-auto">
             <WalkthroughFigma isDesktop={true} />
           </div>
@@ -255,7 +252,10 @@ export default function Navbar() {
           <Link
             href="/opportunities"
             onClick={() =>
-              posthog.capture("navbar_link_clicked", { label: "Opportunities", href: "/opportunities" })
+              posthog.capture("navbar_link_clicked", {
+                label: "Opportunities",
+                href: "/opportunities",
+              })
             }
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
               pathname === "/opportunities"
@@ -269,7 +269,10 @@ export default function Navbar() {
           <Link
             href="/intern"
             onClick={() =>
-              posthog.capture("navbar_link_clicked", { label: "Internships", href: "/intern" })
+              posthog.capture("navbar_link_clicked", {
+                label: "Internships",
+                href: "/intern",
+              })
             }
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
               pathname === "/intern"
@@ -282,7 +285,10 @@ export default function Navbar() {
           <Link
             href="/toolkit"
             onClick={() =>
-              posthog.capture("navbar_link_clicked", { label: "Toolkit", href: "/toolkit" })
+              posthog.capture("navbar_link_clicked", {
+                label: "Toolkit",
+                href: "/toolkit",
+              })
             }
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
               pathname === "/toolkit"
@@ -295,7 +301,10 @@ export default function Navbar() {
           <Link
             href="/ungatekeep"
             onClick={() =>
-              posthog.capture("navbar_link_clicked", { label: "Ungatekeep", href: "/ungatekeep" })
+              posthog.capture("navbar_link_clicked", {
+                label: "Ungatekeep",
+                href: "/ungatekeep",
+              })
             }
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
               pathname === "/ungatekeep"
@@ -308,7 +317,10 @@ export default function Navbar() {
           <Link
             href="/tracker"
             onClick={() =>
-              posthog.capture("navbar_link_clicked", { label: "Tracker", href: "/tracker" })
+              posthog.capture("navbar_link_clicked", {
+                label: "Tracker",
+                href: "/tracker",
+              })
             }
             className={`relative text-sm font-medium transition-colors duration-200 after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-current after:transition-all after:duration-500 hover:text-neutral-500 hover:after:w-full ${
               pathname === "/tracker"
@@ -587,7 +599,10 @@ export default function Navbar() {
                 <Link
                   href="/profile"
                   onClick={() => {
-                    posthog.capture("navbar_link_clicked", { label: "Profile", href: "/profile" });
+                    posthog.capture("navbar_link_clicked", {
+                      label: "Profile",
+                      href: "/profile",
+                    });
                     setIsOpen(false);
                   }}
                   className={`relative transition-colors duration-200 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:bg-current after:transition-all after:duration-500 ${

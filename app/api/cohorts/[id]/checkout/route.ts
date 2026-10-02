@@ -1,13 +1,24 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { eq, and, inArray, sql } from "drizzle-orm";
-import { cohorts, cohortTiers, cohortOrders, coupons, userToolkits, toolkits, user, cohortSessions, siteSettings, cohortUpgradePlans } from "@/lib/schema";
+import {
+  cohorts,
+  cohortTiers,
+  cohortOrders,
+  coupons,
+  userToolkits,
+  toolkits,
+  user,
+  cohortSessions,
+  siteSettings,
+  cohortUpgradePlans,
+} from "@/lib/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { createOrder } from "@/lib/razorpay";
 import { getPaidCohortOrderForUser } from "@/lib/cohort-registration";
 import { sendCohortPaymentConfirmationEmail } from "@/lib/cohort-payment-email";
-export function getDuoPricing(singlePrice: number) {
+function getDuoPricing(singlePrice: number) {
   if (!singlePrice || singlePrice <= 0) {
     return { reference: 0, final: 0, perHead: 0 };
   }
@@ -48,11 +59,12 @@ export async function POST(
       couponCode,
       validateCouponOnly = false,
     } = body;
-    
+
     let selectedAddOnIds = [...rawAddOns];
     let { buddyEmail } = body;
 
-    const effectiveBuyerName = buyerName?.trim() || session.user.name || "Learner";
+    const effectiveBuyerName =
+      buyerName?.trim() || session.user.name || "Learner";
     const effectiveBuyerEmail = buyerEmail?.trim() || session.user.email;
 
     if (!effectiveBuyerName || !effectiveBuyerEmail) {
@@ -63,7 +75,7 @@ export async function POST(
     }
 
     const settings = await db.query.siteSettings.findFirst({
-      where: eq(siteSettings.id, "global")
+      where: eq(siteSettings.id, "global"),
     });
 
     if (!settings?.isBuddyOfferEnabled) {
@@ -95,9 +107,15 @@ export async function POST(
       isUpgradePlanAllInOne = Boolean(upgradePlan.isAllInOne);
       upgradePlanIncludedSessionCount = upgradePlan.includedSessionCount;
 
-      if (upgradePlan.includedSessionIds && upgradePlan.includedSessionIds.length > 0) {
+      if (
+        upgradePlan.includedSessionIds &&
+        upgradePlan.includedSessionIds.length > 0
+      ) {
         upgradePlanIncludedSessionIds = upgradePlan.includedSessionIds;
-        const merged = new Set([...selectedAddOnIds, ...upgradePlan.includedSessionIds]);
+        const merged = new Set([
+          ...selectedAddOnIds,
+          ...upgradePlan.includedSessionIds,
+        ]);
         selectedAddOnIds = Array.from(merged);
       }
     }
@@ -113,7 +131,9 @@ export async function POST(
         )
       );
     const validCohortSessionIds = new Set(cohortSessionsList.map((s) => s.id));
-    selectedAddOnIds = selectedAddOnIds.filter((id) => validCohortSessionIds.has(id));
+    selectedAddOnIds = selectedAddOnIds.filter((id) =>
+      validCohortSessionIds.has(id)
+    );
 
     // Load all paid orders for user in this cohort to deduplicate owned sessions
     const existingPaidOrders = await db.query.cohortOrders.findMany({
@@ -133,26 +153,36 @@ export async function POST(
 
     // Enforce upgrade package session allowances if applicable
     if (selectedUpgradePlanId && !isUpgradePlanAllInOne) {
-      const newSessionsToUnlock = selectedAddOnIds.filter((id) => !userAlreadyOwnedSessionIds.has(id));
+      const newSessionsToUnlock = selectedAddOnIds.filter(
+        (id) => !userAlreadyOwnedSessionIds.has(id)
+      );
 
       if (upgradePlanIncludedSessionIds.length > 0) {
         const allowedSet = new Set(upgradePlanIncludedSessionIds);
         if (newSessionsToUnlock.some((id) => !allowedSet.has(id))) {
           return NextResponse.json(
-            { error: "Selected sessions exceed the allowed pinned sessions for this upgrade package" },
+            {
+              error:
+                "Selected sessions exceed the allowed pinned sessions for this upgrade package",
+            },
             { status: 400 }
           );
         }
       } else if (upgradePlanIncludedSessionCount !== null) {
         if (newSessionsToUnlock.length === 0) {
           return NextResponse.json(
-            { error: "Please select at least one session to unlock with this upgrade package." },
+            {
+              error:
+                "Please select at least one session to unlock with this upgrade package.",
+            },
             { status: 400 }
           );
         }
         if (newSessionsToUnlock.length > upgradePlanIncludedSessionCount) {
           return NextResponse.json(
-            { error: `You can select at most ${upgradePlanIncludedSessionCount} new session(s) with this upgrade package.` },
+            {
+              error: `You can select at most ${upgradePlanIncludedSessionCount} new session(s) with this upgrade package.`,
+            },
             { status: 400 }
           );
         }
@@ -163,14 +193,20 @@ export async function POST(
     if (!validateCouponOnly && !selectedUpgradePlanId) {
       if (!selectedTierId && selectedAddOnIds.length === 0) {
         return NextResponse.json(
-          { error: "Please select either a plan tier, an upgrade package, or at least one session." },
+          {
+            error:
+              "Please select either a plan tier, an upgrade package, or at least one session.",
+          },
           { status: 400 }
         );
       }
 
       if (selectedTierId && selectedAddOnIds.length > 0) {
         return NextResponse.json(
-          { error: "Cannot select both a bundle tier and individual sessions simultaneously" },
+          {
+            error:
+              "Cannot select both a bundle tier and individual sessions simultaneously",
+          },
           { status: 400 }
         );
       }
@@ -198,7 +234,10 @@ export async function POST(
       });
 
       if (!tier) {
-        return NextResponse.json({ error: "Selected tier not found" }, { status: 400 });
+        return NextResponse.json(
+          { error: "Selected tier not found" },
+          { status: 400 }
+        );
       }
       tierPrice = tier.price;
     }
@@ -206,7 +245,9 @@ export async function POST(
     // 3. Fetch Add-ons (sessions)
     let addonsTotal = 0;
     if (selectedAddOnIds.length > 0 && !selectedUpgradePlanId) {
-      const selectedSessionsMap = new Map(cohortSessionsList.map((s) => [s.id, s.price || 0]));
+      const selectedSessionsMap = new Map(
+        cohortSessionsList.map((s) => [s.id, s.price || 0])
+      );
       selectedAddOnIds.forEach((id) => {
         addonsTotal += selectedSessionsMap.get(id) || 0;
       });
@@ -218,7 +259,10 @@ export async function POST(
         if (!resolvedTierId) {
           const defaultTier = await db.query.cohortTiers.findFirst({
             where: eq(cohortTiers.cohortId, cohortId),
-            orderBy: (cohortTiers, { asc }) => [asc(cohortTiers.price), asc(cohortTiers.id)],
+            orderBy: (cohortTiers, { asc }) => [
+              asc(cohortTiers.price),
+              asc(cohortTiers.id),
+            ],
           });
           if (defaultTier) {
             resolvedTierId = defaultTier.id;
@@ -251,7 +295,7 @@ export async function POST(
     // 4. Validate Coupon if provided
     let discountAmount = 0;
     let couponId: string | null = null;
-    
+
     if (couponCode) {
       const couponResult = await db
         .select()
@@ -266,7 +310,10 @@ export async function POST(
         if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
           isValid = false;
         }
-        if (typeof coupon.maxUses === "number" && coupon.currentUses >= coupon.maxUses) {
+        if (
+          typeof coupon.maxUses === "number" &&
+          coupon.currentUses >= coupon.maxUses
+        ) {
           isValid = false;
         }
 
@@ -282,18 +329,24 @@ export async function POST(
               )
             );
           const usesCount = Number(userCouponUses[0]?.count || 0);
-          const maxPerUser = coupon.maxUsesPerUser == null ? Infinity : Number(coupon.maxUsesPerUser);
+          const maxPerUser =
+            coupon.maxUsesPerUser == null
+              ? Infinity
+              : Number(coupon.maxUsesPerUser);
           if (usesCount >= maxPerUser) {
             isValid = false;
           }
         }
 
         if (isValid) {
-          const subtotalForDiscount = (isDuoActive ? getDuoPricing(tierPrice).final : tierPrice) +
-                                      (isDuoActive ? getDuoPricing(addonsTotal).final : addonsTotal) +
-                                      toolkitsTotal;
+          const subtotalForDiscount =
+            (isDuoActive ? getDuoPricing(tierPrice).final : tierPrice) +
+            (isDuoActive ? getDuoPricing(addonsTotal).final : addonsTotal) +
+            toolkitsTotal;
           if (coupon.discountType === "percentage") {
-            discountAmount = Math.round((subtotalForDiscount * coupon.discountAmount) / 100);
+            discountAmount = Math.round(
+              (subtotalForDiscount * coupon.discountAmount) / 100
+            );
           } else {
             discountAmount = coupon.discountAmount;
           }
@@ -312,8 +365,12 @@ export async function POST(
 
     // 5. Compute Total price (in rupees)
     // Duo discount: double the price then apply 20% off. Toolkits are not discounted.
-    const finalTierPrice = isDuoActive ? getDuoPricing(tierPrice).final : tierPrice;
-    const finalAddonsTotal = isDuoActive ? getDuoPricing(addonsTotal).final : addonsTotal;
+    const finalTierPrice = isDuoActive
+      ? getDuoPricing(tierPrice).final
+      : tierPrice;
+    const finalAddonsTotal = isDuoActive
+      ? getDuoPricing(addonsTotal).final
+      : addonsTotal;
 
     const subtotal = finalTierPrice + finalAddonsTotal + toolkitsTotal;
     const finalPriceRupees = Math.max(0, subtotal - discountAmount);
@@ -329,15 +386,32 @@ export async function POST(
     }
 
     // Check existing paid order for user to copy over verification and registration details upon upgrade
-    const primaryExistingOrder = await getPaidCohortOrderForUser(userId, cohortId);
+    const primaryExistingOrder = await getPaidCohortOrderForUser(
+      userId,
+      cohortId
+    );
 
-    const isVerifiedFromPrevious = primaryExistingOrder ? primaryExistingOrder.isVerified : false;
-    const registrationCompletedAtFromPrevious = primaryExistingOrder ? primaryExistingOrder.registrationCompletedAt : null;
-    const registrationNameFromPrevious = primaryExistingOrder ? primaryExistingOrder.registrationName : null;
-    const registrationCollegeFromPrevious = primaryExistingOrder ? primaryExistingOrder.registrationCollege : null;
-    const registrationCourseFromPrevious = primaryExistingOrder ? primaryExistingOrder.registrationCourse : null;
-    const registrationYearFromPrevious = primaryExistingOrder ? primaryExistingOrder.registrationYear : null;
-    const registrationExpectationsFromPrevious = primaryExistingOrder ? primaryExistingOrder.registrationExpectations : null;
+    const isVerifiedFromPrevious = primaryExistingOrder
+      ? primaryExistingOrder.isVerified
+      : false;
+    const registrationCompletedAtFromPrevious = primaryExistingOrder
+      ? primaryExistingOrder.registrationCompletedAt
+      : null;
+    const registrationNameFromPrevious = primaryExistingOrder
+      ? primaryExistingOrder.registrationName
+      : null;
+    const registrationCollegeFromPrevious = primaryExistingOrder
+      ? primaryExistingOrder.registrationCollege
+      : null;
+    const registrationCourseFromPrevious = primaryExistingOrder
+      ? primaryExistingOrder.registrationCourse
+      : null;
+    const registrationYearFromPrevious = primaryExistingOrder
+      ? primaryExistingOrder.registrationYear
+      : null;
+    const registrationExpectationsFromPrevious = primaryExistingOrder
+      ? primaryExistingOrder.registrationExpectations
+      : null;
 
     // 6. Direct free cohort access if price is 0
     if (finalPriceRupees <= 0) {
@@ -378,12 +452,13 @@ export async function POST(
           if (buddyUser) {
             // Grant toolkit access
             if (cohort.toolkitId) {
-              const existingBuddyToolkit = await db.query.userToolkits.findFirst({
-                where: and(
-                  eq(userToolkits.userId, buddyUser.id),
-                  eq(userToolkits.toolkitId, cohort.toolkitId)
-                ),
-              });
+              const existingBuddyToolkit =
+                await db.query.userToolkits.findFirst({
+                  where: and(
+                    eq(userToolkits.userId, buddyUser.id),
+                    eq(userToolkits.toolkitId, cohort.toolkitId)
+                  ),
+                });
               if (!existingBuddyToolkit) {
                 await db.insert(userToolkits).values({
                   userId: buddyUser.id,
@@ -433,7 +508,7 @@ export async function POST(
             eq(userToolkits.toolkitId, cohort.toolkitId)
           ),
         });
-        
+
         if (!existingUserToolkit) {
           await db.insert(userToolkits).values({
             userId,
@@ -452,7 +527,7 @@ export async function POST(
             eq(userToolkits.toolkitId, tkId)
           ),
         });
-        
+
         if (!existingUserToolkit) {
           await db.insert(userToolkits).values({
             userId,

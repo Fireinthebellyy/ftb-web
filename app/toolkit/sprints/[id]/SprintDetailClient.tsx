@@ -16,7 +16,6 @@ import {
   X,
   Gift,
   Copy,
-  Play,
   HelpCircle,
   MessageSquare,
   Users,
@@ -690,22 +689,7 @@ export default function SprintDetailClient() {
                 <span>Back</span>
               </button>
 
-              <div className="pointer-events-auto flex items-center gap-2">
-                {videoEmbed && (
-                  <span className="flex items-center gap-1.5 rounded-full border border-white/20 bg-black/70 px-2.5 py-1 text-[11px] font-semibold text-white/90 shadow-md backdrop-blur-md sm:px-3 sm:py-1.5 sm:text-xs">
-                    <Play className="h-3 w-3 fill-current text-[#ff5e14]" />
-                    <span className="capitalize">
-                      {videoEmbed.provider === "bunny"
-                        ? "Bunny CDN"
-                        : videoEmbed.provider === "youtube"
-                          ? "YouTube"
-                          : videoEmbed.provider === "instagram"
-                            ? "Instagram"
-                            : "Video"}
-                    </span>
-                  </span>
-                )}
-              </div>
+              <div className="pointer-events-auto flex items-center gap-2" />
             </div>
 
             {videoEmbed ? (

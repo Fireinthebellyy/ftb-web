@@ -16,7 +16,6 @@ import {
   X,
   Gift,
   Copy,
-  Play,
   HelpCircle,
   MessageSquare,
   Users,
@@ -398,8 +397,8 @@ export default function SprintDetailClient() {
   const runningTotal = Math.max(0, subtotal - couponDiscount);
 
   const baseOriginalPrice = activeTier
-    ? activeTier.originalPrice || activeTier.price
-    : 0;
+    ? activeTier.originalPrice || sprint.originalPrice || activeTier.price
+    : sprint.originalPrice || sprint.basePrice || 0;
   const sessionsOriginalTotal =
     sprint.sessions
       ?.filter((s) => s.price && selectedAddonIds.includes(s.id))
@@ -690,22 +689,7 @@ export default function SprintDetailClient() {
                 <span>Back</span>
               </button>
 
-              <div className="pointer-events-auto flex items-center gap-2">
-                {videoEmbed && (
-                  <span className="flex items-center gap-1.5 rounded-full border border-white/20 bg-black/70 px-2.5 py-1 text-[11px] font-semibold text-white/90 shadow-md backdrop-blur-md sm:px-3 sm:py-1.5 sm:text-xs">
-                    <Play className="h-3 w-3 fill-current text-[#ff5e14]" />
-                    <span className="capitalize">
-                      {videoEmbed.provider === "bunny"
-                        ? "Bunny CDN"
-                        : videoEmbed.provider === "youtube"
-                          ? "YouTube"
-                          : videoEmbed.provider === "instagram"
-                            ? "Instagram"
-                            : "Video"}
-                    </span>
-                  </span>
-                )}
-              </div>
+              <div className="pointer-events-auto flex items-center gap-2" />
             </div>
 
             {videoEmbed ? (
@@ -1903,7 +1887,7 @@ export default function SprintDetailClient() {
                 </span>
                 <div className="flex flex-wrap items-baseline gap-2">
                   <span className="text-lg font-black text-gray-900">
-                    ₹{runningTotal}/-
+                    ₹{runningTotal}
                   </span>
                   {couponDiscount > 0 && (
                     <>
@@ -1915,27 +1899,32 @@ export default function SprintDetailClient() {
                       </span>
                     </>
                   )}
-                  {sprint.showEarlyBirdCheckout &&
-                    totalOriginalPrice > runningTotal &&
+                  {totalOriginalPrice > runningTotal &&
                     couponDiscount === 0 && (
                       <>
                         <span className="text-xs font-medium text-gray-400 line-through">
                           ₹{totalOriginalPrice}
                         </span>
-                        <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold whitespace-nowrap text-blue-600">
-                          Early Bird offer
-                        </span>
+                        {sprint.showEarlyBirdCheckout && (
+                          <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold whitespace-nowrap text-blue-600">
+                            Early Bird offer
+                          </span>
+                        )}
                       </>
                     )}
-                  {!sprint.showEarlyBirdCheckout &&
+                  {totalOriginalPrice <= runningTotal &&
                     isDuoActive &&
                     (selectedTierId || selectedAddonIds.length > 0) &&
                     couponDiscount === 0 && (
                       <span className="text-xs font-medium text-gray-400 line-through">
                         ₹
                         {selectedTierId
-                          ? basePrice * 2 + toolkitsTotal
-                          : sessionsTotal * 2 + toolkitsTotal}
+                          ? (baseOriginalPrice > basePrice
+                              ? baseOriginalPrice * 2
+                              : basePrice * 2) + toolkitsTotal
+                          : (sessionsOriginalTotal > sessionsTotal
+                              ? sessionsOriginalTotal * 2
+                              : sessionsTotal * 2) + toolkitsTotal}
                       </span>
                     )}
                 </div>

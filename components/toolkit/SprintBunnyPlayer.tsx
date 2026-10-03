@@ -13,6 +13,7 @@ interface SprintBunnyPlayerProps {
   autoplay?: boolean;
   muted?: boolean;
   controls?: boolean;
+  onPlay?: () => void;
 }
 
 export default function SprintBunnyPlayer({
@@ -23,13 +24,14 @@ export default function SprintBunnyPlayer({
   autoplay = false,
   muted = false,
   controls = true,
+  onPlay,
 }: SprintBunnyPlayerProps) {
   const [resolvedVideoUrl, setResolvedVideoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadSecureVideo = useCallback(async () => {
-    if (!videoUrl ) {
+    if (!videoUrl) {
       setError("No video URL or ID provided");
       setLoading(false);
       return;
@@ -48,15 +50,17 @@ export default function SprintBunnyPlayer({
       }
 
       // Always request fresh, authenticated signed URL from backend
-      const response = await fetch(`/api/video-access/sprints?${params.toString()}`);
-      console.log("respons of sprints",response);
+      const response = await fetch(
+        `/api/video-access/sprints?${params.toString()}`
+      );
+      console.log("respons of sprints", response);
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.error || "Failed to load secure video player");
       }
 
       const data = await response.json();
-      console.log("data of sprints",data);
+      console.log("data of sprints", data);
       setError(null);
       setResolvedVideoUrl(data.videoUrl);
     } catch (err) {
@@ -68,9 +72,7 @@ export default function SprintBunnyPlayer({
         setResolvedVideoUrl(videoUrl);
         setError(null);
       } else {
-        setError(
-          err instanceof Error ? err.message : "Failed to load video"
-        );
+        setError(err instanceof Error ? err.message : "Failed to load video");
       }
     } finally {
       setLoading(false);
@@ -80,6 +82,29 @@ export default function SprintBunnyPlayer({
   useEffect(() => {
     loadSecureVideo();
   }, [loadSecureVideo]);
+
+  useEffect(() => {
+    if (!onPlay) return;
+
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const data =
+          typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+        if (
+          data?.event === "play" ||
+          data?.type === "play" ||
+          data === "play"
+        ) {
+          onPlay();
+        }
+      } catch {
+        // ignore non-json messages
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [onPlay]);
 
   const getEmbedSrc = () => {
     if (!resolvedVideoUrl) return "";
@@ -95,8 +120,7 @@ export default function SprintBunnyPlayer({
         url.searchParams.set("controls", "false");
       }
       return url.toString();
-    } 
-    catch {
+    } catch {
       return resolvedVideoUrl;
     }
   };
@@ -113,7 +137,9 @@ export default function SprintBunnyPlayer({
         >
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
             <Loader2 className="h-8 w-8 animate-spin text-white" />
-            <span className="text-xs text-gray-300">Authenticating video access...</span>
+            <span className="text-xs text-gray-300">
+              Authenticating video access...
+            </span>
           </div>
         </div>
       </div>
@@ -130,15 +156,15 @@ export default function SprintBunnyPlayer({
           )}
           style={{ paddingBottom: "56.25%" }}
         >
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center gap-3">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-center">
             <p className="text-sm font-medium text-red-600">{error}</p>
             <Button
               size="sm"
               variant="outline"
               onClick={() => loadSecureVideo()}
-              className="text-xs border-red-300 text-red-700 hover:bg-red-100"
+              className="border-red-300 text-xs text-red-700 hover:bg-red-100"
             >
-              <RefreshCw className="w-3.5 h-3.5 mr-1" /> Retry Access
+              <RefreshCw className="mr-1 h-3.5 w-3.5" /> Retry Access
             </Button>
           </div>
         </div>
@@ -149,6 +175,7 @@ export default function SprintBunnyPlayer({
   return (
     <div className="space-y-4">
       <div
+        onClickCapture={() => onPlay?.()}
         className={cn(
           "relative w-full overflow-hidden rounded-xl bg-black shadow-xl",
           className

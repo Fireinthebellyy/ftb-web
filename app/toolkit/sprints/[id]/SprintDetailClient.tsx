@@ -33,6 +33,7 @@ import ToolkitStudentFeedback from "@/components/toolkit/ToolkitStudentFeedback"
 import { getVideoEmbedInfo } from "@/lib/video-embed";
 import { caveat } from "@/lib/fonts";
 import SprintBunnyPlayer from "@/components/toolkit/SprintBunnyPlayer";
+import posthog from "posthog-js";
 
 export function getDuoPricing(singlePrice: number) {
   if (!singlePrice || singlePrice <= 0) {
@@ -226,15 +227,82 @@ export default function SprintDetailClient() {
     }
   }, [sprint, openFaqId]);
 
+  const [readFaqIds, setReadFaqIds] = useState<string[]>([]);
+  const lastVideoPlayTimeRef = React.useRef<number>(0);
+
+  const handleVideoPlay = useCallback(() => {
+    if (!sprint) return;
+    const now = Date.now();
+    if (now - lastVideoPlayTimeRef.current < 2000) return;
+    lastVideoPlayTimeRef.current = now;
+
+    const videoEmbed = sprint.videoUrl
+      ? getVideoEmbedInfo(sprint.videoUrl)
+      : null;
+
+    posthog.capture("sprint_video_played", {
+      sprint_id: sprint.id,
+      sprint_title: sprint.title,
+      video_provider: videoEmbed?.provider || "direct",
+      video_url: sprint.videoUrl || null,
+    });
+  }, [sprint]);
+
+  const handleFaqClick = (
+    faq: SprintFaqItem,
+    index: number,
+    isOpen: boolean
+  ) => {
+    const nextOpen = !isOpen;
+    setOpenFaqId(nextOpen ? faq.id : null);
+
+    const updatedReadFaqIds = Array.from(new Set([...readFaqIds, faq.id]));
+    if (nextOpen && !readFaqIds.includes(faq.id)) {
+      setReadFaqIds(updatedReadFaqIds);
+    }
+
+    const readFaqTitles = (sprint?.faqs || [])
+      .filter((f) => updatedReadFaqIds.includes(f.id))
+      .map((f) => f.question);
+
+    posthog.capture("sprint_faq_clicked", {
+      sprint_id: sprint?.id,
+      sprint_title: sprint?.title,
+      faq_id: faq.id,
+      faq_question: faq.question,
+      faq_index: index,
+      action: nextOpen ? "opened" : "closed",
+      total_faqs_read: updatedReadFaqIds.length,
+      read_faq_questions: readFaqTitles,
+    });
+  };
+
   const handleCopyLink = () => {
     if (typeof window !== "undefined") {
       navigator.clipboard.writeText(window.location.href);
       setCopied(true);
       toast.success("Sprint link copied to clipboard!");
       setTimeout(() => setCopied(false), 2000);
+
+      if (sprint) {
+        posthog.capture("sprint_shared", {
+          sprint_id: sprint.id,
+          sprint_title: sprint.title,
+          source: "sprint_header",
+          share_type: "link_copied",
+          url: window.location.href,
+        });
+      }
     }
   };
   const handleLastCohortClick = () => {
+    if (sprint) {
+      posthog.capture("sprint_last_cohort_clicked", {
+        sprint_id: sprint.id,
+        sprint_title: sprint.title,
+        has_poster: Boolean(lastCohortPoster),
+      });
+    }
     document.getElementById("last-cohort-poster")?.scrollIntoView({
       behavior: "smooth",
       block: "start",
@@ -426,6 +494,23 @@ export default function SprintDetailClient() {
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessingCheckout(true);
+
+    if (sprint) {
+      const selectedTier = sprint.tiers?.find((t) => t.id === selectedTierId);
+      posthog.capture("sprint_checkout_clicked", {
+        sprint_id: sprint.id,
+        sprint_title: sprint.title,
+        payable_price: runningTotal,
+        original_price: totalOriginalPrice,
+        selected_tier_id: selectedTierId || null,
+        selected_tier_name: selectedTier?.name || null,
+        selected_addon_ids: selectedAddonIds,
+        selected_toolkit_ids: selectedToolkitIds,
+        is_duo_active: isDuoActive,
+        has_coupon: Boolean(couponDiscount > 0),
+        coupon_code: couponCode || null,
+      });
+    }
 
     if (!session) {
       toast.error("Please login to register for this sprint");
@@ -695,7 +780,10 @@ export default function SprintDetailClient() {
             {videoEmbed ? (
               /* Top Banner Video Player (YouTube, Instagram, Bunny CDN, Direct) */
               videoEmbed.provider === "instagram" ? (
-                <div className="relative flex min-h-[420px] w-full flex-col items-center justify-center bg-zinc-950 px-2 py-4 sm:min-h-[520px] sm:px-4 sm:py-6 md:min-h-[600px]">
+                <div
+                  onClickCapture={handleVideoPlay}
+                  className="relative flex min-h-[420px] w-full flex-col items-center justify-center bg-zinc-950 px-2 py-4 sm:min-h-[520px] sm:px-4 sm:py-6 md:min-h-[600px]"
+                >
                   <div className="flex h-[420px] w-full max-w-4xl items-center justify-center sm:h-[520px] md:h-[600px]">
                     <iframe
                       src={videoEmbed.embedUrl}
@@ -709,6 +797,7 @@ export default function SprintDetailClient() {
                 </div>
               ) : (
                 <div
+                  onClickCapture={handleVideoPlay}
                   className={cn(
                     "relative mx-[15px] w-[calc(100%-30px)] overflow-hidden rounded-xl bg-black",
                     videoEmbed.provider !== "bunny" && "aspect-video"
@@ -733,6 +822,7 @@ export default function SprintDetailClient() {
                       sprintId={sprint.id}
                       title={`${sprint.title} Video Player`}
                       className="w-full"
+                      onPlay={handleVideoPlay}
                     />
                   ) : (
                     <video
@@ -740,6 +830,7 @@ export default function SprintDetailClient() {
                       controls
                       playsInline
                       preload="metadata"
+                      onPlay={handleVideoPlay}
                       className="h-full w-full bg-black object-contain"
                     />
                   )}
@@ -943,6 +1034,20 @@ export default function SprintDetailClient() {
                             rel="noopener noreferrer"
                             aria-label={`${mentor.name}'s LinkedIn profile`}
                             className="shrink-0"
+                            onClick={() => {
+                              if (sprint) {
+                                posthog.capture(
+                                  "sprint_mentor_linkedin_clicked",
+                                  {
+                                    sprint_id: sprint.id,
+                                    sprint_title: sprint.title,
+                                    mentor_id: mentor.id,
+                                    mentor_name: mentor.name,
+                                    linkedin_url: mentor.link,
+                                  }
+                                );
+                              }
+                            }}
                           >
                             <FaLinkedinIn
                               className="h-3.5 w-3.5 sm:h-4.5 sm:w-4.5"
@@ -1186,6 +1291,14 @@ export default function SprintDetailClient() {
                 <button
                   type="button"
                   onClick={() => {
+                    if (sprint) {
+                      posthog.capture("sprint_apply_now_clicked", {
+                        sprint_id: sprint.id,
+                        sprint_title: sprint.title,
+                        source: "buddy_dialog",
+                        has_access: sprint.hasAccess,
+                      });
+                    }
                     setIsBuddyDialogOpen(false);
                     setIsDrawerOpen(true);
                   }}
@@ -1281,7 +1394,7 @@ export default function SprintDetailClient() {
                         >
                           <button
                             type="button"
-                            onClick={() => setOpenFaqId(isOpen ? null : faq.id)}
+                            onClick={() => handleFaqClick(faq, index, isOpen)}
                             className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
                             aria-expanded={isOpen}
                           >
@@ -1403,6 +1516,16 @@ export default function SprintDetailClient() {
             href={`https://wa.me/916377492042?text=Hi!%20I'd%20like%20to%20enquire%20about%20the%20sprint%20program:%20${encodeURIComponent(sprint.title)}`}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => {
+              if (sprint) {
+                posthog.capture("sprint_enquire_now_clicked", {
+                  sprint_id: sprint.id,
+                  sprint_title: sprint.title,
+                  source: "sticky_bottom_bar",
+                  whatsapp_url: `https://wa.me/916377492042?text=Hi!%20I'd%20like%20to%20enquire%20about%20the%20sprint%20program:%20${encodeURIComponent(sprint.title)}`,
+                });
+              }
+            }}
             className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-3 text-center text-sm font-bold text-white shadow-lg transition hover:bg-emerald-700 md:text-base"
           >
             <svg
@@ -1432,7 +1555,17 @@ export default function SprintDetailClient() {
             </button>
           ) : (
             <button
-              onClick={() => setIsDrawerOpen(true)}
+              onClick={() => {
+                if (sprint) {
+                  posthog.capture("sprint_apply_now_clicked", {
+                    sprint_id: sprint.id,
+                    sprint_title: sprint.title,
+                    source: "sticky_bottom_bar",
+                    has_access: sprint.hasAccess,
+                  });
+                }
+                setIsDrawerOpen(true);
+              }}
               className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#ff5e14] px-4 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/10 transition hover:bg-[#e04f0f] md:text-base"
             >
               Apply Now <ChevronRight className="h-4 w-4" />
@@ -1503,6 +1636,19 @@ export default function SprintDetailClient() {
                           onClick={() => {
                             setSelectedTierId(tier.id);
                             setSelectedAddonIds([]);
+                            if (sprint) {
+                              posthog.capture("sprint_tier_selected", {
+                                sprint_id: sprint.id,
+                                sprint_title: sprint.title,
+                                tier_id: tier.id,
+                                tier_name: tier.name,
+                                tier_price: tier.price,
+                                is_default: Boolean(tier.isDefault),
+                                is_duo_active: isDuoActive,
+                                is_filling_fast: Boolean(tier.isFillingFast),
+                                is_trending: Boolean(tier.isTrending),
+                              });
+                            }
                           }}
                           className={cn(
                             "flex cursor-pointer items-start justify-between rounded-xl border-2 p-4 transition",

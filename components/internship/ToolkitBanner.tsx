@@ -16,6 +16,8 @@ interface BannerCohort {
   title: string;
   coverImageUrl?: string | null;
   cardImageUrl?: string | null;
+  startDate?: string | null;
+  createdAt?: string | Date | null;
 }
 
 interface BannerSprint {
@@ -23,6 +25,90 @@ interface BannerSprint {
   title: string;
   coverImageUrl?: string | null;
   cardImageUrl?: string | null;
+  startDate?: string | null;
+  createdAt?: string | Date | null;
+}
+
+interface FormattedBannerItem {
+  id: string;
+  title: string;
+  imageUrl: string | null;
+  href: string;
+  eventType: string;
+  eventProps: Record<string, unknown>;
+  type: "cohort" | "sprint";
+}
+
+function getProgramDateScore(
+  startDate?: string | null,
+  createdAt?: string | Date | null
+): number {
+  const now = new Date();
+  let parsedDate: Date | null = null;
+  let isUpcoming = false;
+
+  if (startDate && typeof startDate === "string") {
+    // 1. Direct date parsing
+    const direct = new Date(startDate.trim());
+    if (!isNaN(direct.getTime())) {
+      parsedDate = direct;
+      isUpcoming = direct.getTime() >= now.getTime();
+    } else {
+      // 2. Regex matching common textual dates like "20th Oct", "Starts 15th Nov", "Nov 15"
+      const match = startDate.match(
+        /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s*(\d{1,2})|(\d{1,2})(?:st|nd|rd|th)?\s*(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*/i
+      );
+      if (match) {
+        const monthNames: Record<string, number> = {
+          jan: 0,
+          feb: 1,
+          mar: 2,
+          apr: 3,
+          may: 4,
+          jun: 5,
+          jul: 6,
+          aug: 7,
+          sep: 8,
+          oct: 9,
+          nov: 10,
+          dec: 11,
+        };
+        const monthStr = (match[1] || match[4]).toLowerCase().slice(0, 3);
+        const day = parseInt(match[2] || match[3], 10);
+        const month = monthNames[monthStr];
+
+        const yearMatch = startDate.match(/\b(20\d{2})\b/);
+        const year = yearMatch ? parseInt(yearMatch[1], 10) : now.getFullYear();
+        parsedDate = new Date(year, month, day, 23, 59, 59);
+
+        // If no year specified and date is over 60 days in the past, treat as next year
+        if (
+          !yearMatch &&
+          parsedDate.getTime() < now.getTime() &&
+          now.getTime() - parsedDate.getTime() > 60 * 24 * 60 * 60 * 1000
+        ) {
+          parsedDate.setFullYear(year + 1);
+        }
+        isUpcoming = parsedDate.getTime() >= now.getTime();
+      }
+    }
+  }
+
+  const createdTime = createdAt ? new Date(createdAt).getTime() : 0;
+
+  // Sorting score:
+  // Tier 1 (Upcoming starting soonest): score 1e11 + distance to future date (lowest score = highest rank)
+  // Tier 2 (Active/no explicit start date): score 2e11 + age in ms
+  // Tier 3 (Closed/past dates): score 3e11 + elapsed past time (pushed to end)
+  if (parsedDate && isUpcoming) {
+    return 1e11 + Math.max(0, parsedDate.getTime() - now.getTime());
+  } else if (!parsedDate) {
+    const age = now.getTime() - (createdTime || 0);
+    return 2e11 + Math.max(0, age);
+  } else {
+    const elapsed = now.getTime() - parsedDate.getTime();
+    return 3e11 + Math.max(0, elapsed);
+  }
 }
 
 export default function ToolkitBanner() {
@@ -37,46 +123,75 @@ export default function ToolkitBanner() {
   const bannerItems = useMemo(() => {
     const cohorts = (cohortsData || []) as BannerCohort[];
     const sprints = (sprintsData || []) as BannerSprint[];
-    const items: Array<{
-      id: string;
-      title: string;
-      imageUrl: string | null;
-      href: string;
-      eventType: string;
-      eventProps: Record<string, unknown>;
-    }> = [];
 
-    const maxLength = Math.max(cohorts.length, sprints.length);
+    // Sort both queues by date priority (upcoming soonest -> active recent -> closed past)
+    const sortedCohorts = [...cohorts].sort(
+      (a, b) =>
+        getProgramDateScore(a.startDate, a.createdAt) -
+        getProgramDateScore(b.startDate, b.createdAt)
+    );
+
+    const sortedSprints = [...sprints].sort(
+      (a, b) =>
+        getProgramDateScore(a.startDate, a.createdAt) -
+        getProgramDateScore(b.startDate, b.createdAt)
+    );
+
+    // Format helpers
+    const formatCohort = (cohort: BannerCohort): FormattedBannerItem => ({
+      id: cohort.id,
+      title: cohort.title,
+      imageUrl: cohort.coverImageUrl || cohort.cardImageUrl || null,
+      href: `/toolkit/cohorts/${cohort.id}`,
+      eventType: "internship_cohort_clicked",
+      eventProps: {
+        cohort_id: cohort.id,
+        cohort_title: cohort.title,
+        source: "internship_banner",
+      },
+      type: "cohort",
+    });
+
+    const formatSprint = (sprint: BannerSprint): FormattedBannerItem => ({
+      id: sprint.id,
+      title: sprint.title,
+      imageUrl: sprint.cardImageUrl || sprint.coverImageUrl || null,
+      href: `/toolkit/sprints/${sprint.id}`,
+      eventType: "internship_sprint_clicked",
+      eventProps: {
+        sprint_id: sprint.id,
+        sprint_title: sprint.title,
+        source: "internship_banner",
+      },
+      type: "sprint",
+    });
+
+    // Determine which program category leads based on whichever starts first/is most recent
+    const leadCohort = sortedCohorts[0];
+    const leadSprint = sortedSprints[0];
+
+    const sprintLeads =
+      leadSprint &&
+      (!leadCohort ||
+        getProgramDateScore(leadSprint.startDate, leadSprint.createdAt) <
+          getProgramDateScore(leadCohort.startDate, leadCohort.createdAt));
+
+    const queue1 = sprintLeads
+      ? sortedSprints.map(formatSprint)
+      : sortedCohorts.map(formatCohort);
+    const queue2 = sprintLeads
+      ? sortedCohorts.map(formatCohort)
+      : sortedSprints.map(formatSprint);
+
+    // Interleave queues
+    const items: FormattedBannerItem[] = [];
+    const maxLength = Math.max(queue1.length, queue2.length);
     for (let i = 0; i < maxLength; i++) {
-      if (i < cohorts.length) {
-        const cohort = cohorts[i];
-        items.push({
-          id: cohort.id,
-          title: cohort.title,
-          imageUrl: cohort.coverImageUrl || cohort.cardImageUrl || null,
-          href: `/toolkit/cohorts/${cohort.id}`,
-          eventType: "internship_cohort_clicked",
-          eventProps: {
-            cohort_id: cohort.id,
-            cohort_title: cohort.title,
-            source: "internship_banner",
-          },
-        });
+      if (i < queue1.length) {
+        items.push(queue1[i]);
       }
-      if (i < sprints.length) {
-        const sprint = sprints[i];
-        items.push({
-          id: sprint.id,
-          title: sprint.title,
-          imageUrl: sprint.cardImageUrl || sprint.coverImageUrl || null,
-          href: `/toolkit/sprints/${sprint.id}`,
-          eventType: "internship_sprint_clicked",
-          eventProps: {
-            sprint_id: sprint.id,
-            sprint_title: sprint.title,
-            source: "internship_banner",
-          },
-        });
+      if (i < queue2.length) {
+        items.push(queue2[i]);
       }
     }
 
@@ -115,7 +230,7 @@ export default function ToolkitBanner() {
             className="hide-scrollbar pointer-events-auto flex snap-x gap-3 overflow-x-auto pb-2"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
-            {bannerItems.map((item) => (
+            {bannerItems.map((item, index) => (
               <Link
                 href={item.href}
                 key={`${item.eventType}-${item.id}`}
@@ -141,6 +256,13 @@ export default function ToolkitBanner() {
 
                 {/* Gradient Overlay for text readability */}
                 <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
+
+                {/* Recommended Black Tag on the First Item */}
+                {index === 0 && (
+                  <span className="absolute top-2 left-2 z-20 rounded-md border border-white/20 bg-black/90 px-2 py-0.5 text-[9px] font-bold tracking-wider text-white uppercase shadow-md backdrop-blur-md sm:text-[10px]">
+                    Recommended
+                  </span>
+                )}
 
                 {/* Content */}
                 <div className="absolute right-0 bottom-0 left-0 flex items-end justify-between p-2 text-white sm:p-2.5">

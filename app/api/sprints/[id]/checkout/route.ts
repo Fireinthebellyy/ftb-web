@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, sql } from "drizzle-orm";
 import {
   sprints,
   sprintTiers,
@@ -11,12 +11,27 @@ import {
   sprintSessions,
   siteSettings,
   sprintUpgradePlans,
+  user,
 } from "@/lib/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { createOrder } from "@/lib/razorpay";
-import { getPaidSprintOrderForUser } from "@/lib/sprint-registration";
 import { sendSprintPaymentConfirmationEmail } from "@/lib/sprint-payment-email";
+
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function resolveSprint(identifier: string) {
+  if (UUID_REGEX.test(identifier)) {
+    return db.query.sprints.findFirst({
+      where: eq(sprints.id, identifier),
+    });
+  }
+
+  return db.query.sprints.findFirst({
+    where: eq(sprints.slug, identifier),
+  });
+}
 
 function getDuoPricing(singlePrice: number) {
   if (!singlePrice || singlePrice <= 0) {
@@ -35,7 +50,7 @@ export async function POST(
 ) {
   try {
     const paramsResolved = await params;
-    const sprintId = paramsResolved.id;
+    const identifier = paramsResolved.id;
 
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -72,6 +87,15 @@ export async function POST(
         { status: 400 }
       );
     }
+
+    const sprint = await resolveSprint(identifier);
+    if (!sprint || !sprint.isActive) {
+      return NextResponse.json(
+        { error: "Sprint not found or is inactive" },
+        { status: 404 }
+      );
+    }
+    const sprintId = sprint.id;
 
     const settings = await db.query.siteSettings.findFirst({
       where: eq(siteSettings.id, "global"),
@@ -119,33 +143,59 @@ export async function POST(
       }
     }
 
-    const sprint = await db.query.sprints.findFirst({
-      where: eq(sprints.id, sprintId),
+    // Check existing paid orders to verify eligibility & preserve registration details
+    const existingPaidOrders = await db.query.sprintOrders.findMany({
+      where: and(
+        eq(sprintOrders.sprintId, sprintId),
+        eq(sprintOrders.userId, userId),
+        eq(sprintOrders.status, "paid")
+      ),
+      orderBy: (sprintOrders, { desc }) => [desc(sprintOrders.createdAt)],
     });
 
-    if (!sprint || !sprint.isActive) {
+    const hasPurchasedTier = existingPaidOrders.some((o) =>
+      Boolean(o.selectedTierId)
+    );
+    const previousCompletedOrder = existingPaidOrders.find((o) =>
+      Boolean(o.registrationCompletedAt)
+    );
+
+    // Only block tier purchase if they ALREADY enrolled in a full base tier
+    if (selectedTierId && hasPurchasedTier) {
       return NextResponse.json(
-        { error: "Sprint not found or is inactive" },
-        { status: 404 }
+        { error: "You are already enrolled in this sprint base program." },
+        { status: 400 }
       );
     }
 
-    const existingOrder = await getPaidSprintOrderForUser(userId, sprintId);
-    let _isAlreadyEnrolled = false;
+    const registrationCompletedAtFromPrevious =
+      previousCompletedOrder?.registrationCompletedAt ?? null;
+    const registrationNameFromPrevious =
+      previousCompletedOrder?.registrationName ?? null;
+    const registrationCollegeFromPrevious =
+      previousCompletedOrder?.registrationCollege ?? null;
+    const registrationCourseFromPrevious =
+      previousCompletedOrder?.registrationCourse ?? null;
+    const registrationMobileNumberFromPrevious =
+      previousCompletedOrder?.registrationMobileNumber ?? null;
+    const registrationYearFromPrevious =
+      previousCompletedOrder?.registrationYear ?? null;
+    const registrationCityFromPrevious =
+      previousCompletedOrder?.registrationCity ?? null;
+    const registrationExpectationsFromPrevious =
+      previousCompletedOrder?.registrationExpectations ?? null;
+    const registrationConsentFromPrevious =
+      previousCompletedOrder?.registrationConsent ?? null;
+    const isVerifiedFromPrevious = previousCompletedOrder?.isVerified ?? false;
 
-    if (existingOrder) {
-      _isAlreadyEnrolled = true;
-      if (selectedTierId) {
-        return NextResponse.json(
-          { error: "You are already enrolled in this sprint base program." },
-          { status: 400 }
-        );
-      }
-    }
-
+    // Pricing calculation
     let baseAmount = 0;
+    let addOnTotal = 0;
 
-    if (selectedTierId) {
+    if (selectedUpgradePlanId) {
+      // UPGRADE PLAN: Price is solely the upgrade package price.
+      baseAmount = upgradePlanPrice;
+    } else if (selectedTierId) {
       const tier = await db.query.sprintTiers.findFirst({
         where: and(
           eq(sprintTiers.id, selectedTierId),
@@ -160,9 +210,22 @@ export async function POST(
         );
       }
       baseAmount = tier.price;
-    } else if (selectedUpgradePlanId) {
-      baseAmount = upgradePlanPrice;
+    } else if (selectedAddOnIds.length > 0) {
+      // SESSIONS ONLY: base amount is 0, user pays for chosen sessions
+      baseAmount = 0;
+    } else if (selectedToolkitIds.length > 0) {
+      // TOOLKITS ONLY: base amount is 0
+      baseAmount = 0;
     } else {
+      if (!validateCouponOnly) {
+        return NextResponse.json(
+          {
+            error:
+              "Please select a bundle tier, upgrade package, or at least one session.",
+          },
+          { status: 400 }
+        );
+      }
       baseAmount = sprint.basePrice;
     }
 
@@ -171,8 +234,8 @@ export async function POST(
       baseAmount = duoInfo.final;
     }
 
-    let addOnTotal = 0;
-    if (selectedAddOnIds.length > 0) {
+    // Only compute addOnTotal if NOT purchasing an upgrade plan (prevent double charging)
+    if (selectedAddOnIds.length > 0 && !selectedUpgradePlanId) {
       const sessionRecords = await db
         .select({ id: sprintSessions.id, price: sprintSessions.price })
         .from(sprintSessions)
@@ -188,6 +251,11 @@ export async function POST(
           addOnTotal += rec.price;
         }
       });
+
+      if (buddyEmail && !selectedTierId) {
+        const duoInfo = getDuoPricing(addOnTotal);
+        addOnTotal = duoInfo.final;
+      }
     }
 
     let toolkitsTotal = 0;
@@ -286,9 +354,39 @@ export async function POST(
           razorpayOrderId: dummyOrderId,
           razorpayPaymentId: `free_payment_${Date.now()}`,
           status: "paid",
-          isVerified: true,
+          isVerified: isVerifiedFromPrevious,
+          registrationCompletedAt: registrationCompletedAtFromPrevious,
+          registrationName: registrationNameFromPrevious,
+          registrationCollege: registrationCollegeFromPrevious,
+          registrationCourse: registrationCourseFromPrevious,
+          registrationMobileNumber: registrationMobileNumberFromPrevious,
+          registrationYear: registrationYearFromPrevious,
+          registrationCity: registrationCityFromPrevious,
+          registrationExpectations: registrationExpectationsFromPrevious,
+          registrationConsent: registrationConsentFromPrevious,
         })
         .returning();
+
+      // Increment coupon uses if coupon was applied
+      if (appliedCoupon) {
+        await db
+          .update(coupons)
+          .set({ currentUses: sql`${coupons.currentUses} + 1` })
+          .where(eq(coupons.id, appliedCoupon.id));
+      }
+
+      // Grant linked toolkit access to user if sprint has toolkitId
+      if (sprint.toolkitId) {
+        await db
+          .insert(userToolkits)
+          .values({
+            userId,
+            toolkitId: sprint.toolkitId,
+            paymentStatus: "completed",
+            amountPaid: 0,
+          })
+          .onConflictDoNothing();
+      }
 
       if (selectedToolkitIds.length > 0) {
         for (const tkId of selectedToolkitIds) {
@@ -297,8 +395,68 @@ export async function POST(
             .values({
               userId,
               toolkitId: tkId,
+              paymentStatus: "completed",
+              amountPaid: 0,
             })
             .onConflictDoNothing();
+        }
+      }
+
+      // Grant buddy access for free orders
+      if (buddyEmail) {
+        try {
+          const buddyUser = await db.query.user.findFirst({
+            where: eq(user.email, buddyEmail.trim().toLowerCase()),
+          });
+
+          if (buddyUser) {
+            if (sprint.toolkitId) {
+              await db
+                .insert(userToolkits)
+                .values({
+                  userId: buddyUser.id,
+                  toolkitId: sprint.toolkitId,
+                  paymentStatus: "completed",
+                  amountPaid: 0,
+                })
+                .onConflictDoNothing();
+            }
+
+            const existingBuddyOrder = await db.query.sprintOrders.findFirst({
+              where: and(
+                eq(sprintOrders.userId, buddyUser.id),
+                eq(sprintOrders.sprintId, sprintId),
+                eq(sprintOrders.status, "paid")
+              ),
+            });
+
+            if (!existingBuddyOrder) {
+              await db.insert(sprintOrders).values({
+                sprintId,
+                userId: buddyUser.id,
+                buyerName: effectiveBuyerName,
+                buyerEmail: buddyEmail.trim().toLowerCase(),
+                buyerPhone: null,
+                buddyEmail: null,
+                selectedTierId: selectedTierId || null,
+                selectedUpgradePlanId: selectedUpgradePlanId || null,
+                selectedAddOnIds,
+                selectedToolkitIds,
+                selectedSessionIds: upgradePlanIncludedSessionIds,
+                amountPaid: 0,
+                razorpayOrderId: `buddy_${dummyOrderId}`,
+                razorpayPaymentId: `free_buddy_payment_${Date.now()}`,
+                couponId: appliedCoupon ? appliedCoupon.id : null,
+                status: "paid",
+                isVerified: true,
+              });
+            }
+          }
+        } catch (buddyErr) {
+          console.error(
+            "Failed to grant buddy access for free order:",
+            buddyErr
+          );
         }
       }
 
@@ -321,7 +479,7 @@ export async function POST(
     const razorpayOrder = await createOrder({
       amount: finalAmount * 100, // In paise
       currency: "INR",
-      receipt: `receipt_sprint_${Date.now()}`,
+      receipt: `rcpt_sp_${Date.now()}`,
     });
 
     const newOrder = await db
@@ -342,7 +500,16 @@ export async function POST(
         couponId: appliedCoupon ? appliedCoupon.id : null,
         razorpayOrderId: razorpayOrder.id,
         status: "created",
-        isVerified: false,
+        isVerified: isVerifiedFromPrevious,
+        registrationCompletedAt: registrationCompletedAtFromPrevious,
+        registrationName: registrationNameFromPrevious,
+        registrationCollege: registrationCollegeFromPrevious,
+        registrationCourse: registrationCourseFromPrevious,
+        registrationMobileNumber: registrationMobileNumberFromPrevious,
+        registrationYear: registrationYearFromPrevious,
+        registrationCity: registrationCityFromPrevious,
+        registrationExpectations: registrationExpectationsFromPrevious,
+        registrationConsent: registrationConsentFromPrevious,
       })
       .returning();
 

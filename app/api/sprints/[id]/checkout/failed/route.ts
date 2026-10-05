@@ -1,16 +1,31 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { sprintOrders } from "@/lib/schema";
+import { sprintOrders, sprints } from "@/lib/schema";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function resolveSprint(identifier: string) {
+  if (UUID_REGEX.test(identifier)) {
+    return db.query.sprints.findFirst({
+      where: eq(sprints.id, identifier),
+    });
+  }
+
+  return db.query.sprints.findFirst({
+    where: eq(sprints.slug, identifier),
+  });
+}
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: sprintId } = await params;
+    const { id: identifier } = await params;
     const session = await auth.api.getSession({
       headers: await headers(),
     });
@@ -27,6 +42,12 @@ export async function POST(
         { status: 400 }
       );
     }
+
+    const sprint = await resolveSprint(identifier);
+    if (!sprint) {
+      return NextResponse.json({ error: "Sprint not found" }, { status: 404 });
+    }
+    const sprintId = sprint.id;
 
     await db
       .update(sprintOrders)

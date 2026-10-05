@@ -11,10 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { ArrowLeft, Lock, Unlock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  useSprintDetail,
-  useSprintSession,
-} from "@/lib/queries-sprints";
+import { useSprintDetail, useSprintSession } from "@/lib/queries-sprints";
 import { Skeleton } from "@/components/ui/skeleton";
 import HtmlRenderer from "@/components/toolkit/HtmlRenderer";
 import {
@@ -44,8 +41,11 @@ export default function SprintDashboardPage() {
   );
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
-  const { data: sprintData, isLoading: isSprintLoading, refetch: refetchSprint } =
-    useSprintDetail(sprintId);
+  const {
+    data: sprintData,
+    isLoading: isSprintLoading,
+    refetch: refetchSprint,
+  } = useSprintDetail(sprintId);
 
   const sessions = useMemo(() => sprintData?.sessions ?? [], [sprintData]);
 
@@ -63,7 +63,10 @@ export default function SprintDashboardPage() {
 
     if (!targetId) {
       const accessibleSessions = sessions.filter((s: any) => s.isAccessible);
-      targetId = accessibleSessions.length > 0 ? accessibleSessions[0].id : sessions[0].id;
+      targetId =
+        accessibleSessions.length > 0
+          ? accessibleSessions[0].id
+          : sessions[0].id;
       setCurrentSessionId(targetId);
     }
 
@@ -72,7 +75,10 @@ export default function SprintDashboardPage() {
     } catch {
       /* noop */
     }
-    if (typeof window !== "undefined" && window.location.hash !== `#${targetId}`) {
+    if (
+      typeof window !== "undefined" &&
+      window.location.hash !== `#${targetId}`
+    ) {
       history.replaceState(null, "", `#${targetId}`);
     }
   }, [sessions, currentSessionId, sprintId]);
@@ -95,11 +101,11 @@ export default function SprintDashboardPage() {
 
   if (isSprintLoading) {
     return (
-      <div className="min-h-screen bg-black text-white p-6 space-y-6">
+      <div className="min-h-screen space-y-6 bg-black p-6 text-white">
         <Skeleton className="h-10 w-48 bg-zinc-800" />
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Skeleton className="h-96 bg-zinc-800 rounded-xl" />
-          <Skeleton className="h-96 md:col-span-3 bg-zinc-800 rounded-xl" />
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+          <Skeleton className="h-96 rounded-xl bg-zinc-800" />
+          <Skeleton className="h-96 rounded-xl bg-zinc-800 md:col-span-3" />
         </div>
       </div>
     );
@@ -107,13 +113,17 @@ export default function SprintDashboardPage() {
 
   if (sprintData?.isLocked) {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 text-center">
-        <Lock className="w-12 h-12 text-amber-400 mb-4" />
-        <h1 className="text-2xl font-bold mb-2">Access Pending Verification</h1>
-        <p className="text-sm text-zinc-400 max-w-md mb-6">
-          Your enrollment for {sprintData.sprint?.title} is being verified by our team.
+      <div className="flex min-h-screen flex-col items-center justify-center bg-black p-6 text-center text-white">
+        <Lock className="mb-4 h-12 w-12 text-amber-400" />
+        <h1 className="mb-2 text-2xl font-bold">Access Pending Verification</h1>
+        <p className="mb-6 max-w-md text-sm text-zinc-400">
+          Your enrollment for {sprintData.sprint?.title} is being verified by
+          our team.
         </p>
-        <Button onClick={() => router.push(`/toolkit/sprints/${sprintId}`)} className="bg-orange-600 hover:bg-orange-700">
+        <Button
+          onClick={() => router.push(`/toolkit/sprints/${sprintId}`)}
+          className="bg-orange-600 hover:bg-orange-700"
+        >
           Back to Sprint Details
         </Button>
       </div>
@@ -121,30 +131,30 @@ export default function SprintDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col font-sans">
+    <div className="flex min-h-screen flex-col bg-black font-sans text-white">
       {/* Top Header */}
-      <header className="border-b border-zinc-800 bg-zinc-950 px-4 py-3 flex items-center justify-between">
+      <header className="flex items-center justify-between border-b border-zinc-800 bg-zinc-950 px-4 py-3">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => router.push(`/toolkit/sprints/${sprintId}`)}
-            className="text-zinc-400 hover:text-white gap-1"
+            className="gap-1 text-zinc-400 hover:text-white"
           >
-            <ArrowLeft className="w-4 h-4" /> Sprint Info
+            <ArrowLeft className="h-4 w-4" /> Sprint Info
           </Button>
           <span className="text-zinc-700">|</span>
-          <h1 className="text-sm font-bold text-white truncate max-w-xs md:max-w-md">
+          <h1 className="max-w-xs truncate text-sm font-bold text-white md:max-w-md">
             {sprintData?.sprint?.title}
           </h1>
         </div>
       </header>
 
       {/* Main Layout */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className="w-72 border-r border-zinc-800 bg-zinc-950 p-4 space-y-2 hidden md:block overflow-y-auto">
-          <h2 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3">
+        <aside className="hidden w-72 space-y-2 overflow-y-auto border-r border-zinc-800 bg-zinc-950 p-4 md:block">
+          <h2 className="mb-3 text-xs font-bold tracking-wider text-zinc-400 uppercase">
             Sprint Sessions
           </h2>
           {sessions.map((s: any, idx: number) => {
@@ -154,19 +164,19 @@ export default function SprintDashboardPage() {
                 key={s.id}
                 onClick={() => handleSelectSession(s.id)}
                 className={cn(
-                  "w-full text-left p-3 rounded-xl text-xs transition-colors flex items-center justify-between border",
+                  "flex w-full items-center justify-between rounded-xl border p-3 text-left text-xs transition-colors",
                   isSelected
-                    ? "bg-orange-500/20 border-orange-500/50 text-orange-400 font-bold"
-                    : "bg-zinc-900/40 border-zinc-800/80 text-zinc-300 hover:bg-zinc-900"
+                    ? "border-orange-500/50 bg-orange-500/20 font-bold text-orange-400"
+                    : "border-zinc-800/80 bg-zinc-900/40 text-zinc-300 hover:bg-zinc-900"
                 )}
               >
                 <span className="truncate pr-2">
                   {idx + 1}. {s.title}
                 </span>
                 {s.isAccessible ? (
-                  <Unlock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <Unlock className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
                 ) : (
-                  <Lock className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                  <Lock className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
                 )}
               </button>
             );
@@ -174,86 +184,94 @@ export default function SprintDashboardPage() {
         </aside>
 
         {/* Content View */}
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto max-w-4xl mx-auto space-y-8">
+        <main className="mx-auto max-w-4xl flex-1 space-y-8 overflow-y-auto p-4 md:p-8">
           {currentSessionMeta && (
             <div className="border-b border-zinc-800 pb-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-orange-500">
+              <span className="text-xs font-bold tracking-wider text-orange-500 uppercase">
                 Current Session
               </span>
-              <h2 className="text-2xl font-extrabold text-white mt-1">
+              <h2 className="mt-1 text-2xl font-extrabold text-white">
                 {currentSessionMeta.title}
               </h2>
             </div>
           )}
 
           {!isCurrentSessionAccessible ? (
-            <div className="p-8 rounded-2xl bg-zinc-900/80 border border-zinc-800 text-center space-y-4 my-8">
-              <Lock className="w-10 h-10 text-amber-400 mx-auto" />
+            <div className="my-8 space-y-4 rounded-2xl border border-zinc-800 bg-zinc-900/80 p-8 text-center">
+              <Lock className="mx-auto h-10 w-10 text-amber-400" />
               <h3 className="text-lg font-bold text-white">Session Locked</h3>
-              <p className="text-xs text-zinc-400 max-w-md mx-auto">
-                Upgrade your pass to unlock this session and access live links, recordings, and resources.
+              <p className="mx-auto max-w-md text-xs text-zinc-400">
+                Upgrade your pass to unlock this session and access live links,
+                recordings, and resources.
               </p>
               <Button
                 onClick={() => setUpgradeModalOpen(true)}
-                className="bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-black font-bold text-xs px-6 py-2.5 rounded-xl"
+                className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 px-6 py-2.5 text-xs font-bold text-black hover:from-orange-600 hover:to-amber-700"
               >
                 Upgrade Sprint Pass
               </Button>
             </div>
           ) : isSessionLoading ? (
             <div className="space-y-4">
-              <Skeleton className="h-32 bg-zinc-900 rounded-xl" />
-              <Skeleton className="h-48 bg-zinc-900 rounded-xl" />
+              <Skeleton className="h-32 rounded-xl bg-zinc-900" />
+              <Skeleton className="h-48 rounded-xl bg-zinc-900" />
             </div>
           ) : (
             <div className="space-y-6">
-              {(sessionDetail?.contents || []).map((c: SprintSessionContent) => (
-                <div key={c.id} className="p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800 space-y-3">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-orange-400">
-                    {c.sectionType.replace("_", " ")}
-                  </span>
-                  <h3 className="text-lg font-bold text-white">{c.title}</h3>
-                  {c.content && <HtmlRenderer content={c.content} />}
+              {(sessionDetail?.contents || []).map(
+                (c: SprintSessionContent) => (
+                  <div
+                    key={c.id}
+                    className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6"
+                  >
+                    <span className="text-[10px] font-bold tracking-wider text-orange-400 uppercase">
+                      {c.sectionType.replace("_", " ")}
+                    </span>
+                    <h3 className="text-lg font-bold text-white">{c.title}</h3>
+                    {c.content && <HtmlRenderer content={c.content} />}
 
-                  {c.liveSessionLink && (
-                    <div className="pt-2">
-                      <a
-                        href={c.liveSessionLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs"
-                      >
-                        Join Live Session
-                      </a>
-                    </div>
-                  )}
-
-                  {c.resources && c.resources.length > 0 && (
-                    <div className="pt-4 space-y-2 border-t border-zinc-800/60 mt-4">
-                      <h4 className="text-xs font-bold text-zinc-300">Resources:</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {c.resources.map((r: SprintSessionResource) => (
-                          <a
-                            key={r.id}
-                            href={r.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200"
-                          >
-                            📎 {r.name}
-                          </a>
-                        ))}
+                    {c.liveSessionLink && (
+                      <div className="pt-2">
+                        <a
+                          href={c.liveSessionLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-xs font-bold text-white hover:bg-orange-700"
+                        >
+                          Join Live Session
+                        </a>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    )}
+
+                    {c.resources && c.resources.length > 0 && (
+                      <div className="mt-4 space-y-2 border-t border-zinc-800/60 pt-4">
+                        <h4 className="text-xs font-bold text-zinc-300">
+                          Resources:
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {c.resources.map((r: SprintSessionResource) => (
+                            <a
+                              key={r.id}
+                              href={r.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="rounded-lg bg-zinc-800 px-3 py-1.5 text-xs text-zinc-200 hover:bg-zinc-700"
+                            >
+                              📎 {r.name}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              )}
             </div>
           )}
 
           {/* Upgrade Section */}
           <SprintUpgradeGrid
-            sprintId={sprintId}
+            sprintId={sprintData?.sprint?.id || sprintId}
             sprintTitle={sprintData?.sprint?.title || "Sprint"}
             currentPlanStatus={sprintData?.currentPlanStatus}
             upgradePlans={sprintData?.upgradePlans}
@@ -267,12 +285,12 @@ export default function SprintDashboardPage() {
       </div>
 
       <Dialog open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen}>
-        <DialogContent className="max-w-3xl bg-zinc-900 border-zinc-800 text-white max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto border-zinc-800 bg-zinc-900 text-white">
           <DialogHeader>
             <DialogTitle>Upgrade Sprint Passes</DialogTitle>
           </DialogHeader>
           <SprintUpgradeGrid
-            sprintId={sprintId}
+            sprintId={sprintData?.sprint?.id || sprintId}
             sprintTitle={sprintData?.sprint?.title || "Sprint"}
             currentPlanStatus={sprintData?.currentPlanStatus}
             upgradePlans={sprintData?.upgradePlans}

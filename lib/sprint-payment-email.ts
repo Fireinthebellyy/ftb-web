@@ -5,7 +5,9 @@ import { getEmailFromAddress, isEmailConfigured, resend } from "./email";
 import {
   sprintAddOns,
   sprintOrders,
+  sprintSessions,
   sprintTiers,
+  sprintUpgradePlans,
   sprints,
   toolkits,
 } from "./schema";
@@ -53,6 +55,13 @@ export async function sendSprintPaymentConfirmationEmail(
       where: eq(sprintTiers.id, order.selectedTierId),
     });
     tierName = tier?.name;
+  } else if (order.selectedUpgradePlanId) {
+    const plan = await db.query.sprintUpgradePlans.findFirst({
+      where: eq(sprintUpgradePlans.id, order.selectedUpgradePlanId),
+    });
+    if (plan) {
+      tierName = `Upgrade: ${plan.title}`;
+    }
   }
 
   const addonIds = (order.selectedAddOnIds as string[]) || [];
@@ -63,6 +72,14 @@ export async function sendSprintPaymentConfirmationEmail(
       .from(sprintAddOns)
       .where(inArray(sprintAddOns.id, addonIds));
     addonNames = addons.map((addon) => addon.name);
+
+    if (addonNames.length === 0) {
+      const sessions = await db
+        .select({ title: sprintSessions.title })
+        .from(sprintSessions)
+        .where(inArray(sprintSessions.id, addonIds));
+      addonNames = sessions.map((s) => s.title);
+    }
   }
 
   const toolkitIds = (order.selectedToolkitIds as string[]) || [];
@@ -102,6 +119,9 @@ export async function sendSprintPaymentConfirmationEmail(
   });
 
   if (buyerEmailError) {
-    console.error("Failed to send sprint payment email to buyer:", buyerEmailError);
+    console.error(
+      "Failed to send sprint payment email to buyer:",
+      buyerEmailError
+    );
   }
 }

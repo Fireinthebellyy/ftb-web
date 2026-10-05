@@ -939,6 +939,32 @@ export default function SprintDetailClient() {
             </div>
           )}
 
+          {sprint.isFillingFast && (
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  if (sprint) {
+                    posthog.capture("sprint_filling_fast_cta_clicked", {
+                      sprint_id: sprint.id,
+                      sprint_title: sprint.title,
+                      source: "header_below_starts_on",
+                      has_access: sprint.hasAccess,
+                    });
+                  }
+                  setIsDrawerOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-3 py-1 text-xs font-black tracking-wider text-white uppercase shadow-sm transition hover:bg-blue-700"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75"></span>
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-white"></span>
+                </span>
+                FILLING FAST
+              </button>
+            </div>
+          )}
+
           {(sprint.badge1 || sprint.badge2) && (
             <div className="flex flex-wrap items-center gap-2">
               {sprint.badge1 && (
@@ -1667,14 +1693,12 @@ export default function SprintDetailClient() {
                               </h5>
 
                               {tier.isFillingFast && (
-                                <span className="animate-pulse rounded-full bg-orange-100 px-2 py-0.5 text-[9px] font-bold tracking-wider text-[#ff5e14] uppercase">
-                                  Filling Fast
-                                </span>
-                              )}
-
-                              {tier.isTrending && (
-                                <span className="animate-pulse rounded-full bg-blue-100 px-2 py-0.5 text-[9px] font-bold tracking-wider text-blue-600 uppercase">
-                                  Trending
+                                <span className="inline-flex items-center gap-1 rounded-full bg-blue-600 px-2 py-0.5 text-[9px] font-black tracking-wider text-white uppercase shadow-xs">
+                                  <span className="relative flex h-1.5 w-1.5">
+                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75"></span>
+                                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white"></span>
+                                  </span>
+                                  FILLING FAST
                                 </span>
                               )}
                             </div>

@@ -282,30 +282,31 @@ export default function ToolkitPageClient({
                             )}
 
                             <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-1">
-                              {sprint.isFillingFast ? (
-                                <div className="flex animate-pulse items-center gap-1 rounded bg-red-600 px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-white uppercase shadow-sm">
-                                  <span className="h-1 w-1 animate-pulse rounded-full bg-white" />
-                                  Limited Seats
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-1 rounded bg-gray-700 px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-white uppercase shadow-sm">
-                                  <span className="h-1 w-1 animate-pulse rounded-full bg-white" />
-                                  Registration Closed
+                              {sprint.isFillingFast && (
+                                <div className="flex items-center gap-1.5 rounded-full bg-blue-600 px-2.5 py-0.5 text-[9px] font-black tracking-wider text-white uppercase shadow-sm">
+                                  <span className="relative flex h-1.5 w-1.5">
+                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75"></span>
+                                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white"></span>
+                                  </span>
+                                  FILLING FAST
                                 </div>
                               )}
-                              {sprint.isBestSeller ? (
-                                <div className="flex animate-pulse items-center gap-1 rounded bg-black px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-white uppercase shadow-sm">
-                                  <span className="h-1 w-1 animate-pulse rounded-full bg-white" />
+                              {sprint.isBestSeller && (
+                                <div className="flex items-center gap-1 rounded-full border border-white/20 bg-black/90 px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-white uppercase shadow-sm backdrop-blur-xs">
+                                  <span className="h-1 w-1 rounded-full bg-amber-400" />
                                   Best Seller
                                 </div>
-                              ) : (
-                                <div className="flex animate-pulse items-center gap-1 rounded bg-emerald-600 px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-white uppercase shadow-sm">
-                                  <span className="h-1 w-1 animate-pulse rounded-full bg-white" />
-                                  Sprint Live
-                                </div>
                               )}
+                              {!sprint.isFillingFast &&
+                                !sprint.isBestSeller && (
+                                  <div className="flex items-center gap-1 rounded-full bg-emerald-600/90 px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-white uppercase shadow-sm backdrop-blur-xs">
+                                    <span className="h-1 w-1 animate-pulse rounded-full bg-white" />
+                                    Sprint Live
+                                  </div>
+                                )}
                             </div>
                           </div>
+
                           <div className="p-4">
                             <h3 className="line-clamp-2 text-base leading-snug font-bold text-gray-900">
                               {sprint.title}
@@ -729,30 +730,30 @@ export default function ToolkitPageClient({
                     )}
                     
                     <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-10">
-                      {sprint.isFillingFast ? (
-                        <div className="bg-red-600 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
-                          <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-                          Filling Fast
-                        </div>
-                      ) : (
-                        <div className="bg-gray-700 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
-                          <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
-                          Registration Closed
+                      {sprint.isFillingFast && (
+                        <div className="flex items-center gap-1.5 rounded-full bg-blue-600 px-2.5 py-0.5 text-[9px] font-black tracking-wider text-white uppercase shadow-sm">
+                          <span className="relative flex h-1.5 w-1.5">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75"></span>
+                            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white"></span>
+                          </span>
+                          FILLING FAST
                         </div>
                       )}
-                      {sprint.isBestSeller ? (
-                        <div className="bg-black text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
-                          <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
+                      {sprint.isBestSeller && (
+                        <div className="flex items-center gap-1 rounded-full border border-white/20 bg-black/90 px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-white uppercase shadow-sm backdrop-blur-xs">
+                          <span className="h-1 w-1 rounded-full bg-amber-400" />
                           Best Seller
                         </div>
-                      ) : (
-                        <div className="bg-emerald-600 text-white text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
-                          <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
+                      )}
+                      {!sprint.isFillingFast && !sprint.isBestSeller && (
+                        <div className="flex items-center gap-1 rounded-full bg-emerald-600/90 px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-white uppercase shadow-sm backdrop-blur-xs">
+                          <span className="h-1 w-1 animate-pulse rounded-full bg-white" />
                           Sprint Live
                         </div>
                       )}
                     </div>
                   </div>
+
                     <div className="p-4 space-y-3">
                       <h3 className="font-bold text-gray-900 text-base leading-snug line-clamp-2">
                         {sprint.title}

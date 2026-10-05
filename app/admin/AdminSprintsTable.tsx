@@ -707,16 +707,25 @@ export default function AdminSprintsTable() {
                           ₹{s.basePrice}
                         </td>
                         <td className="p-4">
-                          <span
-                            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
-                              s.isActive
-                                ? "bg-green-100 text-green-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}
-                          >
-                            {s.isActive ? "Active" : "Draft"}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span
+                              className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                s.isActive
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {s.isActive ? "Active" : "Draft"}
+                            </span>
+                            {s.isFillingFast && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+                                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-blue-600" />
+                                Filling Fast
+                              </span>
+                            )}
+                          </div>
                         </td>
+
                         <td className="flex flex-wrap justify-end gap-1.5 p-4 text-right">
                           <Button
                             variant="ghost"
@@ -2851,10 +2860,10 @@ export default function AdminSprintsTable() {
                               const currentTiers = [
                                 ...(editingSprint.tiers || []),
                               ];
-                              currentTiers.forEach(
-                                (t, i) =>
-                                  (t.isFillingFast = i === index ? val : false)
-                              );
+                              currentTiers[index] = {
+                                ...currentTiers[index],
+                                isFillingFast: val,
+                              };
                               setEditingSprint({
                                 ...editingSprint,
                                 tiers: currentTiers,

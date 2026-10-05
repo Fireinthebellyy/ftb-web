@@ -105,6 +105,16 @@ export async function POST(
       buddyEmail = null;
     }
 
+    if (
+      buddyEmail &&
+      (selectedUpgradePlanId || (!selectedTierId && selectedAddOnIds.length === 0))
+    ) {
+      return NextResponse.json(
+        { error: "Buddy checkout requires a tier or session duo purchase" },
+        { status: 400 }
+      );
+    }
+
     let upgradePlanPrice = 0;
     let _isUpgradePlanAllInOne = false;
     let _upgradePlanIncludedSessionCount: number | null = null;

@@ -99,8 +99,6 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const wasAlreadyPaid = existingOrder.status === "paid";
-
     const updatedOrders = await db
       .update(sprintOrders)
       .set({
@@ -116,7 +114,18 @@ export async function POST(
       )
       .returning({ couponId: sprintOrders.couponId });
 
-    if (updatedOrders.length === 0 && wasAlreadyPaid) {
+    if (updatedOrders.length === 0) {
+      const currentOrder = await db.query.sprintOrders.findFirst({
+        where: eq(sprintOrders.id, existingOrder.id),
+      });
+
+      if (currentOrder?.status !== "paid") {
+        return NextResponse.json(
+          { error: "Order could not be verified in its current state" },
+          { status: 409 }
+        );
+      }
+
       return NextResponse.json({
         success: true,
         alreadyVerified: true,
@@ -125,9 +134,8 @@ export async function POST(
       });
     }
 
-    const appliedCouponId =
-      updatedOrders[0]?.couponId || existingOrder.couponId;
-    if (appliedCouponId && !wasAlreadyPaid) {
+    const appliedCouponId = updatedOrders[0].couponId;
+    if (appliedCouponId) {
       await db
         .update(coupons)
         .set({ currentUses: sql`${coupons.currentUses} + 1` })
@@ -221,14 +229,12 @@ export async function POST(
       }
     }
 
-    if (!wasAlreadyPaid) {
-      void sendSprintPaymentConfirmationEmail(existingOrder.id).catch((err) => {
-        console.error(
-          "Failed to send sprint payment confirmation email async:",
-          err
-        );
-      });
-    }
+    void sendSprintPaymentConfirmationEmail(existingOrder.id).catch((err) => {
+      console.error(
+        "Failed to send sprint payment confirmation email async:",
+        err
+      );
+    });
 
     return NextResponse.json({
       success: true,

@@ -2693,23 +2693,76 @@ export default function AdminSprintsTable() {
                     {(editingSprint.tiers || []).map((tier, index) => (
                       <div
                         key={index}
-                        className="relative flex flex-col gap-4 rounded-lg border bg-gray-50 p-4"
+                        className="flex flex-col gap-4 rounded-lg border bg-gray-50 p-4"
                       >
-                        <button
-                          onClick={() => {
-                            const currentTiers = [
-                              ...(editingSprint.tiers || []),
-                            ];
-                            currentTiers.splice(index, 1);
-                            setEditingSprint({
-                              ...editingSprint,
-                              tiers: currentTiers,
-                            });
-                          }}
-                          className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
+                        {/* Header: Title / Order & Action Buttons */}
+                        <div className="flex items-center justify-between border-b pb-2">
+                          <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            Tier #{index + 1} {tier.name ? `— ${tier.name}` : ""}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              disabled={index === 0}
+                              onClick={() => {
+                                const currentTiers = [
+                                  ...(editingSprint.tiers || []),
+                                ];
+                                const temp = currentTiers[index];
+                                currentTiers[index] = currentTiers[index - 1];
+                                currentTiers[index - 1] = temp;
+                                setEditingSprint({
+                                  ...editingSprint,
+                                  tiers: currentTiers,
+                                });
+                              }}
+                              className="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-700 disabled:opacity-30 disabled:hover:bg-transparent"
+                              title="Move up"
+                            >
+                              <ArrowUp className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={
+                                index === (editingSprint.tiers?.length || 0) - 1
+                              }
+                              onClick={() => {
+                                const currentTiers = [
+                                  ...(editingSprint.tiers || []),
+                                ];
+                                const temp = currentTiers[index];
+                                currentTiers[index] = currentTiers[index + 1];
+                                currentTiers[index + 1] = temp;
+                                setEditingSprint({
+                                  ...editingSprint,
+                                  tiers: currentTiers,
+                                });
+                              }}
+                              className="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-700 disabled:opacity-30 disabled:hover:bg-transparent"
+                              title="Move down"
+                            >
+                              <ArrowDown className="h-4 w-4" />
+                            </button>
+                            <div className="mx-1 h-3.5 w-px bg-gray-300" />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const currentTiers = [
+                                  ...(editingSprint.tiers || []),
+                                ];
+                                currentTiers.splice(index, 1);
+                                setEditingSprint({
+                                  ...editingSprint,
+                                  tiers: currentTiers,
+                                });
+                              }}
+                              className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                              title="Delete tier"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
 
                         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                           <div className="space-y-1">

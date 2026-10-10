@@ -20,6 +20,7 @@ import {
   MessageSquare,
   Users,
   Share2,
+  Flame,
 } from "lucide-react";
 import { FaLinkedinIn } from "react-icons/fa";
 import { Drawer } from "vaul";
@@ -1691,6 +1692,13 @@ export default function SprintDetailClient() {
                               <h5 className="text-sm font-bold text-gray-900">
                                 {tier.name}
                               </h5>
+
+                              {tier.isTrending && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-[#ff5e14] px-2 py-0.5 text-[9px] font-black tracking-wider text-white uppercase shadow-sm">
+                                  <Flame className="h-2.5 w-2.5 shrink-0 fill-amber-200 text-white animate-pulse" />
+                                  TRENDING
+                                </span>
+                              )}
 
                               {tier.isFillingFast && (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-blue-600 px-2 py-0.5 text-[9px] font-black tracking-wider text-white uppercase shadow-xs">

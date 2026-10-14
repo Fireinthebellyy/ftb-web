@@ -222,8 +222,6 @@ export const user = pgTable("user", {
     .notNull(),
   deletedAt: timestamp("deleted_at"),
   role: userRoleEnum("role").default("user").notNull(),
-  interestPromptCompletedAt: timestamp("interest_prompt_completed_at"),
-  interestAreas: text("interest_areas").array().default([]),
   loginStreak: integer("login_streak").default(0).notNull(),
   lastLoginDate: date("last_login_date"),
 }, (table) => [

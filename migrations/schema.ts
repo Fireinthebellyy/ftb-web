@@ -561,8 +561,6 @@ export const user = pgTable("user", {
 	calendarReminderWeek: boolean("calendar_reminder_week").default(true),
 	calendarReminderDay: boolean("calendar_reminder_day").default(true),
 	calendarReminderHour: boolean("calendar_reminder_hour").default(true),
-	interestPromptCompletedAt: timestamp("interest_prompt_completed_at", { mode: 'string' }),
-	interestAreas: text("interest_areas").array().default([""]),
 	loginStreak: integer("login_streak").default(0).notNull(),
 	lastLoginDate: date("last_login_date"),
 }, (table) => [

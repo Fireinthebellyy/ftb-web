@@ -11,6 +11,8 @@ import Image from "next/image";
 
 const imgVector2 = "/images/walkthrough-pointer.svg";
 
+const WALKTHROUGH_DISMISSED_EVENT = "ftb-walkthrough-dismissed";
+
 const walkthroughSteps = [
   {
     path: "/",
@@ -182,6 +184,20 @@ export default function WalkthroughFigma({
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    const handleDismissed = () => {
+      setIsVisible(false);
+      try {
+        sessionStorage.removeItem("ftb_walkthrough_active");
+      } catch {
+        /* ignore */
+      }
+    };
+    window.addEventListener(WALKTHROUGH_DISMISSED_EVENT, handleDismissed);
+    return () =>
+      window.removeEventListener(WALKTHROUGH_DISMISSED_EVENT, handleDismissed);
+  }, []);
+
   if (isPending || !user) return null;
   if (!isVisible || currentStepIndex === -1) return null;
 
@@ -198,6 +214,7 @@ export default function WalkthroughFigma({
       console.error("Error in removing walkthrough: ", err);
     } finally {
       sessionStorage.removeItem("ftb_walkthrough_active");
+      window.dispatchEvent(new Event(WALKTHROUGH_DISMISSED_EVENT));
     }
   };
 

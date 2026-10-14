@@ -58,14 +58,12 @@ export default function AuthOverlay() {
               className="w-full"
               returnUrlOverride={returnUrl}
               isOverlay={true}
-              interestBgVariant="blur"
             />
           ) : (
             <LoginForm
               className="w-full"
               returnUrlOverride={returnUrl}
               isOverlay={true}
-              interestBgVariant="blur"
             />
           )}
         </DialogContent>

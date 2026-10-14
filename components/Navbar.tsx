@@ -469,7 +469,7 @@ export default function Navbar() {
                   posthog.capture("navbar_signup_clicked");
                 }}
               >
-                <Link href="/login?interestBg=white">Get Started</Link>
+                <Link href="/login">Get Started</Link>
               </Button>
             </div>
           )}

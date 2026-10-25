@@ -6,6 +6,9 @@ export type PageBannerPlacement = "internship" | "ungatekeep";
 export interface PageBanner {
   _id: string;
   placement: PageBannerPlacement;
+  title?: string;
+  link?: string;
+  url?: string;
   order?: number;
   isActive?: boolean;
   image?: {
@@ -51,6 +54,9 @@ const pageBannersByPlacementQuery = `*[_type == "pageBanner" && coalesce(isActiv
   placement,
   order,
   isActive,
+  title,
+  link,
+  url,
   image {
     alt,
     asset->{

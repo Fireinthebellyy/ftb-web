@@ -11,7 +11,6 @@ import {
   Share2,
   Trash2,
   X,
-  Youtube,
 } from "lucide-react";
 import posthog from "posthog-js";
 import { toast } from "sonner";
@@ -31,6 +30,7 @@ import { OpportunityPostProps } from "@/types/interfaces";
 import CommentSection from "./CommentSection";
 import { OpportunityGuideModal } from "./OpportunityGuideModal";
 import { ShareDialog } from "./ShareDialog";
+import { YouTubeIcon } from "./YouTubeIcon";
 
 interface OpportunityActionsProps {
   opportunity: OpportunityPostProps["opportunity"];
@@ -239,13 +239,13 @@ export function OpportunityActions({
                       }
                     }}
                     className={cn(
-                      "h-7 cursor-pointer rounded-lg border px-2 text-[10px] font-bold shadow-none transition-all active:scale-95 sm:h-8 sm:px-3 sm:text-xs",
+                      "h-7 cursor-pointer rounded-lg border px-2 text-[10px] font-bold shadow-xs transition-all active:scale-95 sm:h-8 sm:px-2.5 sm:text-xs",
                       isMobileExpanded
-                        ? "border-red-400 bg-red-100 text-red-800"
-                        : "border-red-200 bg-red-50/80 text-red-700 hover:border-red-300 hover:bg-red-100"
+                        ? "border-slate-300 bg-slate-100 text-slate-900"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
                     )}
                   >
-                    <Youtube className="h-3.5 w-3.5 fill-red-600 text-red-600" />
+                    <YouTubeIcon className="h-3.5 w-3.5 shrink-0" />
                     <span>Guide</span>
                   </Button>
                 ) : (
@@ -253,7 +253,7 @@ export function OpportunityActions({
                     asChild
                     size="sm"
                     variant="outline"
-                    className="h-7 cursor-pointer rounded-lg border border-blue-200 bg-blue-50/80 px-2 text-[10px] font-bold text-blue-700 shadow-none transition-all hover:border-blue-300 hover:bg-blue-100 active:scale-95 sm:h-8 sm:px-3 sm:text-xs"
+                    className="h-7 cursor-pointer rounded-lg border border-slate-200 bg-white px-2 text-[10px] font-bold text-slate-700 shadow-xs transition-all hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 active:scale-95 sm:h-8 sm:px-2.5 sm:text-xs"
                   >
                     <Link
                       href={guideUrl}
@@ -268,7 +268,7 @@ export function OpportunityActions({
                         });
                       }}
                     >
-                      <ExternalLink className="h-3.5 w-3.5 text-blue-600" />
+                      <ExternalLink className="h-3.5 w-3.5 text-slate-500" />
                       <span>Guide</span>
                     </Link>
                   </Button>
@@ -401,7 +401,7 @@ export function OpportunityActions({
           <div className="md:hidden mt-2 pt-3 border-t border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex items-center justify-between mb-2 px-1">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-800">
-                <Youtube className="h-3.5 w-3.5 text-red-600 fill-red-600" />
+                <YouTubeIcon className="h-3.5 w-3.5 shrink-0" />
                 <span>Video Guide</span>
               </div>
               <button

@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import OpportunityPost from "@/components/OpportunityCard";
-import { NewOpportunityButton } from "@/components/opportunity/NewOpportunityButton";
+import OpportunityBanner from "@/components/opportunity/OpportunityBanner";
 import FeaturedOpportunities from "@/components/opportunity/FeaturedOpportunities";
 import { TagsDropdown } from "@/components/opportunity/TagsDropdown";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
@@ -33,7 +33,6 @@ import { useOpportunityFeed } from "./useOpportunityFeed";
 const CalendarWidget = dynamic(
   () => import("@/components/opportunity/CalendarWidget")
 );
-const TaskWidget = dynamic(() => import("@/components/opportunity/TaskWidget"));
 
 interface OpportunityListProps {
   initialTags?: string[];
@@ -66,7 +65,6 @@ export default function OpportunityCardsPage({
     return tagsParam ? tagsParam.split("|").filter(Boolean) : [];
   };
 
-  const [isNewOpportunityOpen, setIsNewOpportunityOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>(getInitialSearch);
   const [debouncedSearchTerm, setDebouncedSearchTerm] =
     useState<string>(getInitialSearch);
@@ -216,7 +214,6 @@ export default function OpportunityCardsPage({
   const {
     shouldUseBootstrap,
     isBootstrapPending,
-    bootstrapTasks,
     bootstrapMonth,
     bootstrapBookmarkDates,
     allOpportunities,
@@ -343,6 +340,7 @@ export default function OpportunityCardsPage({
     <div className="h-full grow bg-gray-50">
       <div className="container mx-auto max-w-7xl px-4 pt-2">
         <div className="mb-5 lg:hidden">
+          <OpportunityBanner />
           <div className="mb-4 flex items-center justify-between gap-4">
             <div>
               <h1 className="mb-1 text-xl font-bold text-gray-900">
@@ -494,6 +492,7 @@ export default function OpportunityCardsPage({
 
           {/* Main Content - 6 columns */}
           <main className="col-span-6 pr-2">
+            <OpportunityBanner />
             <div className="mb-6 flex items-center justify-between gap-4">
               <div>
                 <h1 className="mb-1 text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
@@ -585,16 +584,6 @@ export default function OpportunityCardsPage({
               </div>
             )}
 
-            <NewOpportunityButton
-              isOpen={isNewOpportunityOpen}
-              onOpenChange={(open) => {
-                if (open) {
-                  posthog.capture("opportunity_post_it_here_clicked");
-                }
-                setIsNewOpportunityOpen(open);
-              }}
-              layout="horizontal"
-            />
             {isLoading && (
               <div className="space-y-4">
                 {[...Array(3)].map((_, index) => (
@@ -684,23 +673,14 @@ export default function OpportunityCardsPage({
           <aside className="col-span-3">
             <div className="sticky top-16 space-y-6">
               {showSecondaryWidgets ? (
-                <>
-                  <CalendarWidget
-                    kind="opportunity"
-                    queryEnabled={shouldEnableWidgetQueries}
-                    initialMonthKey={bootstrapMonth}
-                    initialBookmarkedDates={bootstrapBookmarkDates}
-                  />
-                  <TaskWidget
-                    queryEnabled={shouldEnableWidgetQueries}
-                    initialTasks={bootstrapTasks}
-                  />
-                </>
+                <CalendarWidget
+                  kind="opportunity"
+                  queryEnabled={shouldEnableWidgetQueries}
+                  initialMonthKey={bootstrapMonth}
+                  initialBookmarkedDates={bootstrapBookmarkDates}
+                />
               ) : (
-                <>
-                  <div className="h-80 animate-pulse rounded-lg border bg-white" />
-                  <div className="h-52 animate-pulse rounded-lg border bg-white" />
-                </>
+                <div className="h-80 animate-pulse rounded-lg border bg-white" />
               )}
               {FEATURE_FLAGS.showTrendingTags && (
                 <>
@@ -730,16 +710,6 @@ export default function OpportunityCardsPage({
         </div>
 
         <div className="lg:hidden">
-          <NewOpportunityButton
-            isOpen={isNewOpportunityOpen}
-            onOpenChange={(open) => {
-              if (open) {
-                posthog.capture("opportunity_post_it_here_clicked");
-              }
-              setIsNewOpportunityOpen(open);
-            }}
-            layout="vertical"
-          />
           {isLoading && (
             <div className="space-y-4">
               {[...Array(3)].map((_, index) => (

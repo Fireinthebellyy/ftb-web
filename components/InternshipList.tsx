@@ -34,7 +34,6 @@ import { SimilarInternships } from "./internship/SimilarInternships";
 import InternshipTrackerButton from "./internship/InternshipTrackerButton";
 
 const CalendarWidget = dynamic(() => import("./opportunity/CalendarWidget"));
-const TaskWidget = dynamic(() => import("./opportunity/TaskWidget"));
 
 interface SearchWidgetProps {
   searchTerm: string;
@@ -45,6 +44,8 @@ interface SearchWidgetProps {
   placeholder: string;
   applyFilters: (term?: string, specificFields?: string[]) => void;
   selectedFields: string[];
+  autoFocus?: boolean;
+  onClose?: () => void;
 }
 
 const SearchWidget = ({
@@ -56,6 +57,8 @@ const SearchWidget = ({
   placeholder,
   applyFilters,
   selectedFields,
+  autoFocus,
+  onClose,
 }: SearchWidgetProps) => {
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [activeBubble, setActiveBubble] = useState<{
@@ -63,6 +66,13 @@ const SearchWidget = ({
     label: string;
   } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (autoFocus) {
+      inputRef.current?.focus();
+    }
+  }, [autoFocus]);
+
   // Reset focusedIndex when suggestions change or list closes
   useEffect(() => {
     if (!isSearchFocused || filteredSuggestions.length === 0) {
@@ -75,6 +85,7 @@ const SearchWidget = ({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Escape") {
       setIsSearchFocused(false);
+      onClose?.();
       inputRef.current?.blur();
       return;
     }
@@ -129,7 +140,7 @@ const SearchWidget = ({
           onKeyDown={handleKeyDown}
           className="h-10 w-full rounded-lg border border-slate-200 bg-white pr-8 pl-10 text-sm text-slate-900 shadow-xs transition-colors placeholder:text-slate-400 focus:border-slate-300 focus:ring-1 focus:ring-slate-300 focus:outline-none"
         />
-        {searchTerm && (
+        {searchTerm ? (
           <button
             type="button"
             onClick={() => {
@@ -138,18 +149,31 @@ const SearchWidget = ({
               applyFilters("", []);
               inputRef.current?.focus();
             }}
-            className="absolute right-3 z-10 text-gray-400 hover:text-gray-600"
+            className="absolute right-3 z-10 flex h-5 w-5 cursor-pointer items-center justify-center text-gray-400 hover:text-gray-600"
+            aria-label="Clear search"
           >
             <X className="h-4 w-4" />
           </button>
-        )}
+        ) : onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-3 z-10 flex h-5 w-5 cursor-pointer items-center justify-center text-gray-400 hover:text-gray-600"
+            aria-label="Close search"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        ) : null}
       </div>
 
       {isSearchFocused && (
         <>
           <div
             className="fixed inset-0 z-40 bg-transparent"
-            onClick={() => setIsSearchFocused(false)}
+            onClick={() => {
+              setIsSearchFocused(false);
+              onClose?.();
+            }}
           />
           <div
             className={cn(
@@ -396,6 +420,9 @@ export default function InternshipList() {
   const [isFilterBoxOpen, setIsFilterBoxOpen] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(() =>
+    Boolean(initialSearch)
+  );
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const [showSecondaryWidgets, setShowSecondaryWidgets] = useState(false);
   // const [showAllFields, setShowAllFields] = useState(false);
@@ -768,6 +795,8 @@ export default function InternshipList() {
   const clearFilters = () => {
     setSearchTerm("");
     setAppliedSearchTerm("");
+    setIsSearchExpanded(false);
+    setIsSearchFocused(false);
     setLocation("");
     setAppliedLocation("");
     setSelectedTypes([]);
@@ -800,54 +829,64 @@ export default function InternshipList() {
         {/* Mobile: Search */}
 
         <div
-          className={cn("mb-0 lg:hidden", isSearchFocused && "relative z-50")}
+          className={cn(
+            "mb-0 lg:hidden",
+            (isSearchExpanded || isSearchFocused) && "relative z-50"
+          )}
         >
           {showInitialSkeleton ? (
-            <div className="mb-2 flex w-full items-center justify-between py-1">
-              <Skeleton className="h-10 w-[calc(100%-96px)] rounded-lg" />
-              <Skeleton className="h-10 w-10 rounded-lg" />
-              <Skeleton className="h-10 w-10 rounded-lg" />
+            <div className="mb-2 flex w-full items-center gap-2 py-1">
+              <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
+              <Skeleton className="h-10 flex-1 rounded-lg" />
+              <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
             </div>
           ) : (
             <>
               <div
                 className={cn(
-                  "relative mb-2 flex w-full items-center justify-between py-1",
-                  isSearchFocused && "z-50"
+                  "relative mb-2 flex w-full items-center gap-2 py-1",
+                  (isSearchExpanded || isSearchFocused) && "z-50"
                 )}
               >
-                <div
-                  className={cn(
-                    "relative transition-all duration-300 ease-in-out",
-                    isSearchFocused
-                      ? "z-50 w-[calc(100%-48px)]"
-                      : "z-20 w-[calc(100%-96px)]"
-                  )}
-                >
-                  <SearchWidget
-                    searchTerm={searchTerm}
-                    setSearchTerm={setSearchTerm}
-                    isSearchFocused={isSearchFocused}
-                    setIsSearchFocused={setIsSearchFocused}
-                    filteredSuggestions={filteredSuggestions}
-                    placeholder={searchPlaceholders[currentPlaceholderIndex]}
-                    applyFilters={applyFilters}
-                    selectedFields={selectedFields}
-                  />
-                </div>
+                {isSearchExpanded ? (
+                  <div className="relative z-50 flex-1 transition-all duration-300 ease-in-out">
+                    <SearchWidget
+                      searchTerm={searchTerm}
+                      setSearchTerm={setSearchTerm}
+                      isSearchFocused={isSearchFocused}
+                      setIsSearchFocused={setIsSearchFocused}
+                      filteredSuggestions={filteredSuggestions}
+                      placeholder={searchPlaceholders[currentPlaceholderIndex]}
+                      applyFilters={applyFilters}
+                      selectedFields={selectedFields}
+                      autoFocus
+                      onClose={() => {
+                        setIsSearchExpanded(false);
+                        setIsSearchFocused(false);
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsSearchExpanded(true);
+                        setIsSearchFocused(true);
+                      }}
+                      aria-label="Search internships"
+                      className={cn(
+                        "flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-xs transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus:ring-2 focus:ring-slate-200 focus:outline-none active:scale-95",
+                        Boolean(appliedSearchTerm) &&
+                          "border-orange-500 bg-orange-50/50 text-orange-600"
+                      )}
+                    >
+                      <Search className="h-4 w-4" />
+                    </button>
 
-                <div
-                  className={cn(
-                    "absolute right-12 z-10 transition-all duration-300 ease-in-out",
-                    isSearchFocused
-                      ? "pointer-events-none scale-95 opacity-0"
-                      : "pointer-events-auto scale-100 opacity-100"
-                  )}
-                >
-                  <InternshipTrackerButton
-                    tabIndex={isSearchFocused ? -1 : 0}
-                  />
-                </div>
+                    <InternshipTrackerButton className="flex-1" />
+                  </>
+                )}
 
                 <Button
                   aria-label="Toggle filters"
@@ -1162,58 +1201,68 @@ export default function InternshipList() {
         <div className="hidden gap-6 lg:grid lg:grid-cols-12">
           {/* Left Sidebar - 3 columns */}
           <aside
-            className={cn("col-span-3", isSearchFocused && "relative z-50")}
+            className={cn(
+              "col-span-3",
+              (isSearchExpanded || isSearchFocused) && "relative z-50"
+            )}
           >
             <div className="scrollbar-hide sticky top-20 max-h-[calc(100vh-6rem)] space-y-6 overflow-y-auto pt-1.5 pr-2 pb-12">
               {/* Search Bar */}
               {showInitialSkeleton ? (
-                <div className="flex w-full items-center justify-between py-1">
-                  <Skeleton className="h-10 w-[calc(100%-96px)] rounded-lg" />
-                  <Skeleton className="h-10 w-10 rounded-lg" />
-                  <Skeleton className="h-10 w-10 rounded-lg" />
+                <div className="flex w-full items-center gap-2 py-1">
+                  <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
+                  <Skeleton className="h-10 flex-1 rounded-lg" />
+                  <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
                 </div>
               ) : (
                 <>
                   <div
                     className={cn(
-                      "relative flex w-full items-center justify-between py-1",
-                      isSearchFocused && "z-50"
+                      "relative flex w-full items-center gap-2 py-1",
+                      (isSearchExpanded || isSearchFocused) && "z-50"
                     )}
                   >
-                    <div
-                      className={cn(
-                        "relative transition-all duration-300 ease-in-out",
-                        isSearchFocused
-                          ? "z-50 w-[calc(100%-48px)]"
-                          : "z-20 w-[calc(100%-96px)]"
-                      )}
-                    >
-                      <SearchWidget
-                        searchTerm={searchTerm}
-                        setSearchTerm={setSearchTerm}
-                        isSearchFocused={isSearchFocused}
-                        setIsSearchFocused={setIsSearchFocused}
-                        filteredSuggestions={filteredSuggestions}
-                        placeholder={
-                          searchPlaceholders[currentPlaceholderIndex]
-                        }
-                        applyFilters={applyFilters}
-                        selectedFields={selectedFields}
-                      />
-                    </div>
+                    {isSearchExpanded ? (
+                      <div className="relative z-50 flex-1 transition-all duration-300 ease-in-out">
+                        <SearchWidget
+                          searchTerm={searchTerm}
+                          setSearchTerm={setSearchTerm}
+                          isSearchFocused={isSearchFocused}
+                          setIsSearchFocused={setIsSearchFocused}
+                          filteredSuggestions={filteredSuggestions}
+                          placeholder={
+                            searchPlaceholders[currentPlaceholderIndex]
+                          }
+                          applyFilters={applyFilters}
+                          selectedFields={selectedFields}
+                          autoFocus
+                          onClose={() => {
+                            setIsSearchExpanded(false);
+                            setIsSearchFocused(false);
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsSearchExpanded(true);
+                            setIsSearchFocused(true);
+                          }}
+                          aria-label="Search internships"
+                          className={cn(
+                            "flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-xs transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus:ring-2 focus:ring-slate-200 focus:outline-none active:scale-95",
+                            Boolean(appliedSearchTerm) &&
+                              "border-orange-500 bg-orange-50/50 text-orange-600"
+                          )}
+                        >
+                          <Search className="h-4 w-4" />
+                        </button>
 
-                    <div
-                      className={cn(
-                        "absolute right-12 z-10 transition-all duration-300 ease-in-out",
-                        isSearchFocused
-                          ? "pointer-events-none scale-95 opacity-0"
-                          : "pointer-events-auto scale-100 opacity-100"
-                      )}
-                    >
-                      <InternshipTrackerButton
-                        tabIndex={isSearchFocused ? -1 : 0}
-                      />
-                    </div>
+                        <InternshipTrackerButton className="flex-1" />
+                      </>
+                    )}
 
                     <Button
                       aria-label="Toggle filters"
@@ -1568,7 +1617,6 @@ export default function InternshipList() {
               {showSecondaryWidgets ? (
                 <>
                   <CalendarWidget kind="internship" />
-                  <TaskWidget />
                   {lastInteracted && lastInteracted.id && (
                     <SimilarInternships
                       currentId={lastInteracted.id}
@@ -1585,10 +1633,7 @@ export default function InternshipList() {
                   )}
                 </>
               ) : (
-                <>
-                  <div className="h-80 animate-pulse rounded-lg border bg-white" />
-                  <div className="h-52 animate-pulse rounded-lg border bg-white" />
-                </>
+                <div className="h-80 animate-pulse rounded-lg border bg-white" />
               )}
             </div>
           </aside>

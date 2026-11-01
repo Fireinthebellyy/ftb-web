@@ -53,8 +53,8 @@ export function ExpandableDescription({
 
     textNodes.forEach((node) => {
       node.nodeValue = (node.nodeValue ?? "")
-        .replace(/-/g, "\u2011")
-        .replace(/\s*\|\s*/g, ";");
+        .replace(/\u00a0/g, " ")
+        .replace(/-/g, "\u2011");
     });
 
     return container.innerHTML;
@@ -63,14 +63,28 @@ export function ExpandableDescription({
   const plainTextPreview = useMemo(() => stripHtml(text), [text]);
 
   useEffect(() => {
-    if (ref.current && isCardExpanded) {
-      const computedStyle = window.getComputedStyle(ref.current);
-      const lineHeight = parseFloat(computedStyle.lineHeight);
-      const maxHeight = !isNaN(lineHeight) ? lineHeight * CLAMP_LINES : 16 * CLAMP_LINES;
-      setClamped(ref.current.scrollHeight > maxHeight);
-    } else {
+    if (!ref.current || !isCardExpanded) {
       setClamped(false);
+      return;
     }
+
+    const element = ref.current;
+
+    const previousClassName = element.className;
+
+    element.classList.remove("line-clamp-4", "text-ellipsis");
+
+    const fullHeight = element.scrollHeight;
+
+    element.className = previousClassName;
+
+    const computedStyle = window.getComputedStyle(element);
+    const lineHeight = parseFloat(computedStyle.lineHeight);
+    const maxHeight = !isNaN(lineHeight)
+      ? lineHeight * CLAMP_LINES
+      : 16 * CLAMP_LINES;
+
+  setClamped(fullHeight > maxHeight + 1);
   }, [text, isCardExpanded]);
 
   if (!isCardExpanded) {
@@ -86,10 +100,10 @@ export function ExpandableDescription({
       <div
         ref={ref}
         className={cn(
-          "w-full break-words",
+          "w-full min-w-0 overflow-hidden whitespace-normal break-normal",
           expanded ? "" : "line-clamp-4 text-ellipsis",
           "[&_ol]:ml-4 [&_ol]:list-decimal [&_p]:mb-1 last:[&_p]:mb-0 [&_ul]:ml-4 [&_ul]:list-disc",
-          "[&_*]:break-words [&_*]:whitespace-normal"
+          "[&_*]:whitespace-normal"
         )}
         dangerouslySetInnerHTML={{ __html: safeHtml }}
       />

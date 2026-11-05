@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  computeAccountAgeDays,
+  computeConsistencyScore,
   computeLoginStreakUpdate,
+  getConsistencyTier,
   getDaysDifferenceInIST,
   getDisplayStreak,
   isValidCalendarDateString,
@@ -141,6 +144,49 @@ describe("login-streak utils", () => {
       expect(getDisplayStreak(45, "2026-08-30")).toBe(0);
 
       vi.useRealTimers();
+    });
+  });
+
+  describe("consistency metrics", () => {
+    it("computes consistencyStatus, previousStreak, and daysSinceLastLogin", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-09-01T10:00:00+05:30"));
+
+      const first = computeLoginStreakUpdate(0, null);
+      expect(first.consistencyStatus).toBe("first_login");
+      expect(first.daysSinceLastLogin).toBeNull();
+      expect(first.previousStreak).toBe(0);
+
+      const continued = computeLoginStreakUpdate(6, "2026-08-31");
+      expect(continued.consistencyStatus).toBe("continued");
+      expect(continued.daysSinceLastLogin).toBe(1);
+      expect(continued.previousStreak).toBe(6);
+      expect(continued.streak).toBe(7);
+
+      const sameDay = computeLoginStreakUpdate(7, "2026-09-01");
+      expect(sameDay.consistencyStatus).toBe("same_day");
+      expect(sameDay.daysSinceLastLogin).toBe(0);
+      expect(sameDay.previousStreak).toBe(7);
+
+      const reset = computeLoginStreakUpdate(10, "2026-08-28");
+      expect(reset.consistencyStatus).toBe("reset");
+      expect(reset.daysSinceLastLogin).toBe(4);
+      expect(reset.previousStreak).toBe(10);
+      expect(reset.streak).toBe(1);
+
+      vi.useRealTimers();
+    });
+
+    it("computes consistency tiers and scores accurately", () => {
+      expect(getConsistencyTier(1)).toBe("new");
+      expect(getConsistencyTier(3)).toBe("building");
+      expect(getConsistencyTier(7)).toBe("consistent");
+      expect(getConsistencyTier(14)).toBe("highly_consistent");
+      expect(getConsistencyTier(30)).toBe("power_user");
+
+      expect(computeAccountAgeDays("2026-08-23", "2026-09-01")).toBe(10);
+      expect(computeConsistencyScore(7, 10)).toBe(70);
+      expect(computeConsistencyScore(10, 10)).toBe(100);
     });
   });
 });

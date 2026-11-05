@@ -22,6 +22,7 @@ import { SchedulePublishPopover } from "@/components/opportunity/fields/MetaPopo
 import { toDateTimeLocalValue } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import { useToolkits } from "@/lib/queries/toolkits";
+import { useQuery } from "@tanstack/react-query";
 
 import {
   Dialog,
@@ -57,6 +58,28 @@ import {
 } from "./ungatekeep-form-constants";
 
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
+
+interface FilterTag {
+  label: string;
+  value: string;
+}
+
+const ALL_FILTER_TAGS: FilterTag[] = [
+  { label: "College AMAs", value: "college_amas" },
+  { label: "Upskill", value: "upskill" },
+  { label: "Entrance Exams", value: "entrance_exams" },
+];
+
+async function fetchFilterTagsData(): Promise<{
+  order: string[];
+  labels: Record<string, string>;
+}> {
+  const response = await axios.get("/api/admin/settings/filter-tags");
+  return {
+    order: response.data.order || ALL_FILTER_TAGS.map((t) => t.value),
+    labels: response.data.labels || {},
+  };
+}
 
 interface NewUngatekeepFormProps {
   children?: React.ReactNode;
@@ -114,6 +137,12 @@ export default function NewUngatekeepForm({
       : false
   );
 
+  const { data: { order = ALL_FILTER_TAGS.map((t) => t.value), labels = {} } = {} } =
+    useQuery({
+      queryKey: ["admin", "settings", "filter-tags"],
+      queryFn: fetchFilterTagsData,
+    });
+
   const maxFiles = 10;
   const maxAttachments = 2;
 
@@ -143,6 +172,16 @@ export default function NewUngatekeepForm({
   const handleRemoveExistingFile = (fileId: string) => {
     setExistingFiles((prev) => prev.filter((id) => id !== fileId));
     setRemovedFileIds((prev) => [...prev, fileId]);
+  };
+
+  // Handle reordering existing files
+  const handleReorderExistingFiles = (fromIndex: number, toIndex: number) => {
+    setExistingFiles((prev) => {
+      const updated = [...prev];
+      const [moved] = updated.splice(fromIndex, 1);
+      updated.splice(toIndex, 0, moved);
+      return updated;
+    });
   };
 
   // Delete removed files from storage
@@ -176,9 +215,7 @@ export default function NewUngatekeepForm({
       prev.map((file) => ({ ...file, uploading: true, progress: 0 }))
     );
 
-    const allNewFiles = [...files, ...attachmentFiles].sort(
-      (a, b) => (a.addedAt || 0) - (b.addedAt || 0)
-    );
+    const allNewFiles = [...files, ...attachmentFiles];
 
     for (const fileItem of allNewFiles) {
       const isImage = fileItem.kind === "image";
@@ -279,6 +316,7 @@ export default function NewUngatekeepForm({
       }
 
       // Combine existing and new files into one attachments array
+      // The order is: existing files (in their original order) + new files (in the order they were added/reordered)
       const finalAttachments = [...existingFiles, ...attachmentIds];
 
       const cleanedData = {
@@ -502,40 +540,46 @@ export default function NewUngatekeepForm({
               <FormItem>
                 <FormLabel>Filter Tags</FormLabel>
                 <div className="flex flex-wrap gap-2">
-                  {[
-                    { label: "College AMAs", value: "college_amas" },
-                    { label: "Upskill", value: "upskill" },
-                    { label: "Entrance Exams", value: "entrance_exams" },
-                  ].map((filterTag) => {
-                    const isSelected = field.value.includes(filterTag.value);
-                    return (
-                      <label
-                        key={filterTag.value}
-                        className={cn(
-                          "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition-all",
-                          isSelected
-                            ? "border-orange-500 bg-orange-50 text-orange-700 hover:bg-orange-100"
-                            : "hover:bg-muted"
-                        )}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              field.onChange([...field.value, filterTag.value]);
-                            } else {
-                              field.onChange(
-                                field.value.filter((v) => v !== filterTag.value)
-                              );
-                            }
-                          }}
-                          className="h-4 w-4 rounded border-gray-300"
-                        />
-                        {filterTag.label}
-                      </label>
-                    );
-                  })}
+                  {order
+                    .map((value) => {
+                      const tag = ALL_FILTER_TAGS.find((t) => t.value === value);
+                      if (!tag) return null;
+                      return {
+                        ...tag,
+                        label: labels[value] || tag.label,
+                      };
+                    })
+                    .filter((t): t is FilterTag => t !== undefined)
+                    .map((filterTag) => {
+                      const isSelected = field.value.includes(filterTag.value);
+                      return (
+                        <label
+                          key={filterTag.value}
+                          className={cn(
+                            "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition-all",
+                            isSelected
+                              ? "border-orange-500 bg-orange-50 text-orange-700 hover:bg-orange-100"
+                              : "hover:bg-muted"
+                          )}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                field.onChange([...field.value, filterTag.value]);
+                              } else {
+                                field.onChange(
+                                  field.value.filter((v) => v !== filterTag.value)
+                                );
+                              }
+                            }}
+                            className="h-4 w-4 rounded border-gray-300"
+                          />
+                          {filterTag.label}
+                        </label>
+                      );
+                    })}
                 </div>
                 <div className="text-muted-foreground text-[10px]">
                   Select which filter categories this post should appear in
@@ -596,6 +640,7 @@ export default function NewUngatekeepForm({
               <ExistingAttachments
                 existingAttachments={existingFiles}
                 onRemoveExisting={handleRemoveExistingFile}
+                onReorder={handleReorderExistingFiles}
                 loading={isSubmitting}
               />
             )}

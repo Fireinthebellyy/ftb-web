@@ -204,6 +204,15 @@ export default function NewOpportunityForm({
     setRemovedAttachmentIds((prev) => [...prev, attachmentId]);
   };
 
+  const handleReorderExistingAttachments = (fromIndex: number, toIndex: number) => {
+    setExistingAttachments((prev) => {
+      const updated = [...prev];
+      const [moved] = updated.splice(fromIndex, 1);
+      updated.splice(toIndex, 0, moved);
+      return updated;
+    });
+  };
+
   function handleTypeChange(type: string) {
     form.setValue("type", type, { shouldValidate: true, shouldTouch: true });
   }
@@ -236,6 +245,7 @@ export default function NewOpportunityForm({
             <ExistingAttachments
               existingAttachments={existingAttachments}
               onRemoveExisting={handleRemoveExistingAttachment}
+              onReorder={handleReorderExistingAttachments}
               loading={loading}
             />
           )}

@@ -9,6 +9,7 @@ const storageDomainPublicBaseUrlMap: Record<StorageDomain, string | undefined> =
     "opportunity-attachments":
       process.env.NEXT_PUBLIC_R2_OPPORTUNITY_ATTACHMENTS_BASE_URL,
     "cohort-resources": process.env.NEXT_PUBLIC_R2_COHORT_RESOURCES_BASE_URL,
+    "cold-dm-templates": process.env.NEXT_PUBLIC_R2_COLD_DM_TEMPLATES_BASE_URL,
   };
 
 function normalizeBaseUrl(baseUrl: string): string {

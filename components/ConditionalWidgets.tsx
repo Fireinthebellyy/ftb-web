@@ -7,13 +7,15 @@ export default function ConditionalWidgets() {
   const pathname = usePathname();
   const isHomepage = pathname === "/";
   const isToolkitPage = pathname?.startsWith("/toolkit") || false;
+  const isUngatekeepPage = pathname?.startsWith("/ungatekeep") || false;
+  const isAdminPage = pathname?.startsWith("/admin") || false;
 
   if (isHomepage) return null;
 
   return (
     <>
       {!isToolkitPage && <WhatsAppWidget />}
-      <FeedbackWidget />
+      {!isUngatekeepPage && !isAdminPage && <FeedbackWidget />}
     </>
   );
 }

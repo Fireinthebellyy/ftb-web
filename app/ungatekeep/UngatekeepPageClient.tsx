@@ -110,12 +110,38 @@ export default function UngatekeepPageClient() {
     window.history.pushState({}, "", newUrl);
   };
 
-  const tags = [
-    { label: "All", value: "all" },
+  const ALL_FILTER_TAGS = [
     { label: "College AMAs", value: "college_amas" },
     { label: "Upskill", value: "upskill" },
     { label: "Entrance exams", value: "entrance_exams" },
   ];
+
+  const { data: { order = ALL_FILTER_TAGS.map((t) => t.value), labels = {} } = {} } =
+    useQuery({
+      queryKey: ["admin", "settings", "filter-tags"],
+      queryFn: async () => {
+        const response = await axios.get("/api/admin/settings/filter-tags");
+        return {
+          order: response.data.order || ALL_FILTER_TAGS.map((t) => t.value),
+          labels: response.data.labels || {},
+        };
+      },
+      staleTime: 1000 * 60 * 10, // 10 minutes
+    });
+
+  const tags = useMemo(() => {
+    const orderedTags = order
+      .map((value) => {
+        const tag = ALL_FILTER_TAGS.find((t) => t.value === value);
+        if (!tag) return null;
+        return {
+          ...tag,
+          label: labels[value] || tag.label,
+        };
+      })
+      .filter((t): t is typeof ALL_FILTER_TAGS[0] => t !== undefined);
+    return [{ label: "All", value: "all" }, ...orderedTags];
+  }, [order, labels]);
 
   const {
     data,
@@ -197,6 +223,29 @@ export default function UngatekeepPageClient() {
   const posts = data?.pages.flatMap((page) => page.posts) ?? [];
   const pinnedPosts = posts.filter((post) => post.isPinned);
   const firstPage = data?.pages[0];
+
+  // Scroll to specific post when URL has scrollTo parameter
+  useEffect(() => {
+    const scrollToId = searchParams.get("scrollTo");
+    if (!scrollToId || !posts.length) return;
+
+    // Wait for DOM to render and then scroll
+    const scrollTimer = setTimeout(() => {
+      const element = document.getElementById(`post-${scrollToId}`);
+      if (element) {
+        element.style.scrollMarginTop = "510px";
+
+        element.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(scrollTimer);
+    };
+  }, [searchParams, posts]);
 
   const scrollToPost = (id: string) => {
     const element = document.getElementById(`post-${id}`);
@@ -315,7 +364,7 @@ export default function UngatekeepPageClient() {
                   Ungatekeep
                 </h1>
                 <p className="mb-3 text-sm text-gray-600 md:text-base">
-                  Posting everything students usually figure out too late.
+                  Ungatekeeping <span className="text-orange-500 font-bold">Top 1%</span>
                 </p>
               </div>
               <motion.div animate={savedButtonControls}>
@@ -458,8 +507,8 @@ export default function UngatekeepPageClient() {
               <h1 className="mb-1 text-xl font-bold text-gray-900">
                 Ungatekeep
               </h1>
-              <p className="text-xs text-gray-600">
-                Everything students figure out too late.
+              <p className="text-md text-gray-600">
+                Ungatekeeping <span className="text-orange-500 font-bold">Top 1%</span>
               </p>
             </div>
             <motion.div animate={savedButtonControls}>
@@ -468,7 +517,7 @@ export default function UngatekeepPageClient() {
                 aria-label="View saved posts"
                 className="group hover:text-primary relative flex items-center gap-1.5 rounded-full border bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm transition-all hover:bg-gray-50 active:scale-95"
               >
-                <Bookmark className="group-hover:fill-primary group-hover:text-primary h-3 w-3 transition-colors sm:h-4 sm:w-4" />
+                <Bookmark className="group-hover:fill-primary group-hover:text-primary transition-colors h-4 w-4" />
                 {savedCount > 0 && (
                   <span className="bg-primary absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[10px] text-white">
                     {savedCount}

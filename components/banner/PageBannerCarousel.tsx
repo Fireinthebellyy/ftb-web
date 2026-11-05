@@ -18,20 +18,32 @@ import { cn } from "@/lib/utils";
 interface PageBannerCarouselProps {
   placement: PageBannerPlacement;
   className?: string;
+  customHeight?: string;
 }
 
 export default function PageBannerCarousel({
   placement,
   className,
+  customHeight,
 }: PageBannerCarouselProps) {
   const { data: banners = [], isLoading } = usePageBanners(placement);
   const autoplayRef = useRef(Autoplay({ delay: CAROUSEL_AUTOPLAY_DELAY_MS }));
+
+  // Set height based on placement
+  const getHeight = () => {
+    if (customHeight) return customHeight;
+    if (placement === "cold-dm") return "h-[220px]";
+    return "h-[96px] sm:h-[84px]";
+  };
+
+  const heightClass = getHeight();
 
   if (isLoading) {
     return (
       <div
         className={cn(
-          "h-[96px] w-full animate-pulse overflow-hidden rounded-xl bg-slate-100 sm:h-[84px]",
+          heightClass,
+          "w-full animate-pulse overflow-hidden rounded-xl bg-slate-100",
           className
         )}
       />
@@ -55,13 +67,15 @@ export default function PageBannerCarousel({
         <CarouselContent className="-ml-0">
           {banners.map((banner) => (
             <CarouselItem key={banner._id} className="pl-0">
-              <div className="relative h-[96px] w-full overflow-hidden rounded-xl sm:h-[84px]">
+              <div className={cn("relative w-full overflow-hidden rounded-xl", heightClass)}>
                 {banner.image?.asset?.url ? (
                   <Image
                     src={banner.image.asset.url}
                     alt={banner.image.alt || `${placement} banner`}
                     fill
-                    className="object-contain sm:object-cover"
+                    className={cn(
+                      placement === "cold-dm" ? "object-cover" : "object-contain sm:object-cover"
+                    )}
                     sizes="(max-width: 640px) 100vw, 1200px"
                     priority={placement === "internship"}
                   />

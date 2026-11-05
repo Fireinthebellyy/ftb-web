@@ -17,6 +17,8 @@ export const adminTabValues = [
   "popups",
   "session-queries",
   "sprint-session-queries",
+  "cold-dm-templates",
+  "cold-dm-settings",
 ] as const;
 
 export type AdminTabValue = (typeof adminTabValues)[number];
@@ -35,6 +37,8 @@ const roleToAdminTabs: Record<UserRole, readonly AdminTabValue[]> = {
     "sprints",
     "session-queries",
     "sprint-session-queries",
+    "cold-dm-templates",
+    "cold-dm-settings",
   ],
   admin: adminTabValues,
 };

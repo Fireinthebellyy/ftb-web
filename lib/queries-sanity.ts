@@ -1,7 +1,7 @@
 import sanityClient from "@/lib/sanity";
 import { useQuery } from "@tanstack/react-query";
 
-export type PageBannerPlacement = "internship" | "ungatekeep";
+export type PageBannerPlacement = "internship" | "ungatekeep" | "cold-dm";
 
 export interface PageBanner {
   _id: string;

@@ -235,7 +235,7 @@ export default function Navbar() {
               className="object-contain"
             />
             <span
-              className={`${righteous.className} hidden bg-clip-text text-2xl font-bold tracking-tight text-neutral-800 sm:inline`}
+              className={`${righteous.className} hidden bg-clip-text text-2xl font-bold tracking-tight text-neutral-800 sm:inline md:hidden lg:inline`}
             >
               Fire in the Belly
             </span>
@@ -356,7 +356,7 @@ export default function Navbar() {
             </div>
           ) : user ? (
             <div className="flex items-center justify-center space-x-2">
-              <span className="hidden text-sm font-medium sm:inline">
+              <span className="hidden text-sm font-medium sm:inline md:hidden lg:inline">
                 Hi, {user?.user?.name?.split(" ")[0] || "User"}!
               </span>
               <LoginStreakBadge userId={user?.user?.id} />

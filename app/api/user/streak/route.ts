@@ -1,7 +1,10 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
+  computeAccountAgeDays,
+  computeConsistencyScore,
   computeLoginStreakUpdate,
+  getConsistencyTier,
   getDisplayStreak,
 } from "@/lib/login-streak";
 import { user } from "@/lib/schema";
@@ -30,6 +33,9 @@ export async function GET() {
       .select({
         loginStreak: user.loginStreak,
         lastLoginDate: user.lastLoginDate,
+        createdAt: user.createdAt,
+        email: user.email,
+        name: user.name,
       })
       .from(user)
       .where(eq(user.id, session.user.id))
@@ -55,7 +61,28 @@ export async function GET() {
       ? update.streak
       : getDisplayStreak(currentStreak, lastLoginDate);
 
-    return NextResponse.json({ streak });
+    const accountAgeDays = computeAccountAgeDays(
+      row?.createdAt ?? session.user.createdAt,
+      update.lastLoginDate
+    );
+    const consistencyScore = computeConsistencyScore(streak, accountAgeDays);
+    const consistencyTier = getConsistencyTier(streak);
+
+    return NextResponse.json({
+      streak,
+      previousStreak: update.previousStreak,
+      lastLoginDate: update.lastLoginDate,
+      previousLoginDate: update.previousLoginDate,
+      daysSinceLastLogin: update.daysSinceLastLogin,
+      consistencyStatus: update.consistencyStatus,
+      consistencyTier,
+      consistencyScore,
+      accountAgeDays,
+      changed: update.changed,
+      userId: session.user.id,
+      email: row?.email ?? session.user.email ?? "",
+      name: row?.name ?? session.user.name ?? "",
+    });
   } catch (error) {
     console.error("Error updating login streak:", error);
     return NextResponse.json(

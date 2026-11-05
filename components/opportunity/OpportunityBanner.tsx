@@ -15,7 +15,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Skeleton } from "@/components/ui/skeleton";
 import { CAROUSEL_AUTOPLAY_DELAY_MS } from "@/lib/carousel";
 import { usePageBanners } from "@/lib/queries-sanity";
 import { cn } from "@/lib/utils";
@@ -62,11 +61,7 @@ export default function OpportunityBanner({
   }, [pageBanners]);
 
   if (!mounted || pageBannersLoading || banners.length === 0) {
-    return (
-      <div className={cn("mb-4 w-full", className)}>
-        <Skeleton className="h-[145px] w-full rounded-2xl sm:h-[175px] md:h-[190px] lg:h-[200px]" />
-      </div>
-    );
+    return null;
   }
 
   const handleBannerClick = (banner: SanityBannerSlide, index: number) => {

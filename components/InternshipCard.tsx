@@ -81,8 +81,8 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
   const { addToTracker, getStatus, removeFromTracker } = useTracker();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
-  const { id, title, hiringOrganization, deadline, is_trending, is_exclusive } = internship;
-  
+  const { id, title, hiringOrganization, deadline, is_trending, is_exclusive } =
+    internship;
 
   const currentStatus = getStatus(id, "internship");
   const isBookmarked = !!currentStatus;
@@ -94,7 +94,10 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
     });
     if (typeof window !== "undefined") {
       try {
-        sessionStorage.setItem("internship_list_scroll_pos", window.scrollY.toString());
+        sessionStorage.setItem(
+          "internship_list_scroll_pos",
+          window.scrollY.toString()
+        );
         sessionStorage.setItem("last_clicked_internship_id", id);
         localStorage.setItem(
           "last_interacted_internship",
@@ -214,28 +217,31 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
       <div
         role="button"
         tabIndex={0}
-        className="relative group cursor-pointer rounded-xl border border-slate-200 bg-white pl-4 pr-2 py-3 transition-all hover:border-[#ec5b13]/30 hover:bg-orange-50/10 hover:shadow-md"
+        className="group relative cursor-pointer rounded-xl border border-slate-200 bg-white py-3 pr-2 pl-4 transition-all hover:border-[#ec5b13]/30 hover:bg-orange-50/10 hover:shadow-md"
         onClick={handleCardClick}
         onKeyDown={handleCardKeyDown}
       >
-
         {is_exclusive && (
-          <div className="absolute -top-0.5 right-0 z-20">
-            <Badge className="bg-black text-white rounded-tl-none rounded-br-none px-2 py-1 text-[9px] font-bold">
-              <Crown className="h-2.5 w-2.5 mr-0.5 inline" />Recommended
+          <div className="absolute -top-0.5 right-0 z-10">
+            <Badge className="rounded-tl-none rounded-br-none bg-black px-2 py-1 text-[9px] font-bold text-white">
+              <Crown className="mr-0.5 inline h-2.5 w-2.5" />
+              Recommended
             </Badge>
           </div>
         )}
         {is_trending && !is_exclusive && (
-          <div className="absolute -top-0.5 right-0 z-20">
-            <Badge className="bg-orange-500 text-white rounded-tl-none rounded-br-none px-2 py-1 text-[9px] font-bold">
-              <Flame className="h-2.5 w-2.5 mr-0.5 inline" />Trending
+          <div className="absolute -top-0.5 right-0 z-10">
+            <Badge className="rounded-tl-none rounded-br-none bg-orange-500 px-2 py-1 text-[9px] font-bold text-white">
+              <Flame className="mr-0.5 inline h-2.5 w-2.5" />
+              Trending
             </Badge>
           </div>
         )}
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            <div className={`${isActionsHidden?"mt-3":"mt-0"} flex h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/50 shadow-sm sm:h-11 sm:w-11`}>
+            <div
+              className={`${isActionsHidden ? "mt-3" : "mt-0"} flex h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/50 shadow-sm sm:h-11 sm:w-11`}
+            >
               <div
                 className="flex h-full w-full items-center justify-center"
                 style={{
@@ -248,7 +254,9 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
             </div>
 
             <div className="min-w-0 flex-1">
-              <h3 className={`${isActionsHidden?"mt-3":"mt-0"} truncate text-sm font-bold text-slate-900 sm:text-base`}>
+              <h3
+                className={`${isActionsHidden ? "mt-3" : "mt-0"} truncate text-sm font-bold text-slate-900 sm:text-base`}
+              >
                 {toTitleCase(title)}
               </h3>
               <p className="truncate text-xs text-slate-500 sm:text-sm">
@@ -260,7 +268,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             {isActionsHidden ? (
               <span
-                className={`${isActionsHidden?"mt-4":"mt-0"} inline-flex h-8 items-center justify-center rounded-[39px] bg-black px-3.5 text-[12px] font-semibold tracking-[-0.25px] text-white transition-colors group-hover:bg-slate-800`}
+                className={`${isActionsHidden ? "mt-4" : "mt-0"} inline-flex h-8 items-center justify-center rounded-[39px] bg-black px-3.5 text-[12px] font-semibold tracking-[-0.25px] text-white transition-colors group-hover:bg-slate-800`}
               >
                 Explore
               </span>
@@ -309,7 +317,9 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
 
                 <button
                   type="button"
-                  title={isBookmarked ? "Remove from Tracker" : "Save to Tracker"}
+                  title={
+                    isBookmarked ? "Remove from Tracker" : "Save to Tracker"
+                  }
                   aria-label={
                     isBookmarked ? "Remove from Tracker" : "Save to Tracker"
                   }

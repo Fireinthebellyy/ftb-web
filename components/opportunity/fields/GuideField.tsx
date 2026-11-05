@@ -2,7 +2,8 @@
 
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
-import { ExternalLink, Video, Youtube } from "lucide-react";
+import { ExternalLink, Video } from "lucide-react";
+import { YouTubeIcon } from "../YouTubeIcon";
 import {
   FormControl,
   FormDescription,
@@ -99,7 +100,7 @@ export function GuideField() {
                       className="flex cursor-pointer items-center justify-between rounded-lg border-2 border-gray-200 bg-white p-3 text-xs font-medium hover:bg-gray-50 peer-data-[state=checked]:border-red-600 peer-data-[state=checked]:bg-red-50/50 dark:border-gray-800 dark:bg-gray-950 dark:peer-data-[state=checked]:border-red-500 dark:peer-data-[state=checked]:bg-red-950/20"
                     >
                       <div className="flex items-center gap-2">
-                        <Youtube className="h-4 w-4 text-red-600" />
+                        <YouTubeIcon className="h-4 w-4 shrink-0" />
                         <span>YouTube Video</span>
                       </div>
                     </Label>

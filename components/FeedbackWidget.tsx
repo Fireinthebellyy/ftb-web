@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MessageSquareHeart } from "lucide-react";
 import posthog from "posthog-js";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
@@ -67,7 +66,6 @@ export function FeedbackWidget({
 } = {}) {
   const pathname = usePathname();
   const shouldHideOnPage = pathname.startsWith("/toolkit");
-  const isInternshipDetailPage = pathname.startsWith("/intern/");
 
   const [internalOpen, setInternalOpen] = useState(false);
   const open = isOpen !== undefined ? isOpen : internalOpen;
@@ -131,26 +129,6 @@ export function FeedbackWidget({
 
   return (
     <>
-      {!onOpenChange && !submitted && (
-        <button
-          type="button"
-          aria-label="Open feedback"
-          title="Share feedback"
-          onClick={() => {
-            setOpen(true);
-            posthog.capture("feedback_widget_opened", {
-              pathname,
-            });
-          }}
-          className={cn(
-            "fixed right-6 z-50 flex size-10 cursor-pointer items-center justify-center rounded-full bg-orange-500 text-white shadow-lg transition hover:bg-orange-600 focus:ring-2 focus:ring-orange-400 focus:outline-none md:bottom-20 md:size-12",
-            isInternshipDetailPage ? "bottom-[148px]" : "bottom-[124px]"
-          )}
-        >
-          <MessageSquareHeart className="size-5 md:size-6" aria-hidden />
-        </button>
-      )}
-
       <Dialog open={open} onOpenChange={(newOpen) => {
         setOpen(newOpen);
         if (!newOpen) {

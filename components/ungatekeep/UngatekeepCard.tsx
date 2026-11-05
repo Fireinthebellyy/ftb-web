@@ -268,7 +268,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
       {post.tag && (
         <div className="absolute -top-1.5 right-0 z-10 sm:-top-1">
           <Badge
-            className={`${getTagBadgeVariant(post.tag)} rounded-xl px-1.5 py-0.5 text-[9px] font-medium sm:px-2 sm:py-1 sm:text-[10px]`}
+            className={`${getTagBadgeVariant(post.tag)} rounded-tl-none rounded-br-none px-1.5 py-0.5 text-[9px] font-medium sm:px-2 sm:py-1 sm:text-[10px]`}
           >
             {post.tag.replace("_", " ")}
           </Badge>

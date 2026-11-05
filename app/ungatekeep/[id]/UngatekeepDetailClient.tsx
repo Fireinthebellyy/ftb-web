@@ -405,7 +405,7 @@ export default function UngatekeepDetailClient() {
                     <>
                       <span>•</span>
                       <Badge
-                        className={`${getTagBadgeVariant(post.tag)} rounded-xl text-xs`}
+                        className={`${getTagBadgeVariant(post.tag)} rounded-tl-none rounded-br-none text-xs`}
                       >
                         {post.tag.replace("_", " ")}
                       </Badge>

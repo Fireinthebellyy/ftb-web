@@ -361,10 +361,10 @@ export default function UngatekeepPageClient() {
             <div className="flex items-start justify-between">
               <div>
                 <h1 className="mb-1 text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
-                  Ungatekeep
+                  Ungatekeep<span className="text-orange-500 font-bold ml-1">Top 1%</span>
                 </h1>
                 <p className="mb-3 text-sm text-gray-600 md:text-base">
-                  Ungatekeeping <span className="text-orange-500 font-bold">Top 1%</span>
+                  Posting everything students usually figure out too late
                 </p>
               </div>
               <motion.div animate={savedButtonControls}>
@@ -505,10 +505,10 @@ export default function UngatekeepPageClient() {
           <div className="mb-4 flex items-start justify-between">
             <div>
               <h1 className="mb-1 text-xl font-bold text-gray-900">
-                Ungatekeep
+                Ungatekeep<span className="text-orange-500 font-bold ml-1">Top 1%</span>
               </h1>
-              <p className="text-md text-gray-600">
-                Ungatekeeping <span className="text-orange-500 font-bold">Top 1%</span>
+              <p className="text-xs text-gray-600">
+                Posting everything students usually figure out too late
               </p>
             </div>
             <motion.div animate={savedButtonControls}>

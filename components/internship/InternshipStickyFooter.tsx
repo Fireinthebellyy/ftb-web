@@ -24,6 +24,7 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
     coldDmShowPageBanner: true,
     coldDmShowTemplates: true,
   });
+  const [settingsLoaded, setSettingsLoaded] = React.useState(false);
 
   const hasApply = !!(internship.applyLink || internship.link);
   const hasDM = !!internship.hiringManagerLinkedin;
@@ -39,6 +40,8 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
         }
       } catch (error) {
         console.error("Error fetching Cold DM settings:", error);
+      } finally {
+        setSettingsLoaded(true);
       }
     };
     fetchColdDmSettings();
@@ -99,6 +102,12 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
                 field_label: fieldAnalytics.fieldLabel,
                 source: "mobile_footer",
               });
+
+              // If settings not loaded yet, redirect directly
+              if (!settingsLoaded) {
+                window.open(dmUrl, "_blank");
+                return;
+              }
 
               const shouldShowPopup = coldDmSettings.coldDmShowPageBanner || coldDmSettings.coldDmShowTemplates;
 

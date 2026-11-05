@@ -100,6 +100,27 @@ export const storageDomainConfig: Record<StorageDomain, StorageDomainConfig> = {
     ],
     cacheControl: "public, max-age=31536000, immutable",
   },
+  "cold-dm-templates": {
+    bucketEnvVar: "R2_BUCKET_COLD_DM_TEMPLATES",
+    publicBaseUrlEnvVar: "NEXT_PUBLIC_R2_COLD_DM_TEMPLATES_BASE_URL",
+    maxFileSizeBytes: 50 * MEGABYTE,
+    allowedMimeTypes: [
+      "application/pdf",
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+      "image/avif",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    ],
+    cacheControl: "public, max-age=31536000, immutable",
+  },
 };
 
 export function getStorageDomainBucket(domain: StorageDomain): string {

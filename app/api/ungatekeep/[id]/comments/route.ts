@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { eq, desc } from "drizzle-orm";
 import { z } from "zod";
+import { isFeatureEnabledServer } from "@/lib/feature-flags";
 
 const commentSchema = z.object({
   content: z.string().min(1, "Comment cannot be empty").max(1000, "Comment too long"),
@@ -16,6 +17,14 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check if comments feature is enabled
+    if (!isFeatureEnabledServer("ENABLE_UNGATEKEEP_COMMENTS")) {
+      return NextResponse.json(
+        { error: "Comments feature is currently disabled" },
+        { status: 503 }
+      );
+    }
+
     if (!db) {
       return NextResponse.json(
         { error: "Database connection not available" },
@@ -76,6 +85,14 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check if comments feature is enabled
+    if (!isFeatureEnabledServer("ENABLE_UNGATEKEEP_COMMENTS")) {
+      return NextResponse.json(
+        { error: "Comments feature is currently disabled" },
+        { status: 503 }
+      );
+    }
+
     if (!db) {
       return NextResponse.json(
         { error: "Database connection not available" },

@@ -5,9 +5,11 @@ import Link from "next/link";
 import axios from "axios";
 import { toast } from "sonner";
 import posthog from "posthog-js";
-import { Bookmark, Droplets, Flame, MessageSquare, Pin } from "lucide-react";
+import { Bookmark, ArrowBigUp, ArrowBigDown, MessageSquare, Pin } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { isFeatureEnabled } from "@/lib/feature-flags";
+import dayjs from "dayjs";
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg
@@ -54,6 +56,8 @@ interface UngatekeepPostActionBarProps {
   onCommentClick: () => void;
   isFlying?: boolean;
   flyPos?: { x: number; y: number };
+  publishedAt?: string | null;
+  createdAt?: string;
 }
 
 export function UngatekeepPostActionBar({
@@ -70,15 +74,13 @@ export function UngatekeepPostActionBar({
   onCommentClick,
   isFlying = false,
   flyPos = { x: 0, y: 0 },
+  publishedAt,
+  createdAt,
 }: UngatekeepPostActionBarProps) {
   const [score, setScore] = useState(initialScore);
   const [userVote, setUserVote] = useState(initialUserVote);
   const [comments, setComments] = useState(commentCount);
   const [isVoting, setIsVoting] = useState(false);
-  const [upAnimKey, setUpAnimKey] = useState(0);
-  const [downAnimKey, setDownAnimKey] = useState(0);
-  const [upParticles, setUpParticles] = useState<{ id: number; left: number; delay: number; size: number }[]>([]);
-  const [downParticles, setDownParticles] = useState<{ id: number; left: number; delay: number; size: number }[]>([]);
 
   useEffect(() => {
     setScore(initialScore);
@@ -89,28 +91,6 @@ export function UngatekeepPostActionBar({
   const handleVote = async (direction: "up" | "down", e: React.MouseEvent) => {
     e.stopPropagation();
     if (isVoting) return;
-
-    if (direction === "up") {
-      setUpAnimKey((k) => k + 1);
-      const newParticles = Array.from({ length: 24 }).map((_, i) => ({
-        id: Date.now() + i,
-        left: Math.random() * 100,
-        delay: Math.random() * 0.6,
-        size: 16 + Math.random() * 24,
-      }));
-      setUpParticles(newParticles);
-      setTimeout(() => setUpParticles([]), 2000);
-    } else {
-      setDownAnimKey((k) => k + 1);
-      const newParticles = Array.from({ length: 24 }).map((_, i) => ({
-        id: Date.now() + i,
-        left: Math.random() * 100,
-        delay: Math.random() * 0.6,
-        size: 16 + Math.random() * 24,
-      }));
-      setDownParticles(newParticles);
-      setTimeout(() => setDownParticles([]), 2000);
-    }
 
     setIsVoting(true);
     const prevScore = score;
@@ -176,56 +156,12 @@ export function UngatekeepPostActionBar({
             userVote === 1 && "bg-orange-100 text-orange-600"
           )}
         >
-          <motion.span
-            key={upAnimKey}
-            className="relative inline-flex"
-            initial={{ scale: 1, y: 0 }}
-            animate={{
-              scale: [1, 1.45, 1.05, 1],
-              y: [0, -5, -1, 0],
-            }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-          >
-            <Flame
-              className={cn(
-                "h-4 w-4",
-                userVote === 1 && "fill-orange-500 text-orange-500"
-              )}
-            />
-          </motion.span>
-          {upAnimKey > 0 ? (
-            <motion.span
-              key={`up-burst-${upAnimKey}`}
-              initial={{ opacity: 0.7, scale: 0.6 }}
-              animate={{ opacity: 0, scale: 2.2 }}
-              transition={{ duration: 0.45, ease: "easeOut" }}
-              className="pointer-events-none absolute inset-0 m-auto h-4 w-4 rounded-full bg-orange-400/50"
-              aria-hidden
-            />
-          ) : null}
-          <AnimatePresence>
-            {upParticles.map((p) => (
-              <motion.div
-                key={p.id}
-                initial={{ opacity: 0, y: "110vh", x: `${p.left}vw` }}
-                animate={{
-                  opacity: [0, 1, 1, 0],
-                  y: "-10vh",
-                }}
-                transition={{
-                  duration: 1.5,
-                  delay: p.delay,
-                  ease: "easeOut",
-                }}
-                className="pointer-events-none fixed left-0 top-0 z-[9999]"
-              >
-                <Flame
-                  className="fill-orange-500 text-orange-500"
-                  style={{ width: p.size, height: p.size }}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+          <ArrowBigUp
+            className={cn(
+              "h-4 w-4",
+              userVote === 1 && "fill-orange-500 text-orange-500"
+            )}
+          />
         </button>
         <button
           type="button"
@@ -234,59 +170,15 @@ export function UngatekeepPostActionBar({
           onClick={(e) => handleVote("down", e)}
           className={cn(
             "relative cursor-pointer overflow-visible rounded-r-full px-2.5 py-1.5 transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50",
-            userVote === -1 && "bg-sky-100 text-sky-600"
+            userVote === -1 && "bg-blue-100 text-blue-600"
           )}
         >
-          <motion.span
-            key={downAnimKey}
-            className="relative inline-flex"
-            initial={{ scale: 1, y: 0 }}
-            animate={{
-              scale: [1, 1.45, 1.05, 1],
-              y: [0, 5, 1, 0],
-            }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-          >
-            <Droplets
-              className={cn(
-                "h-4 w-4",
-                userVote === -1 && "fill-sky-500 text-sky-500"
-              )}
-            />
-          </motion.span>
-          {downAnimKey > 0 ? (
-            <motion.span
-              key={`down-burst-${downAnimKey}`}
-              initial={{ opacity: 0.7, scale: 0.6 }}
-              animate={{ opacity: 0, scale: 2.2 }}
-              transition={{ duration: 0.45, ease: "easeOut" }}
-              className="pointer-events-none absolute inset-0 m-auto h-4 w-4 rounded-full bg-sky-400/50"
-              aria-hidden
-            />
-          ) : null}
-          <AnimatePresence>
-            {downParticles.map((p) => (
-              <motion.div
-                key={p.id}
-                initial={{ opacity: 0, y: "-10vh", x: `${p.left}vw` }}
-                animate={{
-                  opacity: [0, 1, 1, 0],
-                  y: "110vh",
-                }}
-                transition={{
-                  duration: 1.5,
-                  delay: p.delay,
-                  ease: "easeIn",
-                }}
-                className="pointer-events-none fixed left-0 top-0 z-[9999]"
-              >
-                <Droplets
-                  className="fill-sky-500 text-sky-500"
-                  style={{ width: p.size, height: p.size }}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+          <ArrowBigDown
+            className={cn(
+              "h-4 w-4",
+              userVote === -1 && "fill-blue-500 text-blue-500"
+            )}
+          />
         </button>
       </div>
 
@@ -316,27 +208,29 @@ export function UngatekeepPostActionBar({
           <span className="hidden sm:inline">Ask query</span>
         </Link>
 
-        <RedditPill
-          onClick={(e) => {
-            e.stopPropagation();
-            onCommentClick();
-            
-            posthog.capture("ungatekeep_comments_toggled", {
-              post_id: postId,
-              action: showComments ? "hide" : "show",
-            });
-          }}
-          className={cn(showComments && "bg-orange-50 text-orange-700")}
-          aria-expanded={showComments}
-          aria-label="Comments"
-        >
-          <MessageSquare
-            className={cn("h-3.5 w-3.5", showComments && "fill-orange-500")}
-          />
-          <span className="hidden sm:inline">
-            {comments > 0 ? comments : "Comment"}
-          </span>
-        </RedditPill>
+        {isFeatureEnabled("ENABLE_UNGATEKEEP_COMMENTS") && (
+          <RedditPill
+            onClick={(e) => {
+              e.stopPropagation();
+              onCommentClick();
+
+              posthog.capture("ungatekeep_comments_toggled", {
+                post_id: postId,
+                action: showComments ? "hide" : "show",
+              });
+            }}
+            className={cn(showComments && "bg-orange-50 text-orange-700")}
+            aria-expanded={showComments}
+            aria-label="Comments"
+          >
+            <MessageSquare
+              className={cn("h-3.5 w-3.5", showComments && "fill-orange-500")}
+            />
+            <span className="hidden sm:inline">
+              {comments > 0 ? comments : "Comment"}
+            </span>
+          </RedditPill>
+        )}
 
         <RedditPill
           onClick={onSaveClick}
@@ -368,6 +262,10 @@ export function UngatekeepPostActionBar({
           </AnimatePresence>
         </RedditPill>
       </div>
+
+      <span className="text-[10px] sm:text-[11px] font-semibold text-black ml-auto">
+        {dayjs(publishedAt || createdAt).format("D MMM, YYYY")}
+      </span>
     </footer>
   );
 }

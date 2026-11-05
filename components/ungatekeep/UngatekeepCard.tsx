@@ -19,7 +19,6 @@ import {
   Flame,
 } from "lucide-react";
 import axios from "axios";
-import dayjs from "dayjs";
 import UngatekeepCommentSection from "./UngatekeepCommentSection";
 import { UngatekeepPostActionBar } from "./UngatekeepPostActionBar";
 
@@ -28,6 +27,7 @@ import posthog from "posthog-js";
 import { ShareDialog } from "./ShareDialog";
 import { AttachmentSlide, ImageModal } from "./UngatekeepMediaComponents";
 import { cn, stripHtml } from "@/lib/utils";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import DOMPurify from "dompurify";
 
 type UngatekeepPost = {
@@ -164,8 +164,8 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
     (process.env.NEXT_PUBLIC_SITE_URL as string | undefined) ||
     "";
   const shareUrl = publicBaseUrl
-    ? `${publicBaseUrl}/ungatekeep/${post.id}`
-    : `/ungatekeep/${post.id}`;
+    ? `${publicBaseUrl}/ungatekeep?scrollTo=${post.id}`
+    : `/ungatekeep?scrollTo=${post.id}`;
 
   const handleCopy = async () => {
     try {
@@ -188,31 +188,31 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
   )}`;
 
   const getTagBadgeVariant = (tag: string | null | undefined) => {
-    if (!tag) return "bg-gray-200 text-gray-600";
-    
+    if (!tag) return "bg-gradient-to-r from-gray-600 via-gray-500 to-gray-400 text-white";
+
     switch (tag.toLowerCase()) {
       case "announcement":
-        return "bg-blue-200 text-blue-600";
+        return "bg-gradient-to-r from-blue-800 via-cyan-500 via-green-500 via-yellow-500 to-red-500 text-white";
       case "company_experience":
-        return "bg-orange-200 text-orange-600";
+        return "bg-gradient-to-r from-purple-800 via-pink-500 via-orange-500 via-amber-500 to-yellow-700 text-white";
       case "resources":
-        return "bg-green-200 text-green-600";
+        return "bg-gradient-to-r from-indigo-800 via-violet-500 via-blue-500 via-cyan-500 to-teal-700 text-white";
       case "playbooks":
-        return "bg-purple-200 text-purple-600";
+        return "bg-gradient-to-r from-blue-800 via-cyan-500 via-green-500 via-yellow-500 to-red-700 text-white";
       case "college_hacks":
-        return "bg-pink-200 text-pink-600";
+        return "bg-gradient-to-r from-purple-800 via-pink-500 via-orange-500 via-amber-500 to-yellow-700 text-white";
       case "interview":
-        return "bg-red-200 text-red-600";
+        return "bg-gradient-to-r from-indigo-800 via-violet-500 via-blue-500 via-cyan-500 to-teal-700 text-white";
       case "college_amas":
-        return "bg-blue-200 text-blue-600";
+        return "bg-gradient-to-r from-blue-800 via-cyan-500 via-green-500 via-yellow-500 to-red-700 text-white";
       case "upskill":
-        return "bg-orange-200 text-orange-600";
+        return "bg-gradient-to-r from-purple-800 via-pink-500 via-orange-500 via-amber-500 to-yellow-700 text-white";
       case "ama_drops":
-        return "bg-indigo-200 text-indigo-600";
+        return "bg-gradient-to-r from-indigo-800 via-violet-500 via-blue-500 via-cyan-500 to-teal-700 text-white";
       case "ftb_recommends":
-        return "bg-teal-200 text-teal-600";
+        return "bg-gradient-to-r from-blue-800 via-cyan-500 via-green-500 via-yellow-500 to-red-700 text-white";
       default:
-        return "bg-yellow-200 text-yellow-600";
+        return "bg-gradient-to-r from-purple-800 via-pink-500 via-orange-500 via-amber-500 to-yellow-700 text-white";
     }
   };
 
@@ -268,7 +268,7 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
       {post.tag && (
         <div className="absolute -top-1.5 right-0 z-10 sm:-top-1">
           <Badge
-            className={`${getTagBadgeVariant(post.tag)} rounded-tl-none rounded-br-none px-1.5 py-0.5 text-[9px] font-medium sm:px-2 sm:py-1 sm:text-[10px]`}
+            className={`${getTagBadgeVariant(post.tag)} rounded-xl px-1.5 py-0.5 text-[9px] font-medium sm:px-2 sm:py-1 sm:text-[10px]`}
           >
             {post.tag.replace("_", " ")}
           </Badge>
@@ -281,12 +281,6 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
              <Flame className="h-2.5 w-2.5 mr-0.5 inline" />Trending
           </Badge>
         )}
-        <span className={cn(
-          "text-[10px] font-semibold text-black sm:text-[11px]",
-          !post.is_trending && "ml-3 mt-1"
-        )}>
-          {dayjs(post.publishedAt || post.createdAt).format("D MMM, h:mm A")}
-        </span>
       </div>
 
       {/* Content - no title */}
@@ -601,6 +595,8 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
         onSaveClick={toggleSave}
         isFlying={isFlying}
         flyPos={flyPos}
+        publishedAt={post.publishedAt}
+        createdAt={post.createdAt}
         onCommentClick={() => {
           const newState = !showComments;
           setShowComments(newState);
@@ -612,7 +608,9 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
           }
         }}
       />
-      {showComments && <UngatekeepCommentSection postId={post.id} />}
+      {isFeatureEnabled("ENABLE_UNGATEKEEP_COMMENTS") && showComments && (
+        <UngatekeepCommentSection postId={post.id} />
+      )}
     </article>
   );
 }

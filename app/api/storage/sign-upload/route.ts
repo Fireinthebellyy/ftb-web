@@ -12,6 +12,7 @@ const signUploadSchema = z.object({
     "avatar-images",
     "opportunity-attachments",
     "cohort-resources",
+    "cold-dm-templates",
   ]),
   fileName: z.string().min(1).max(255),
   contentType: z.string().min(1).max(200),

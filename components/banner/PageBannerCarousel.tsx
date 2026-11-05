@@ -23,11 +23,13 @@ import { cn } from "@/lib/utils";
 interface PageBannerCarouselProps {
   placement: PageBannerPlacement;
   className?: string;
+  customHeight?: string;
 }
 
 export default function PageBannerCarousel({
   placement,
   className,
+  customHeight,
 }: PageBannerCarouselProps) {
   const [mounted, setMounted] = useState(false);
   const autoplayRef = useRef(Autoplay({ delay: CAROUSEL_AUTOPLAY_DELAY_MS }));
@@ -39,10 +41,19 @@ export default function PageBannerCarousel({
 
   const banners = pageBanners.filter((b) => Boolean(b.image?.asset?.url));
 
+  // Get height based on placement
+  const getHeight = () => {
+    if (customHeight) return customHeight;
+    if (placement === "cold-dm") return "h-[220px]";
+    return "h-[145px] sm:h-[175px] md:h-[190px] lg:h-[200px]";
+  };
+
+  const heightClass = getHeight();
+
   if (!mounted || isLoading) {
     return (
       <div className={cn("mb-4 w-full", className)}>
-        <Skeleton className="h-[145px] w-full rounded-2xl sm:h-[175px] md:h-[190px] lg:h-[200px]" />
+        <Skeleton className={cn("w-full rounded-2xl", heightClass)} />
       </div>
     );
   }
@@ -96,15 +107,17 @@ export default function PageBannerCarousel({
               banner.title || banner.image?.alt || `${placement} banner`;
 
             const slideInner = (
-              <div className="relative h-[145px] w-full overflow-hidden sm:h-[175px] md:h-[190px] lg:h-[200px]">
+              <div className={cn("relative w-full overflow-hidden rounded-xl", heightClass)}>
                 {banner.image?.asset?.url ? (
                   <Image
                     src={banner.image.asset.url}
                     alt={title}
                     fill
                     priority={index === 0}
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 850px"
-                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+                    sizes={placement === "cold-dm" ? "(max-width: 640px) 100vw, 1200px" : "(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 850px"}
+                    className={cn(
+                      placement === "cold-dm" ? "object-cover" : "object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+                    )}
                   />
                 ) : (
                   <div className="absolute inset-0 bg-slate-900" />

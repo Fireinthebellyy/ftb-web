@@ -3,12 +3,21 @@ import { ungatekeepComments } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
 import { eq, and } from "drizzle-orm";
+import { isFeatureEnabledServer } from "@/lib/feature-flags";
 
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; commentId: string }> }
 ) {
   try {
+    // Check if comments feature is enabled
+    if (!isFeatureEnabledServer("ENABLE_UNGATEKEEP_COMMENTS")) {
+      return NextResponse.json(
+        { error: "Comments feature is currently disabled" },
+        { status: 503 }
+      );
+    }
+
     if (!db) {
       return NextResponse.json(
         { error: "Database connection not available" },

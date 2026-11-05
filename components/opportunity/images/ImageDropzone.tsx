@@ -1,6 +1,7 @@
+/* eslint-disable max-lines */
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   ImagePlus,
@@ -8,6 +9,7 @@ import {
   FileText,
   FileSpreadsheet,
   X,
+  GripVertical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -20,6 +22,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 type BaseProps = {
   files: FileItem[];
@@ -278,6 +297,109 @@ export function ExistingImages({
 // Unified preview for mixed image/attachment streams (e.g. Ungatekeep)
 // ---------------------------------------------------------------------------
 
+interface SortableFileItemProps {
+  file: FileItem;
+  index: number;
+  loading?: boolean;
+  onRemove: (file: FileItem) => void;
+}
+
+function SortableFileItem({
+  file,
+  index: _index,
+  loading,
+  onRemove,
+}: SortableFileItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: file.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "group bg-muted/10 hover:bg-muted/20 relative flex items-center justify-between gap-3 rounded-lg border p-2 transition-colors",
+        isDragging && "opacity-50"
+      )}
+    >
+      <div className="flex items-center gap-3 overflow-hidden">
+        <button
+          type="button"
+          className="cursor-grab text-muted-foreground hover:text-foreground"
+          {...attributes}
+          {...listeners}
+          disabled={loading || file.uploading}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+        {file.kind === "image" ? (
+          <div className="h-10 w-10 shrink-0 overflow-hidden rounded border bg-gray-100">
+            <Image
+              src={file.preview}
+              alt={file.name}
+              className="h-full w-full object-cover"
+              width={40}
+              height={40}
+            />
+          </div>
+        ) : (
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded border bg-gray-100">
+            <AttachmentIcon kind={file.kind} />
+          </div>
+        )}
+        <div className="flex flex-col overflow-hidden">
+          <span className="truncate text-xs font-medium">{file.name}</span>
+          <span className="text-muted-foreground text-[10px] uppercase">
+            {formatBytes(file.size)} • {file.kind}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        {file.uploading && (
+          <div className="flex items-center gap-1.5">
+            <div className="bg-muted h-1.5 w-12 overflow-hidden rounded-full">
+              <div
+                className="bg-primary h-full transition-all duration-300"
+                style={{ width: `${file.progress}%` }}
+              />
+            </div>
+            <span className="text-primary text-[10px] font-medium">
+              {file.progress}%
+            </span>
+          </div>
+        )}
+        {file.error && (
+          <span className="text-[10px] font-medium text-red-500">
+            Error
+          </span>
+        )}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 rounded-full hover:bg-red-50 hover:text-red-500"
+          onClick={() => onRemove(file)}
+          disabled={loading || file.uploading}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function UnifiedFilesPreview({
   files,
   setFiles,
@@ -291,8 +413,21 @@ export function UnifiedFilesPreview({
   setAttachmentFiles: (updater: (prev: FileItem[]) => FileItem[]) => void;
   loading?: boolean;
 }) {
-  const allFiles = [...files, ...attachmentFiles].sort(
-    (a, b) => (a.addedAt || 0) - (b.addedAt || 0)
+  const filesRef = useRef(files);
+  const attachmentsRef = useRef(attachmentFiles);
+
+  useEffect(() => {
+    filesRef.current = files;
+    attachmentsRef.current = attachmentFiles;
+  }, [files, attachmentFiles]);
+
+  const allFiles = [...files, ...attachmentFiles];
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
   );
 
   const removeFile = (fileItem: FileItem) => {
@@ -323,72 +458,49 @@ export function UnifiedFilesPreview({
     }
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const currentAllFiles = [...filesRef.current, ...attachmentsRef.current];
+      const oldIndex = currentAllFiles.findIndex((item) => item.id === active.id);
+      const newIndex = currentAllFiles.findIndex((item) => item.id === over.id);
+      const reordered = arrayMove(currentAllFiles, oldIndex, newIndex);
+
+      const reorderedImages = reordered.filter((f) => f.kind === "image");
+      const reorderedAttachments = reordered.filter(
+        (f) => f.kind !== "image"
+      );
+
+      setFiles(() => reorderedImages);
+      setAttachmentFiles(() => reorderedAttachments);
+    }
+  };
+
   if (allFiles.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-2 py-2">
-      {allFiles.map((file) => (
-        <div
-          key={file.id}
-          className="group bg-muted/10 hover:bg-muted/20 relative flex items-center justify-between gap-3 rounded-lg border p-2 transition-colors"
-        >
-          <div className="flex items-center gap-3 overflow-hidden">
-            {file.kind === "image" ? (
-              <div className="h-10 w-10 shrink-0 overflow-hidden rounded border bg-gray-100">
-                <Image
-                  src={file.preview}
-                  alt={file.name}
-                  className="h-full w-full object-cover"
-                  width={40}
-                  height={40}
-                />
-              </div>
-            ) : (
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded border bg-gray-100">
-                <AttachmentIcon kind={file.kind} />
-              </div>
-            )}
-            <div className="flex flex-col overflow-hidden">
-              <span className="truncate text-xs font-medium">{file.name}</span>
-              <span className="text-muted-foreground text-[10px] uppercase">
-                {formatBytes(file.size)} • {file.kind}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {file.uploading && (
-              <div className="flex items-center gap-1.5">
-                <div className="bg-muted h-1.5 w-12 overflow-hidden rounded-full">
-                  <div
-                    className="bg-primary h-full transition-all duration-300"
-                    style={{ width: `${file.progress}%` }}
-                  />
-                </div>
-                <span className="text-primary text-[10px] font-medium">
-                  {file.progress}%
-                </span>
-              </div>
-            )}
-            {file.error && (
-              <span className="text-[10px] font-medium text-red-500">
-                Error
-              </span>
-            )}
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 rounded-full hover:bg-red-50 hover:text-red-500"
-              onClick={() => removeFile(file)}
-              disabled={loading || file.uploading}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext
+        items={allFiles.map((f) => f.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className="flex flex-col gap-2 py-2">
+          {allFiles.map((file, index) => (
+            <SortableFileItem
+              key={file.id}
+              file={file}
+              index={index}
+              loading={loading}
+              onRemove={removeFile}
+            />
+          ))}
         </div>
-      ))}
-    </div>
+      </SortableContext>
+    </DndContext>
   );
 }
 
@@ -703,43 +815,141 @@ export function SelectedAttachments({
 type ExistingAttachmentsProps = {
   existingAttachments: string[];
   onRemoveExisting: (attachmentId: string) => void;
+  onReorder: (fromIndex: number, toIndex: number) => void;
   loading?: boolean;
 };
+
+interface SortableExistingAttachmentProps {
+  attachmentId: string;
+  index: number;
+  loading?: boolean;
+  onRemove: (attachmentId: string) => void;
+}
+
+function SortableExistingAttachment({
+  attachmentId,
+  index: _index,
+  loading,
+  onRemove,
+}: SortableExistingAttachmentProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: attachmentId });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const isImage = !attachmentId
+    .toLowerCase()
+    .endsWith(".pdf") &&
+    !attachmentId.toLowerCase().endsWith(".ppt") &&
+    !attachmentId.toLowerCase().endsWith(".pptx");
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-center gap-2 rounded-md border bg-gray-50 px-2 py-1.5 text-sm",
+        isDragging && "opacity-50"
+      )}
+    >
+      <button
+        type="button"
+        className="cursor-grab text-muted-foreground hover:text-foreground"
+        {...attributes}
+        {...listeners}
+        disabled={loading}
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      {isImage ? (
+        <div className="h-8 w-8 shrink-0 overflow-hidden rounded border bg-gray-100">
+          <img
+            src={tryGetStoragePublicUrl("ungatekeep-images", attachmentId)}
+            alt="Existing file"
+            className="h-full w-full object-cover"
+          />
+        </div>
+      ) : (
+        <FileText className="h-5 w-5 shrink-0 text-red-500" />
+      )}
+      <span className="text-muted-foreground max-w-[180px] flex-1 truncate">
+        {attachmentId.slice(0, 12)}…
+      </span>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-5 w-5 shrink-0 p-0 hover:bg-red-50"
+        onClick={() => {
+          if (loading) return;
+          onRemove(attachmentId);
+        }}
+        disabled={loading}
+      >
+        <X className="h-3 w-3" />
+      </Button>
+    </div>
+  );
+}
 
 export function ExistingAttachments({
   existingAttachments,
   onRemoveExisting,
+  onReorder,
   loading,
 }: ExistingAttachmentsProps) {
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = existingAttachments.indexOf(active.id as string);
+      const newIndex = existingAttachments.indexOf(over.id as string);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        onReorder(oldIndex, newIndex);
+      }
+    }
+  };
+
   if (existingAttachments.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-1.5 py-2">
-      {existingAttachments.map((attachmentId) => (
-        <div
-          key={attachmentId}
-          className="flex items-center gap-2 rounded-md border bg-gray-50 px-2 py-1.5 text-sm"
-        >
-          <FileText className="h-5 w-5 shrink-0 text-red-500" />
-          <span className="text-muted-foreground max-w-[180px] flex-1 truncate">
-            {attachmentId.slice(0, 12)}…
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-5 w-5 shrink-0 p-0 hover:bg-red-50"
-            onClick={() => {
-              if (loading) return;
-              onRemoveExisting(attachmentId);
-            }}
-            disabled={loading}
-          >
-            <X className="h-3 w-3" />
-          </Button>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext
+        items={existingAttachments}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className="flex flex-col gap-1.5 py-2">
+          {existingAttachments.map((attachmentId, index) => (
+            <SortableExistingAttachment
+              key={attachmentId}
+              attachmentId={attachmentId}
+              index={index}
+              loading={loading}
+              onRemove={onRemoveExisting}
+            />
+          ))}
         </div>
-      ))}
-    </div>
+      </SortableContext>
+    </DndContext>
   );
 }
 

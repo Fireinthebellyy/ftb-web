@@ -1164,6 +1164,10 @@ export const siteSettings = pgTable("site_settings", {
   toolkitSessionsTabLabel: text("toolkit_sessions_tab_label").default("Sessions"),
   toolkitMentorshipTabLabel: text("toolkit_mentorship_tab_label").default("1:1 Mentorship"),
   toolkitDigitalProductsTabLabel: text("toolkit_digital_products_tab_label").default("Digital products"),
+  ungatekeepFilterTagsOrder: text("ungatekeep_filter_tags_order").array().default([]),
+  ungatekeepFilterTagsLabels: jsonb("ungatekeep_filter_tags_labels").default({}),
+  coldDmShowPageBanner: boolean("cold_dm_show_page_banner").default(true),
+  coldDmShowTemplates: boolean("cold_dm_show_templates").default(true),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
@@ -1492,6 +1496,72 @@ export const sprintFaqsRelations = relations(sprintFaqs, ({ one }) => ({
   }),
 }));
 
+// Cold DM Templates
+export const coldDmTemplateTypeEnum = pgEnum("cold_dm_template_type", [
+  "pdf",
+  "image",
+  "document",
+]);
+
+export const coldDmTemplates = pgTable("cold_dm_templates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  description: text("description"),
+  type: coldDmTemplateTypeEnum("type").notNull(),
+  fileUrl: text("file_url").notNull(),
+  fileName: text("file_name"),
+  fileSize: integer("file_size"), // in bytes
+  price: integer("price").notNull(), // in rupees
+  originalPrice: integer("original_price"), // for displaying strikethrough discount price
+  previewImageUrl: text("preview_image_url"), // for template preview
+  checkoutTitle: text("checkout_title"), // custom title for checkout page
+  checkoutDescription: text("checkout_description"), // custom description for checkout page
+  benefits: text("benefits"), // JSON array of benefit strings for checkout page
+  isActive: boolean("is_active").default(true),
+  orderIndex: integer("order_index").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User Cold DM Template Purchases
+export const userColdDmTemplates = pgTable("user_cold_dm_templates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  templateId: uuid("template_id")
+    .notNull()
+    .references(() => coldDmTemplates.id, { onDelete: "cascade" }),
+  purchaseDate: timestamp("purchase_date").defaultNow(),
+  razorpayOrderId: text("razorpay_order_id"),
+  paymentId: text("payment_id"),
+  paymentStatus: text("payment_status").$type<
+    "pending" | "completed" | "failed"
+  >(),
+  amountPaid: integer("amount_paid"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  uniqueIndex("user_cold_dm_templates_user_template_unique").on(
+    table.userId,
+    table.templateId
+  ),
+]);
+
+export const coldDmTemplatesRelations = relations(coldDmTemplates, ({ many }) => ({
+  userPurchases: many(userColdDmTemplates),
+}));
+
+export const userColdDmTemplatesRelations = relations(userColdDmTemplates, ({ one }) => ({
+  user: one(user, {
+    fields: [userColdDmTemplates.userId],
+    references: [user.id],
+  }),
+  template: one(coldDmTemplates, {
+    fields: [userColdDmTemplates.templateId],
+    references: [coldDmTemplates.id],
+  }),
+}));
+
 export const schema = {
   user,
   userOnboardingProfiles,
@@ -1577,5 +1647,9 @@ export const schema = {
   sprintUpgradePlansRelations,
   userSprintTargetPlansRelations,
   sprintFaqsRelations,
+  coldDmTemplates,
+  userColdDmTemplates,
+  coldDmTemplatesRelations,
+  userColdDmTemplatesRelations,
 };
 

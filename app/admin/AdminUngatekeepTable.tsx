@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import NewUngatekeepForm from "@/components/ungatekeep/NewUngatekeepForm";
+import FilterTagsManager from "@/components/admin/FilterTagsManager";
 import { cn, stripHtml } from "@/lib/utils";
 
 interface UngatekeepPost {
@@ -428,6 +429,7 @@ export default function AdminUngatekeepTable() {
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
+          <FilterTagsManager />
           <NewUngatekeepForm
             onSuccess={() =>
               queryClient.invalidateQueries({

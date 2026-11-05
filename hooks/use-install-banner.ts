@@ -33,6 +33,9 @@ const isDialogOpen = (): boolean =>
 export function useInstallBanner(): UseInstallBannerResult {
   const pathname = usePathname();
   const { isReady, mode, isStandalone, install: promptInstall } = usePwaInstall();
+  const isDev = process.env.NODE_ENV === "development";
+  const effectiveMode: PwaInstallMode =
+    isDev && mode === "none" ? "native" : mode;
   const [isVisible, setIsVisible] = useState(false);
   const hasShownThisMountRef = useRef(false);
 
@@ -40,7 +43,20 @@ export function useInstallBanner(): UseInstallBannerResult {
     if (!isReady || hasShownThisMountRef.current) {
       return;
     }
-    if (!shouldShowBanner(readPwaInstallState(), { mode, isStandalone, pathname })) {
+    if (isDev) {
+      if (!isStandalone && !isExcludedRoute(pathname)) {
+        hasShownThisMountRef.current = true;
+        setIsVisible(true);
+      }
+      return;
+    }
+    if (
+      !shouldShowBanner(readPwaInstallState(), {
+        mode: effectiveMode,
+        isStandalone,
+        pathname,
+      })
+    ) {
       return;
     }
 
@@ -49,7 +65,13 @@ export function useInstallBanner(): UseInstallBannerResult {
 
     const tryShow = () => {
       // Re-check at fire time: state may have changed (other tab, install, navigation).
-      if (!shouldShowBanner(readPwaInstallState(), { mode, isStandalone, pathname })) {
+      if (
+        !shouldShowBanner(readPwaInstallState(), {
+          mode: effectiveMode,
+          isStandalone,
+          pathname,
+        })
+      ) {
         return;
       }
       if (isDialogOpen() && attempts < MAX_DIALOG_RETRIES) {
@@ -63,12 +85,12 @@ export function useInstallBanner(): UseInstallBannerResult {
       hasShownThisMountRef.current = true;
       markBannerShown();
       setIsVisible(true);
-      posthog.capture("pwa_install_banner_shown", { mode });
+      posthog.capture("pwa_install_banner_shown", { mode: effectiveMode });
     };
 
     timer = setTimeout(tryShow, SHOW_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [isReady, mode, isStandalone, pathname]);
+  }, [isReady, effectiveMode, isStandalone, pathname, isDev]);
 
   // Hide if the user installs (or dismisses) in another tab.
   useEffect(() => {
@@ -99,12 +121,12 @@ export function useInstallBanner(): UseInstallBannerResult {
   const dismiss = useCallback(() => {
     // lastShownAt was already written when the banner appeared, so X counts as shown.
     setIsVisible(false);
-    posthog.capture("pwa_install_banner_dismissed", { mode });
-  }, [mode]);
+    posthog.capture("pwa_install_banner_dismissed", { mode: effectiveMode });
+  }, [effectiveMode]);
 
   const install = useCallback(async () => {
-    posthog.capture("pwa_install_banner_clicked", { mode });
-    if (mode !== "native") {
+    posthog.capture("pwa_install_banner_clicked", { mode: effectiveMode });
+    if (effectiveMode !== "native") {
       return;
     }
     const outcome = await promptInstall();
@@ -114,11 +136,11 @@ export function useInstallBanner(): UseInstallBannerResult {
       posthog.capture("pwa_install_declined");
     }
     setIsVisible(false);
-  }, [mode, promptInstall]);
+  }, [effectiveMode, promptInstall]);
 
   return {
     isVisible: isVisible && !isExcludedRoute(pathname),
-    mode,
+    mode: effectiveMode,
     install,
     dismiss,
   };

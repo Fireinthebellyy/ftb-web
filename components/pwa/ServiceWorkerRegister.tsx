@@ -4,11 +4,7 @@ import { useEffect } from "react";
 
 export default function ServiceWorkerRegister() {
   useEffect(() => {
-    const isEnabled =
-      process.env.NODE_ENV === "production" ||
-      process.env.NEXT_PUBLIC_ENABLE_SW === "true";
-
-    if (!isEnabled || !("serviceWorker" in navigator)) {
+    if (!("serviceWorker" in navigator)) {
       return;
     }
 

@@ -123,7 +123,6 @@ export function useOpportunityFeed({
     normalizedSearchTerm,
     shouldUseBootstrap,
     isBootstrapPending: shouldUseBootstrap && bootstrapQuery.isPending,
-    bootstrapTasks: bootstrapQuery.data?.tasks ?? [],
     bootstrapMonth: bootstrapQuery.data?.month,
     bootstrapBookmarkDates: bootstrapQuery.data?.bookmarkDates ?? [],
     allOpportunities,

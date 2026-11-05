@@ -3,7 +3,7 @@
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getYouTubeEmbedUrl } from "@/lib/youtube";
-import { Youtube } from "lucide-react";
+import { YouTubeIcon } from "./YouTubeIcon";
 
 interface OpportunityGuideModalProps {
   isOpen: boolean;
@@ -25,8 +25,8 @@ export function OpportunityGuideModal({
       <DialogContent className="max-w-4xl p-0 overflow-hidden bg-gray-950 border-gray-800 text-white rounded-xl shadow-2xl">
         <DialogHeader className="px-5 py-3.5 bg-gray-900/90 border-b border-gray-800 flex flex-row items-center justify-between">
           <DialogTitle className="text-base font-semibold text-gray-100 flex items-center gap-2 line-clamp-1 pr-6">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-600/20 text-red-500 border border-red-500/30">
-              <Youtube className="h-4 w-4 fill-red-500 text-red-500" />
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 border border-white/10">
+              <YouTubeIcon className="h-4 w-4" />
             </span>
             <span>Guide: {title}</span>
           </DialogTitle>

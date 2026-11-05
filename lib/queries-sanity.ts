@@ -1,11 +1,18 @@
 import sanityClient from "@/lib/sanity";
 import { useQuery } from "@tanstack/react-query";
 
-export type PageBannerPlacement = "internship" | "ungatekeep";
+export type PageBannerPlacement =
+  | "internship"
+  | "ungatekeep"
+  | "opportunity"
+  | "opportunities";
 
 export interface PageBanner {
   _id: string;
   placement: PageBannerPlacement;
+  title?: string;
+  link?: string;
+  url?: string;
   order?: number;
   isActive?: boolean;
   image?: {
@@ -46,11 +53,14 @@ const featuredQuery = `*[_type == "featured"] | order(priority, _createdAt desc)
     }
 }`;
 
-const pageBannersByPlacementQuery = `*[_type == "pageBanner" && coalesce(isActive, true) == true && placement == $placement] | order(coalesce(order, 9999) asc, _createdAt desc) {
+const pageBannersByPlacementQuery = `*[_type == "pageBanner" && coalesce(isActive, true) == true && (placement == $placement || ($placement == "opportunity" && placement == "opportunities"))] | order(coalesce(order, 9999) asc, _createdAt desc) {
   _id,
   placement,
   order,
   isActive,
+  title,
+  link,
+  url,
   image {
     alt,
     asset->{

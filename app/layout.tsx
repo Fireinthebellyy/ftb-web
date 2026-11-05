@@ -31,11 +31,11 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.ftbhustle.com"),
   title: {
-    default: "Fire in the Belly — Ignite Your Learning Journey",
+    default: "Fire In The Belly (FTB) - Your College Companion",
     template: "%s | Fire in the Belly",
   },
   description:
-    "Connect with mentors, discover verified internships, fellowships, and resources. Accelerate your career with personalized guidance for India's ambitious students.",
+    "Discover Internships, National & International Opportunities, Mentors at every stage of college life. ZERO GATEKEEPING.",
   keywords: [
     "internships india",
     "student opportunities",
@@ -55,23 +55,23 @@ export const metadata: Metadata = {
     locale: "en_IN",
     url: "https://www.ftbhustle.com",
     siteName: "Fire in the Belly",
-    title: "Fire in the Belly — Ignite Your Learning Journey",
+    title: "Fire In The Belly (FTB) - Your College Companion",
     description:
-      "Discover internships, opportunities, and career toolkits for ambitious Indian students. Zero gatekeeping.",
+      "Discover Internships, National & International Opportunities, Mentors at every stage of college life. ZERO GATEKEEPING.",
     images: [
       {
         url: "/images/og-home.png",
         width: 1200,
         height: 630,
-        alt: "Fire in the Belly",
+        alt: "Fire In The Belly (FTB)",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Fire in the Belly — Ignite Your Learning Journey",
+    title: "Fire In The Belly (FTB) - Your College Companion",
     description:
-      "Discover internships, opportunities, and career toolkits for ambitious Indian students.",
+      "Discover Internships, National & International Opportunities, Mentors at every stage of college life. ZERO GATEKEEPING.",
     images: ["/images/og-home.png"],
     creator: "@ftbhustle",
   },

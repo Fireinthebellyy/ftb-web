@@ -21,6 +21,7 @@ import OpportunityBanner from "@/components/opportunity/OpportunityBanner";
 import FeaturedOpportunities from "@/components/opportunity/FeaturedOpportunities";
 import { TagsDropdown } from "@/components/opportunity/TagsDropdown";
 import { FeedbackWidget } from "@/components/FeedbackWidget";
+import OpportunityTrackerButton from "@/components/opportunity/OpportunityTrackerButton";
 import { cn } from "@/lib/utils";
 import {
   AVAILABLE_TYPES,
@@ -350,21 +351,24 @@ export default function OpportunityCardsPage({
                 Filter the Noise, explore what matters.
               </p>
             </div>
-            <Button
-              size="sm"
-              onClick={() => {
-                posthog.capture("opportunity_filter_button_clicked", {
-                  action: isFilterBoxOpen ? "close" : "open",
-                });
-                setIsFilterBoxOpen(!isFilterBoxOpen);
-              }}
-              className="shrink-0 cursor-pointer bg-orange-600 text-white"
-              aria-label="Toggle filters"
-              aria-expanded={isFilterBoxOpen}
-              aria-controls="filters-panel-mobile"
-            >
-              <Filter className="size-4 text-white" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <OpportunityTrackerButton className="flex-1" />
+              <Button
+                size="sm"
+                onClick={() => {
+                  posthog.capture("opportunity_filter_button_clicked", {
+                    action: isFilterBoxOpen ? "close" : "open",
+                  });
+                  setIsFilterBoxOpen(!isFilterBoxOpen);
+                }}
+                className="shrink-0 cursor-pointer bg-orange-600 text-white"
+                aria-label="Toggle filters"
+                aria-expanded={isFilterBoxOpen}
+                aria-controls="filters-panel-mobile"
+              >
+                <Filter className="size-4 text-white" />
+              </Button>
+            </div>
           </div>
 
           {isFilterBoxOpen && (
@@ -502,21 +506,24 @@ export default function OpportunityCardsPage({
                   Filter the Noise, explore what matters.
                 </p>
               </div>
-              <Button
-                size="sm"
-                onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
-                className={cn(
-                  "shrink-0 transition-all",
-                  isFilterBoxOpen
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-gray-400 bg-orange-600 text-white hover:bg-orange-700 hover:text-white"
-                )}
-                aria-label="Toggle filters"
-                aria-expanded={isFilterBoxOpen}
-                aria-controls="filters-panel-desktop"
-              >
-                <Filter className="h-5 w-5" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <OpportunityTrackerButton className="flex-1" />
+                <Button
+                  size="sm"
+                  onClick={() => setIsFilterBoxOpen(!isFilterBoxOpen)}
+                  className={cn(
+                    "shrink-0 transition-all",
+                    isFilterBoxOpen
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-gray-400 bg-orange-600 text-white hover:bg-orange-700 hover:text-white"
+                  )}
+                  aria-label="Toggle filters"
+                  aria-expanded={isFilterBoxOpen}
+                  aria-controls="filters-panel-desktop"
+                >
+                  <Filter className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
 
             {isFilterBoxOpen && (

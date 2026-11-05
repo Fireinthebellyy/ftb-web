@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import posthog from "posthog-js";
+import { motion, AnimatePresence } from "framer-motion";
 import { InternshipPostProps } from "@/types/interfaces";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -80,6 +81,8 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
   const router = useRouter();
   const { addToTracker, getStatus, removeFromTracker } = useTracker();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [isFlying, setIsFlying] = useState(false);
+  const [flyPos, setFlyPos] = useState({ x: 0, y: 0 });
 
   const { id, title, hiringOrganization, deadline, is_trending, is_exclusive } =
     internship;
@@ -125,6 +128,9 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
     e.preventDefault();
     e.stopPropagation();
 
+    const buttonElement = e.currentTarget as HTMLElement;
+    const _nextBookmarked = !isBookmarked;
+
     try {
       if (isBookmarked) {
         const removed = await removeFromTracker(id, "internship");
@@ -165,6 +171,15 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
             );
           }
           toast.success("Saved to Tracker");
+
+          // Trigger flying animation
+          const rect = buttonElement.getBoundingClientRect();
+          setFlyPos({
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2,
+          });
+          setIsFlying(true);
+          setTimeout(() => setIsFlying(false), 800);
         } else if (addOutcome === "already_exists") {
           toast.info("Already in Tracker");
         } else {
@@ -310,7 +325,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
                   title="Share"
                   aria-label="Share"
                   onClick={handleShareClick}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-orange-50 hover:text-[#ec5b13]"
+                  className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-orange-50 hover:text-[#ec5b13]"
                 >
                   <Share2 className="h-4 w-4" />
                 </button>
@@ -325,7 +340,7 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
                   }
                   onClick={handleSaveClick}
                   className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
+                    "relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors",
                     isBookmarked
                       ? "bg-orange-100 text-[#ec5b13]"
                       : "text-slate-400 hover:bg-orange-50 hover:text-[#ec5b13]"
@@ -334,6 +349,26 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
                   <Bookmark
                     className={cn("h-4 w-4", isBookmarked && "fill-current")}
                   />
+                  <AnimatePresence>
+                    {isFlying ? (
+                      <motion.div
+                        initial={{ opacity: 1, x: flyPos.x, y: flyPos.y, scale: 1 }}
+                        animate={{
+                          opacity: 0,
+                          x: 100,
+                          y: 50,
+                          scale: 0.2,
+                          rotate: -45,
+                        }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.8, ease: "easeIn" }}
+                        className="bg-primary pointer-events-none fixed left-0 top-0 z-[9999] flex h-6 w-6 items-center justify-center rounded-full text-white shadow-lg"
+                        style={{ transform: "translate(-50%, -50%)" }}
+                      >
+                        <Bookmark className="h-4 w-4 fill-white" />
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
                 </button>
               </>
             )}

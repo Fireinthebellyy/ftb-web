@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import posthog from "posthog-js";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import {
@@ -52,6 +53,8 @@ export function OpportunityActions({
   const { id, user, userHasUpvoted } = opportunity;
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   const [isMobileExpanded, setIsMobileExpanded] = useState(false);
+  const [isFlying, setIsFlying] = useState(false);
+  const [flyPos, setFlyPos] = useState({ x: 0, y: 0 });
   const { data: session } = useSession();
   const toggleUpvote = useToggleUpvote(id);
   const actionIconClass =
@@ -166,16 +169,29 @@ export function OpportunityActions({
             <button
               type="button"
               title="Track"
-              onClick={() => {
+              onClick={(e) => {
                 if (!session?.user?.id) {
                   toast.error("Please log in to track opportunities");
                   return;
                 }
 
-                onBookmarkChange(id, !isBookmarked);
+                const buttonElement = e.currentTarget as HTMLElement;
+                const nextBookmarked = !isBookmarked;
+
+                onBookmarkChange(id, nextBookmarked);
+
+                if (nextBookmarked) {
+                  const rect = buttonElement.getBoundingClientRect();
+                  setFlyPos({
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2,
+                  });
+                  setIsFlying(true);
+                  setTimeout(() => setIsFlying(false), 800);
+                }
               }}
               aria-label="Track"
-              className="group flex cursor-pointer items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
+              className="group relative flex cursor-pointer items-center text-xs transition-colors hover:text-orange-600 sm:text-sm"
             >
               <Bookmark
                 className={`${actionIconClass} ${
@@ -184,6 +200,26 @@ export function OpportunityActions({
                     : "hover:text-orange-600"
                 }`}
               />
+              <AnimatePresence>
+                {isFlying ? (
+                  <motion.div
+                    initial={{ opacity: 1, x: flyPos.x, y: flyPos.y, scale: 1 }}
+                    animate={{
+                      opacity: 0,
+                      x: typeof window !== "undefined" ? window.innerWidth - 100 : 0,
+                      y: 50,
+                      scale: 0.2,
+                      rotate: 45,
+                    }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.8, ease: "easeIn" }}
+                    className="bg-primary pointer-events-none fixed left-0 top-0 z-[9999] flex h-6 w-6 items-center justify-center rounded-full text-white shadow-lg"
+                    style={{ transform: "translate(-50%, -50%)" }}
+                  >
+                    <Bookmark className="h-4 w-4 fill-white" />
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
             </button>
             <Dialog>
               <DialogTrigger asChild>

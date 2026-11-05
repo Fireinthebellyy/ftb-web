@@ -126,6 +126,21 @@ export function UngatekeepPostActionBar({
         direction,
         score: data.score,
       });
+
+      // Show toast based on vote action
+      if (direction === "up") {
+        if (userVote === 1) {
+          toast.success("Upvote Removed");
+        } else {
+          toast.success("Thanks for your feedback");
+        }
+      } else {
+        if (userVote === -1) {
+          toast.success("Downvote Removed");
+        } else {
+          toast.success("Feedback Recorded. Thanks");
+        }
+      }
     } catch (error) {
       setScore(prevScore);
       setUserVote(prevVote);

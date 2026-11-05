@@ -33,6 +33,8 @@ import AdminSprintsTable from "./AdminSprintsTable";
 import AdminPopupsTable from "./popups/AdminPopupsTable";
 import SessionQueriesManager from "./SessionQueriesManager";
 import SprintSessionQueriesManager from "./SprintSessionQueriesManager";
+import ColdDmTemplatesManager from "./ColdDmTemplatesManager";
+import { ColdDmSettings } from "@/components/admin/ColdDmSettings";
 
 const _TAB_VALUES = [
   "opportunities",
@@ -48,6 +50,8 @@ const _TAB_VALUES = [
   "popups",
   "session-queries",
   "sprint-session-queries",
+  "cold-dm-templates",
+  "cold-dm-settings",
 ] as const;
 type TabValue = (typeof _TAB_VALUES)[number];
 
@@ -142,6 +146,18 @@ const adminCards: Array<{
     description: "Manage and answer questions from sprint sessions",
     icon: MessageSquare,
   },
+  {
+    key: "cold-dm-templates",
+    title: "Cold DM Templates",
+    description: "Manage Cold DM templates (PDF, image, document) with pricing",
+    icon: BookOpen,
+  },
+  {
+    key: "cold-dm-settings",
+    title: "Cold DM Settings",
+    description: "Configure Cold DM popup visibility (banner, templates)",
+    icon: BookOpen,
+  },
 ];
 
 export function AdminTabs({
@@ -220,6 +236,8 @@ export function AdminTabs({
       {activeTab === "popups" ? <AdminPopupsTable /> : null}
       {activeTab === "session-queries" ? <SessionQueriesManager /> : null}
       {activeTab === "sprint-session-queries" ? <SprintSessionQueriesManager /> : null}
+      {activeTab === "cold-dm-templates" ? <ColdDmTemplatesManager /> : null}
+      {activeTab === "cold-dm-settings" ? <ColdDmSettings /> : null}
     </div>
   );
 }

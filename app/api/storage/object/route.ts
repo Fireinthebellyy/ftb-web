@@ -11,6 +11,8 @@ const deleteObjectSchema = z.object({
     "ungatekeep-images",
     "avatar-images",
     "opportunity-attachments",
+    "cohort-resources",
+    "cold-dm-templates",
   ]),
   key: z.string().min(1),
 });

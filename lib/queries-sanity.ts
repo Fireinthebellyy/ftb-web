@@ -5,7 +5,8 @@ export type PageBannerPlacement =
   | "internship"
   | "ungatekeep"
   | "opportunity"
-  | "opportunities";
+  | "opportunities"
+  | "cold-dm";
 
 export interface PageBanner {
   _id: string;

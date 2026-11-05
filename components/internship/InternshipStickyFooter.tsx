@@ -8,6 +8,7 @@ import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
 import { addUtmParams, ensureAbsoluteUrl } from "@/lib/utils";
 import { InternshipData } from "@/types/interfaces";
+import { ColdDmPopup } from "@/components/internship/ColdDmPopup";
 
 interface InternshipStickyFooterProps {
   internship: InternshipData;
@@ -17,9 +18,30 @@ interface InternshipStickyFooterProps {
 export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
   internship,isEditOpen
 }) => {
+  const [coldDmPopupOpen, setColdDmPopupOpen] = React.useState(false);
+  const [coldDmSettings, setColdDmSettings] = React.useState({
+    coldDmShowPageBanner: true,
+    coldDmShowTemplates: true,
+  });
+
   const hasApply = !!(internship.applyLink || internship.link);
   const hasDM = !!internship.hiringManagerLinkedin;
   const hasMail = !!internship.hiringManagerEmail;
+
+  React.useEffect(() => {
+    const fetchColdDmSettings = async () => {
+      try {
+        const res = await fetch("/api/settings/cold-dm");
+        if (res.ok) {
+          const data = await res.json();
+          setColdDmSettings(data);
+        }
+      } catch (error) {
+        console.error("Error fetching Cold DM settings:", error);
+      }
+    };
+    fetchColdDmSettings();
+  }, []);
 
   if (!hasApply && !hasDM && !hasMail) return null;
 
@@ -57,28 +79,32 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
         )}
 
         {hasDM && (
-          <Button asChild className="flex-1 h-11 rounded-xl border-none bg-[#0077b5] hover:bg-[#005987] font-bold text-white shadow-none transition-all active:scale-95 text-[11px] px-1 flex items-center justify-center gap-1">
-            <Link
-              href={dmUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() =>
-                posthog.capture("internship_cold_dm_clicked", {
-                  internship_id: internship.id,
-                  title: internship.title,
-                  source: "mobile_footer",
-                })
+          <Button
+            onClick={() => {
+              posthog.capture("internship_cold_dm_clicked", {
+                internship_id: internship.id,
+                title: internship.title,
+                source: "mobile_footer",
+              });
+
+              const shouldShowPopup = coldDmSettings.coldDmShowPageBanner || coldDmSettings.coldDmShowTemplates;
+
+              if (shouldShowPopup) {
+                setColdDmPopupOpen(true);
+              } else {
+                window.open(dmUrl, "_blank");
               }
-            >
-              <Image
-                src="/images/linkedin.svg"
-                alt="LinkedIn"
-                width={14}
-                height={14}
-                className="h-3.5 w-3.5 object-contain brightness-0 invert"
-              />
-              <span>Cold DM</span>
-            </Link>
+            }}
+            className="flex-1 h-11 rounded-xl border-none bg-[#0077b5] hover:bg-[#005987] font-bold text-white shadow-none transition-all active:scale-95 text-[11px] px-1 flex items-center justify-center gap-1"
+          >
+            <Image
+              src="/images/linkedin.svg"
+              alt="LinkedIn"
+              width={14}
+              height={14}
+              className="h-3.5 w-3.5 object-contain brightness-0 invert"
+            />
+            <span>Cold DM</span>
           </Button>
         )}
 
@@ -104,6 +130,15 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
       </div>
     </footer>
     )}
+
+    {/* Cold DM Popup */}
+    <ColdDmPopup
+      open={coldDmPopupOpen}
+      onOpenChange={setColdDmPopupOpen}
+      linkedinUrl={dmUrl}
+      internshipId={internship.id}
+      internshipTitle={internship.title}
+    />
     </>
   );
 };

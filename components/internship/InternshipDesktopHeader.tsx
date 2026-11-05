@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { cn, toTitleCase, formatSalary, formatDateLong, addUtmParams } from "@/lib/utils";
 import { InternshipData } from "@/types/interfaces";
 import posthog from "posthog-js";
+import { ColdDmPopup } from "@/components/internship/ColdDmPopup";
 
 interface UserSession {
   id: string;
@@ -54,6 +55,27 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
   const hasApply = !!(internship.applyLink || internship.link);
   const hasDM = !!internship.hiringManagerLinkedin;
   const hasMail = !!internship.hiringManagerEmail;
+
+  const [coldDmPopupOpen, setColdDmPopupOpen] = React.useState(false);
+  const [coldDmSettings, setColdDmSettings] = React.useState({
+    coldDmShowPageBanner: true,
+    coldDmShowTemplates: true,
+  });
+
+  React.useEffect(() => {
+    const fetchColdDmSettings = async () => {
+      try {
+        const res = await fetch("/api/settings/cold-dm");
+        if (res.ok) {
+          const data = await res.json();
+          setColdDmSettings(data);
+        }
+      } catch (error) {
+        console.error("Error fetching Cold DM settings:", error);
+      }
+    };
+    fetchColdDmSettings();
+  }, []);
 
 
 
@@ -209,28 +231,32 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
           )}
 
           {hasDM && (
-            <Button asChild className="h-12 px-5 rounded-xl bg-[#0077b5] hover:bg-[#005987] text-white font-bold border-none shadow-none transition-all active:scale-95 duration-200 flex items-center gap-2">
-              <Link
-                href={dmUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() =>
-                  posthog.capture("internship_cold_dm_clicked", {
-                    internship_id: internship.id,
-                    title: internship.title,
-                    source: "desktop_header",
-                  })
+            <Button
+              onClick={() => {
+                posthog.capture("internship_cold_dm_clicked", {
+                  internship_id: internship.id,
+                  title: internship.title,
+                  source: "desktop_header",
+                });
+
+                const shouldShowPopup = coldDmSettings.coldDmShowPageBanner || coldDmSettings.coldDmShowTemplates;
+
+                if (shouldShowPopup) {
+                  setColdDmPopupOpen(true);
+                } else {
+                  window.open(dmUrl, "_blank");
                 }
-              >
-                <Image
-                  src="/images/linkedin.svg"
-                  alt="LinkedIn"
-                  width={16}
-                  height={16}
-                  className="w-4 h-4 object-contain brightness-0 invert"
-                />
-                Cold DM
-              </Link>
+              }}
+              className="h-12 px-5 rounded-xl bg-[#0077b5] hover:bg-[#005987] text-white font-bold border-none shadow-none transition-all active:scale-95 duration-200 flex items-center gap-2"
+            >
+              <Image
+                src="/images/linkedin.svg"
+                alt="LinkedIn"
+                width={16}
+                height={16}
+                className="w-4 h-4 object-contain brightness-0 invert"
+              />
+              Cold DM
             </Button>
           )}
 
@@ -261,6 +287,15 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
           <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#ec5b13] rounded-t-full" />
         </div>
       </div>
+
+      {/* Cold DM Popup */}
+      <ColdDmPopup
+        open={coldDmPopupOpen}
+        onOpenChange={setColdDmPopupOpen}
+        linkedinUrl={dmUrl}
+        internshipId={internship.id}
+        internshipTitle={internship.title}
+      />
     </div>
   );
 };

@@ -111,13 +111,27 @@ export default function UngatekeepDetailClient() {
   const getTagBadgeVariant = (tag: string | null | undefined) => {
     switch (tag) {
       case "announcement":
-        return "default";
+        return "bg-gradient-to-r from-blue-900 via-cyan-500 via-green-500 via-yellow-500 to-red-500 text-white";
       case "company_experience":
-        return "secondary";
+        return "bg-gradient-to-r from-purple-900 via-pink-500 via-orange-500 via-amber-500 to-yellow-500 text-white";
       case "resources":
-        return "outline";
+        return "bg-gradient-to-r from-indigo-900 via-violet-500 via-blue-500 via-cyan-500 to-teal-500 text-white";
+      case "playbooks":
+        return "bg-gradient-to-r from-blue-900 via-cyan-500 via-green-500 via-yellow-500 to-red-500 text-white";
+      case "college_hacks":
+        return "bg-gradient-to-r from-purple-900 via-pink-500 via-orange-500 via-amber-500 to-yellow-500 text-white";
+      case "interview":
+        return "bg-gradient-to-r from-indigo-900 via-violet-500 via-blue-500 via-cyan-500 to-teal-500 text-white";
+      case "college_amas":
+        return "bg-gradient-to-r from-blue-900 via-cyan-500 via-green-500 via-yellow-500 to-red-500 text-white";
+      case "upskill":
+        return "bg-gradient-to-r from-purple-900 via-pink-500 via-orange-500 via-amber-500 to-yellow-500 text-white";
+      case "ama_drops":
+        return "bg-gradient-to-r from-indigo-900 via-violet-500 via-blue-500 via-cyan-500 to-teal-500 text-white";
+      case "ftb_recommends":
+        return "bg-gradient-to-r from-blue-900 via-cyan-500 via-green-500 via-yellow-500 to-red-500 text-white";
       default:
-        return "outline";
+        return "bg-gradient-to-r from-purple-900 via-pink-500 via-orange-500 via-amber-500 to-yellow-500 text-white";
     }
   };
 
@@ -391,8 +405,7 @@ export default function UngatekeepDetailClient() {
                     <>
                       <span>•</span>
                       <Badge
-                        variant={getTagBadgeVariant(post.tag)}
-                        className="text-xs"
+                        className={`${getTagBadgeVariant(post.tag)} rounded-tl-none rounded-br-none text-xs`}
                       >
                         {post.tag.replace("_", " ")}
                       </Badge>

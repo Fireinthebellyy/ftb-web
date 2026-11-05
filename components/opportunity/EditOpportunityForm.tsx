@@ -67,6 +67,15 @@ export default function EditOpportunityForm({
     setRemovedAttachmentIds((prev) => [...prev, attachmentId]);
   };
 
+  const handleReorderExistingAttachments = (fromIndex: number, toIndex: number) => {
+    setExistingAttachments((prev) => {
+      const updated = [...prev];
+      const [moved] = updated.splice(fromIndex, 1);
+      updated.splice(toIndex, 0, moved);
+      return updated;
+    });
+  };
+
   async function deleteRemovedFiles(): Promise<void> {
     await Promise.all([
       ...removedImageIds.map(async (fileId) => {
@@ -274,6 +283,7 @@ export default function EditOpportunityForm({
           <ExistingAttachments
             existingAttachments={existingAttachments}
             onRemoveExisting={handleRemoveExistingAttachment}
+            onReorder={handleReorderExistingAttachments}
             loading={loading}
           />
 

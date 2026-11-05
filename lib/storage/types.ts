@@ -3,7 +3,8 @@ export type StorageDomain =
   | "ungatekeep-images"
   | "avatar-images"
   | "opportunity-attachments"
-  | "cohort-resources";
+  | "cohort-resources"
+  | "cold-dm-templates";
 
 export interface GetSignedUploadUrlInput {
   bucket: string;

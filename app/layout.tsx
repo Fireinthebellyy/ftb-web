@@ -16,12 +16,16 @@ import PostOnboardingSurveyWidget from "@/components/PostOnboardingSurveyWidget"
 import { TrackerProvider } from "@/components/providers/TrackerProvider";
 import { CSPostHogProvider } from "./providers/posthog-provider";
 import GlobalPopup from "@/components/GlobalPopup";
+import InstallBanner from "@/components/pwa/InstallBanner";
+import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
+  viewportFit: "cover",
+  themeColor: "#ff6e00",
 };
 
 export const metadata: Metadata = {
@@ -70,6 +74,11 @@ export const metadata: Metadata = {
       "Discover internships, opportunities, and career toolkits for ambitious Indian students.",
     images: ["/images/og-home.png"],
     creator: "@ftbhustle",
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "FTB",
   },
   icons: {
     icon: "/favicon.ico",
@@ -156,6 +165,8 @@ export default function RootLayout({
                   <ConditionalWidgets />
                   <PostOnboardingSurveyWidget />
                   <GlobalPopup />
+                  <InstallBanner />
+                  <ServiceWorkerRegister />
                 </TrackerProvider>
               </CSPostHogProvider>
             </ProgressProvider>

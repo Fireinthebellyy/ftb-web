@@ -1,8 +1,10 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import Autoplay from "embla-carousel-autoplay";
+import posthog from "posthog-js";
 
 import {
   Carousel,
@@ -10,7 +12,10 @@ import {
   CarouselDots,
   CarouselDotsOverlay,
   CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
 } from "@/components/ui/carousel";
+import { Skeleton } from "@/components/ui/skeleton";
 import { CAROUSEL_AUTOPLAY_DELAY_MS } from "@/lib/carousel";
 import { PageBannerPlacement, usePageBanners } from "@/lib/queries-sanity";
 import { cn } from "@/lib/utils";
@@ -26,8 +31,9 @@ export default function PageBannerCarousel({
   className,
   customHeight,
 }: PageBannerCarouselProps) {
-  const { data: banners = [], isLoading } = usePageBanners(placement);
+  const [mounted, setMounted] = useState(false);
   const autoplayRef = useRef(Autoplay({ delay: CAROUSEL_AUTOPLAY_DELAY_MS }));
+  const { data: pageBanners = [], isLoading } = usePageBanners(placement);
 
   // Set height based on placement
   const getHeight = () => {
@@ -54,15 +60,41 @@ export default function PageBannerCarousel({
     return null;
   }
 
+  const handleBannerClick = (
+    bannerId: string,
+    title: string,
+    href: string,
+    index: number
+  ) => {
+    const eventName =
+      placement === "ungatekeep"
+        ? "ungatekeep_banner_clicked"
+        : `${placement}_banner_clicked`;
+
+    posthog.capture(eventName, {
+      banner_id: bannerId,
+      title,
+      placement,
+      source: `${placement}_promotional_hero`,
+      slide_index: index,
+      target_url: href,
+    });
+  };
+
   return (
-    <div className={cn("overflow-hidden rounded-xl", className)}>
+    <div
+      className={cn(
+        "group relative mb-4 w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-950 shadow-xs",
+        className
+      )}
+    >
       <Carousel
         opts={{
           align: "start",
           loop: banners.length > 1,
         }}
-        plugins={[autoplayRef.current]}
-        className="relative w-full overflow-hidden"
+        plugins={banners.length > 1 ? [autoplayRef.current] : []}
+        className="relative w-full"
       >
         <CarouselContent className="-ml-0">
           {banners.map((banner) => (
@@ -71,7 +103,7 @@ export default function PageBannerCarousel({
                 {banner.image?.asset?.url ? (
                   <Image
                     src={banner.image.asset.url}
-                    alt={banner.image.alt || `${placement} banner`}
+                    alt={title}
                     fill
                     className={cn(
                       placement === "cold-dm" ? "object-cover" : "object-contain sm:object-cover"
@@ -80,21 +112,63 @@ export default function PageBannerCarousel({
                     priority={placement === "internship"}
                   />
                 ) : (
-                  <div className="absolute inset-0 bg-slate-100" />
+                  <div className="absolute inset-0 bg-slate-900" />
                 )}
               </div>
-            </CarouselItem>
-          ))}
+            );
+
+            return (
+              <CarouselItem key={banner._id} className="pl-0">
+                {isClickable ? (
+                  isExternal ? (
+                    <a
+                      href={rawHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() =>
+                        handleBannerClick(banner._id, title, rawHref, index)
+                      }
+                      className="block h-full w-full"
+                    >
+                      {slideInner}
+                    </a>
+                  ) : (
+                    <Link
+                      href={rawHref}
+                      onClick={() =>
+                        handleBannerClick(banner._id, title, rawHref, index)
+                      }
+                      className="block h-full w-full"
+                    >
+                      {slideInner}
+                    </Link>
+                  )
+                ) : (
+                  slideInner
+                )}
+              </CarouselItem>
+            );
+          })}
         </CarouselContent>
-        {banners.length > 1 ? (
-          <CarouselDotsOverlay>
+
+        {/* Navigation Chevrons when multiple banners exist */}
+        {banners.length > 1 && (
+          <>
+            <CarouselPrevious className="top-1/2 left-2 z-20 hidden size-7 -translate-y-1/2 border-white/20 bg-black/40 text-white opacity-0 backdrop-blur-xs transition-opacity duration-200 group-hover:opacity-100 hover:bg-black/70 hover:text-white sm:left-3 sm:flex sm:size-8" />
+            <CarouselNext className="top-1/2 right-2 z-20 hidden size-7 -translate-y-1/2 border-white/20 bg-black/40 text-white opacity-0 backdrop-blur-xs transition-opacity duration-200 group-hover:opacity-100 hover:bg-black/70 hover:text-white sm:right-3 sm:flex sm:size-8" />
+          </>
+        )}
+
+        {/* Carousel Pagination Dots when multiple banners exist */}
+        {banners.length > 1 && (
+          <CarouselDotsOverlay className="bottom-2 sm:bottom-2.5">
             <CarouselDots
               className="gap-1.5 py-0"
-              dotClassName="bg-white/45 hover:bg-white/70"
-              activeDotClassName="h-1.5 w-3 rounded-full bg-white"
+              dotClassName="bg-white/40 hover:bg-white/70"
+              activeDotClassName="h-1.5 w-3.5 rounded-full bg-white"
             />
           </CarouselDotsOverlay>
-        ) : null}
+        )}
       </Carousel>
     </div>
   );

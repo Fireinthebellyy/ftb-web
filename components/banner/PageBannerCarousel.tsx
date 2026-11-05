@@ -29,6 +29,7 @@ interface PageBannerCarouselProps {
 export default function PageBannerCarousel({
   placement,
   className,
+  customHeight,
 }: PageBannerCarouselProps) {
   const [mounted, setMounted] = useState(false);
   const autoplayRef = useRef(Autoplay({ delay: CAROUSEL_AUTOPLAY_DELAY_MS }));
@@ -42,6 +43,7 @@ export default function PageBannerCarousel({
 
   // Get height based on placement
   const getHeight = () => {
+    if (customHeight) return customHeight;
     if (placement === "cold-dm") return "h-[220px]";
     return "h-[145px] sm:h-[175px] md:h-[190px] lg:h-[200px]";
   };

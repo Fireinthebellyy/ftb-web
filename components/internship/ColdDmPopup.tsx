@@ -49,6 +49,7 @@ export const ColdDmPopup: React.FC<ColdDmPopupProps> = ({
     coldDmShowPageBanner: true,
     coldDmShowTemplates: true,
   });
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -66,6 +67,8 @@ export const ColdDmPopup: React.FC<ColdDmPopupProps> = ({
       }
     } catch (error) {
       console.error("Error fetching Cold DM settings:", error);
+    } finally {
+      setSettingsLoaded(true);
     }
   };
 
@@ -95,6 +98,11 @@ export const ColdDmPopup: React.FC<ColdDmPopupProps> = ({
       }, 100);
     }
   };
+
+  // If settings not loaded yet, or settings say don't show popup, close it and return null
+  if (!settingsLoaded) {
+    return null;
+  }
 
   const shouldShowPopup = settings.coldDmShowPageBanner || settings.coldDmShowTemplates;
 

@@ -62,6 +62,7 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
     coldDmShowPageBanner: true,
     coldDmShowTemplates: true,
   });
+  const [settingsLoaded, setSettingsLoaded] = React.useState(false);
 
   React.useEffect(() => {
     const fetchColdDmSettings = async () => {
@@ -73,6 +74,8 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
         }
       } catch (error) {
         console.error("Error fetching Cold DM settings:", error);
+      } finally {
+        setSettingsLoaded(true);
       }
     };
     fetchColdDmSettings();
@@ -251,6 +254,12 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
                   field_label: fieldAnalytics.fieldLabel,
                   source: "desktop_header",
                 });
+
+                // If settings not loaded yet, redirect directly
+                if (!settingsLoaded) {
+                  window.open(dmUrl, "_blank");
+                  return;
+                }
 
                 const shouldShowPopup = coldDmSettings.coldDmShowPageBanner || coldDmSettings.coldDmShowTemplates;
 

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Mail } from "lucide-react";
 import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
+import { getInternshipFieldAnalytics } from "@/components/internship/constants";
 import { addUtmParams, ensureAbsoluteUrl } from "@/lib/utils";
 import { InternshipData } from "@/types/interfaces";
 import { ColdDmPopup } from "@/components/internship/ColdDmPopup";
@@ -64,14 +65,20 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
               )}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() =>
+              onClick={() => {
+                const fieldAnalytics = getInternshipFieldAnalytics(
+                  internship.field,
+                  internship.title
+                );
                 posthog.capture("internship_apply_forms_clicked", {
                   internship_id: internship.id,
                   title: internship.title,
+                  field: fieldAnalytics.field,
+                  field_label: fieldAnalytics.fieldLabel,
                   url: internship.applyLink || internship.link,
                   source: "mobile_footer",
-                })
-              }
+                });
+              }}
             >
               <span>Apply Directly</span>
             </Link>
@@ -81,9 +88,15 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
         {hasDM && (
           <Button
             onClick={() => {
+              const fieldAnalytics = getInternshipFieldAnalytics(
+                internship.field,
+                internship.title
+              );
               posthog.capture("internship_cold_dm_clicked", {
                 internship_id: internship.id,
                 title: internship.title,
+                field: fieldAnalytics.field,
+                field_label: fieldAnalytics.fieldLabel,
                 source: "mobile_footer",
               });
 
@@ -114,13 +127,19 @@ export const InternshipStickyFooter: React.FC<InternshipStickyFooterProps> = ({
               href={mailUrl}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() =>
+              onClick={() => {
+                const fieldAnalytics = getInternshipFieldAnalytics(
+                  internship.field,
+                  internship.title
+                );
                 posthog.capture("internship_cold_mail_clicked", {
                   internship_id: internship.id,
                   title: internship.title,
+                  field: fieldAnalytics.field,
+                  field_label: fieldAnalytics.fieldLabel,
                   source: "mobile_footer",
-                })
-              }
+                });
+              }}
             >
               <Mail className="h-3.5 w-3.5" />
               <span>Cold Mail</span>

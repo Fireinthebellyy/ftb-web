@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getInternshipFieldAnalytics } from "@/components/internship/constants";
 import { cn, toTitleCase, formatSalary, formatDateLong, addUtmParams } from "@/lib/utils";
 import { InternshipData } from "@/types/interfaces";
 import posthog from "posthog-js";
@@ -216,14 +217,20 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
                 href={addUtmParams(internship.applyLink || internship.link || "", "ftb_web")}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() =>
+                onClick={() => {
+                  const fieldAnalytics = getInternshipFieldAnalytics(
+                    internship.field,
+                    internship.title
+                  );
                   posthog.capture("internship_apply_forms_clicked", {
                     internship_id: internship.id,
                     title: internship.title,
+                    field: fieldAnalytics.field,
+                    field_label: fieldAnalytics.fieldLabel,
                     url: internship.applyLink || internship.link,
                     source: "desktop_header",
-                  })
-                }
+                  });
+                }}
               >
                 Apply Directly
               </Link>
@@ -233,9 +240,15 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
           {hasDM && (
             <Button
               onClick={() => {
+                const fieldAnalytics = getInternshipFieldAnalytics(
+                  internship.field,
+                  internship.title
+                );
                 posthog.capture("internship_cold_dm_clicked", {
                   internship_id: internship.id,
                   title: internship.title,
+                  field: fieldAnalytics.field,
+                  field_label: fieldAnalytics.fieldLabel,
                   source: "desktop_header",
                 });
 
@@ -264,13 +277,19 @@ export const InternshipDesktopHeader: React.FC<InternshipDesktopHeaderProps> = (
             <Button asChild className="h-12 px-5 rounded-xl bg-black hover:bg-zinc-800 text-white font-bold border-none shadow-none transition-all active:scale-95 duration-200 flex items-center gap-2">
               <Link
                 href={mailUrl}
-                onClick={() =>
+                onClick={() => {
+                  const fieldAnalytics = getInternshipFieldAnalytics(
+                    internship.field,
+                    internship.title
+                  );
                   posthog.capture("internship_cold_mail_clicked", {
                     internship_id: internship.id,
                     title: internship.title,
+                    field: fieldAnalytics.field,
+                    field_label: fieldAnalytics.fieldLabel,
                     source: "desktop_header",
-                  })
-                }
+                  });
+                }}
               >
                 <Mail className="w-4 h-4" />
                 Cold Mail

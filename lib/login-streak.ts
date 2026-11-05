@@ -91,9 +91,55 @@ export function getDisplayStreak(
   return 0;
 }
 
+export type ConsistencyStatus =
+  | "first_login"
+  | "continued"
+  | "same_day"
+  | "reset";
+
+export type ConsistencyTier =
+  | "new"
+  | "building"
+  | "consistent"
+  | "highly_consistent"
+  | "power_user";
+
+export function getConsistencyTier(streak: number): ConsistencyTier {
+  const safe = Math.max(0, streak);
+  if (safe >= 30) return "power_user";
+  if (safe >= 14) return "highly_consistent";
+  if (safe >= 7) return "consistent";
+  if (safe >= 2) return "building";
+  return "new";
+}
+
+export function computeAccountAgeDays(
+  createdAt: string | Date | null | undefined,
+  todayStr: string = getCalendarDateInIST()
+): number {
+  const createdDateStr = normalizeDateToISTString(createdAt);
+  if (!createdDateStr) return 1;
+  const diff = getDaysDifferenceInIST(createdDateStr, todayStr);
+  if (!Number.isFinite(diff) || diff < 0) return 1;
+  return diff + 1;
+}
+
+export function computeConsistencyScore(
+  streak: number,
+  accountAgeDays: number
+): number {
+  const safeStreak = Math.max(0, streak);
+  const safeAge = Math.max(1, accountAgeDays);
+  return Math.min(100, Math.round((safeStreak / safeAge) * 100));
+}
+
 export interface LoginStreakUpdate {
   streak: number;
+  previousStreak: number;
   lastLoginDate: string;
+  previousLoginDate: string | null;
+  daysSinceLastLogin: number | null;
+  consistencyStatus: ConsistencyStatus;
   changed: boolean;
 }
 
@@ -106,7 +152,15 @@ export function computeLoginStreakUpdate(
   const normLastLogin = normalizeDateToISTString(lastLoginDate);
 
   if (!normLastLogin) {
-    return { streak: 1, lastLoginDate: today, changed: true };
+    return {
+      streak: 1,
+      previousStreak: safeStreak,
+      lastLoginDate: today,
+      previousLoginDate: null,
+      daysSinceLastLogin: null,
+      consistencyStatus: "first_login",
+      changed: true,
+    };
   }
 
   const diffDays = getDaysDifferenceInIST(normLastLogin, today);
@@ -114,7 +168,11 @@ export function computeLoginStreakUpdate(
   if (diffDays === 0) {
     return {
       streak: safeStreak === 0 ? 1 : safeStreak,
+      previousStreak: safeStreak,
       lastLoginDate: today,
+      previousLoginDate: normLastLogin,
+      daysSinceLastLogin: 0,
+      consistencyStatus: "same_day",
       changed: safeStreak === 0,
     };
   }
@@ -122,7 +180,11 @@ export function computeLoginStreakUpdate(
   if (diffDays === 1) {
     return {
       streak: safeStreak + 1,
+      previousStreak: safeStreak,
       lastLoginDate: today,
+      previousLoginDate: normLastLogin,
+      daysSinceLastLogin: 1,
+      consistencyStatus: "continued",
       changed: true,
     };
   }
@@ -130,10 +192,22 @@ export function computeLoginStreakUpdate(
   if (diffDays < 0) {
     return {
       streak: safeStreak === 0 ? 1 : safeStreak,
+      previousStreak: safeStreak,
       lastLoginDate: today,
+      previousLoginDate: normLastLogin,
+      daysSinceLastLogin: 0,
+      consistencyStatus: "same_day",
       changed: true,
     };
   }
 
-  return { streak: 1, lastLoginDate: today, changed: true };
+  return {
+    streak: 1,
+    previousStreak: safeStreak,
+    lastLoginDate: today,
+    previousLoginDate: normLastLogin,
+    daysSinceLastLogin: Number.isFinite(diffDays) ? diffDays : null,
+    consistencyStatus: "reset",
+    changed: true,
+  };
 }

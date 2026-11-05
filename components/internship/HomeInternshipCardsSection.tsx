@@ -13,6 +13,8 @@ import {
   Megaphone,
   Paintbrush,
 } from "lucide-react";
+import posthog from "posthog-js";
+import { getInternshipFieldAnalytics } from "@/components/internship/constants";
 import { Internship } from "@/types/interfaces";
 
 interface HomeInternshipCardsSectionProps {
@@ -162,6 +164,33 @@ export default function HomeInternshipCardsSection({
                     </p>
                     <Link
                       href={`/intern/${internship.id}`}
+                      onClick={() => {
+                        const fieldAnalytics = getInternshipFieldAnalytics(
+                          internship.field,
+                          internship.title
+                        );
+                        posthog.capture("internship_card_clicked", {
+                          internship_id: internship.id,
+                          title: internship.title,
+                          company: internship.hiringOrganization,
+                          field: fieldAnalytics.field,
+                          field_label: fieldAnalytics.fieldLabel,
+                          fields: fieldAnalytics.fields,
+                          field_labels: fieldAnalytics.fieldLabels,
+                          source: "home_featured",
+                        });
+                        fieldAnalytics.fields.forEach((fieldId, idx) => {
+                          posthog.capture("internship_clicked_by_field", {
+                            field: fieldId,
+                            field_label:
+                              fieldAnalytics.fieldLabels[idx] || fieldId,
+                            internship_id: internship.id,
+                            title: internship.title,
+                            company: internship.hiringOrganization,
+                            source: "home_featured",
+                          });
+                        });
+                      }}
                       className={`${sfProClass} mt-2 inline-flex h-8 items-center justify-center rounded-[39px] bg-black px-3 text-[12px] leading-none font-medium tracking-[-0.25px] text-white md:h-9 md:text-[13px]`}
                     >
                       Explore

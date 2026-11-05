@@ -23,6 +23,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { InternshipPostProps } from "@/types/interfaces";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { getInternshipFieldAnalytics } from "./internship/constants";
 import { toTitleCase, cn } from "@/lib/utils";
 import { ShareDialog } from "./internship/ShareDialog";
 import { useTracker } from "@/components/providers/TrackerProvider";
@@ -86,15 +87,35 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
 
   const { id, title, hiringOrganization, deadline, is_trending, is_exclusive } =
     internship;
+  const fieldAnalytics = getInternshipFieldAnalytics(internship.field, title);
 
   const currentStatus = getStatus(id, "internship");
   const isBookmarked = !!currentStatus;
 
   const handleCardClick = () => {
+    const source = isActionsHidden ? "similar_internships" : "internship_list";
     posthog.capture("internship_card_clicked", {
       internship_id: id,
       title,
+      company: hiringOrganization,
+      field: fieldAnalytics.field,
+      field_label: fieldAnalytics.fieldLabel,
+      fields: fieldAnalytics.fields,
+      field_labels: fieldAnalytics.fieldLabels,
+      source,
     });
+
+    fieldAnalytics.fields.forEach((fieldId, idx) => {
+      posthog.capture("internship_clicked_by_field", {
+        field: fieldId,
+        field_label: fieldAnalytics.fieldLabels[idx] || fieldId,
+        internship_id: id,
+        title,
+        company: hiringOrganization,
+        source,
+      });
+    });
+
     if (typeof window !== "undefined") {
       try {
         sessionStorage.setItem(
@@ -138,6 +159,8 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
           posthog.capture("internship_bookmarked", {
             internship_id: id,
             title,
+            field: fieldAnalytics.field,
+            field_label: fieldAnalytics.fieldLabel,
             action: "unsave",
           });
           toast.success("Deleted from Tracker");
@@ -158,6 +181,8 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
           posthog.capture("internship_bookmarked", {
             internship_id: id,
             title,
+            field: fieldAnalytics.field,
+            field_label: fieldAnalytics.fieldLabel,
             action: "save",
           });
           if (typeof window !== "undefined") {
@@ -205,6 +230,8 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
       posthog.capture("internship_shared", {
         internship_id: id,
         title,
+        field: fieldAnalytics.field,
+        field_label: fieldAnalytics.fieldLabel,
         method: "copy",
       });
       toast.success("Link copied to clipboard");
@@ -217,6 +244,8 @@ const InternshipPost: React.FC<InternshipPostProps> = ({
     posthog.capture("internship_shared", {
       internship_id: id,
       title,
+      field: fieldAnalytics.field,
+      field_label: fieldAnalytics.fieldLabel,
       method,
     });
   };

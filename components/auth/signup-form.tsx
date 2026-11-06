@@ -26,6 +26,11 @@ import {
 import { z } from "zod";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
+import {
+  clearPendingAuth,
+  resolveAuthSource,
+  setPendingAuth,
+} from "@/lib/auth-analytics";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
@@ -58,6 +63,25 @@ export function SignupForm({
       ? rawReturnUrl
       : "/";
   const returnUrl = returnUrlOverride ?? searchParamReturnUrl;
+  const authSource = resolveAuthSource(searchParams.get("source"), returnUrl);
+  const authSurface = isOverlay ? "overlay" : "login_page";
+
+  const beginAuth = (provider: "google" | "linkedin" | "email") => {
+    posthog.capture("signup_initiated", {
+      auth_provider: provider,
+      login_source: authSource,
+      return_url: returnUrl,
+      auth_surface: authSurface,
+    });
+    setPendingAuth({
+      flow: "signup",
+      provider,
+      source: authSource,
+      returnUrl,
+      surface: authSurface,
+      initiatedAt: Date.now(),
+    });
+  };
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -69,23 +93,38 @@ export function SignupForm({
   });
 
   const signInWithGoogle = async () => {
-    await authClient.signIn.social({
-      provider: "google",
-      callbackURL: returnUrl,
-      newUserCallbackURL: returnUrl,
-    });
+    beginAuth("google");
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: returnUrl,
+        newUserCallbackURL: returnUrl,
+      });
+    } catch (error) {
+      clearPendingAuth();
+      console.error("Google signup error:", error);
+      toast.error("Google signup failed. Please try again.");
+    }
   };
 
   const signInWithLinkedIn = async () => {
-    await authClient.signIn.social({
-      provider: "linkedin",
-      callbackURL: returnUrl,
-      newUserCallbackURL: returnUrl,
-    });
+    beginAuth("linkedin");
+    try {
+      await authClient.signIn.social({
+        provider: "linkedin",
+        callbackURL: returnUrl,
+        newUserCallbackURL: returnUrl,
+      });
+    } catch (error) {
+      clearPendingAuth();
+      console.error("LinkedIn signup error:", error);
+      toast.error("LinkedIn signup failed. Please try again.");
+    }
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+    beginAuth("email");
 
     try {
       await authClient.signUp.email(
@@ -104,6 +143,13 @@ export function SignupForm({
                 createdAt: ctx.data.user.createdAt?.toISOString(),
               });
             }
+            posthog.capture("user_signed_up", {
+              auth_provider: "email",
+              login_source: authSource,
+              return_url: returnUrl,
+              auth_surface: authSurface,
+            });
+            clearPendingAuth();
             const isNewUser =
               ctx.data?.user?.createdAt === ctx.data?.user?.updatedAt;
 
@@ -118,6 +164,7 @@ export function SignupForm({
 
       toast.success("Account created. Redirecting...");
     } catch (error) {
+      clearPendingAuth();
       console.error("Signup error:", error);
       toast.error("Signup failed. Please try again.");
     } finally {

@@ -26,6 +26,11 @@ import {
 import { z } from "zod";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
+import {
+  clearPendingAuth,
+  resolveAuthSource,
+  setPendingAuth,
+} from "@/lib/auth-analytics";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
@@ -63,6 +68,25 @@ export function LoginForm({
       ? rawReturnUrl
       : "/";
   const returnUrl = returnUrlOverride ?? searchParamReturnUrl;
+  const authSource = resolveAuthSource(searchParams.get("source"), returnUrl);
+  const authSurface = isOverlay ? "overlay" : "login_page";
+
+  const beginAuth = (provider: "google" | "linkedin" | "email") => {
+    posthog.capture("login_initiated", {
+      auth_provider: provider,
+      login_source: authSource,
+      return_url: returnUrl,
+      auth_surface: authSurface,
+    });
+    setPendingAuth({
+      flow: "login",
+      provider,
+      source: authSource,
+      returnUrl,
+      surface: authSurface,
+      initiatedAt: Date.now(),
+    });
+  };
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -76,12 +100,14 @@ export function LoginForm({
     try {
       setIsLoading(true);
       setLoadingProvider("google");
+      beginAuth("google");
       await authClient.signIn.social({
         provider: "google",
         callbackURL: returnUrl,
         newUserCallbackURL: returnUrl,
       });
     } catch (error) {
+      clearPendingAuth();
       console.error("Google sign-in error:", error);
       toast.error("Google sign-in failed. Please try again.");
     } finally {
@@ -94,12 +120,14 @@ export function LoginForm({
     try {
       setIsLoading(true);
       setLoadingProvider("linkedin");
+      beginAuth("linkedin");
       await authClient.signIn.social({
         provider: "linkedin",
         callbackURL: returnUrl,
         newUserCallbackURL: returnUrl,
       });
     } catch (error) {
+      clearPendingAuth();
       console.error("LinkedIn sign-in error:", error);
       toast.error("LinkedIn sign-in failed. Please try again.");
     } finally {
@@ -110,6 +138,7 @@ export function LoginForm({
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+    beginAuth("email");
 
     try {
       await authClient.signIn.email(
@@ -127,9 +156,17 @@ export function LoginForm({
                 createdAt: ctx.data.user.createdAt?.toISOString(),
               });
             }
+            posthog.capture("user_signed_in", {
+              auth_provider: "email",
+              login_source: authSource,
+              return_url: returnUrl,
+              auth_surface: authSurface,
+            });
+            clearPendingAuth();
             router.push(returnUrl);
           },
           onError: (ctx) => {
+            clearPendingAuth();
             setIsLoading(false);
             const msg = ctx.error?.message || "Invalid email or password";
             toast.error(msg);
@@ -137,6 +174,7 @@ export function LoginForm({
         }
       );
     } catch (error: unknown) {
+      clearPendingAuth();
       console.error("Login error:", error);
       const msg =
         error instanceof Error ? error.message : "Login failed. Please try again.";

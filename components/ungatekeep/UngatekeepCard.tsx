@@ -242,15 +242,28 @@ export default function UngatekeepCard({ post }: UngatekeepCardProps) {
       ? `${plainTextContent.slice(0, CONTENT_PREVIEW_LENGTH).trim()}...`
       : post.content;
 
-  const [safeHtml, setSafeHtml] = useState(() =>
-    typeof window !== "undefined" ? DOMPurify.sanitize(post.content) : ""
+  const [safeHtml, setSafeHtml] = useState("");
+
+useEffect(() => {
+  if (typeof window === "undefined") return;
+
+  const sanitizedHtml = DOMPurify.sanitize(post.content);
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(sanitizedHtml, "text/html");
+
+  const walker = doc.createTreeWalker(
+    doc.body,
+    NodeFilter.SHOW_TEXT
   );
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setSafeHtml(DOMPurify.sanitize(post.content));
-    }
-  }, [post.content]);
+  let node;
+
+  while ((node = walker.nextNode())) {
+    node.textContent = node.textContent?.replace(/\u00A0/g, " ");
+  }
+
+  setSafeHtml(doc.body.innerHTML);
+}, [post.content]);
 
   const youtubeEmbedUrl = getYouTubeEmbedUrl(post.videoUrl);
 

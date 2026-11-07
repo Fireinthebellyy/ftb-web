@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSession } from "@/hooks/use-session";
 import { useToggleUpvote } from "@/lib/queries-opportunities";
+import { isOpportunityClosed } from "@/lib/date-utils";
 import { addUtmParams, cn } from "@/lib/utils";
 import { getYouTubeEmbedUrl, isYouTubeUrl } from "@/lib/youtube";
 import { OpportunityPostProps } from "@/types/interfaces";
@@ -101,17 +102,10 @@ export function OpportunityActions({
     }
   };
 
-  const resolveOpportunityDeadline=():Date |null=>{
-    const {endDate,createdAt}=opportunity;
-    if(endDate) return new Date(endDate);
-    if(!createdAt) return null;
-    const baseDate= new Date(createdAt);
-    return new Date(baseDate.getTime()+3*24*60*60*1000);
-    
-  }
-  const currentDate=new Date();
-  const deadlineDate=resolveOpportunityDeadline();
-  const closedDisplay=deadlineDate? currentDate > deadlineDate :false;
+  const closedDisplay = isOpportunityClosed(
+    opportunity.endDate,
+    opportunity.createdAt
+  );
   return (
     <>
       <footer className="flex items-center justify-between border-t border-gray-100 pt-1">

@@ -11,6 +11,7 @@ import { createApiTimer } from "@/lib/api-timing";
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { eq, and, desc, inArray } from "drizzle-orm";
+import { resolveOpportunityDeadlineDate } from "@/lib/date-utils";
 import { z } from "zod";
 
 const trackerItemSchema = z.object({
@@ -50,21 +51,6 @@ const uuidRegex =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const isUuid = (value: string) => uuidRegex.test(value);
-
-const resolveOpportunityDeadline = (
-  startDate?: string | null,
-  endDate?: string | null
-): string | null => {
-  if (endDate) return endDate;
-  if (!startDate) return null;
-
-  const baseDate = new Date(startDate);
-  if (Number.isNaN(baseDate.getTime())) return null;
-
-  return new Date(baseDate.getTime() + 3 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0];
-};
 
 export async function GET(req: NextRequest) {
   const timer = createApiTimer("GET /api/tracker");
@@ -176,7 +162,7 @@ export async function GET(req: NextRequest) {
           const dateRows = await db
             .select({
               id: opportunities.id,
-              startDate: opportunities.startDate,
+              createdAt: opportunities.createdAt,
               endDate: opportunities.endDate,
             })
             .from(opportunities)
@@ -185,9 +171,9 @@ export async function GET(req: NextRequest) {
           const idToDate = new Map(
             dateRows
               .map((row) => {
-                const date = resolveOpportunityDeadline(
-                  row.startDate as string | null | undefined,
-                  row.endDate as string | null | undefined
+                const date = resolveOpportunityDeadlineDate(
+                  row.createdAt,
+                  row.endDate
                 );
                 return date ? [row.id, date as string] : null;
               })

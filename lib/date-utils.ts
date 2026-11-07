@@ -41,6 +41,87 @@ export function parseDateOnlyToLocalDate(
   return undefined;
 }
 
+export function getOpportunityClosedStartDate(
+  endDate?: string | null,
+  createdAt?: string | Date | null
+): Date | null {
+  const toLocalMidnight = (value: string | Date): Date | null => {
+    const parsed =
+      typeof value === "string" ? new Date(value) : new Date(value.getTime());
+    if (Number.isNaN(parsed.getTime())) return null;
+    return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+  };
+
+  if (endDate) {
+    const dateOnly = parseDateOnlyToLocalDate(endDate);
+    const base = dateOnly ?? toLocalMidnight(endDate);
+    if (!base) return null;
+    base.setDate(base.getDate() + 1);
+    return base;
+  }
+
+  if (!createdAt) return null;
+  const base = toLocalMidnight(createdAt);
+  if (!base) return null;
+  base.setDate(base.getDate() + 10);
+  return base;
+}
+
+export function isOpportunityRemovedFromFeed(
+  endDate?: string | null,
+  createdAt?: string | Date | null
+): boolean {
+  const toLocalMidnight = (value: string | Date): Date | null => {
+    const parsed =
+      typeof value === "string" ? new Date(value) : new Date(value.getTime());
+    if (Number.isNaN(parsed.getTime())) return null;
+    return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+  };
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  if (endDate) {
+    const base = parseDateOnlyToLocalDate(endDate) ?? toLocalMidnight(endDate);
+    if (!base) return false;
+    const removeDate = new Date(base);
+    removeDate.setDate(removeDate.getDate() + 16);
+    return today >= removeDate;
+  }
+
+  if (!createdAt) return false;
+  const base = toLocalMidnight(createdAt);
+  if (!base) return false;
+  const removeDate = new Date(base);
+  removeDate.setDate(removeDate.getDate() + 15);
+  return today >= removeDate;
+}
+
+export function resolveOpportunityDeadlineDate(
+  createdAt?: string | Date | null,
+  endDate?: string | null
+): string | null {
+  if (endDate) {
+    return normalizeDateOnly(endDate) ?? null;
+  }
+
+  const closedStart = getOpportunityClosedStartDate(null, createdAt);
+  if (!closedStart) return null;
+  closedStart.setDate(closedStart.getDate() - 1);
+  return toDateOnlyLocalValue(closedStart) ?? null;
+}
+
+export function isOpportunityClosed(
+  endDate?: string | null,
+  createdAt?: string | Date | null
+): boolean {
+  const closedStart = getOpportunityClosedStartDate(endDate, createdAt);
+  if (!closedStart) return false;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return today >= closedStart;
+}
+
 export function normalizeDateOnly(value?: string): string | undefined {
   if (!value) {
     return undefined;

@@ -12,19 +12,13 @@ import { fetchInternshipsPaginated } from "@/lib/queries-internships";
 import { fetchOpportunitiesPaginated } from "@/lib/queries-opportunities";
 import { Internship, Opportunity } from "@/types/interfaces";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
+import { resolveOpportunityDeadlineDate } from "@/lib/date-utils";
 
 const resolveOpportunityDeadline = (
-  startDate?: string | null,
+  createdAt?: string | null,
   endDate?: string | null
-): string | undefined => {
-  if (endDate) return endDate;
-  if (!startDate) return undefined;
-  const baseDate = new Date(startDate);
-  if (Number.isNaN(baseDate.getTime())) return undefined;
-  return new Date(baseDate.getTime() + 3 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0];
-};
+): string | undefined =>
+  resolveOpportunityDeadlineDate(createdAt, endDate) ?? undefined;
 
 export interface TrackerItem {
   oppId: number | string;
@@ -404,7 +398,7 @@ export const TrackerProvider = ({ children }: { children: ReactNode }) => {
                 location: fetched.location,
                 type: fetched.type,
                 deadline: resolveOpportunityDeadline(
-                  fetched.startDate,
+                  fetched.createdAt,
                   fetched.endDate
                 ),
                 logo: getImageUrl(fetched.images?.[0]), // Use first image if available, resolving to URL

@@ -22,6 +22,7 @@ import { OpportunityAttachments } from "./opportunity/OpportunityAttachments";
 import { OpportunityActions } from "./opportunity/OpportunityActions";
 import NewOpportunityForm from "./opportunity/NewOpportunityForm";
 import { tryGetStoragePublicUrl } from "@/lib/storage/public-url";
+import { resolveOpportunityDeadlineDate } from "@/lib/date-utils";
 import { formatTypeName } from "@/app/opportunities/constants";
 import { Flame } from "lucide-react";
 
@@ -32,17 +33,10 @@ const isValidUUID = (uuid: string): boolean => {
 };
 
 const resolveOpportunityDeadline = (
-  startDate?: string | null,
+  createdAt?: string | null,
   endDate?: string | null
-): string | undefined => {
-  if (endDate) return endDate;
-  if (!startDate) return undefined;
-  const baseDate = new Date(startDate);
-  if (Number.isNaN(baseDate.getTime())) return undefined;
-  return new Date(baseDate.getTime() + 3 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0];
-};
+): string | undefined =>
+  resolveOpportunityDeadlineDate(createdAt, endDate) ?? undefined;
 
 const getTypeBadgeColor = (type?: string): string => {
   const colors: Record<string, string> = {
@@ -117,7 +111,7 @@ const OpportunityPost: React.FC<OpportunityPostProps> = ({
             type: opportunity.type,
             location: opportunity.location,
             deadline: resolveOpportunityDeadline(
-              opportunity.startDate,
+              opportunity.createdAt,
               opportunity.endDate
             ),
             kind: "opportunity",

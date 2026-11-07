@@ -85,6 +85,7 @@ export async function GET(req: NextRequest) {
           isFeaturedHome: opportunities.featuredHome,
           trendingIndex: opportunities.trendingIndex,
           featuredHomeIndex: opportunities.featuredHomeIndex,
+          priority: opportunities.priority,
           userId: opportunities.userId,
           user: {
             id: user.id,

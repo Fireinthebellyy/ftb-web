@@ -4,7 +4,7 @@ import { canAccessAdminTab } from "@/lib/admin-permissions";
 import { opportunities, tags, user } from "@/lib/schema";
 import { getCurrentUser } from "@/server/users";
 import { NextRequest, NextResponse } from "next/server";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, isNull, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 
 const updateOpportunitySchema = z.object({
@@ -13,8 +13,10 @@ const updateOpportunitySchema = z.object({
   applyLink: z.string().optional(),
   isTrending: z.boolean().optional(),
   isFeaturedHome: z.boolean().optional(),
+  isActive: z.boolean().optional(),
   trendingIndex: z.number().nullable().optional(),
   featuredHomeIndex: z.number().nullable().optional(),
+  priority: z.number().int().min(1).nullable().optional(),
 });
 
 export async function GET(
@@ -80,6 +82,7 @@ export async function GET(
         isFeaturedHome: opportunities.featuredHome,
         trendingIndex: opportunities.trendingIndex,
         featuredHomeIndex: opportunities.featuredHomeIndex,
+        priority: opportunities.priority,
         user: {
           id: user.id,
           name: user.name,
@@ -174,6 +177,26 @@ export async function PATCH(
 
     activityBeforeState = existingOpportunity[0];
 
+    if (validatedData.priority !== undefined && validatedData.priority !== null) {
+      const conflict = await db
+        .select({ id: opportunities.id, title: opportunities.title })
+        .from(opportunities)
+        .where(
+          and(
+            eq(opportunities.priority, validatedData.priority),
+            isNull(opportunities.deletedAt),
+            ne(opportunities.id, opportunityId)
+          )
+        )
+        .limit(1);
+
+      if (conflict.length > 0) {
+        activityStatus = 409;
+        activityError = `Priority ${validatedData.priority} is already used by "${conflict[0].title}"`;
+        return NextResponse.json({ error: activityError }, { status: 409 });
+      }
+    }
+
     const updateData: any = {
       updatedAt: new Date(),
     };
@@ -200,6 +223,10 @@ export async function PATCH(
 
     if (validatedData.featuredHomeIndex !== undefined)
       updateData.featuredHomeIndex = validatedData.featuredHomeIndex;
+    if (validatedData.isActive !== undefined)
+      updateData.isActive = validatedData.isActive;
+    if (validatedData.priority !== undefined)
+      updateData.priority = validatedData.priority;
   
 
     const updatedOpportunity = await db

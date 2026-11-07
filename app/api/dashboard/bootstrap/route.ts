@@ -99,7 +99,14 @@ export async function GET(req: NextRequest) {
     }
 
     const buildFilters = (usePublishAt: boolean) => {
-      const conditions: SQL<unknown>[] = [isNull(opportunities.deletedAt)];
+      const conditions: SQL<unknown>[] = [
+        isNull(opportunities.deletedAt),
+        sql`(
+          (${opportunities.endDate} IS NOT NULL AND CURRENT_DATE < ${opportunities.endDate} + 16)
+          OR
+          (${opportunities.endDate} IS NULL AND CURRENT_DATE < ${opportunities.createdAt}::date + 15)
+        )`,
+      ];
 
       conditions.push(eq(opportunities.isActive, true));
       conditions.push(eq(opportunities.isVerified, true));
@@ -196,11 +203,13 @@ export async function GET(req: NextRequest) {
           .leftJoin(user, eq(opportunities.userId, user.id))
           .where(filters)
           .orderBy(
-            sql`COALESCE("opportunities"."trending_index", 999)`,
-            sql`CASE 
-              WHEN COALESCE("opportunities"."end_date", ("opportunities"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
-              ELSE 0 
+            sql`CASE
+              WHEN ${opportunities.endDate} IS NOT NULL AND CURRENT_DATE > ${opportunities.endDate} THEN 1
+              WHEN ${opportunities.endDate} IS NULL AND CURRENT_DATE >= ${opportunities.createdAt}::date + 10 THEN 1
+              ELSE 0
             END`,
+            sql`COALESCE("opportunities"."priority", 999)`,
+            sql`COALESCE("opportunities"."trending_index", 999)`,
             desc(opportunities.createdAt)
           )
           .limit(limit + 1)
@@ -248,11 +257,13 @@ export async function GET(req: NextRequest) {
         .leftJoin(user, eq(opportunities.userId, user.id))
         .where(filters)
         .orderBy(
-          sql`COALESCE("opportunities"."trending_index", 999)`,
-          sql`CASE 
-            WHEN COALESCE("opportunities"."end_date", ("opportunities"."created_at" + INTERVAL '3 days')::date) < CURRENT_DATE THEN 1 
-            ELSE 0 
+          sql`CASE
+            WHEN ${opportunities.endDate} IS NOT NULL AND CURRENT_DATE > ${opportunities.endDate} THEN 1
+            WHEN ${opportunities.endDate} IS NULL AND CURRENT_DATE >= ${opportunities.createdAt}::date + 10 THEN 1
+            ELSE 0
           END`,
+          sql`COALESCE("opportunities"."priority", 999)`,
+          sql`COALESCE("opportunities"."trending_index", 999)`,
           desc(opportunities.createdAt)
         )
         .limit(limit + 1)

@@ -12,6 +12,7 @@ import { AdminTabLayout } from "@/components/admin/AdminTabLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+import { isOpportunityClosed, isOpportunityRemovedFromFeed } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import NewOpportunityForm from "@/components/opportunity/NewOpportunityForm";
 
@@ -39,12 +40,14 @@ interface Opportunity {
   title: string;
   description: string;
   createdAt: string;
+  endDate?: string | null;
   isActive: boolean;
   isVerified: boolean;
   isTrending?: boolean;
   isFeaturedHome?: boolean;
   trendingIndex?: number;
   featuredHomeIndex?: number;
+  priority?: number | null;
   type: string;
   applyLink?: string;
   upvoteCount: number;
@@ -133,7 +136,10 @@ export default function OpportunityManagementTable() {
     queryFn: fetchAllOpportunities,
   });
   const opportunities = [...(data ?? EMPTY_OPPORTUNITIES)].sort((a, b) => {
-    return (a.trendingIndex ?? 9999) - (b.trendingIndex ?? 9999);
+    return (
+      (a.priority ?? 9999) - (b.priority ?? 9999) ||
+      (a.trendingIndex ?? 9999) - (b.trendingIndex ?? 9999)
+    );
   });
   const handleApproveReject = useCallback(
     async (opportunity: Opportunity, action: "approve" | "reject") => {
@@ -350,6 +356,39 @@ export default function OpportunityManagementTable() {
 
       
       {
+        accessorKey: "priority",
+        header: "Priority",
+        cell: ({ row }) => {
+          const opportunity = row.original;
+          return (
+            <input
+              key={`priority-${opportunity.id}-${opportunity.priority}`}
+              type="number"
+              min={1}
+              defaultValue={opportunity.priority ?? ""}
+              placeholder="—"
+              className="border rounded px-2 py-1 text-sm w-[80px]"
+              onBlur={async (e) => {
+                const raw = e.target.value;
+                try {
+                  await axios.patch(`/api/admin/opportunities/${opportunity.id}`, {
+                    priority: raw === "" ? null : Number(raw),
+                  });
+                  toast.success("Priority updated");
+                } catch (err) {
+                  const message = axios.isAxiosError(err)
+                    ? err.response?.data?.error
+                    : null;
+                  toast.error(message || "Failed to update priority");
+                } finally {
+                  queryClient.invalidateQueries({ queryKey: ["admin-opportunity-management"] });
+                }
+              }}
+            />
+          );
+        },
+      },
+      {
         id: "user",
         accessorFn: (row) => row.user?.name,
         header: "Posted by",
@@ -358,6 +397,44 @@ export default function OpportunityManagementTable() {
         accessorKey: "createdAt",
         header: "Created",
         cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString(),
+      },
+      {
+        id: "status",
+        header: "Status",
+        cell: ({ row }) => {
+          const closed = isOpportunityClosed(
+            row.original.endDate,
+            row.original.createdAt
+          );
+          return closed ? (
+            <Badge variant="outline" className="text-red-600 border-red-400 text-xs">
+              Closed
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-green-600 border-green-400 text-xs">
+              Ongoing
+            </Badge>
+          );
+        },
+      },
+      {
+        id: "deleteFromFeed",
+        header: "Delete from Feed",
+        cell: ({ row }) => {
+          const removed = isOpportunityRemovedFromFeed(
+            row.original.endDate,
+            row.original.createdAt
+          );
+          return removed ? (
+            <Badge variant="outline" className="text-red-600 border-red-400 text-xs">
+              Yes
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-green-600 border-green-400 text-xs">
+              No
+            </Badge>
+          );
+        },
       },
       {
         id: "actions",
@@ -520,7 +597,7 @@ export default function OpportunityManagementTable() {
             data={opportunities}
             toolbarActions={deleteToolbar}
             emptyMessage="No opportunities found"
-            filterFields={["title", "createdAt", "trendingIndex", "featuredHomeIndex", "index"]}
+            filterFields={["title", "createdAt", "trendingIndex", "featuredHomeIndex", "priority", "index"]}
             filterPlaceholder="Search opportunities..."
           />
         </AdminTableState>

@@ -42,10 +42,21 @@ export async function GET(req: NextRequest) {
           or(
             isNull(opportunities.publishAt),
             lte(opportunities.publishAt, new Date())
-          )
+          ),
+          sql`(
+            (${opportunities.endDate} IS NOT NULL AND CURRENT_DATE < ${opportunities.endDate} + 16)
+            OR
+            (${opportunities.endDate} IS NULL AND CURRENT_DATE < ${opportunities.createdAt}::date + 15)
+          )`
         )
       )
       .orderBy(
+        sql`CASE
+          WHEN ${opportunities.endDate} IS NOT NULL AND CURRENT_DATE > ${opportunities.endDate} THEN 1
+          WHEN ${opportunities.endDate} IS NULL AND CURRENT_DATE >= ${opportunities.createdAt}::date + 10 THEN 1
+          ELSE 0
+        END`,
+        sql`COALESCE("opportunities"."priority", 999)`,
         sql`COALESCE("opportunities"."featured_home_index", 999)`,
         desc(opportunities.createdAt)
       )
